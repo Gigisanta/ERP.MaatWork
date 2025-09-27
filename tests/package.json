@@ -1,0 +1,114 @@
+{
+  "name": "cactus-dashboard-tests",
+  "version": "1.0.0",
+  "description": "Suite de pruebas exhaustivas para CactusDashboard - Validación completa antes de deployment",
+  "main": "run-all-tests.js",
+  "scripts": {
+    "test": "node run-all-tests.js",
+    "test:isolation": "node data-isolation.test.js",
+    "test:concurrency": "node concurrency.test.js",
+    "test:stress": "node stress.test.js",
+    "test:integrity": "node data-integrity.test.js",
+    "test:functionality": "node critical-functionality.test.js",
+    "test:performance": "node performance-metrics.test.js",
+    "test:quick": "node run-all-tests.js --quick",
+    "test:production-ready": "node run-all-tests.js --production-check",
+    "clean-reports": "rm -rf reports/* || del /Q reports\\* 2>nul",
+    "setup": "mkdir reports 2>nul || md reports 2>nul || true"
+  },
+  "keywords": [
+    "testing",
+    "database",
+    "supabase",
+    "stress-testing",
+    "concurrency",
+    "data-isolation",
+    "performance",
+    "production-ready"
+  ],
+  "author": "CactusDashboard Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "./"
+  },
+  "config": {
+    "test-timeout": 300000,
+    "max-concurrent-users": 100,
+    "stress-duration": 300000,
+    "reports-retention-days": 30
+  },
+  "testConfig": {
+    "isolation": {
+      "testUsers": 5,
+      "contactsPerUser": 10,
+      "timeout": 60000
+    },
+    "concurrency": {
+      "concurrentUsers": 20,
+      "operationsPerUser": 10,
+      "poolSize": 10,
+      "timeout": 120000
+    },
+    "stress": {
+      "maxUsers": 100,
+      "operationsPerUser": 50,
+      "duration": 300000,
+      "rampUpTime": 30000
+    },
+    "integrity": {
+      "testRecords": 100,
+      "validationRounds": 5,
+      "timeout": 90000
+    },
+    "functionality": {
+      "testUsers": 10,
+      "operationsPerFeature": 5,
+      "timeout": 120000
+    },
+    "performance": {
+      "measurementRounds": 10,
+      "concurrentOperations": 50,
+      "timeout": 180000
+    }
+  },
+  "productionCriteria": {
+    "critical": {
+      "dataIsolation": {
+        "minSuccessRate": 0.90,
+        "required": true
+      },
+      "dataIntegrity": {
+        "minSuccessRate": 0.95,
+        "required": true
+      },
+      "criticalFunctionality": {
+        "minSuccessRate": 0.90,
+        "required": true
+      }
+    },
+    "important": {
+      "concurrency": {
+        "minSuccessRate": 0.85,
+        "required": false
+      },
+      "performance": {
+        "minScore": 70,
+        "required": false
+      }
+    },
+    "optional": {
+      "stress": {
+        "minSuccessRate": 0.80,
+        "required": false
+      }
+    }
+  }
+}

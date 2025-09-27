@@ -1,0 +1,293 @@
+{
+  "timestamp": "2025-09-17T13:42:11.996Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "0/2",
+      "optional": "0/1"
+    },
+    "totalDuration": 40777,
+    "criticalIssuesCount": 3,
+    "warningsCount": 1,
+    "recommendationsCount": 4
+  },
+  "detailedResults": {
+    "startTime": 1758116491218,
+    "endTime": 1758116531995,
+    "totalDuration": 40777,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "COMPLETED",
+        "duration": 10288,
+        "result": {
+          "passed": 4,
+          "failed": 2,
+          "errors": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "error": "Advisor 1 debería ver exactamente 1 contacto\n\n17 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'b52dd40b-c8e2-4686-985b-2d702fa83c53',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: 'edb25b5e-71f9-4ea7-a530-b3db40464998',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            }
+          ],
+          "details": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "status": "FAILED",
+              "message": "Advisor 1 debería ver exactamente 1 contacto\n\n17 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "status": "FAILED",
+              "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'b52dd40b-c8e2-4686-985b-2d702fa83c53',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: 'edb25b5e-71f9-4ea7-a530-b3db40464998',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            },
+            {
+              "test": "Manager puede acceder a contactos del equipo",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Admin puede acceder a todos los contactos",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Advisor no puede crear contactos para otros",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Políticas RLS están configuradas correctamente",
+              "status": "PASSED",
+              "message": "OK"
+            }
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "COMPLETED",
+        "duration": 28172,
+        "result": {
+          "passed": 2,
+          "failed": 1,
+          "errors": [
+            {
+              "test": "Pool de conexiones de base de datos",
+              "error": "Al menos 80% de conexiones deberían ser exitosas (26/50)"
+            }
+          ],
+          "details": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 16703
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "status": "FAILED",
+              "message": "Al menos 80% de conexiones deberían ser exitosas (26/50)",
+              "duration": 0
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 857
+            }
+          ],
+          "metrics": {
+            "totalOperations": 200,
+            "successfulOperations": 200,
+            "failedOperations": 0,
+            "averageResponseTime": 766.13,
+            "maxResponseTime": 1330,
+            "minResponseTime": 701,
+            "concurrentUsers": 10,
+            "operationsPerUser": 20
+          }
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "FAILED",
+        "duration": 611,
+        "error": "duplicate key value violates unique constraint \"users_email_key\"",
+        "isOptional": true,
+        "success": false
+      },
+      "dataIntegrity": {
+        "status": "FAILED",
+        "duration": 589,
+        "error": "duplicate key value violates unique constraint \"users_email_key\"",
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "FAILED",
+        "duration": 557,
+        "error": "invalid input syntax for type uuid: \"critical-advisor-001\"",
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "FAILED",
+        "duration": 559,
+        "error": "duplicate key value violates unique constraint \"users_email_key\"",
+        "isOptional": false,
+        "success": false
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [
+      "dataIntegrity: duplicate key value violates unique constraint \"users_email_key\"",
+      "criticalFunctionality: invalid input syntax for type uuid: \"critical-advisor-001\"",
+      "performanceMetrics: duplicate key value violates unique constraint \"users_email_key\""
+    ],
+    "warnings": [
+      "stress: duplicate key value violates unique constraint \"users_email_key\""
+    ],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "Resolver todos los problemas críticos antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad",
+      "Optimizar rendimiento antes de manejar carga de producción"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "COMPLETED",
+      "duration": 10288,
+      "result": {
+        "passed": 4,
+        "failed": 2,
+        "errors": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "error": "Advisor 1 debería ver exactamente 1 contacto\n\n17 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'b52dd40b-c8e2-4686-985b-2d702fa83c53',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: 'edb25b5e-71f9-4ea7-a530-b3db40464998',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          }
+        ],
+        "details": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "status": "FAILED",
+            "message": "Advisor 1 debería ver exactamente 1 contacto\n\n17 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "status": "FAILED",
+            "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'b52dd40b-c8e2-4686-985b-2d702fa83c53',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: 'edb25b5e-71f9-4ea7-a530-b3db40464998',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:41:37.551548+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          },
+          {
+            "test": "Manager puede acceder a contactos del equipo",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Admin puede acceder a todos los contactos",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Advisor no puede crear contactos para otros",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Políticas RLS están configuradas correctamente",
+            "status": "PASSED",
+            "message": "OK"
+          }
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "COMPLETED",
+      "duration": 28172,
+      "result": {
+        "passed": 2,
+        "failed": 1,
+        "errors": [
+          {
+            "test": "Pool de conexiones de base de datos",
+            "error": "Al menos 80% de conexiones deberían ser exitosas (26/50)"
+          }
+        ],
+        "details": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 16703
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "status": "FAILED",
+            "message": "Al menos 80% de conexiones deberían ser exitosas (26/50)",
+            "duration": 0
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 857
+          }
+        ],
+        "metrics": {
+          "totalOperations": 200,
+          "successfulOperations": 200,
+          "failedOperations": 0,
+          "averageResponseTime": 766.13,
+          "maxResponseTime": 1330,
+          "minResponseTime": 701,
+          "concurrentUsers": 10,
+          "operationsPerUser": 20
+        }
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "FAILED",
+      "duration": 611,
+      "error": "duplicate key value violates unique constraint \"users_email_key\"",
+      "isOptional": true,
+      "success": false
+    },
+    "dataIntegrity": {
+      "status": "FAILED",
+      "duration": 589,
+      "error": "duplicate key value violates unique constraint \"users_email_key\"",
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "FAILED",
+      "duration": 557,
+      "error": "invalid input syntax for type uuid: \"critical-advisor-001\"",
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "FAILED",
+      "duration": 559,
+      "error": "duplicate key value violates unique constraint \"users_email_key\"",
+      "isOptional": false,
+      "success": false
+    }
+  }
+}

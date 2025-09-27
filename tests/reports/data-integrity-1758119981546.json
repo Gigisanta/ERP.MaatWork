@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-09-17T14:39:41.546Z",
+  "summary": {
+    "totalTests": 6,
+    "passed": 4,
+    "failed": 2,
+    "successRate": 67,
+    "totalDuration": 3618
+  },
+  "validations": {
+    "requiredFields": {
+      "totalTests": 5,
+      "validationErrors": 5,
+      "success": true
+    },
+    "foreignKeys": {
+      "fkValidation": true,
+      "cascadeDelete": false,
+      "success": true
+    },
+    "dataConsistency": {
+      "totalContacts": 2,
+      "consistencyIssues": 0,
+      "timestampIssues": 2,
+      "success": false
+    },
+    "uniqueConstraints": {
+      "contactEmailUnique": true,
+      "userEmailUnique": true,
+      "success": true
+    },
+    "dataTypes": {
+      "totalTests": 3,
+      "validationErrors": 2,
+      "success": true
+    }
+  },
+  "errors": [
+    {
+      "test": "transactionRollback",
+      "error": ""
+    }
+  ],
+  "recommendations": [
+    "Investigar problemas de consistencia de datos",
+    "Corregir todos los problemas de integridad antes del deployment"
+  ]
+}

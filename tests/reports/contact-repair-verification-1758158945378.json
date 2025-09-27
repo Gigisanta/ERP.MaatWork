@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-09-18T01:28:58.846Z",
+  "testSuite": "Contact Repair Verification",
+  "tests": [
+    {
+      "name": "Database Structure Verification",
+      "status": "passed",
+      "startTime": "2025-09-18T01:28:58.847Z",
+      "details": {
+        "usersTable": "accessible",
+        "contactsTable": "accessible",
+        "syncFunction": "available"
+      },
+      "endTime": "2025-09-18T01:29:00.334Z"
+    },
+    {
+      "name": "User Synchronization Test",
+      "status": "passed",
+      "startTime": "2025-09-18T01:29:00.334Z",
+      "details": {
+        "authUserId": "45c4d27a-93ab-44cc-a787-97cf1e0648a8",
+        "publicUserSynced": true,
+        "email": "test-repair-1758158940334-7dtk5o7vs@example.com"
+      },
+      "endTime": "2025-09-18T01:29:03.039Z"
+    },
+    {
+      "name": "Contact Creation with Validation Test",
+      "status": "passed",
+      "startTime": "2025-09-18T01:29:03.039Z",
+      "details": {
+        "contactId": "d3948724-6db6-4426-bdf6-e9150956790f",
+        "contactEmail": "test-repair-1758158943237-63wbtsuvq@example.com",
+        "userId": "45c4d27a-93ab-44cc-a787-97cf1e0648a8",
+        "createdSuccessfully": true
+      },
+      "endTime": "2025-09-18T01:29:03.658Z"
+    },
+    {
+      "name": "RLS Policies Verification Test",
+      "status": "passed",
+      "startTime": "2025-09-18T01:29:03.658Z",
+      "details": {
+        "anonAccess": "restricted",
+        "serviceAccess": "allowed",
+        "rlsActive": true
+      },
+      "endTime": "2025-09-18T01:29:04.104Z"
+    },
+    {
+      "name": "Error Handling and Recovery Test",
+      "status": "passed",
+      "startTime": "2025-09-18T01:29:04.104Z",
+      "details": {
+        "expectedErrorCaught": true,
+        "errorType": "foreign_key_violation",
+        "errorMessage": "insert or update on table \"contacts\" violates foreign key constraint \"contacts_user_id_fkey\""
+      },
+      "endTime": "2025-09-18T01:29:04.315Z"
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "errors": []
+  }
+}

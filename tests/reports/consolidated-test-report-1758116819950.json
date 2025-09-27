@@ -1,0 +1,2278 @@
+{
+  "timestamp": "2025-09-17T13:46:59.950Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "1/2",
+      "optional": "0/1"
+    },
+    "totalDuration": 240827,
+    "criticalIssuesCount": 0,
+    "warningsCount": 0,
+    "recommendationsCount": 9
+  },
+  "detailedResults": {
+    "startTime": 1758116579122,
+    "endTime": 1758116819949,
+    "totalDuration": 240827,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "COMPLETED",
+        "duration": 9276,
+        "result": {
+          "passed": 4,
+          "failed": 2,
+          "errors": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "error": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'a3f43cba-23ee-487e-8ab5-4e9caef603a8',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '27b55cdb-b807-47f4-8c37-2e93821edfd5',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            }
+          ],
+          "details": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "status": "FAILED",
+              "message": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "status": "FAILED",
+              "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'a3f43cba-23ee-487e-8ab5-4e9caef603a8',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '27b55cdb-b807-47f4-8c37-2e93821edfd5',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            },
+            {
+              "test": "Manager puede acceder a contactos del equipo",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Admin puede acceder a todos los contactos",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Advisor no puede crear contactos para otros",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Políticas RLS están configuradas correctamente",
+              "status": "PASSED",
+              "message": "OK"
+            }
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "COMPLETED",
+        "duration": 27194,
+        "result": {
+          "passed": 2,
+          "failed": 1,
+          "errors": [
+            {
+              "test": "Pool de conexiones de base de datos",
+              "error": "Al menos 80% de conexiones deberían ser exitosas (24/50)"
+            }
+          ],
+          "details": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 15809
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "status": "FAILED",
+              "message": "Al menos 80% de conexiones deberían ser exitosas (24/50)",
+              "duration": 0
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 760
+            }
+          ],
+          "metrics": {
+            "totalOperations": 200,
+            "successfulOperations": 200,
+            "failedOperations": 0,
+            "averageResponseTime": 748.595,
+            "maxResponseTime": 961,
+            "minResponseTime": 709,
+            "concurrentUsers": 10,
+            "operationsPerUser": 20
+          }
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "COMPLETED",
+        "duration": 188216,
+        "result": {
+          "timestamp": "2025-09-17T13:46:43.401Z",
+          "summary": {
+            "totalTests": 5,
+            "passed": 2,
+            "failed": 3,
+            "successRate": 40,
+            "totalDuration": 187807
+          },
+          "performanceMetrics": {
+            "connectionStress": {
+              "totalConnections": 200,
+              "successfulConnections": 200,
+              "duration": 749,
+              "connectionsPerSecond": 267,
+              "success": true
+            },
+            "memoryLeak": {
+              "iterations": 1000,
+              "duration": 185892,
+              "initialMemory": 28,
+              "finalMemory": 16,
+              "memoryIncrease": -12,
+              "success": true
+            }
+          },
+          "errors": [
+            {
+              "test": "massiveContactCreation",
+              "error": "Could not find the 'position' column of 'contacts' in the schema cache"
+            },
+            {
+              "test": "concurrentReads",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "test": "massiveUpdates",
+              "error": "column contacts.user_id does not exist"
+            }
+          ],
+          "recommendations": [
+            "Revisar y corregir errores antes del deployment"
+          ]
+        },
+        "isOptional": true,
+        "success": false
+      },
+      "dataIntegrity": {
+        "status": "COMPLETED",
+        "duration": 3884,
+        "result": {
+          "timestamp": "2025-09-17T13:46:47.313Z",
+          "summary": {
+            "totalTests": 6,
+            "passed": 3,
+            "failed": 3,
+            "successRate": 50,
+            "totalDuration": 3503
+          },
+          "validations": {
+            "requiredFields": {
+              "totalTests": 5,
+              "validationErrors": 3,
+              "success": false
+            },
+            "foreignKeys": {
+              "fkValidation": true,
+              "cascadeDelete": false,
+              "success": true
+            },
+            "uniqueConstraints": {
+              "contactEmailUnique": true,
+              "userEmailUnique": true,
+              "success": true
+            },
+            "dataTypes": {
+              "totalTests": 3,
+              "validationErrors": 1,
+              "success": true
+            }
+          },
+          "errors": [
+            {
+              "test": "requiredFields",
+              "error": "Contacto inválido fue aceptado: {\"name\":\"Test Contact\"}"
+            },
+            {
+              "test": "requiredFields",
+              "error": "Contacto inválido fue aceptado: {\"name\":\"Test\",\"email\":\"invalid-email\"}"
+            },
+            {
+              "test": "dataConsistency",
+              "error": "Could not find the 'user_id' column of 'contacts' in the schema cache"
+            },
+            {
+              "test": "transactionRollback",
+              "error": ""
+            }
+          ],
+          "recommendations": [
+            "Implementar validaciones más estrictas para campos requeridos",
+            "Corregir todos los problemas de integridad antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "COMPLETED",
+        "duration": 4232,
+        "result": {
+          "timestamp": "2025-09-17T13:46:51.541Z",
+          "summary": {
+            "totalTests": 4,
+            "passed": 2,
+            "failed": 2,
+            "successRate": 50,
+            "totalDuration": 3847
+          },
+          "functionalities": {
+            "authentication": {
+              "validLogin": true,
+              "invalidLogin": true,
+              "inactiveUserLogin": true,
+              "logout": true,
+              "sessionPersistence": true,
+              "successRate": 100,
+              "success": true
+            },
+            "contactManagement": {
+              "create": false,
+              "read": false,
+              "update": false,
+              "delete": false,
+              "search": false,
+              "filter": false,
+              "pagination": false,
+              "successRate": 0,
+              "success": false
+            },
+            "roleBasedAccess": {
+              "adminAccess": false,
+              "managerAccess": false,
+              "advisorAccess": false,
+              "crossUserAccess": true,
+              "successRate": 25,
+              "success": false
+            },
+            "systemMetrics": {
+              "contactCount": true,
+              "userStats": true,
+              "activityTracking": true,
+              "performanceMetrics": true,
+              "successRate": 100,
+              "success": true
+            }
+          },
+          "errors": [],
+          "recommendations": [
+            "Optimizar las funcionalidades de gestión de contactos",
+            "Fortalecer el control de acceso basado en roles",
+            "Corregir todas las funcionalidades críticas antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "COMPLETED",
+        "duration": 8023,
+        "result": {
+          "timestamp": "2025-09-17T13:46:59.583Z",
+          "duration": 7656,
+          "performanceScore": {
+            "score": 71,
+            "penalties": [
+              "Concurrency penalty: -29.0"
+            ],
+            "grade": "C"
+          },
+          "metrics": {
+            "database": {
+              "queryTimes": [
+                183.29230000000098,
+                190.85839999999735,
+                190.5225999999966,
+                193.4193999999843,
+                195.41229999999632,
+                215.5556000000215,
+                185.05220000000554,
+                178.38440000000992,
+                186.38420000000042,
+                183.97650000001886,
+                214.05689999999595,
+                197.4646000000066,
+                187.82640000001993,
+                184.62170000001788,
+                178.4377000000095,
+                216.74650000000838,
+                189.01459999999497,
+                187.25959999999031,
+                176.65170000001672,
+                191.45570000002044,
+                208.66229999999632,
+                186.57079999998678,
+                182.00719999999274,
+                185.8927000000258,
+                185.01420000000508
+              ],
+              "connectionTime": 0,
+              "throughput": 0,
+              "errorRate": 0,
+              "avgQueryTime": 190.98162000000477,
+              "maxQueryTime": 216.74650000000838,
+              "minQueryTime": 176.65170000001672,
+              "queryCount": 25
+            },
+            "system": {
+              "cpuUsage": [
+                {
+                  "cores": 24,
+                  "loadAverage": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "utilization": 0
+                }
+              ],
+              "memoryUsage": [
+                {
+                  "total": 17085898752,
+                  "used": 12809986048,
+                  "free": 4275912704,
+                  "percentage": 74.97402527040329
+                }
+              ],
+              "networkLatency": {
+                "average": 190.2222999999969,
+                "maximum": 214.59109999999055,
+                "minimum": 180.97849999999744,
+                "samples": [
+                  186.80969999998342,
+                  188.8816999999981,
+                  186.9669999999751,
+                  180.97849999999744,
+                  192.91250000000582,
+                  184.48449999999139,
+                  214.59109999999055,
+                  190.3399999999965,
+                  192.484300000011,
+                  183.77370000001974
+                ]
+              }
+            },
+            "application": {
+              "responseTime": [
+                386.52679999999236,
+                387.0593999999983,
+                391.7259999999951,
+                392.46510000000126,
+                396.4039000000048,
+                398.73649999999907,
+                405.4881999999925,
+                410.32829999999376,
+                410.6837999999989,
+                415.5399000000034,
+                416.2522000000172,
+                428.84969999999157,
+                429.1570000000065,
+                429.11530000000494,
+                430.96100000001024,
+                433.65419999998994,
+                433.93249999999534,
+                434.2124999999942,
+                434.08990000002086,
+                435.867900000012,
+                439.4701000000059,
+                439.8900999999896,
+                440.16539999999804,
+                439.9294000000227,
+                440.58069999999134,
+                455.93900000001304,
+                460.2253999999957,
+                459.8238999999885,
+                462.6916000000201,
+                462.9115999999922,
+                463.4578000000038,
+                463.7485999999917,
+                463.690499999997,
+                463.83720000000903,
+                464.85800000000745,
+                465.2069999999949,
+                466.1849999999977,
+                466.39770000000135,
+                466.4666000000143,
+                467.17720000000554,
+                468.02640000000247,
+                468.38730000000214,
+                467.1692000000039,
+                468.5033000000112,
+                470.01559999998426,
+                469.8945999999996,
+                470.5616999999911,
+                471.5188999999955,
+                474.104800000001,
+                474.5252000000037,
+                474.49319999999716,
+                474.7755000000179,
+                474.83030000000144,
+                475.5154999999795,
+                490.921800000011,
+                490.6178999999829,
+                492.0194999999949,
+                492.434500000003,
+                493.1240000000107,
+                502.87410000001546,
+                503.89810000002035,
+                505.2234999999928,
+                508.46529999998165,
+                508.8725000000268,
+                509.65439999999944,
+                510.31889999998384,
+                512.3058000000019,
+                512.3534999999974,
+                512.2476999999781,
+                512.456600000005,
+                512.6688999999897,
+                512.8040000000037,
+                513.0418000000063,
+                513.1006000000052,
+                513.4590000000026,
+                514.1772000000055,
+                515.1725000000151,
+                515.4065999999875,
+                516.2980000000098,
+                521.2466999999888,
+                521.9645000000019,
+                523.8672999999835,
+                524.2676999999967,
+                525.9472999999998,
+                526.9672000000137,
+                530.7067000000097,
+                534.4961000000185,
+                534.687900000019,
+                536.4491999999736,
+                536.1128000000026,
+                537.1820000000007,
+                536.4595999999729,
+                538.4157999999879,
+                536.5795999999973,
+                538.3864000000176,
+                537.5054000000237,
+                537.7143999999971,
+                539.8906000000134,
+                540.7246999999916,
+                539.9355999999971,
+                540.4806000000099,
+                541.4103999999934,
+                542.8745000000054,
+                541.5803000000014,
+                543.894100000005,
+                545.3262999999861,
+                545.1997000000265,
+                546.226800000004,
+                546.8405999999959,
+                548.8889999999956,
+                548.8887999999861,
+                549.4556000000157,
+                550.1434000000008,
+                552.6652000000176,
+                553.4458000000159,
+                554.5204000000085,
+                554.7239000000118,
+                555.3767000000225,
+                556.0414000000164,
+                556.1669000000111,
+                556.8979000000108,
+                557.9219999999914,
+                558.8888999999908,
+                562.0200999999943,
+                562.800900000002,
+                563.2882999999856,
+                564.030299999984,
+                564.4239999999991,
+                564.3826999999874,
+                565.2332999999926,
+                565.5914000000048,
+                567.7446999999811,
+                571.0229999999865,
+                570.7067999999854,
+                574.9332999999751,
+                574.664700000023,
+                574.5371000000159,
+                575.9021000000066,
+                576.0443000000087,
+                577.2865999999922,
+                578.4384999999893,
+                579.4089999999851,
+                579.74549999999,
+                581.651199999993,
+                581.1889999999839,
+                581.4949000000197,
+                583.077099999995,
+                583.6050999999861,
+                587.3571999999986,
+                587.870900000009,
+                589.7004000000015,
+                589.7147000000114,
+                591.8439000000071,
+                594.9919999999984,
+                595.2232000000076,
+                597.8309999999765,
+                599.9425000000047,
+                603.9053000000131,
+                603.1114999999991,
+                603.3337999999931,
+                605.9084000000148,
+                622.9758999999904,
+                630.0176999999967,
+                632.598399999988,
+                633.6771000000008,
+                633.3012999999919,
+                634.7802000000083,
+                636.1800999999978,
+                637.2060000000056,
+                636.4024000000209,
+                636.4532999999938,
+                637.1318000000028,
+                637.2544999999809,
+                636.7976999999955,
+                636.9793000000063,
+                637.0503000000026,
+                637.5235000000102,
+                637.8813999999838,
+                638.5921000000089,
+                638.8580000000075,
+                638.8691999999864,
+                639.6479000000108,
+                640.2749999999942,
+                640.1061000000045,
+                640.7222000000183,
+                640.4847000000009,
+                640.4331999999995,
+                640.4771999999939,
+                641.3288000000175,
+                641.6371999999974,
+                643.5980999999738,
+                643.8569999999891,
+                656.9392999999982,
+                673.7331000000122,
+                740.202099999995,
+                751.3718999999983,
+                771.1431000000157,
+                772.3047000000079,
+                781.1986000000034,
+                791.8773999999976
+              ],
+              "concurrentUsers": 20,
+              "operationsPerSecond": 80.61660618951642,
+              "concurrencySuccessRate": 32,
+              "avgResponseTime": 541.8156715000006
+            }
+          },
+          "errors": [
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            }
+          ],
+          "recommendations": [
+            "Mejorar manejo de concurrencia y pool de conexiones",
+            "Reducir número de errores antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": true
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [],
+    "warnings": [],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "[stress] Revisar y corregir errores antes del deployment",
+      "[dataIntegrity] Implementar validaciones más estrictas para campos requeridos",
+      "[dataIntegrity] Corregir todos los problemas de integridad antes del deployment",
+      "[criticalFunctionality] Optimizar las funcionalidades de gestión de contactos",
+      "[criticalFunctionality] Fortalecer el control de acceso basado en roles",
+      "[criticalFunctionality] Corregir todas las funcionalidades críticas antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad",
+      "Optimizar rendimiento antes de manejar carga de producción"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "COMPLETED",
+      "duration": 9276,
+      "result": {
+        "passed": 4,
+        "failed": 2,
+        "errors": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "error": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'a3f43cba-23ee-487e-8ab5-4e9caef603a8',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '27b55cdb-b807-47f4-8c37-2e93821edfd5',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          }
+        ],
+        "details": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "status": "FAILED",
+            "message": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "status": "FAILED",
+            "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: 'a3f43cba-23ee-487e-8ab5-4e9caef603a8',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '27b55cdb-b807-47f4-8c37-2e93821edfd5',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:43:04.645714+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          },
+          {
+            "test": "Manager puede acceder a contactos del equipo",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Admin puede acceder a todos los contactos",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Advisor no puede crear contactos para otros",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Políticas RLS están configuradas correctamente",
+            "status": "PASSED",
+            "message": "OK"
+          }
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "COMPLETED",
+      "duration": 27194,
+      "result": {
+        "passed": 2,
+        "failed": 1,
+        "errors": [
+          {
+            "test": "Pool de conexiones de base de datos",
+            "error": "Al menos 80% de conexiones deberían ser exitosas (24/50)"
+          }
+        ],
+        "details": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 15809
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "status": "FAILED",
+            "message": "Al menos 80% de conexiones deberían ser exitosas (24/50)",
+            "duration": 0
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 760
+          }
+        ],
+        "metrics": {
+          "totalOperations": 200,
+          "successfulOperations": 200,
+          "failedOperations": 0,
+          "averageResponseTime": 748.595,
+          "maxResponseTime": 961,
+          "minResponseTime": 709,
+          "concurrentUsers": 10,
+          "operationsPerUser": 20
+        }
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "COMPLETED",
+      "duration": 188216,
+      "result": {
+        "timestamp": "2025-09-17T13:46:43.401Z",
+        "summary": {
+          "totalTests": 5,
+          "passed": 2,
+          "failed": 3,
+          "successRate": 40,
+          "totalDuration": 187807
+        },
+        "performanceMetrics": {
+          "connectionStress": {
+            "totalConnections": 200,
+            "successfulConnections": 200,
+            "duration": 749,
+            "connectionsPerSecond": 267,
+            "success": true
+          },
+          "memoryLeak": {
+            "iterations": 1000,
+            "duration": 185892,
+            "initialMemory": 28,
+            "finalMemory": 16,
+            "memoryIncrease": -12,
+            "success": true
+          }
+        },
+        "errors": [
+          {
+            "test": "massiveContactCreation",
+            "error": "Could not find the 'position' column of 'contacts' in the schema cache"
+          },
+          {
+            "test": "concurrentReads",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "test": "massiveUpdates",
+            "error": "column contacts.user_id does not exist"
+          }
+        ],
+        "recommendations": [
+          "Revisar y corregir errores antes del deployment"
+        ]
+      },
+      "isOptional": true,
+      "success": false
+    },
+    "dataIntegrity": {
+      "status": "COMPLETED",
+      "duration": 3884,
+      "result": {
+        "timestamp": "2025-09-17T13:46:47.313Z",
+        "summary": {
+          "totalTests": 6,
+          "passed": 3,
+          "failed": 3,
+          "successRate": 50,
+          "totalDuration": 3503
+        },
+        "validations": {
+          "requiredFields": {
+            "totalTests": 5,
+            "validationErrors": 3,
+            "success": false
+          },
+          "foreignKeys": {
+            "fkValidation": true,
+            "cascadeDelete": false,
+            "success": true
+          },
+          "uniqueConstraints": {
+            "contactEmailUnique": true,
+            "userEmailUnique": true,
+            "success": true
+          },
+          "dataTypes": {
+            "totalTests": 3,
+            "validationErrors": 1,
+            "success": true
+          }
+        },
+        "errors": [
+          {
+            "test": "requiredFields",
+            "error": "Contacto inválido fue aceptado: {\"name\":\"Test Contact\"}"
+          },
+          {
+            "test": "requiredFields",
+            "error": "Contacto inválido fue aceptado: {\"name\":\"Test\",\"email\":\"invalid-email\"}"
+          },
+          {
+            "test": "dataConsistency",
+            "error": "Could not find the 'user_id' column of 'contacts' in the schema cache"
+          },
+          {
+            "test": "transactionRollback",
+            "error": ""
+          }
+        ],
+        "recommendations": [
+          "Implementar validaciones más estrictas para campos requeridos",
+          "Corregir todos los problemas de integridad antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "COMPLETED",
+      "duration": 4232,
+      "result": {
+        "timestamp": "2025-09-17T13:46:51.541Z",
+        "summary": {
+          "totalTests": 4,
+          "passed": 2,
+          "failed": 2,
+          "successRate": 50,
+          "totalDuration": 3847
+        },
+        "functionalities": {
+          "authentication": {
+            "validLogin": true,
+            "invalidLogin": true,
+            "inactiveUserLogin": true,
+            "logout": true,
+            "sessionPersistence": true,
+            "successRate": 100,
+            "success": true
+          },
+          "contactManagement": {
+            "create": false,
+            "read": false,
+            "update": false,
+            "delete": false,
+            "search": false,
+            "filter": false,
+            "pagination": false,
+            "successRate": 0,
+            "success": false
+          },
+          "roleBasedAccess": {
+            "adminAccess": false,
+            "managerAccess": false,
+            "advisorAccess": false,
+            "crossUserAccess": true,
+            "successRate": 25,
+            "success": false
+          },
+          "systemMetrics": {
+            "contactCount": true,
+            "userStats": true,
+            "activityTracking": true,
+            "performanceMetrics": true,
+            "successRate": 100,
+            "success": true
+          }
+        },
+        "errors": [],
+        "recommendations": [
+          "Optimizar las funcionalidades de gestión de contactos",
+          "Fortalecer el control de acceso basado en roles",
+          "Corregir todas las funcionalidades críticas antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "COMPLETED",
+      "duration": 8023,
+      "result": {
+        "timestamp": "2025-09-17T13:46:59.583Z",
+        "duration": 7656,
+        "performanceScore": {
+          "score": 71,
+          "penalties": [
+            "Concurrency penalty: -29.0"
+          ],
+          "grade": "C"
+        },
+        "metrics": {
+          "database": {
+            "queryTimes": [
+              183.29230000000098,
+              190.85839999999735,
+              190.5225999999966,
+              193.4193999999843,
+              195.41229999999632,
+              215.5556000000215,
+              185.05220000000554,
+              178.38440000000992,
+              186.38420000000042,
+              183.97650000001886,
+              214.05689999999595,
+              197.4646000000066,
+              187.82640000001993,
+              184.62170000001788,
+              178.4377000000095,
+              216.74650000000838,
+              189.01459999999497,
+              187.25959999999031,
+              176.65170000001672,
+              191.45570000002044,
+              208.66229999999632,
+              186.57079999998678,
+              182.00719999999274,
+              185.8927000000258,
+              185.01420000000508
+            ],
+            "connectionTime": 0,
+            "throughput": 0,
+            "errorRate": 0,
+            "avgQueryTime": 190.98162000000477,
+            "maxQueryTime": 216.74650000000838,
+            "minQueryTime": 176.65170000001672,
+            "queryCount": 25
+          },
+          "system": {
+            "cpuUsage": [
+              {
+                "cores": 24,
+                "loadAverage": [
+                  0,
+                  0,
+                  0
+                ],
+                "utilization": 0
+              }
+            ],
+            "memoryUsage": [
+              {
+                "total": 17085898752,
+                "used": 12809986048,
+                "free": 4275912704,
+                "percentage": 74.97402527040329
+              }
+            ],
+            "networkLatency": {
+              "average": 190.2222999999969,
+              "maximum": 214.59109999999055,
+              "minimum": 180.97849999999744,
+              "samples": [
+                186.80969999998342,
+                188.8816999999981,
+                186.9669999999751,
+                180.97849999999744,
+                192.91250000000582,
+                184.48449999999139,
+                214.59109999999055,
+                190.3399999999965,
+                192.484300000011,
+                183.77370000001974
+              ]
+            }
+          },
+          "application": {
+            "responseTime": [
+              386.52679999999236,
+              387.0593999999983,
+              391.7259999999951,
+              392.46510000000126,
+              396.4039000000048,
+              398.73649999999907,
+              405.4881999999925,
+              410.32829999999376,
+              410.6837999999989,
+              415.5399000000034,
+              416.2522000000172,
+              428.84969999999157,
+              429.1570000000065,
+              429.11530000000494,
+              430.96100000001024,
+              433.65419999998994,
+              433.93249999999534,
+              434.2124999999942,
+              434.08990000002086,
+              435.867900000012,
+              439.4701000000059,
+              439.8900999999896,
+              440.16539999999804,
+              439.9294000000227,
+              440.58069999999134,
+              455.93900000001304,
+              460.2253999999957,
+              459.8238999999885,
+              462.6916000000201,
+              462.9115999999922,
+              463.4578000000038,
+              463.7485999999917,
+              463.690499999997,
+              463.83720000000903,
+              464.85800000000745,
+              465.2069999999949,
+              466.1849999999977,
+              466.39770000000135,
+              466.4666000000143,
+              467.17720000000554,
+              468.02640000000247,
+              468.38730000000214,
+              467.1692000000039,
+              468.5033000000112,
+              470.01559999998426,
+              469.8945999999996,
+              470.5616999999911,
+              471.5188999999955,
+              474.104800000001,
+              474.5252000000037,
+              474.49319999999716,
+              474.7755000000179,
+              474.83030000000144,
+              475.5154999999795,
+              490.921800000011,
+              490.6178999999829,
+              492.0194999999949,
+              492.434500000003,
+              493.1240000000107,
+              502.87410000001546,
+              503.89810000002035,
+              505.2234999999928,
+              508.46529999998165,
+              508.8725000000268,
+              509.65439999999944,
+              510.31889999998384,
+              512.3058000000019,
+              512.3534999999974,
+              512.2476999999781,
+              512.456600000005,
+              512.6688999999897,
+              512.8040000000037,
+              513.0418000000063,
+              513.1006000000052,
+              513.4590000000026,
+              514.1772000000055,
+              515.1725000000151,
+              515.4065999999875,
+              516.2980000000098,
+              521.2466999999888,
+              521.9645000000019,
+              523.8672999999835,
+              524.2676999999967,
+              525.9472999999998,
+              526.9672000000137,
+              530.7067000000097,
+              534.4961000000185,
+              534.687900000019,
+              536.4491999999736,
+              536.1128000000026,
+              537.1820000000007,
+              536.4595999999729,
+              538.4157999999879,
+              536.5795999999973,
+              538.3864000000176,
+              537.5054000000237,
+              537.7143999999971,
+              539.8906000000134,
+              540.7246999999916,
+              539.9355999999971,
+              540.4806000000099,
+              541.4103999999934,
+              542.8745000000054,
+              541.5803000000014,
+              543.894100000005,
+              545.3262999999861,
+              545.1997000000265,
+              546.226800000004,
+              546.8405999999959,
+              548.8889999999956,
+              548.8887999999861,
+              549.4556000000157,
+              550.1434000000008,
+              552.6652000000176,
+              553.4458000000159,
+              554.5204000000085,
+              554.7239000000118,
+              555.3767000000225,
+              556.0414000000164,
+              556.1669000000111,
+              556.8979000000108,
+              557.9219999999914,
+              558.8888999999908,
+              562.0200999999943,
+              562.800900000002,
+              563.2882999999856,
+              564.030299999984,
+              564.4239999999991,
+              564.3826999999874,
+              565.2332999999926,
+              565.5914000000048,
+              567.7446999999811,
+              571.0229999999865,
+              570.7067999999854,
+              574.9332999999751,
+              574.664700000023,
+              574.5371000000159,
+              575.9021000000066,
+              576.0443000000087,
+              577.2865999999922,
+              578.4384999999893,
+              579.4089999999851,
+              579.74549999999,
+              581.651199999993,
+              581.1889999999839,
+              581.4949000000197,
+              583.077099999995,
+              583.6050999999861,
+              587.3571999999986,
+              587.870900000009,
+              589.7004000000015,
+              589.7147000000114,
+              591.8439000000071,
+              594.9919999999984,
+              595.2232000000076,
+              597.8309999999765,
+              599.9425000000047,
+              603.9053000000131,
+              603.1114999999991,
+              603.3337999999931,
+              605.9084000000148,
+              622.9758999999904,
+              630.0176999999967,
+              632.598399999988,
+              633.6771000000008,
+              633.3012999999919,
+              634.7802000000083,
+              636.1800999999978,
+              637.2060000000056,
+              636.4024000000209,
+              636.4532999999938,
+              637.1318000000028,
+              637.2544999999809,
+              636.7976999999955,
+              636.9793000000063,
+              637.0503000000026,
+              637.5235000000102,
+              637.8813999999838,
+              638.5921000000089,
+              638.8580000000075,
+              638.8691999999864,
+              639.6479000000108,
+              640.2749999999942,
+              640.1061000000045,
+              640.7222000000183,
+              640.4847000000009,
+              640.4331999999995,
+              640.4771999999939,
+              641.3288000000175,
+              641.6371999999974,
+              643.5980999999738,
+              643.8569999999891,
+              656.9392999999982,
+              673.7331000000122,
+              740.202099999995,
+              751.3718999999983,
+              771.1431000000157,
+              772.3047000000079,
+              781.1986000000034,
+              791.8773999999976
+            ],
+            "concurrentUsers": 20,
+            "operationsPerSecond": 80.61660618951642,
+            "concurrencySuccessRate": 32,
+            "avgResponseTime": 541.8156715000006
+          }
+        },
+        "errors": [
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          }
+        ],
+        "recommendations": [
+          "Mejorar manejo de concurrencia y pool de conexiones",
+          "Reducir número de errores antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": true
+    }
+  }
+}

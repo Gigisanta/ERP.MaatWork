@@ -1,0 +1,53 @@
+{
+  "timestamp": "2025-09-17T15:13:47.308Z",
+  "summary": {
+    "totalTests": 4,
+    "passed": 3,
+    "failed": 1,
+    "successRate": 75,
+    "totalDuration": 4100
+  },
+  "functionalities": {
+    "authentication": {
+      "validLogin": true,
+      "invalidLogin": true,
+      "inactiveUserLogin": true,
+      "logout": true,
+      "sessionPersistence": true,
+      "successRate": 100,
+      "success": true
+    },
+    "contactManagement": {
+      "create": false,
+      "read": false,
+      "update": false,
+      "delete": false,
+      "search": false,
+      "filter": true,
+      "pagination": true,
+      "successRate": 29,
+      "success": false
+    },
+    "roleBasedAccess": {
+      "adminAccess": false,
+      "managerAccess": true,
+      "advisorAccess": true,
+      "crossUserAccess": true,
+      "successRate": 75,
+      "success": true
+    },
+    "systemMetrics": {
+      "contactCount": true,
+      "userStats": true,
+      "activityTracking": true,
+      "performanceMetrics": true,
+      "successRate": 100,
+      "success": true
+    }
+  },
+  "errors": [],
+  "recommendations": [
+    "Optimizar las funcionalidades de gestión de contactos",
+    "Corregir todas las funcionalidades críticas antes del deployment"
+  ]
+}

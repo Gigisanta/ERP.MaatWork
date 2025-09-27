@@ -1,0 +1,127 @@
+{
+  "timestamp": "2025-09-17T04:24:33.400Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "0/2",
+      "optional": "0/1"
+    },
+    "totalDuration": 3119,
+    "criticalIssuesCount": 5,
+    "warningsCount": 1,
+    "recommendationsCount": 4
+  },
+  "detailedResults": {
+    "startTime": 1758083070281,
+    "endTime": 1758083073400,
+    "totalDuration": 3119,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "FAILED",
+        "duration": 0,
+        "error": "runner.run is not a function",
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "FAILED",
+        "duration": 0,
+        "error": "runner.run is not a function",
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "FAILED",
+        "duration": 1268,
+        "error": "Could not find the 'active' column of 'users' in the schema cache",
+        "isOptional": true,
+        "success": false
+      },
+      "dataIntegrity": {
+        "status": "FAILED",
+        "duration": 616,
+        "error": "Could not find the 'active' column of 'users' in the schema cache",
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "FAILED",
+        "duration": 610,
+        "error": "Could not find the 'active' column of 'users' in the schema cache",
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "FAILED",
+        "duration": 622,
+        "error": "Could not find the 'active' column of 'users' in the schema cache",
+        "isOptional": false,
+        "success": false
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [
+      "dataIsolation: runner.run is not a function",
+      "concurrency: runner.run is not a function",
+      "dataIntegrity: Could not find the 'active' column of 'users' in the schema cache",
+      "criticalFunctionality: Could not find the 'active' column of 'users' in the schema cache",
+      "performanceMetrics: Could not find the 'active' column of 'users' in the schema cache"
+    ],
+    "warnings": [
+      "stress: Could not find the 'active' column of 'users' in the schema cache"
+    ],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "Resolver todos los problemas críticos antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad",
+      "Optimizar rendimiento antes de manejar carga de producción"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "FAILED",
+      "duration": 0,
+      "error": "runner.run is not a function",
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "FAILED",
+      "duration": 0,
+      "error": "runner.run is not a function",
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "FAILED",
+      "duration": 1268,
+      "error": "Could not find the 'active' column of 'users' in the schema cache",
+      "isOptional": true,
+      "success": false
+    },
+    "dataIntegrity": {
+      "status": "FAILED",
+      "duration": 616,
+      "error": "Could not find the 'active' column of 'users' in the schema cache",
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "FAILED",
+      "duration": 610,
+      "error": "Could not find the 'active' column of 'users' in the schema cache",
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "FAILED",
+      "duration": 622,
+      "error": "Could not find the 'active' column of 'users' in the schema cache",
+      "isOptional": false,
+      "success": false
+    }
+  }
+}

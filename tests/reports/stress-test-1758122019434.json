@@ -1,0 +1,46 @@
+{
+  "timestamp": "2025-09-17T15:13:39.433Z",
+  "summary": {
+    "totalTests": 5,
+    "passed": 3,
+    "failed": 2,
+    "successRate": 60,
+    "totalDuration": 193618
+  },
+  "performanceMetrics": {
+    "massiveUpdates": {
+      "totalUpdates": 0,
+      "duration": 2393,
+      "updatesPerSecond": 0,
+      "success": true
+    },
+    "connectionStress": {
+      "totalConnections": 200,
+      "successfulConnections": 200,
+      "duration": 949,
+      "connectionsPerSecond": 211,
+      "success": true
+    },
+    "memoryLeak": {
+      "iterations": 1000,
+      "duration": 186476,
+      "initialMemory": 23,
+      "finalMemory": 22,
+      "memoryIncrease": -1,
+      "success": true
+    }
+  },
+  "errors": [
+    {
+      "test": "massiveContactCreation",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "test": "concurrentReads",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    }
+  ],
+  "recommendations": [
+    "Revisar y corregir errores antes del deployment"
+  ]
+}

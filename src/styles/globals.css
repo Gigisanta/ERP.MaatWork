@@ -1,0 +1,225 @@
+/**
+ * Estilos Globales - Paleta Cactus Dashboard
+ * 
+ * Variables CSS para soporte de modo oscuro y colores semánticos
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS para colores semánticos */
+:root {
+  /* Colores de fondo */
+  --color-bg: #F8FAF9;
+  --color-surface: #FFFFFF;
+  
+  /* Colores de texto */
+  --color-text: #1E2726;
+  --color-muted: #7F9190;
+  
+  /* Colores de marca */
+  --color-brand: #55DFA0;
+  --color-brand-strong: #0C7048;
+  
+  /* Estados */
+  --color-info: #18778C;
+  --color-success: #16B273;
+  --color-warning: #C48600;
+  --color-danger: #BA3737;
+  --color-on-state: #FFFFFF;
+  
+  /* Bordes */
+  --color-border-sub: #E6EBE9;
+  --color-border-strong: #D5DDDA;
+  
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(30, 39, 38, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(30, 39, 38, 0.1), 0 2px 4px -1px rgba(30, 39, 38, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(30, 39, 38, 0.1), 0 4px 6px -2px rgba(30, 39, 38, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(30, 39, 38, 0.1), 0 10px 10px -5px rgba(30, 39, 38, 0.04);
+}
+
+/* Modo oscuro */
+.dark {
+  /* Colores de fondo */
+  --color-bg: #0E1413;
+  --color-surface: #1E2726;
+  
+  /* Colores de texto */
+  --color-text: #F8FAF9;
+  --color-muted: #D5DDDA;
+  
+  /* Colores de marca */
+  --color-brand: #2CCB86;
+  --color-brand-strong: #55DFA0;
+  
+  /* Estados (ajustados para mejor contraste en oscuro) */
+  --color-info: #2AADC7;
+  --color-success: #2CCB86;
+  --color-warning: #FFB300;
+  --color-danger: #DC6A52;
+  
+  /* Bordes */
+  --color-border-sub: #3B4A49;
+  --color-border-strong: #5D6E6C;
+  
+  /* Sombras más sutiles en modo oscuro */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos base */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand);
+}
+
+/* Focus styles mejorados */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Utilidades personalizadas */
+.bg-cactus-gradient {
+  background: linear-gradient(135deg, #F0FFF6 0%, #55DFA0 40%, #0C7048 100%);
+}
+
+.text-gradient-cactus {
+  background: linear-gradient(135deg, #55DFA0 0%, #2CCB86 50%, #16B273 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.border-gradient-cactus {
+  border: 1px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+              linear-gradient(135deg, #55DFA0, #2CCB86) border-box;
+}
+
+/* Animaciones suaves */
+.transition-colors-smooth {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Estados de hover mejorados */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Componentes de estado */
+.state-success {
+  background-color: var(--color-success);
+  color: var(--color-on-state);
+}
+
+.state-warning {
+  background-color: var(--color-warning);
+  color: var(--color-on-state);
+}
+
+.state-danger {
+  background-color: var(--color-danger);
+  color: var(--color-on-state);
+}
+
+.state-info {
+  background-color: var(--color-info);
+  color: var(--color-on-state);
+}
+
+/* Utilidades de espaciado consistente */
+.space-y-cactus > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-x-cactus > * + * {
+  margin-left: 1rem;
+}
+
+/* Efectos de glassmorphism para elementos flotantes */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass-effect {
+  background: rgba(30, 39, 38, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

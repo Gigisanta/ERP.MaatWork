@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Registro - Cactus Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #059669;
+        }
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌵 Test de Registro - Cactus Dashboard</h1>
+    
+    <div class="test-container">
+        <h2>🧪 Pruebas Automatizadas de Registro</h2>
+        <p>Estas pruebas verifican diferentes escenarios de error en el registro:</p>
+        
+        <button class="test-button" onclick="testInvalidEmail()">📧 Test Email Inválido</button>
+        <button class="test-button" onclick="testWeakPassword()">🔒 Test Contraseña Débil</button>
+        <button class="test-button" onclick="testMismatchPassword()">🔄 Test Contraseñas No Coinciden</button>
+        <button class="test-button" onclick="testEmptyFields()">📝 Test Campos Vacíos</button>
+        <button class="test-button" onclick="testValidRegistration()">✅ Test Registro Válido</button>
+        <button class="test-button" onclick="clearLogs()">🧹 Limpiar Logs</button>
+        
+        <div id="testResults"></div>
+        <div id="testLogs" class="log"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>🌐 Aplicación Deployada</h2>
+        <p>Prueba manual en la aplicación real:</p>
+        <iframe src="https://traejz5qlwp3-gigisanta-giolivos-projects.vercel.app/register" 
+                title="Cactus Dashboard - Registro"></iframe>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logs.push(logEntry);
+            updateLogDisplay();
+            console.log(logEntry);
+        }
+        
+        function updateLogDisplay() {
+            const logDiv = document.getElementById('testLogs');
+            logDiv.innerHTML = logs.join('\n');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogDisplay();
+            document.getElementById('testResults').innerHTML = '';
+        }
+        
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('testResults');
+            resultDiv.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+        
+        async function simulateRegistration(formData) {
+            log(`Simulando registro con datos: ${JSON.stringify(formData)}`);
+            
+            try {
+                // Simular las validaciones del frontend
+                if (!formData.fullName.trim()) {
+                    throw new Error('El nombre completo es requerido');
+                }
+                
+                if (!formData.username.trim()) {
+                    throw new Error('El nombre de usuario es requerido');
+                }
+                
+                if (!formData.email.trim()) {
+                    throw new Error('El correo electrónico es requerido');
+                }
+                
+                if (formData.password !== formData.confirmPassword) {
+                    throw new Error('Las contraseñas no coinciden');
+                }
+                
+                if (formData.password.length < 6) {
+                    throw new Error('La contraseña debe tener al menos 6 caracteres');
+                }
+                
+                // Validar formato de email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.email)) {
+                    throw new Error('El formato del correo electrónico no es válido');
+                }
+                
+                log('✅ Validaciones del frontend pasadas');
+                log('🚀 Simulando llamada a Supabase...');
+                
+                // Simular diferentes tipos de errores de Supabase
+                if (formData.email === 'invalid-email') {
+                    throw new Error('Unable to validate email address: invalid format');
+                }
+                
+                if (formData.email === 'existing@example.com') {
+                    throw new Error('User already registered');
+                }
+                
+                if (formData.password === '123') {
+                    throw new Error('Password should be at least 6 characters.');
+                }
+                
+                log('✅ Registro simulado exitoso');
+                return { success: true };
+                
+            } catch (error) {
+                log(`❌ Error en registro: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        async function testInvalidEmail() {
+            log('🧪 INICIANDO: Test de email inválido');
+            try {
+                await simulateRegistration({
+                    fullName: 'Test User',
+                    username: 'testuser',
+                    email: 'invalid-email',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    role: 'advisor'
+                });
+                showResult('❌ ERROR: Debería haber fallado con email inválido', true);
+            } catch (error) {
+                showResult(`✅ CORRECTO: Error capturado - ${error.message}`);
+            }
+        }
+        
+        async function testWeakPassword() {
+            log('🧪 INICIANDO: Test de contraseña débil');
+            try {
+                await simulateRegistration({
+                    fullName: 'Test User',
+                    username: 'testuser',
+                    email: 'test@example.com',
+                    password: '123',
+                    confirmPassword: '123',
+                    role: 'advisor'
+                });
+                showResult('❌ ERROR: Debería haber fallado con contraseña débil', true);
+            } catch (error) {
+                showResult(`✅ CORRECTO: Error capturado - ${error.message}`);
+            }
+        }
+        
+        async function testMismatchPassword() {
+            log('🧪 INICIANDO: Test de contraseñas no coinciden');
+            try {
+                await simulateRegistration({
+                    fullName: 'Test User',
+                    username: 'testuser',
+                    email: 'test@example.com',
+                    password: 'password123',
+                    confirmPassword: 'different123',
+                    role: 'advisor'
+                });
+                showResult('❌ ERROR: Debería haber fallado con contraseñas diferentes', true);
+            } catch (error) {
+                showResult(`✅ CORRECTO: Error capturado - ${error.message}`);
+            }
+        }
+        
+        async function testEmptyFields() {
+            log('🧪 INICIANDO: Test de campos vacíos');
+            try {
+                await simulateRegistration({
+                    fullName: '',
+                    username: '',
+                    email: '',
+                    password: '',
+                    confirmPassword: '',
+                    role: 'advisor'
+                });
+                showResult('❌ ERROR: Debería haber fallado con campos vacíos', true);
+            } catch (error) {
+                showResult(`✅ CORRECTO: Error capturado - ${error.message}`);
+            }
+        }
+        
+        async function testValidRegistration() {
+            log('🧪 INICIANDO: Test de registro válido');
+            try {
+                await simulateRegistration({
+                    fullName: 'Test User Valid',
+                    username: 'testuservalid',
+                    email: 'valid@example.com',
+                    password: 'validpassword123',
+                    confirmPassword: 'validpassword123',
+                    role: 'advisor'
+                });
+                showResult('✅ CORRECTO: Registro simulado exitoso');
+            } catch (error) {
+                showResult(`❌ ERROR: No debería haber fallado - ${error.message}`, true);
+            }
+        }
+        
+        // Inicializar
+        log('🌵 Sistema de pruebas inicializado');
+        log('💡 Usa los botones para probar diferentes escenarios');
+        log('🌐 Prueba manualmente en el iframe de abajo');
+    </script>
+</body>
+</html>

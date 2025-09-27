@@ -1,0 +1,2269 @@
+{
+  "timestamp": "2025-09-17T14:39:54.280Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "1/2",
+      "optional": "1/1"
+    },
+    "totalDuration": 243532,
+    "criticalIssuesCount": 0,
+    "warningsCount": 0,
+    "recommendationsCount": 6
+  },
+  "detailedResults": {
+    "startTime": 1758119750747,
+    "endTime": 1758119994279,
+    "totalDuration": 243532,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "COMPLETED",
+        "duration": 9533,
+        "result": {
+          "passed": 4,
+          "failed": 2,
+          "errors": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "error": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '96b59240-71d0-4bb2-b503-51bce948088e',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   position: null,\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   user_id: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            }
+          ],
+          "details": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "status": "FAILED",
+              "message": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "status": "FAILED",
+              "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '96b59240-71d0-4bb2-b503-51bce948088e',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   position: null,\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   user_id: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            },
+            {
+              "test": "Manager puede acceder a contactos del equipo",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Admin puede acceder a todos los contactos",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Advisor no puede crear contactos para otros",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Políticas RLS están configuradas correctamente",
+              "status": "PASSED",
+              "message": "OK"
+            }
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "COMPLETED",
+        "duration": 27627,
+        "result": {
+          "passed": 2,
+          "failed": 1,
+          "errors": [
+            {
+              "test": "Pool de conexiones de base de datos",
+              "error": "Al menos 80% de conexiones deberían ser exitosas (25/50)"
+            }
+          ],
+          "details": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 15876
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "status": "FAILED",
+              "message": "Al menos 80% de conexiones deberían ser exitosas (25/50)",
+              "duration": 0
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 918
+            }
+          ],
+          "metrics": {
+            "totalOperations": 200,
+            "successfulOperations": 200,
+            "failedOperations": 0,
+            "averageResponseTime": 755.25,
+            "maxResponseTime": 962,
+            "minResponseTime": 722,
+            "concurrentUsers": 10,
+            "operationsPerUser": 20
+          }
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "COMPLETED",
+        "duration": 190020,
+        "result": {
+          "timestamp": "2025-09-17T14:39:37.446Z",
+          "summary": {
+            "totalTests": 5,
+            "passed": 4,
+            "failed": 1,
+            "successRate": 80,
+            "totalDuration": 189537
+          },
+          "performanceMetrics": {
+            "massiveCreation": {
+              "totalContacts": 5000,
+              "duration": 1328,
+              "contactsPerSecond": 3765,
+              "success": true
+            },
+            "massiveUpdates": {
+              "totalUpdates": 1000,
+              "duration": 639,
+              "updatesPerSecond": 1565,
+              "success": true
+            },
+            "connectionStress": {
+              "totalConnections": 200,
+              "successfulConnections": 200,
+              "duration": 687,
+              "connectionsPerSecond": 291,
+              "success": true
+            },
+            "memoryLeak": {
+              "iterations": 1000,
+              "duration": 186462,
+              "initialMemory": 28,
+              "finalMemory": 18,
+              "memoryIncrease": -10,
+              "success": true
+            }
+          },
+          "errors": [
+            {
+              "test": "concurrentReads",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            }
+          ],
+          "recommendations": [
+            "Revisar y corregir errores antes del deployment"
+          ]
+        },
+        "isOptional": true,
+        "success": true
+      },
+      "dataIntegrity": {
+        "status": "COMPLETED",
+        "duration": 3986,
+        "result": {
+          "timestamp": "2025-09-17T14:39:41.546Z",
+          "summary": {
+            "totalTests": 6,
+            "passed": 4,
+            "failed": 2,
+            "successRate": 67,
+            "totalDuration": 3618
+          },
+          "validations": {
+            "requiredFields": {
+              "totalTests": 5,
+              "validationErrors": 5,
+              "success": true
+            },
+            "foreignKeys": {
+              "fkValidation": true,
+              "cascadeDelete": false,
+              "success": true
+            },
+            "dataConsistency": {
+              "totalContacts": 2,
+              "consistencyIssues": 0,
+              "timestampIssues": 2,
+              "success": false
+            },
+            "uniqueConstraints": {
+              "contactEmailUnique": true,
+              "userEmailUnique": true,
+              "success": true
+            },
+            "dataTypes": {
+              "totalTests": 3,
+              "validationErrors": 2,
+              "success": true
+            }
+          },
+          "errors": [
+            {
+              "test": "transactionRollback",
+              "error": ""
+            }
+          ],
+          "recommendations": [
+            "Investigar problemas de consistencia de datos",
+            "Corregir todos los problemas de integridad antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "COMPLETED",
+        "duration": 4212,
+        "result": {
+          "timestamp": "2025-09-17T14:39:45.755Z",
+          "summary": {
+            "totalTests": 4,
+            "passed": 3,
+            "failed": 1,
+            "successRate": 75,
+            "totalDuration": 3840
+          },
+          "functionalities": {
+            "authentication": {
+              "validLogin": true,
+              "invalidLogin": true,
+              "inactiveUserLogin": true,
+              "logout": true,
+              "sessionPersistence": true,
+              "successRate": 100,
+              "success": true
+            },
+            "contactManagement": {
+              "create": false,
+              "read": false,
+              "update": false,
+              "delete": false,
+              "search": false,
+              "filter": true,
+              "pagination": true,
+              "successRate": 29,
+              "success": false
+            },
+            "roleBasedAccess": {
+              "adminAccess": false,
+              "managerAccess": true,
+              "advisorAccess": true,
+              "crossUserAccess": true,
+              "successRate": 75,
+              "success": true
+            },
+            "systemMetrics": {
+              "contactCount": true,
+              "userStats": true,
+              "activityTracking": true,
+              "performanceMetrics": true,
+              "successRate": 100,
+              "success": true
+            }
+          },
+          "errors": [],
+          "recommendations": [
+            "Optimizar las funcionalidades de gestión de contactos",
+            "Corregir todas las funcionalidades críticas antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "COMPLETED",
+        "duration": 8153,
+        "result": {
+          "timestamp": "2025-09-17T14:39:53.910Z",
+          "duration": 7784,
+          "performanceScore": {
+            "score": 71,
+            "penalties": [
+              "Concurrency penalty: -29.0"
+            ],
+            "grade": "C"
+          },
+          "metrics": {
+            "database": {
+              "queryTimes": [
+                183.55990000002203,
+                176.84270000000834,
+                179.50159999998868,
+                186.0401000000129,
+                198.16660000002594,
+                213.87159999998403,
+                193.0619000000006,
+                182.6413000000175,
+                190.06979999999749,
+                192.66130000000703,
+                222.7146000000066,
+                189.46820000000298,
+                194.19779999999446,
+                179.99220000000787,
+                187.2722000000067,
+                236.95329999999376,
+                191.26460000002407,
+                194.07010000001173,
+                193.67579999999725,
+                202.41719999999623,
+                225.15909999998985,
+                178.50749999997788,
+                180.07279999999446,
+                186.07560000001104,
+                188.57320000001346
+              ],
+              "connectionTime": 0,
+              "throughput": 0,
+              "errorRate": 0,
+              "avgQueryTime": 193.8732400000037,
+              "maxQueryTime": 236.95329999999376,
+              "minQueryTime": 176.84270000000834,
+              "queryCount": 25
+            },
+            "system": {
+              "cpuUsage": [
+                {
+                  "cores": 24,
+                  "loadAverage": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "utilization": 0
+                }
+              ],
+              "memoryUsage": [
+                {
+                  "total": 17085898752,
+                  "used": 13862727680,
+                  "free": 3223171072,
+                  "percentage": 81.13549003898487
+                }
+              ],
+              "networkLatency": {
+                "average": 192.49527000000234,
+                "maximum": 231.21199999999953,
+                "minimum": 181.67580000002636,
+                "samples": [
+                  192.13629999998375,
+                  186.22960000002058,
+                  183.18469999998342,
+                  201.13969999999972,
+                  183.5289000000048,
+                  181.67580000002636,
+                  231.21199999999953,
+                  193.67360000000917,
+                  187.17329999999492,
+                  184.9988000000012
+                ]
+              }
+            },
+            "application": {
+              "responseTime": [
+                386.00210000001243,
+                388.26189999998314,
+                392.31479999999283,
+                394.1029999999737,
+                399.2546999999904,
+                399.05629999999655,
+                400.3093999999983,
+                405.6679000000004,
+                410.1722000000009,
+                410.36800000001676,
+                419.10659999999916,
+                424.14380000001984,
+                429.79649999999674,
+                433.32790000000386,
+                433.91219999999157,
+                435.1104999999807,
+                435.7980000000098,
+                440.65009999999893,
+                440.7135000000126,
+                453.1735000000044,
+                459.0859000000055,
+                484.2541000000201,
+                489.6576000000059,
+                507.65690000000177,
+                510.4394999999786,
+                530.7247999999963,
+                531.5130000000063,
+                530.9423999999999,
+                536.4563999999955,
+                538.1465000000026,
+                538.6493999999948,
+                538.8268999999855,
+                539.4105999999738,
+                543.7788,
+                543.6989000000176,
+                544.5788000000175,
+                550.9493999999831,
+                551.6361000000034,
+                550.9744999999821,
+                550.710299999977,
+                551.8414000000048,
+                550.7271000000183,
+                550.4651000000013,
+                551.8858999999939,
+                551.2307000000146,
+                564.6906999999774,
+                564.2049999999872,
+                565.2875000000058,
+                564.2094999999972,
+                564.6276000000071,
+                564.6704999999783,
+                565.4224000000104,
+                564.4756999999809,
+                564.7594000000099,
+                565.6089000000211,
+                565.4870999999985,
+                565.5950999999768,
+                564.9493999999831,
+                565.1977000000188,
+                565.061400000006,
+                565.225299999991,
+                565.7533999999869,
+                565.9336999999941,
+                565.7975999999908,
+                566.0402000000176,
+                565.1001999999862,
+                571.6221000000078,
+                571.3012000000163,
+                571.5265000000072,
+                572.4286000000138,
+                571.8829999999725,
+                571.4196999999986,
+                571.7571999999927,
+                571.8795999999857,
+                572.6671999999962,
+                571.7057000000204,
+                571.7940999999992,
+                571.5542999999889,
+                572.0420999999915,
+                572.7920000000158,
+                571.9273000000103,
+                571.7021999999997,
+                572.7825000000012,
+                572.0324000000255,
+                572.2000000000116,
+                571.6639999999898,
+                572.3340000000026,
+                572.147799999977,
+                573.0356000000029,
+                572.9355999999971,
+                572.4015000000072,
+                571.9196999999986,
+                571.8744000000006,
+                572.1426999999967,
+                572.1848000000173,
+                573.065900000016,
+                573.1269000000029,
+                574.3393999999971,
+                574.3877000000211,
+                574.5722999999998,
+                574.7828000000154,
+                573.943900000013,
+                574.104800000001,
+                574.3953000000038,
+                574.3418000000238,
+                574.6745999999985,
+                574.5263000000268,
+                574.1576000000059,
+                574.1039000000164,
+                574.545299999998,
+                574.5160000000033,
+                574.5969000000041,
+                575.334600000002,
+                575.1122000000032,
+                576.588699999993,
+                575.264599999995,
+                575.157200000016,
+                577.2942000000039,
+                579.3959000000032,
+                582.9297999999835,
+                583.0558000000019,
+                582.9283999999752,
+                586.0499999999884,
+                586.1300999999803,
+                587.4510000000009,
+                588.6367000000027,
+                591.3215999999957,
+                591.1841999999888,
+                591.5724000000046,
+                593.6049000000057,
+                597.950199999992,
+                605.1150999999954,
+                609.6952000000165,
+                618.5065999999933,
+                626.3056999999972,
+                628.99099999998,
+                630.1032999999879,
+                632.0696999999927,
+                632.1230999999971,
+                635.3822000000218,
+                635.733200000017,
+                635.5282000000007,
+                637.1834999999846,
+                637.6321999999927,
+                640.7092999999877,
+                647.3589999999967,
+                647.4956000000238,
+                647.3712999999989,
+                647.0243999999948,
+                647.3056999999972,
+                647.7796000000089,
+                650.9713999999803,
+                650.8287000000128,
+                653.8851999999897,
+                654.8072999999858,
+                653.9673999999941,
+                653.908299999981,
+                655.2535999999964,
+                655.9196999999986,
+                656.0743000000075,
+                657.5350000000035,
+                657.5831999999937,
+                657.4562999999907,
+                657.4691999999923,
+                657.7087999999931,
+                657.6364000000176,
+                658.0970000000088,
+                658.4024999999965,
+                659.7515999999887,
+                660.1805999999924,
+                661.0557000000263,
+                661.5237999999954,
+                661.3415999999852,
+                663.3999000000185,
+                663.2767999999924,
+                665.0828000000038,
+                664.3744000000006,
+                664.0658999999869,
+                664.4444000000076,
+                664.2440999999817,
+                668.4579000000085,
+                668.7004999999772,
+                668.5450999999885,
+                668.9267000000109,
+                668.7839000000095,
+                669.1037000000069,
+                670.6855999999971,
+                680.4172000000253,
+                747.7654000000039,
+                749.7857999999833,
+                757.9391999999934,
+                761.7558999999892,
+                762.6719999999914,
+                766.9276000000245,
+                767.035200000013,
+                775.5566999999864,
+                779.7798000000184,
+                788.1315999999933,
+                792.5567999999912,
+                818.2619999999879
+              ],
+              "concurrentUsers": 20,
+              "operationsPerSecond": 78.02842648728559,
+              "concurrencySuccessRate": 32,
+              "avgResponseTime": 586.9891614999996
+            }
+          },
+          "errors": [
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            },
+            {
+              "type": "concurrency",
+              "error": "invalid input syntax for type uuid: \"undefined\""
+            },
+            {
+              "type": "concurrency",
+              "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+            }
+          ],
+          "recommendations": [
+            "Mejorar manejo de concurrencia y pool de conexiones",
+            "Reducir número de errores antes del deployment"
+          ]
+        },
+        "isOptional": false,
+        "success": true
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [],
+    "warnings": [],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "[dataIntegrity] Investigar problemas de consistencia de datos",
+      "[dataIntegrity] Corregir todos los problemas de integridad antes del deployment",
+      "[criticalFunctionality] Optimizar las funcionalidades de gestión de contactos",
+      "[criticalFunctionality] Corregir todas las funcionalidades críticas antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "COMPLETED",
+      "duration": 9533,
+      "result": {
+        "passed": 4,
+        "failed": 2,
+        "errors": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "error": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '96b59240-71d0-4bb2-b503-51bce948088e',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   position: null,\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   user_id: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          }
+        ],
+        "details": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "status": "FAILED",
+            "message": "Advisor 1 debería ver exactamente 1 contacto\n\n14 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "status": "FAILED",
+            "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '96b59240-71d0-4bb2-b503-51bce948088e',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   position: null,\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T14:35:56.559813+00:00',\n\u001b[32m+\u001b[39m   user_id: '314471ef-d5c8-4315-81d7-58c35e78ec78',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          },
+          {
+            "test": "Manager puede acceder a contactos del equipo",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Admin puede acceder a todos los contactos",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Advisor no puede crear contactos para otros",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Políticas RLS están configuradas correctamente",
+            "status": "PASSED",
+            "message": "OK"
+          }
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "COMPLETED",
+      "duration": 27627,
+      "result": {
+        "passed": 2,
+        "failed": 1,
+        "errors": [
+          {
+            "test": "Pool de conexiones de base de datos",
+            "error": "Al menos 80% de conexiones deberían ser exitosas (25/50)"
+          }
+        ],
+        "details": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 15876
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "status": "FAILED",
+            "message": "Al menos 80% de conexiones deberían ser exitosas (25/50)",
+            "duration": 0
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 918
+          }
+        ],
+        "metrics": {
+          "totalOperations": 200,
+          "successfulOperations": 200,
+          "failedOperations": 0,
+          "averageResponseTime": 755.25,
+          "maxResponseTime": 962,
+          "minResponseTime": 722,
+          "concurrentUsers": 10,
+          "operationsPerUser": 20
+        }
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "COMPLETED",
+      "duration": 190020,
+      "result": {
+        "timestamp": "2025-09-17T14:39:37.446Z",
+        "summary": {
+          "totalTests": 5,
+          "passed": 4,
+          "failed": 1,
+          "successRate": 80,
+          "totalDuration": 189537
+        },
+        "performanceMetrics": {
+          "massiveCreation": {
+            "totalContacts": 5000,
+            "duration": 1328,
+            "contactsPerSecond": 3765,
+            "success": true
+          },
+          "massiveUpdates": {
+            "totalUpdates": 1000,
+            "duration": 639,
+            "updatesPerSecond": 1565,
+            "success": true
+          },
+          "connectionStress": {
+            "totalConnections": 200,
+            "successfulConnections": 200,
+            "duration": 687,
+            "connectionsPerSecond": 291,
+            "success": true
+          },
+          "memoryLeak": {
+            "iterations": 1000,
+            "duration": 186462,
+            "initialMemory": 28,
+            "finalMemory": 18,
+            "memoryIncrease": -10,
+            "success": true
+          }
+        },
+        "errors": [
+          {
+            "test": "concurrentReads",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          }
+        ],
+        "recommendations": [
+          "Revisar y corregir errores antes del deployment"
+        ]
+      },
+      "isOptional": true,
+      "success": true
+    },
+    "dataIntegrity": {
+      "status": "COMPLETED",
+      "duration": 3986,
+      "result": {
+        "timestamp": "2025-09-17T14:39:41.546Z",
+        "summary": {
+          "totalTests": 6,
+          "passed": 4,
+          "failed": 2,
+          "successRate": 67,
+          "totalDuration": 3618
+        },
+        "validations": {
+          "requiredFields": {
+            "totalTests": 5,
+            "validationErrors": 5,
+            "success": true
+          },
+          "foreignKeys": {
+            "fkValidation": true,
+            "cascadeDelete": false,
+            "success": true
+          },
+          "dataConsistency": {
+            "totalContacts": 2,
+            "consistencyIssues": 0,
+            "timestampIssues": 2,
+            "success": false
+          },
+          "uniqueConstraints": {
+            "contactEmailUnique": true,
+            "userEmailUnique": true,
+            "success": true
+          },
+          "dataTypes": {
+            "totalTests": 3,
+            "validationErrors": 2,
+            "success": true
+          }
+        },
+        "errors": [
+          {
+            "test": "transactionRollback",
+            "error": ""
+          }
+        ],
+        "recommendations": [
+          "Investigar problemas de consistencia de datos",
+          "Corregir todos los problemas de integridad antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "COMPLETED",
+      "duration": 4212,
+      "result": {
+        "timestamp": "2025-09-17T14:39:45.755Z",
+        "summary": {
+          "totalTests": 4,
+          "passed": 3,
+          "failed": 1,
+          "successRate": 75,
+          "totalDuration": 3840
+        },
+        "functionalities": {
+          "authentication": {
+            "validLogin": true,
+            "invalidLogin": true,
+            "inactiveUserLogin": true,
+            "logout": true,
+            "sessionPersistence": true,
+            "successRate": 100,
+            "success": true
+          },
+          "contactManagement": {
+            "create": false,
+            "read": false,
+            "update": false,
+            "delete": false,
+            "search": false,
+            "filter": true,
+            "pagination": true,
+            "successRate": 29,
+            "success": false
+          },
+          "roleBasedAccess": {
+            "adminAccess": false,
+            "managerAccess": true,
+            "advisorAccess": true,
+            "crossUserAccess": true,
+            "successRate": 75,
+            "success": true
+          },
+          "systemMetrics": {
+            "contactCount": true,
+            "userStats": true,
+            "activityTracking": true,
+            "performanceMetrics": true,
+            "successRate": 100,
+            "success": true
+          }
+        },
+        "errors": [],
+        "recommendations": [
+          "Optimizar las funcionalidades de gestión de contactos",
+          "Corregir todas las funcionalidades críticas antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "COMPLETED",
+      "duration": 8153,
+      "result": {
+        "timestamp": "2025-09-17T14:39:53.910Z",
+        "duration": 7784,
+        "performanceScore": {
+          "score": 71,
+          "penalties": [
+            "Concurrency penalty: -29.0"
+          ],
+          "grade": "C"
+        },
+        "metrics": {
+          "database": {
+            "queryTimes": [
+              183.55990000002203,
+              176.84270000000834,
+              179.50159999998868,
+              186.0401000000129,
+              198.16660000002594,
+              213.87159999998403,
+              193.0619000000006,
+              182.6413000000175,
+              190.06979999999749,
+              192.66130000000703,
+              222.7146000000066,
+              189.46820000000298,
+              194.19779999999446,
+              179.99220000000787,
+              187.2722000000067,
+              236.95329999999376,
+              191.26460000002407,
+              194.07010000001173,
+              193.67579999999725,
+              202.41719999999623,
+              225.15909999998985,
+              178.50749999997788,
+              180.07279999999446,
+              186.07560000001104,
+              188.57320000001346
+            ],
+            "connectionTime": 0,
+            "throughput": 0,
+            "errorRate": 0,
+            "avgQueryTime": 193.8732400000037,
+            "maxQueryTime": 236.95329999999376,
+            "minQueryTime": 176.84270000000834,
+            "queryCount": 25
+          },
+          "system": {
+            "cpuUsage": [
+              {
+                "cores": 24,
+                "loadAverage": [
+                  0,
+                  0,
+                  0
+                ],
+                "utilization": 0
+              }
+            ],
+            "memoryUsage": [
+              {
+                "total": 17085898752,
+                "used": 13862727680,
+                "free": 3223171072,
+                "percentage": 81.13549003898487
+              }
+            ],
+            "networkLatency": {
+              "average": 192.49527000000234,
+              "maximum": 231.21199999999953,
+              "minimum": 181.67580000002636,
+              "samples": [
+                192.13629999998375,
+                186.22960000002058,
+                183.18469999998342,
+                201.13969999999972,
+                183.5289000000048,
+                181.67580000002636,
+                231.21199999999953,
+                193.67360000000917,
+                187.17329999999492,
+                184.9988000000012
+              ]
+            }
+          },
+          "application": {
+            "responseTime": [
+              386.00210000001243,
+              388.26189999998314,
+              392.31479999999283,
+              394.1029999999737,
+              399.2546999999904,
+              399.05629999999655,
+              400.3093999999983,
+              405.6679000000004,
+              410.1722000000009,
+              410.36800000001676,
+              419.10659999999916,
+              424.14380000001984,
+              429.79649999999674,
+              433.32790000000386,
+              433.91219999999157,
+              435.1104999999807,
+              435.7980000000098,
+              440.65009999999893,
+              440.7135000000126,
+              453.1735000000044,
+              459.0859000000055,
+              484.2541000000201,
+              489.6576000000059,
+              507.65690000000177,
+              510.4394999999786,
+              530.7247999999963,
+              531.5130000000063,
+              530.9423999999999,
+              536.4563999999955,
+              538.1465000000026,
+              538.6493999999948,
+              538.8268999999855,
+              539.4105999999738,
+              543.7788,
+              543.6989000000176,
+              544.5788000000175,
+              550.9493999999831,
+              551.6361000000034,
+              550.9744999999821,
+              550.710299999977,
+              551.8414000000048,
+              550.7271000000183,
+              550.4651000000013,
+              551.8858999999939,
+              551.2307000000146,
+              564.6906999999774,
+              564.2049999999872,
+              565.2875000000058,
+              564.2094999999972,
+              564.6276000000071,
+              564.6704999999783,
+              565.4224000000104,
+              564.4756999999809,
+              564.7594000000099,
+              565.6089000000211,
+              565.4870999999985,
+              565.5950999999768,
+              564.9493999999831,
+              565.1977000000188,
+              565.061400000006,
+              565.225299999991,
+              565.7533999999869,
+              565.9336999999941,
+              565.7975999999908,
+              566.0402000000176,
+              565.1001999999862,
+              571.6221000000078,
+              571.3012000000163,
+              571.5265000000072,
+              572.4286000000138,
+              571.8829999999725,
+              571.4196999999986,
+              571.7571999999927,
+              571.8795999999857,
+              572.6671999999962,
+              571.7057000000204,
+              571.7940999999992,
+              571.5542999999889,
+              572.0420999999915,
+              572.7920000000158,
+              571.9273000000103,
+              571.7021999999997,
+              572.7825000000012,
+              572.0324000000255,
+              572.2000000000116,
+              571.6639999999898,
+              572.3340000000026,
+              572.147799999977,
+              573.0356000000029,
+              572.9355999999971,
+              572.4015000000072,
+              571.9196999999986,
+              571.8744000000006,
+              572.1426999999967,
+              572.1848000000173,
+              573.065900000016,
+              573.1269000000029,
+              574.3393999999971,
+              574.3877000000211,
+              574.5722999999998,
+              574.7828000000154,
+              573.943900000013,
+              574.104800000001,
+              574.3953000000038,
+              574.3418000000238,
+              574.6745999999985,
+              574.5263000000268,
+              574.1576000000059,
+              574.1039000000164,
+              574.545299999998,
+              574.5160000000033,
+              574.5969000000041,
+              575.334600000002,
+              575.1122000000032,
+              576.588699999993,
+              575.264599999995,
+              575.157200000016,
+              577.2942000000039,
+              579.3959000000032,
+              582.9297999999835,
+              583.0558000000019,
+              582.9283999999752,
+              586.0499999999884,
+              586.1300999999803,
+              587.4510000000009,
+              588.6367000000027,
+              591.3215999999957,
+              591.1841999999888,
+              591.5724000000046,
+              593.6049000000057,
+              597.950199999992,
+              605.1150999999954,
+              609.6952000000165,
+              618.5065999999933,
+              626.3056999999972,
+              628.99099999998,
+              630.1032999999879,
+              632.0696999999927,
+              632.1230999999971,
+              635.3822000000218,
+              635.733200000017,
+              635.5282000000007,
+              637.1834999999846,
+              637.6321999999927,
+              640.7092999999877,
+              647.3589999999967,
+              647.4956000000238,
+              647.3712999999989,
+              647.0243999999948,
+              647.3056999999972,
+              647.7796000000089,
+              650.9713999999803,
+              650.8287000000128,
+              653.8851999999897,
+              654.8072999999858,
+              653.9673999999941,
+              653.908299999981,
+              655.2535999999964,
+              655.9196999999986,
+              656.0743000000075,
+              657.5350000000035,
+              657.5831999999937,
+              657.4562999999907,
+              657.4691999999923,
+              657.7087999999931,
+              657.6364000000176,
+              658.0970000000088,
+              658.4024999999965,
+              659.7515999999887,
+              660.1805999999924,
+              661.0557000000263,
+              661.5237999999954,
+              661.3415999999852,
+              663.3999000000185,
+              663.2767999999924,
+              665.0828000000038,
+              664.3744000000006,
+              664.0658999999869,
+              664.4444000000076,
+              664.2440999999817,
+              668.4579000000085,
+              668.7004999999772,
+              668.5450999999885,
+              668.9267000000109,
+              668.7839000000095,
+              669.1037000000069,
+              670.6855999999971,
+              680.4172000000253,
+              747.7654000000039,
+              749.7857999999833,
+              757.9391999999934,
+              761.7558999999892,
+              762.6719999999914,
+              766.9276000000245,
+              767.035200000013,
+              775.5566999999864,
+              779.7798000000184,
+              788.1315999999933,
+              792.5567999999912,
+              818.2619999999879
+            ],
+            "concurrentUsers": 20,
+            "operationsPerSecond": 78.02842648728559,
+            "concurrencySuccessRate": 32,
+            "avgResponseTime": 586.9891614999996
+          }
+        },
+        "errors": [
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          },
+          {
+            "type": "concurrency",
+            "error": "invalid input syntax for type uuid: \"undefined\""
+          },
+          {
+            "type": "concurrency",
+            "error": "duplicate key value violates unique constraint \"contacts_email_key\""
+          }
+        ],
+        "recommendations": [
+          "Mejorar manejo de concurrencia y pool de conexiones",
+          "Reducir número de errores antes del deployment"
+        ]
+      },
+      "isOptional": false,
+      "success": true
+    }
+  }
+}

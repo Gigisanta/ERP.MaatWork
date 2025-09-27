@@ -1,0 +1,44 @@
+{
+  "timestamp": "2025-09-17T13:23:04.866Z",
+  "summary": {
+    "totalTests": 5,
+    "passed": 2,
+    "failed": 3,
+    "successRate": 40,
+    "totalDuration": 186552
+  },
+  "performanceMetrics": {
+    "connectionStress": {
+      "totalConnections": 200,
+      "successfulConnections": 200,
+      "duration": 680,
+      "connectionsPerSecond": 294,
+      "success": true
+    },
+    "memoryLeak": {
+      "iterations": 1000,
+      "duration": 185035,
+      "initialMemory": 30,
+      "finalMemory": 17,
+      "memoryIncrease": -13,
+      "success": true
+    }
+  },
+  "errors": [
+    {
+      "test": "massiveContactCreation",
+      "error": "Could not find the 'position' column of 'contacts' in the schema cache"
+    },
+    {
+      "test": "concurrentReads",
+      "error": "column contacts.user_id does not exist"
+    },
+    {
+      "test": "massiveUpdates",
+      "error": "column contacts.user_id does not exist"
+    }
+  ],
+  "recommendations": [
+    "Revisar y corregir errores antes del deployment"
+  ]
+}

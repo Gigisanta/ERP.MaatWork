@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login Error</title>
+</head>
+<body>
+    <h1>Instrucciones para probar el error de login:</h1>
+    <ol>
+        <li>Abre la aplicación en <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+        <li>Ve a la página de login</li>
+        <li>Ingresa cualquier usuario (ej: "test")</li>
+        <li>Ingresa una contraseña incorrecta (ej: "wrong")</li>
+        <li>Haz clic en "Iniciar Sesión"</li>
+        <li>Verifica que aparezca el mensaje de error "Contraseña incorrecta" en la interfaz (no solo en consola)</li>
+        <li>Abre las herramientas de desarrollador (F12) y ve a la pestaña Console</li>
+        <li>Deberías ver los logs de debug que agregamos</li>
+    </ol>
+    
+    <h2>Logs esperados en consola:</h2>
+    <ul>
+        <li>🔵 LOGIN_FORM: Estado de error cambió: (vacío al inicio)</li>
+        <li>📝 LOGIN_FORM: Iniciando submit</li>
+        <li>🚀 LOGIN_FORM: Llamando función login...</li>
+        <li>❌ LOGIN_FORM: Error en login: Error: Contraseña incorrecta</li>
+        <li>🔴 LOGIN_FORM: Estableciendo error en estado: Contraseña incorrecta</li>
+        <li>🔴 LOGIN_FORM: Error establecido, debería aparecer en UI</li>
+        <li>🔵 LOGIN_FORM: Estado de error cambió: Contraseña incorrecta</li>
+        <li>🟢 LOGIN_FORM: Renderizando error en UI: Contraseña incorrecta</li>
+    </ul>
+</body>
+</html>

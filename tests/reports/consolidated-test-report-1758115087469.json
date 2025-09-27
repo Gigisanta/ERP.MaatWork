@@ -1,0 +1,378 @@
+{
+  "timestamp": "2025-09-17T13:18:07.469Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "0/2",
+      "optional": "0/1"
+    },
+    "totalDuration": 226148,
+    "criticalIssuesCount": 3,
+    "warningsCount": 0,
+    "recommendationsCount": 5
+  },
+  "detailedResults": {
+    "startTime": 1758114861320,
+    "endTime": 1758115087468,
+    "totalDuration": 226148,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "COMPLETED",
+        "duration": 9170,
+        "result": {
+          "passed": 4,
+          "failed": 2,
+          "errors": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "error": "Advisor 1 debería ver exactamente 1 contacto\n\n18 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '0a22f275-e952-45fb-b597-66e72edd2e5a',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '5642c043-b546-4f0f-929e-cf4a9bfe9298',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            }
+          ],
+          "details": [
+            {
+              "test": "Advisor puede acceder solo a sus contactos",
+              "status": "FAILED",
+              "message": "Advisor 1 debería ver exactamente 1 contacto\n\n18 !== 1\n"
+            },
+            {
+              "test": "Advisor no puede acceder a contactos de otros",
+              "status": "FAILED",
+              "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '0a22f275-e952-45fb-b597-66e72edd2e5a',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '5642c043-b546-4f0f-929e-cf4a9bfe9298',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+            },
+            {
+              "test": "Manager puede acceder a contactos del equipo",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Admin puede acceder a todos los contactos",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Advisor no puede crear contactos para otros",
+              "status": "PASSED",
+              "message": "OK"
+            },
+            {
+              "test": "Políticas RLS están configuradas correctamente",
+              "status": "PASSED",
+              "message": "OK"
+            }
+          ]
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "COMPLETED",
+        "duration": 27523,
+        "result": {
+          "passed": 2,
+          "failed": 1,
+          "errors": [
+            {
+              "test": "Pool de conexiones de base de datos",
+              "error": "Al menos 80% de conexiones deberían ser exitosas (25/50)"
+            }
+          ],
+          "details": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 15878
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "status": "FAILED",
+              "message": "Al menos 80% de conexiones deberían ser exitosas (25/50)",
+              "duration": 0
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "status": "PASSED",
+              "message": "OK",
+              "duration": 914
+            }
+          ],
+          "metrics": {
+            "totalOperations": 200,
+            "successfulOperations": 200,
+            "failedOperations": 0,
+            "averageResponseTime": 749.905,
+            "maxResponseTime": 940,
+            "minResponseTime": 718,
+            "concurrentUsers": 10,
+            "operationsPerUser": 20
+          }
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "COMPLETED",
+        "duration": 187702,
+        "result": {
+          "timestamp": "2025-09-17T13:18:05.301Z",
+          "summary": {
+            "totalTests": 5,
+            "passed": 2,
+            "failed": 3,
+            "successRate": 40,
+            "totalDuration": 187287
+          },
+          "performanceMetrics": {
+            "connectionStress": {
+              "totalConnections": 200,
+              "successfulConnections": 200,
+              "duration": 770,
+              "connectionsPerSecond": 260,
+              "success": true
+            },
+            "memoryLeak": {
+              "iterations": 1000,
+              "duration": 185652,
+              "initialMemory": 30,
+              "finalMemory": 17,
+              "memoryIncrease": -13,
+              "success": true
+            }
+          },
+          "errors": [
+            {
+              "test": "massiveContactCreation",
+              "error": "Could not find the 'position' column of 'contacts' in the schema cache"
+            },
+            {
+              "test": "concurrentReads",
+              "error": "column contacts.user_id does not exist"
+            },
+            {
+              "test": "massiveUpdates",
+              "error": "column contacts.user_id does not exist"
+            }
+          ],
+          "recommendations": [
+            "Revisar y corregir errores antes del deployment"
+          ]
+        },
+        "isOptional": true,
+        "success": false
+      },
+      "dataIntegrity": {
+        "status": "FAILED",
+        "duration": 596,
+        "error": "duplicate key value violates unique constraint \"users_email_key\"",
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "FAILED",
+        "duration": 578,
+        "error": "Could not find the 'approved' column of 'users' in the schema cache",
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "FAILED",
+        "duration": 577,
+        "error": "duplicate key value violates unique constraint \"users_email_key\"",
+        "isOptional": false,
+        "success": false
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [
+      "dataIntegrity: duplicate key value violates unique constraint \"users_email_key\"",
+      "criticalFunctionality: Could not find the 'approved' column of 'users' in the schema cache",
+      "performanceMetrics: duplicate key value violates unique constraint \"users_email_key\""
+    ],
+    "warnings": [],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "[stress] Revisar y corregir errores antes del deployment",
+      "Resolver todos los problemas críticos antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad",
+      "Optimizar rendimiento antes de manejar carga de producción"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "COMPLETED",
+      "duration": 9170,
+      "result": {
+        "passed": 4,
+        "failed": 2,
+        "errors": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "error": "Advisor 1 debería ver exactamente 1 contacto\n\n18 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "error": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '0a22f275-e952-45fb-b597-66e72edd2e5a',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '5642c043-b546-4f0f-929e-cf4a9bfe9298',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          }
+        ],
+        "details": [
+          {
+            "test": "Advisor puede acceder solo a sus contactos",
+            "status": "FAILED",
+            "message": "Advisor 1 debería ver exactamente 1 contacto\n\n18 !== 1\n"
+          },
+          {
+            "test": "Advisor no puede acceder a contactos de otros",
+            "status": "FAILED",
+            "message": "Advisor 1 no debería poder acceder al contacto de Advisor 2\n\u001b[32m+ actual\u001b[39m \u001b[31m- expected\u001b[39m\n\n\u001b[32m+\u001b[39m {\n\u001b[32m+\u001b[39m   assigned_to: '0a22f275-e952-45fb-b597-66e72edd2e5a',\n\u001b[32m+\u001b[39m   company: null,\n\u001b[32m+\u001b[39m   created_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   email: 'contacto2@test.com',\n\u001b[32m+\u001b[39m   id: '5642c043-b546-4f0f-929e-cf4a9bfe9298',\n\u001b[32m+\u001b[39m   last_contact_date: null,\n\u001b[32m+\u001b[39m   name: 'Contacto Advisor 2',\n\u001b[32m+\u001b[39m   notes: [],\n\u001b[32m+\u001b[39m   phone: '+54922222222',\n\u001b[32m+\u001b[39m   stage: 'initial',\n\u001b[32m+\u001b[39m   status: 'Contactado',\n\u001b[32m+\u001b[39m   tags: [],\n\u001b[32m+\u001b[39m   updated_at: '2025-09-17T13:14:26.755745+00:00',\n\u001b[32m+\u001b[39m   value: 0\n\u001b[32m+\u001b[39m }\n\u001b[31m-\u001b[39m null\n"
+          },
+          {
+            "test": "Manager puede acceder a contactos del equipo",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Admin puede acceder a todos los contactos",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Advisor no puede crear contactos para otros",
+            "status": "PASSED",
+            "message": "OK"
+          },
+          {
+            "test": "Políticas RLS están configuradas correctamente",
+            "status": "PASSED",
+            "message": "OK"
+          }
+        ]
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "COMPLETED",
+      "duration": 27523,
+      "result": {
+        "passed": 2,
+        "failed": 1,
+        "errors": [
+          {
+            "test": "Pool de conexiones de base de datos",
+            "error": "Al menos 80% de conexiones deberían ser exitosas (25/50)"
+          }
+        ],
+        "details": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 15878
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "status": "FAILED",
+            "message": "Al menos 80% de conexiones deberían ser exitosas (25/50)",
+            "duration": 0
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "status": "PASSED",
+            "message": "OK",
+            "duration": 914
+          }
+        ],
+        "metrics": {
+          "totalOperations": 200,
+          "successfulOperations": 200,
+          "failedOperations": 0,
+          "averageResponseTime": 749.905,
+          "maxResponseTime": 940,
+          "minResponseTime": 718,
+          "concurrentUsers": 10,
+          "operationsPerUser": 20
+        }
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "COMPLETED",
+      "duration": 187702,
+      "result": {
+        "timestamp": "2025-09-17T13:18:05.301Z",
+        "summary": {
+          "totalTests": 5,
+          "passed": 2,
+          "failed": 3,
+          "successRate": 40,
+          "totalDuration": 187287
+        },
+        "performanceMetrics": {
+          "connectionStress": {
+            "totalConnections": 200,
+            "successfulConnections": 200,
+            "duration": 770,
+            "connectionsPerSecond": 260,
+            "success": true
+          },
+          "memoryLeak": {
+            "iterations": 1000,
+            "duration": 185652,
+            "initialMemory": 30,
+            "finalMemory": 17,
+            "memoryIncrease": -13,
+            "success": true
+          }
+        },
+        "errors": [
+          {
+            "test": "massiveContactCreation",
+            "error": "Could not find the 'position' column of 'contacts' in the schema cache"
+          },
+          {
+            "test": "concurrentReads",
+            "error": "column contacts.user_id does not exist"
+          },
+          {
+            "test": "massiveUpdates",
+            "error": "column contacts.user_id does not exist"
+          }
+        ],
+        "recommendations": [
+          "Revisar y corregir errores antes del deployment"
+        ]
+      },
+      "isOptional": true,
+      "success": false
+    },
+    "dataIntegrity": {
+      "status": "FAILED",
+      "duration": 596,
+      "error": "duplicate key value violates unique constraint \"users_email_key\"",
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "FAILED",
+      "duration": 578,
+      "error": "Could not find the 'approved' column of 'users' in the schema cache",
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "FAILED",
+      "duration": 577,
+      "error": "duplicate key value violates unique constraint \"users_email_key\"",
+      "isOptional": false,
+      "success": false
+    }
+  }
+}

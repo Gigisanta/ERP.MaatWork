@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Producción</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test de Login - Producción</h1>
+        <div id="results"></div>
+        
+        <h3>Probar Login Manual:</h3>
+        <input type="email" id="email" placeholder="Email" value="tdanziger@grupoabax.com">
+        <input type="password" id="password" placeholder="Password" value="Cactus2024!">
+        <button onclick="testLogin()">Probar Login</button>
+        
+        <h3>Tests Automáticos:</h3>
+        <button onclick="testAllUsers()">Probar Todos los Usuarios</button>
+        <button onclick="checkSupabaseConnection()">Verificar Conexión Supabase</button>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://pphrkrtjxwjvxokcwhjz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwaHJrcnRqeHdqdnhva2N3aGp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY5NDIyMDAsImV4cCI6MjA3MjUxODIwMH0.15QzSTr9KrkaBxuTptDjpusCXdv2CWCdA3gRI7WW0a8';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            addResult(`Intentando login con: ${email}`);
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    addResult(`❌ Error de login: ${error.message}`, 'error');
+                } else {
+                    addResult(`✅ Login exitoso para: ${data.user.email}`, 'success');
+                    
+                    // Verificar perfil del usuario
+                    const { data: profile, error: profileError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single();
+                    
+                    if (profile) {
+                        addResult(`👤 Perfil encontrado: ${profile.full_name} - Rol: ${profile.role} - Aprobado: ${profile.approved}`, 'success');
+                    } else {
+                        addResult(`⚠️ No se encontró perfil para el usuario`, 'error');
+                    }
+                }
+            } catch (err) {
+                addResult(`❌ Error inesperado: ${err.message}`, 'error');
+            }
+        }
+        
+        async function testAllUsers() {
+            const users = [
+                { email: 'tdanziger@grupoabax.com', name: 'TDanziger' },
+                { email: 'pmolina@grupoabax.com', name: 'PMolina' },
+                { email: 'mvicente@grupoabax.com', name: 'Mvicente' }
+            ];
+            
+            for (const user of users) {
+                addResult(`🔍 Verificando usuario: ${user.name}`);
+                
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: user.email,
+                        password: 'Cactus2024!'
+                    });
+                    
+                    if (error) {
+                        addResult(`❌ ${user.name}: ${error.message}`, 'error');
+                    } else {
+                        addResult(`✅ ${user.name}: Login exitoso`, 'success');
+                        await supabase.auth.signOut();
+                    }
+                } catch (err) {
+                    addResult(`❌ ${user.name}: Error inesperado - ${err.message}`, 'error');
+                }
+                
+                // Pausa entre tests
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        
+        async function checkSupabaseConnection() {
+            addResult('🔗 Verificando conexión a Supabase...');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    addResult(`❌ Error de conexión: ${error.message}`, 'error');
+                } else {
+                    addResult('✅ Conexión a Supabase exitosa', 'success');
+                }
+            } catch (err) {
+                addResult(`❌ Error de red: ${err.message}`, 'error');
+            }
+        }
+        
+        // Test inicial al cargar la página
+        window.onload = function() {
+            addResult('🚀 Página de test cargada correctamente');
+            checkSupabaseConnection();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+{
+  "timestamp": "2025-09-17T14:49:37.996Z",
+  "executiveSummary": {
+    "status": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "testResults": {
+      "critical": "0/3",
+      "important": "0/2",
+      "optional": "0/1"
+    },
+    "totalDuration": 19911,
+    "criticalIssuesCount": 4,
+    "warningsCount": 1,
+    "recommendationsCount": 4
+  },
+  "detailedResults": {
+    "startTime": 1758120558085,
+    "endTime": 1758120577996,
+    "totalDuration": 19911,
+    "testSuites": {
+      "dataIsolation": {
+        "status": "FAILED",
+        "duration": 1843,
+        "error": "Error creando usuario público advisor2_1758120557988@test.com: infinite recursion detected in policy for relation \"users\"",
+        "isOptional": false,
+        "success": false
+      },
+      "concurrency": {
+        "status": "COMPLETED",
+        "duration": 15551,
+        "result": {
+          "passed": 0,
+          "failed": 3,
+          "errors": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "error": "Errores no deberían exceder 10% del total (200/0)"
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "error": "Al menos 80% de conexiones deberían ser exitosas (0/50)"
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "error": "Error creando contacto base: infinite recursion detected in policy for relation \"users\""
+            }
+          ],
+          "details": [
+            {
+              "test": "Operaciones concurrentes de contactos",
+              "status": "FAILED",
+              "message": "Errores no deberían exceder 10% del total (200/0)",
+              "duration": 0
+            },
+            {
+              "test": "Pool de conexiones de base de datos",
+              "status": "FAILED",
+              "message": "Al menos 80% de conexiones deberían ser exitosas (0/50)",
+              "duration": 0
+            },
+            {
+              "test": "Integridad de transacciones concurrentes",
+              "status": "FAILED",
+              "message": "Error creando contacto base: infinite recursion detected in policy for relation \"users\"",
+              "duration": 0
+            }
+          ],
+          "metrics": {
+            "totalOperations": 0,
+            "successfulOperations": 0,
+            "failedOperations": 200,
+            "averageResponseTime": 0,
+            "maxResponseTime": 0,
+            "minResponseTime": null,
+            "concurrentUsers": 10,
+            "operationsPerUser": 20
+          }
+        },
+        "isOptional": false,
+        "success": false
+      },
+      "stress": {
+        "status": "FAILED",
+        "duration": 589,
+        "error": "new row violates row-level security policy for table \"users\"",
+        "isOptional": true,
+        "success": false
+      },
+      "dataIntegrity": {
+        "status": "FAILED",
+        "duration": 553,
+        "error": "new row violates row-level security policy for table \"users\"",
+        "isOptional": false,
+        "success": false
+      },
+      "criticalFunctionality": {
+        "status": "FAILED",
+        "duration": 724,
+        "error": "new row violates row-level security policy for table \"users\"",
+        "isOptional": false,
+        "success": false
+      },
+      "performanceMetrics": {
+        "status": "FAILED",
+        "duration": 650,
+        "error": "new row violates row-level security policy for table \"users\"",
+        "isOptional": false,
+        "success": false
+      }
+    },
+    "overallStatus": "CRITICAL_ISSUES",
+    "readyForProduction": false,
+    "criticalIssues": [
+      "dataIsolation: Error creando usuario público advisor2_1758120557988@test.com: infinite recursion detected in policy for relation \"users\"",
+      "dataIntegrity: new row violates row-level security policy for table \"users\"",
+      "criticalFunctionality: new row violates row-level security policy for table \"users\"",
+      "performanceMetrics: new row violates row-level security policy for table \"users\""
+    ],
+    "warnings": [
+      "stress: new row violates row-level security policy for table \"users\""
+    ],
+    "recommendations": [
+      "🚨 CRÍTICO: El sistema NO está listo para producción",
+      "Resolver todos los problemas críticos antes del deployment",
+      "Priorizar la corrección de problemas de datos y seguridad",
+      "Optimizar rendimiento antes de manejar carga de producción"
+    ]
+  },
+  "testSuites": {
+    "dataIsolation": {
+      "status": "FAILED",
+      "duration": 1843,
+      "error": "Error creando usuario público advisor2_1758120557988@test.com: infinite recursion detected in policy for relation \"users\"",
+      "isOptional": false,
+      "success": false
+    },
+    "concurrency": {
+      "status": "COMPLETED",
+      "duration": 15551,
+      "result": {
+        "passed": 0,
+        "failed": 3,
+        "errors": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "error": "Errores no deberían exceder 10% del total (200/0)"
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "error": "Al menos 80% de conexiones deberían ser exitosas (0/50)"
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "error": "Error creando contacto base: infinite recursion detected in policy for relation \"users\""
+          }
+        ],
+        "details": [
+          {
+            "test": "Operaciones concurrentes de contactos",
+            "status": "FAILED",
+            "message": "Errores no deberían exceder 10% del total (200/0)",
+            "duration": 0
+          },
+          {
+            "test": "Pool de conexiones de base de datos",
+            "status": "FAILED",
+            "message": "Al menos 80% de conexiones deberían ser exitosas (0/50)",
+            "duration": 0
+          },
+          {
+            "test": "Integridad de transacciones concurrentes",
+            "status": "FAILED",
+            "message": "Error creando contacto base: infinite recursion detected in policy for relation \"users\"",
+            "duration": 0
+          }
+        ],
+        "metrics": {
+          "totalOperations": 0,
+          "successfulOperations": 0,
+          "failedOperations": 200,
+          "averageResponseTime": 0,
+          "maxResponseTime": 0,
+          "minResponseTime": null,
+          "concurrentUsers": 10,
+          "operationsPerUser": 20
+        }
+      },
+      "isOptional": false,
+      "success": false
+    },
+    "stress": {
+      "status": "FAILED",
+      "duration": 589,
+      "error": "new row violates row-level security policy for table \"users\"",
+      "isOptional": true,
+      "success": false
+    },
+    "dataIntegrity": {
+      "status": "FAILED",
+      "duration": 553,
+      "error": "new row violates row-level security policy for table \"users\"",
+      "isOptional": false,
+      "success": false
+    },
+    "criticalFunctionality": {
+      "status": "FAILED",
+      "duration": 724,
+      "error": "new row violates row-level security policy for table \"users\"",
+      "isOptional": false,
+      "success": false
+    },
+    "performanceMetrics": {
+      "status": "FAILED",
+      "duration": 650,
+      "error": "new row violates row-level security policy for table \"users\"",
+      "isOptional": false,
+      "success": false
+    }
+  }
+}

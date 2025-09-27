@@ -1,0 +1,48 @@
+{
+  "timestamp": "2025-09-17T14:39:37.446Z",
+  "summary": {
+    "totalTests": 5,
+    "passed": 4,
+    "failed": 1,
+    "successRate": 80,
+    "totalDuration": 189537
+  },
+  "performanceMetrics": {
+    "massiveCreation": {
+      "totalContacts": 5000,
+      "duration": 1328,
+      "contactsPerSecond": 3765,
+      "success": true
+    },
+    "massiveUpdates": {
+      "totalUpdates": 1000,
+      "duration": 639,
+      "updatesPerSecond": 1565,
+      "success": true
+    },
+    "connectionStress": {
+      "totalConnections": 200,
+      "successfulConnections": 200,
+      "duration": 687,
+      "connectionsPerSecond": 291,
+      "success": true
+    },
+    "memoryLeak": {
+      "iterations": 1000,
+      "duration": 186462,
+      "initialMemory": 28,
+      "finalMemory": 18,
+      "memoryIncrease": -10,
+      "success": true
+    }
+  },
+  "errors": [
+    {
+      "test": "concurrentReads",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    }
+  ],
+  "recommendations": [
+    "Revisar y corregir errores antes del deployment"
+  ]
+}

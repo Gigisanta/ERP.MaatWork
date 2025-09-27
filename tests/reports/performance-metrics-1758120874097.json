@@ -1,0 +1,861 @@
+{
+  "timestamp": "2025-09-17T14:54:34.097Z",
+  "duration": 7700,
+  "performanceScore": {
+    "score": 70,
+    "penalties": [
+      "Concurrency penalty: -30.0"
+    ],
+    "grade": "C"
+  },
+  "metrics": {
+    "database": {
+      "queryTimes": [
+        180.18330000000424,
+        210.8287999999884,
+        195.8453000000154,
+        199.54689999998664,
+        190.8978000000061,
+        212.9782000000123,
+        186.37249999999767,
+        180.22429999997257,
+        185.96530000001076,
+        189.67829999999958,
+        223.836100000015,
+        192.28609999999753,
+        185.37690000000293,
+        179.183400000009,
+        186.5112000000081,
+        218.58900000000722,
+        185.26909999997588,
+        180.68779999998515,
+        197.816599999991,
+        194.17399999999907,
+        229.3880000000063,
+        196.795999999973,
+        177.46299999998882,
+        177.8931000000157,
+        183.19599999999627
+      ],
+      "connectionTime": 0,
+      "throughput": 0,
+      "errorRate": 0,
+      "avgQueryTime": 193.63947999999857,
+      "maxQueryTime": 229.3880000000063,
+      "minQueryTime": 177.46299999998882,
+      "queryCount": 25
+    },
+    "system": {
+      "cpuUsage": [
+        {
+          "cores": 24,
+          "loadAverage": [
+            0,
+            0,
+            0
+          ],
+          "utilization": 0
+        }
+      ],
+      "memoryUsage": [
+        {
+          "total": 17085898752,
+          "used": 14297923584,
+          "free": 2787975168,
+          "percentage": 83.68259575649392
+        }
+      ],
+      "networkLatency": {
+        "average": 185.37878000000492,
+        "maximum": 191.33249999998952,
+        "minimum": 181.09520000001066,
+        "samples": [
+          190.13730000000214,
+          182.28109999999288,
+          181.64000000001397,
+          181.96400000000722,
+          187.54920000000857,
+          185.57790000000386,
+          186.27860000001965,
+          191.33249999998952,
+          181.09520000001066,
+          185.9320000000007
+        ]
+      }
+    },
+    "application": {
+      "responseTime": [
+        380.979800000001,
+        383.9783999999927,
+        388.9806000000099,
+        390.33400000000256,
+        390.4476999999897,
+        393.63980000000447,
+        396.5791999999783,
+        396.30709999997634,
+        406.5005999999994,
+        406.3773999999976,
+        406.1137999999919,
+        407.492900000012,
+        419.0883000000031,
+        419.1215000000084,
+        433.0101999999897,
+        440.28349999999045,
+        441.51370000001043,
+        441.7697000000044,
+        445.12410000001546,
+        446.5960999999952,
+        446.1744999999937,
+        448.75519999998505,
+        448.88080000001355,
+        452.01009999998496,
+        467.4107999999833,
+        467.2232999999833,
+        469.872000000003,
+        469.75399999998626,
+        469.5362000000023,
+        470.75620000000345,
+        472.2627999999968,
+        472.35349999999744,
+        472.34619999999995,
+        472.32850000000326,
+        472.49989999999525,
+        472.25169999999343,
+        473.6670999999915,
+        473.65909999998985,
+        473.60390000001644,
+        475.5970999999845,
+        476.117499999993,
+        475.7698999999848,
+        475.96940000000177,
+        474.8194000000076,
+        479.32439999998314,
+        483.00760000001173,
+        483.32050000000163,
+        483.5705999999773,
+        486.7641000000003,
+        485.81650000001537,
+        486.92379999998957,
+        489.21940000000177,
+        488.43739999999525,
+        492.3267000000051,
+        491.64160000000265,
+        492.9500999999873,
+        492.3454999999958,
+        494.6431000000157,
+        494.8385000000126,
+        497.6894999999786,
+        496.14689999999246,
+        496.5828000000038,
+        499.7771000000066,
+        500.42290000000503,
+        500.5454000000027,
+        502.09969999999157,
+        500.62390000000596,
+        503.39260000002105,
+        503.38449999998556,
+        505.14280000000144,
+        505.54920000000857,
+        508.4100000000035,
+        509.14910000000964,
+        508.48970000000554,
+        508.71489999999176,
+        509.0364999999874,
+        511.316599999991,
+        511.55259999999544,
+        511.2270000000135,
+        511.48059999998077,
+        512.054999999993,
+        514.8540000000212,
+        515.2471999999834,
+        515.2862000000023,
+        515.4211000000068,
+        516.9130000000005,
+        517.374599999981,
+        517.1945000000123,
+        517.2419999999984,
+        517.4444999999832,
+        535.1445999999996,
+        537.4107000000076,
+        540.9492000000027,
+        542.0597000000125,
+        541.8323999999848,
+        544.0884000000078,
+        543.5008999999845,
+        545.5412000000069,
+        546.587200000009,
+        546.4478999999992,
+        546.9759999999951,
+        549.137699999992,
+        549.2942000000039,
+        554.4245999999985,
+        554.3781000000017,
+        553.5451999999932,
+        554.400799999974,
+        554.4707000000053,
+        555.6646999999939,
+        558.2035999999789,
+        558.2905999999784,
+        561.7894000000088,
+        562.5342999999993,
+        561.8955999999889,
+        562.8411999999953,
+        562.8238999999885,
+        562.6111999999848,
+        563.6269000000029,
+        564.5217999999877,
+        565.6622999999963,
+        565.6235999999917,
+        566.3150000000023,
+        569.2694999999949,
+        568.5658999999869,
+        567.87049999999,
+        569.8099999999977,
+        569.718200000003,
+        569.7462000000232,
+        570.812900000019,
+        571.4082000000053,
+        571.8984999999811,
+        573.2409000000043,
+        573.544900000008,
+        574.0892999999924,
+        575.9804000000004,
+        576.0375000000058,
+        577.5087999999814,
+        580.0575000000244,
+        581.8894999999902,
+        589.7813000000024,
+        589.7594000000099,
+        593.5696000000171,
+        594.4171999999962,
+        593.7121999999799,
+        593.7161999999953,
+        594.5083999999915,
+        594.602899999998,
+        595.7621999999974,
+        603.8793000000005,
+        603.2210999999952,
+        604.969299999997,
+        632.6475999999966,
+        632.9822999999742,
+        633.4663,
+        634.6566000000166,
+        636.6589999999851,
+        644.9348999999929,
+        656.0658000000112,
+        656.824099999998,
+        660.1577000000107,
+        659.074500000017,
+        659.022799999977,
+        661.0887000000221,
+        659.8360000000102,
+        659.9590999999782,
+        661.090200000006,
+        660.2483000000066,
+        661.1258999999845,
+        661.391100000008,
+        662.160899999988,
+        665.7692000000097,
+        664.7538000000059,
+        664.6349999999802,
+        666.3947000000044,
+        666.2125999999989,
+        666.1551000000036,
+        666.4072999999917,
+        668.1803999999829,
+        668.1144000000204,
+        668.968200000003,
+        669.0185999999812,
+        669.7942000000039,
+        669.5468999999866,
+        669.6042000000016,
+        669.7386000000115,
+        670.9230000000098,
+        669.831600000005,
+        669.8701000000001,
+        670.1737000000139,
+        731.462200000009,
+        754.6779000000097,
+        756.983899999992,
+        774.8924000000115,
+        779.6841999999888,
+        781.6167000000132,
+        784.5835000000079,
+        799.5971999999892,
+        799.6479000000108,
+        801.3028000000049,
+        812.844299999997
+      ],
+      "concurrentUsers": 20,
+      "operationsPerSecond": 73.79990287932777,
+      "concurrencySuccessRate": 30,
+      "avgResponseTime": 554.1673574999986
+    }
+  },
+  "errors": [
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    },
+    {
+      "type": "concurrency",
+      "error": "invalid input syntax for type uuid: \"undefined\""
+    },
+    {
+      "type": "concurrency",
+      "error": "new row violates row-level security policy for table \"contacts\""
+    }
+  ],
+  "recommendations": [
+    "Mejorar manejo de concurrencia y pool de conexiones",
+    "Reducir número de errores antes del deployment"
+  ]
+}
