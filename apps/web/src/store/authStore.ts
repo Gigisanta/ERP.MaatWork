@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CONFIG, isDevelopment, isProduction } from '../config/environment';
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export interface User {
@@ -538,14 +538,19 @@ export const useAuthStore = create<AuthState>()(
 
           console.log('🔍 REGISTER: Verificando si el usuario ya existe en Supabase...');
 
-          // Verificar si el usuario ya existe en la tabla users
+          // Verificar si el usuario ya existe en la tabla users (0 o 1 fila)
           const { data: existingUser, error: checkError } = await supabase
             .from('users')
-            .select('*')
-            .eq('email', email)
-            .single();
+            .select('id')
+            .eq('email', email.trim().toLowerCase())
+            .maybeSingle();
 
-          if (existingUser && !checkError) {
+          if (checkError) {
+            console.error('❌ REGISTER: Error verificando usuario existente:', checkError);
+            throw checkError;
+          }
+
+          if (existingUser) {
             console.log('❌ REGISTER: Usuario ya existe:', email);
             console.log('🔄 REGISTER: Estableciendo isLoading = false (usuario existe)');
             set({ isLoading: false });

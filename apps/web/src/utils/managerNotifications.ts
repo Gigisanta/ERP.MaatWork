@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNotificationStore } from '../stores/notificationStore';
+import { useNotificationStore } from '../store/notificationStore';
 import { TeamMetrics, AdvisorMetrics } from '../types/metrics';
 import { Contact } from '../types/crm';
 import { TeamMember } from '../types/team';
@@ -143,9 +143,16 @@ class ManagerNotificationService {
       });
     }
 
-    // Send notifications
-    notifications.forEach(notification => {
-      this.notificationStore.addNotification(notification);
+    // Send notifications using unified store API
+    notifications.forEach(n => {
+      this.notificationStore.createNotification({
+        user_id: 'current-user',
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        priority: n.priority,
+        data: { category: n.category, ...n.data }
+      });
     });
   }
 
@@ -245,13 +252,14 @@ class ManagerNotificationService {
       message = `El contacto ${contact.name} ha sido desasignado.`;
     }
 
-    this.notificationStore.addNotification({
+    this.notificationStore.createNotification({
+      user_id: 'current-user',
       type: 'info' as const,
       title: 'Contacto Reasignado',
       message,
-      category: 'contact_management',
       priority: 'low' as const,
       data: {
+        category: 'contact_management',
         contactId: contact.id,
         contactName: contact.name,
         fromAdvisor,
@@ -268,13 +276,14 @@ class ManagerNotificationService {
       ? `Nuevo contacto ${contact.name} asignado a ${assignedAdvisor}.`
       : `Nuevo contacto ${contact.name} agregado al sistema.`;
 
-    this.notificationStore.addNotification({
+    this.notificationStore.createNotification({
+      user_id: 'current-user',
       type: 'info' as const,
       title: 'Nuevo Contacto',
       message,
-      category: 'contact_management',
       priority: 'low' as const,
       data: {
+        category: 'contact_management',
         contactId: contact.id,
         contactName: contact.name,
         assignedAdvisor,
@@ -292,13 +301,14 @@ class ManagerNotificationService {
       ? `¡El equipo ha alcanzado el ${percentage}% de la meta de ${goalType}!`
       : `¡${achiever} ha alcanzado el ${percentage}% de la meta de ${goalType}!`;
 
-    this.notificationStore.addNotification({
+    this.notificationStore.createNotification({
+      user_id: 'current-user',
       type: 'success' as const,
       title: 'Meta Alcanzada',
       message,
-      category: 'goal_achievement',
       priority: 'medium' as const,
       data: {
+        category: 'goal_achievement',
         type,
         achiever,
         goalType,
@@ -323,13 +333,14 @@ class ManagerNotificationService {
     });
 
     if (inactiveContacts.length > 0) {
-      this.notificationStore.addNotification({
+      this.notificationStore.createNotification({
+        user_id: 'current-user',
         type: 'warning' as const,
         title: 'Contactos Inactivos Detectados',
         message: `Hay ${inactiveContacts.length} contacto(s) sin actividad por más de ${this.thresholds.inactivityDays} días.`,
-        category: 'contact_management',
         priority: 'medium' as const,
         data: {
+          category: 'contact_management',
           inactiveCount: inactiveContacts.length,
           inactiveContacts: inactiveContacts.map(c => ({
             id: c.id,

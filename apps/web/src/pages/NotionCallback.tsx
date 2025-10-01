@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 import { useAuthStore } from '../store/authStore';
 import { Loader2, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 

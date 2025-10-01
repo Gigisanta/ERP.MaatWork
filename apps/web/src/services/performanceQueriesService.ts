@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import { HistoricalMetricsEntry } from './historicalMetricsService';
 
 export interface TeamPerformanceMetrics {

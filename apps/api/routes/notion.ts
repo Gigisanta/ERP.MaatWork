@@ -7,7 +7,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, type Router as ExpressRouter } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
@@ -26,12 +26,13 @@ interface NotionPageMap {
   updated_at?: string;
 }
 
-interface AuthenticatedRequest extends Request {
+type AuthenticatedRequest = Request & {
   user?: {
     id: string;
     email?: string;
+    role?: string;
   };
-}
+};
 
 // Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL!;
@@ -45,7 +46,7 @@ const NOTION_REDIRECT_URI = process.env.NOTION_REDIRECT_URI;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 
 // Router de Express
-const router = Router();
+const router: ExpressRouter = Router();
 
 /**
  * Middleware mejorado para autenticación automática
@@ -152,7 +153,7 @@ const requireNotionConnection = async (req: AuthenticatedRequest, res: Response,
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (error || !workspace) {
       return res.status(403).json({
@@ -424,7 +425,7 @@ router.get('/oauth/callback', async (req: Request, res: Response) => {
       return res.redirect(`/notion-crm?error=token_exchange_failed`);
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData: any = await tokenResponse.json();
     
     // Cifrar el access token antes de guardarlo
     const iv = crypto.randomBytes(16);
@@ -560,7 +561,7 @@ router.get('/connection/status', authenticateUser, async (req: AuthenticatedRequ
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (error || !workspace) {
       return res.json({

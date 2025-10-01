@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import { MetricsService } from './metricsService';
 import { format, startOfDay, endOfDay, subDays, subMonths } from 'date-fns';
 import type {
@@ -42,10 +42,19 @@ export class HistoricalMetricsService {
         .from('data_retention_config')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      this.retentionConfig = data;
+      if (error) throw error;
+      // Si no hay configuración activa, usar defaults seguros
+      this.retentionConfig = data ?? {
+        id: undefined as any,
+        is_active: true,
+        retention_days: 365,
+        soft_delete: true,
+        purge_anonymized: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as any;
     } catch (error) {
       console.error('Error loading retention config:', error);
     }
@@ -120,7 +129,7 @@ export class HistoricalMetricsService {
         .from('historical_metrics')
         .select('id')
         .eq('date', today)
-        .single();
+        .maybeSingle();
 
       // Calcular métricas derivadas correctamente
       const totalContacts = currentMetrics?.total_contacts || 0;

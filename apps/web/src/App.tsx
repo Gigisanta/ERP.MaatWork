@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'sonner';
 import { useAuthStore } from './store/authStore';
 import { useEffect, Suspense, lazy } from 'react';
-import { supabase } from './lib/supabase';
+import { supabase } from '@cactus/database';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';

@@ -13,7 +13,7 @@ import {
 } from '../types/crm';
 import { useMetricsStore } from './metricsStore';
 import { useDashboardStore } from './dashboardStore';
-import { supabase } from "../config/supabase";
+import { supabase } from '@cactus/database';
 import { useAuthStore } from './authStore';
 import { executeWithRetry, withErrorHandling } from '../utils/supabaseErrorHandler';
 import { EnhancedMetricsService } from '../services/enhancedMetricsService';

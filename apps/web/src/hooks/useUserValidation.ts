@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 import { toast } from 'sonner';
 
 interface UserValidationResult {

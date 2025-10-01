@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-
-// Cargar variables de entorno
-dotenv.config();
+// Cargar .env.local
+dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

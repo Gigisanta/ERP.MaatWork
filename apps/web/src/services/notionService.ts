@@ -1,7 +1,7 @@
 // Servicio para manejo de datos de Notion CRM
 // Fecha: 2024-01-20
 
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 import {
   NotionWorkspace,
   NotionContact,

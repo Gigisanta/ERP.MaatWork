@@ -8,9 +8,8 @@ import { Client } from '@notionhq/client';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-
-// Cargar variables de entorno
-dotenv.config();
+// Cargar .env.local primero
+dotenv.config({ path: '.env.local' });
 
 // Configuración del cliente de Notion
 const getNotionClient = (accessToken: string) => {

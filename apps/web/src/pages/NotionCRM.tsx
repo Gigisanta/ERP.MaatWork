@@ -23,7 +23,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 import { NotionWorkspace, MigrationLog, CRMStats } from '../types/notion';
 import ContactsManager from '../components/ContactsManager';
 import DealsManager from '../components/DealsManager';

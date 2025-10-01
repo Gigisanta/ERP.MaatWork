@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X, Check, CheckCheck, Filter, Trash2, AlertCircle, Info, CheckCircle, XCircle } from 'lucide-react';
-import { useNotificationStore, useFilteredNotifications, useUnreadCount } from '../stores/notificationStore';
-import type { NotificationFilter } from '../stores/notificationStore';
+import { useNotificationStore, useFilteredNotifications, useUnreadCount } from '../store/notificationStore';
+import type { NotificationFilter } from '../store/notificationStore';
 
 interface NotificationCenterProps {
   isOpen: boolean;

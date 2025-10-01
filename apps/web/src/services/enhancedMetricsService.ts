@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import { MetricsService, MonthlyConversionMetric, HistoricalMetric } from './metricsService';
 import { SupabaseErrorHandler, withErrorHandling } from '../utils/supabaseErrorHandler';
 import { Contact } from '../types/metrics';

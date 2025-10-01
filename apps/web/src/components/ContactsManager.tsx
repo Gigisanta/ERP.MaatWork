@@ -20,7 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 
 // Tipos
 interface Contact {

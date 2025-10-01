@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bug, X, Copy, Check } from 'lucide-react';
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 // import { LayoutConfig } from '../config/layoutConfig';
 
 interface DebugInfo {

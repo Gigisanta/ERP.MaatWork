@@ -4,14 +4,14 @@ import { Eye, EyeOff, Lock, User, UserCheck, Loader2, Phone, AlertCircle, CheckC
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/authStore';
 import { useNotificationStore } from '../store/notificationStore';
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 
 import DebugPanel from '../components/DebugPanel';
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, isLoading, setLoading } = useAuthStore();
-  const { addNotification } = useNotificationStore();
+  const { register, isLoading, setLoading, user } = useAuthStore();
+  const { createNotification } = useNotificationStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -193,10 +193,12 @@ export default function Register() {
         setSuccessMessage(successMsg);
         
         // Mostrar notificación
-        addNotification({
-          tipo: 'success',
-          titulo: '¡Registro exitoso!',
-          mensaje: successMsg
+        createNotification({
+          user_id: user?.id || 'system',
+          type: 'success',
+          title: '¡Registro exitoso!',
+          message: successMsg,
+          priority: 'high'
         });
         
         // Esperar un momento para que el usuario vea el mensaje
@@ -253,10 +255,12 @@ export default function Register() {
       setError(errorMessage);
       
       // Mostrar notificación de error
-      addNotification({
-        tipo: 'error',
-        titulo: 'Error en el registro',
-        mensaje: errorMessage
+      createNotification({
+        user_id: user?.id || 'system',
+        type: 'error',
+        title: 'Error en el registro',
+        message: errorMessage,
+        priority: 'high'
       });
       
       return;

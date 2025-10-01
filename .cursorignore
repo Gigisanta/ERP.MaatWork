@@ -1,2 +1,11 @@
-!*.env
+
 .trae
+
+# Ignore environment files in Cursor context
+.env
+.env.*
+apps/*/.env
+apps/*/.env.*
+packages/*/.env
+packages/*/.env.*
+!**/.env.example

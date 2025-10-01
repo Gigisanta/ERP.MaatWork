@@ -153,21 +153,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 };
 
 // Hook para verificar permisos en componentes
-export const useRoutePermissions = () => {
-  const { user } = useAuthStore();
-  const permissions = usePermissions(user);
-  
-  return {
-    ...permissions,
-    canAccessRoute: (requiredPermissions: Permission[], requireAll = false) => {
-      if (!user || !user.isApproved) return false;
-      
-      return requireAll 
-        ? permissions.hasAllPermissions(requiredPermissions)
-        : permissions.hasAnyPermission(requiredPermissions);
-    }
-  };
-};
+// Mantenemos la exportación para compatibilidad, pero delegamos al hook dedicado
+export { useRoutePermissions } from '../hooks/useRoutePermissions';
 
 // Componente para mostrar contenido condicionalmente basado en permisos
 interface ConditionalRenderProps {

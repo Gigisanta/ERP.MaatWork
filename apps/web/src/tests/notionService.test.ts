@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { notionService } from '../services/notionService';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 
 // Mock fetch global
 const mockFetch = vi.fn();

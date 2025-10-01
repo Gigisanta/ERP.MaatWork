@@ -18,6 +18,7 @@
     "noFallthroughCasesInSwitch": false,
     "noUncheckedSideEffectImports": false,
     "forceConsistentCasingInFileNames": false,
+    "composite": false,
     "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"],
@@ -28,9 +29,6 @@
     "types": ["node"]
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/database" }
-  ]
+  "exclude": ["node_modules", "dist"]
 }
 

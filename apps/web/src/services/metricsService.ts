@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import { Contact, ConversionEvent } from '../types/metrics';
 
 export interface MonthlyConversionMetric {

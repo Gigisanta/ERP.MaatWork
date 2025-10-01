@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 
 export interface User {
   id: string;

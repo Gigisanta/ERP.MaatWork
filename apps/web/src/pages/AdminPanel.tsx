@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { User } from '../store/authStore';
-import { useApprovalStore } from '../stores/approvalStore';
-import { useNotificationStore } from '../stores/notificationStore';
+import { useApprovalStore } from '../store/approvalStore';
+import { useNotificationStore } from '../store/notificationStore';
 
 import { CheckCircle, XCircle, Users, Clock, UserCheck, Trash2, AlertTriangle, Settings, Database, FileText, Download, Calendar, RotateCcw } from 'lucide-react';
 
@@ -80,14 +80,14 @@ const AdminPanel: React.FC = () => {
     fetchApprovalRequests();
   }, [fetchApprovalRequests]);
 
-  // Iniciar realtime de approvals
-  useEffect(() => {
-    const { startApprovalsSubscription, stopApprovalsSubscription } = useApprovalStore.getState();
-    startApprovalsSubscription?.();
-    return () => {
-      stopApprovalsSubscription?.();
-    };
-  }, []);
+  // Iniciar realtime de approvals (disabled for now)
+  // useEffect(() => {
+  //   const { startApprovalsSubscription, stopApprovalsSubscription } = useApprovalStore.getState();
+  //   startApprovalsSubscription?.();
+  //   return () => {
+  //     stopApprovalsSubscription?.();
+  //   };
+  // }, []);
 
   // Iniciar realtime de users
   useEffect(() => {

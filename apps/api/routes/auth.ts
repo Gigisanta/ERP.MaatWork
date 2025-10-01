@@ -2,10 +2,10 @@
  * This is a user authentication API route demo.
  * Handle user registration, login, token management, etc.
  */
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type Router as ExpressRouter } from 'express';
 
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 /**
  * User Registration

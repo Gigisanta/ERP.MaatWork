@@ -23,7 +23,7 @@ import {
   Target
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 
 // Tipos
 interface Deal {

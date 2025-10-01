@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import notionService from '../services/notionService.js';
 import { supabase } from '../config/supabase.js';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 // Obtener estadísticas del CRM
 router.get('/stats', authenticateToken, async (req, res) => {
@@ -19,7 +19,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
       .select('*')
       .eq('user_id', userId)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
     if (!workspace) {
       // Sin conexión, devolver estadísticas vacías

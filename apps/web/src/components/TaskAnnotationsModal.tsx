@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, MessageSquare, Plus, Edit2, Trash2, Save, User } from 'lucide-react';
-import { useAnnotationsStore, TaskAnnotation } from '../stores/annotationsStore';
+import { useAnnotationsStore, TaskAnnotation } from '../store/annotationsStore';
 import { useAuthStore } from "../store/authStore";
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';

@@ -14,6 +14,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "composite": false,
     "baseUrl": "./",
     "paths": {
       "@cactus/shared": ["../../packages/shared/index.ts"],
@@ -23,10 +24,6 @@
     "types": ["node", "express"]
   },
   "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/database" }
-  ]
+  "exclude": ["node_modules", "dist"]
 }
 

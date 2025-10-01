@@ -5,7 +5,7 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "../../packages/**/*.{js,ts,jsx,tsx}",
+    "../../packages/shared/**/*.{ts,tsx}",
   ],
   theme: {
     container: {

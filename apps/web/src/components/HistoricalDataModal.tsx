@@ -4,7 +4,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { Line } from 'react-chartjs-2';
 import { format, subDays, subMonths, addDays, addMonths, startOfDay, endOfDay, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, startOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useHistoricalMetricsStore } from '../stores/historicalMetricsStore';
+import { useHistoricalMetricsStore } from '../store/historicalMetricsStore';
 import HistoricalMetricsService from '../services/historicalMetricsService';
 import { cn } from '../lib/utils';
 // import { LayoutConfig } from '../config/layoutConfig';

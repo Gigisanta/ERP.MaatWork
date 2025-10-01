@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { supabase } from '../config/supabase.js';
 import crypto from 'crypto';
 
-const router = Router();
+const router: ExpressRouter = Router();
 
 // Configuración OAuth de Notion
 const NOTION_CLIENT_ID = process.env.NOTION_CLIENT_ID;
@@ -16,7 +16,7 @@ function encryptToken(token: string): string {
   const algorithm = 'aes-256-cbc';
   const key = crypto.scryptSync(process.env.ENCRYPTION_KEY || 'default-key', 'salt', 32);
   const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipher(algorithm, key);
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encrypted = cipher.update(token, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   return `${iv.toString('hex')}:${encrypted}`;
@@ -28,7 +28,7 @@ function decryptToken(encryptedToken: string): string {
   const key = crypto.scryptSync(process.env.ENCRYPTION_KEY || 'default-key', 'salt', 32);
   const [ivHex, encrypted] = encryptedToken.split(':');
   const iv = Buffer.from(ivHex, 'hex');
-  const decipher = crypto.createDecipher(algorithm, key);
+  const decipher = crypto.createDecipheriv(algorithm, key, iv);
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   return decrypted;
@@ -97,7 +97,7 @@ router.get('/notion/callback', async (req, res) => {
       .select('user_id')
       .eq('preference_key', 'oauth_state')
       .eq('preference_value', state as string)
-      .single();
+      .maybeSingle();
 
     if (!stateData) {
       return res.redirect(`${FRONTEND_URL}/crm?error=invalid_state`);
@@ -125,7 +125,7 @@ router.get('/notion/callback', async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/crm?error=token_exchange_failed`);
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData: any = await tokenResponse.json();
     const { access_token, workspace_name, workspace_icon, workspace_id, bot_id } = tokenData;
 
     // Cifrar el token antes de guardarlo

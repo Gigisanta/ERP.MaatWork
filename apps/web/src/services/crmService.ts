@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '@cactus/database';
 import { toast } from 'sonner';
 
 // Tipos para el servicio CRM

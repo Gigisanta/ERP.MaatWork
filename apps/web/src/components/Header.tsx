@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, pageTitle, pageDescription
   const { refreshDashboard, isRefreshing, lastUpdated } = useDashboardStore();
   const { notifications, markAsRead } = useNotificationStore();
   // Calcular notificaciones no leídas del store real
-  const notificacionesNoLeidas = notifications.filter(n => !n.leida).length;
+  const notificacionesNoLeidas = notifications.filter(n => !n.read_at).length;
   const menuRef = useRef<HTMLDivElement>(null);
   const botonRef = useRef<HTMLButtonElement>(null);
   
@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, pageTitle, pageDescription
     setMostrarMenuUsuario(false);
     // Marcar todas las notificaciones como leídas al hacer clic
     notifications.forEach(notification => {
-      if (!notification.leida) {
+      if (!notification.read_at) {
         markAsRead(notification.id);
       }
     });

@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, CheckCircle, XCircle, Mail, Phone, User, Building, FileText, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { useApprovalStore } from '../stores/approvalStore';
-import { useNotificationStore } from '../stores/notificationStore';
+import { useApprovalStore } from '../store/approvalStore';
+import { useNotificationStore } from '../store/notificationStore';
 
 const ApprovalPendingPage: React.FC = () => {
   const navigate = useNavigate();

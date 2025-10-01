@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Building, Calendar, Save, Lock, Camera, Edit2, Crown, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { useApprovalStore } from '../stores/approvalStore';
-import { useNotificationStore } from '../stores/notificationStore';
+import { useApprovalStore } from '../store/approvalStore';
+import { useNotificationStore } from '../store/notificationStore';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -123,7 +123,7 @@ const Profile: React.FC = () => {
     }
 
     try {
-      await createApprovalRequest(user.id, 'manager', justificacionSolicitud);
+      await createApprovalRequest(user.id, 'manager');
       
       toast.success('Solicitud enviada correctamente. Recibirás una notificación cuando sea revisada.');
       setShowManagerRequestModal(false);

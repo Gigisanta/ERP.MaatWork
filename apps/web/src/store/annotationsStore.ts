@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../config/supabase';
+import { supabase } from '@cactus/database';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface TaskAnnotation {
@@ -37,7 +37,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   fetchAnnotations: async (taskId: string) => {
     set({ loading: true, error: null });
-    
     try {
       const { data, error } = await supabase
         .from('task_annotations')
@@ -52,7 +51,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-
       set({ annotations: data || [], loading: false });
     } catch (error) {
       console.error('Error fetching annotations:', error);
@@ -65,7 +63,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   createAnnotation: async (taskId: string, content: string) => {
     set({ loading: true, error: null });
-    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
@@ -87,13 +84,10 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
         .single();
 
       if (error) throw error;
-
-      // Agregar la nueva anotación al estado
       set(state => ({
         annotations: [...state.annotations, data],
         loading: false
       }));
-
       return data;
     } catch (error) {
       console.error('Error creating annotation:', error);
@@ -107,7 +101,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   updateAnnotation: async (id: string, content: string) => {
     set({ loading: true, error: null });
-    
     try {
       const { data, error } = await supabase
         .from('task_annotations')
@@ -126,8 +119,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
         .single();
 
       if (error) throw error;
-
-      // Actualizar la anotación en el estado
       set(state => ({
         annotations: state.annotations.map(annotation => 
           annotation.id === id ? data : annotation
@@ -145,7 +136,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   deleteAnnotation: async (id: string) => {
     set({ loading: true, error: null });
-    
     try {
       const { error } = await supabase
         .from('task_annotations')
@@ -153,8 +143,6 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
         .eq('id', id);
 
       if (error) throw error;
-
-      // Remover la anotación del estado
       set(state => ({
         annotations: state.annotations.filter(annotation => annotation.id !== id),
         loading: false
@@ -174,13 +162,9 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   subscribeToAnnotations: (taskId: string) => {
     const { realtimeChannel } = get();
-    
-    // Si ya hay una suscripción activa, desuscribirse primero
     if (realtimeChannel) {
       realtimeChannel.unsubscribe();
     }
-
-    // Crear nuevo canal para las anotaciones de esta tarea específica
     const channel = supabase
       .channel(`task_annotations_${taskId}`)
       .on(
@@ -192,10 +176,7 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
           filter: `task_id=eq.${taskId}`
         },
         async (payload) => {
-          console.log('Annotation change received:', payload);
-          
-          if (payload.eventType === 'INSERT') {
-            // Obtener la anotación completa con datos del usuario
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const { data } = await supabase
               .from('task_annotations')
               .select(`
@@ -207,38 +188,16 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
               `)
               .eq('id', payload.new.id)
               .single();
-            
             if (data) {
               set(state => ({
-                annotations: [...state.annotations, data]
-              }));
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            // Obtener la anotación actualizada con datos del usuario
-            const { data } = await supabase
-              .from('task_annotations')
-              .select(`
-                *,
-                user:users(
-                  full_name,
-                  email
-                )
-              `)
-              .eq('id', payload.new.id)
-              .single();
-            
-            if (data) {
-              set(state => ({
-                annotations: state.annotations.map(annotation => 
-                  annotation.id === data.id ? data : annotation
-                )
+                annotations: payload.eventType === 'INSERT'
+                  ? [...state.annotations, data]
+                  : state.annotations.map(a => a.id === data.id ? data : a)
               }));
             }
           } else if (payload.eventType === 'DELETE') {
             set(state => ({
-              annotations: state.annotations.filter(annotation => 
-                annotation.id !== payload.old.id
-              )
+              annotations: state.annotations.filter(a => a.id !== payload.old.id)
             }));
           }
         }
@@ -250,10 +209,11 @@ export const useAnnotationsStore = create<AnnotationsState>((set, get) => ({
 
   unsubscribeFromAnnotations: () => {
     const { realtimeChannel } = get();
-    
     if (realtimeChannel) {
       realtimeChannel.unsubscribe();
       set({ realtimeChannel: null });
     }
   }
 }));
+
+

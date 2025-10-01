@@ -7,7 +7,7 @@ import { MetricsService } from '../services/metricsService';
 import MetricCard from './MetricCard';
 import { AnimatedCounter } from './AnimatedCounter';
 import HistoricalDataModal from './HistoricalDataModal';
-import { useHistoricalMetricsStore } from '../stores/historicalMetricsStore';
+import { useHistoricalMetricsStore } from '../store/historicalMetricsStore';
 import { cn } from '../lib/utils';
 // import { LayoutConfig } from '../config/layout-config'; // Migrated to Cactus Dashboard palette
 
