@@ -1,0 +1,19 @@
+{
+  "name": "@cactus/database",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./client.ts",
+  "types": "./client.ts",
+  "exports": {
+    ".": "./client.ts",
+    "./types": "./types.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "peerDependencies": {
+    "typescript": "~5.8.3"
+  }
+}
+
