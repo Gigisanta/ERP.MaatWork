@@ -1,0 +1,55 @@
+# Proyecto: CACTUS CRM (Monorepo pnpm + Turborepo)
+
+## Arquitectura general
+- Monorepo gestionado con `pnpm workspaces` y `turborepo`.
+- Apps en `apps/` y paquetes compartidos en `packages/`.
+- Apps:
+  - `apps/api`: API en Node.js + Express. Logging con `pino`/`pino-http`. Despliegue en VPS con `pm2` (cluster mode). Envía logs a stdout y a archivos bajo `apps/api/logs/`.
+  - `apps/web`: Frontend en Next.js (App Router). Consume la API vía `NEXT_PUBLIC_API_URL`.
+- Paquetes compartidos:
+  - `packages/db`: Drizzle ORM (PostgreSQL) con `schema.ts`, conexión `db`, migraciones (`drizzle-kit`).
+
+## Decisiones clave
+- Logging: `pino` por performance y logs JSON estructurados. En dev puede usarse `pino-pretty` si se agrega, pero por defecto JSON.
+- Process manager: `pm2` en VPS (sin Docker/K8s). Modo `cluster` con `instances: 'max'` en `ecosystem.config.js`.
+- DB: Postgres 16 local con `docker-compose.yml`. Variable de conexión `DATABASE_URL` compartida.
+- TypeScript: base común en `tsconfig.base.json`. Cada app extiende y define `outDir`/`rootDir`.
+- Tareas: `turbo` orquesta `build/dev/lint/test` con cacheo por tareas.
+
+## Rutas relevantes
+- API entrypoint: `apps/api/src/index.ts`.
+- Rutas API: `apps/api/src/routes/*` (ejemplo: `users.ts`).
+- PM2 config: `apps/api/ecosystem.config.js`.
+- Next.js raíz: `apps/web/app/*` (`layout.tsx`, `page.tsx`).
+- Drizzle:
+  - Config: `packages/db/drizzle.config.ts`.
+  - Schema: `packages/db/src/schema.ts`.
+  - Cliente/exports: `packages/db/src/index.ts`.
+
+## Ejecución local (desarrollo)
+- Prerrequisitos: Node 20+, pnpm 9+, Docker (opcional para Postgres local).
+- Comandos:
+  - `pnpm install`
+  - `docker compose up -d` (levanta Postgres 16)
+  - `pnpm dev` (ejecuta `web` y `api` en paralelo si están configuradas)
+  - API: `http://localhost:3001/health`
+  - Web: `http://localhost:3000`
+
+## Despliegue en VPS (PM2)
+- Construir API: `pnpm -F @cactus/api build` → genera `apps/api/dist`.
+- Iniciar con PM2: `pm2 start apps/api/ecosystem.config.js --env production`.
+- Logs: `pm2 logs cactus-api` o archivos en `apps/api/logs/`.
+- Asegurar variables: `.env` por app; al menos `DATABASE_URL`, `PORT`, `LOG_LEVEL`.
+
+## Convenciones de código
+- Usar TypeScript estricto.
+- Evitar comentarios triviales; añadir comentarios cuando la intención no sea obvia.
+- Logging: registrar eventos de negocio clave con contexto (ids, tamaños, tiempos) y sanitizar datos sensibles (`redact` en `pino-http`).
+- Errores: loguear con `req.log.error({ err }, msg)` y retornar JSON con mensaje genérico.
+
+## Notas de Cursor
+- Al referenciar código existente en mensajes, usar code references con rango de líneas y ruta.
+- Para nuevo código, usar bloques de código con lenguaje.
+- Mantener estructura y nombrado conforme a este archivo y evitar mezclar estilos.
+
+
