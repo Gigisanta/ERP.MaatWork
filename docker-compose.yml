@@ -1,9 +1,9 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cactus
+      POSTGRES_DB: CRM
       POSTGRES_USER: postgres
     ports:
       - "5432:5432"

@@ -7,11 +7,18 @@
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "db:generate": "pnpm -F @cactus/db run generate",
+    "db:migrate": "pnpm -F @cactus/db run migrate",
+    "db:push": "pnpm -F @cactus/db run push",
+    "db:studio": "pnpm -F @cactus/db run studio"
   },
   "devDependencies": {
     "turbo": "^2.1.1",
     "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
 

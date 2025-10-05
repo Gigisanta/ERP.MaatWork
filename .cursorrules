@@ -52,4 +52,15 @@
 - Para nuevo código, usar bloques de código con lenguaje.
 - Mantener estructura y nombrado conforme a este archivo y evitar mezclar estilos.
 
+## Operativa (dev y prod)
+- Desarrollo:
+  - Logs legibles con `pino-pretty` (se activa automáticamente cuando `NODE_ENV !== 'production'`).
+  - Comando opcional: `pnpm -F @cactus/api run dev:pretty`.
+- Producción (VPS con PM2):
+  - Iniciar: `pm2 start apps/api/ecosystem.config.js --env production`.
+  - Rotación de logs: `pm2 install pm2-logrotate` y `pm2 set ...` (o scripts `pm2:logrotate:*`).
+  - Variables requeridas: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`.
+  - CORS: restringir orígenes con `CORS_ORIGINS` (lista separada por comas).
+  - CSP: activar con `CSP_ENABLED=true` si se define una política adecuada.
+
 

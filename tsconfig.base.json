@@ -5,8 +5,8 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@cactus/db": ["packages/db/src/index.ts"],
-      "@cactus/db/*": ["packages/db/src/*"]
+      "@cactus/db": ["packages/db/dist/index.d.ts"],
+      "@cactus/db/*": ["packages/db/dist/*"]
     },
     "strict": true,
     "esModuleInterop": true,

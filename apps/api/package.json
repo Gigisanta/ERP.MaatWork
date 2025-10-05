@@ -6,21 +6,30 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:pretty": "NODE_ENV=development LOG_LEVEL=debug tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "pm2:logrotate:install": "pm2 install pm2-logrotate",
+    "pm2:logrotate:config": "pm2 set pm2-logrotate:max_size 10M && pm2 set pm2-logrotate:retain 10 && pm2 set pm2-logrotate:compress true && pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss && pm2 set pm2-logrotate:workerInterval 60 && pm2 set pm2-logrotate:rotateInterval 0 0 * * *"
   },
   "dependencies": {
     "@cactus/db": "workspace:*",
-    "express": "^4.19.2",
-    "zod": "^3.23.8",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "pino": "^9.2.0",
-    "pino-http": "^9.0.0"
+    "express": "^5.1.0",
+    "helmet": "^7.1.0",
+    "pino": "^10.0.0",
+    "pino-http": "^11.0.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "pino-pretty": "^11.2.2",
     "tsx": "^4.16.2",
     "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
-
-
