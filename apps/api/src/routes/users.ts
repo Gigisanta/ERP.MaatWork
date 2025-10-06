@@ -1,9 +1,10 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users } from '@cactus/db';
+import { requireAuth, requireRole } from '../auth/middlewares';
 
 const router = Router();
 
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const all = await db.select().from(users).limit(25);
     res.json(all);

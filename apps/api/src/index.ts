@@ -3,6 +3,7 @@ import express from 'express';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 import usersRouter from './routes/users';
+import authRouter from './routes/auth';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 
@@ -61,6 +62,7 @@ app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
 
+app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 
 const port = Number(process.env.PORT || 3001);
