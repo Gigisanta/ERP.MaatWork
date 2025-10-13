@@ -1,0 +1,243 @@
+/* ==========================================================
+   Estilos para el sistema de etiquetas
+   ========================================================== */
+
+/* Contenedor principal de etiquetas */
+.tag-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 32px;
+  padding: 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.tag-container:hover {
+  border-color: #d1d5db;
+}
+
+.tag-container.focused {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Chip de etiqueta */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.tag-chip:hover {
+  background-color: #e5e7eb;
+}
+
+.tag-chip.removable {
+  padding-right: 4px;
+}
+
+.tag-chip .remove-btn {
+  margin-left: 4px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.tag-chip .remove-btn:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Input de búsqueda */
+.tag-search-input {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  outline: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: transparent;
+  color: #374151;
+}
+
+.tag-search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Dropdown de sugerencias */
+.tag-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 2px;
+}
+
+.tag-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.2s ease;
+}
+
+.tag-dropdown-item:hover {
+  background-color: #f9fafb;
+}
+
+.tag-dropdown-item.selected {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tag-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.tag-dropdown-item .tag-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-dropdown-item .tag-name {
+  font-weight: 500;
+}
+
+.tag-dropdown-item .tag-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+}
+
+.tag-dropdown-item .create-option {
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Contador de etiquetas */
+.tag-counter {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-counter:hover {
+  background-color: #e5e7eb;
+}
+
+/* Estados de carga */
+.tag-container.loading .tag-search-input::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilos para fallback sin JS */
+.tag-fallback {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tag-fallback-input {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.tag-fallback-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tag-fallback-btn {
+  padding: 6px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tag-fallback-btn:hover {
+  background-color: #2563eb;
+}
+
+.tag-fallback-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tag-container {
+    min-height: 28px;
+  }
+  
+  .tag-chip {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .tag-search-input {
+    font-size: 11px;
+    min-width: 100px;
+  }
+}
+
+

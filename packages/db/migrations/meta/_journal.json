@@ -8,6 +8,48 @@
       "when": 1759626098839,
       "tag": "0000_warm_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1760034707515,
+      "tag": "0001_icy_sasquatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1760067482237,
+      "tag": "0002_violet_magus",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1760221879839,
+      "tag": "0003_flippant_mathemanic",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1760222631673,
+      "tag": "0004_fuzzy_vivisector",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1760312060732,
+      "tag": "0005_sour_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759626098840,
+      "tag": "0006_sistema_comparacion_mensual",
+      "breakpoints": true
     }
   ]
 }

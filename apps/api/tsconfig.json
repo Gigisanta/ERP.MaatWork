@@ -2,9 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/__tests__", "src/etl/__tests__", "src/add-user.ts", "src/test-functional.ts"]
 }
 
 

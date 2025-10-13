@@ -79,6 +79,119 @@ pm2 logs cactus-api
 - CORS estricto en producción mediante `CORS_ORIGINS`.
 - CSP opcional con `CSP_ENABLED=true` si defines una política adecuada.
 
+## Sistema de Etiquetas
+
+El sistema de etiquetas permite categorizar contactos con etiquetas personalizables y editables inline.
+
+### Características
+- **Creación automática**: Las etiquetas se crean automáticamente al escribir nombres nuevos
+- **Autocompletado**: Búsqueda en tiempo real con debounce de 250ms
+- **Edición inline**: Click en la celda de etiquetas para editar
+- **Case-insensitive**: Los nombres de etiquetas son únicos sin importar mayúsculas/minúsculas
+- **Fallback sin JS**: Formulario de texto separado por comas cuando JavaScript está deshabilitado
+- **Límites**: Máximo 3 etiquetas visibles + contador "+N" para el resto
+
+### Endpoints API
+
+#### `GET /api/tags`
+Lista etiquetas con autocompletado.
+```bash
+curl -H "Authorization: Bearer TOKEN" \
+  "http://localhost:3001/api/tags?scope=contact&q=vi&limit=10"
+```
+
+#### `POST /api/tags`
+Crea nueva etiqueta (idempotente).
+```bash
+curl -X POST -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"scope":"contact","name":"VIP","color":"#ff0000"}' \
+  "http://localhost:3001/api/tags"
+```
+
+#### `GET /api/tags/contacts/:id`
+Lista etiquetas de un contacto.
+```bash
+curl -H "Authorization: Bearer TOKEN" \
+  "http://localhost:3001/api/tags/contacts/CONTACT_ID"
+```
+
+#### `PUT /api/tags/contacts/:id`
+Actualiza etiquetas de un contacto.
+```bash
+curl -X PUT -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"add":["TAG_ID","Nueva Etiqueta"],"remove":["TAG_ID_TO_REMOVE"]}' \
+  "http://localhost:3001/api/tags/contacts/CONTACT_ID"
+```
+
+### Validaciones
+- **Nombre**: 1-40 caracteres, alfanumérico + espacios
+- **Único**: Case-insensitive por scope
+- **Rate limiting**: 10 requests/minuto para creación
+- **Seguridad**: CSRF habilitado en PUT/POST/DELETE
+
+### Estructura de Base de Datos
+```sql
+-- Tabla principal de etiquetas
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scope TEXT NOT NULL, -- 'contact', 'meeting', 'note'
+  name TEXT NOT NULL,
+  color TEXT DEFAULT '#6B7280',
+  icon TEXT,
+  description TEXT,
+  is_system BOOLEAN DEFAULT false,
+  created_by_user_id UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Relación N:M contactos-etiquetas
+CREATE TABLE contact_tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### Archivos del Sistema
+- **Backend**: `apps/api/src/routes/tags.ts`
+- **Frontend**: `apps/web/app/contacts/page.tsx`
+- **Estilos**: `apps/web/public/css/tags.css`
+- **JavaScript**: `apps/web/public/js/tag-select.js`
+- **Tests**: `apps/api/src/__tests__/tags.spec.ts`, `contacts-tags.e2e.test.ts`
+
+### Uso en Frontend
+```html
+<!-- Contenedor para editor de etiquetas -->
+<div class="tag-selector" 
+     data-contact-id="CONTACT_ID" 
+     data-api-url="/api">
+  <!-- Fallback sin JS -->
+  <noscript>
+    <form class="tag-fallback" data-contact-id="CONTACT_ID">
+      <input type="text" class="tag-fallback-input" 
+             placeholder="Etiquetas separadas por comas" />
+      <button type="submit" class="tag-fallback-btn">Guardar</button>
+    </form>
+  </noscript>
+</div>
+```
+
+### Comandos de Prueba
+```bash
+# Tests unitarios
+pnpm -F @cactus/api test tags.spec.ts
+
+# Tests e2e
+pnpm -F @cactus/api test contacts-tags.e2e.test.ts
+
+# Generar migraciones
+cd packages/db && npx drizzle-kit generate
+```
+
 ## Scripts útiles
 - `pnpm dev`: inicia API y Web en paralelo.
 - `pnpm -F @cactus/api build`: compila la API.

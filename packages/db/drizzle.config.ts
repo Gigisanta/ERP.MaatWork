@@ -3,9 +3,10 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Config } from 'drizzle-kit';
 
-const cwd = process.cwd();
-const envLocalPath = resolve(cwd, '.env.local');
-const envPath = resolve(cwd, '.env');
+// Buscar .env en la raíz del monorepo (2 niveles arriba de packages/db)
+const rootDir = resolve(__dirname, '../..');
+const envLocalPath = resolve(rootDir, '.env.local');
+const envPath = resolve(rootDir, '.env');
 config({ path: existsSync(envLocalPath) ? envLocalPath : envPath });
 
 /**
@@ -20,8 +21,6 @@ export default {
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL!
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/CRM'
   }
 } satisfies Config;
-
-

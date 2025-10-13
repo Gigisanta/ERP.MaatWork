@@ -1,34 +1,44 @@
-import { config } from 'dotenv';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-const cwd = process.cwd();
-const envLocalPath = resolve(cwd, '.env.local');
-const envPath = resolve(cwd, '.env');
-config({ path: existsSync(envLocalPath) ? envLocalPath : envPath });
+// Cargar .env si no está disponible
+if (!process.env.DATABASE_URL) {
+  const { config } = require('dotenv');
+  config();
+}
+
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import * as schema from './schema';
 export * from './schema';
 
 /**
- * Crea una conexión de base de datos utilizando node-postgres y Drizzle ORM.
+ * Crea una conexión de base de datos utilizando PostgreSQL y Drizzle ORM.
  * 
- * Variables de entorno requeridas:
- * - DATABASE_URL: cadena de conexión a PostgreSQL.
+ * Usa PostgreSQL para desarrollo y producción.
+ * Requiere DATABASE_URL en las variables de entorno.
  * 
  * Devuelve una instancia de `db` tipada que expone métodos de consulta
  * y facilita el uso de esquemas definidos en Drizzle (`./schema`).
  */
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL no está definida en las variables de entorno');
+function createDb() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+  return drizzle(pool, { schema });
 }
-const pool = new Pool({ connectionString });
 
 /**
  * db
  * Instancia principal de Drizzle ORM, construida sobre el pool de pg.
  * Usar esta export para realizar operaciones de lectura/escritura.
+ * Se inicializa de forma lazy cuando se accede por primera vez.
  */
-export const db = drizzle(pool);
+let _db: any = null;
 
-
+export function db() {
+  if (!_db) {
+    _db = createDb();
+  }
+  return _db;
+}

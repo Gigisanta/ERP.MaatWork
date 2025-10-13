@@ -20,7 +20,9 @@ interface AuthContextValue {
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
 function getApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  console.log('API URL:', url);
+  return url;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -45,22 +47,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = React.useCallback(async (email: string, role?: UserRole) => {
-    const res = await fetch(`${getApiUrl()}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, role })
-    });
-    if (!res.ok) throw new Error('Credenciales inválidas');
-    const data = await res.json();
-    const t = data.token as string;
-    localStorage.setItem('cactus_token', t);
-    setToken(t);
-    const me = await fetch(`${getApiUrl()}/auth/me`, {
-      headers: { Authorization: `Bearer ${t}` }
-    });
-    if (me.ok) {
-      const { user } = await me.json();
-      setUser(user);
+    try {
+      const apiUrl = getApiUrl();
+      console.log('Attempting login to:', `${apiUrl}/auth/login`);
+      console.log('Login payload:', { email, role });
+      
+      const res = await fetch(`${apiUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role })
+      });
+      
+      console.log('Login response status:', res.status);
+      console.log('Login response ok:', res.ok);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Login error response:', errorText);
+        throw new Error('Credenciales inválidas');
+      }
+      
+      const data = await res.json();
+      console.log('Login success, token received');
+      const t = data.token as string;
+      localStorage.setItem('cactus_token', t);
+      setToken(t);
+      
+      const me = await fetch(`${apiUrl}/auth/me`, {
+        headers: { Authorization: `Bearer ${t}` }
+      });
+      if (me.ok) {
+        const { user } = await me.json();
+        setUser(user);
+        console.log('User data loaded:', user);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   }, []);
 
