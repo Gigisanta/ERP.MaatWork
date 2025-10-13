@@ -83,3 +83,4 @@ export const COMPARACION_MENSUAL_CONFIG = {
 export type ComparacionMensualConfig = typeof COMPARACION_MENSUAL_CONFIG;
 
 
+

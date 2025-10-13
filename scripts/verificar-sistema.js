@@ -104,3 +104,4 @@ console.log('  4. Configurar logs y monitoreo');
 console.log('\n🚀 El Sistema de Comparación Mensual está listo para usar!');
 
 
+

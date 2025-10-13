@@ -20,3 +20,4 @@ ALTER TABLE "diff_detalle" ALTER COLUMN "descripcion_nueva" DROP NOT NULL;
 -- The application logic will handle the 'ausente' type
 
 
+

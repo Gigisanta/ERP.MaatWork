@@ -136,3 +136,4 @@ ALTER TABLE "snapshots_maestro" ADD CONSTRAINT "snapshots_maestro_carga_id_audit
 ALTER TABLE "diff_detalle" ADD CONSTRAINT "diff_detalle_carga_id_auditoria_cargas_id_fk" FOREIGN KEY ("carga_id") REFERENCES "auditoria_cargas"("id") ON DELETE no action ON UPDATE no action;
 
 
+

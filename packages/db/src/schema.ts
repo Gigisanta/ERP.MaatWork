@@ -74,21 +74,18 @@ export const users = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     email: text('email').notNull(),
-    fullName: text('full_name').notNull(),
+    fullName: text('fullName').notNull(),
     role: text('role').notNull(), // advisor, manager, admin
-    isActive: boolean('is_active').notNull().default(true),
-    teamId: uuid('team_id').references(() => teams.id),
-    // FK self-referencial agregado vía migración SQL para evitar ciclo de tipos en TS
-    managerId: uuid('manager_id'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    passwordHash: text('passwordHash'),
+    isActive: boolean('isActive').notNull().default(true),
+    lastLogin: timestamp('lastLogin'),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt').notNull().defaultNow()
   },
   (table) => {
     return {
       emailUnique: uniqueIndex('users_email_unique').on(table.email),
-      roleIdx: index('idx_users_role').on(table.role),
-      managerIdx: index('idx_users_manager').on(table.managerId),
-      teamIdx: index('idx_users_team').on(table.teamId)
+      roleIdx: index('idx_users_role').on(table.role)
     };
   }
 );

@@ -303,3 +303,4 @@ curl /api/comparacion-mensual/snapshots/:cargaId/verify
 - [ ] Métricas en tiempo real
 
 
+
