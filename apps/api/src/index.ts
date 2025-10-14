@@ -26,7 +26,6 @@ import pipelineRouter from './routes/pipeline';
 import notificationsRouter from './routes/notifications';
 import attachmentsRouter from './routes/attachments';
 import notesRouter from './routes/notes';
-import comparacionMensualRouter from './routes/comparacion-mensual';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 
@@ -1030,80 +1029,6 @@ app.post('/populate-test-matching', async (req, res) => {
   }
 });
 
-// Endpoint para verificar sistema de comparación mensual
-app.get('/test-comparacion-mensual', async (req, res) => {
-  try {
-    const { Pool } = await import('pg');
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    const client = await pool.connect();
-    
-    try {
-      // Verificar que las tablas del sistema existen
-      const tablesResult = await client.query(`
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name IN (
-          'maestro_cuentas', 'staging_mensual', 'auditoria_cargas', 
-          'diff_detalle', 'asignaciones_asesor', 'snapshots_maestro'
-        )
-        ORDER BY table_name
-      `);
-      
-      // Verificar índices importantes
-      const indexesResult = await client.query(`
-        SELECT indexname, tablename 
-        FROM pg_indexes 
-        WHERE tablename IN (
-          'maestro_cuentas', 'staging_mensual', 'auditoria_cargas', 
-          'diff_detalle', 'asignaciones_asesor', 'snapshots_maestro'
-        )
-        ORDER BY tablename, indexname
-      `);
-      
-      // Verificar que no hay datos en staging (limpio)
-      const stagingCountResult = await client.query(`
-        SELECT COUNT(*) as count FROM staging_mensual
-      `);
-      
-      // Verificar cargas recientes
-      const cargasResult = await client.query(`
-        SELECT COUNT(*) as count FROM auditoria_cargas
-      `);
-      
-      res.json({
-        ok: true,
-        message: 'Sistema de comparación mensual verificado',
-        tables: {
-          found: tablesResult.rows.length,
-          expected: 6,
-          names: tablesResult.rows.map((r: any) => r.table_name)
-        },
-        indexes: {
-          count: indexesResult.rows.length,
-          details: indexesResult.rows
-        },
-        data: {
-          stagingRecords: parseInt(stagingCountResult.rows[0].count),
-          totalCargas: parseInt(cargasResult.rows[0].count)
-        },
-        status: tablesResult.rows.length === 6 ? 'READY' : 'INCOMPLETE',
-        timestamp: new Date().toISOString()
-      });
-      
-    } finally {
-      client.release();
-      await pool.end();
-    }
-    
-  } catch (error) {
-    req.log.error({ err: error }, 'Error en test-comparacion-mensual');
-    res.status(500).json({
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack?.substring(0, 500) : undefined
-    });
-  }
-});
 
 app.use('/auth', authRouter);
 app.use('/users', usersRouter);
@@ -1119,7 +1044,6 @@ app.use('/pipeline', pipelineRouter);
 app.use('/notifications', notificationsRouter);
 app.use('/attachments', attachmentsRouter);
 app.use('/notes', notesRouter);
-app.use('/comparacion-mensual', comparacionMensualRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

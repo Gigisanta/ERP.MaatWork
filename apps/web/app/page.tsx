@@ -52,33 +52,6 @@ export default function HomePage() {
             </div>
 
 
-            {/* Card Comparación Mensual */}
-            <div style={{ 
-              padding: 24, 
-              backgroundColor: '#f3f4f6', 
-              borderRadius: 12,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>📊 Comparación Mensual</h3>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 16 }}>
-                Sistema de gestión del maestro "Balanz Cactus 2025"
-              </p>
-              <Link 
-                href="/comparacion-mensual"
-                style={{ 
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: 500
-                }}
-              >
-                Gestionar Maestro →
-              </Link>
-            </div>
 
             
           </div>
