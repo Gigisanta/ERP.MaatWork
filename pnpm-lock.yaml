@@ -7,6 +7,13 @@ settings:
 importers:
 
   .:
+    dependencies:
+      node-fetch:
+        specifier: ^3.3.2
+        version: 3.3.2
+      pg:
+        specifier: ^8.16.3
+        version: 8.16.3
     devDependencies:
       turbo:
         specifier: ^2.1.1

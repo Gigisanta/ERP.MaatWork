@@ -90,7 +90,6 @@ export interface AumMadreValidRow {
 export interface ParseAumMadreResult {
   validRows: AumMadreValidRow[];
   invalidRows: Array<{ row: number; errors: string[] }>;
-  warnings: Array<{ row: number; warnings: string[] }>;
   metrics: IngestaMetrics;
 }
 
@@ -133,35 +132,10 @@ function parseDecimalComma(value: string | number | null | undefined): number | 
   if (typeof value === 'number') return value;
   
   if (typeof value === 'string') {
-    // Limpiar el string: quitar espacios y caracteres no numéricos excepto coma y punto
-    let cleaned = value.trim().replace(/[^\d.,-]/g, '');
-    
-    // Manejar números negativos
-    const isNegative = cleaned.startsWith('-');
-    if (isNegative) {
-      cleaned = cleaned.substring(1);
-    }
-    
-    // Si tiene punto y coma, el punto es separador de miles y la coma es decimal
-    if (cleaned.includes('.') && cleaned.includes(',')) {
-      cleaned = cleaned.replace(/\./g, ''); // Quitar puntos (separadores de miles)
-      cleaned = cleaned.replace(',', '.'); // Coma a punto decimal
-    } else if (cleaned.includes(',')) {
-      // Solo coma: puede ser decimal o separador de miles
-      const parts = cleaned.split(',');
-      if (parts.length === 2 && parts[1].length <= 2) {
-        // Probablemente es decimal (ej: "123,45")
-        cleaned = cleaned.replace(',', '.');
-      } else {
-        // Probablemente es separador de miles (ej: "1,234,567")
-        cleaned = cleaned.replace(/,/g, '');
-      }
-    }
-    
-    const num = parseFloat(cleaned);
-    const result = isNaN(num) ? null : num;
-    
-    return isNegative && result !== null ? -result : result;
+    // Reemplazar coma por punto
+    const normalized = value.replace(',', '.');
+    const num = parseFloat(normalized);
+    return isNaN(num) ? null : num;
   }
   
   return null;
@@ -174,12 +148,11 @@ function parseDecimalComma(value: string | number | null | undefined): number | 
  * @param rowNumber - Número de fila (para logging)
  * @returns Row validado o array de errores
  */
-export async function validateAumMadreRow(
+export function validateAumMadreRow(
   raw: AumMadreRawRow,
   rowNumber: number
-): Promise<{ valid: true; row: AumMadreValidRow; warnings?: string[] } | { valid: false; errors: string[] }> {
+): { valid: true; row: AumMadreValidRow } | { valid: false; errors: string[] } {
   const errors: string[] = [];
-  const warnings: string[] = [];
   
   // Validar campos obligatorios
   const comitente = castToInt(raw.comitente);
@@ -220,33 +193,16 @@ export async function validateAumMadreRow(
   const cv7000 = parseDecimalComma(raw.cv7000) || 0;
   const cv10000 = parseDecimalComma(raw.cv10000) || 0;
   
-  // Validar suma de breakdowns usando configuración (solo como warning, no error fatal)
+  // Validar suma de breakdowns (más permisivo)
   const breakdowns = [bolsaArg, fondosArg, bolsaBci, pesos, mep, cable, cv7000, cv10000];
+  const sumBreakdowns = breakdowns.reduce((a,b) => a+b, 0);
+  const diff = Math.abs(aumEnDolares! - sumBreakdowns);
   
-  // Importar configuración de parsing
-  const { getParsingConfig } = await import('../config');
-  const parsingConfig = getParsingConfig();
-  
-  if (!validateBreakdownSum(aumEnDolares!, breakdowns, parsingConfig)) {
-    const sumBreakdowns = breakdowns.reduce((a,b) => a+b, 0);
-    const diff = Math.abs(aumEnDolares! - sumBreakdowns);
-    
-    // Solo agregar como warning si la diferencia es muy grande (>100 USD o >10%)
-    const toleranceAbs = parsingConfig.breakdownTolerance || 10.0;
-    const tolerancePercent = parsingConfig.breakdownTolerancePercent || 5.0;
-    const tolerancePercentValue = (aumEnDolares! * tolerancePercent) / 100;
-    const maxTolerance = Math.max(toleranceAbs, tolerancePercentValue);
-    
-    if (diff > maxTolerance * 2) { // Solo error si es más del doble de la tolerancia
-      errors.push(
-        `Fila ${rowNumber}: Gran diferencia en breakdowns (${sumBreakdowns.toFixed(2)}) vs AUM (${aumEnDolares!.toFixed(2)}) - diferencia: ${diff.toFixed(2)}`
-      );
-    } else {
-      // Si la diferencia es menor, agregar como warning
-      warnings.push(
-        `Diferencia en breakdowns: ${sumBreakdowns.toFixed(2)} vs AUM ${aumEnDolares!.toFixed(2)} (diff: ${diff.toFixed(2)})`
-      );
-    }
+  // Solo error si la diferencia es muy grande (>1% del AUM)
+  if (diff > (aumEnDolares! * 0.01)) {
+    errors.push(
+      `Fila ${rowNumber}: Suma de breakdowns (${sumBreakdowns.toFixed(2)}) no coincide con AUM (${aumEnDolares!.toFixed(2)}) - diferencia: ${diff.toFixed(2)}`
+    );
   }
   
   if (errors.length > 0) {
@@ -286,7 +242,7 @@ export async function validateAumMadreRow(
     cv10000
   };
   
-  return { valid: true, row: validRow, warnings: warnings.length > 0 ? warnings : undefined };
+  return { valid: true, row: validRow };
 }
 
 /**
@@ -296,34 +252,27 @@ export async function validateAumMadreRow(
  * @param config - Configuración del parser
  * @returns Resultado del parsing con métricas
  */
-export async function parseAumMadre(
+export function parseAumMadre(
   rawRows: AumMadreRawRow[],
   config: ParserConfig = {}
-): Promise<ParseAumMadreResult> {
+): ParseAumMadreResult {
   const startTime = Date.now();
   
   const validRows: AumMadreValidRow[] = [];
   const invalidRows: Array<{ row: number; errors: string[] }> = [];
-  const warnings: Array<{ row: number; warnings: string[] }> = [];
-  const generalWarnings: string[] = [];
+  const warnings: string[] = [];
   
-  for (let index = 0; index < rawRows.length; index++) {
-    const raw = rawRows[index];
+  rawRows.forEach((raw, index) => {
     const rowNumber = index + (config.headerRow || 1) + 1;
     
-    const result = await validateAumMadreRow(raw, rowNumber);
+    const result = validateAumMadreRow(raw, rowNumber);
     
     if (result.valid) {
       validRows.push(result.row);
-      
-      // Verificar si hay warnings de breakdowns
-      if (result.warnings && result.warnings.length > 0) {
-        warnings.push({ row: rowNumber, warnings: result.warnings });
-      }
     } else {
       invalidRows.push({ row: rowNumber, errors: result.errors });
     }
-  }
+  });
   
   const endTime = Date.now();
   
@@ -333,14 +282,13 @@ export async function parseAumMadre(
     filasRechazadas: invalidRows.length,
     filasInsertadas: 0, // Se actualiza después de DB insert
     tiempoMs: endTime - startTime,
-    warnings: generalWarnings,
+    warnings,
     errors: invalidRows.flatMap(r => r.errors)
   };
   
   return {
     validRows,
     invalidRows,
-    warnings,
     metrics
   };
 }

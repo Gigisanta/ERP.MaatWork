@@ -180,25 +180,16 @@ export function castToNumber(
 
 /**
  * Valida que la suma de breakdowns aproxime al total
- * Usa tolerancia configurable desde ETL config
+ * Tolerancia aumentada para ser más permisiva: ±0.1 USD
  * 
  * @param total - AUM total esperado
  * @param breakdowns - Array de valores de breakdown
  * @returns true si es válido, false si excede tolerancia
  */
-export function validateBreakdownSum(total: number, breakdowns: (number | null)[], config?: any): boolean {
-  // Si no se pasa config, usar valores por defecto
-  const toleranceAbs = config?.breakdownTolerance ?? 0.1;
-  const tolerancePercent = config?.breakdownTolerancePercent ?? 1.0;
-  
+export function validateBreakdownSum(total: number, breakdowns: (number | null)[]): boolean {
   const sum = breakdowns.reduce((acc: number, val) => acc + (val || 0), 0);
   const diff = Math.abs(total - sum);
-  
-  // Usar tolerancia absoluta o porcentual, la que sea mayor
-  const toleranceAbsValue = toleranceAbs;
-  const tolerancePercentValue = (total * tolerancePercent) / 100;
-  const tolerance = Math.max(toleranceAbsValue, tolerancePercentValue);
-  
+  const tolerance = 0.1; // Aumentada de 0.01 a 0.1 USD
   return diff <= tolerance;
 }
 

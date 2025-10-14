@@ -45,7 +45,7 @@ export async function upsertDimClient(row: ClusterCuentasValidRow): Promise<stri
     const client = existing[0];
     
     // Si fue descubierto en Madre, solo actualizar campos no-autoritativos
-    if (false) { // client.descubiertoEnMadre) { // Comentado temporalmente
+    if (client.descubiertoEnMadre) {
       const [updated] = await db()
         .update(dimClient)
         .set({
@@ -96,8 +96,8 @@ export async function upsertDimClient(row: ClusterCuentasValidRow): Promise<stri
         primerFondeo: row.primerFondeo ? row.primerFondeo.toISOString().split('T')[0] : null,
         equipo: row.equipo,
         unidad: row.unidad,
-        // descubiertoEnMadre: false, // Comentado temporalmente
-        // descubiertoEnMensual: true // Comentado temporalmente
+        descubiertoEnMadre: false,
+        descubiertoEnMensual: true
       })
       .returning({ id: dimClient.id });
     
@@ -282,7 +282,7 @@ export async function ingestClusterCuentas(
   const { parseClusterCuentas } = await import('../parsers/cluster-cuentas');
   
   // Fase 1: Parsing y validación
-  const parseResult = await parseClusterCuentas(rawRows);
+  const parseResult = parseClusterCuentas(rawRows);
   
   // Fase 2: Carga a DB
   const loadResult = await loadClusterCuentas(parseResult.validRows, {

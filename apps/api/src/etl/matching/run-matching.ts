@@ -44,15 +44,10 @@ export interface RunMatchingResult {
  * @returns Resultado del matching con métricas
  */
 export async function runMatchingJob(config: RunMatchingConfig = {}): Promise<RunMatchingResult> {
-  // Cargar configuración desde ETL config
-  const { getMatchingConfig, getProcessingConfig } = await import('../config');
-  const matchingConfig = getMatchingConfig();
-  const processingConfig = getProcessingConfig();
-  
   const {
-    fuzzyEnabled = matchingConfig.fuzzyEnabled,
-    fuzzyThreshold = matchingConfig.fuzzyThreshold,
-    batchSize = processingConfig.batchSize,
+    fuzzyEnabled = true,
+    fuzzyThreshold = 2,
+    batchSize = 100,
     maxRecords
   } = config;
   

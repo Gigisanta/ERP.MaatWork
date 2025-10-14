@@ -66,7 +66,7 @@ export async function upsertDimClientFromMadre(row: AumMadreValidRow): Promise<s
     const [updated] = await db()
       .update(dimClient)
       .set({
-        cuentaNorm: row.descripcionNorm,
+        cuentaNorm: row.cuentaNorm,
         equipo: row.equipo,
         unidad: row.unidad,
         updatedAt: new Date()
@@ -82,7 +82,7 @@ export async function upsertDimClientFromMadre(row: AumMadreValidRow): Promise<s
       .values({
         comitente: row.comitente,
         cuotapartista: row.cuotapartista,
-        cuentaNorm: row.descripcionNorm,
+        cuentaNorm: row.cuentaNorm,
         equipo: row.equipo,
         unidad: row.unidad
       })
@@ -152,10 +152,14 @@ export async function loadAumMadre(
       await createAumSnapshot(clientId, advisorId, row, snapshotDate);
 
       result.snapshotsCreados++;
-      // Nota: Para simplificar, asumimos que siempre se crea/actualiza un cliente
+      if (existing.length === 0) {
+        result.clientesCreados++;
+      } else {
+        result.clientesActualizados++;
+      }
 
     } catch (error) {
-      const errorMsg = `Error procesando comitente ${row.comitente}/${row.cuotapartista}: ${error instanceof Error ? error.message : String(error)}`;
+      const errorMsg = `Error procesando comitente ${row.comitente}/${row.cuotapartista}: ${error.message}`;
       result.errors.push(errorMsg);
       console.error(errorMsg, error);
     }

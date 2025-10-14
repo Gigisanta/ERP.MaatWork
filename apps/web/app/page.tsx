@@ -80,33 +80,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Card Pipeline */}
-            <div style={{ 
-              padding: 24, 
-              backgroundColor: '#f3f4f6', 
-              borderRadius: 12,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>🔄 Pipeline</h3>
-              <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 16 }}>
-                Gestión de oportunidades y seguimiento
-              </p>
-              <Link 
-                href="/pipeline"
-                style={{ 
-                  display: 'inline-block',
-                  padding: '8px 16px',
-                  backgroundColor: '#8b5cf6',
-                  color: 'white',
-                  borderRadius: 6,
-                  textDecoration: 'none',
-                  fontSize: 14,
-                  fontWeight: 500
-                }}
-              >
-                Ver Pipeline →
-              </Link>
-            </div>
+            
           </div>
 
           <div style={{ marginTop: 24 }}>

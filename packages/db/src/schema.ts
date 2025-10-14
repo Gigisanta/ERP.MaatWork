@@ -74,13 +74,13 @@ export const users = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     email: text('email').notNull(),
-    fullName: text('fullName').notNull(),
+    fullName: text('full_name').notNull(),
     role: text('role').notNull(), // advisor, manager, admin
-    passwordHash: text('passwordHash'),
-    isActive: boolean('isActive').notNull().default(true),
-    lastLogin: timestamp('lastLogin'),
-    createdAt: timestamp('createdAt').notNull().defaultNow(),
-    updatedAt: timestamp('updatedAt').notNull().defaultNow()
+    passwordHash: text('password_hash'),
+    isActive: boolean('is_active').notNull().default(true),
+    lastLogin: timestamp('last_login'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => {
     return {

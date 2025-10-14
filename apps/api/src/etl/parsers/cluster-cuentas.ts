@@ -67,10 +67,10 @@ export interface ParseResult {
  * @param rowNumber - Número de fila (para logging)
  * @returns Row validado o array de errores
  */
-export async function validateClusterCuentasRow(
+export function validateClusterCuentasRow(
   raw: ClusterCuentasRawRow,
   rowNumber: number
-): Promise<{ valid: true; row: ClusterCuentasValidRow } | { valid: false; errors: string[] }> {
+): { valid: true; row: ClusterCuentasValidRow } | { valid: false; errors: string[] } {
   const errors: string[] = [];
   
   // Validar campos obligatorios
@@ -108,16 +108,13 @@ export async function validateClusterCuentasRow(
   const cv7000 = castToNumber(raw.cv7000, 6) || 0;
   const cv10000 = castToNumber(raw.cv10000, 6) || 0;
   
-  // Validar suma de breakdowns usando configuración
+  // Validar suma de breakdowns (más permisivo)
   const breakdowns = [bolsaArg, fondosArg, bolsaBci, pesos, mep, cable, cv7000, cv10000];
+  const sumBreakdowns = breakdowns.reduce((a,b) => a+b, 0);
+  const diff = Math.abs(aumEnDolares! - sumBreakdowns);
   
-  // Importar configuración de parsing
-  const { getParsingConfig } = await import('../config');
-  const parsingConfig = getParsingConfig();
-  
-  if (!validateBreakdownSum(aumEnDolares!, breakdowns, parsingConfig)) {
-    const sumBreakdowns = breakdowns.reduce((a,b) => a+b, 0);
-    const diff = Math.abs(aumEnDolares! - sumBreakdowns);
+  // Solo error si la diferencia es muy grande (>1% del AUM)
+  if (diff > (aumEnDolares! * 0.01)) {
     errors.push(
       `Fila ${rowNumber}: Suma de breakdowns (${sumBreakdowns.toFixed(2)}) no coincide con AUM (${aumEnDolares!.toFixed(2)}) - diferencia: ${diff.toFixed(2)}`
     );
@@ -168,28 +165,27 @@ export async function validateClusterCuentasRow(
  * @param config - Configuración del parser
  * @returns Resultado del parsing con métricas
  */
-export async function parseClusterCuentas(
+export function parseClusterCuentas(
   rawRows: ClusterCuentasRawRow[],
   config: ParserConfig = {}
-): Promise<ParseResult> {
+): ParseResult {
   const startTime = Date.now();
   
   const validRows: ClusterCuentasValidRow[] = [];
   const invalidRows: Array<{ row: number; errors: string[] }> = [];
   const warnings: string[] = [];
   
-  for (let index = 0; index < rawRows.length; index++) {
-    const raw = rawRows[index];
+  rawRows.forEach((raw, index) => {
     const rowNumber = index + (config.headerRow || 1) + 1;
     
-    const result = await validateClusterCuentasRow(raw, rowNumber);
+    const result = validateClusterCuentasRow(raw, rowNumber);
     
     if (result.valid) {
       validRows.push(result.row);
     } else {
       invalidRows.push({ row: rowNumber, errors: result.errors });
     }
-  }
+  });
   
   const endTime = Date.now();
   

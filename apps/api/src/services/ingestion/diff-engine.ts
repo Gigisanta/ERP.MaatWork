@@ -4,7 +4,9 @@ import {
   maestroCuentas, 
   stagingMensual, 
   diffDetalle, 
-  auditoriaCargas,
+  auditoriaCargas
+} from '@cactus/db';
+import { 
   type DiffResult,
   type NuevoRegistro,
   type ModificadoRegistro,
@@ -72,7 +74,9 @@ export class DiffEngine {
       if (!maestroRecord) {
         // Registro nuevo
         const nuevo: NuevoRegistro = {
+          tipo: 'nuevo',
           idcuenta: stagingRecord.idcuenta,
+          data: stagingRecord,
           comitente: stagingRecord.comitente,
           cuotapartista: stagingRecord.cuotapartista,
           descripcion: stagingRecord.descripcion,
@@ -84,10 +88,13 @@ export class DiffEngine {
         // Agregar a sin asesor si no tiene
         if (!stagingRecord.asesor) {
           sinAsesor.push({
+            tipo: 'sin_asesor',
             idcuenta: stagingRecord.idcuenta,
+            data: stagingRecord,
             comitente: stagingRecord.comitente,
             cuotapartista: stagingRecord.cuotapartista,
             descripcion: stagingRecord.descripcion,
+            asesor: stagingRecord.asesor,
             esNuevo: true
           });
         }
@@ -101,7 +108,11 @@ export class DiffEngine {
         
         if (cambios.length > 0 || asesorCambio) {
           const modificado: ModificadoRegistro = {
+            tipo: 'modificado',
             idcuenta: stagingRecord.idcuenta,
+            cambios: this.buildCambiosMap(maestroRecord, stagingRecord, cambios, asesorCambio),
+            dataAnterior: maestroRecord,
+            dataNuevo: stagingRecord,
             // Valores anteriores (del maestro)
             comitenteAnterior: maestroRecord.comitente,
             cuotapartistaAnterior: maestroRecord.cuotapartista,
@@ -113,18 +124,20 @@ export class DiffEngine {
             descripcionNueva: stagingRecord.descripcion,
             asesorNuevo: stagingRecord.asesor || undefined,
             // Metadatos
-            camposCambiados: asesorCambio ? [...cambios, 'asesor'] : cambios,
-            necesitaAsesor: !maestroRecord.asesor // Si el maestro no tiene asesor, necesita asignación
+            camposCambiados: asesorCambio ? [...cambios, 'asesor'] : cambios
           };
           modificados.push(modificado);
 
           // Agregar a sin asesor si no tiene asesor en el maestro
           if (!maestroRecord.asesor) {
             sinAsesor.push({
+              tipo: 'sin_asesor',
               idcuenta: stagingRecord.idcuenta,
+              data: stagingRecord,
               comitente: stagingRecord.comitente,
               cuotapartista: stagingRecord.cuotapartista,
               descripcion: stagingRecord.descripcion,
+              asesor: stagingRecord.asesor,
               esNuevo: false
             });
           }
@@ -140,12 +153,13 @@ export class DiffEngine {
       if (!stagingRecord) {
         // Registro ausente
         const ausente: AusenteRegistro = {
+          tipo: 'ausente',
           idcuenta: maestroRecord.idcuenta,
+          data: maestroRecord,
           comitente: maestroRecord.comitente,
           cuotapartista: maestroRecord.cuotapartista,
           descripcion: maestroRecord.descripcion,
-          asesor: maestroRecord.asesor || undefined,
-          requiereInactivacion: false // Por defecto no se inactiva
+          asesor: maestroRecord.asesor || undefined
         };
         ausentes.push(ausente);
       }
@@ -354,6 +368,41 @@ export class DiffEngine {
       .from(diffDetalle)
       .where(eq(diffDetalle.cargaId, cargaId))
       .orderBy(diffDetalle.tipo, diffDetalle.idcuenta);
+  }
+
+  /**
+   * Construye el mapa de cambios para un registro modificado
+   * @param anterior Registro anterior
+   * @param nuevo Registro nuevo
+   * @param camposCambiados Lista de campos que cambiaron
+   * @param asesorCambio Si hubo cambio de asesor
+   * @returns Mapa de cambios
+   */
+  private buildCambiosMap(
+    anterior: any, 
+    nuevo: any, 
+    camposCambiados: string[], 
+    asesorCambio: boolean
+  ): CamposCambiados {
+    const cambios: CamposCambiados = {};
+    
+    // Agregar campos que cambiaron
+    for (const campo of camposCambiados) {
+      cambios[campo] = {
+        anterior: anterior[campo],
+        nuevo: nuevo[campo]
+      };
+    }
+    
+    // Agregar cambio de asesor si aplica
+    if (asesorCambio) {
+      cambios.asesor = {
+        anterior: anterior.asesor,
+        nuevo: nuevo.asesor
+      };
+    }
+    
+    return cambios;
   }
 }
 

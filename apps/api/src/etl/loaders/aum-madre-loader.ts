@@ -3,7 +3,7 @@
  * FUENTE AUTORITATIVA: prioridad sobre el Mensual para AUM y owner
  */
 
-import { db, dimClient, dimAdvisor, factAumSnapshot, mapCuentaVariantes } from '@cactus/db';
+import { db, dimClient, dimAdvisor, factAumSnapshot, mapCuentaVariantes, stgAumMadre } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
 import type { AumMadreValidRow } from '../parsers/aum-madre';
 import type { ProyeccionResult } from '../types';
@@ -65,7 +65,7 @@ export async function findOrCreateAdvisorByName(
 /**
  * Proyecta una fila validada del CSV Madre a dim_client
  * Hace UPSERT basado en (comitente, cuotapartista)
- * PRIORIDAD: Si el cliente YA existe, solo actualiza si vino desde madre (// descubiertoEnMadre=true)
+ * PRIORIDAD: Si el cliente YA existe, solo actualiza si vino desde madre (descubiertoEnMadre=true)
  * 
  * @param row - Fila validada del CSV Madre
  * @param idAdvisorOwner - ID del asesor owner (si se encontró)
@@ -309,7 +309,7 @@ export async function ingestAumMadre(
   const { parseAumMadre } = await import('../parsers/aum-madre');
   
   // Fase 1: Parsing y validación
-  const parseResult = await parseAumMadre(rawRows);
+  const parseResult = parseAumMadre(rawRows);
   
   // Fase 2: Carga a DB con prioridad autoritativa
   const loadResult = await loadAumMadre(parseResult.validRows, {

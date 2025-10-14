@@ -6,8 +6,8 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
 
-// Cargar .env desde la raíz del workspace
-const envPath = resolve(process.cwd(), '../../.env');
+// Cargar .env desde el directorio de la API
+const envPath = resolve(process.cwd(), '.env');
 
 console.log(`Looking for .env at: ${envPath}`);
 console.log(`Exists: ${existsSync(envPath)}`);
