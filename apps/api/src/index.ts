@@ -28,6 +28,7 @@ import analyticsRouter from './routes/analytics';
 import instrumentsRouter from './routes/instruments';
 import logsRouter from './routes/logs';
 import brokerAccountsRouter from './routes/broker-accounts';
+import aumRouter from './routes/aum';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import { initializeDatabase } from './db-init';
@@ -258,6 +259,7 @@ app.use('/analytics', analyticsRouter);
 app.use('/instruments', instrumentsRouter);
 app.use('/logs', logsRouter);
 app.use('/broker-accounts', brokerAccountsRouter);
+app.use('/admin/aum', aumRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -276,6 +278,7 @@ app.use('/v1/analytics', analyticsRouter);
 app.use('/v1/instruments', instrumentsRouter);
 app.use('/v1/logs', logsRouter);
 app.use('/v1/broker-accounts', brokerAccountsRouter);
+app.use('/v1/admin/aum', aumRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

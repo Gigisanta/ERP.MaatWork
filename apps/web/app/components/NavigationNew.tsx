@@ -31,7 +31,7 @@ export default function NavigationNew() {
 
   // Add role-based navigation items
   if (user.role === 'admin') {
-    navItems.push({ label: 'Administración', href: '/admin/users', icon: 'Settings' });
+    // Admin: no mostrar acceso directo a Administración; se accede desde el home card
     navItems.push({ label: 'Equipos', href: '/teams', icon: 'Users' });
   } else if (user.role === 'manager') {
     navItems.push({ label: 'Mi Equipo', href: '/teams', icon: 'Users' });

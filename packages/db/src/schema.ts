@@ -860,6 +860,55 @@ export const brokerPositions = pgTable(
 );
 
 // ==========================================================
+// AUM Imports (manual CSV/XLSX staging y auditoría)
+// ==========================================================
+
+/**
+ * aum_import_files
+ * Auditoría de importaciones manuales (CSV/XLSX) con métricas y estado.
+ */
+export const aumImportFiles = pgTable(
+  'aum_import_files',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    broker: text('broker').notNull(), // balanz
+    originalFilename: text('original_filename').notNull(),
+    mimeType: text('mime_type').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    uploadedByUserId: uuid('uploaded_by_user_id').notNull().references(() => users.id),
+    status: text('status').notNull(), // uploaded, parsed, committed, failed
+    totalParsed: integer('total_parsed').notNull().default(0),
+    totalMatched: integer('total_matched').notNull().default(0),
+    totalUnmatched: integer('total_unmatched').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  }
+);
+
+/**
+ * aum_import_rows
+ * Filas parseadas desde archivos importados, con pre-matching y estado.
+ */
+export const aumImportRows = pgTable(
+  'aum_import_rows',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    fileId: uuid('file_id').notNull().references(() => aumImportFiles.id, { onDelete: 'cascade' }),
+    raw: jsonb('raw').notNull().default(sql`'{}'::jsonb`),
+    accountNumber: text('account_number'),
+    holderName: text('holder_name'),
+    advisorRaw: text('advisor_raw'),
+    matchedContactId: uuid('matched_contact_id').references(() => contacts.id),
+    matchedUserId: uuid('matched_user_id').references(() => users.id),
+    matchStatus: text('match_status').notNull().default('unmatched'), // matched, ambiguous, unmatched
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    aumRowsAccountIdx: index('idx_aum_rows_account').on(table.accountNumber),
+    aumRowsFileIdx: index('idx_aum_rows_file').on(table.fileId)
+  })
+);
+
+// ==========================================================
 // Carteras
 // ==========================================================
 

@@ -84,7 +84,7 @@ export default function HomePage() {
 
             {/* Administración */}
             <Card>
-              <Link href="/admin/users" className="block no-underline">
+              <Link href="/admin" className="block no-underline">
                 <CardContent>
                   <Stack direction="column" gap="sm">
                     <Stack direction="row" gap="sm" align="center">

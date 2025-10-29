@@ -52,25 +52,7 @@ export default function AdminUsersPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  // Early return for loading
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p>Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not admin
-  if (user && user.role !== 'admin') {
-    router.push('/');
-    return null;
-  }
-
-  // Fetch users
+  // Fetch users (must be declared before any early return to keep hooks order)
   useEffect(() => {
     if (user?.role === 'admin' && token) {
       fetchUsers();
@@ -102,6 +84,23 @@ export default function AdminUsersPage() {
       setDataLoading(false);
     }
   };
+  // Early return for loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not admin
+  if (user && user.role !== 'admin') {
+    router.push('/');
+    return null;
+  }
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!token) return;
