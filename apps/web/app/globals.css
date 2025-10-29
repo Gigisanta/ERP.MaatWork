@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cactus CRM - Design System Foundation */
+:root {
+  /* Brand Colors - Green Primary System */
+  --color-primary: #22c55e;
+  --color-primary-hover: #16a34a;
+  --color-primary-active: #15803d;
+  --color-primary-light: #4ade80;
+  --color-primary-subtle: #dcfce7;
+  
+  /* Semantic Status Colors */
+  --color-success: #22c55e;
+  --color-success-hover: #16a34a;
+  --color-success-subtle: #dcfce7;
+  --color-error: #ef4444;
+  --color-error-hover: #dc2626;
+  --color-error-subtle: #fee2e2;
+  --color-warning: #f59e0b;
+  --color-warning-hover: #d97706;
+  --color-warning-subtle: #fef3c7;
+  --color-info: #3b82f6;
+  --color-info-hover: #2563eb;
+  --color-info-subtle: #dbeafe;
+  
+  /* Neutral Scale (Gray System) */
+  --color-background: #ffffff;
+  --color-surface: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-text-inverse: #ffffff;
+  
+  /* Chart & Data Visualization */
+  --color-chart-1: #3b82f6;  /* Blue */
+  --color-chart-2: #22c55e;  /* Green */
+  --color-chart-3: #f59e0b;  /* Amber */
+  --color-chart-4: #ef4444;  /* Red */
+  --color-chart-5: #8b5cf6;  /* Purple */
+  --color-chart-6: #06b6d4;  /* Cyan */
+  
+  /* Elevation (Shadows) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.375rem;  /* 6px */
+  --radius-lg: 0.5rem;    /* 8px */
+  --radius-xl: 0.75rem;   /* 12px */
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Legacy brand overrides (maintained for compatibility) */
+  --color-brand-primary: oklch(58% 0.10 145);
+  --color-brand-hover: oklch(55% 0.09 145);
+}
+
+/* Asegurar que el texto tenga contraste adecuado por defecto */
+@layer base {
+  body {
+    @apply text-text bg-background;
+    color: var(--color-text);
+    background-color: var(--color-background);
+  }
+}

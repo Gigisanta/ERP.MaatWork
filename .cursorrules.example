@@ -1,0 +1,84 @@
+# Example: Universal Rules Integration for Other Projects
+
+# Copy this configuration to your .cursorrules file to integrate the universal engineering rules
+
+---
+
+## 📋 Instructions to Integrate
+
+1. Copy the content below to your project's `.cursorrules` file
+2. Ensure `AI_AUTO_DEV_RULES.md` exists in your project root
+3. Adapt the project-specific sections to your stack
+
+---
+
+## START CONFIGURATION
+
+# Proyecto: [Your Project Name]
+
+## Arquitectura general
+- [Define your architecture here]
+- Tech stack: [List your main technologies]
+- Monorepo/polyrepo structure: [Describe]
+
+## Reglas Universales de Ingeniería (AI_AUTO_DEV_RULES.md)
+
+ANTES DE CUALQUIER MODIFICACIÓN DE CÓDIGO:
+
+1. **Leer y aplicar las 30 reglas** de `AI_AUTO_DEV_RULES.md`
+2. **Prioridad**: Si duda entre dos soluciones, elegir la MÁS ESTABLE, no la más creativa
+3. **Decision flow**:
+   - ¿Es necesario? → Si NO, detener
+   - ¿Sigue las reglas 1-30? → Si NO, refactorizar
+   - ¿Es seguro? → Si NO, agregar tests primero
+   - ¿Romperá código existente? → Si SÍ, versionarlo
+   - ¿Está documentado? → Si NO, agregar comentarios inline
+
+### Principios Críticos:
+- **Rule 12**: Fallar rápido con mensajes claros
+- **Rule 13**: Tests antes de refactorizar
+- **Rule 15**: Cambios pequeños y atómicos
+- **Rule 22**: Documentar decisiones de arquitectura
+- **Rule 27**: Mantener lista de riesgos antes de refactors grandes
+
+### Formato para Cambios:
+```typescript
+// AI_DECISION: [Motivo del cambio]
+// Justificación: [Por qué es mejor esta implementación]
+// Impacto: [Qué áreas del código afecta]
+```
+
+### Checklist Pre-Modificación:
+- [ ] Typed correctamente (TypeScript strict o equivalent)
+- [ ] Sin dependencias nuevas sin justificación
+- [ ] Sin breaking changes sin versionado
+- [ ] Tests existentes pasan
+- [ ] Nuevos tests agregados
+- [ ] Linter limpio
+- [ ] Documentado con comentarios inline
+
+## Convenciones de código
+- [Add your specific code conventions here]
+- TypeScript, Python, etc.
+- Linters and formatters
+- Testing frameworks
+
+## Rutas relevantes
+- [Add key paths for your project]
+
+## Ejecución local (desarrollo)
+- Comandos: [Your dev commands]
+- URLs: [Your local URLs]
+
+## Despliegue
+- [Your deployment process]
+- Variables de entorno: [Required env vars]
+
+## Notas de Cursor
+- Al referenciar código existente en mensajes, usar code references con rango de líneas y ruta.
+- Para nuevo código, usar bloques de código con lenguaje.
+- LEER `AI_AUTO_DEV_RULES.md` ANTES DE CUALQUIER CAMBIO. Es el archivo principal de referencia.
+
+---
+
+## END CONFIGURATION

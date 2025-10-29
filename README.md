@@ -1,0 +1,459 @@
+# CACTUS CRM Monorepo
+
+Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@cactus/db` (Drizzle + PostgreSQL) y `@cactus/ui` (Design System + React Components).
+
+## Estructura del Proyecto
+
+```
+CactusDashboard-epic-D/
+├── apps/
+│   ├── api/                 # API Express + TypeScript
+│   ├── web/                 # Frontend Next.js
+│   └── analytics-service/   # Servicio Python de análisis
+├── packages/
+│   ├── db/                  # Drizzle ORM + PostgreSQL
+│   └── ui/                  # Design System + React Components
+├── data/                    # Archivos de datos de negocio (Excel)
+├── Automations/             # Scripts de automatización Chrome
+└── docker-compose.yml       # PostgreSQL local
+```
+
+## Requisitos
+- Node.js 20+
+- pnpm 9+
+- TMUX (recomendado) - `brew install tmux` en macOS, `sudo apt-get install tmux` en Ubuntu
+- (Opcional) Docker para Postgres local
+
+## Instalación
+```bash
+pnpm install
+```
+
+## Desarrollo
+
+### Prerrequisitos
+- Node.js 20+
+- pnpm 9+
+- TMUX (recomendado para mejor experiencia de desarrollo)
+- Docker (opcional, para PostgreSQL local)
+
+### Configuración Inicial
+- Base de datos local (opcional):
+```bash
+docker compose up -d
+```
+- Variables de entorno API: copia `apps/api/.env.example` a `apps/api/.env` y ajusta.
+
+### Ejecutar Aplicaciones
+
+#### Opción 1: Comando Unificado con TMUX (Recomendado)
+```bash
+pnpm dev
+```
+
+Este comando inicia todos los servicios en una sesión TMUX con 4 paneles:
+- **Panel 1**: API (puerto 3001)
+- **Panel 2**: Web App (puerto 3000)
+- **Panel 3**: Analytics Service (puerto 3002)
+- **Panel 4**: DB Logs (PostgreSQL)
+
+**Ventajas:**
+- Logs visibles simultáneamente en todos los servicios
+- Fácil detección de errores
+- Sesión persistente (puedes desacoplarte sin detener servicios)
+- Scrollback individual por panel
+
+**Comandos TMUX útiles:**
+```bash
+# Conectar a sesión existente
+tmux attach -t cactus-dev
+
+# Detach de la sesión (Ctrl+b d)
+# Cambiar entre paneles (Ctrl+b →, ←, ↑, ↓ o Ctrl+b o)
+# Cerrar panel actual (Ctrl+b x)
+# Maximizar panel (Ctrl+b z)
+# Salir de la sesión completamente
+pnpm run dev:kill
+```
+
+#### Opción 2: Comandos Separados (Sin TMUX)
+```bash
+pnpm run dev:basic
+```
+
+O manualmente:
+```bash
+# Terminal 1 - API
+cd apps/api && pnpm dev
+
+# Terminal 2 - Web App  
+cd apps/web && pnpm dev
+
+# Terminal 3 - Analytics (opcional)
+cd apps/analytics-service && python main.py
+```
+
+### URLs de Acceso
+- **Aplicación Web**: http://localhost:3000
+- **API Health Check**: http://localhost:3001/health
+- **Analytics Service**: http://localhost:3002
+- **Analytics Health**: http://localhost:3002/health
+
+### Logs
+
+Al usar `pnpm dev` (TMUX), los logs de cada servicio aparecen en su propio panel:
+
+- **Panel 1 (API)**: Logs estructurados JSON con Pino
+- **Panel 2 (Web)**: Logs de Next.js (build, requests)
+- **Panel 3 (Analytics)**: Logs de FastAPI/Uvicorn
+- **Panel 4 (DB)**: Logs de PostgreSQL en tiempo real
+
+**TMUX - Ver logs de un servicio específico:**
+```bash
+# Ver el panel de la API
+Ctrl+b o  # Navega hasta el panel de API
+# O usar teclas de dirección: Ctrl+b → para ir al siguiente panel
+```
+
+**TMUX - Scroll en logs:**
+```bash
+Ctrl+b [  # Entrar en modo scroll
+# Usa ↑↓ para navegar, q para salir
+```
+
+Logs legibles en API (desarrollo):
+```bash
+pnpm -F @cactus/api run dev:pretty
+```
+
+### Solución de Problemas
+
+#### TMUX no está instalado:
+```bash
+# macOS
+brew install tmux
+
+# Ubuntu/Debian
+sudo apt-get install tmux
+
+# Arch Linux
+sudo pacman -S tmux
+```
+
+#### Detener sesión TMUX si quedó colgada:
+```bash
+pnpm run dev:kill
+# o manualmente:
+tmux kill-session -t cactus-dev
+```
+
+#### Reconectar a sesión TMUX existente:
+```bash
+tmux attach -t cactus-dev
+```
+
+#### Si `pnpm dev` (TMUX) se queda en loop:
+```bash
+# Detener sesión TMUX
+pnpm run dev:kill
+
+# Limpiar procesos
+pkill -f "turbo" && pkill -f "tsx" && pkill -f "next"
+pkill -f "uvicorn"
+
+# Reiniciar
+pnpm dev
+```
+
+#### Si hay errores de base de datos:
+```bash
+# Verificar que PostgreSQL esté corriendo
+docker ps | grep postgres
+
+# Si no está corriendo, iniciar PostgreSQL
+docker compose up -d
+# o localmente:
+brew services start postgresql
+```
+
+#### Si hay errores de dependencias:
+```bash
+pnpm install
+```
+
+#### Servicio Analytics no inicia:
+```bash
+# Verificar que Python 3.10+ está instalado
+python3 --version
+
+# Instalar dependencias Python
+cd apps/analytics-service
+pip install -r requirements.txt
+```
+
+## API (Express)
+- Entrypoint: `apps/api/src/index.ts`
+- Rutas: `apps/api/src/routes/*`
+- Seguridad:
+  - Helmet activado; `CSP_ENABLED=true` para habilitar CSP por defecto.
+  - CORS: en dev permite todo; en prod permite orígenes en `CORS_ORIGINS`.
+- Variables (`apps/api/.env`):
+  - `NODE_ENV` (development|production)
+  - `PORT` (por defecto 3001)
+  - `LOG_LEVEL` (info|debug|...)
+  - `DATABASE_URL` (postgres)
+  - `CORS_ORIGINS` (separado por comas, usado en producción)
+  - `CSP_ENABLED` (true/false)
+
+## Sistema de Logging Avanzado
+
+### Backend (API)
+- **Logger**: Pino con logs estructurados JSON
+- **Correlación**: Cada request tiene `X-Request-ID` único
+- **Contexto**: Incluye `userId`, `userRole`, `teamId` automáticamente
+- **Métricas**: Duración de operaciones y queries DB
+- **Sanitización**: Headers sensibles redactados automáticamente
+
+### Frontend (Web)
+- **Logger**: Sistema estructurado con niveles (debug/info/warn/error)
+- **Correlación**: `X-Request-ID` en todos los fetch calls
+- **Error Boundary**: Captura errores de React automáticamente
+- **Centralización**: Logs enviados a `/logs/client` en producción
+
+### Comandos de Logging
+```bash
+# Ver logs en desarrollo (formato legible)
+pnpm -F @cactus/api run dev:pretty
+
+# Ver logs en producción
+pm2 logs cactus-api
+
+# Configurar rotación de logs
+pnpm -F @cactus/api run pm2:logrotate:install
+pnpm -F @cactus/api run pm2:logrotate:config
+```
+
+### Integración con Servicios Externos
+Para producción, configurar variables de entorno:
+- `LOGZIO_API_KEY` - Para Logz.io (ELK as-a-service)
+- `SENTRY_DSN` - Para Sentry (errores frontend/backend)
+- `BETTER_STACK_TOKEN` - Para Better Stack (logs centralizados)
+
+## Paquetes Compartidos
+
+### DB (Drizzle)
+- Config: `packages/db/drizzle.config.ts`
+- Schema: `packages/db/src/schema.ts`
+- Cliente: `packages/db/src/index.ts` (exporta `db` y esquemas)
+
+### UI (Design System)
+- Componentes: `packages/ui/src/components/`
+- Primitivos: `packages/ui/src/primitives/`
+- Tokens: `packages/ui/src/tokens/`
+- Storybook: `packages/ui/.storybook/`
+- Tests: `packages/ui/tests/`
+
+## Web (Next.js)
+- App router en `apps/web/app/*`
+- `NEXT_PUBLIC_API_URL` para apuntar a la API
+
+## Deploy en VPS con PM2
+1) Build de la API
+```bash
+pnpm -F @cactus/api build
+```
+2) Iniciar con PM2
+```bash
+pm2 start apps/api/ecosystem.config.js --env production
+```
+3) pm2-logrotate (recomendado)
+```bash
+pnpm -F @cactus/api run pm2:logrotate:install
+pnpm -F @cactus/api run pm2:logrotate:config
+```
+   - También está configurado en `ecosystem.config.js` dentro de `deploy.production.post_deploy`.
+4) Logs
+```bash
+pm2 logs cactus-api
+# o archivos en apps/api/logs/
+```
+5) Variables en el servidor
+- Crear `.env` en `apps/api` con: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`.
+
+## Reglas operativas (resumen)
+- Desarrollo: usar `pino-pretty` (activado automáticamente cuando `NODE_ENV !== 'production'`).
+- Producción: ejecutar con PM2 en cluster; habilitar logrotate con `pm2-logrotate`.
+- CORS estricto en producción mediante `CORS_ORIGINS`.
+- CSP opcional con `CSP_ENABLED=true` si defines una política adecuada.
+
+## Sistema de Etiquetas
+
+El sistema de etiquetas permite categorizar contactos con etiquetas personalizables y editables inline.
+
+### Características
+- **Creación automática**: Las etiquetas se crean automáticamente al escribir nombres nuevos
+- **Autocompletado**: Búsqueda en tiempo real con debounce de 250ms
+- **Edición inline**: Click en la celda de etiquetas para editar
+- **Case-insensitive**: Los nombres de etiquetas son únicos sin importar mayúsculas/minúsculas
+- **Fallback sin JS**: Formulario de texto separado por comas cuando JavaScript está deshabilitado
+- **Límites**: Máximo 3 etiquetas visibles + contador "+N" para el resto
+
+### Endpoints API
+
+#### `GET /api/tags`
+Lista etiquetas con autocompletado.
+```bash
+curl -H "Authorization: Bearer TOKEN" \
+  "http://localhost:3001/api/tags?scope=contact&q=vi&limit=10"
+```
+
+#### `POST /api/tags`
+Crea nueva etiqueta (idempotente).
+```bash
+curl -X POST -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"scope":"contact","name":"VIP","color":"#ff0000"}' \
+  "http://localhost:3001/api/tags"
+```
+
+#### `GET /api/tags/contacts/:id`
+Lista etiquetas de un contacto.
+```bash
+curl -H "Authorization: Bearer TOKEN" \
+  "http://localhost:3001/api/tags/contacts/CONTACT_ID"
+```
+
+#### `PUT /api/tags/contacts/:id`
+Actualiza etiquetas de un contacto.
+```bash
+curl -X PUT -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"add":["TAG_ID","Nueva Etiqueta"],"remove":["TAG_ID_TO_REMOVE"]}' \
+  "http://localhost:3001/api/tags/contacts/CONTACT_ID"
+```
+
+### Validaciones
+- **Nombre**: 1-40 caracteres, alfanumérico + espacios
+- **Único**: Case-insensitive por scope
+- **Rate limiting**: 10 requests/minuto para creación
+- **Seguridad**: CSRF habilitado en PUT/POST/DELETE
+
+### Estructura de Base de Datos
+```sql
+-- Tabla principal de etiquetas
+CREATE TABLE tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scope TEXT NOT NULL, -- 'contact', 'meeting', 'note'
+  name TEXT NOT NULL,
+  color TEXT DEFAULT '#6B7280',
+  icon TEXT,
+  description TEXT,
+  is_system BOOLEAN DEFAULT false,
+  created_by_user_id UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Relación N:M contactos-etiquetas
+CREATE TABLE contact_tags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### Archivos del Sistema
+- **Backend**: `apps/api/src/routes/tags.ts`
+- **Frontend**: `apps/web/app/contacts/page.tsx`
+- **Tests**: `apps/api/src/__tests__/tags.spec.ts`, `contacts-tags.e2e.test.ts`
+
+### Uso en Frontend
+```html
+<!-- Contenedor para editor de etiquetas -->
+<div class="tag-selector" 
+     data-contact-id="CONTACT_ID" 
+     data-api-url="/api">
+  <!-- Fallback sin JS -->
+  <noscript>
+    <form class="tag-fallback" data-contact-id="CONTACT_ID">
+      <input type="text" class="tag-fallback-input" 
+             placeholder="Etiquetas separadas por comas" />
+      <button type="submit" class="tag-fallback-btn">Guardar</button>
+    </form>
+  </noscript>
+</div>
+```
+
+### Comandos de Prueba
+```bash
+# Tests unitarios
+pnpm -F @cactus/api test tags.spec.ts
+
+# Tests e2e
+pnpm -F @cactus/api test contacts-tags.e2e.test.ts
+
+# Generar migraciones
+cd packages/db && npx drizzle-kit generate
+```
+
+## Datos de Negocio
+
+Los archivos de datos de negocio se encuentran en la carpeta `/data/`:
+- **Balanz Cactus 2025 - AUM Balanz.xlsx**: Archivo madre con datos de AUM por cuenta/cliente
+- **reporteClusterCuentasV2.xlsx**: Reporte mensual de cluster de cuentas  
+- **Comisiones (2).xlsx**: Datos de comisiones por operaciones
+
+Ver `/data/README.md` para más detalles sobre cada archivo.
+
+## Scripts útiles
+- `pnpm dev`: inicia API, Web, Analytics y DB logs en TMUX (recomendado).
+- `pnpm run dev:basic`: inicia servicios sin TMUX (alternativa).
+- `pnpm run dev:kill`: detiene la sesión TMUX `cactus-dev`.
+- `pnpm -F @cactus/api build`: compila la API.
+- `pnpm -F @cactus/ui build`: compila el design system.
+- `pnpm -F @cactus/ui storybook`: inicia Storybook para documentación de componentes.
+- `pnpm -F @cactus/api run dev:pretty`: logs legibles en dev.
+- `pnpm -F @cactus/api run pm2:logrotate:install` y `pnpm -F @cactus/api run pm2:logrotate:config`: configurar rotación de logs.
+
+## Repo hygiene
+- No se comitean artefactos: `dist/`, `node_modules/`, `.next/`, `.turbo/`, `coverage/`, logs.
+- `apps/api/uploads/` mantiene `.gitkeep`; contenidos ignorados.
+- Pre-commit: se ejecuta `lint-staged` y `pnpm guard:artifacts` para bloquear artefactos.
+- Drizzle: flujo permitido `generate` → `migrate` (sin `push`).
+
+## Design System (@cactus/ui)
+
+Sistema de diseño moderno y accesible construido con React, Tailwind CSS y Radix Primitives.
+
+### Características
+- **Accesibilidad**: WCAG 2.2 AA, soporte completo para lectores de pantalla
+- **Theming**: Modo claro/oscuro con tokens CSS personalizables
+- **Componentes**: 40+ componentes reutilizables (Button, Input, Modal, DataTable, etc.)
+- **Documentación**: Storybook con ejemplos interactivos y pruebas de accesibilidad
+- **Testing**: Jest + React Testing Library + jest-axe para validación automática
+
+### Componentes Principales
+- **Primitivos**: Box, Stack, Grid, Text, Heading, Icon
+- **Inputs**: Button, Input, Select, Checkbox, Switch
+- **Navegación**: Header, Sidebar, Breadcrumbs, Tabs, Pagination
+- **Feedback**: Modal, Toast, Tooltip, Alert, Spinner, Card
+- **Datos**: DataTable, EmptyState, DropdownMenu
+
+### Uso
+```tsx
+import { Button, Card, Input, useTheme } from '@cactus/ui';
+
+function MyComponent() {
+  const { theme, setTheme } = useTheme();
+  
+  return (
+    <Card>
+      <Input placeholder="Escribe algo..." />
+      <Button onClick={() => setTheme('dark')}>
+        Cambiar tema
+      </Button>
+    </Card>
+  );
+}
+```

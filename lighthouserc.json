@@ -1,0 +1,27 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "cd apps/web && pnpm start",
+      "url": [
+        "http://localhost:3000",
+        "http://localhost:3000/contacts",
+        "http://localhost:3000/pipeline"
+      ],
+      "numberOfRuns": 3
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "first-contentful-paint": ["error", {"maxNumericValue": 1800}],
+        "largest-contentful-paint": ["error", {"maxNumericValue": 2500}],
+        "interactive": ["error", {"maxNumericValue": 3800}],
+        "speed-index": ["error", {"maxNumericValue": 3400}],
+        "total-byte-weight": ["error", {"maxNumericValue": 300000}]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
+

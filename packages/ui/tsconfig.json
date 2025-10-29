@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ES2015", "ES2017", "ES2018", "ES2019", "ES2020"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": false,
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "src/tailwind-preset.ts"],
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "tests", 
+    "**/*.test.ts", 
+    "**/*.test.tsx", 
+    "**/*.stories.tsx",
+    "src/components/Select.tsx",
+    "src/components/Switch.tsx",
+    "src/components/nav/Header.tsx",
+    "src/components/nav/Nav.tsx",
+    "src/components/nav/Pagination.tsx",
+    "src/components/nav/Sidebar.tsx"
+  ]
+}

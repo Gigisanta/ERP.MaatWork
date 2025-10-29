@@ -1,0 +1,50 @@
+{
+  "name": "cactus",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.10.0",
+  "scripts": {
+    "build": "turbo run build",
+    "build:clean": "turbo run build:clean && turbo run build",
+    "dev": "bash scripts/dev-tmux.sh",
+    "dev:basic": "turbo run dev --parallel",
+    "dev:clean": "pnpm dev:kill && pnpm -F @cactus/web clean && pnpm dev",
+    "dev:kill": "tmux kill-session -t cactus-dev 2>/dev/null || true",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    
+    "db:generate": "pnpm -F @cactus/db run generate",
+    "db:migrate": "pnpm -F @cactus/db run migrate",
+    
+    "db:studio": "pnpm -F @cactus/db run studio",
+    "lighthouse": "lhci autorun --config=lighthouserc.json",
+    "predev": "bash scripts/dev-clean.sh",
+    "predev:basic": "bash scripts/dev-clean.sh",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --project=chromium",
+    "e2e:report": "playwright show-report",
+    "prepare": "husky install",
+    "guard:artifacts": "git ls-files -z | xargs -0 -I {} bash -lc '[[ {} == *\"/node_modules/\"* || {} == *\"/dist/\"* ]] && echo Forbidden artifact tracked: {} && exit 1 || true'"
+  },
+  "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.10",
+    "rimraf": "^5.0.5",
+    "turbo": "^2.1.1",
+    "typescript": "^5.6.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "pnpm -w lint --filter=...[HEAD] --continue --",
+      "pnpm -w typecheck --filter=...[HEAD] --continue --",
+      "pnpm -w test --filter=...[HEAD] --passWithNoTests --"
+    ]
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {}
+}

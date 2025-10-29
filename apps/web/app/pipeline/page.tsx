@@ -1,0 +1,372 @@
+"use client";
+import { useRequireAuth } from '../auth/useRequireAuth';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Heading,
+  Text,
+  Stack,
+  Badge,
+  EmptyState,
+  Alert,
+  Spinner,
+  Icon,
+} from '@cactus/ui';
+
+interface Contact {
+  id: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  nextStep?: string;
+  tags?: Array<{ id: string; name: string; color: string }>;
+}
+
+interface PipelineStage {
+  id: string;
+  name: string;
+  description?: string;
+  order: number;
+  color: string;
+  wipLimit?: number;
+  contacts: Contact[];
+  currentCount: number;
+}
+
+export default function PipelinePage() {
+  const { user, token, loading } = useRequireAuth();
+  const router = useRouter();
+  const [stages, setStages] = useState<PipelineStage[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [draggingOverStageId, setDraggingOverStageId] = useState<string | null>(null);
+  const [movingContactId, setMovingContactId] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+  const fetchBoard = useCallback(async () => {
+    if (!token) return;
+    try {
+      setDataLoading(true);
+      setError(null);
+      const response = await fetch(`${apiUrl}/pipeline/board`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch pipeline board');
+      }
+
+      const data = await response.json();
+      setStages(data.data || []);
+    } catch (err) {
+      console.error('Error fetching pipeline board:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar el pipeline');
+    } finally {
+      setDataLoading(false);
+    }
+  }, [token, apiUrl]);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchBoard();
+    }
+  }, [user, token, fetchBoard]);
+
+  const handleDragStart = (e: React.DragEvent, contactId: string) => {
+    e.dataTransfer.setData('text/plain', contactId);
+    setMovingContactId(contactId);
+    setMoveError(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    setDraggingOverStageId(stageId);
+  };
+
+  const handleDragLeave = () => {
+    setDraggingOverStageId(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    setDraggingOverStageId(null);
+    
+    const contactId = e.dataTransfer.getData('text/plain');
+    if (!contactId || !token) return;
+
+    // Encontrar el contacto y su etapa actual
+    const sourceStage = stages.find(stage => 
+      stage.contacts.some(contact => contact.id === contactId)
+    );
+    
+    if (!sourceStage || sourceStage.id === targetStageId) {
+      setMovingContactId(null);
+      return;
+    }
+
+    // Verificar límite WIP
+    const targetStage = stages.find(stage => stage.id === targetStageId);
+    if (targetStage?.wipLimit && targetStage.currentCount >= targetStage.wipLimit) {
+      setMoveError(`No se puede mover el contacto. El límite WIP de "${targetStage.name}" ha sido alcanzado (${targetStage.wipLimit}).`);
+      setMovingContactId(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/pipeline/move`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+          contactId: contactId,
+          toStageId: targetStageId 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to move contact');
+      }
+
+      // Actualizar el estado local
+      setStages(prevStages => {
+        return prevStages.map(stage => {
+          if (stage.id === sourceStage.id) {
+            return {
+              ...stage,
+              contacts: stage.contacts.filter(contact => contact.id !== contactId),
+              currentCount: stage.currentCount - 1
+            };
+          } else if (stage.id === targetStageId) {
+            const movedContact = sourceStage.contacts.find(contact => contact.id === contactId);
+            return {
+              ...stage,
+              contacts: [...stage.contacts, movedContact!],
+              currentCount: stage.currentCount + 1
+            };
+          }
+          return stage;
+        });
+      });
+    } catch (err) {
+      console.error('Error moving contact:', err);
+      setMoveError(err instanceof Error ? err.message : 'Error al mover contacto');
+    } finally {
+      setMovingContactId(null);
+    }
+  };
+
+  const getWipLimitStatus = (stage: PipelineStage) => {
+    if (!stage.wipLimit) return null;
+    
+    const percentage = (stage.currentCount / stage.wipLimit) * 100;
+    if (percentage >= 100) return 'error';
+    if (percentage >= 80) return 'warning';
+    return 'success';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-8">
+      <Stack direction="column" gap="lg">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <Heading level={1}>Pipeline de Ventas</Heading>
+          <Button onClick={() => router.push('/contacts/new')}>
+            <Icon name="plus" size={16} className="mr-2" />
+            Nuevo Contacto
+          </Button>
+        </div>
+
+        {/* Alerts */}
+        {error && (
+          <Alert variant="error" title="Error">
+            {error}
+          </Alert>
+        )}
+        
+        {moveError && (
+          <Alert variant="error" title="Error al mover contacto">
+            {moveError}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setMoveError(null)}
+              className="ml-2"
+            >
+              <Icon name="X" size={16} />
+            </Button>
+          </Alert>
+        )}
+
+        {/* Pipeline Board */}
+        {stages.length === 0 ? (
+          <Card>
+            <CardContent>
+              <EmptyState 
+                title="No hay etapas configuradas"
+                description="Configura las etapas del pipeline para comenzar a organizar tus contactos."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex gap-6 overflow-x-auto pb-4">
+            {stages
+              .sort((a, b) => a.order - b.order)
+              .map((stage) => (
+                <Card 
+                  key={stage.id}
+                  className={`min-w-[280px] flex-shrink-0 ${
+                    draggingOverStageId === stage.id 
+                      ? 'ring-2 ring-accent-base bg-accent-subtle' 
+                      : ''
+                  }`}
+                  onDragOver={(e) => handleDragOver(e, stage.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, stage.id)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium">
+                        {stage.name}
+                      </CardTitle>
+                      {stage.wipLimit && (
+                        <Badge 
+                          variant={getWipLimitStatus(stage) === 'error' ? 'error' : 
+                                  getWipLimitStatus(stage) === 'warning' ? 'warning' : 'default'}
+                        >
+                          {stage.currentCount}/{stage.wipLimit}
+                        </Badge>
+                      )}
+                    </div>
+                    {stage.description && (
+                      <Text size="sm" color="secondary">
+                        {stage.description}
+                      </Text>
+                    )}
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    <Stack direction="column" gap="sm" className="min-h-[200px]">
+                      {stage.contacts.length === 0 ? (
+                        <div className="flex items-center justify-center h-32 text-center">
+                          <Text size="sm" color="secondary">
+                            Arrastra contactos aquí
+                          </Text>
+                        </div>
+                      ) : (
+                        stage.contacts.map((contact) => (
+                          <Card 
+                            key={contact.id}
+                            variant="interactive"
+                            className={`cursor-move transition-all hover:shadow-md ${
+                              movingContactId === contact.id ? 'opacity-50' : ''
+                            }`}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, contact.id)}
+                          >
+                            <CardContent className="p-3">
+                              <Stack direction="column" gap="sm">
+                                <Text weight="medium" size="sm">
+                                  {contact.fullName}
+                                </Text>
+                                
+                                {contact.email && (
+                                  <Text size="xs" color="secondary">
+                                    {contact.email}
+                                  </Text>
+                                )}
+                                
+                                {contact.nextStep && (
+                                  <Text size="xs" color="secondary">
+                                    {contact.nextStep}
+                                  </Text>
+                                )}
+                                
+                                {contact.tags && contact.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {contact.tags.slice(0, 2).map((tag) => (
+                                      <Badge 
+                                        key={tag.id} 
+                                        variant="default" 
+                                        className="text-xs"
+                                        style={{ backgroundColor: tag.color, color: 'white' }}
+                                      >
+                                        {tag.name}
+                                      </Badge>
+                                    ))}
+                                    {contact.tags.length > 2 && (
+                                      <Badge variant="default" className="text-xs">
+                                        +{contact.tags.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                <div className="flex justify-end mt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.push(`/contacts/${contact.id}`)}
+                                  >
+                                    <Icon name="ChevronRight" size={12} />
+                                  </Button>
+                                </div>
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
+        )}
+
+        {/* Stats */}
+        {stages.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Estadísticas del Pipeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {stages.map((stage) => (
+                  <div key={stage.id} className="text-center">
+                    <Text size="lg" weight="bold" style={{ color: stage.color }}>
+                      {stage.currentCount}
+                    </Text>
+                    <Text size="sm" color="secondary">
+                      {stage.name}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </Stack>
+    </div>
+  );
+}

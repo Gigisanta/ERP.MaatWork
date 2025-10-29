@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@cactus/db": ["packages/db/src/index.ts"],
+      "@cactus/db/*": ["packages/db/src/*"],
+      "@cactus/ui": ["packages/ui/src/index.ts"],
+      "@cactus/ui/*": ["packages/ui/src/*"]
+    },
+    "strict": true,
+    "noImplicitAny": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  }
+}
+
+

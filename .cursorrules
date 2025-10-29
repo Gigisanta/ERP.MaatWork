@@ -1,0 +1,141 @@
+# Proyecto: CACTUS CRM (Monorepo pnpm + Turborepo)
+
+## Arquitectura general
+- Monorepo gestionado con `pnpm workspaces` y `turborepo`.
+- Apps en `apps/` y paquetes compartidos en `packages/`.
+- Apps:
+  - `apps/api`: API en Node.js + Express. Logging con `pino`/`pino-http`. Despliegue en VPS con `pm2` (cluster mode). Envía logs a stdout y a archivos bajo `apps/api/logs/`.
+  - `apps/web`: Frontend en Next.js (App Router). Consume la API vía `NEXT_PUBLIC_API_URL`.
+- Paquetes compartidos:
+  - `packages/db`: Drizzle ORM (PostgreSQL) con `schema.ts`, conexión `db`, migraciones (`drizzle-kit`).
+
+## Decisiones clave
+- Logging: `pino` por performance y logs JSON estructurados. En dev puede usarse `pino-pretty` si se agrega, pero por defecto JSON.
+- Process manager: `pm2` en VPS (sin Docker/K8s). Modo `cluster` con `instances: 'max'` en `ecosystem.config.js`.
+- DB: Postgres 16 local con `docker-compose.yml`. Variable de conexión `DATABASE_URL` compartida.
+- TypeScript: base común en `tsconfig.base.json`. Cada app extiende y define `outDir`/`rootDir`.
+- Tareas: `turbo` orquesta `build/dev/lint/test` con cacheo por tareas.
+
+## Rutas relevantes
+- API entrypoint: `apps/api/src/index.ts`.
+- Rutas API: `apps/api/src/routes/*` (ejemplo: `users.ts`).
+- PM2 config: `apps/api/ecosystem.config.js`.
+- Next.js raíz: `apps/web/app/*` (`layout.tsx`, `page.tsx`).
+- Drizzle:
+  - Config: `packages/db/drizzle.config.ts`.
+  - Schema: `packages/db/src/schema.ts`.
+  - Cliente/exports: `packages/db/src/index.ts`.
+
+## Ejecución local (desarrollo)
+- Prerrequisitos: Node 20+, pnpm 9+, Docker (opcional para Postgres local).
+- Comandos:
+  - `pnpm install`
+  - `docker compose up -d` (levanta Postgres 16)
+  - `pnpm dev` (ejecuta `web` y `api` en paralelo si están configuradas)
+  - API: `http://localhost:3001/health`
+  - Web: `http://localhost:3000`
+
+## Despliegue en VPS (PM2)
+- Construir API: `pnpm -F @cactus/api build` → genera `apps/api/dist`.
+- Iniciar con PM2: `pm2 start apps/api/ecosystem.config.js --env production`.
+- Logs: `pm2 logs cactus-api` o archivos en `apps/api/logs/`.
+- Asegurar variables: `.env` por app; al menos `DATABASE_URL`, `PORT`, `LOG_LEVEL`.
+
+## Convenciones de código
+- Usar TypeScript estricto.
+- Evitar comentarios triviales; añadir comentarios cuando la intención no sea obvia.
+- Logging: registrar eventos de negocio clave con contexto (ids, tamaños, tiempos) y sanitizar datos sensibles (`redact` en `pino-http`).
+- Errores: loguear con `req.log.error({ err }, msg)` y retornar JSON con mensaje genérico.
+
+## Reglas de Base de Datos y Migraciones
+- **NUNCA usar `drizzle-kit push` en desarrollo** - es destructivo y elimina datos.
+- Siempre usar el flujo: `drizzle-kit generate` → `drizzle-kit migrate`.
+- Las migraciones se trackean en `drizzle.__drizzle_migrations`.
+- **Auto-inicialización**: La API ejecuta migraciones y seed automáticamente en cada startup.
+- Seed data esencial (7 etapas de pipeline, lookup tables) se crea automáticamente.
+- Scripts disponibles:
+  - `pnpm -F @cactus/db seed:all` - Seed completo manual
+  - `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
+  - `pnpm -F @cactus/db db:init` - Inicialización completa
+
+## Reglas Universales de Ingeniería (AI_AUTO_DEV_RULES.md)
+
+ANTES DE CUALQUIER MODIFICACIÓN DE CÓDIGO:
+
+1. **Leer y aplicar las 30 reglas** de `AI_AUTO_DEV_RULES.md`
+2. **Prioridad**: Si duda entre dos soluciones, elegir la MÁS ESTABLE, no la más creativa
+3. **Decision flow**:
+   - ¿Es necesario? → Si NO, detener
+   - ¿Sigue las reglas 1-30? → Si NO, refactorizar
+   - ¿Es seguro? → Si NO, agregar tests primero
+   - ¿Romperá código existente? → Si SÍ, versionarlo
+   - ¿Está documentado? → Si NO, agregar comentarios inline
+
+### Principios Críticos:
+- **Rule 12**: Fallar rápido con mensajes claros
+- **Rule 13**: Tests antes de refactorizar
+- **Rule 15**: Cambios pequeños y atómicos
+- **Rule 22**: Documentar decisiones de arquitectura
+- **Rule 27**: Mantener lista de riesgos antes de refactors grandes
+
+### Formato para Cambios:
+```typescript
+// AI_DECISION: [Motivo del cambio]
+// Justificación: [Por qué es mejor esta implementación]
+// Impacto: [Qué áreas del código afecta]
+```
+
+### Checklist Pre-Modificación:
+- [ ] Typed correctamente (TypeScript estricto)
+- [ ] Sin dependencias nuevas sin justificación
+- [ ] Sin breaking changes sin versionado
+- [ ] Tests existentes pasan
+- [ ] Nuevos tests agregados
+- [ ] Linter limpio
+- [ ] Documentado con comentarios inline
+
+## Notas de Cursor
+- Al referenciar código existente en mensajes, usar code references con rango de líneas y ruta.
+- Para nuevo código, usar bloques de código con lenguaje.
+- Mantener estructura y nombrado conforme a este archivo y evitar mezclar estilos.
+- LEER `AI_AUTO_DEV_RULES.md` ANTES DE CUALQUIER CAMBIO. Es el archivo principal de referencia.
+
+## Server Component Architecture Pattern
+
+### When to Use Server vs Client Components
+- **Server Component**: Data fetching, static rendering, SEO-critical content
+- **Client Component**: Interactivity, hooks (useState, useEffect), browser APIs
+
+### Pattern: Client Islands
+Extract interactive sections into small, focused client components:
+- Keep components < 100 lines
+- Pass server data as props
+- Use SWR for client-side mutations
+- Prefix with "use client" directive
+
+### Example Structure
+```
+app/route/
+  page.tsx           # Server Component (data fetch + layout)
+  SomeSection.tsx    # Client Island (interactive logic)
+  api-hooks.ts       # SWR hooks for mutations
+```
+
+### Performance Benefits
+- **Bundle Size**: Server components reduce First Load JS by 60-70%
+- **LCP**: Server-rendered content improves Largest Contentful Paint
+- **SEO**: Static content is crawlable and indexable
+- **Maintainability**: Clear separation of concerns
+
+## Operativa (dev y prod)
+- Desarrollo:
+  - Logs legibles con `pino-pretty` (se activa automáticamente cuando `NODE_ENV !== 'production'`).
+  - Comando opcional: `pnpm -F @cactus/api run dev:pretty`.
+- Producción (VPS con PM2):
+  - Iniciar: `pm2 start apps/api/ecosystem.config.js --env production`.
+  - Rotación de logs: `pm2 install pm2-logrotate` y `pm2 set ...` (o scripts `pm2:logrotate:*`).
+  - Variables requeridas: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`.
+  - CORS: restringir orígenes con `CORS_ORIGINS` (lista separada por comas).
+  - CSP: activar con `CSP_ENABLED=true` si se define una política adecuada.
+
+
