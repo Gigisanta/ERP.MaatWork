@@ -15,6 +15,119 @@
 
 ---
 
+## Arquitectura de Paquetes
+
+### @cactus/ui (React Components)
+
+**Estructura:**
+```
+packages/ui/src/
+├── components/          # Componentes React organizados por categoría
+│   ├── forms/          # Input, Select, Checkbox, Switch, etc.
+│   ├── feedback/       # Alert, Modal, Toast, Card, etc.
+│   └── nav/             # Header, Sidebar, Nav, Pagination, etc.
+├── primitives/          # Box, Text, Stack, Grid, etc. (building blocks)
+├── hooks/               # useTheme, etc.
+├── styles/              # CSS global y variables
+├── tokens/              # Design tokens (colores, spacing, etc.)
+├── utils/               # Utilidades (cn, etc.)
+└── index.ts             # Barrel export (exports específicos para tree-shaking)
+```
+
+**Reglas:**
+- ✅ **Exports específicos** (NO `export *`) para tree-shaking
+- ✅ **Tipos exportados explícitamente** (`type ComponentProps`)
+- ✅ **Tests co-ubicados** con componentes (`Component.test.tsx`)
+- ✅ **Build genera `dist/`** con `.js` y `.d.ts` (tipos en dist/)
+
+**Comandos:**
+```bash
+pnpm -F @cactus/ui build        # Compilar TypeScript + copiar CSS
+pnpm -F @cactus/ui test         # Vitest (Testing Library)
+pnpm -F @cactus/ui typecheck    # Verificar tipos
+```
+
+### @cactus/db (Drizzle ORM)
+
+**Estructura:**
+```
+packages/db/src/
+├── schema.ts            # Definiciones de tablas Drizzle
+├── index.ts             # Exporta db() y schema
+├── seed-*.ts            # Seeds para diferentes contextos
+└── tools/                # Scripts de utilidad
+```
+
+**Reglas:**
+- ✅ **Exportar schema** como `@cactus/db/schema` para tipos
+- ✅ **Singleton db()** - NO crear pools manuales
+- ✅ **Migraciones** siempre con `generate` + `migrate` (NO `push`)
+- ✅ **Build genera `dist/`** con tipos TypeScript
+
+**Comandos:**
+```bash
+pnpm -F @cactus/db build         # Compilar TypeScript
+pnpm -F @cactus/db generate      # Generar migración
+pnpm -F @cactus/db migrate       # Aplicar migración
+pnpm -F @cactus/db seed:all      # Seed completo
+```
+
+### Manejo de Tipos en Paquetes
+
+**Principios:**
+1. **Tipos exportados desde `dist/`** - Definir `"types"` en `package.json`
+2. **Exports específicos** - NO usar `export *` (rompe tree-shaking)
+3. **Tipos explícitos** - Exportar `type ComponentProps` junto al componente
+4. **Build antes de typecheck** - Si modificas tipos, build primero
+
+**Ejemplo (@cactus/ui):**
+```typescript
+// ✅ BIEN - Export específico con tipo
+export { Button, type ButtonProps } from './components/nav/Button';
+
+// ❌ MAL - Barrel export genérico
+export * from './components';
+```
+
+**Flujo de trabajo:**
+```bash
+# 1. Modificar tipos en @cactus/ui
+# 2. Build del paquete
+pnpm -F @cactus/ui build
+
+# 3. Luego typecheck en apps que lo usan
+pnpm -F @cactus/web typecheck
+```
+
+### Testing en Paquetes
+
+**@cactus/ui:**
+- ✅ **Vitest** + **Testing Library** para componentes
+- ✅ **Tests co-ubicados** (`Component.test.tsx` junto a `Component.tsx`)
+- ✅ **Coverage target:** ≥70% (líneas, funciones, branches)
+
+**Ubicación:** `packages/ui/src/**/*.test.tsx`
+
+**Ejemplo:**
+```typescript
+// Button.test.tsx (mismo directorio que Button.tsx)
+import { render, screen } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+});
+```
+
+**@cactus/db:**
+- ✅ **No tests unit** - Validación vía migraciones y seeds
+- ✅ **Seeds como tests** - Verifican integridad de schema
+
+---
+
 ## Principios Fundamentales
 
 ### Antes de Modificar Código
@@ -190,13 +303,20 @@ app/route/
 - ✅ **Playwright** para E2E tests
 - ✅ **Testing Library** para componentes React
 
-**Ubicación:**
+**Ubicación por Workspace:**
+
+**Apps (api/web):**
 - Unit: `src/**/*.test.ts` (mismo directorio que el archivo)
 - E2E: `tests/e2e/[feature].spec.ts` (raíz del monorepo)
 
+**Packages:**
+- **@cactus/ui:** `src/**/*.test.tsx` (co-ubicados con componentes)
+- **@cactus/db:** Sin tests unit (validación vía migraciones y seeds)
+
 **Coverage Targets:**
-- Backend: ≥70% (lines, functions, branches, statements)
-- Frontend: ≥60% (lines, functions, branches, statements)
+- Backend (api): ≥70% (lines, functions, branches, statements)
+- Frontend (web): ≥60% (lines, functions, branches, statements)
+- UI Package: ≥70% (lines, functions, branches, statements)
 
 ---
 
