@@ -111,7 +111,17 @@ router.get('/components/batch', requireAuth, requireRole(['advisor', 'manager', 
       componentsByBenchmark[id] = [];
     });
 
-    allComponents.forEach((comp: any) => {
+    type BenchmarkComponentWithMetadata = {
+      benchmarkId: string;
+      componentId: string;
+      instrumentId: string;
+      weight: string;
+      instrumentSymbol: string;
+      instrumentName: string;
+      active: boolean;
+    };
+    
+    allComponents.forEach((comp: BenchmarkComponentWithMetadata) => {
       if (componentsByBenchmark[comp.benchmarkId]) {
         componentsByBenchmark[comp.benchmarkId].push({
           id: comp.componentId,
@@ -177,7 +187,10 @@ router.get('/:id', requireAuth, async (req, res) => {
       .orderBy(desc(benchmarkComponents.weight));
 
     // Calcular suma de pesos
-      const totalWeight = components.reduce((sum: number, comp: any) => sum + Number(comp.weight), 0);
+    type ComponentWithWeight = {
+      weight: string | number;
+    };
+    const totalWeight = components.reduce((sum: number, comp: ComponentWithWeight) => sum + Number(comp.weight), 0);
 
     res.json({
       success: true,
@@ -458,7 +471,10 @@ router.post('/:id/components', requireAuth, requireRole(['admin']), async (req, 
       .from(benchmarkComponents)
       .where(eq(benchmarkComponents.benchmarkId, benchmarkId));
 
-    const currentTotal = existingComponents.reduce((sum: number, comp: any) => sum + Number(comp.weight), 0);
+    type ComponentWithWeight = {
+      weight: string;
+    };
+    const currentTotal = existingComponents.reduce((sum: number, comp: ComponentWithWeight) => sum + Number(comp.weight), 0);
     if (currentTotal + weightNum > 1.0) {
       return res.status(400).json({ 
         error: `La suma de pesos excedería 100%. Peso actual: ${(currentTotal * 100).toFixed(2)}%, nuevo peso: ${(weightNum * 100).toFixed(2)}%` 
@@ -551,7 +567,10 @@ router.put('/:id/components/:componentId', requireAuth, requireRole(['admin']), 
       .from(benchmarkComponents)
       .where(eq(benchmarkComponents.benchmarkId, benchmarkId));
 
-    const currentTotal = existingComponents.reduce((sum: number, comp: any) => sum + Number(comp.weight), 0);
+    type ComponentWithWeight = {
+      weight: string;
+    };
+    const currentTotal = existingComponents.reduce((sum: number, comp: ComponentWithWeight) => sum + Number(comp.weight), 0);
     const currentWeight = Number(currentComponent[0].weight);
     const newTotal = currentTotal - currentWeight + weightNum;
 
