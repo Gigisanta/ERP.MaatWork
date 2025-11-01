@@ -8,11 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useAuth } from '../../../auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 import ContactUserPicker from '../components/ContactUserPicker';
 
 export default function AumPreviewPage() {
-  const { token } = useAuth();
   const params = useParams();
   const fileId = params.fileId as string;
   const [file, setFile] = useState<any>(null);
@@ -21,20 +20,17 @@ export default function AumPreviewPage() {
 
   const loadRows = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${base}/admin/aum/uploads/${fileId}/preview`, { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const data = await apiClient.get<{ok: boolean; file: any; rows: any[]}>(`/admin/aum/uploads/${fileId}/preview`);
       setFile(data.file);
       setRows(data.rows || []);
     } catch (e: any) {
-      setError(e.message || 'Error');
+      setError(e.userMessage || e.message || 'Error');
     }
   };
 
   useEffect(() => {
-    if (token) loadRows();
-  }, [token, fileId]);
+    loadRows();
+  }, [fileId]);
 
   return (
     <div className="space-y-4">
@@ -91,7 +87,6 @@ export default function AumPreviewPage() {
                     rowId={r.id}
                     initialContactId={r.matchedContactId}
                     initialUserId={r.matchedUserId}
-                    token={token}
                     onSave={() => loadRows()}
                   />
                 </td>

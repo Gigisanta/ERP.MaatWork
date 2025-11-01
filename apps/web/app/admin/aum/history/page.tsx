@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
 import Link from 'next/link';
+import { apiClient } from '@/lib/api-client';
 import ContactUserPicker from '../components/ContactUserPicker';
 import DuplicateResolutionModal from '../components/DuplicateResolutionModal';
 

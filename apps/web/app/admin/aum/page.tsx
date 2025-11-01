@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../auth/AuthContext';
 import Link from 'next/link';
+import { apiClient } from '@/lib/api-client';
 import FileUploader from './components/FileUploader';
 import ContactUserPicker from './components/ContactUserPicker';
 import DuplicateResolutionModal from './components/DuplicateResolutionModal';
@@ -40,7 +40,6 @@ interface Row {
 }
 
 export default function AumAdminPage() {
-  const { token } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,30 +52,26 @@ export default function AumAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const params = new URLSearchParams();
-      if (filters.broker) params.set('broker', filters.broker);
-      if (filters.status) params.set('status', filters.status);
-      params.set('limit', String(pagination.limit));
-      params.set('offset', String(pagination.offset));
+      const params: Record<string, string> = {
+        limit: String(pagination.limit),
+        offset: String(pagination.offset)
+      };
+      if (filters.broker) params.broker = filters.broker;
+      if (filters.status) params.status = filters.status;
       
-      const res = await fetch(`${base}/admin/aum/rows/all?${params}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const data = await apiClient.get<{ rows: Row[]; pagination: any }>('/admin/aum/rows/all', { params });
       setRows(data.rows || []);
       setPagination(prev => ({ ...prev, ...data.pagination }));
     } catch (e: any) {
-      setError(e.message || 'Error');
+      setError(e.userMessage || e.message || 'Error cargando datos');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) loadRows();
-  }, [token, pagination.offset, filters.broker, filters.status]);
+    loadRows();
+  }, [pagination.offset, filters.broker, filters.status]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -173,7 +168,6 @@ export default function AumAdminPage() {
                         rowId={row.id}
                         initialContactId={row.matchedContactId}
                         initialUserId={row.matchedUserId}
-                        token={token}
                         onSave={() => loadRows()}
                       />
                     </td>

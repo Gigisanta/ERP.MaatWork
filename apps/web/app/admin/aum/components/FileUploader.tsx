@@ -2,15 +2,27 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface FileUploaderProps {
   onUploadSuccess?: () => void;
 }
 
+interface UploadResponse {
+  ok: boolean;
+  fileId: string;
+  filename: string;
+  totals: {
+    parsed: number;
+    matched: number;
+    ambiguous: number;
+    conflicts: number;
+    unmatched: number;
+  };
+}
+
 export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const router = useRouter();
-  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -22,24 +34,13 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setLoading(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const form = new FormData();
       form.append('file', file);
-      // Debug
-      // eslint-disable-next-line no-console
-      console.log('Uploading AUM file', { name: file.name, size: file.size, type: file.type, url: `${base}/admin/aum/uploads?broker=balanz` });
-      const res = await fetch(`${base}/admin/aum/uploads?broker=balanz`, {
-        method: 'POST',
-        body: form,
-        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined as any,
-        credentials: 'include'
+      
+      const data = await apiClient.post<UploadResponse>('/admin/aum/uploads', form, {
+        params: { broker: 'balanz' }
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
-      const data = await res.json();
-      const fileId = data.fileId as string;
+      const fileId = data.fileId;
       // Show summary modal if there are conflicts or interesting stats
       if (data.totals.conflicts > 0 || data.totals.ambiguous > 0) {
         setUploadSummary({ fileId, totals: data.totals });
@@ -54,10 +55,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         }
       }
     } catch (err: any) {
-      // eslint-disable-next-line no-console
-      console.error('AUM upload failed', err);
-      setError(err.message || 'Upload failed');
-      alert(`Error subiendo archivo: ${err?.message || err}`);
+      const errorMessage = err.userMessage || err.message || 'Error subiendo archivo';
+      setError(errorMessage);
     } finally {
       setLoading(false);
       (e.target as any).value = '';
