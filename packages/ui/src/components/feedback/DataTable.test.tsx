@@ -102,7 +102,7 @@ describe('DataTable Component', () => {
 
   describe('Sorting', () => {
     it('should show sort icons on sortable columns', () => {
-      const { container } = render(
+      render(
         <DataTable data={mockData} columns={mockColumns} keyField="id" />
       );
       const nameHeader = screen.getByText('Name').closest('button');

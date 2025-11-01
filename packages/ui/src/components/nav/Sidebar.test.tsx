@@ -139,8 +139,7 @@ describe('Sidebar Component', () => {
       expect(sidebar).toHaveClass('w-16');
     });
 
-    it('should hide section titles when collapsed', async () => {
-      const user = userEvent.setup();
+    it('should hide section titles when collapsed', () => {
       render(<Sidebar sections={mockSections} defaultCollapsed={true} LinkComponent={MockLink} />);
 
       expect(screen.queryByText('Main')).not.toBeInTheDocument();

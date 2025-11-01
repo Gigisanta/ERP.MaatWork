@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Checkbox } from './Checkbox';
+import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 
 describe('Checkbox Component', () => {
   describe('Rendering', () => {
@@ -74,7 +75,7 @@ describe('Checkbox Component', () => {
     });
 
     it('should call onCheckedChange when toggled', async () => {
-      const handleChange = vi.fn<[boolean], void>();
+      const handleChange = vi.fn<(checked: boolean) => void>();
       const user = userEvent.setup();
       
       render(<Checkbox onCheckedChange={handleChange} />);
@@ -95,7 +96,7 @@ describe('Checkbox Component', () => {
     });
 
     it('should not toggle when disabled', async () => {
-      const handleChange = vi.fn<[boolean], void>();
+      const handleChange = vi.fn<(checked: boolean) => void>();
       const user = userEvent.setup();
       
       render(<Checkbox disabled={true} onCheckedChange={handleChange} />);
@@ -153,7 +154,7 @@ describe('Checkbox Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = React.createRef<React.ElementRef<typeof import('@radix-ui/react-checkbox').Root>>();
+      const ref = React.createRef<React.ElementRef<typeof CheckboxPrimitive.Root>>();
       render(<Checkbox ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
