@@ -53,15 +53,30 @@
       ]
     },
     "test": {
-      "dependsOn": ["^build"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
         "**/*.test.ts",
         "**/*.test.tsx",
-        "jest.config.*",
+        "vitest.config.*",
         "package.json"
-      ]
+      ],
+      "outputs": ["coverage/**"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:coverage": {
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "vitest.config.*",
+        "package.json"
+      ],
+      "outputs": ["coverage/**"]
     },
     "clean": {
       "cache": false
