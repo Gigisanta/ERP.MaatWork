@@ -33,6 +33,9 @@ import {
   Spinner,
   Icon,
   Toast,
+  Tabs,
+  TabsList,
+  TabsTrigger,
   type Column,
 } from '@cactus/ui';
 
@@ -594,14 +597,15 @@ export default function ContactsPage() {
 
     if (isEditing) {
       return (
-        <input
+        <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus
-          className="min-w-[200px] px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          size="sm"
+          className="min-w-[200px]"
         />
       );
     }
@@ -734,12 +738,13 @@ export default function ContactsPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Input de búsqueda compacto con icono */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
+                  <Input
                     placeholder="Buscar contactos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-9 pl-10 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                    leftIcon="search"
+                    size="sm"
+                    className="w-full"
                   />
                 </div>
 
@@ -789,30 +794,24 @@ export default function ContactsPage() {
                 </DropdownMenu>
 
                 {/* Toggle vista tabla/kanban */}
-                <div className="flex border border-gray-300 rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`px-3 py-1.5 text-sm flex items-center gap-1 transition-colors ${
-                      viewMode === 'table' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon name="list" size={16} />
-                    <span className="text-xs">Tabla</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('kanban')}
-                    className={`px-3 py-1.5 text-sm flex items-center gap-1 transition-colors ${
-                      viewMode === 'kanban' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon name="grid" size={16} />
-                    <span className="text-xs">Kanban</span>
-                  </button>
-                </div>
+                <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'kanban')}>
+                  <TabsList className="border border-gray-300 rounded-md overflow-hidden p-0 h-auto bg-white">
+                    <TabsTrigger 
+                      value="table" 
+                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
+                    >
+                      <Icon name="list" size={16} />
+                      <span className="text-xs">Tabla</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="kanban" 
+                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
+                    >
+                      <Icon name="grid" size={16} />
+                      <span className="text-xs">Kanban</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               {/* Segunda fila: Chips de filtros activos */}
@@ -994,17 +993,12 @@ export default function ContactsPage() {
           </ModalHeader>
           <ModalContent>
             <Stack direction="column" gap="md">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de la etiqueta
-                </label>
-                <input
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  placeholder="Ej: Cliente VIP, Prospecto caliente..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <Input
+                label="Nombre de la etiqueta"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="Ej: Cliente VIP, Prospecto caliente..."
+              />
               <div>
                 <Text size="sm" weight="medium" className="mb-2">Color</Text>
                 <div className="flex gap-2">
@@ -1045,17 +1039,12 @@ export default function ContactsPage() {
               {isCreatingTag ? (
                 // Vista de creación
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre de la etiqueta
-                    </label>
-                    <input
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                      placeholder="Ej: Cliente VIP, Prospecto caliente..."
-                      className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
+                  <Input
+                    label="Nombre de la etiqueta"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    placeholder="Ej: Cliente VIP, Prospecto caliente..."
+                  />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color
@@ -1079,17 +1068,12 @@ export default function ContactsPage() {
               ) : tagToEdit ? (
                 // Vista de edición
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre de la etiqueta
-                    </label>
-                    <input
-                      value={editedTagName}
-                      onChange={(e) => setEditedTagName(e.target.value)}
-                      placeholder="Nombre de la etiqueta"
-                      className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
+                  <Input
+                    label="Nombre de la etiqueta"
+                    value={editedTagName}
+                    onChange={(e) => setEditedTagName(e.target.value)}
+                    placeholder="Nombre de la etiqueta"
+                  />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color

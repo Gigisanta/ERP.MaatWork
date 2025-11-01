@@ -299,44 +299,9 @@ const upload = multer({
   limits: { fileSize: AUM_LIMITS.MAX_FILE_SIZE }
 });
 
-async function ensureAumTables(dbi: any) {
-  // Create tables if they don't exist (idempotent)
-  await dbi.execute(sql`
-    CREATE TABLE IF NOT EXISTS aum_import_files (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-      broker text NOT NULL,
-      original_filename text NOT NULL,
-      mime_type text NOT NULL,
-      size_bytes integer NOT NULL,
-      uploaded_by_user_id uuid NOT NULL,
-      status text NOT NULL,
-      total_parsed integer NOT NULL DEFAULT 0,
-      total_matched integer NOT NULL DEFAULT 0,
-      total_unmatched integer NOT NULL DEFAULT 0,
-      created_at timestamp with time zone DEFAULT now() NOT NULL
-    );
-  `);
-
-  await dbi.execute(sql`
-    CREATE TABLE IF NOT EXISTS aum_import_rows (
-      id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-      file_id uuid NOT NULL REFERENCES aum_import_files(id) ON DELETE CASCADE,
-      raw jsonb NOT NULL DEFAULT '{}'::jsonb,
-      account_number text,
-      holder_name text,
-      advisor_raw text,
-      matched_contact_id uuid,
-      matched_user_id uuid,
-      match_status text NOT NULL DEFAULT 'unmatched',
-      is_preferred boolean NOT NULL DEFAULT true,
-      conflict_detected boolean NOT NULL DEFAULT false,
-      created_at timestamp with time zone DEFAULT now() NOT NULL
-    );
-  `);
-
-  await dbi.execute(sql`CREATE INDEX IF NOT EXISTS idx_aum_rows_account ON aum_import_rows (account_number);`);
-  await dbi.execute(sql`CREATE INDEX IF NOT EXISTS idx_aum_rows_file ON aum_import_rows (file_id);`);
-}
+// AI_DECISION: ensureAumTables() removido - tablas ya están en Drizzle migrations
+// Justificación: Las tablas AUM están definidas en packages/db/src/schema.ts y migraciones 0012/0013
+// Impacto: Simplifica código y sigue convención de usar solo migraciones Drizzle
 
 
 function isEmailLike(value: string | null | undefined): boolean {
@@ -408,26 +373,19 @@ router.post('/uploads',
     const { broker = 'balanz' } = req.query; // Validated broker enum
 
     const dbi = db();
-    let inserted;
-    try {
-      inserted = await dbi.execute(sql`
-        INSERT INTO aum_import_files (broker, original_filename, mime_type, size_bytes, uploaded_by_user_id, status)
-        VALUES (${broker}, ${file.originalname}, ${file.mimetype}, ${file.size}, ${userId}, 'uploaded')
-        RETURNING id
-      `);
-    } catch (e: any) {
-      if (e?.code === '42P01') {
-        await ensureAumTables(dbi);
-        inserted = await dbi.execute(sql`
-          INSERT INTO aum_import_files (broker, original_filename, mime_type, size_bytes, uploaded_by_user_id, status)
-          VALUES (${broker}, ${file.originalname}, ${file.mimetype}, ${file.size}, ${userId}, 'uploaded')
-          RETURNING id
-        `);
-      } else {
-        throw e;
-      }
-    }
-    const fileRow = { id: (inserted.rows?.[0] as any)?.id as string } as any;
+    // AI_DECISION: Usar insert de Drizzle en lugar de SQL crudo
+    // Justificación: Mejor type safety y usa schema definido en packages/db
+    const [fileRow] = await dbi.insert(aumImportFiles).values({
+      broker,
+      originalFilename: file.originalname,
+      mimeType: file.mimetype,
+      sizeBytes: file.size,
+      uploadedByUserId: userId,
+      status: 'uploaded',
+      totalParsed: 0,
+      totalMatched: 0,
+      totalUnmatched: 0
+    }).returning();
 
     // Resolve team scope for matching (all members of uploader's teams)
     let teamIds: string[] = [];

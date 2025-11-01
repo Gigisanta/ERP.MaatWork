@@ -1,59 +1,47 @@
 /**
- * Validation utilities and common schemas for scalable Zod validation
+ * Validation utilities and middleware for scalable Zod validation
  * 
- * Provides reusable validation helpers for:
- * - Common types (UUID, pagination, etc.)
- * - Request validation middleware
- * - Consistent error handling
+ * NOTE: Common schemas have been consolidated in common-schemas.ts
+ * Import base schemas from there instead of this file.
+ * 
+ * This file now only contains:
+ * - Validation middleware factory (validate)
+ * - Helper functions (validateField, safeParseRequest)
+ * - Re-exports for backward compatibility (deprecated)
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
 // ==========================================================
-// Common Schemas - Reusable across routes
+// Re-exports from common-schemas (for backward compatibility)
 // ==========================================================
 
 /**
- * UUID validation schema
+ * @deprecated Import directly from '../utils/common-schemas' instead
+ * These re-exports are kept for backward compatibility only
  */
-export const uuidSchema = z.string().uuid('Invalid UUID format');
+export { 
+  uuidSchema,
+  paginationQuerySchema as paginationSchema,
+  fileIdParamSchema,
+  brokerSchema
+} from './common-schemas';
 
 /**
- * Pagination query parameters
- */
-export const paginationSchema = z.object({
-  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(500)).optional(),
-  offset: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(0)).optional(),
-  page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1)).optional()
-});
-
-/**
- * Common file ID parameter (UUID)
- */
-export const fileIdParamSchema = z.object({
-  fileId: uuidSchema
-});
-
-/**
- * Common row ID parameter (UUID)
+ * @deprecated Import directly from '../utils/common-schemas' instead
  */
 export const rowIdParamSchema = z.object({
-  rowId: uuidSchema
+  rowId: z.string().uuid('Invalid UUID format')
 });
 
 /**
- * Broker name validation
- */
-export const brokerSchema = z.enum(['balanz', 'other']).default('balanz');
-
-/**
- * Status values for AUM imports
+ * @deprecated Import directly from '../utils/common-schemas' instead
  */
 export const aumStatusSchema = z.enum(['uploaded', 'parsed', 'committed', 'failed']);
 
 /**
- * Match status values
+ * @deprecated Import directly from '../utils/common-schemas' instead
  */
 export const matchStatusSchema = z.enum(['matched', 'unmatched', 'ambiguous']);
 

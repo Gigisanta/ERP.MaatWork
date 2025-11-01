@@ -55,6 +55,10 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
         // Include manager's own ID so they can see contacts they created
         accessibleAdvisorIds = [userId, ...teamMembers.map((m: { id: string }) => m.id)];
       } catch (error) {
+        // AI_DECISION: Mantener console.warn aquí por ser función de utilidad sin request context
+        // Justificación: getUserAccessScope no tiene acceso a req.log, y es llamado antes de handlers
+        // Impacto: Este warning es de configuración/setup, aceptable en console
+        // TODO: Considerar logger global si se vuelve problemático
         console.warn(`Manager ${userId} has no team members or team setup issue:`, error);
         // Even without team members, manager should see their own contacts
         accessibleAdvisorIds = [userId];

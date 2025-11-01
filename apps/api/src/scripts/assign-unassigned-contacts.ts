@@ -1,31 +1,53 @@
 #!/usr/bin/env tsx
 /**
- * Script para asignar contactos sin assignedAdvisorId a "giolivo santarelli"
- * Uso: pnpm -F @cactus/api run tsx src/scripts/assign-unassigned-contacts.ts
+ * Script para asignar contactos sin assignedAdvisorId a un usuario específico.
+ * 
+ * AI_DECISION: Parametrizar script para aceptar nombre de usuario como argumento
+ * Justificación: Hace el script reutilizable para cualquier usuario
+ * Impacto: Mejor developer experience y flexibilidad
+ * 
+ * Uso:
+ *   pnpm -F @cactus/api run assign-unassigned-contacts "Nombre Usuario"
+ * 
+ * Ejemplo:
+ *   pnpm -F @cactus/api run assign-unassigned-contacts "giolivo santarelli"
  */
 
 import { db, contacts, users } from '@cactus/db';
 import { eq, and, isNull, sql, or, ilike } from 'drizzle-orm';
 
 async function assignUnassignedContacts() {
-  console.log('\n🔍 Buscando usuario "giolivo santarelli"...\n');
+  // Obtener nombre de usuario desde argumentos CLI
+  const targetUserName = process.argv[2] || 'giolivo santarelli'; // Default para backward compatibility
+
+  if (process.argv.length <= 2) {
+    console.log('\n💡 Tip: Puedes especificar un usuario como argumento:');
+    console.log('   pnpm -F @cactus/api run assign-unassigned-contacts "Nombre Usuario"\n');
+  }
+
+  console.log(`\n🔍 Buscando usuario "${targetUserName}"...\n`);
   
   try {
     // Buscar usuario por nombre (case-insensitive) o email
+    const searchPattern = `%${targetUserName}%`;
     const targetUser = await db()
       .select()
       .from(users)
       .where(
         or(
-          sql`LOWER(${users.fullName}) LIKE LOWER(${'%giolivo%santarelli%'})`,
-          sql`LOWER(${users.email}) LIKE LOWER(${'%giolivo%santarelli%'})`
+          sql`LOWER(${users.fullName}) LIKE LOWER(${searchPattern})`,
+          sql`LOWER(${users.email}) LIKE LOWER(${searchPattern})`
         )
       )
       .limit(1);
     
     if (targetUser.length === 0) {
-      console.error('❌ No se encontró el usuario "giolivo santarelli"');
-      console.log('\n📋 Usuarios disponibles:');
+      console.error(`❌ No se encontró el usuario "${targetUserName}"`);
+      console.log('\nSugerencias:');
+      console.log('  - Verifica que el usuario exista en la base de datos');
+      console.log('  - El nombre puede ser parcial (busca con LIKE)');
+      console.log('  - Prueba con el email si conoces el dominio\n');
+      console.log('📋 Usuarios disponibles:');
       const allUsers = await db()
         .select({ id: users.id, email: users.email, fullName: users.fullName, role: users.role })
         .from(users)

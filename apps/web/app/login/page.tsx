@@ -25,7 +25,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   // AI_DECISION: Redirigir automáticamente si ya hay sesión
@@ -108,25 +107,17 @@ export default function LoginPage() {
                 />
 
                 {/* Password Input */}
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    label="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Tu contraseña"
-                    disabled={loading}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
-                  >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  label="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Tu contraseña"
+                  disabled={loading}
+                  required
+                  showPasswordToggle
+                />
 
                 {/* Remember me */}
                 <div className="flex items-center justify-between text-sm">

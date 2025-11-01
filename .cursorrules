@@ -192,28 +192,61 @@ const res = await fetch(`${apiUrl}/portfolios`, {
 
 ### 3. Validaciones con Zod
 
-**Validar en backend SIEMPRE** con Zod schemas.
+**Validar en backend SIEMPRE** con Zod schemas y middleware `validate()`.
 
-**Ubicación:** `apps/api/src/schemas/[domain].ts`
+**Ubicación:** Definir schemas en cada archivo de rutas (`apps/api/src/routes/*.ts`)  
+bajo la sección `// Zod Validation Schemas`
 
-**Ejemplo:**
+**Estructura estándar:**
 ```typescript
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema,
+  paginationQuerySchema,
+  idParamSchema,
+  // ... otros schemas comunes
+} from '../utils/common-schemas';
 
-export const createPortfolioSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().optional(),
-  riskLevel: z.enum(['conservative', 'moderate', 'aggressive'])
+// ==========================================================
+// Zod Validation Schemas
+// ==========================================================
+
+// Path params
+const contactIdParams = z.object({ id: uuidSchema });
+
+// Query params
+const listQuerySchema = paginationQuerySchema.extend({
+  status: z.enum(['active', 'inactive']).optional()
 });
 
-// En route:
-const validated = createPortfolioSchema.parse(req.body);
+// Body schemas
+const createSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional()
+});
+
+// ==========================================================
+// Routes
+// ==========================================================
+
+router.post('/',
+  requireAuth,
+  validate({ body: createSchema }),
+  async (req, res) => {
+    // req.body ya está validado y tipado
+    const data = req.body;
+    // ...
+  }
+);
 ```
 
 **Reglas:**
-- Validar en edge (inicio del endpoint)
-- Retornar 400 con detalles claros si falla
-- Usar `.parse()` para throw o `.safeParse()` para manejo manual
+- ✅ Usar middleware `validate()` en la definición del endpoint
+- ✅ Importar schemas comunes desde `common-schemas.ts`
+- ✅ Validación ejecutada ANTES de entrar al handler
+- ❌ NO usar `.parse()` manual en el handler
+- ❌ NO manejar `ZodError` manualmente (validate() lo hace)
 
 ### 4. Validaciones de Batch Endpoints
 
@@ -469,7 +502,7 @@ const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
 ## ✅ Checklist Pre-Commit
 
 - [ ] Sin tipos `any` sin justificación
-- [ ] Validaciones Zod en endpoints nuevos
+- [ ] Validaciones Zod en endpoints nuevos (usar middleware `validate()`)
 - [ ] Tests unitarios para lógica de negocio
 - [ ] Tipos TypeScript para request/response
 - [ ] Cliente API usado (no fetch directo)
@@ -478,6 +511,27 @@ const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
 - [ ] Logging estructurado con contexto
 - [ ] Error handling con ApiError
 - [ ] Linter limpio (`pnpm lint`)
+
+### Checklist de Validación (Nuevo Endpoint)
+
+Al crear un nuevo endpoint, verificar:
+
+- [ ] Schemas definidos bajo `// Zod Validation Schemas`
+- [ ] Imports de common schemas cuando aplique (`uuidSchema`, `paginationQuerySchema`, etc.)
+- [ ] Middleware `validate()` aplicado en la definición del endpoint
+- [ ] NO usar `.parse()` manual en el handler
+- [ ] Validar params, query y body según corresponda
+- [ ] Path params: Usar `idParamSchema`, `fileIdParamSchema`, etc.
+- [ ] Query params: Usar `paginationQuerySchema` para listados
+- [ ] Body: Crear schema específico o reutilizar existente
+- [ ] Tests de validación: Casos de error 400 con detalles claros
+
+**Anti-patterns a evitar:**
+- ❌ `const validated = schema.parse(req.body)` en handler
+- ❌ `try/catch` manual para `ZodError`
+- ❌ Acceder a `req.query.limit` sin validar
+- ❌ Hardcodear valores de enums
+- ❌ Crear schemas UUID custom (usar `uuidSchema`)
 
 ---
 

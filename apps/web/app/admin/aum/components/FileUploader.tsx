@@ -3,6 +3,19 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api-client';
+import {
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalContent,
+  ModalFooter,
+  Button,
+  Text,
+  Stack,
+  Alert,
+  Heading,
+} from '@cactus/ui';
 
 interface FileUploaderProps {
   onUploadSuccess?: () => void;
@@ -78,72 +91,83 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   return (
     <>
       <div className="flex items-center gap-3">
-        <label htmlFor="aum-file-input" className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 cursor-pointer">
+        <Button
+          as="label"
+          htmlFor="aum-file-input"
+          variant="primary"
+          disabled={loading}
+          className="cursor-pointer"
+        >
           {loading ? 'Subiendo…' : 'Cargar archivo de Balanz (CSV o Excel)'}
-        </label>
-        <input id="aum-file-input" type="file" className="hidden" accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onChange} disabled={loading} />
-        {error && <span className="text-sm text-red-600">{error}</span>}
+        </Button>
+        <input 
+          id="aum-file-input" 
+          type="file" 
+          className="hidden" 
+          accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+          onChange={onChange} 
+          disabled={loading} 
+        />
+        {error && (
+          <Text size="sm" className="text-error">{error}</Text>
+        )}
       </div>
 
-      {showSummary && uploadSummary && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold mb-4">Resumen de importación</h3>
-            
-            <div className="space-y-3 mb-6">
+      <Modal open={showSummary && !!uploadSummary} onOpenChange={setShowSummary}>
+        <ModalHeader>
+          <ModalTitle>Resumen de importación</ModalTitle>
+        </ModalHeader>
+        <ModalContent>
+          <Stack direction="column" gap="md">
+            <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-700">Total procesados:</span>
-                <span className="font-semibold">{uploadSummary.totals.parsed}</span>
+                <Text>Total procesados:</Text>
+                <Text weight="semibold">{uploadSummary?.totals.parsed}</Text>
               </div>
               
-              {uploadSummary.totals.matched > 0 && (
-                <div className="flex justify-between text-green-700">
-                  <span>Coincidencias:</span>
-                  <span className="font-semibold">{uploadSummary.totals.matched}</span>
+              {uploadSummary?.totals.matched && uploadSummary.totals.matched > 0 && (
+                <div className="flex justify-between">
+                  <Text className="text-success-base">Coincidencias:</Text>
+                  <Text weight="semibold" className="text-success-base">{uploadSummary.totals.matched}</Text>
                 </div>
               )}
               
-              {uploadSummary.totals.conflicts > 0 && (
-                <div className="flex justify-between text-orange-700">
-                  <span>Conflictos detectados:</span>
-                  <span className="font-semibold">{uploadSummary.totals.conflicts}</span>
+              {uploadSummary?.totals.conflicts && uploadSummary.totals.conflicts > 0 && (
+                <div className="flex justify-between">
+                  <Text className="text-warning-base">Conflictos detectados:</Text>
+                  <Text weight="semibold" className="text-warning-base">{uploadSummary.totals.conflicts}</Text>
                 </div>
               )}
               
-              {uploadSummary.totals.ambiguous > 0 && (
-                <div className="flex justify-between text-orange-700">
-                  <span>Requieren revisión:</span>
-                  <span className="font-semibold">{uploadSummary.totals.ambiguous}</span>
+              {uploadSummary?.totals.ambiguous && uploadSummary.totals.ambiguous > 0 && (
+                <div className="flex justify-between">
+                  <Text className="text-warning-base">Requieren revisión:</Text>
+                  <Text weight="semibold" className="text-warning-base">{uploadSummary.totals.ambiguous}</Text>
                 </div>
               )}
               
-              {uploadSummary.totals.unmatched > 0 && (
-                <div className="flex justify-between text-gray-700">
-                  <span>Sin coincidencia:</span>
-                  <span className="font-semibold">{uploadSummary.totals.unmatched}</span>
+              {uploadSummary?.totals.unmatched && uploadSummary.totals.unmatched > 0 && (
+                <div className="flex justify-between">
+                  <Text>Sin coincidencia:</Text>
+                  <Text weight="semibold">{uploadSummary.totals.unmatched}</Text>
                 </div>
               )}
             </div>
 
-            {uploadSummary.totals.conflicts > 0 && (
-              <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-6">
-                <p className="text-sm text-orange-800">
-                  Se detectaron conflictos en cuentas duplicadas. Revisa los duplicados en la vista previa.
-                </p>
-              </div>
+            {uploadSummary?.totals.conflicts && uploadSummary.totals.conflicts > 0 && (
+              <Alert variant="warning" title="Conflictos detectados">
+                Se detectaron conflictos en cuentas duplicadas. Revisa los duplicados en la vista previa.
+              </Alert>
             )}
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={handleCloseSummary}
-                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-              >
+            <ModalFooter>
+              <Button variant="primary" onClick={handleCloseSummary}>
                 Ver archivo
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Button>
+            </ModalFooter>
+          </Stack>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

@@ -44,6 +44,102 @@
 - Error handler devuelve JSON y oculta detalles en prod
 - Shutdown graceful (SIGTERM/SIGINT) con timeout de 10s
 
+## Portfolio Systems
+
+**AI_DECISION: Clarificar coexistencia de Portfolio Templates (CRM) y Epic-D (Analytics)**
+**Justificación: Evitar confusión sobre dos sistemas con propósitos diferentes pero relacionados**
+**Impacto: Equipo entiende cuándo usar cada sistema**
+
+### Portfolio Templates (CRM Legacy - Activo)
+- **Propósito:** Modelos de inversión predefinidos para asignar a clientes
+- **Ubicación Backend:** `apps/api/src/routes/portfolio.ts` (endpoints `/portfolios/templates`)
+- **DB Tables:** `portfolioTemplates`, `portfolioTemplateLines`, `clientPortfolioAssignments`
+- **Usado por:** Advisors/Managers para asignar estrategias de inversión a contactos
+- **Features:**
+  - Crear templates con líneas de inversión (instrumentos o asset classes)
+  - Validar que pesos sumen 100%
+  - Asignar templates a contactos (clientes)
+  - Ver historial de asignaciones
+- **Estado:** ✅ **Activo** - Feature operativa del CRM
+
+**Endpoints Portfolio Templates:**
+```
+GET    /portfolios/templates              # Listar templates
+POST   /portfolios/templates              # Crear template
+PUT    /portfolios/templates/:id          # Editar template
+GET    /portfolios/templates/:id/lines    # Ver líneas
+POST   /portfolios/templates/:id/lines    # Agregar línea
+DELETE /portfolios/templates/:id/lines/:lineId
+GET    /portfolios/templates/lines/batch  # Batch fetch
+
+POST   /portfolios/assignments            # Asignar template a contacto
+GET    /portfolios/assignments/:contactId # Ver asignaciones de contacto
+```
+
+### Portfolios & Benchmarks (Epic-D - Activo)
+- **Propósito:** Sistema de analytics para performance y comparación de instrumentos
+- **Ubicación Backend:** `apps/api/src/routes/benchmarks.ts`, `apps/api/src/routes/instruments.ts`
+- **DB Tables:** `instruments`, `benchmarks`, `benchmark_components`, `metrics`
+- **Usado por:** Sistema de analytics para cálculos financieros
+- **Features:**
+  - Gestión de instrumentos financieros (acciones, ETFs, bonos)
+  - Definición de benchmarks (S&P 500, MSCI World, etc.)
+  - Cálculo de performance (Python microservice)
+  - Comparación de portfolios vs benchmarks
+- **Estado:** ✅ **Activo** - Feature nueva de analytics
+
+**Endpoints Epic-D:**
+```
+GET    /benchmarks                        # Listar benchmarks
+POST   /benchmarks                        # Crear benchmark
+GET    /benchmarks/:id/components         # Ver componentes
+POST   /benchmarks/:id/components         # Agregar componente
+
+GET    /instruments                       # Listar instrumentos
+POST   /instruments                       # Crear instrumento
+GET    /instruments/:symbol/price         # Precio actual
+
+POST   /analytics/performance             # Calcular performance
+POST   /analytics/compare                 # Comparar portfolios
+```
+
+### Relación entre Sistemas
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CRM Legacy System                        │
+│                                                             │
+│  Portfolio Templates → Define QUÉ instrumentos recomendar   │
+│  - Template: "Conservador"                                  │
+│    • 60% Bonos (asset class)                               │
+│    • 30% Acciones AAPL (instrumento)                       │
+│    • 10% Cash                                              │
+│                                                             │
+│  Asignación: Contact ← Template                            │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+                 │ Referencia instrumentos
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Epic-D Analytics                         │
+│                                                             │
+│  Instruments & Benchmarks → Analiza CÓMO performan         │
+│  - Instrumento: AAPL                                       │
+│    • Precio actual                                         │
+│    • Performance histórica                                 │
+│    • Volatilidad, Sharpe ratio                            │
+│                                                             │
+│  - Benchmark: S&P 500                                      │
+│    • Comparación con portfolios                            │
+│    • Drawdown, correlación                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**En resumen:**
+- **Templates (CRM)**: Receta de inversión para asignar a clientes
+- **Epic-D**: Motor de análisis financiero con datos de mercado
+- **Ambos coexisten**: Templates referencian instrumentos que Epic-D analiza
+
 ## Frontend (Web)
 - App Router; islas cliente para interactividad
 - Auth: token en localStorage + cookie corta para middleware
@@ -69,8 +165,4 @@
 ## Seguridad
 - Pino redacta headers sensibles en prod
 - Cookies `SameSite=Lax` y `Secure` cuando hay HTTPS
-
-
-
-
 

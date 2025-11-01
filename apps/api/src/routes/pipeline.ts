@@ -5,6 +5,12 @@ import { eq, desc, and, isNull, sql, count, avg, sum, inArray } from 'drizzle-or
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema,
+  idParamSchema,
+  dateSchema
+} from '../utils/common-schemas';
 
 const router = Router();
 
@@ -12,6 +18,25 @@ const router = Router();
 // Schemas de validación
 // ==========================================================
 
+// Query parameter schemas
+const boardQuerySchema = z.object({
+  assignedAdvisorId: z.string().uuid().optional(),
+  assignedTeamId: z.string().uuid().optional()
+});
+
+const metricsQuerySchema = z.object({
+  fromDate: dateSchema.optional(),
+  toDate: dateSchema.optional(),
+  assignedAdvisorId: z.string().uuid().optional(),
+  assignedTeamId: z.string().uuid().optional()
+});
+
+const metricsExportQuerySchema = z.object({
+  fromDate: dateSchema.optional(),
+  toDate: dateSchema.optional()
+});
+
+// Body schemas
 const createStageSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().nullable(),
@@ -85,9 +110,13 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
 // ==========================================================
 // POST /pipeline/stages - Crear nueva etapa
 // ==========================================================
-router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/stages', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ body: createStageSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createStageSchema.parse(req.body);
+    const validated = req.body;
 
     const [newStage] = await db()
       .insert(pipelineStages)
@@ -97,9 +126,6 @@ router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (re
     req.log.info({ stageId: newStage.id }, 'pipeline stage created');
     res.status(201).json({ data: newStage });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create pipeline stage');
     next(err);
   }
@@ -108,10 +134,17 @@ router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (re
 // ==========================================================
 // PUT /pipeline/stages/:id - Actualizar etapa
 // ==========================================================
-router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.put('/stages/:id', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ 
+    params: idParamSchema,
+    body: updateStageSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const validated = updateStageSchema.parse(req.body);
+    const validated = req.body;
 
     const [updated] = await db()
       .update(pipelineStages)
@@ -129,9 +162,6 @@ router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async 
     req.log.info({ stageId: id }, 'pipeline stage updated');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, stageId: req.params.id }, 'failed to update pipeline stage');
     next(err);
   }
@@ -140,7 +170,10 @@ router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async 
 // ==========================================================
 // GET /pipeline/board - Obtener board kanban completo
 // ==========================================================
-router.get('/board', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/board', 
+  requireAuth,
+  validate({ query: boardQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { assignedAdvisorId, assignedTeamId } = req.query;
 
@@ -190,9 +223,12 @@ router.get('/board', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // POST /pipeline/move - Mover contacto entre etapas
 // ==========================================================
-router.post('/move', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/move', 
+  requireAuth,
+  validate({ body: moveContactSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { contactId, toStageId, reason } = moveContactSchema.parse(req.body);
+    const { contactId, toStageId, reason } = req.body;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -279,9 +315,6 @@ router.post('/move', requireAuth, async (req: Request, res: Response, next: Next
     req.log.info({ contactId, fromStage: contact.pipelineStageId, toStage: toStageId }, 'contact moved in pipeline');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to move contact in pipeline');
     next(err);
   }
@@ -290,7 +323,10 @@ router.post('/move', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // GET /pipeline/metrics - Obtener métricas de conversión
 // ==========================================================
-router.get('/metrics', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/metrics', 
+  requireAuth,
+  validate({ query: metricsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       fromDate,
@@ -404,7 +440,10 @@ router.get('/metrics', requireAuth, async (req: Request, res: Response, next: Ne
 // ==========================================================
 // GET /pipeline/metrics/export - Exportar métricas
 // ==========================================================
-router.get('/metrics/export', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/metrics/export', 
+  requireAuth,
+  validate({ query: metricsExportQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { fromDate, toDate } = req.query;
 

@@ -3,6 +3,7 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { logger } from '../../../lib/logger';
 import {
   Card,
   CardHeader,
@@ -171,26 +172,24 @@ export default function NewContactPage() {
         const responseData = await response.json();
         const createdContact = responseData.data;
         
-        // AI_DECISION: Log assignedAdvisorId verification in development
-        // Justificación: Helps debug assignment issues and verify backend is working correctly
-        // Impacto: Provides visibility into assignment flow from frontend perspective
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Contact Creation] Contact created successfully:', {
-            contactId: createdContact?.id,
-            assignedAdvisorId: createdContact?.assignedAdvisorId,
-            expectedAdvisorId: user?.id, // For advisors, should match their own ID
-            userRole: user?.role,
-            warning: responseData.warning || null,
-            fullContact: createdContact
-          });
-          
-          // Verify assignment for advisors
-          if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
-            console.warn('[Contact Creation] WARNING: Advisor created contact but assignedAdvisorId does not match user ID:', {
-              expected: user.id,
-              actual: createdContact?.assignedAdvisorId
-            });
-          }
+        // AI_DECISION: Usar logger estructurado en lugar de console.log
+        // Justificación: Mejor observabilidad y correlación con logs de API
+        // Impacto: Logs estructurados y rastreables en producción
+        logger.info({
+          contactId: createdContact?.id,
+          assignedAdvisorId: createdContact?.assignedAdvisorId,
+          expectedAdvisorId: user?.id,
+          userRole: user?.role,
+          warning: responseData.warning || null
+        }, 'Contact created successfully');
+        
+        // Verify assignment for advisors
+        if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
+          logger.warn({
+            expected: user.id,
+            actual: createdContact?.assignedAdvisorId,
+            contactId: createdContact?.id
+          }, 'Advisor mismatch on contact creation');
         }
         
         setSuccess(true);

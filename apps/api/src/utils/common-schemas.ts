@@ -102,6 +102,10 @@ export const userIdParamSchema = z.object({
   userId: uuidSchema
 });
 
+export const rowIdParamSchema = z.object({
+  rowId: uuidSchema
+});
+
 // ==========================================================
 // Common Enums
 // ==========================================================
@@ -111,6 +115,10 @@ export const userRoleSchema = z.enum(['admin', 'manager', 'advisor']);
 export const brokerSchema = z.enum(['balanz', 'other']).default('balanz');
 
 export const statusSchema = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled']);
+
+export const aumStatusSchema = z.enum(['uploaded', 'parsed', 'committed', 'failed']);
+
+export const matchStatusSchema = z.enum(['matched', 'unmatched', 'ambiguous']);
 
 // ==========================================================
 // File Upload
@@ -159,4 +167,14 @@ export function paginationSchemaWithLimit(maxLimit: number = 500) {
     })
   );
 }
+
+// ==========================================================
+// Legacy Compatibility Aliases
+// ==========================================================
+
+/**
+ * @deprecated Use paginationQuerySchema instead
+ * Kept for backward compatibility
+ */
+export const paginationSchema = paginationQuerySchema;
 

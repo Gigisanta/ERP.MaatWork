@@ -198,6 +198,7 @@ export default function RegisterPage() {
                   disabled={loading}
                   required
                   minLength={6}
+                  showPasswordToggle
                 />
 
                 <div>

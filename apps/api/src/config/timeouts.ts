@@ -119,11 +119,18 @@ export function validateTimeouts(): {
 }
 
 // Validar al inicializar
+// AI_DECISION: Usar logger estructurado en lugar de console.warn
+// Justificación: Mejor observabilidad en producción
+// Impacto: Warnings de configuración se registran en logs estructurados
 if (process.env.NODE_ENV !== 'test') {
   const validation = validateTimeouts();
   if (!validation.valid) {
-    console.warn('⚠️  Timeout configuration warnings:');
-    validation.warnings.forEach(w => console.warn(`  - ${w}`));
+    // Importar logger solo si hay warnings (lazy import para evitar ciclos)
+    import('../index.js').then(({ logger }) => {
+      logger.warn({ warnings: validation.warnings }, 'Timeout configuration warnings detected');
+    }).catch(() => {
+      // Fallback a console.warn si logger no está disponible (durante inicialización)
+      console.warn('⚠️  Timeout configuration warnings:', validation.warnings);
+    });
   }
 }
-

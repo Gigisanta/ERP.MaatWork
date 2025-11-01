@@ -41,7 +41,7 @@ jobs:
       - name: Build API
         run: pnpm -F @cactus/api build
       - name: Start API
-        run: node apps/api/dist/apps/api/src/index.js &
+        run: node apps/api/dist/index.js &
       - name: Wait for API
         run: |
           for i in {1..30}; do

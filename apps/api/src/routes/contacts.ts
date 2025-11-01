@@ -6,6 +6,12 @@ import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../auth/authorization';
 import { createDrizzleLogger } from '../utils/db-logger';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema, 
+  idParamSchema,
+  paginationQuerySchema 
+} from '../utils/common-schemas';
 
 const router = Router();
 
@@ -13,6 +19,19 @@ const router = Router();
 // Schemas de validación
 // ==========================================================
 
+// Query parameter schemas
+const listContactsQuerySchema = paginationQuerySchema.extend({
+  pipelineStageId: z.string().uuid().optional(),
+  assignedAdvisorId: z.string().uuid().optional()
+});
+
+const contactDetailQuerySchema = z.object({
+  includeTimeline: z.enum(['true', 'false']).optional().default('true')
+});
+
+const historyQuerySchema = paginationQuerySchema;
+
+// Body schemas
 const createContactSchema = z.object({
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
@@ -47,7 +66,10 @@ const patchContactSchema = z.object({
 // ==========================================================
 // GET /contacts - Listar contactos con filtros
 // ==========================================================
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', 
+  requireAuth,
+  validate({ query: listContactsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   const userId = req.user!.id;
   const userRole = req.user!.role;
@@ -404,7 +426,13 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // ==========================================================
 // GET /contacts/:id - Obtener ficha 360 de un contacto
 // ==========================================================
-router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    query: contactDetailQuerySchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   const { id } = req.params;
   const { includeTimeline = 'true' } = req.query;
@@ -511,7 +539,10 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 // ==========================================================
 // POST /contacts - Crear nuevo contacto
 // ==========================================================
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', 
+  requireAuth,
+  validate({ body: createContactSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   const userId = req.user!.id;
   const userRole = req.user!.role;
@@ -524,7 +555,8 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
   }, 'Iniciando creación de contacto');
 
   try {
-    const validated = createContactSchema.parse(req.body);
+    // req.body ya está validado por middleware validate()
+    const validated = req.body;
 
     // AI_DECISION: Auto-assign contacts to creator for ALL user roles
     // Justificación: Cada usuario debe tener sus contactos asignados a su ID, independientemente del rol
@@ -732,17 +764,6 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
   } catch (err) {
     const duration = Date.now() - startTime;
     
-    if (err instanceof z.ZodError) {
-      req.log.warn({ 
-        err: err.errors, 
-        duration,
-        userId,
-        userRole,
-        action: 'create_contact'
-      }, 'Error de validación en creación de contacto');
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
-    
     req.log.error({ 
       err, 
       duration,
@@ -757,10 +778,16 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 // ==========================================================
 // PUT /contacts/:id - Actualizar contacto completo
 // ==========================================================
-router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: updateContactSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const validated = updateContactSchema.parse(req.body);
+    const validated = req.body;
 
     // Verify user has access to this contact
     const userId = req.user!.id;
@@ -870,9 +897,6 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
       warning: advisorWarning 
     });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact');
     next(err);
   }
@@ -881,10 +905,16 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 // ==========================================================
 // PATCH /contacts/:id - Actualizar campos específicos
 // ==========================================================
-router.patch('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:id', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: patchContactSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { fields } = patchContactSchema.parse(req.body);
+    const { fields } = req.body;
 
     // Verify user has access to this contact
     const userId = req.user!.id;
@@ -987,9 +1017,6 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response, next: Next
       warning: advisorWarning 
     });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, contactId: req.params.id }, 'failed to patch contact');
     next(err);
   }
@@ -998,12 +1025,21 @@ router.patch('/:id', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // PATCH /contacts/:id/next-step - Actualizar próximo paso
 // ==========================================================
-router.patch('/:id/next-step', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+
+const nextStepSchema = z.object({
+  nextStep: z.string().max(500).optional().nullable()
+});
+
+router.patch('/:id/next-step', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: nextStepSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { nextStep } = z.object({
-      nextStep: z.string().max(500).optional().nullable()
-    }).parse(req.body);
+    const { nextStep } = req.body;
 
     // Verificar que el contacto existe
     const [existing] = await db()
@@ -1042,9 +1078,6 @@ router.patch('/:id/next-step', requireAuth, async (req: Request, res: Response, 
     req.log.info({ contactId: id, nextStep }, 'contact next step updated');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact next step');
     next(err);
   }
@@ -1078,7 +1111,13 @@ router.delete('/:id', requireAuth, requireRole(['manager', 'admin']), async (req
 // ==========================================================
 // GET /contacts/:id/history - Obtener historial de cambios
 // ==========================================================
-router.get('/:id/history', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id/history', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    query: historyQuerySchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { limit = '50', offset = '0' } = req.query;
