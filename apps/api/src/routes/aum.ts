@@ -72,8 +72,9 @@ const matchRowBodySchema = z.object({
 // AI_DECISION: Guardar uploads en FS local bajo apps/api/uploads y registrar metadata en DB
 // Justificación: Simplicidad y trazabilidad en MVP; mover a S3 en el futuro si es necesario
 // Impacto: Nuevo endpoint y archivos temporales controlados
+// CORRECCIÓN: Usar variable de entorno UPLOAD_DIR para evitar path duplicado
 
-const uploadDir = join(process.cwd(), 'apps', 'api', 'uploads');
+const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
 
 // Singleton Pool for raw SQL queries
 let _rawPool: Pool | null = null;
