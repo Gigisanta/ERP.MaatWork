@@ -560,7 +560,7 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
 
         // Agrupar por portfolioId
         const portfolioDataById: Record<string, any[]> = {};
-        allPortfolioData.forEach(row => {
+        allPortfolioData.forEach((row: any) => {
           if (!portfolioDataById[row.portfolioId]) {
             portfolioDataById[row.portfolioId] = [];
           }
@@ -568,7 +568,7 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
         });
 
         // Crear objetos de portfolio
-        portfolioIds.forEach(portfolioId => {
+        portfolioIds.forEach((portfolioId: string) => {
           const portfolioData = portfolioDataById[portfolioId];
           if (portfolioData && portfolioData.length > 0) {
             portfoliosToCompare.push({
@@ -606,7 +606,7 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
 
         // Agrupar por benchmarkId
         const benchmarkDataById: Record<string, any[]> = {};
-        allBenchmarkData.forEach(row => {
+        allBenchmarkData.forEach((row: any) => {
           if (!benchmarkDataById[row.benchmarkId]) {
             benchmarkDataById[row.benchmarkId] = [];
           }
@@ -614,7 +614,7 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
         });
 
         // Crear objetos de benchmark
-        benchmarkIds.forEach(benchmarkId => {
+        benchmarkIds.forEach((benchmarkId: string) => {
           const benchmarkData = benchmarkDataById[benchmarkId];
           if (benchmarkData && benchmarkData.length > 0) {
             portfoliosToCompare.push({

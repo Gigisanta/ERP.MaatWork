@@ -111,7 +111,7 @@ router.get('/components/batch', requireAuth, requireRole(['advisor', 'manager', 
       componentsByBenchmark[id] = [];
     });
 
-    allComponents.forEach(comp => {
+    allComponents.forEach((comp: any) => {
       if (componentsByBenchmark[comp.benchmarkId]) {
         componentsByBenchmark[comp.benchmarkId].push({
           id: comp.componentId,

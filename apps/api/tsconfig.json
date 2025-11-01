@@ -2,20 +2,21 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": ".",
     "skipLibCheck": true,
     "declaration": false,
     "sourceMap": false,
     "baseUrl": ".",
     "paths": {
-      "@cactus/db": ["../../packages/db/dist/index.js"],
-      "@cactus/db/schema": ["../../packages/db/dist/schema.js"],
-      "@cactus/ui": ["../../packages/ui/dist/index.js"],
-      "@cactus/ui/*": ["../../packages/ui/dist/*.js"]
-    }
+      "@cactus/db": ["../../packages/db/src/index.ts"],
+      "@cactus/db/*": ["../../packages/db/src/*"],
+      "@cactus/ui": ["../../packages/ui/src/index.ts"],
+      "@cactus/ui/*": ["../../packages/ui/src/*"]
+    },
+    "types": ["node"],
+    "typeRoots": ["../../node_modules/@types", "./node_modules/@types"]
   },
-  "include": ["src"],
-  "exclude": ["src/__tests__", "src/etl/__tests__", "src/add-user.ts", "src/test-functional.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts", "node_modules", "dist"]
 }
 
 

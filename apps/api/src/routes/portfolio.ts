@@ -213,7 +213,7 @@ router.get('/templates/lines/batch', requireAuth, async (req, res) => {
       linesByTemplate[id] = [];
     });
 
-    allLines.forEach(line => {
+    allLines.forEach((line: any) => {
       if (linesByTemplate[line.templateId]) {
         linesByTemplate[line.templateId].push({
           id: line.lineId,
