@@ -509,7 +509,8 @@ router.get('/:id',
         .limit(10);
 
       // Unificar y ordenar por fecha
-      timeline = recentTasks.map((t): TimelineItem => ({ 
+      type TaskForTimeline = InferSelectModel<typeof tasks>;
+      timeline = recentTasks.map((t: TaskForTimeline): TimelineItem => ({ 
         ...t, 
         type: 'task', 
         timestamp: t.createdAt 
