@@ -21,7 +21,7 @@ export interface Contact {
   riskProfile?: string | null;
   nextStep?: string | null;
   notes?: string | null;
-  customFields?: Record<string, any>;
+  customFields?: Record<string, ContactFieldValue>;
   contactLastTouchAt?: string | null;
   pipelineStageUpdatedAt?: string | null;
   deletedAt?: string | null;

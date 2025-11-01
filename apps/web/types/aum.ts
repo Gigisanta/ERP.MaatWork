@@ -53,7 +53,7 @@ export interface AumRow {
     name: string;
     email: string;
   } | null;
-  raw?: Record<string, any>; // Datos raw del parseo
+  raw?: Record<string, unknown>; // Datos raw del parseo (sin estructura conocida)
 }
 
 /**

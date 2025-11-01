@@ -6,11 +6,17 @@
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+/**
+ * Tipo para valores de contexto en logs
+ * Permite cualquier valor JSON-serializable
+ */
+export type LogContextValue = string | number | boolean | null | undefined | LogContextValue[] | { [key: string]: LogContextValue };
+
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, LogContextValue>;
   userAgent?: string | undefined;
   url?: string | undefined;
   requestId?: string;
@@ -51,7 +57,7 @@ class ClientLogger {
   private createLogEntry(
     level: LogLevel,
     message: string,
-    context?: Record<string, any>
+    context?: Record<string, LogContextValue>
   ): LogEntry {
     return {
       timestamp: new Date().toISOString(),
@@ -83,7 +89,7 @@ class ClientLogger {
     }
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
+  private log(level: LogLevel, message: string, context?: Record<string, LogContextValue>): void {
     const entry = this.createLogEntry(level, message, context);
     
     if (process.env.NODE_ENV === 'production') {
@@ -118,28 +124,28 @@ class ClientLogger {
   /**
    * Log de debug - información detallada para desarrollo
    */
-  debug(message: string, context?: Record<string, any>): void {
+  debug(message: string, context?: Record<string, LogContextValue>): void {
     this.log('debug', message, context);
   }
 
   /**
    * Log de información - eventos importantes del flujo de la aplicación
    */
-  info(message: string, context?: Record<string, any>): void {
+  info(message: string, context?: Record<string, LogContextValue>): void {
     this.log('info', message, context);
   }
 
   /**
    * Log de advertencia - situaciones anómalas que no interrumpen el flujo
    */
-  warn(message: string, context?: Record<string, any>): void {
+  warn(message: string, context?: Record<string, LogContextValue>): void {
     this.log('warn', message, context);
   }
 
   /**
    * Log de error - errores que requieren atención
    */
-  error(message: string, context?: Record<string, any>): void {
+  error(message: string, context?: Record<string, LogContextValue>): void {
     this.log('error', message, context);
   }
 
@@ -158,7 +164,7 @@ class ClientLogger {
     method: string,
     url: string,
     requestId: string,
-    context?: Record<string, any>
+    context?: Record<string, LogContextValue>
   ): void {
     this.info(`HTTP ${method} ${url}`, {
       ...context,
@@ -177,7 +183,7 @@ class ClientLogger {
     status: number,
     duration: number,
     requestId: string,
-    context?: Record<string, any>
+    context?: Record<string, LogContextValue>
   ): void {
     const level = status >= 400 ? 'error' : status >= 300 ? 'warn' : 'info';
     this.log(level, `HTTP ${method} ${url} - ${status}`, {
@@ -198,7 +204,7 @@ class ClientLogger {
     url: string,
     error: Error,
     requestId: string,
-    context?: Record<string, any>
+    context?: Record<string, LogContextValue>
   ): void {
     this.error(`Network error: ${method} ${url}`, {
       ...context,
