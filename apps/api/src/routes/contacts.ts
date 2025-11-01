@@ -695,7 +695,8 @@ router.post('/',
         })
         .returning()
     );
-    const newContact = (newContactResult as any[])[0];
+    type NewContactResult = Contact;
+    const [newContact] = newContactResult as NewContactResult[];
 
     // AI_DECISION: Verify assignedAdvisorId was saved correctly after insertion
     // Justificación: Ensures data integrity and catches any assignment failures

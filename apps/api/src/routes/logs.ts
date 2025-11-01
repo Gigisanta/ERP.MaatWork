@@ -73,7 +73,7 @@ router.post('/client', async (req: Request, res: Response, next: NextFunction) =
         context: sanitizedContext,
         source: 'client',
         receivedAt: new Date().toISOString(),
-        requestId: req.headers['x-request-id'] || (req as any).requestId
+        requestId: req.headers['x-request-id'] || req.requestId
       };
 
       // Loggear usando el logger del servidor

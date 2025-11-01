@@ -10,7 +10,7 @@ import {
   instruments,
   lookupAssetClass
 } from '@cactus/db/schema';
-import { eq, and, sql, desc, asc } from 'drizzle-orm';
+import { eq, and, sql, desc, asc, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope } from '../auth/authorization';
 import { UserRole } from '../auth/types';

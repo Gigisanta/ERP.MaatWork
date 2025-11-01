@@ -152,11 +152,11 @@ app.use(
       remove: true
     } : [],  // No redactar nada en desarrollo
     customProps: (req: Request) => ({
-      requestId: (req as any).requestId,
+      requestId: req.requestId,
       traceparent: req.headers['traceparent'],
-      userId: (req as any).user?.id,
-      userRole: (req as any).user?.role,
-      teamId: (req as any).user?.teamId
+      userId: req.user?.id,
+      userRole: req.user?.role,
+      teamId: req.user?.teamId
     }),
     customSuccessMessage: (req: Request, res: Response) => {
       return `${req.method} ${req.url} - ${res.statusCode}`;
@@ -286,19 +286,19 @@ app.use('/v1/admin/aum', aumRouter);
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   req.log.error({
     err,
-    requestId: (req as any).requestId,
+    requestId: req.requestId,
     url: req.url,
     method: req.method,
     body: req.body,
     query: req.query,
     params: req.params,
-    userId: (req as any).user?.id,
-    userRole: (req as any).user?.role
+    userId: req.user?.id,
+    userRole: req.user?.role
   }, 'Unhandled error in request');
   
   res.status(500).json({
     error: 'Internal server error',
-    requestId: (req as any).requestId,
+    requestId: req.requestId,
     message: !isProduction ? err.message : undefined,
     stack: !isProduction ? err.stack : undefined
   });

@@ -402,23 +402,25 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
         .from(teamMembership)
         .where(and(eq(teamMembership.userId, request.managerId), eq(teamMembership.role, 'lead')))
         .limit(1);
+      type Team = InferSelectModel<typeof teams>;
       if (lead.length > 0) {
-        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1);
-        if (t) managerTeam = t as any;
+        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1) as Team[];
+        if (t) managerTeam = t;
       }
     }
 
     if (!managerTeam) {
       // Crear equipo automáticamente para el manager y asignarlo como lead
+      type NewTeam = InferSelectModel<typeof teams>;
       const [newTeam] = await dbi
         .insert(teams)
         .values({ name: `team-${request.managerId.slice(0, 8)}`, managerUserId: request.managerId })
-        .returning();
+        .returning() as NewTeam[];
       await dbi
         .insert(teamMembership)
         .values({ teamId: newTeam.id, userId: request.managerId, role: 'lead' })
         .onConflictDoNothing();
-      managerTeam = newTeam as any;
+      managerTeam = newTeam;
     }
 
     // Actualizar la solicitud como aprobada
