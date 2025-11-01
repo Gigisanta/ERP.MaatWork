@@ -139,8 +139,7 @@ describe('Tabs Component', () => {
       expect(tab).toHaveClass('focus-visible:ring-2');
     });
 
-    it('should be keyboard navigable', async () => {
-      const user = userEvent.setup();
+    it('should be keyboard navigable', () => {
       render(<Tabs items={mockItems} defaultValue="tab1" />);
       
       const tab1 = screen.getByRole('tab', { name: 'Tab 1' });

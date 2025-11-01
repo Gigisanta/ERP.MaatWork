@@ -1,8 +1,6 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 import Icon from '../Icon';
-import { Text } from '../../primitives/Text';
-import { VisuallyHidden } from '../../primitives/VisuallyHidden';
 
 export interface BreadcrumbItem {
   label: string;

@@ -18,14 +18,18 @@ export { FocusRing, type FocusRingProps } from './primitives/FocusRing';
 
 // Basic components - specific exports
 export { default as Input } from './components/forms/Input';
+export { default as Label } from './components/forms/Label';
 export { default as Button } from './components/nav/Button';
-export { Checkbox } from './components/Checkbox';
-export { Select, type SelectProps, type SelectItem } from './components/Select';
-export { Badge, type BadgeProps } from './components/Badge';
-export { Switch, type SwitchProps } from './components/Switch';
+export { Checkbox } from './components/forms/Checkbox';
+export { Select, type SelectProps, type SelectItem } from './components/forms/Select';
+export { Badge, type BadgeProps } from './components/feedback/Badge';
+export { Switch, type SwitchProps } from './components/forms/Switch';
 
 // Navigation components - specific exports
 export { Header, type HeaderProps, type NavItem, type User } from './components/nav/Header';
+export { Nav, type NavProps } from './components/nav/Nav';
+export { Sidebar, type SidebarProps, type SidebarSection, type SidebarItem } from './components/nav/Sidebar';
+export { Pagination, type PaginationProps } from './components/nav/Pagination';
 export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './components/nav/Breadcrumbs';
 export { Tabs, TabsList, TabsTrigger, TabsContent, type TabsProps, type TabItem } from './components/nav/Tabs';
 
@@ -54,7 +58,7 @@ export { Toast, ToastAction, ToastClose, type ToastProps } from './components/fe
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip';
 
 // Theme Provider - specific export
-export const ThemeProvider = ({ children, defaultTheme }: { children: React.ReactNode; defaultTheme?: string }) => {
+export const ThemeProvider = ({ children }: { children: React.ReactNode; defaultTheme?: string }) => {
   return React.createElement('div', { className: 'theme-provider' }, children);
 };
 

@@ -75,7 +75,7 @@ describe('EmptyState Component', () => {
 
   describe('Content Structure', () => {
     it('should render icon before title', () => {
-      const { container } = render(
+      render(
         <EmptyState 
           title="Empty" 
           icon={<span data-testid="icon">Icon</span>} 

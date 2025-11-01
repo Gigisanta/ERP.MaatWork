@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { cn } from '../../utils/cn';
 import Button from './Button';
 import Icon, { type IconName } from '../Icon';
@@ -27,6 +25,14 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   collapsed?: boolean;
   onCollapse?: (collapsed: boolean) => void;
   defaultCollapsed?: boolean;
+  currentPath?: string;
+  LinkComponent?: React.ComponentType<{
+    href: string;
+    className?: string;
+    'aria-current'?: 'page' | undefined;
+    title?: string;
+    children: React.ReactNode;
+  }>;
   className?: string;
 }
 
@@ -37,6 +43,8 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     collapsed: controlledCollapsed,
     onCollapse,
     defaultCollapsed = false,
+    currentPath = '',
+    LinkComponent,
     className,
     ...props 
   }, ref) => {
@@ -54,7 +62,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
     // Persist collapsed state to localStorage
     useEffect(() => {
-      if (controlledCollapsed === undefined) {
+      if (controlledCollapsed === undefined && typeof window !== 'undefined') {
         const saved = localStorage.getItem('sidebar-collapsed');
         if (saved !== null) {
           setInternalCollapsed(JSON.parse(saved));
@@ -63,7 +71,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     }, [controlledCollapsed]);
 
     useEffect(() => {
-      if (controlledCollapsed === undefined) {
+      if (controlledCollapsed === undefined && typeof window !== 'undefined') {
         localStorage.setItem('sidebar-collapsed', JSON.stringify(collapsed));
       }
     }, [collapsed, controlledCollapsed]);
@@ -90,11 +98,12 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           <Button
             variant="ghost"
             size="sm"
-            iconLeft={collapsed ? 'chevron-right' : 'chevron-left'}
             onClick={handleToggle}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className="ml-auto"
-          />
+          >
+            <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={16} />
+          </Button>
         </div>
 
         {/* Navigation */}
@@ -117,6 +126,8 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
                     key={item.href}
                     item={item}
                     collapsed={collapsed}
+                    currentPath={currentPath}
+                    LinkComponent={LinkComponent}
                   />
                 ))}
               </div>
@@ -133,12 +144,20 @@ Sidebar.displayName = 'Sidebar';
 interface SidebarItemProps {
   item: SidebarItem;
   collapsed: boolean;
+  currentPath?: string;
+  LinkComponent?: React.ComponentType<{
+    href: string;
+    className?: string;
+    'aria-current'?: 'page' | undefined;
+    title?: string;
+    children: React.ReactNode;
+  }>;
 }
 
 const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
-  ({ item, collapsed }, ref) => {
-    const pathname = usePathname();
-    const isActive = pathname === item.href;
+  ({ item, collapsed, currentPath = '', LinkComponent }, ref) => {
+    const isActive = currentPath === item.href;
+    const Link = LinkComponent || 'a';
 
     return (
       <Link
@@ -159,7 +178,7 @@ const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
         {item.icon && (
           <Icon 
             name={item.icon} 
-            size="sm" 
+            size={16}
             className="flex-shrink-0" 
           />
         )}

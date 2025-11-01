@@ -159,10 +159,10 @@ describe('Input Component', () => {
     it('should associate label with input', () => {
       render(<Input label="Email" />);
       const label = screen.getByText('Email');
-      const input = screen.getByRole('textbox');
       
       expect(label.tagName).toBe('LABEL');
       // Note: implicit association through parent div, not explicit htmlFor
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
   });
 

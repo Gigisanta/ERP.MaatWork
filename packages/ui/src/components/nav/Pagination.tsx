@@ -35,7 +35,7 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
 
       const half = Math.floor(maxVisiblePages / 2);
       let start = Math.max(1, currentPage - half);
-      let end = Math.min(totalPages, start + maxVisiblePages - 1);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
 
       if (end - start + 1 < maxVisiblePages) {
         start = Math.max(1, end - maxVisiblePages + 1);
@@ -79,13 +79,13 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
             <Button
               variant="ghost"
               size="sm"
-              iconLeft="chevron-left"
-              iconRight="chevron-left"
               onClick={() => onPageChange(1)}
               disabled={!canGoPrevious}
               aria-label="Go to first page"
               className="p-2"
             >
+              <Icon name="ChevronLeft" size={16} />
+              <Icon name="ChevronLeft" size={16} className="-ml-1" />
               <VisuallyHidden>First</VisuallyHidden>
             </Button>
           </>
@@ -95,11 +95,11 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
           <Button
             variant="ghost"
             size="sm"
-            iconLeft="chevron-left"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!canGoPrevious}
             aria-label={`Go to previous page, page ${currentPage - 1}`}
           >
+            <Icon name="ChevronLeft" size={16} className="mr-1" />
             Previous
           </Button>
         )}
@@ -138,12 +138,12 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
           <Button
             variant="ghost"
             size="sm"
-            iconRight="chevron-right"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!canGoNext}
             aria-label={`Go to next page, page ${currentPage + 1}`}
           >
             Next
+            <Icon name="ChevronRight" size={16} className="ml-1" />
           </Button>
         )}
 
@@ -151,13 +151,13 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
           <Button
             variant="ghost"
             size="sm"
-            iconLeft="chevron-right"
-            iconRight="chevron-right"
             onClick={() => onPageChange(totalPages)}
             disabled={!canGoNext}
             aria-label="Go to last page"
             className="p-2"
           >
+            <Icon name="ChevronRight" size={16} className="-mr-1" />
+            <Icon name="ChevronRight" size={16} />
             <VisuallyHidden>Last</VisuallyHidden>
           </Button>
         )}

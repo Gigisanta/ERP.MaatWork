@@ -1,6 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { Select, type SelectItem } from './Select';
 
 const mockItems: SelectItem[] = [
@@ -104,8 +103,7 @@ describe('Select Component', () => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
     });
 
-    it('should be keyboard accessible', async () => {
-      const user = userEvent.setup();
+    it('should be keyboard accessible', () => {
       render(<Select items={mockItems} />);
       
       const trigger = screen.getByRole('combobox');

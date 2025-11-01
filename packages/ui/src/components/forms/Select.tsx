@@ -2,7 +2,6 @@ import React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import Icon from '../Icon';
 
 export interface SelectItem {
   value: string;
@@ -41,7 +40,7 @@ export const Select = React.forwardRef<
   className,
   id,
   required = false,
-  ...props
+  ..._props
 }, ref) => {
   const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
   const helperId = helperText ? `${selectId}-helper` : undefined;

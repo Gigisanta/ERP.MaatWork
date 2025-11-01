@@ -7,13 +7,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClick?: () => void;
 }
 
-export default function Button({ 
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ 
   variant = 'primary', 
   size = 'md', 
   className = '', 
   children, 
   ...props 
-}: ButtonProps) {
+}, ref) => {
   const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variantClasses = {
@@ -32,8 +32,12 @@ export default function Button({
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
   
   return (
-    <button className={classes} {...props}>
+    <button ref={ref} className={classes} {...props}>
       {children}
     </button>
   );
-}
+});
+
+Button.displayName = 'Button';
+
+export default Button;
