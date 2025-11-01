@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import { app } from '../index';
 import { db } from '@cactus/db';
 
 // Mock de autenticación
-jest.mock('../auth/middlewares', () => ({
+vi.mock('../auth/middlewares', () => ({
   requireAuth: (req: any, res: any, next: any) => {
     req.user = { id: 'test-user-id' };
     next();
