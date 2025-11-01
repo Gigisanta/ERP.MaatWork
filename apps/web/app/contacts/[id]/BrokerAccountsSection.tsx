@@ -21,6 +21,7 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useBrokerAccounts } from '../../../lib/api-hooks';
 import { createBrokerAccount, deleteBrokerAccount } from '@/lib/api';
 import { logger } from '../../../lib/logger';
@@ -51,6 +52,20 @@ export default function BrokerAccountsSection({
   const { brokerAccounts, error, isLoading, mutate } = useBrokerAccounts(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newAccount, setNewAccount] = useState({
     broker: '',
     accountNumber: '',
@@ -76,15 +91,21 @@ export default function BrokerAccountsSection({
     }
   };
 
-  const handleDeleteAccount = async (accountId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) return;
-
-    try {
-      await deleteBrokerAccount(accountId);
-      await mutate(); // Refresh data
-    } catch (err) {
-      logger.error('Error deleting broker account', { err, accountId });
-    }
+  const handleDeleteAccount = (accountId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar cuenta',
+      description: '¿Estás seguro de que quieres eliminar esta cuenta?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteBrokerAccount(accountId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting broker account', { err, accountId });
+        }
+      }
+    });
   };
 
   const accounts = brokerAccounts.length > 0 ? brokerAccounts : initialBrokerAccounts;

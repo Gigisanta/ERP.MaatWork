@@ -21,6 +21,7 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useTasks } from '../../../lib/api-hooks';
 import { createTask, deleteTask } from '@/lib/api';
 import { logger } from '../../../lib/logger';
@@ -51,6 +52,20 @@ export default function TasksSection({
   const { tasks, error, isLoading, mutate } = useTasks(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -77,15 +92,21 @@ export default function TasksSection({
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
-
-    try {
-      await deleteTask(taskId);
-      await mutate(); // Refresh data
-    } catch (err) {
-      logger.error('Error deleting task', { err, taskId });
-    }
+  const handleDeleteTask = (taskId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar tarea',
+      description: '¿Estás seguro de que quieres eliminar esta tarea?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteTask(taskId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting task', { err, taskId });
+        }
+      }
+    });
   };
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
@@ -294,6 +315,18 @@ export default function TasksSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

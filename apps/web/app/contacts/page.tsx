@@ -40,6 +40,7 @@ import {
   TabsTrigger,
   type Column,
 } from '@cactus/ui';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 // Types Contact y Tag importados desde @/types
 
@@ -88,6 +89,19 @@ export default function ContactsPage() {
   // Estados para edición inline
   const [savingContactId, setSavingContactId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<{ contactId: string; field: string } | null>(null);
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [toast, setToast] = useState<{ show: boolean; title: string; description?: string; variant: 'success' | 'error' }>({
     show: false,
     title: '',
@@ -174,28 +188,36 @@ export default function ContactsPage() {
     }
   };
 
-  const handleDeleteTag = async (tagId: string) => {
-    if (!token || !confirm('¿Estás seguro de eliminar esta etiqueta?')) return;
+  const handleDeleteTag = (tagId: string) => {
+    if (!token) return;
     
-    try {
-      await deleteTag(tagId);
-      // Invalidate tags cache to refetch updated data
-      mutateTags();
-      setToast({
-        show: true,
-        title: 'Etiqueta eliminada',
-        variant: 'success'
-      });
-      // Also refresh contacts to show updated tags
-      mutateContacts();
-    } catch (err) {
-      setToast({
-        show: true,
-        title: 'Error al eliminar etiqueta',
-        description: err instanceof Error ? err.message : 'Error desconocido',
-        variant: 'error'
-      });
-    }
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar etiqueta',
+      description: '¿Estás seguro de eliminar esta etiqueta?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteTag(tagId);
+          // Invalidate tags cache to refetch updated data
+          mutateTags();
+          setToast({
+            show: true,
+            title: 'Etiqueta eliminada',
+            variant: 'success'
+          });
+          // Also refresh contacts to show updated tags
+          mutateContacts();
+        } catch (err) {
+          setToast({
+            show: true,
+            title: 'Error al eliminar etiqueta',
+            description: err instanceof Error ? err.message : 'Error desconocido',
+            variant: 'error'
+          });
+        }
+      }
+    });
   };
 
   const openEditTag = (tag: Tag) => {
@@ -1067,6 +1089,18 @@ export default function ContactsPage() {
             onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
           />
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+          onConfirm={confirmDialog.onConfirm}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          variant={confirmDialog.variant || 'default'}
+          confirmLabel="Confirmar"
+          cancelLabel="Cancelar"
+        />
       </Stack>
     </div>
   );

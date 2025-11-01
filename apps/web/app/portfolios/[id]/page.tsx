@@ -19,6 +19,7 @@ import {
   DataTable,
   type Column,
 } from '@cactus/ui';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { getPortfolioLines, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
 import { logger } from '../../../lib/logger';
@@ -82,6 +83,19 @@ export default function PortfolioDetailPage() {
     show: false,
     title: '',
     variant: 'info'
+  });
+
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
   });
 
   const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
@@ -171,22 +185,28 @@ export default function PortfolioDetailPage() {
     }
   };
 
-  const handleDeleteLine = async (lineId: string) => {
+  const handleDeleteLine = (lineId: string) => {
     if (!token || !templateId) return;
     
-    if (!confirm('¿Estás seguro de eliminar esta línea?')) return;
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar línea',
+      description: '¿Estás seguro de eliminar esta línea?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deletePortfolioLine(templateId, lineId);
 
-    try {
-      await deletePortfolioLine(templateId, lineId);
-
-      // Actualizar la lista de líneas
-      await fetchTemplate();
-      
-      showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
-    } catch (err) {
-      logger.error('Error deleting template line', { err, lineId, templateId });
-      showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
-    }
+          // Actualizar la lista de líneas
+          await fetchTemplate();
+          
+          showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
+        } catch (err) {
+          logger.error('Error deleting template line', { err, lineId, templateId });
+          showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
+        }
+      }
+    });
   };
 
   useEffect(() => {
@@ -517,6 +537,18 @@ export default function PortfolioDetailPage() {
         variant={toast.variant}
         open={toast.show}
         onOpenChange={(open: boolean) => setToast(prev => ({ ...prev, show: open }))}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
       />
     </main>
   );

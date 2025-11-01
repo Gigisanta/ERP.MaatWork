@@ -39,6 +39,7 @@ import { createInstrument, getInstruments } from '@/lib/api';
 import { logger } from '../../lib/logger';
 import { API_BASE_URL } from '../../lib/api-url';
 import type { Portfolio, PortfolioLine, Benchmark, BenchmarkComponent, BenchmarkComponentForm, Instrument, InstrumentSearchResult, RiskLevel } from '@/types';
+import ConfirmDialog from '../components/ConfirmDialog';
 import {
   Grid,
   Card,
@@ -135,6 +136,19 @@ export default function PortfoliosPage() {
     show: false,
     title: '',
     variant: 'info'
+  });
+
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
   });
 
   const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
@@ -485,31 +499,35 @@ export default function PortfoliosPage() {
     }
   };
 
-  const handleDeletePortfolio = async (portfolioId: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta cartera? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
+  const handleDeletePortfolio = (portfolioId: string) => {
     if (!token) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para eliminar carteras', 'warning');
       return;
     }
 
-    setIsLoading(true);
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar cartera',
+      description: '¿Estás seguro de eliminar esta cartera? Esta acción no se puede deshacer.',
+      variant: 'danger',
+      onConfirm: async () => {
+        setIsLoading(true);
 
-    try {
-      await deletePortfolio(portfolioId);
+        try {
+          await deletePortfolio(portfolioId);
 
-      // Remover del estado local
-      setPortfolios(portfolios.filter(p => p.id !== portfolioId));
+          // Remover del estado local
+          setPortfolios(portfolios.filter(p => p.id !== portfolioId));
       
-      showToast('Cartera eliminada', 'La cartera se eliminó exitosamente', 'success');
-    } catch (err) {
-      logger.error('Error deleting portfolio', { err, portfolioId });
-      showToast('Error al eliminar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+          showToast('Cartera eliminada', 'La cartera se eliminó exitosamente', 'success');
+        } catch (err) {
+          logger.error('Error deleting portfolio', { err, portfolioId });
+          showToast('Error al eliminar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   const handleEditBenchmark = (benchmark: Benchmark) => {
@@ -584,31 +602,35 @@ export default function PortfoliosPage() {
     }
   };
 
-  const handleDeleteBenchmark = async (benchmarkId: string) => {
-    if (!confirm('¿Estás seguro de eliminar este benchmark? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
+  const handleDeleteBenchmark = (benchmarkId: string) => {
     if (!token) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para eliminar benchmarks', 'warning');
       return;
     }
 
-    setIsLoading(true);
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar benchmark',
+      description: '¿Estás seguro de eliminar este benchmark? Esta acción no se puede deshacer.',
+      variant: 'danger',
+      onConfirm: async () => {
+        setIsLoading(true);
 
-    try {
-      await deleteBenchmark(benchmarkId);
+        try {
+          await deleteBenchmark(benchmarkId);
 
-      // Remover del estado local
-      setBenchmarks(benchmarks.filter(b => b.id !== benchmarkId));
-      
-      showToast('Benchmark eliminado', 'El benchmark se eliminó exitosamente', 'success');
-    } catch (err) {
-      logger.error('Error deleting benchmark', { err, benchmarkId });
-      showToast('Error al eliminar benchmark', err instanceof Error ? err.message : 'Error desconocido', 'error');
-    } finally {
-      setIsLoading(false);
-    }
+          // Remover del estado local
+          setBenchmarks(benchmarks.filter(b => b.id !== benchmarkId));
+          
+          showToast('Benchmark eliminado', 'El benchmark se eliminó exitosamente', 'success');
+        } catch (err) {
+          logger.error('Error deleting benchmark', { err, benchmarkId });
+          showToast('Error al eliminar benchmark', err instanceof Error ? err.message : 'Error desconocido', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   const handleCreateBenchmark = async () => {
@@ -1545,6 +1567,18 @@ export default function PortfoliosPage() {
         variant={toast.variant}
         open={toast.show}
         onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
       />
     </div>
   );

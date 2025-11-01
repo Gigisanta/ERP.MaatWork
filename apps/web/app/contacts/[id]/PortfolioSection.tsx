@@ -19,6 +19,7 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { usePortfolioAssignments } from '../../../lib/api-hooks';
 import { assignPortfolioToContact, removePortfolioAssignment, updatePortfolioAssignmentStatus } from '@/lib/api';
 import { logger } from '../../../lib/logger';
@@ -50,6 +51,20 @@ export default function PortfolioSection({
   const { portfolioAssignments, error, isLoading, mutate } = usePortfolioAssignments(contactId);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newAssignment, setNewAssignment] = useState({
     templateId: '',
     templateName: '',
@@ -74,15 +89,21 @@ export default function PortfolioSection({
     }
   };
 
-  const handleUnassignPortfolio = async (assignmentId: string) => {
-    if (!confirm('¿Estás seguro de que quieres desasignar este portfolio?')) return;
-
-    try {
-      await removePortfolioAssignment(assignmentId);
-      await mutate(); // Refresh data
-    } catch (err) {
-      logger.error('Error unassigning portfolio', { err, assignmentId });
-    }
+  const handleUnassignPortfolio = (assignmentId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Desasignar portfolio',
+      description: '¿Estás seguro de que quieres desasignar este portfolio?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await removePortfolioAssignment(assignmentId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error unassigning portfolio', { err, assignmentId });
+        }
+      }
+    });
   };
 
   const handleUpdateStatus = async (assignmentId: string, newStatus: 'active' | 'paused' | 'ended') => {
@@ -260,6 +281,18 @@ export default function PortfolioSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

@@ -19,6 +19,7 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useNotes } from '../../../lib/api-hooks';
 import { createNote, deleteNote } from '@/lib/api';
 import { logger } from '../../../lib/logger';
@@ -50,6 +51,20 @@ export default function NotesSection({
   const { notes, error, isLoading, mutate } = useNotes(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newNote, setNewNote] = useState({
     content: '',
     noteType: 'general',
@@ -74,15 +89,21 @@ export default function NotesSection({
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta nota?')) return;
-
-    try {
-      await deleteNote(noteId);
-      await mutate(); // Refresh data
-    } catch (err) {
-      logger.error('Error deleting note', { err, noteId });
-    }
+  const handleDeleteNote = (noteId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar nota',
+      description: '¿Estás seguro de que quieres eliminar esta nota?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteNote(noteId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting note', { err, noteId });
+        }
+      }
+    });
   };
 
   const getNoteTypeBadgeVariant = (noteType: string) => {
