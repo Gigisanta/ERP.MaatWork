@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
     try {
       await fs.mkdir(entityDir, { recursive: true });
       cb(null, entityDir);
-    } catch (err: any) {
+    } catch (err: unknown) {
       cb(err, entityDir);
     }
   },
@@ -42,7 +42,7 @@ const storage = multer.diskStorage({
 });
 
 // Filtro de tipos de archivo permitidos
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = [
     'image/jpeg',
     'image/png',

@@ -556,9 +556,9 @@ router.get('/export/csv',
 
     // Convertir a CSV simple
     const headers = ['id', 'title', 'status', 'priority', 'dueDate', 'assignedToUserId', 'contactId', 'createdAt'];
+    type TaskItem = InferSelectModel<typeof tasks>;
     const csv = [
       headers.join(','),
-      type TaskItem = InferSelectModel<typeof tasks>;
       ...items.map((item: TaskItem) => headers.map(h => item[h as keyof typeof item] || '').join(','))
     ].join('\n');
 

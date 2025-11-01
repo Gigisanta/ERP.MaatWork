@@ -35,7 +35,23 @@ import { initializeDatabase } from './db-init';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const loggerOptions: any = {
+type PinoLoggerOptions = {
+  level: string;
+  transport?: {
+    target: string;
+    options: {
+      colorize: boolean;
+      translateTime: string;
+      singleLine: boolean;
+      ignore: string;
+      errorLikeObjectKeys: string[];
+      messageFormat: string;
+      errorProps: string;
+    };
+  };
+};
+
+const loggerOptions: PinoLoggerOptions = {
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
 };
 if (!isProduction) {
