@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 export default function RowMatchForm({ fileId, rowId, initialContactId, initialUserId }: { fileId: string; rowId: string; initialContactId?: string | null; initialUserId?: string | null; }) {
-  const { token } = useAuth();
   const [contactId, setContactId] = useState(initialContactId || '');
   const [userId, setUserId] = useState(initialUserId || '');
   const [saving, setSaving] = useState(false);
@@ -14,15 +13,13 @@ export default function RowMatchForm({ fileId, rowId, initialContactId, initialU
     setSaving(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${base}/admin/aum/uploads/${fileId}/match`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ rowId, matchedContactId: contactId || null, matchedUserId: userId || null })
+      await apiClient.post(`/admin/aum/uploads/${fileId}/match`, {
+        rowId,
+        matchedContactId: contactId || null,
+        matchedUserId: userId || null
       });
-      if (!res.ok) throw new Error(await res.text());
     } catch (e: any) {
-      setError(e.message || 'Error');
+      setError(e.userMessage || e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -37,5 +34,3 @@ export default function RowMatchForm({ fileId, rowId, initialContactId, initialU
     </div>
   );
 }
-
-

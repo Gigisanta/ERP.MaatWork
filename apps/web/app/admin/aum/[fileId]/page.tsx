@@ -41,10 +41,10 @@ export default function AumPreviewPage() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href={(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + `/admin/aum/uploads/${fileId}/export`}
+            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/admin/aum/uploads/${fileId}/export`}
             className="px-3 py-2 text-sm border rounded"
           >Descargar CSV</a>
-          <form action={(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + `/admin/aum/uploads/${fileId}/commit`} method="post">
+          <form action={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/admin/aum/uploads/${fileId}/commit`} method="post">
             <button className="px-3 py-2 text-sm bg-indigo-600 text-white rounded">Confirmar sincronización</button>
           </form>
         </div>
