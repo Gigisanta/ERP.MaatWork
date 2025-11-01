@@ -10,7 +10,7 @@
   - DB: `packages/db` (Drizzle ORM + PostgreSQL 16)
   - UI: `packages/ui` (Design System + React Components)
 - **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
-- **Requisitos:** Node.js >=22.0.0, pnpm >=9.0.0
+- **Requisitos:** Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x), pnpm >=9.0.0
 
 ## Decisiones claves recientes
 // AI_DECISION: Endurecer validación de variables de entorno
