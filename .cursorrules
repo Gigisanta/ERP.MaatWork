@@ -48,57 +48,56 @@
 - Errores: loguear con `req.log.error({ err }, msg)` y retornar JSON con mensaje genérico.
 
 ## Reglas de Base de Datos y Migraciones
-- **NUNCA usar `drizzle-kit push` en desarrollo** - es destructivo y elimina datos.
-- Siempre usar el flujo: `drizzle-kit generate` → `drizzle-kit migrate`.
-- Las migraciones se trackean en `drizzle.__drizzle_migrations`.
-- **Auto-inicialización**: La API ejecuta migraciones y seed automáticamente en cada startup.
-- Seed data esencial (7 etapas de pipeline, lookup tables) se crea automáticamente.
-- Scripts disponibles:
-  - `pnpm -F @cactus/db seed:all` - Seed completo manual
-  - `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
-  - `pnpm -F @cactus/db db:init` - Inicialización completa
 
-## Reglas Universales de Ingeniería (AI_AUTO_DEV_RULES.md)
+**NUNCA usar `drizzle-kit push`** - es destructivo y elimina datos.
 
-ANTES DE CUALQUIER MODIFICACIÓN DE CÓDIGO:
+**Flujo correcto:**
+1. Modificar schema: `packages/db/src/schema.ts`
+2. Generar migración: `pnpm -F @cactus/db generate`
+3. Aplicar migración: `pnpm -F @cactus/db migrate`
 
-1. **Leer y aplicar las 30 reglas** de `AI_AUTO_DEV_RULES.md`
-2. **Prioridad**: Si duda entre dos soluciones, elegir la MÁS ESTABLE, no la más creativa
-3. **Decision flow**:
+**Seeds disponibles:**
+- `pnpm -F @cactus/db seed:all` - Seed sistema completo (CRM + Analytics)
+- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline (CRM)
+- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos (Epic-D)
+- `pnpm -F @cactus/db db:init` - Inicialización completa
+
+**Nota:** El proyecto contiene dos dominios:
+- **CRM (Legacy)**: Contactos, pipeline, tags
+- **Portfolio/Analytics (Epic-D)**: Portfolios, benchmarks, instrumentos financieros
+
+## Principios de Ingeniería
+
+**Antes de cualquier modificación:**
+
+1. **Prioridad**: Elegir la solución MÁS ESTABLE, no la más creativa
+2. **Decision flow**:
    - ¿Es necesario? → Si NO, detener
-   - ¿Sigue las reglas 1-30? → Si NO, refactorizar
    - ¿Es seguro? → Si NO, agregar tests primero
    - ¿Romperá código existente? → Si SÍ, versionarlo
    - ¿Está documentado? → Si NO, agregar comentarios inline
 
-### Principios Críticos:
-- **Rule 12**: Fallar rápido con mensajes claros
-- **Rule 13**: Tests antes de refactorizar
-- **Rule 15**: Cambios pequeños y atómicos
-- **Rule 22**: Documentar decisiones de arquitectura
-- **Rule 27**: Mantener lista de riesgos antes de refactors grandes
+**Principios críticos:**
+- Fallar rápido con mensajes claros
+- Tests antes de refactorizar
+- Cambios pequeños y atómicos
+- Documentar decisiones de arquitectura con `AI_DECISION` comments
 
-### Formato para Cambios:
+**Formato para decisiones no obvias:**
 ```typescript
 // AI_DECISION: [Motivo del cambio]
 // Justificación: [Por qué es mejor esta implementación]
 // Impacto: [Qué áreas del código afecta]
 ```
 
-### Checklist Pre-Modificación:
-- [ ] Typed correctamente (TypeScript estricto)
+**Checklist Pre-Modificación:**
+- [ ] TypeScript estricto (sin `any`)
 - [ ] Sin dependencias nuevas sin justificación
 - [ ] Sin breaking changes sin versionado
 - [ ] Tests existentes pasan
 - [ ] Nuevos tests agregados
 - [ ] Linter limpio
 - [ ] Documentado con comentarios inline
-
-## Notas de Cursor
-- Al referenciar código existente en mensajes, usar code references con rango de líneas y ruta.
-- Para nuevo código, usar bloques de código con lenguaje.
-- Mantener estructura y nombrado conforme a este archivo y evitar mezclar estilos.
-- LEER `AI_AUTO_DEV_RULES.md` ANTES DE CUALQUIER CAMBIO. Es el archivo principal de referencia.
 
 ## Server Component Architecture Pattern
 
@@ -488,15 +487,37 @@ const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
 
 **Score objetivo:** 8.5+/10 en todas las categorías de calidad
 
-## Operativa (dev y prod)
-- Desarrollo:
-  - Logs legibles con `pino-pretty` (se activa automáticamente cuando `NODE_ENV !== 'production'`).
-  - Comando opcional: `pnpm -F @cactus/api run dev:pretty`.
-- Producción (VPS con PM2):
-  - Iniciar: `pm2 start apps/api/ecosystem.config.js --env production`.
-  - Rotación de logs: `pm2 install pm2-logrotate` y `pm2 set ...` (o scripts `pm2:logrotate:*`).
-  - Variables requeridas: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`.
-  - CORS: restringir orígenes con `CORS_ORIGINS` (lista separada por comas).
-  - CSP: activar con `CSP_ENABLED=true` si se define una política adecuada.
+## Operativa
+
+### Desarrollo
+**Comandos:**
+```bash
+pnpm dev                   # Dev mode (web + api)
+pnpm -F @cactus/api dev    # Solo API
+pnpm -F @cactus/web dev    # Solo frontend
+```
+
+**Logging:**
+- `pino-pretty` se activa automáticamente en desarrollo
+- Logs JSON estructurados en producción
+
+### Producción (VPS con PM2)
+**Deploy API:**
+```bash
+pnpm -F @cactus/api build
+pm2 start apps/api/ecosystem.config.js --env production
+```
+
+**Variables requeridas:**
+- `DATABASE_URL` - Conexión PostgreSQL
+- `PORT` - Puerto API (default: 3001)
+- `LOG_LEVEL` - Nivel logging (info, debug, error)
+- `CORS_ORIGINS` - Orígenes permitidos (separados por comas)
+- `ANALYTICS_SERVICE_URL` - URL del servicio Python (default: http://localhost:8000)
+
+**Logs:**
+- Ver: `pm2 logs cactus-api`
+- Archivos: `apps/api/logs/`
+- Rotación: `pm2 install pm2-logrotate`
 
 
