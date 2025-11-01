@@ -48,57 +48,56 @@
 - Errores: loguear con `req.log.error({ err }, msg)` y retornar JSON con mensaje genérico.
 
 ## Reglas de Base de Datos y Migraciones
-- **NUNCA usar `drizzle-kit push` en desarrollo** - es destructivo y elimina datos.
-- Siempre usar el flujo: `drizzle-kit generate` → `drizzle-kit migrate`.
-- Las migraciones se trackean en `drizzle.__drizzle_migrations`.
-- **Auto-inicialización**: La API ejecuta migraciones y seed automáticamente en cada startup.
-- Seed data esencial (7 etapas de pipeline, lookup tables) se crea automáticamente.
-- Scripts disponibles:
-  - `pnpm -F @cactus/db seed:all` - Seed completo manual
-  - `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
-  - `pnpm -F @cactus/db db:init` - Inicialización completa
 
-## Reglas Universales de Ingeniería (AI_AUTO_DEV_RULES.md)
+**NUNCA usar `drizzle-kit push`** - es destructivo y elimina datos.
 
-ANTES DE CUALQUIER MODIFICACIÓN DE CÓDIGO:
+**Flujo correcto:**
+1. Modificar schema: `packages/db/src/schema.ts`
+2. Generar migración: `pnpm -F @cactus/db generate`
+3. Aplicar migración: `pnpm -F @cactus/db migrate`
 
-1. **Leer y aplicar las 30 reglas** de `AI_AUTO_DEV_RULES.md`
-2. **Prioridad**: Si duda entre dos soluciones, elegir la MÁS ESTABLE, no la más creativa
-3. **Decision flow**:
+**Seeds disponibles:**
+- `pnpm -F @cactus/db seed:all` - Seed sistema completo (CRM + Analytics)
+- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline (CRM)
+- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos (Epic-D)
+- `pnpm -F @cactus/db db:init` - Inicialización completa
+
+**Nota:** El proyecto contiene dos dominios:
+- **CRM (Legacy)**: Contactos, pipeline, tags
+- **Portfolio/Analytics (Epic-D)**: Portfolios, benchmarks, instrumentos financieros
+
+## Principios de Ingeniería
+
+**Antes de cualquier modificación:**
+
+1. **Prioridad**: Elegir la solución MÁS ESTABLE, no la más creativa
+2. **Decision flow**:
    - ¿Es necesario? → Si NO, detener
-   - ¿Sigue las reglas 1-30? → Si NO, refactorizar
    - ¿Es seguro? → Si NO, agregar tests primero
    - ¿Romperá código existente? → Si SÍ, versionarlo
    - ¿Está documentado? → Si NO, agregar comentarios inline
 
-### Principios Críticos:
-- **Rule 12**: Fallar rápido con mensajes claros
-- **Rule 13**: Tests antes de refactorizar
-- **Rule 15**: Cambios pequeños y atómicos
-- **Rule 22**: Documentar decisiones de arquitectura
-- **Rule 27**: Mantener lista de riesgos antes de refactors grandes
+**Principios críticos:**
+- Fallar rápido con mensajes claros
+- Tests antes de refactorizar
+- Cambios pequeños y atómicos
+- Documentar decisiones de arquitectura con `AI_DECISION` comments
 
-### Formato para Cambios:
+**Formato para decisiones no obvias:**
 ```typescript
 // AI_DECISION: [Motivo del cambio]
 // Justificación: [Por qué es mejor esta implementación]
 // Impacto: [Qué áreas del código afecta]
 ```
 
-### Checklist Pre-Modificación:
-- [ ] Typed correctamente (TypeScript estricto)
+**Checklist Pre-Modificación:**
+- [ ] TypeScript estricto (sin `any`)
 - [ ] Sin dependencias nuevas sin justificación
 - [ ] Sin breaking changes sin versionado
 - [ ] Tests existentes pasan
 - [ ] Nuevos tests agregados
 - [ ] Linter limpio
 - [ ] Documentado con comentarios inline
-
-## Notas de Cursor
-- Al referenciar código existente en mensajes, usar code references con rango de líneas y ruta.
-- Para nuevo código, usar bloques de código con lenguaje.
-- Mantener estructura y nombrado conforme a este archivo y evitar mezclar estilos.
-- LEER `AI_AUTO_DEV_RULES.md` ANTES DE CUALQUIER CAMBIO. Es el archivo principal de referencia.
 
 ## Server Component Architecture Pattern
 
@@ -127,15 +126,398 @@ app/route/
 - **SEO**: Static content is crawlable and indexable
 - **Maintainability**: Clear separation of concerns
 
-## Operativa (dev y prod)
-- Desarrollo:
-  - Logs legibles con `pino-pretty` (se activa automáticamente cuando `NODE_ENV !== 'production'`).
-  - Comando opcional: `pnpm -F @cactus/api run dev:pretty`.
-- Producción (VPS con PM2):
-  - Iniciar: `pm2 start apps/api/ecosystem.config.js --env production`.
-  - Rotación de logs: `pm2 install pm2-logrotate` y `pm2 set ...` (o scripts `pm2:logrotate:*`).
-  - Variables requeridas: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`.
-  - CORS: restringir orígenes con `CORS_ORIGINS` (lista separada por comas).
-  - CSP: activar con `CSP_ENABLED=true` si se define una política adecuada.
+---
+
+## 🎯 Mejores Prácticas Profesionales (Post Epic-D)
+
+### 1. Arquitectura de Tipos TypeScript
+
+**NUNCA usar `any`** - Crear tipos explícitos siempre.
+
+**Estructura de archivos:**
+```
+types/
+├── index.ts          # Barrel export
+├── common.ts         # Tipos compartidos (ApiResponse, Currency, etc)
+├── [domain].ts       # Un archivo por dominio (portfolio, benchmark, etc)
+```
+
+**Reglas:**
+- Archivos de tipos: 50-150 líneas máximo
+- Separar por dominio, no por "tipo de tipo"
+- Usar barrel exports (`types/index.ts`)
+- Definir Request/Response types para cada endpoint
+
+**Ejemplo:**
+```typescript
+// ✅ BIEN
+import type { Portfolio, CreatePortfolioRequest } from '@/types';
+
+// ❌ MAL
+const data: any = await fetch(...);
+```
+
+### 2. Cliente API Centralizado
+
+**NUNCA usar `fetch` directamente** - Usar cliente centralizado.
+
+**Estructura:**
+```
+lib/
+├── api-client.ts     # Cliente base con retry, timeout, auth
+├── api-error.ts      # ApiError class custom
+└── api/
+    ├── [domain].ts   # Métodos por dominio
+    └── index.ts      # Barrel export
+```
+
+**Features requeridos:**
+- ✅ Retry automático (errores 5xx)
+- ✅ Refresh token automático (401)
+- ✅ Timeout configurable
+- ✅ Headers automáticos (Authorization)
+- ✅ Error handling consistente
+
+**Ejemplo:**
+```typescript
+// ✅ BIEN
+import { getPortfolios } from '@/lib/api';
+const response = await getPortfolios();
+
+// ❌ MAL
+const res = await fetch(`${apiUrl}/portfolios`, {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+```
+
+### 3. Validaciones con Zod
+
+**Validar en backend SIEMPRE** con Zod schemas.
+
+**Ubicación:** `apps/api/src/schemas/[domain].ts`
+
+**Ejemplo:**
+```typescript
+import { z } from 'zod';
+
+export const createPortfolioSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+  riskLevel: z.enum(['conservative', 'moderate', 'aggressive'])
+});
+
+// En route:
+const validated = createPortfolioSchema.parse(req.body);
+```
+
+**Reglas:**
+- Validar en edge (inicio del endpoint)
+- Retornar 400 con detalles claros si falla
+- Usar `.parse()` para throw o `.safeParse()` para manejo manual
+
+### 4. Validaciones de Batch Endpoints
+
+**Prevenir DoS y validar formato:**
+
+```typescript
+import { validateBatchIds, BATCH_LIMITS } from '../utils/batch-validation';
+
+const validation = validateBatchIds(req.query.ids as string, {
+  maxCount: BATCH_LIMITS.MAX_PORTFOLIOS,  // Límite
+  requireUuid: true,                      // Validar UUID
+  fieldName: 'ids'
+});
+
+if (!validation.valid) {
+  return res.status(400).json({ error: 'Invalid request', details: validation.errors });
+}
+```
+
+### 5. Configuración de Timeouts
+
+**NUNCA hardcodear timeouts** - Usar configuración centralizada.
+
+**Ubicación:** `apps/api/src/config/timeouts.ts`
+
+```typescript
+export const TIMEOUTS = {
+  PORTFOLIO_PERFORMANCE: parseInt(process.env.PORTFOLIO_PERFORMANCE_TIMEOUT || '60000', 10),
+  // ... más timeouts
+};
+
+// Timeout dinámico basado en carga
+export function calculateDynamicTimeout(baseTimeout, itemCount, perItemTimeout, maxTimeout) {
+  return Math.min(baseTimeout + (itemCount * perItemTimeout), maxTimeout);
+}
+```
+
+### 6. Next.js Router (No window.location)
+
+```typescript
+// ✅ BIEN
+import { useRouter } from 'next/navigation';
+const router = useRouter();
+router.push('/portfolios/123');
+
+// ❌ MAL
+window.location.href = '/portfolios/123';
+```
+
+### 7. Estrategia de Testing
+
+**Framework Stack:**
+- ✅ **Vitest** para unit tests (NO Jest)
+- ✅ **Playwright** para E2E tests
+- ✅ **Testing Library** para componentes React
+
+**Pirámide de Testing:**
+```
+        ╱╲
+       ╱E2E╲         ← 10-20% (Playwright)
+      ╱────╲
+     ╱ Integ╲        ← 20-30% (Supertest + DB)
+    ╱────────╲
+   ╱  Unit    ╲      ← 50-70% (Vitest)
+  ╱────────────╲
+```
+
+**Crear unit tests para:**
+- ✅ Funciones de validación
+- ✅ Cálculos de negocio
+- ✅ Utilidades/helpers
+- ✅ Cliente API (mocks)
+
+**Ubicación:** `[file].test.ts` al lado del archivo original
+
+**Comandos:**
+```bash
+# Unit tests
+pnpm test                    # Run all unit tests
+pnpm -F @cactus/api test     # Backend only
+pnpm -F @cactus/web test     # Frontend only
+pnpm test:coverage           # With coverage
+
+# E2E tests (futuro)
+pnpm test:e2e                # Run E2E tests
+```
+
+**Coverage Targets:**
+- Backend: ≥70% (lines, functions, branches, statements)
+- Frontend: ≥60% (lines, functions, branches, statements)
+
+**Ejemplo:**
+```typescript
+// batch-validation.test.ts
+import { describe, it, expect } from 'vitest';
+import { validateBatchIds } from './batch-validation';
+
+describe('validateBatchIds', () => {
+  it('should validate UUIDs correctly', () => {
+    const result = validateBatchIds('uuid1,uuid2');
+    expect(result.valid).toBe(true);
+  });
+
+  it('should reject non-UUIDs', () => {
+    const result = validateBatchIds('invalid,ids');
+    expect(result.valid).toBe(false);
+  });
+
+  it('should enforce limits', () => {
+    const ids = Array(101).fill('uuid').join(',');
+    const result = validateBatchIds(ids, { maxCount: 100 });
+    expect(result.valid).toBe(false);
+  });
+});
+```
+
+**E2E Testing (Playwright):**
+- Page Object Model (POM) obligatorio
+- Tests en `tests/e2e/specs/[feature]/`
+- API-first setup (crear data vía API, testear solo UI)
+- Ver `E2E_TESTING_GUIDE.md` para detalles completos
+
+### 8. Logging Estructurado
+
+```typescript
+// ✅ BIEN - Con contexto
+req.log.info({ userId, portfolioId, duration }, 'Portfolio created');
+
+// ❌ MAL - Sin contexto
+console.log('Portfolio created');
+```
+
+### 9. Queries Optimizadas (Anti N+1)
+
+**NUNCA hacer queries en loops** - Usar batch queries.
+
+```typescript
+// ❌ MAL - N+1 problem
+for (const id of portfolioIds) {
+  const data = await db().select().where(eq(portfolio.id, id));
+}
+
+// ✅ BIEN - Batch query
+const allData = await db().select()
+  .where(sql`${portfolio.id} = ANY(${portfolioIds})`);
+```
+
+### 10. Manejo de Errores
+
+```typescript
+try {
+  const result = await operation();
+} catch (error) {
+  // ✅ BIEN - Error tipado
+  if (error instanceof ApiError) {
+    if (error.isAuthError) {
+      router.push('/login');
+    }
+    showToast('Error', error.userMessage, 'error');
+  }
+  
+  // ❌ MAL - Error genérico
+  // alert('Error');
+}
+```
+
+### 11. Path Aliases en tsconfig.json
+
+```json
+{
+  "paths": {
+    "@/*": ["./*"],
+    "@/types": ["./types"],
+    "@/lib/*": ["./lib/*"],
+    "@/components/*": ["./app/components/*"]
+  }
+}
+```
+
+### 12. Comentarios AI_DECISION
+
+**Documentar decisiones no obvias:**
+
+```typescript
+// AI_DECISION: Timeout dinámico basado en cantidad de items
+// Justificación: Evita timeouts en comparaciones grandes
+// Impacto: Mejor UX y uso de recursos
+const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
+```
+
+---
+
+## 📦 Propósito de Apps y Packages
+
+### Apps
+
+**`apps/api`** (Node.js + Express)
+- API REST principal
+- Orquestación de servicios
+- Auth, CRUD, validaciones
+- Logging con Pino
+- Deploy: VPS con PM2
+
+**`apps/web`** (Next.js App Router)
+- Frontend React
+- Server/Client components
+- Consume API vía cliente centralizado
+- Deploy: Vercel/VPS
+
+**`apps/analytics-service`** (Python + FastAPI)
+- Cálculos financieros pesados
+- Fetch de precios (yfinance)
+- Métricas: Sharpe, volatility, drawdown
+- Deploy: VPS con PM2/uvicorn
+
+### Packages
+
+**`packages/db`** (Drizzle ORM)
+- Schema de PostgreSQL
+- Migraciones con drizzle-kit
+- Cliente DB exportado
+- Seeds automáticos
+
+**`packages/ui`** (React Components)
+- Componentes compartidos
+- Design system
+- Sin lógica de negocio
+
+---
+
+## 🚫 Anti-Patterns a Evitar
+
+1. ❌ Tipos `any` sin justificación
+2. ❌ Fetch manual sin cliente centralizado
+3. ❌ Magic numbers (usar constantes/config)
+4. ❌ Listas hardcodeadas como única fuente de datos
+5. ❌ `window.location` en Next.js (usar router)
+6. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
+7. ❌ Queries N+1 en loops
+8. ❌ Sin validación de inputs
+9. ❌ Timeouts hardcodeados
+10. ❌ `console.log` en producción (usar logger)
+
+---
+
+## ✅ Checklist Pre-Commit
+
+- [ ] Sin tipos `any` sin justificación
+- [ ] Validaciones Zod en endpoints nuevos
+- [ ] Tests unitarios para lógica de negocio
+- [ ] Tipos TypeScript para request/response
+- [ ] Cliente API usado (no fetch directo)
+- [ ] Queries optimizadas (no N+1)
+- [ ] Configuración externalizada (no hardcoded)
+- [ ] Logging estructurado con contexto
+- [ ] Error handling con ApiError
+- [ ] Linter limpio (`pnpm lint`)
+
+---
+
+## 📚 Referencias Rápidas
+
+- **Tipos:** `apps/web/types/[domain].ts`
+- **Cliente API:** `apps/web/lib/api/[domain].ts`
+- **Validaciones:** `apps/api/src/schemas/[domain].ts`
+- **Utils:** `apps/api/src/utils/[feature].ts`
+- **Config:** `apps/api/src/config/[feature].ts`
+- **Tests Unitarios:** `[file].test.ts` (mismo directorio)
+- **Tests E2E:** `tests/e2e/specs/[feature]/` (Page Object Model)
+- **Testing Guide:** `E2E_TESTING_GUIDE.md`
+
+**Score objetivo:** 8.5+/10 en todas las categorías de calidad
+
+## Operativa
+
+### Desarrollo
+**Comandos:**
+```bash
+pnpm dev                   # Dev mode (web + api)
+pnpm -F @cactus/api dev    # Solo API
+pnpm -F @cactus/web dev    # Solo frontend
+```
+
+**Logging:**
+- `pino-pretty` se activa automáticamente en desarrollo
+- Logs JSON estructurados en producción
+
+### Producción (VPS con PM2)
+**Deploy API:**
+```bash
+pnpm -F @cactus/api build
+pm2 start apps/api/ecosystem.config.js --env production
+```
+
+**Variables requeridas:**
+- `DATABASE_URL` - Conexión PostgreSQL
+- `PORT` - Puerto API (default: 3001)
+- `LOG_LEVEL` - Nivel logging (info, debug, error)
+- `CORS_ORIGINS` - Orígenes permitidos (separados por comas)
+- `ANALYTICS_SERVICE_URL` - URL del servicio Python (default: http://localhost:8000)
+
+**Logs:**
+- Ver: `pm2 logs cactus-api`
+- Archivos: `apps/api/logs/`
+- Rotación: `pm2 install pm2-logrotate`
 
 

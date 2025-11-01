@@ -156,6 +156,89 @@ router.put('/templates/:id', requireAuth, requireRole(['admin', 'manager']), asy
 });
 
 /**
+ * GET /portfolios/templates/lines/batch
+ * Obtener líneas de múltiples plantillas (batch)
+ * Query params: ids=id1,id2,id3
+ */
+router.get('/templates/lines/batch', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const role = req.user?.role as UserRole;
+    
+    if (!userId || !role) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    // AI_DECISION: Validación robusta de IDs en batch endpoint
+    // Justificación: Prevenir DoS, validar formato UUID, eliminar duplicados
+    // Impacto: Seguridad mejorada, mejor manejo de errores
+    const { validateBatchIds, BATCH_LIMITS } = await import('../utils/batch-validation');
+    
+    const validation = validateBatchIds(req.query.ids as string, {
+      maxCount: BATCH_LIMITS.MAX_PORTFOLIOS,
+      requireUuid: true,
+      fieldName: 'ids'
+    });
+
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        error: 'Invalid batch request',
+        details: validation.errors
+      });
+    }
+
+    const templateIds = validation.ids;
+
+    // Obtener todas las líneas de todos los portfolios en una sola query
+    const allLines = await db()
+      .select({
+        lineId: portfolioTemplateLines.id,
+        templateId: portfolioTemplateLines.templateId,
+        targetType: portfolioTemplateLines.targetType,
+        assetClass: portfolioTemplateLines.assetClass,
+        instrumentId: portfolioTemplateLines.instrumentId,
+        targetWeight: portfolioTemplateLines.targetWeight,
+        instrumentSymbol: instruments.symbol,
+        instrumentName: instruments.name,
+        assetClassName: lookupAssetClass.name
+      })
+      .from(portfolioTemplateLines)
+      .leftJoin(instruments, eq(portfolioTemplateLines.instrumentId, instruments.id))
+      .leftJoin(lookupAssetClass, eq(portfolioTemplateLines.assetClass, lookupAssetClass.id))
+      .where(sql`${portfolioTemplateLines.templateId} = ANY(${templateIds})`);
+
+    // Agrupar líneas por templateId
+    const linesByTemplate: Record<string, any[]> = {};
+    templateIds.forEach(id => {
+      linesByTemplate[id] = [];
+    });
+
+    allLines.forEach(line => {
+      if (linesByTemplate[line.templateId]) {
+        linesByTemplate[line.templateId].push({
+          id: line.lineId,
+          targetType: line.targetType,
+          assetClass: line.assetClass,
+          instrumentId: line.instrumentId,
+          targetWeight: line.targetWeight,
+          instrumentSymbol: line.instrumentSymbol,
+          instrumentName: line.instrumentName,
+          assetClassName: line.assetClassName
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      data: linesByTemplate
+    });
+  } catch (error) {
+    console.error('Error fetching template lines batch:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+/**
  * GET /portfolios/templates/:id/lines
  * Obtener composición de una plantilla
  */

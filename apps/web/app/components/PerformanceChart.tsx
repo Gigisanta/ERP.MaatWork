@@ -69,79 +69,74 @@ export default function PerformanceChart({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generar datos simulados
-  const generateMockData = (id: string, name: string, type: 'portfolio' | 'benchmark'): PerformanceData => {
-    const days = selectedPeriod === '1M' ? 30 : 
-                 selectedPeriod === '3M' ? 90 :
-                 selectedPeriod === '6M' ? 180 :
-                 selectedPeriod === '1Y' ? 365 :
-                 selectedPeriod === 'YTD' ? new Date().getDay() + 1 : 365;
-    
-    const performance: PerformancePoint[] = [];
-    let baseValue = 100;
-    
-    for (let i = 0; i < days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - i));
-      
-      // Simular volatilidad y tendencia
-      const volatility = type === 'benchmark' ? 0.02 : 0.03;
-      const trend = type === 'benchmark' ? 0.0005 : 0.0008;
-      const randomChange = (Math.random() - 0.5) * volatility;
-      
-      baseValue *= (1 + trend + randomChange);
-      
-      performance.push({
-        date: date.toISOString().split('T')[0],
-        value: Math.round(baseValue * 100) / 100
-      });
-    }
-    
-    const totalReturn = ((performance[performance.length - 1]?.value || 100) - 100);
-    
-    return {
-      id,
-      name,
-      type,
-      performance,
-      totalReturn,
-      color: COLORS[(portfolioIds.length + benchmarkIds.length) % COLORS.length]
-    };
-  };
-
   useEffect(() => {
     const fetchPerformanceData = async () => {
+      if (portfolioIds.length === 0 && benchmarkIds.length === 0) {
+        setPerformanceData([]);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       
       try {
-        // Simular delay de carga
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const data: PerformanceData[] = [];
-        
-        // Generar datos para portfolios
-        portfolioIds.forEach((id, index) => {
-          data.push(generateMockData(id, `Cartera ${index + 1}`, 'portfolio'));
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const token = localStorage.getItem('token'); // Obtener token de localStorage
+
+        if (!token) {
+          setError('Debes iniciar sesión para ver el rendimiento');
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${apiUrl}/v1/analytics/compare`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            portfolioIds,
+            benchmarkIds,
+            period: selectedPeriod
+          })
         });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
         
-        // Generar datos para benchmarks
-        benchmarkIds.forEach((id, index) => {
-          data.push(generateMockData(id, `Benchmark ${index + 1}`, 'benchmark'));
-        });
-        
-        setPerformanceData(data);
+        if (result.success && result.data && result.data.results) {
+          // Mapear datos de la API al formato del componente
+          const data: PerformanceData[] = result.data.results.map((item: any, index: number) => ({
+            id: item.id,
+            name: item.name,
+            type: item.type as 'portfolio' | 'benchmark',
+            performance: item.performance.map((p: any) => ({
+              date: p.date,
+              value: p.value // Ya viene normalizado a base 100
+            })),
+            totalReturn: item.metrics?.totalReturn || 0,
+            color: COLORS[index % COLORS.length]
+          }));
+          
+          setPerformanceData(data);
+        } else {
+          setError('No se pudieron obtener los datos de rendimiento');
+          setPerformanceData([]);
+        }
       } catch (err) {
         setError('Error al cargar datos de rendimiento');
         console.error('Error fetching performance data:', err);
+        setPerformanceData([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (portfolioIds.length > 0 || benchmarkIds.length > 0) {
-      fetchPerformanceData();
-    }
+    fetchPerformanceData();
   }, [portfolioIds, benchmarkIds, selectedPeriod]);
 
   const formatDate = (dateStr: string) => {

@@ -18,8 +18,13 @@ import {
 } from '@cactus/db/schema';
 import { eq, desc, and, gte, sql, count, sum } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
+import fetch from 'node-fetch';
+import { TIMEOUTS, getPortfolioCompareTimeout } from '../config/timeouts';
 
 const router = express.Router();
+
+// URL del microservicio Python
+const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:3002';
 
 // D1 - Dashboard "one-glance" con KPIs según rol
 router.get('/dashboard', requireAuth, requireRole(['advisor', 'manager', 'admin']), async (req: Request, res: Response) => {
@@ -360,6 +365,9 @@ router.get('/metrics', requireAuth, requireRole(['advisor', 'manager', 'admin'])
 });
 
 // GET /analytics/performance/:portfolioId - Obtener rendimiento de una cartera
+// AI_DECISION: Usar servicio Python para cálculos profesionales de rendimiento
+// Justificación: Aprovecha código existente en portfolio_performance.py con pandas/numpy
+// Impacto: Cálculos más precisos, eliminación de código duplicado
 router.get('/performance/:portfolioId', requireAuth, requireRole(['advisor', 'manager', 'admin']), async (req: Request, res: Response) => {
   try {
     const { portfolioId } = req.params;
@@ -378,148 +386,116 @@ router.get('/performance/:portfolioId', requireAuth, requireRole(['advisor', 'ma
       });
     }
 
-    // Obtener composición de la cartera
-    const portfolioLines = await db()
+    // Obtener composición de la cartera y nombre
+    const portfolioData = await db()
       .select({
+        portfolioName: portfolioTemplates.name,
         instrumentId: portfolioTemplateLines.instrumentId,
         weight: portfolioTemplateLines.targetWeight,
         instrumentSymbol: instruments.symbol,
         instrumentName: instruments.name
       })
-      .from(portfolioTemplateLines)
+      .from(portfolioTemplates)
+      .innerJoin(portfolioTemplateLines, eq(portfolioTemplateLines.templateId, portfolioTemplates.id))
       .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-      .where(eq(portfolioTemplateLines.templateId, portfolioId));
+      .where(eq(portfolioTemplates.id, portfolioId))
+      .limit(100); // Límite razonable de componentes
 
-    if (portfolioLines.length === 0) {
+    if (portfolioData.length === 0) {
       return res.status(404).json({
         error: 'Portfolio not found or has no components'
       });
     }
 
-    // Calcular fechas según período
-    const today = new Date();
-    let startDate: Date;
+    const portfolioName = portfolioData[0]?.portfolioName || `Portfolio ${portfolioId}`;
 
-    switch (period) {
-      case '1M':
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case '3M':
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case '6M':
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case '1Y':
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-      case 'YTD':
-        startDate = new Date(today.getFullYear(), 0, 1);
-        break;
-      case 'ALL':
-        startDate = new Date('2020-01-01'); // Fecha arbitraria muy atrás
-        break;
-      default:
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
-    }
+    // Preparar componentes para Python service
+    const components = portfolioData.map((line: { instrumentSymbol: string; weight: string | number; instrumentName: string }) => ({
+      symbol: line.instrumentSymbol,
+      weight: Number(line.weight),
+      name: line.instrumentName
+    }));
 
-    // Obtener precios históricos para los instrumentos
-    const performanceData = [];
-    const instrumentIds = portfolioLines.map((line: any) => line.instrumentId);
+      // Llamar al servicio Python para cálculo profesional
+      // AI_DECISION: Timeout configurable vía env var
+      // Justificación: Permite ajustar según carga/entorno sin redeploy
+      // Impacto: Mejor configurabilidad y mantenibilidad
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), TIMEOUTS.PORTFOLIO_PERFORMANCE);
 
-    for (const line of portfolioLines) {
-      try {
-        const prices = await db()
-          .select({
-            date: priceSnapshots.asOfDate,
-            price: priceSnapshots.closePrice
-          })
-          .from(priceSnapshots)
-          .where(
-            and(
-              eq(priceSnapshots.instrumentId, line.instrumentId),
-              gte(priceSnapshots.asOfDate, startDate.toISOString().split('T')[0])
-            )
-          )
-          .orderBy(priceSnapshots.asOfDate);
+    try {
+      const pythonResponse = await fetch(`${PYTHON_SERVICE_URL}/portfolio/performance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolio_id: portfolioId,
+          portfolio_name: portfolioName,
+          components,
+          period: period as string
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
 
-        if (prices.length > 0) {
-          performanceData.push({
-            instrumentId: line.instrumentId,
-            symbol: line.instrumentSymbol,
-            name: line.instrumentName,
-            weight: Number(line.weight),
-            prices: prices.map((p: any) => ({
-              date: p.date,
-              price: Number(p.price)
-            }))
-          });
-        }
-      } catch (error) {
-        req.log.warn({ error, instrumentId: line.instrumentId }, 'Failed to get prices for instrument');
+      if (!pythonResponse.ok) {
+        throw new Error(`Python service error: ${pythonResponse.statusText}`);
       }
-    }
 
-    if (performanceData.length === 0) {
+      const pythonData = await pythonResponse.json() as any;
+
+      if (pythonData.status === 'success' && pythonData.data) {
+        // Formatear respuesta compatible con frontend
+        res.json({
+          success: true,
+          data: {
+            portfolioId,
+            portfolioName: pythonData.data.portfolio_name,
+            period: pythonData.data.period,
+            performance: pythonData.data.performance_series || [],
+            metrics: {
+              totalReturn: pythonData.data.total_return,
+              annualizedReturn: pythonData.data.annualized_return,
+              volatility: pythonData.data.volatility,
+              sharpeRatio: pythonData.data.sharpe_ratio,
+              maxDrawdown: pythonData.data.max_drawdown
+            },
+            components: components.map((c: { symbol: string; weight: number; name: string }) => ({
+              symbol: c.symbol,
+              name: c.name,
+              weight: c.weight
+            }))
+          },
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        throw new Error('Invalid response from Python service');
+      }
+
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        req.log.error({ portfolioId }, 'Timeout calling Python service for portfolio performance');
+        return res.status(504).json({
+          error: 'Service timeout',
+          details: 'Portfolio performance calculation timed out'
+        });
+      }
+
+      // Fallback: retornar error pero no crashear
+      req.log.warn({ error: fetchError, portfolioId }, 'Error calling Python service, returning empty performance');
+      
       return res.json({
         success: true,
         data: {
           portfolioId,
           period,
-          message: 'No price data available for this period',
+          message: 'No price data available or service unavailable',
           performance: []
-        }
+        },
+        timestamp: new Date().toISOString()
       });
     }
-
-    // Calcular rendimiento de la cartera (simplificado)
-    // En una implementación completa, esto se haría en Python con cálculos más sofisticados
-    const portfolioPerformance = [];
-    const allDates = new Set<string>();
-    
-    // Recopilar todas las fechas únicas
-    performanceData.forEach((instrument: any) => {
-      instrument.prices.forEach((price: any) => allDates.add(price.date));
-    });
-
-    const sortedDates = Array.from(allDates).sort();
-
-    for (const date of sortedDates) {
-      let portfolioValue = 0;
-      let hasDataForAllInstruments = true;
-
-      for (const instrument of performanceData) {
-        const priceForDate = instrument.prices.find((p: any) => p.date === date);
-        if (!priceForDate) {
-          hasDataForAllInstruments = false;
-          break;
-        }
-        portfolioValue += priceForDate.price * instrument.weight;
-      }
-
-      if (hasDataForAllInstruments) {
-        portfolioPerformance.push({
-          date,
-          value: portfolioValue
-        });
-      }
-    }
-
-    res.json({
-      success: true,
-      data: {
-        portfolioId,
-        period,
-        performance: portfolioPerformance,
-        components: performanceData.map(instrument => ({
-          symbol: instrument.symbol,
-          name: instrument.name,
-          weight: instrument.weight,
-          priceCount: instrument.prices.length
-        }))
-      },
-      timestamp: new Date().toISOString()
-    });
 
   } catch (error) {
     req.log.error(error, 'Error fetching portfolio performance');
@@ -531,6 +507,9 @@ router.get('/performance/:portfolioId', requireAuth, requireRole(['advisor', 'ma
 });
 
 // POST /analytics/compare - Comparar múltiples carteras/benchmarks
+// AI_DECISION: Usar servicio Python para comparación profesional
+// Justificación: Cálculos más precisos con pandas/numpy, normalización automática a base 100
+// Impacto: Eliminación de código N+1 queries, mejor performance y precisión
 router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']), async (req: Request, res: Response) => {
   try {
     const { portfolioIds = [], benchmarkIds = [], period = '1Y' } = req.body;
@@ -549,253 +528,209 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
     const validPeriods = ['1M', '3M', '6M', '1Y', 'YTD', 'ALL'];
     if (!validPeriods.includes(period)) {
       return res.status(400).json({
-        error: 'Invalid period. Valid periods: 1M, 3M, 6M, 6Y, 1Y, YTD, ALL'
+        error: 'Invalid period. Valid periods: 1M, 3M, 6M, 1Y, YTD, ALL'
       });
     }
 
-    // Calcular fechas según período
-    const today = new Date();
-    let startDate: Date;
-
-    switch (period) {
-      case '1M':
-        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case '3M':
-        startDate = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-        break;
-      case '6M':
-        startDate = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
-        break;
-      case '1Y':
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
-        break;
-      case 'YTD':
-        startDate = new Date(today.getFullYear(), 0, 1);
-        break;
-      case 'ALL':
-        startDate = new Date('2020-01-01');
-        break;
-      default:
-        startDate = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+    // Obtener datos de todas las carteras y benchmarks en paralelo
+    interface PortfolioToCompare {
+      id: string;
+      name: string;
+      type: 'portfolio' | 'benchmark';
+      components: Array<{ symbol: string; weight: number; name: string }>;
     }
-
-    const comparisonResults = [];
+    const portfoliosToCompare: PortfolioToCompare[] = [];
 
     // Procesar carteras
-    for (const portfolioId of portfolioIds) {
+    // Procesar portfolios - Batch query optimizada (1 query en lugar de N)
+    if (portfolioIds.length > 0) {
       try {
-        // Obtener composición de la cartera
-        const portfolioLines = await db()
+        const allPortfolioData = await db()
           .select({
-            instrumentId: portfolioTemplateLines.instrumentId,
+            portfolioId: portfolioTemplates.id,
+            portfolioName: portfolioTemplates.name,
+            instrumentSymbol: instruments.symbol,
             weight: portfolioTemplateLines.targetWeight,
-            instrumentSymbol: instruments.symbol
+            instrumentName: instruments.name
           })
-          .from(portfolioTemplateLines)
-          .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-          .where(eq(portfolioTemplateLines.templateId, portfolioId));
-
-        if (portfolioLines.length === 0) continue;
-
-        // Obtener nombre de la cartera
-        const portfolio = await db()
-          .select({ name: portfolioTemplates.name })
           .from(portfolioTemplates)
-          .where(eq(portfolioTemplates.id, portfolioId))
-          .limit(1);
+          .innerJoin(portfolioTemplateLines, eq(portfolioTemplateLines.templateId, portfolioTemplates.id))
+          .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
+          .where(sql`${portfolioTemplates.id} = ANY(${portfolioIds})`);
 
-        // Calcular rendimiento (simplificado)
-        const portfolioPerformance = [];
-        const allDates = new Set<string>();
-
-        for (const line of portfolioLines) {
-          const prices = await db()
-            .select({
-              date: priceSnapshots.asOfDate,
-              price: priceSnapshots.closePrice
-            })
-            .from(priceSnapshots)
-            .where(
-              and(
-                eq(priceSnapshots.instrumentId, line.instrumentId),
-                gte(priceSnapshots.asOfDate, startDate.toISOString().split('T')[0])
-              )
-            )
-            .orderBy(priceSnapshots.asOfDate);
-
-          prices.forEach((price: any) => allDates.add(price.date));
-        }
-
-        const sortedDates = Array.from(allDates).sort();
-
-        for (const date of sortedDates) {
-          let portfolioValue = 0;
-          let hasDataForAllInstruments = true;
-
-          for (const line of portfolioLines) {
-            const prices = await db()
-              .select({ price: priceSnapshots.closePrice })
-              .from(priceSnapshots)
-              .where(
-                and(
-                  eq(priceSnapshots.instrumentId, line.instrumentId),
-                  eq(priceSnapshots.asOfDate, date)
-                )
-              )
-              .limit(1);
-
-            if (prices.length === 0) {
-              hasDataForAllInstruments = false;
-              break;
-            }
-
-            portfolioValue += Number(prices[0].price) * Number(line.weight);
+        // Agrupar por portfolioId
+        const portfolioDataById: Record<string, any[]> = {};
+        allPortfolioData.forEach(row => {
+          if (!portfolioDataById[row.portfolioId]) {
+            portfolioDataById[row.portfolioId] = [];
           }
+          portfolioDataById[row.portfolioId].push(row);
+        });
 
-          if (hasDataForAllInstruments) {
-            portfolioPerformance.push({
-              date,
-              value: portfolioValue
+        // Crear objetos de portfolio
+        portfolioIds.forEach(portfolioId => {
+          const portfolioData = portfolioDataById[portfolioId];
+          if (portfolioData && portfolioData.length > 0) {
+            portfoliosToCompare.push({
+              id: portfolioId,
+              name: portfolioData[0]?.portfolioName || `Portfolio ${portfolioId}`,
+              type: 'portfolio',
+              components: portfolioData.map((line: { instrumentSymbol: string; weight: string | number; instrumentName: string }) => ({
+                symbol: line.instrumentSymbol,
+                weight: Number(line.weight),
+                name: line.instrumentName
+              }))
             });
           }
-        }
-
-        if (portfolioPerformance.length > 0) {
-          comparisonResults.push({
-            id: portfolioId,
-            name: portfolio[0]?.name || `Portfolio ${portfolioId}`,
-            type: 'portfolio',
-            performance: portfolioPerformance
-          });
-        }
+        });
       } catch (error) {
-        req.log.warn({ error, portfolioId }, 'Failed to process portfolio for comparison');
+        req.log.warn({ error, portfolioIds }, 'Failed to fetch portfolio data');
       }
     }
 
-    // Procesar benchmarks (simplificado - solo benchmarks individuales)
-    for (const benchmarkId of benchmarkIds) {
+    // Procesar benchmarks - Batch query optimizada (1 query en lugar de N)
+    if (benchmarkIds.length > 0) {
       try {
-        // Obtener información del benchmark
-        const benchmark = await db()
+        const allBenchmarkData = await db()
           .select({
-            name: benchmarkDefinitions.name,
-            code: benchmarkDefinitions.code
+            benchmarkId: benchmarkDefinitions.id,
+            benchmarkName: benchmarkDefinitions.name,
+            instrumentSymbol: instruments.symbol,
+            weight: benchmarkComponents.weight,
+            instrumentName: instruments.name
           })
           .from(benchmarkDefinitions)
-          .where(eq(benchmarkDefinitions.id, benchmarkId))
-          .limit(1);
-
-        if (benchmark.length === 0) continue;
-
-        // Obtener componentes del benchmark
-        const benchmarkComponentsData = await db()
-          .select({
-            instrumentId: benchmarkComponents.instrumentId,
-            weight: benchmarkComponents.weight,
-            instrumentSymbol: instruments.symbol
-          })
-          .from(benchmarkComponents)
+          .innerJoin(benchmarkComponents, eq(benchmarkComponents.benchmarkId, benchmarkDefinitions.id))
           .innerJoin(instruments, eq(instruments.id, benchmarkComponents.instrumentId))
-          .where(eq(benchmarkComponents.benchmarkId, benchmarkId));
+          .where(sql`${benchmarkDefinitions.id} = ANY(${benchmarkIds})`);
 
-        if (benchmarkComponentsData.length === 0) continue;
-
-        // Calcular rendimiento del benchmark (similar a carteras)
-        const benchmarkPerformance = [];
-        const allDates = new Set<string>();
-
-        for (const component of benchmarkComponentsData) {
-          const prices = await db()
-            .select({
-              date: priceSnapshots.asOfDate,
-              price: priceSnapshots.closePrice
-            })
-            .from(priceSnapshots)
-            .where(
-              and(
-                eq(priceSnapshots.instrumentId, component.instrumentId),
-                gte(priceSnapshots.asOfDate, startDate.toISOString().split('T')[0])
-              )
-            )
-            .orderBy(priceSnapshots.asOfDate);
-
-          prices.forEach((price: any) => allDates.add(price.date));
-        }
-
-        const sortedDates = Array.from(allDates).sort();
-
-        for (const date of sortedDates) {
-          let benchmarkValue = 0;
-          let hasDataForAllInstruments = true;
-
-          for (const component of benchmarkComponentsData) {
-            const prices = await db()
-              .select({ price: priceSnapshots.closePrice })
-              .from(priceSnapshots)
-              .where(
-                and(
-                  eq(priceSnapshots.instrumentId, component.instrumentId),
-                  eq(priceSnapshots.asOfDate, date)
-                )
-              )
-              .limit(1);
-
-            if (prices.length === 0) {
-              hasDataForAllInstruments = false;
-              break;
-            }
-
-            benchmarkValue += Number(prices[0].price) * Number(component.weight);
+        // Agrupar por benchmarkId
+        const benchmarkDataById: Record<string, any[]> = {};
+        allBenchmarkData.forEach(row => {
+          if (!benchmarkDataById[row.benchmarkId]) {
+            benchmarkDataById[row.benchmarkId] = [];
           }
+          benchmarkDataById[row.benchmarkId].push(row);
+        });
 
-          if (hasDataForAllInstruments) {
-            benchmarkPerformance.push({
-              date,
-              value: benchmarkValue
+        // Crear objetos de benchmark
+        benchmarkIds.forEach(benchmarkId => {
+          const benchmarkData = benchmarkDataById[benchmarkId];
+          if (benchmarkData && benchmarkData.length > 0) {
+            portfoliosToCompare.push({
+              id: benchmarkId,
+              name: benchmarkData[0]?.benchmarkName || `Benchmark ${benchmarkId}`,
+              type: 'benchmark',
+              components: benchmarkData.map((line: { instrumentSymbol: string; weight: string | number; instrumentName: string }) => ({
+                symbol: line.instrumentSymbol,
+                weight: Number(line.weight),
+                name: line.instrumentName
+              }))
             });
           }
-        }
-
-        if (benchmarkPerformance.length > 0) {
-          comparisonResults.push({
-            id: benchmarkId,
-            name: benchmark[0]?.name || `Benchmark ${benchmarkId}`,
-            type: 'benchmark',
-            performance: benchmarkPerformance
-          });
-        }
+        });
       } catch (error) {
-        req.log.warn({ error, benchmarkId }, 'Failed to process benchmark for comparison');
+        req.log.warn({ error, benchmarkIds }, 'Failed to fetch benchmark data');
       }
     }
 
-    // Normalizar series a base 100
-    const normalizedResults = comparisonResults.map(result => {
-      if (result.performance.length === 0) return result;
+    if (portfoliosToCompare.length === 0) {
+      return res.status(404).json({
+        error: 'No valid portfolios or benchmarks found'
+      });
+    }
 
-      const firstValue = result.performance[0].value;
-      const normalizedPerformance = result.performance.map(point => ({
-        date: point.date,
-        value: firstValue > 0 ? (point.value / firstValue) * 100 : 100
-      }));
+    // Llamar al servicio Python para comparación profesional
+    // AI_DECISION: Timeout dinámico basado en cantidad de items
+    // Justificación: Evita timeouts en comparaciones grandes, previene esperas excesivas en pequeñas
+    // Impacto: Mejor UX y uso de recursos
+    const dynamicTimeout = getPortfolioCompareTimeout(portfolioIds.length, benchmarkIds.length);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
 
-      return {
-        ...result,
-        performance: normalizedPerformance
-      };
-    });
+    try {
+      const pythonResponse = await fetch(`${PYTHON_SERVICE_URL}/portfolio/compare`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolios: portfoliosToCompare.map(p => ({
+            id: p.id,
+            name: p.name,
+            components: p.components
+          })),
+          period: period as string
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
 
-    res.json({
-      success: true,
-      data: {
-        period,
-        results: normalizedResults,
-        count: normalizedResults.length
-      },
-      timestamp: new Date().toISOString()
-    });
+      if (!pythonResponse.ok) {
+        throw new Error(`Python service error: ${pythonResponse.statusText}`);
+      }
+
+      const pythonData = await pythonResponse.json() as any;
+
+      if (pythonData.status === 'success' && pythonData.data && pythonData.data.portfolios) {
+        // Formatear respuesta compatible con frontend (normalizada a base 100)
+        const results = Object.entries(pythonData.data.portfolios).map(([portfolioId, perfData]: [string, any]) => {
+          const portfolioInfo = portfoliosToCompare.find(p => p.id === portfolioId);
+          
+          return {
+            id: portfolioId,
+            name: portfolioInfo?.name || `Portfolio ${portfolioId}`,
+            type: portfolioInfo?.type || 'portfolio',
+            performance: (perfData.performance_series || []).map((point: any) => ({
+              date: point.date,
+              value: point.value // Ya viene normalizado a base 100 desde Python
+            })),
+            metrics: {
+              totalReturn: perfData.total_return,
+              annualizedReturn: perfData.annualized_return,
+              volatility: perfData.volatility,
+              sharpeRatio: perfData.sharpe_ratio,
+              maxDrawdown: perfData.max_drawdown
+            }
+          };
+        });
+
+        res.json({
+          success: true,
+          data: {
+            period,
+            results,
+            count: results.length
+          },
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        throw new Error('Invalid response from Python service');
+      }
+
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        req.log.error({ portfolioIds, benchmarkIds }, 'Timeout calling Python service for portfolio comparison');
+        return res.status(504).json({
+          error: 'Service timeout',
+          details: 'Portfolio comparison calculation timed out'
+        });
+      }
+
+      // Fallback: retornar error pero no crashear
+      req.log.warn({ error: fetchError }, 'Error calling Python service, returning empty comparison');
+      
+      return res.json({
+        success: true,
+        data: {
+          period,
+          results: [],
+          count: 0,
+          message: 'Service unavailable or no data available'
+        },
+        timestamp: new Date().toISOString()
+      });
+    }
 
   } catch (error) {
     req.log.error(error, 'Error comparing portfolios/benchmarks');
