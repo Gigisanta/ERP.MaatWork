@@ -4,8 +4,9 @@ import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import type { Request } from 'express';
 import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users } from '@cactus/db';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
+import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
 
 const router = Router();
 
@@ -30,6 +31,19 @@ const storage = multer.diskStorage({
 router.get('/uploads/:fileId/export', requireAuth, async (req, res) => {
   try {
     const fileId = req.params.fileId;
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
     const dbi = db();
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
     if (!file) return res.status(404).json({ error: 'File not found' });
@@ -96,6 +110,19 @@ router.get('/uploads/:fileId/export', requireAuth, async (req, res) => {
 router.post('/uploads/:fileId/commit', requireAuth, async (req, res) => {
   try {
     const fileId = req.params.fileId;
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
     const broker = (req.query.broker as string) || 'balanz';
     const dbi = db();
 
@@ -314,12 +341,23 @@ router.post('/uploads', requireAuth, upload.single('file'), async (req: Request,
   }
 });
 
-export default router;
-
 // GET /admin/aum/uploads/:fileId/preview
 router.get('/uploads/:fileId/preview', requireAuth, async (req, res) => {
   try {
     const fileId = req.params.fileId;
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
     const limit = Math.min(Number(req.query.limit || 50), 500);
     const dbi = db();
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
@@ -354,11 +392,41 @@ router.get('/uploads/:fileId/preview', requireAuth, async (req, res) => {
 // GET /admin/aum/uploads/history
 router.get('/uploads/history', requireAuth, async (req, res) => {
   try {
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const limit = Math.min(Number(req.query.limit || 50), 200);
     const dbi = db();
-    const rows = await dbi.select().from(aumImportFiles).limit(limit);
+
+    // Filter files based on user role and access scope
+    let whereClause;
+    if (userRole === 'admin') {
+      // Admin can see all files
+      whereClause = undefined; // No filter
+    } else if (userRole === 'advisor') {
+      // Advisor can only see their own files
+      whereClause = eq(aumImportFiles.uploadedByUserId, userId);
+    } else if (userRole === 'manager') {
+      // Manager can see files from themselves and their team members
+      const accessScope = await getUserAccessScope(userId, userRole);
+      const accessibleUserIds = [...new Set([...accessScope.accessibleAdvisorIds, userId])];
+      whereClause = inArray(aumImportFiles.uploadedByUserId, accessibleUserIds);
+    } else {
+      // Unknown role - no access
+      return res.json({ ok: true, files: [] });
+    }
+
+    const rows = whereClause
+      ? await dbi.select().from(aumImportFiles).where(whereClause).limit(limit)
+      : await dbi.select().from(aumImportFiles).limit(limit);
+
     return res.json({ ok: true, files: rows });
   } catch (error) {
+    (req as any).log?.error?.({ err: error }, 'AUM history failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
@@ -367,6 +435,19 @@ router.get('/uploads/history', requireAuth, async (req, res) => {
 router.post('/uploads/:fileId/match', requireAuth, async (req, res) => {
   try {
     const fileId = req.params.fileId;
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
     const { rowId, matchedContactId, matchedUserId } = req.body as {
       rowId: string;
       matchedContactId?: string | null;
@@ -412,4 +493,4 @@ router.post('/uploads/:fileId/match', requireAuth, async (req, res) => {
   }
 });
 
-
+export default router;

@@ -1,4 +1,4 @@
-import { db, users, teamMembership, teams, contacts } from '@cactus/db';
+import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
 import { eq, and, or, sql, inArray, isNull } from 'drizzle-orm';
 import { UserRole } from './types';
 
@@ -237,4 +237,61 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
     name: t.name,
     role: t.isManager ? 'manager' as const : 'member' as const
   }));
+}
+
+/**
+ * Check if a user can access a specific AUM import file
+ * - Admin: can access all files
+ * - Manager: can access files uploaded by their team members or themselves
+ * - Advisor: can only access their own files
+ */
+export async function canAccessAumFile(userId: string, role: UserRole, fileId: string): Promise<boolean> {
+  try {
+    // Admin can access everything
+    if (role === 'admin') {
+      const [file] = await db()
+        .select({ id: aumImportFiles.id })
+        .from(aumImportFiles)
+        .where(eq(aumImportFiles.id, fileId))
+        .limit(1);
+      return file !== undefined;
+    }
+
+    // Advisor can only access their own files
+    if (role === 'advisor') {
+      const [file] = await db()
+        .select({ id: aumImportFiles.id })
+        .from(aumImportFiles)
+        .where(and(
+          eq(aumImportFiles.id, fileId),
+          eq(aumImportFiles.uploadedByUserId, userId)
+        ))
+        .limit(1);
+      return file !== undefined;
+    }
+
+    // Manager can access files uploaded by their team members or themselves
+    if (role === 'manager') {
+      // Get team member IDs (including manager themselves)
+      const accessScope = await getUserAccessScope(userId, role);
+      const accessibleUserIds = [...new Set([...accessScope.accessibleAdvisorIds, userId])];
+
+      // Manager can see files from themselves and their team members
+      const [file] = await db()
+        .select({ id: aumImportFiles.id })
+        .from(aumImportFiles)
+        .where(and(
+          eq(aumImportFiles.id, fileId),
+          inArray(aumImportFiles.uploadedByUserId, accessibleUserIds)
+        ))
+        .limit(1);
+      return file !== undefined;
+    }
+
+    // Default: no access
+    return false;
+  } catch (error) {
+    console.error('Error checking AUM file access:', error);
+    return false; // Fail closed
+  }
 }
