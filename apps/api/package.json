@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "check": "tsc --noEmit",
-    "clean": "rm -rf node_modules dist"
+    "clean": "rm -rf node_modules dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@cactus/shared": "workspace:*",
@@ -24,6 +27,7 @@
     "zod": "^4.1.8"
   },
   "devDependencies": {
+    "@cactus/testing": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.10",
@@ -34,7 +38,8 @@
     "nodemon": "^3.1.10",
     "supertest": "^7.1.4",
     "tsx": "^4.20.3",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "vitest": "^2.1.8"
   }
 }
 

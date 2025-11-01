@@ -2,5 +2,5 @@ packages:
   - 'apps/*'
   - 'packages/*'
   - 'packages/shared'
-  - 'packages/config/*'
+  - 'packages/testing'
 

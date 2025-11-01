@@ -4,8 +4,9 @@ import { resolve } from 'path';
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts', '@cactus/testing/fixtures/setup'],
+    environment: 'node',
+    testTimeout: 10000,
+    setupFiles: ['./tests/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -15,19 +16,15 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         'dist/',
-        '.next/'
-      ]
+      ],
     },
-    testTimeout: 10000,
-    hookTimeout: 10000
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
       '@cactus/shared': resolve(__dirname, '../../packages/shared/index.ts'),
       '@cactus/database': resolve(__dirname, '../../packages/database/client.ts'),
       '@cactus/testing': resolve(__dirname, '../../packages/testing/index.ts'),
-      '~': resolve(__dirname, './')
-    }
-  }
+    },
+  },
 });
+
