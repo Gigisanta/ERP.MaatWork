@@ -274,12 +274,17 @@ window.location.href = '/portfolios/123';
 ```
         ╱╲
        ╱E2E╲         ← 10-20% (Playwright)
-      ╱────╲
-     ╱ Integ╲        ← 20-30% (Supertest + DB)
-    ╱────────╲
-   ╱  Unit    ╲      ← 50-70% (Vitest)
+      ╱────╲         tests/e2e/*.spec.ts
+     ╱      ╲
+    ╱  Unit  ╲       ← 80-90% (Vitest)
+   ╱──────────╲      src/**/*.test.ts
   ╱────────────╲
 ```
+
+**Arquitectura de Testing:**
+- **Unit tests:** Vitest, `[file].test.ts` al lado del archivo original
+- **E2E tests:** Playwright, `tests/e2e/*.spec.ts` (separados)
+- **NO usar:** Supertest para E2E (Playwright cubre integración completa)
 
 **Crear unit tests para:**
 - ✅ Funciones de validación
@@ -287,7 +292,9 @@ window.location.href = '/portfolios/123';
 - ✅ Utilidades/helpers
 - ✅ Cliente API (mocks)
 
-**Ubicación:** `[file].test.ts` al lado del archivo original
+**Ubicación estricta:**
+- Unit: `src/utils/feature.test.ts` (mismo directorio que `feature.ts`)
+- E2E: `tests/e2e/feature.spec.ts` (carpeta raíz del monorepo)
 
 **Comandos:**
 ```bash
@@ -331,10 +338,10 @@ describe('validateBatchIds', () => {
 ```
 
 **E2E Testing (Playwright):**
-- Page Object Model (POM) obligatorio
-- Tests en `tests/e2e/specs/[feature]/`
-- API-first setup (crear data vía API, testear solo UI)
-- Ver `E2E_TESTING_GUIDE.md` para detalles completos
+- Tests en `tests/e2e/[feature].spec.ts`
+- Testear flujos críticos de usuario (login, CRUD, navegación)
+- API-first setup cuando sea posible (crear data vía API, testear solo UI)
+- Ver `TESTING_ARCHITECTURE.md` para detalles completos
 
 ### 8. Logging Estructurado
 
@@ -481,9 +488,9 @@ const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
 - **Validaciones:** `apps/api/src/schemas/[domain].ts`
 - **Utils:** `apps/api/src/utils/[feature].ts`
 - **Config:** `apps/api/src/config/[feature].ts`
-- **Tests Unitarios:** `[file].test.ts` (mismo directorio)
-- **Tests E2E:** `tests/e2e/specs/[feature]/` (Page Object Model)
-- **Testing Guide:** `E2E_TESTING_GUIDE.md`
+- **Tests Unitarios:** `[file].test.ts` (mismo directorio que el archivo)
+- **Tests E2E:** `tests/e2e/[feature].spec.ts` (raíz del monorepo)
+- **Testing Guide:** `TESTING_ARCHITECTURE.md`
 
 **Score objetivo:** 8.5+/10 en todas las categorías de calidad
 
