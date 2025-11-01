@@ -4,7 +4,7 @@ import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import type { Request } from 'express';
 import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership } from '@cactus/db';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray, type SQL } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
 import { z } from 'zod';
@@ -130,8 +130,14 @@ router.get('/uploads/:fileId/export',
     ];
 
     // Fetch contact names for matched rows
+    type AumRowWithContactId = {
+      matchedContactId: string | null;
+      [key: string]: unknown;
+    };
     const contactIdSet = new Set<string>();
-    rows.forEach((r: any) => { if (r.matchedContactId) contactIdSet.add(r.matchedContactId as string); });
+    rows.forEach((r: AumRowWithContactId) => { 
+      if (r.matchedContactId) contactIdSet.add(r.matchedContactId); 
+    });
     const contactIds = Array.from(contactIdSet);
     const contactMap = new Map<string, string>();
     if (contactIds.length > 0) {
@@ -139,9 +145,13 @@ router.get('/uploads/:fileId/export',
       for (const cid of contactIds) {
         try {
           const r = await dbi.execute(sql`SELECT id, full_name FROM contacts WHERE id = ${cid} LIMIT 1`);
-          const rec = (r.rows && r.rows[0]) as any;
+          type ContactResult = {
+            id: string;
+            full_name: string;
+          };
+          const rec = (r.rows && r.rows[0]) as ContactResult | undefined;
           if (rec && rec.id) {
-            contactMap.set(rec.id as string, (rec.full_name as string) || '');
+            contactMap.set(rec.id, rec.full_name || '');
           }
         } catch {}
       }
@@ -391,18 +401,27 @@ router.post('/uploads',
     let teamIds: string[] = [];
     let memberUserIds: string[] = [];
     try {
-      const myManagerTeams = await dbi.select({ id: teams.id }).from(teams).where(sql`manager_user_id = ${userId}`);
-      const myMemberTeams = await dbi.select({ teamId: teamMembership.teamId }).from(teamMembership).where(sql`user_id = ${userId}`);
+      type TeamWithId = { id: string };
+      type TeamMembershipWithTeamId = { teamId: string };
+      type TeamMembershipWithUserId = { userId: string | null };
+      type TeamWithManagerId = { userId: string | null };
+      
+      const myManagerTeams = await dbi.select({ id: teams.id }).from(teams).where(sql`manager_user_id = ${userId}`) as TeamWithId[];
+      const myMemberTeams = await dbi.select({ teamId: teamMembership.teamId }).from(teamMembership).where(sql`user_id = ${userId}`) as TeamMembershipWithTeamId[];
       const set = new Set<string>();
-      myManagerTeams.forEach((t: any) => set.add(t.id as any));
-      myMemberTeams.forEach((t: any) => set.add((t.teamId as any)));
+      myManagerTeams.forEach((t: TeamWithId) => set.add(t.id));
+      myMemberTeams.forEach((t: TeamMembershipWithTeamId) => set.add(t.teamId));
       teamIds = Array.from(set);
       if (teamIds.length > 0) {
-        const members = await dbi.select({ userId: teamMembership.userId }).from(teamMembership).where(inArray(teamMembership.teamId, teamIds));
-        const managers = await dbi.select({ userId: teams.managerUserId }).from(teams).where(inArray(teams.id, teamIds));
+        const members = await dbi.select({ userId: teamMembership.userId }).from(teamMembership).where(inArray(teamMembership.teamId, teamIds)) as TeamMembershipWithUserId[];
+        const managers = await dbi.select({ userId: teams.managerUserId }).from(teams).where(inArray(teams.id, teamIds)) as TeamWithManagerId[];
         const mset = new Set<string>();
-        members.forEach((m: any) => m.userId && mset.add(m.userId as any));
-        managers.forEach((m: any) => m.userId && mset.add(m.userId as any));
+        members.forEach((m: TeamMembershipWithUserId) => {
+          if (m.userId) mset.add(m.userId);
+        });
+        managers.forEach((m: TeamWithManagerId) => {
+          if (m.userId) mset.add(m.userId);
+        });
         memberUserIds = Array.from(mset);
       }
     } catch {}
@@ -413,17 +432,38 @@ router.post('/uploads',
     let matched = 0;
     let ambiguous = 0;
     let conflictsDetected = 0;
-    const rowsToInsert: any[] = [];
+    
+    type AumRowInsert = {
+      fileId: string;
+      accountNumber: string | null;
+      holderName: string | null;
+      advisorRaw: string | null;
+      matchedContactId: string | null;
+      matchedUserId: string | null;
+      matchStatus: 'matched' | 'ambiguous' | 'unmatched';
+      isPreferred: boolean;
+      conflictDetected: boolean;
+    };
+    
+    const rowsToInsert: AumRowInsert[] = [];
     
     // Get existing rows for duplicate detection
-    const existingAccounts = new Map<string, any>();
+    type ExistingRow = {
+      account_number: string;
+      holder_name: string | null;
+      advisor_raw: string | null;
+      file_id: string;
+      created_at: Date;
+    };
+    
+    const existingAccounts = new Map<string, ExistingRow[]>();
     try {
       const existingResult = await dbi.execute(sql`
         SELECT account_number, holder_name, advisor_raw, file_id, created_at
         FROM aum_import_rows
         WHERE account_number IS NOT NULL
       `);
-      (existingResult.rows || []).forEach((row: any) => {
+      (existingResult.rows || []).forEach((row: ExistingRow) => {
         if (!existingAccounts.has(row.account_number)) {
           existingAccounts.set(row.account_number, []);
         }
@@ -441,7 +481,7 @@ router.post('/uploads',
       if (r.accountNumber && existingAccounts.has(r.accountNumber)) {
         const existingRows = existingAccounts.get(r.accountNumber)!;
         // Check if data conflicts
-        const hasConflict = existingRows.some((existing: any) => 
+        const hasConflict = existingRows.some((existing: ExistingRow) => 
           existing.holder_name !== r.holderName || existing.advisor_raw !== r.advisorRaw
         );
         
@@ -663,10 +703,14 @@ router.get('/uploads/history',
         : await dbi.select().from(aumImportFiles).limit(limit as number);
 
       return res.json({ ok: true, files: rows });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Si la tabla aún no existe (migración no aplicada en este DB), devolver lista vacía
-      if (error?.code === '42P01') {
-        (req as any).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
+      type PostgresError = {
+        code?: string;
+      };
+      const pgError = error as PostgresError;
+      if (pgError?.code === '42P01') {
+        (req as Request & { log?: { warn?: (context: unknown, message: string) => void } }).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
         return res.json({ ok: true, files: [] });
       }
       throw error;
@@ -762,7 +806,7 @@ router.get('/rows/all', requireAuth, async (req, res) => {
     const dbi = db();
     
     // Build WHERE conditions
-    const conditions: any[] = [];
+    const conditions: SQL[] = [];
     if (broker) {
       conditions.push(sql`f.broker = ${broker}`);
     }
@@ -781,9 +825,35 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       INNER JOIN aum_import_files f ON r.file_id = f.id
       ${whereClause}
     `);
-    const total = Number((countResult.rows?.[0] as any)?.total || 0);
+    type CountResult = {
+      total: string | number;
+    };
+    const total = Number((countResult.rows?.[0] as CountResult | undefined)?.total || 0);
     
     // Get paginated rows with joined data
+    type AumRowResult = {
+      id: string;
+      file_id: string;
+      account_number: string | null;
+      holder_name: string | null;
+      advisor_raw: string | null;
+      matched_contact_id: string | null;
+      matched_user_id: string | null;
+      match_status: 'matched' | 'ambiguous' | 'unmatched';
+      is_preferred: boolean;
+      conflict_detected: boolean;
+      row_created_at: Date;
+      broker: string;
+      original_filename: string;
+      file_status: string;
+      file_created_at: Date;
+      contact_name: string | null;
+      contact_first_name: string | null;
+      contact_last_name: string | null;
+      user_name: string | null;
+      user_email: string | null;
+    };
+    
     const result = await dbi.execute(sql`
       SELECT 
         r.id,
@@ -816,7 +886,7 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       LIMIT ${limit} OFFSET ${offset}
     `);
     
-    const rows = ((result.rows || []) as any[]).map((r: any) => ({
+    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
       id: r.id,
       fileId: r.file_id,
       accountNumber: r.account_number,
@@ -859,7 +929,7 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       }
     });
   } catch (error) {
-    (req as any).log?.error?.({ err: error }, 'failed to get all rows');
+    (req as Request & { log?: { error?: (context: unknown, message: string) => void } }).log?.error?.({ err: error }, 'failed to get all rows');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
@@ -897,7 +967,7 @@ router.get('/rows/duplicates/:accountNumber', requireAuth, async (req, res) => {
       ORDER BY f.created_at DESC, r.created_at DESC
     `);
     
-    const rows = ((result.rows || []) as any[]).map((r: any) => ({
+    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
       id: r.id,
       fileId: r.file_id,
       accountNumber: r.account_number,
