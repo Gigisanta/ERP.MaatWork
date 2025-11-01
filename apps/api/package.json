@@ -55,7 +55,10 @@
     "pino-pretty": "^10.2.3",
     "supertest": "^7.1.4",
     "tsx": "^4.1.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.6"
+  },
+  "engines": {
+    "node": ">=22.0.0 <25.0.0"
   }
 }
