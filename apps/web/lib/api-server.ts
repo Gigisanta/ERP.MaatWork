@@ -6,8 +6,8 @@
  * Impacto: Permite usar cliente centralizado también en Server Components
  */
 
-import { apiClient } from './api-client';
 import type { ApiResponse } from './api-client';
+import { config } from './config';
 
 /**
  * Cliente API para Server Components que acepta token explícito
@@ -21,8 +21,7 @@ export async function apiCallWithToken<T>(
     headers?: Record<string, string>;
   }
 ): Promise<ApiResponse<T>> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  const url = `${apiUrl}${endpoint}`;
+  const url = `${config.apiUrl}${endpoint}`;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

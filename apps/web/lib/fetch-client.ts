@@ -84,7 +84,7 @@ export async function fetchWithLogging(
 /**
  * Helper para requests JSON con logging automático
  */
-export async function fetchJson<T = any>(
+export async function fetchJson<T = unknown>(
   url: string | URL,
   options: FetchOptions = {}
 ): Promise<T> {
@@ -98,29 +98,34 @@ export async function fetchJson<T = any>(
 
   if (!response.ok) {
     const errorText = await response.text();
-    let errorData: any;
+    type ErrorResponse = {
+      message?: string;
+      error?: string;
+    };
+    
+    let errorData: ErrorResponse;
     
     try {
-      errorData = JSON.parse(errorText);
+      errorData = JSON.parse(errorText) as ErrorResponse;
     } catch {
       errorData = { message: errorText };
     }
 
     throw new Error(
-      errorData.message || 
+      errorData.message || errorData.error || 
       `HTTP ${response.status}: ${response.statusText}`
     );
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 /**
  * Helper para requests POST con JSON
  */
-export async function postJson<T = any>(
+export async function postJson<T = unknown>(
   url: string | URL,
-  data: any,
+  data: unknown,
   options: Omit<FetchOptions, 'method' | 'body'> = {}
 ): Promise<T> {
   return fetchJson<T>(url, {
@@ -133,9 +138,9 @@ export async function postJson<T = any>(
 /**
  * Helper para requests PUT con JSON
  */
-export async function putJson<T = any>(
+export async function putJson<T = unknown>(
   url: string | URL,
-  data: any,
+  data: unknown,
   options: Omit<FetchOptions, 'method' | 'body'> = {}
 ): Promise<T> {
   return fetchJson<T>(url, {
@@ -148,7 +153,7 @@ export async function putJson<T = any>(
 /**
  * Helper para requests DELETE
  */
-export async function deleteJson<T = any>(
+export async function deleteJson<T = unknown>(
   url: string | URL,
   options: Omit<FetchOptions, 'method'> = {}
 ): Promise<T> {
@@ -161,7 +166,7 @@ export async function deleteJson<T = any>(
 /**
  * Helper para requests GET con query parameters
  */
-export async function getJson<T = any>(
+export async function getJson<T = unknown>(
   url: string | URL,
   params?: Record<string, string | number | boolean>,
   options: Omit<FetchOptions, 'method'> = {}

@@ -68,8 +68,9 @@ class ClientLogger {
 
   private async sendToBackend(entry: LogEntry): Promise<void> {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      await fetch(`${apiUrl}/logs/client`, {
+      // Importar config dinámicamente para evitar ciclos de dependencia
+      const { config } = await import('./config');
+      await fetch(`${config.apiUrl}/logs/client`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
