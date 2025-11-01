@@ -17,7 +17,7 @@ export { VisuallyHidden, type VisuallyHiddenProps } from './primitives/VisuallyH
 export { FocusRing, type FocusRingProps } from './primitives/FocusRing';
 
 // Basic components - specific exports
-export { default as Input } from './components/forms/Input';
+export { default as Input, type InputProps } from './components/forms/Input';
 export { default as Label } from './components/forms/Label';
 export { default as Button } from './components/nav/Button';
 export { Checkbox } from './components/forms/Checkbox';

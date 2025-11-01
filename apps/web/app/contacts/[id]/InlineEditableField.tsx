@@ -10,7 +10,7 @@ interface InlineEditableFieldProps {
   label: string;
   value: string | null | undefined;
   field: string;
-  onSave: (field: any, value: string) => Promise<void>;
+  onSave: (field: string, value: string) => Promise<void>;
   placeholder?: string;
   emptyText?: string;
   type?: 'text' | 'email' | 'tel' | 'number';
@@ -78,7 +78,7 @@ export default function InlineEditableField({
             if (e.key === 'Enter') handleSave();
             if (e.key === 'Escape') handleCancel();
           }}
-          placeholder={placeholder}
+          {...(placeholder ? { placeholder } : {})}
           className="flex-1"
           autoFocus
           size="sm"

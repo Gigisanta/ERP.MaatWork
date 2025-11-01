@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
+import { getCurrentUser, getTeams, getAllTeamMembers, getPendingInvitations, respondToInvitation, createTeam, inviteTeamMember, removeTeamMember, changePassword } from '@/lib/api';
+import { logger } from '../../lib/logger';
 import { useRouter } from 'next/navigation';
+import type { UserApiResponse as User, Team, TeamMember, TeamInvitation } from '@/types';
 import { 
   Card, 
   CardContent, 
@@ -23,39 +26,10 @@ import {
   DataTable,
   type Column,
   Badge,
-  Switch
+  Switch,
+  Toast
 } from '@cactus/ui';
-
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  role: 'admin' | 'manager' | 'advisor';
-  isActive: boolean;
-}
-
-interface Team {
-  id: string;
-  name: string;
-  role: 'member' | 'manager';
-}
-
-interface TeamMember {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-}
-
-interface TeamInvitationRow {
-  id: string;
-  managerId: string;
-  status: string;
-  createdAt: string;
-  managerEmail: string;
-  managerFullName: string;
-}
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function ProfilePage() {
   const { user, token, loading } = useRequireAuth();
@@ -65,7 +39,7 @@ export default function ProfilePage() {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [invitations, setInvitations] = useState<TeamInvitationRow[]>([]);
+  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -73,6 +47,35 @@ export default function ProfilePage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
+  
+  // Estados para Toast
+  const [toast, setToast] = useState<{
+    show: boolean;
+    title: string;
+    description?: string;
+    variant: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    show: false,
+    title: '',
+    variant: 'info'
+  });
+
+  // Estados para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
+  const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setToast({ show: true, title, description, variant });
+  };
   
   // Estados de formularios
   const [passwordForm, setPasswordForm] = useState({
@@ -85,7 +88,10 @@ export default function ProfilePage() {
     name: ''
   });
 
-  const [memberForm, setMemberForm] = useState({
+  const [memberForm, setMemberForm] = useState<{
+    email: string;
+    teamId?: string;
+  }>({
     email: ''
   });
 
@@ -102,63 +108,35 @@ export default function ProfilePage() {
   const fetchUserInfo = async () => {
     try {
       setDataLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       
       // Fetch user info
-      const userResponse = await fetch(`${apiUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUserInfo(userData.data);
+      const userResponse = await getCurrentUser();
+      if (userResponse.success && userResponse.data) {
+        setUserInfo(userResponse.data);
       }
 
       // Fetch teams if user is manager or admin
       if (user?.role === 'manager' || user?.role === 'admin') {
-        const teamsResponse = await fetch(`${apiUrl}/teams`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (teamsResponse.ok) {
-          const teamsData = await teamsResponse.json();
-          setTeams(teamsData.data || []);
+        const teamsResponse = await getTeams();
+        if (teamsResponse.success && teamsResponse.data) {
+          setTeams(teamsResponse.data || []);
           
           // Fetch team members
-          const membersResponse = await fetch(`${apiUrl}/teams/members`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (membersResponse.ok) {
-            const membersData = await membersResponse.json();
-            setTeamMembers(membersData.data || []);
+          const membersResponse = await getAllTeamMembers();
+          if (membersResponse.success && membersResponse.data) {
+            setTeamMembers(membersResponse.data || []);
           }
         }
       }
 
       // Fetch pending team invitations for current user
-      const invitationsResponse = await fetch(`${apiUrl}/teams/invitations/pending`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (invitationsResponse.ok) {
-        const invData = await invitationsResponse.json();
-        setInvitations(invData.data || []);
+      const invitationsResponse = await getPendingInvitations();
+      if (invitationsResponse.success && invitationsResponse.data) {
+        setInvitations(invitationsResponse.data || []);
       }
     } catch (err) {
+      logger.error('Error fetching user info', { err });
       setError('Error al cargar la información del usuario');
-      console.error('Error:', err);
     } finally {
       setDataLoading(false);
     }
@@ -168,17 +146,10 @@ export default function ProfilePage() {
     try {
       setActionLoading(`inv-${id}`);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${apiUrl}/teams/invitations/${id}/${action}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        const e = await res.json();
-        throw new Error(e?.error || 'Error al procesar invitación');
-      }
+      await respondToInvitation(id, action);
       setInvitations(prev => prev.filter(r => r.id !== id));
     } catch (err) {
+      logger.error('Error responding to invitation', { err, invitationId: id, action });
       setError(err instanceof Error ? err.message : 'Error al procesar invitación');
     } finally {
       setActionLoading(null);
@@ -200,28 +171,16 @@ export default function ProfilePage() {
       setActionLoading('password');
       setError(null);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/users/change-password`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword
-        }),
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cambiar contraseña');
-      }
 
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setShowPasswordForm(false);
-      alert('Contraseña cambiada exitosamente');
+      showToast('Contraseña cambiada exitosamente', undefined, 'success');
     } catch (err) {
+      logger.error('Error changing password', { err });
       setError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
     } finally {
       setActionLoading(null);
@@ -238,26 +197,19 @@ export default function ProfilePage() {
       setActionLoading('team');
       setError(null);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/teams`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(teamForm),
+      if (!user) throw new Error('Usuario no autenticado');
+      
+      await createTeam({
+        name: teamForm.name.trim(),
+        managerUserId: user.id
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear equipo');
-      }
 
       setTeamForm({ name: '' });
       setShowTeamForm(false);
       fetchUserInfo(); // Reload data
-      alert('Equipo creado exitosamente');
+      showToast('Equipo creado exitosamente', undefined, 'success');
     } catch (err) {
+      logger.error('Error creating team', { err, teamForm });
       setError(err instanceof Error ? err.message : 'Error al crear equipo');
     } finally {
       setActionLoading(null);
@@ -274,53 +226,50 @@ export default function ProfilePage() {
       setActionLoading('member');
       setError(null);
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/teams/invite-member`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(memberForm),
+      if (!memberForm.teamId) throw new Error('Equipo requerido');
+      
+      await inviteTeamMember({
+        teamId: memberForm.teamId,
+        email: memberForm.email.trim()
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al invitar miembro');
-      }
 
       setMemberForm({ email: '' });
       setShowAddMemberForm(false);
       fetchUserInfo(); // Reload data
-      alert('Invitación enviada exitosamente');
+      showToast('Invitación enviada exitosamente', undefined, 'success');
     } catch (err) {
+      logger.error('Error inviting member', { err, memberForm });
       setError(err instanceof Error ? err.message : 'Error al invitar miembro');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleLeaveTeam = async (teamId: string) => {
+  const handleLeaveTeam = (teamId: string) => {
     if (!token || !user) return;
-    const confirm = window.confirm('¿Seguro que deseas abandonar este equipo?');
-    if (!confirm) return;
-    try {
-      setActionLoading(`leave-${teamId}`);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${apiUrl}/teams/${teamId}/members/${user.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e?.error || 'No se pudo abandonar el equipo');
+    
+    setConfirmDialog({
+      open: true,
+      title: 'Abandonar equipo',
+      description: '¿Seguro que deseas abandonar este equipo?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          setActionLoading(`leave-${teamId}`);
+          if (!user) throw new Error('Usuario no autenticado');
+          
+          await removeTeamMember(teamId, user.id);
+          await fetchUserInfo();
+          showToast('Has abandonado el equipo', undefined, 'success');
+        } catch (err) {
+          logger.error('Error leaving team', { err, teamId, userId: user?.id });
+          setError(err instanceof Error ? err.message : 'Error al abandonar equipo');
+          showToast('Error al abandonar equipo', err instanceof Error ? err.message : 'Error desconocido', 'error');
+        } finally {
+          setActionLoading(null);
+        }
       }
-      await fetchUserInfo();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al abandonar equipo');
-    } finally {
-      setActionLoading(null);
-    }
+    });
   };
 
   // Columnas para la tabla de miembros
@@ -339,17 +288,17 @@ export default function ProfilePage() {
       key: 'role',
       header: 'Rol',
       render: (member) => (
-        <Badge variant={member.role === 'manager' ? 'brand' : 'default'}>
+        <Badge variant={member.role === 'lead' ? 'brand' : 'default'}>
           {member.role}
         </Badge>
       ),
     },
     {
-      key: 'isActive',
+      key: 'user',
       header: 'Estado',
       render: (member) => (
         <Switch
-          checked={member.isActive}
+          checked={member.user?.role !== undefined}
           disabled={true}
         />
       ),
@@ -485,7 +434,7 @@ export default function ProfilePage() {
                   {invitations.map((inv) => (
                     <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <Text weight="medium">Invitación de {inv.managerFullName || inv.managerEmail}</Text>
+                        <Text weight="medium">Invitación de {inv.team?.name || 'Equipo'}</Text>
                         <Text size="sm" color="secondary">{new Date(inv.createdAt).toLocaleString('es-ES')}</Text>
                       </div>
                       <div className="flex gap-2">
@@ -638,6 +587,27 @@ export default function ProfilePage() {
           </div>
         </Stack>
       </Modal>
+
+      {/* Toast Notifications */}
+      <Toast
+        title={toast.title}
+        {...(toast.description && { description: toast.description })}
+        variant={toast.variant}
+        open={toast.show}
+        onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Icon, { type IconName } from '../Icon';
 import { cn } from '../../utils/cn';
 
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
   placeholder?: string;

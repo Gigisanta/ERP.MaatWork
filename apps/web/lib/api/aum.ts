@@ -8,87 +8,15 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-
-// ==========================================================
-// Types
-// ==========================================================
-
-export interface AumFile {
-  id: string;
-  broker: string;
-  originalFilename: string;
-  mimeType: string;
-  sizeBytes: number;
-  uploadedByUserId: string;
-  status: string;
-  totalParsed: number;
-  totalMatched: number;
-  totalUnmatched: number;
-  createdAt: string;
-}
-
-export interface AumRow {
-  id: string;
-  fileId: string;
-  accountNumber: string | null;
-  holderName: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  rowCreatedAt: string;
-  file?: AumFile;
-  contact?: {
-    id: string;
-    fullName: string;
-    firstName: string;
-    lastName: string;
-  } | null;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
-}
-
-export interface AumUploadResponse {
-  ok: boolean;
-  fileId: string;
-  filename: string;
-  totals: {
-    parsed: number;
-    matched: number;
-    ambiguous: number;
-    conflicts: number;
-    unmatched: number;
-  };
-}
-
-export interface AumMatchRequest {
-  rowId: string;
-  matchedContactId?: string | null;
-  matchedUserId?: string | null;
-  isPreferred?: boolean;
-}
-
-export interface AumRowsResponse {
-  rows: AumRow[];
-  pagination: {
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
-
-export interface AumDuplicatesResponse {
-  ok: boolean;
-  accountNumber: string;
-  rows: AumRow[];
-  hasConflicts: boolean;
-}
+import { API_BASE_URL } from '../api-url';
+import type {
+  AumFile,
+  AumRow,
+  AumUploadResponse,
+  AumMatchRequest,
+  AumRowsResponse,
+  AumDuplicatesResponse
+} from '@/types/aum';
 
 // ==========================================================
 // API Methods
@@ -125,10 +53,9 @@ export async function uploadAumFile(
 
   // Para FormData, necesitamos usar fetch directamente ya que apiClient usa JSON.stringify
   // Pero mejoramos el manejo de errores
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
-  const response = await fetch(`${apiUrl}/v1/admin/aum/uploads?broker=${broker}`, {
+  const response = await fetch(`${API_BASE_URL}/v1/admin/aum/uploads?broker=${broker}`, {
     method: 'POST',
     headers: {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -162,8 +89,7 @@ export async function getAumFilePreview(fileId: string): Promise<ApiResponse<{
  * Exportar archivo AUM a CSV
  */
 export function getAumFileExportUrl(fileId: string): string {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-  return `${apiUrl}/v1/admin/aum/uploads/${fileId}/export`;
+  return `${API_BASE_URL}/v1/admin/aum/uploads/${fileId}/export`;
 }
 
 /**

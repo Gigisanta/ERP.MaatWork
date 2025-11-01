@@ -19,165 +19,71 @@ import {
   Alert,
   type BreadcrumbItem,
 } from '@cactus/ui';
+import type {
+  Contact,
+  PipelineStage,
+  Advisor,
+  BrokerAccount,
+  PortfolioAssignment,
+  Task,
+  Note
+} from '@/types';
 import ContactEditableField from './ContactEditableField';
 import BrokerAccountsSection from './BrokerAccountsSection';
 import PortfolioSection from './PortfolioSection';
 import TasksSection from './TasksSection';
 import NotesSection from './NotesSection';
 
-// Types
-interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  country?: string;
-  dni?: string;
-  pipelineStageId?: string;
-  source?: string;
-  riskProfile?: string;
-  assignedAdvisorId?: string;
-  assignedTeamId?: string;
-  nextStep?: string;
-  notes?: string;
-  customFields?: Record<string, any>;
-  contactLastTouchAt?: string;
-  pipelineStageUpdatedAt?: string;
-  deletedAt?: string;
-  version: number;
-  createdAt: string;
-  updatedAt: string;
-  tags?: Array<{ id: string; name: string; color: string }>;
-}
-
-interface BrokerAccount {
-  id: string;
-  broker: string;
-  accountNumber: string;
-  holderName?: string;
-  contactId: string;
-  status: 'active' | 'closed';
-  lastSyncedAt?: string;
-  createdAt: string;
-}
-
-interface PortfolioAssignment {
-  id: string;
-  contactId: string;
-  templateId: string;
-  templateName: string;
-  status: 'active' | 'paused' | 'ended';
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-  createdAt: string;
-}
-
-interface Task {
-  id: string;
-  contactId: string;
-  title: string;
-  description?: string;
-  status: string;
-  dueDate?: string;
-  priority?: string;
-  createdAt: string;
-}
-
-interface Note {
-  id: string;
-  contactId: string;
-  authorUserId?: string;
-  source: string;
-  noteType: string;
-  content: string;
-  authorName?: string;
-  createdAt: string;
-}
-
-interface PipelineStage {
-  id: string;
-  name: string;
-  color: string;
-  order: number;
-}
-
-interface Advisor {
-  id: string;
-  fullName: string;
-  email: string;
-}
-
 // Server-side data fetching
+// AI_DECISION: Usar helper apiCallWithToken para Server Components
+// Justificación: Permite usar cliente centralizado también en Server Components
+// Impacto: Consistencia con cliente API, mejor manejo de errores
+import { apiCallWithToken } from '@/lib/api-server';
+import type { Contact } from '@/types/contact';
+
 async function getContactData(id: string, token: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    
-    // Fetch contact data
-    const contactResponse = await fetch(`${apiUrl}/contacts/${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      cache: 'no-store' // Ensure fresh data
+    // Usar helper para Server Components
+    const contactResponse = await apiCallWithToken<Contact>(`/v1/contacts/${id}`, {
+      token,
+      method: 'GET'
     });
 
-    if (!contactResponse.ok) {
+    if (!contactResponse.success || !contactResponse.data) {
       return null;
     }
 
-    const contactData = await contactResponse.json();
-    const contact = contactData.data;
+    const contact = contactResponse.data;
 
-    // Fetch related data in parallel
+    // Fetch related data in parallel usando helper
     const [stagesResponse, advisorsResponse, brokerAccountsResponse, portfolioResponse, tasksResponse, notesResponse] = await Promise.all([
-      fetch(`${apiUrl}/pipeline/stages`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`${apiUrl}/users/advisors`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`${apiUrl}/broker-accounts?contactId=${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`${apiUrl}/portfolios/assignments?contactId=${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`${apiUrl}/tasks?contactId=${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      }),
-      fetch(`${apiUrl}/notes?contactId=${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        cache: 'no-store'
-      })
+      apiCallWithToken<PipelineStage[]>('/v1/pipeline/stages', { token }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Advisor[]>('/v1/users/advisors', { token }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<BrokerAccount[]>(`/v1/broker-accounts?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<PortfolioAssignment[]>(`/v1/portfolios/assignments?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Task[]>(`/v1/tasks?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Note[]>(`/v1/notes?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] }))
     ]);
 
-    const [stagesData, advisorsData, brokerAccountsData, portfolioData, tasksData, notesData] = await Promise.all([
-      stagesResponse.ok ? stagesResponse.json() : { data: [] },
-      advisorsResponse.ok ? advisorsResponse.json() : { data: [] },
-      brokerAccountsResponse.ok ? brokerAccountsResponse.json() : { data: [] },
-      portfolioResponse.ok ? portfolioResponse.json() : { data: [] },
-      tasksResponse.ok ? tasksResponse.json() : { data: [] },
-      notesResponse.ok ? notesResponse.json() : { data: [] }
-    ]);
+    const stages = stagesResponse.success ? stagesResponse.data || [] : [];
+    const advisors = advisorsResponse.success ? advisorsResponse.data || [] : [];
+    const brokerAccounts = brokerAccountsResponse.success ? brokerAccountsResponse.data || [] : [];
+    const portfolioAssignments = portfolioResponse.success ? portfolioResponse.data || [] : [];
+    const tasks = tasksResponse.success ? tasksResponse.data || [] : [];
+    const notes = notesResponse.success ? notesResponse.data || [] : [];
 
     return {
       contact,
-      stages: stagesData.data || [],
-      advisors: advisorsData.data || [],
-      brokerAccounts: brokerAccountsData.data || [],
-      portfolioAssignments: portfolioData.data || [],
-      tasks: tasksData.data || [],
-      notes: notesData.data || []
+      stages,
+      advisors,
+      brokerAccounts,
+      portfolioAssignments,
+      tasks,
+      notes
     };
   } catch (error) {
-    console.error('Error fetching contact data:', error);
+    // En server components, usar console.error es aceptable
+    console.error('Error fetching contact data', { err: error, contactId: id });
     return null;
   }
 }
@@ -233,7 +139,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                   {currentStage.name}
                 </Badge>
               )}
-              {contact.tags && contact.tags.map((tag: any) => (
+              {contact.tags && contact.tags.map((tag: { id: string; name: string; color?: string }) => (
                 <Badge key={tag.id} variant="default">
                   {tag.name}
                 </Badge>

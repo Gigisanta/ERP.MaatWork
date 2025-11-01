@@ -6,6 +6,8 @@
 
 import { useState } from 'react';
 import { matchAumRow } from '@/lib/api';
+import type { ApiErrorWithMessage } from '@/types';
+import { Input, Button, Spinner, Text } from '@cactus/ui';
 
 interface ContactUserPickerProps {
   fileId: string;
@@ -41,8 +43,9 @@ export default function ContactUserPicker({
       setSuccess(true);
       if (onSave) onSave();
       setTimeout(() => setSuccess(false), 2000);
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error al guardar');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -50,32 +53,45 @@ export default function ContactUserPicker({
 
   return (
     <div className="flex items-center gap-2">
-      <input
+      <Input
         type="text"
         value={contactId}
         onChange={(e) => setContactId(e.target.value)}
         placeholder="Contact ID"
-        className="border rounded px-2 py-1 text-xs w-40"
+        size="sm"
+        className="text-xs w-40"
       />
-      <input
+      <Input
         type="text"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
         placeholder="User ID (advisor)"
-        className="border rounded px-2 py-1 text-xs w-40"
+        size="sm"
+        className="text-xs w-40"
       />
-      <button
+      <Button
         onClick={save}
         disabled={saving || success}
-        className={`px-2 py-1 text-xs rounded ${
-          success 
-            ? 'bg-green-600 text-white' 
-            : 'bg-gray-800 text-white hover:bg-gray-700'
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
+        size="sm"
+        variant="primary"
+        className={`text-xs ${success ? 'bg-green-600 hover:bg-green-700' : ''}`}
       >
-        {saving ? '...' : success ? '✓' : 'Guardar'}
-      </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+        {saving ? (
+          <>
+            <Spinner size="sm" className="mr-1" />
+            Guardando...
+          </>
+        ) : success ? (
+          '✓'
+        ) : (
+          'Guardar'
+        )}
+      </Button>
+      {error && (
+        <Text size="sm" className="text-error">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

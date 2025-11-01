@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { matchAumRow } from '@/lib/api';
+import type { ApiErrorWithMessage } from '@/types';
 import { Input, Button, Spinner, Text } from '@cactus/ui';
 
 export default function RowMatchForm({ fileId, rowId, initialContactId, initialUserId }: { fileId: string; rowId: string; initialContactId?: string | null; initialUserId?: string | null; }) {
@@ -19,8 +20,9 @@ export default function RowMatchForm({ fileId, rowId, initialContactId, initialU
         matchedContactId: contactId || null,
         matchedUserId: userId || null,
       });
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error al guardar');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }

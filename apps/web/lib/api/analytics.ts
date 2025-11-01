@@ -15,8 +15,10 @@ import type {
 /**
  * Obtener KPIs del dashboard
  */
-export async function getDashboardKPIs(): Promise<ApiResponse<DashboardKPIs>> {
-  return apiClient.get<DashboardKPIs>('/v1/analytics/dashboard');
+import type { DashboardData } from '@/types';
+
+export async function getDashboardKPIs(): Promise<ApiResponse<DashboardData>> {
+  return apiClient.get<DashboardData>('/v1/analytics/dashboard');
 }
 
 /**

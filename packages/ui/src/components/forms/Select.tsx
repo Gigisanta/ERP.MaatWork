@@ -25,7 +25,7 @@ export interface SelectProps {
 }
 
 export const Select = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Root>,
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
   SelectProps
 >(({
   items,

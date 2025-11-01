@@ -9,14 +9,26 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getAumFilePreview, getAumFileExportUrl, commitAumFile } from '@/lib/api';
+import { Toast, Button, Text, Badge } from '@cactus/ui';
 import ContactUserPicker from '../components/ContactUserPicker';
+import type { ApiErrorWithMessage, AumFile, AumRow } from '@/types';
 
 export default function AumPreviewPage() {
   const params = useParams();
   const fileId = params.fileId as string;
-  const [file, setFile] = useState<any>(null);
-  const [rows, setRows] = useState<any[]>([]);
+  const [file, setFile] = useState<AumFile | null>(null);
+  const [rows, setRows] = useState<AumRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    title: string;
+    description?: string;
+    variant: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    show: false,
+    title: '',
+    variant: 'info'
+  });
 
   const loadRows = async () => {
     try {
@@ -26,8 +38,9 @@ export default function AumPreviewPage() {
         setFile(response.data.file);
         setRows(response.data.rows || []);
       }
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || error.error || 'Error');
     }
   };
 
@@ -45,27 +58,46 @@ export default function AumPreviewPage() {
         <div className="flex items-center gap-2">
           <a
             href={getAumFileExportUrl(fileId)}
-            className="px-3 py-2 text-sm border rounded"
-          >Descargar CSV</a>
-          <button 
+            className="px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-50 inline-block"
+          >
+            Descargar CSV
+          </a>
+          <Button 
             onClick={async () => {
               try {
                 await commitAumFile(fileId);
-                alert('Sincronización confirmada');
+                setToast({
+                  show: true,
+                  title: 'Sincronización confirmada',
+                  variant: 'success'
+                });
                 loadRows();
-              } catch (e: any) {
-                alert(e.userMessage || e.message || 'Error al confirmar');
+              } catch (e: unknown) {
+                const error = e as ApiErrorWithMessage;
+                setToast({
+                  show: true,
+                  title: 'Error al confirmar',
+                  description: error.userMessage || error.message || error.error || 'Error desconocido',
+                  variant: 'error'
+                });
               }
             }}
-            className="px-3 py-2 text-sm bg-indigo-600 text-white rounded"
+            variant="primary"
+            size="sm"
           >
             Confirmar sincronización
-          </button>
+          </Button>
         </div>
       </div>
 
-      {file && <div className="text-sm text-gray-700">Procesados: {file.totals.parsed} · Coincidencias: {file.totals.matched} · Pendientes: {file.totals.unmatched}</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {file && file.totals && (
+        <Text size="sm" color="secondary">
+          Procesados: {file.totals.parsed} · Coincidencias: {file.totals.matched} · Pendientes: {file.totals.unmatched}
+        </Text>
+      )}
+      {error && (
+        <Text size="sm" className="text-error">{error}</Text>
+      )}
 
       <div className="overflow-x-auto border rounded">
         <table className="min-w-full divide-y divide-gray-200">
@@ -91,9 +123,12 @@ export default function AumPreviewPage() {
                 <td className="px-4 py-2 text-sm text-gray-700">{r.raw?.Titular || r.holderName || '-'}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">{r.matchedUserId || '-'}</td>
                 <td className="px-4 py-2 text-sm">
-                  <span className={"inline-flex items-center rounded px-2 py-0.5 text-xs " + (r.matchStatus === 'matched' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')}>
+                  <Badge 
+                    variant={r.matchStatus === 'matched' ? 'success' : 'warning'} 
+                    size="sm"
+                  >
                     {r.matchStatus}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="px-4 py-2 text-sm">
                   <ContactUserPicker
@@ -114,8 +149,14 @@ export default function AumPreviewPage() {
           </tbody>
         </table>
       </div>
+      
+      <Toast
+        open={toast.show}
+        title={toast.title}
+        {...(toast.description ? { description: toast.description } : {})}
+        variant={toast.variant}
+        onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
+      />
     </div>
   );
 }
-
-

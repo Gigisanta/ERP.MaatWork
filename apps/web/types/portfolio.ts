@@ -15,14 +15,17 @@ export interface Portfolio {
   lines?: PortfolioLine[];
 }
 
+/**
+ * Línea de portfolio - puede referenciar un instrumento o asset class
+ */
 export interface PortfolioLine {
   id: string;
   templateId: string;
   targetType: 'instrument' | 'assetClass';
   assetClass?: string | null;
-  instrumentId?: string | null;
+  instrumentId: string | null; // Puede ser null si aún no está resuelto
   targetWeight: number; // Decimal (0.25 = 25%)
-  instrumentSymbol?: string;
+  instrumentSymbol: string; // Required para UI
   instrumentName?: string;
   assetClassName?: string;
 }

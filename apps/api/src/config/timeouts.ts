@@ -125,12 +125,8 @@ export function validateTimeouts(): {
 if (process.env.NODE_ENV !== 'test') {
   const validation = validateTimeouts();
   if (!validation.valid) {
-    // Importar logger solo si hay warnings (lazy import para evitar ciclos)
-    import('../index.js').then(({ logger }) => {
-      logger.warn({ warnings: validation.warnings }, 'Timeout configuration warnings detected');
-    }).catch(() => {
-      // Fallback a console.warn si logger no está disponible (durante inicialización)
-      console.warn('⚠️  Timeout configuration warnings:', validation.warnings);
-    });
+    // Usar console.warn directamente para evitar ciclos de importación
+    // El logger se inicializará después de cargar este módulo
+    console.warn('⚠️  Timeout configuration warnings:', validation.warnings);
   }
 }

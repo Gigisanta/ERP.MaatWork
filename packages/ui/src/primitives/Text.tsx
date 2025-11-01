@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../utils/cn';
 
 export interface TextProps {
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   children?: React.ReactNode;
   className?: string;
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';

@@ -11,11 +11,11 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   context?: Record<string, any>;
-  userAgent?: string;
-  url?: string;
+  userAgent?: string | undefined;
+  url?: string | undefined;
   requestId?: string;
-  userId?: string;
-  userRole?: string;
+  userId?: string | undefined;
+  userRole?: string | undefined;
   sessionId?: string;
 }
 
@@ -57,7 +57,7 @@ class ClientLogger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      context,
+      ...(context && { context }),
       userAgent: typeof window !== 'undefined' ? navigator.userAgent : undefined,
       url: typeof window !== 'undefined' ? window.location.href : undefined,
       userId: this.userId || undefined,

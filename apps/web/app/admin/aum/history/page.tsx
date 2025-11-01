@@ -5,38 +5,7 @@ import Link from 'next/link';
 import { getAumRows } from '@/lib/api';
 import ContactUserPicker from '../components/ContactUserPicker';
 import DuplicateResolutionModal from '../components/DuplicateResolutionModal';
-
-interface Row {
-  id: string;
-  fileId: string;
-  accountNumber: string | null;
-  holderName: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  rowCreatedAt: string;
-  file: {
-    id: string;
-    broker: string;
-    originalFilename: string;
-    status: string;
-    createdAt: string;
-  };
-  contact: {
-    id: string;
-    fullName: string;
-    firstName: string;
-    lastName: string;
-  } | null;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
-}
+import type { Row, ApiErrorWithMessage, AumRow } from '@/types';
 
 export default function AumHistoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -52,25 +21,36 @@ export default function AumHistoryPage() {
     setError(null);
     try {
       // TODO: Agregar soporte para fileId en getAumRows si el backend lo soporta
-      const response = await getAumRows({
+      const params: {
+        limit: number;
+        offset: number;
+        broker?: string;
+        status?: string;
+      } = {
         limit: pagination.limit,
         offset: pagination.offset,
-        broker: filters.broker || undefined,
-        status: filters.status || undefined,
-        // fileId: filters.fileId || undefined, // Pendiente agregar si backend lo soporta
-      });
+      };
+      if (filters.broker) params.broker = filters.broker;
+      if (filters.status) params.status = filters.status;
+      
+      const response = await getAumRows(params);
       
       if (response.success && response.data) {
         // Filtrar por fileId en cliente si es necesario hasta que backend lo soporte
-        let rows = response.data.rows || [];
+        let allRows: AumRow[] = response.data.rows || [];
         if (filters.fileId) {
-          rows = rows.filter(r => r.fileId === filters.fileId);
+          allRows = allRows.filter(r => r.fileId === filters.fileId);
         }
-        setRows(rows);
-        setPagination(prev => ({ ...prev, ...response.data.pagination }));
+        // Convertir AumRow[] a Row[] (requiere file)
+        const validRows: Row[] = allRows
+          .filter((r): r is Row => r.file !== undefined)
+          .map(r => ({ ...r, file: r.file! }));
+        setRows(validRows);
+        setPagination(prev => ({ ...prev, ...(response.data?.pagination || {}) }));
       }
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error cargando datos');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || error.error || 'Error cargando datos');
     } finally {
       setLoading(false);
     }
@@ -172,7 +152,6 @@ export default function AumHistoryPage() {
                         rowId={row.id}
                         initialContactId={row.matchedContactId}
                         initialUserId={row.matchedUserId}
-                        token={token}
                         onSave={() => loadRows()}
                       />
                     </td>

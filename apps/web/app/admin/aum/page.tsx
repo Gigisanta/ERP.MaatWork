@@ -6,38 +6,8 @@ import { getAumRows } from '@/lib/api';
 import FileUploader from './components/FileUploader';
 import ContactUserPicker from './components/ContactUserPicker';
 import DuplicateResolutionModal from './components/DuplicateResolutionModal';
-
-interface Row {
-  id: string;
-  fileId: string;
-  accountNumber: string | null;
-  holderName: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  rowCreatedAt: string;
-  file: {
-    id: string;
-    broker: string;
-    originalFilename: string;
-    status: string;
-    createdAt: string;
-  };
-  contact: {
-    id: string;
-    fullName: string;
-    firstName: string;
-    lastName: string;
-  } | null;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
-}
+import type { Row, ApiErrorWithMessage, AumRow } from '@/types';
+import { Button, Select, Text, Badge } from '@cactus/ui';
 
 export default function AumAdminPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -52,19 +22,32 @@ export default function AumAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await getAumRows({
+      const params: {
+        limit: number;
+        offset: number;
+        broker?: string;
+        status?: string;
+      } = {
         limit: pagination.limit,
         offset: pagination.offset,
-        broker: filters.broker || undefined,
-        status: filters.status || undefined,
-      });
+      };
+      if (filters.broker) params.broker = filters.broker;
+      if (filters.status) params.status = filters.status;
+      
+      const response = await getAumRows(params);
       
       if (response.success && response.data) {
-        setRows(response.data.rows || []);
-        setPagination(prev => ({ ...prev, ...response.data.pagination }));
+        // Convertir AumRow[] a Row[] (requiere file)
+        const allRows: AumRow[] = response.data.rows || [];
+        const validRows: Row[] = allRows
+          .filter((r): r is Row => r.file !== undefined)
+          .map(r => ({ ...r, file: r.file! }));
+        setRows(validRows);
+        setPagination(prev => ({ ...prev, ...(response.data?.pagination || {}) }));
       }
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error cargando datos');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || error.error || 'Error cargando datos');
     } finally {
       setLoading(false);
     }
@@ -92,41 +75,47 @@ export default function AumAdminPage() {
           <p className="text-sm text-gray-600">Normalización de cuentas comitentes</p>
         </div>
         <div className="flex gap-2">
-          <Link 
-            href="/admin/aum/history" 
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-md hover:bg-indigo-50"
-          >
-            📋 Historial de importaciones
+          <Link href="/admin/aum/history">
+            <Button
+              variant="outline"
+              size="sm"
+            >
+              📋 Historial de importaciones
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Filtros */}
       <div className="flex gap-4 items-center">
-        <select
-          value={filters.broker}
-          onChange={(e) => setFilters(prev => ({ ...prev, broker: e.target.value }))}
-          className="border rounded px-3 py-2 text-sm"
-        >
-          <option value="">Todos los Brokers</option>
-          <option value="balanz">Balanz</option>
-        </select>
-        <select
-          value={filters.status}
-          onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-          className="border rounded px-3 py-2 text-sm"
-        >
-          <option value="">Todos los Estados</option>
-          <option value="matched">Coincidencia</option>
-          <option value="ambiguous">Ambiguo</option>
-          <option value="unmatched">Sin Coincidencia</option>
-        </select>
+        <Select
+          value={filters.broker || ''}
+          onValueChange={(value) => setFilters(prev => ({ ...prev, broker: value }))}
+          placeholder="Todos los Brokers"
+          items={[
+            { value: '', label: 'Todos los Brokers' },
+            { value: 'balanz', label: 'Balanz' }
+          ]}
+        />
+        <Select
+          value={filters.status || ''}
+          onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+          placeholder="Todos los Estados"
+          items={[
+            { value: '', label: 'Todos los Estados' },
+            { value: 'matched', label: 'Coincidencia' },
+            { value: 'ambiguous', label: 'Ambiguo' },
+            { value: 'unmatched', label: 'Sin Coincidencia' }
+          ]}
+        />
         <div className="ml-auto">
           <FileUploader onUploadSuccess={() => loadRows()} />
         </div>
       </div>
 
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {error && (
+        <Text size="sm" className="text-error">{error}</Text>
+      )}
 
       {/* Tabla consolidada */}
       {loading ? (

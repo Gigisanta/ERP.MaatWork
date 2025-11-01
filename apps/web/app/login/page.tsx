@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Input, 
@@ -21,6 +21,7 @@ import {
 export default function LoginPage() {
   const { login, user, token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,11 +34,10 @@ export default function LoginPage() {
   // Impacto: Afecta navegación en la ruta `/login` cuando `user` o `token` están presentes.
   useEffect(() => {
     if (user || token) {
-      const searchParams = new URLSearchParams(window.location.search);
       const redirectTo = searchParams.get('redirect') || '/';
       router.replace(redirectTo);
     }
-  }, [user, token, router]);
+  }, [user, token, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +59,6 @@ export default function LoginPage() {
       await login(identifier, password, rememberMe);
       
       // Obtener URL de redirección desde query params
-      const searchParams = new URLSearchParams(window.location.search);
       const redirectTo = searchParams.get('redirect') || '/';
       
       // Redirigir inmediatamente usando replace para evitar loops

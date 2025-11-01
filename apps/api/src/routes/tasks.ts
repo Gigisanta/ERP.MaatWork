@@ -19,15 +19,20 @@ const router = Router();
 // ==========================================================
 
 // Query parameter schemas
-const listTasksQuerySchema = paginationQuerySchema.extend({
-  status: z.string().optional(),
-  assignedToUserId: z.string().uuid().optional(),
-  contactId: z.string().uuid().optional(),
-  dueDateFrom: dateSchema.optional(),
-  dueDateTo: dateSchema.optional(),
-  priority: z.string().optional(),
-  includeCompleted: z.enum(['true', 'false']).optional().default('false')
-});
+// AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects
+// Justificación: .extend() solo funciona en ZodObject, pero paginationQuerySchema tiene .refine()
+// Impacto: Schema combinado correctamente manteniendo validación de paginación
+const listTasksQuerySchema = paginationQuerySchema.and(
+  z.object({
+    status: z.string().optional(),
+    assignedToUserId: z.string().uuid().optional(),
+    contactId: z.string().uuid().optional(),
+    dueDateFrom: dateSchema.optional(),
+    dueDateTo: dateSchema.optional(),
+    priority: z.string().optional(),
+    includeCompleted: z.enum(['true', 'false']).optional().default('false')
+  })
+);
 
 const exportTasksQuerySchema = z.object({
   status: z.string().optional(),

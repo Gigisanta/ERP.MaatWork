@@ -2,34 +2,10 @@
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getDashboardKPIs } from '@/lib/api';
+import { logger } from '../../lib/logger';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-interface DashboardData {
-  role: string;
-  kpis: {
-    totalAum?: number;
-    teamAum?: number;
-    globalAum?: number;
-    clientsWithPortfolio?: number;
-    deviationAlerts?: number;
-    activeTemplates?: number;
-    clientsWithoutPortfolio?: number;
-    instrumentsWithoutPrice?: number;
-  };
-  riskDistribution?: Array<{
-    riskLevel: string;
-    count: number;
-  }>;
-  topClients?: Array<{
-    contactId: string;
-    contactName: string;
-    aum: number;
-  }>;
-  aumTrend?: Array<{
-    date: string;
-    value: number;
-  }>;
-}
+import type { DashboardData } from '@/types';
 
 export default function AnalyticsPage() {
   const { user, token, loading } = useRequireAuth();
@@ -37,27 +13,21 @@ export default function AnalyticsPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   const fetchDashboardData = async () => {
     if (!token) return;
     
     try {
       setDataLoading(true);
       
-      const response = await fetch(`${apiUrl}/analytics/dashboard`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await getDashboardKPIs();
 
-      if (!response.ok) {
+      if (!response.success || !response.data) {
         throw new Error('Failed to fetch dashboard data');
       }
 
-      const data = await response.json();
-      setDashboardData(data.data);
+      const data = response.data;
+      // La API devuelve DashboardData directamente
+      setDashboardData(data as DashboardData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -152,7 +122,7 @@ export default function AnalyticsPage() {
                     AUM Total Clientes
                   </h3>
                   <div className="text-2xl font-bold text-info">
-                    {formatCurrency(dashboardData.kpis.totalAum || 0)}
+                    {formatCurrency((dashboardData.kpis.totalAUM || dashboardData.kpis.totalAum || 0))}
                   </div>
                 </div>
 
@@ -161,7 +131,7 @@ export default function AnalyticsPage() {
                     Clientes con Cartera
                   </h3>
                   <div className="text-2xl font-bold text-success">
-                    {dashboardData.kpis.clientsWithPortfolio || 0}
+                    {(dashboardData.kpis.clientsWithPortfolio || dashboardData.kpis.portfolioCount || 0)}
                   </div>
                 </div>
 
@@ -195,7 +165,7 @@ export default function AnalyticsPage() {
                     AUM Total Equipo
                   </h3>
                   <div className="text-2xl font-bold text-info">
-                    {formatCurrency(dashboardData.kpis.teamAum || 0)}
+                    {formatCurrency((dashboardData.kpis.teamAUM || dashboardData.kpis.teamAum || 0))}
                   </div>
                 </div>
 
@@ -234,7 +204,7 @@ export default function AnalyticsPage() {
                     AUM Global
                   </h3>
                   <div className="text-2xl font-bold text-info">
-                    {formatCurrency(dashboardData.kpis.globalAum || 0)}
+                    {formatCurrency((dashboardData.kpis.globalAum || dashboardData.kpis.totalAUM || 0))}
                   </div>
                 </div>
 

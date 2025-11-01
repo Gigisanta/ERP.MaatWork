@@ -64,9 +64,9 @@ class ApiClient {
    * Construir headers
    */
   private buildHeaders(options: RequestOptions = {}): HeadersInit {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string> | undefined),
     };
 
     // Agregar token si se requiere auth (default: true)
@@ -238,11 +238,12 @@ class ApiClient {
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**
@@ -254,11 +255,12 @@ class ApiClient {
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**
@@ -270,11 +272,12 @@ class ApiClient {
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**

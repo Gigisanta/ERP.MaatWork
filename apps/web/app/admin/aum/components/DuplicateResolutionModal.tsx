@@ -15,34 +15,7 @@ import {
   Spinner,
   Alert,
 } from '@cactus/ui';
-
-interface DuplicateRow {
-  id: string;
-  fileId: string;
-  accountNumber: string;
-  holderName: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: string;
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  rowCreatedAt: string;
-  file: {
-    id: string;
-    broker: string;
-    originalFilename: string;
-    createdAt: string;
-  };
-  contact: {
-    id: string;
-    fullName: string;
-  } | null;
-  user: {
-    id: string;
-    name: string;
-  } | null;
-}
+import type { AumRow, ApiErrorWithMessage } from '@/types';
 
 interface DuplicateResolutionModalProps {
   accountNumber: string | null;
@@ -55,7 +28,7 @@ export default function DuplicateResolutionModal({
   onClose,
   onResolved
 }: DuplicateResolutionModalProps) {
-  const [rows, setRows] = useState<DuplicateRow[]>([]);
+  const [rows, setRows] = useState<AumRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
@@ -68,6 +41,8 @@ export default function DuplicateResolutionModal({
   }, [accountNumber]);
 
   const loadDuplicates = async () => {
+    if (!accountNumber) return;
+    
     setLoading(true);
     setError(null);
     try {
@@ -76,11 +51,12 @@ export default function DuplicateResolutionModal({
       if (response.success && response.data) {
         setRows(response.data.rows || []);
         // Auto-select the preferred row if exists
-        const preferred = response.data.rows.find((r: DuplicateRow) => r.isPreferred);
+        const preferred = response.data.rows.find((r: AumRow) => r.isPreferred);
         if (preferred) setSelectedRowId(preferred.id);
       }
-    } catch (e: any) {
-      setError(e.userMessage || e.message || 'Error');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || error.error || 'Error');
     } finally {
       setLoading(false);
     }
@@ -93,6 +69,7 @@ export default function DuplicateResolutionModal({
     try {
       // Update is_preferred for all rows for this account
       for (const row of rows) {
+        if (!row.fileId) continue;
         await matchAumRow(row.fileId, {
           rowId: row.id,
           matchedContactId: row.matchedContactId,
@@ -103,8 +80,9 @@ export default function DuplicateResolutionModal({
       
       if (onResolved) onResolved();
       onClose();
-    } catch (e: any) {
-      setError(e.message || 'Error al guardar');
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || error.error || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -161,9 +139,9 @@ export default function DuplicateResolutionModal({
                           className="h-4 w-4"
                         />
                       </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{row.file.originalFilename}</td>
+                      <td className="px-4 py-2 text-sm text-gray-700">{row.file?.originalFilename || '-'}</td>
                       <td className="px-4 py-2 text-sm text-gray-700">
-                        {new Date(row.file.createdAt).toLocaleDateString()}
+                        {row.file?.createdAt ? new Date(row.file.createdAt).toLocaleDateString() : '-'}
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-700">{row.holderName}</td>
                       <td className="px-4 py-2 text-sm text-gray-700">{row.advisorRaw}</td>
@@ -175,7 +153,7 @@ export default function DuplicateResolutionModal({
                           variant={
                             row.matchStatus === 'matched' ? 'success' :
                             row.matchStatus === 'ambiguous' ? 'warning' :
-                            'secondary'
+                            'default'
                           }
                           size="sm"
                         >

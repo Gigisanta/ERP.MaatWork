@@ -9,7 +9,7 @@
 export class ApiError extends Error {
   public readonly status: number;
   public readonly statusText: string;
-  public readonly details?: string | string[];
+  public readonly details?: string | string[] | undefined;
   public readonly timestamp?: string;
 
   constructor(
@@ -17,7 +17,7 @@ export class ApiError extends Error {
     message: string,
     options?: {
       statusText?: string;
-      details?: string | string[];
+      details?: string | string[] | undefined;
       timestamp?: string;
     }
   ) {
@@ -123,13 +123,21 @@ export class ApiError extends Error {
  * Crear ApiError desde Response
  */
 export async function createApiErrorFromResponse(response: Response): Promise<ApiError> {
-  let errorData: any;
+  type ErrorResponse = {
+    error?: string;
+    message?: string;
+    details?: string | string[];
+    timestamp?: string;
+  };
+  
+  let errorData: ErrorResponse;
   
   try {
-    errorData = await response.json();
+    errorData = await response.json() as ErrorResponse;
   } catch {
     // Si no es JSON, usar texto
-    errorData = { error: await response.text() };
+    const textData = await response.text();
+    errorData = { error: textData };
   }
 
   return new ApiError(

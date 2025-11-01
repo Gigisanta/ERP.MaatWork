@@ -23,6 +23,9 @@ export type {
 export type {
   User,
   UserRole,
+  UserApiResponse,
+  UserWithTeam,
+  Advisor,
   AuthResponse,
   LoginCredentials,
   RegisterData
@@ -55,11 +58,11 @@ export type {
   Benchmark,
   BenchmarkType,
   BenchmarkComponent,
+  BenchmarkComponentForm,
   CreateBenchmarkRequest,
   UpdateBenchmarkRequest,
   AddBenchmarkComponentRequest,
   BenchmarkWithComponents,
-  BenchmarkComponentForm,
   BenchmarkFormData
 } from './benchmark';
 
@@ -71,6 +74,82 @@ export type {
   ComparisonResult,
   CompareRequest,
   CompareResponse,
-  DashboardKPIs
+  DashboardKPIs,
+  DashboardData
 } from './analytics';
+
+// Team types
+export type {
+  Team,
+  TeamMember,
+  TeamAdvisor,
+  MembershipRequest,
+  TeamInvitation,
+  TeamInvitationResponse
+} from './team';
+
+// Contact types
+export type {
+  Contact,
+  ContactFieldValue,
+  ContactFieldName,
+  ContactFieldUpdate,
+  CreateContactRequest,
+  UpdateContactRequest
+} from './contact';
+
+// Pipeline types
+export type {
+  PipelineStage,
+  PipelineStageWithContacts,
+  PipelineBoard
+} from './pipeline';
+
+// Tag types
+export type {
+  Tag,
+  CreateTagRequest,
+  UpdateTagRequest
+} from './tag';
+
+// Broker Account types
+export type {
+  BrokerAccount,
+  CreateBrokerAccountRequest
+} from './broker-account';
+
+// Task types
+export type {
+  Task,
+  CreateTaskRequest,
+  UpdateTaskRequest
+} from './task';
+
+// Note types
+export type {
+  Note,
+  CreateNoteRequest,
+  UpdateNoteRequest
+} from './note';
+
+// AUM types
+export type {
+  AumFile,
+  AumRow,
+  DuplicateRow,
+  Row,
+  AumUploadSummary,
+  AumUploadResponse,
+  AumMatchRequest,
+  AumRowsResponse,
+  AumDuplicatesResponse,
+  ApiErrorWithMessage
+} from './aum';
+
+// Portfolio Assignment types
+export type {
+  PortfolioAssignment,
+  AssignPortfolioRequest,
+  AssignPortfolioResponse
+} from './portfolio-assignment';
 

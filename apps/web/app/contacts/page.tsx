@@ -4,6 +4,8 @@ import { useRequireAuth } from '../auth/useRequireAuth';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
+import { deleteContact, createTag, updateTag, deleteTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
+import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag } from '@/types';
 import {
   Card,
   CardHeader,
@@ -39,49 +41,13 @@ import {
   type Column,
 } from '@cactus/ui';
 
-interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  pipelineStageId?: string;
-  assignedAdvisorId?: string;
-  nextStep?: string;
-  tags?: Tag[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
-
-interface PipelineStage {
-  id: string;
-  name: string;
-  color: string;
-  order: number;
-}
-
-interface Advisor {
-  id: string;
-  fullName: string;
-  email: string;
-}
+// Types Contact y Tag importados desde @/types
 
 export default function ContactsPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const advisorIdFilter = searchParams.get('advisorId');
-  const apiUrl = typeof window !== 'undefined' 
-    ? window.location.protocol + '//' + window.location.hostname + ':3001'
-    : 'http://localhost:3001';
   
   // AI_DECISION: Replace manual API calls with SWR hooks for request deduplication
   // Justificación: Eliminates redundant requests on navigation, provides automatic caching
@@ -138,19 +104,11 @@ export default function ContactsPage() {
     if (!contactToDelete || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/contacts/${contactToDelete.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setShowDeleteModal(false);
-        setContactToDelete(null);
-      } else {
-        throw new Error('Error al eliminar contacto');
-      }
+      await deleteContact(contactToDelete.id);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setShowDeleteModal(false);
+      setContactToDelete(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar contacto');
     }
@@ -160,36 +118,23 @@ export default function ContactsPage() {
     if (!newTagName.trim() || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/tags`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          scope: 'contact',
-          name: newTagName.trim(),
-          color: newTagColor
-        })
+      await createTag({
+        entityType: 'contact',
+        name: newTagName.trim(),
+        color: newTagColor
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setNewTagName('');
-        setNewTagColor('#6B7280');
-        setIsCreatingTag(false);
-        setToast({
-          show: true,
-          title: 'Etiqueta creada',
-          variant: 'success'
-        });
-        // Also refresh contacts to show new tag
-        mutateContacts();
-      } else {
-        throw new Error('Error al crear etiqueta');
-      }
+      // Invalidate tags cache to refetch updated data
+      mutateTags();
+      setNewTagName('');
+      setNewTagColor('#6B7280');
+      setIsCreatingTag(false);
+      setToast({
+        show: true,
+        title: 'Etiqueta creada',
+        variant: 'success'
+      });
+      // Also refresh contacts to show new tag
+      mutateContacts();
     } catch (err) {
       setToast({
         show: true,
@@ -204,35 +149,21 @@ export default function ContactsPage() {
     if (!tagToEdit || !editedTagName.trim() || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/tags/${tagToEdit.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: editedTagName.trim(),
-          color: editedTagColor
-        })
+      await updateTag(tagToEdit.id, {
+        name: editedTagName.trim(),
+        color: editedTagColor
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setToast({
-          show: true,
-          title: 'Etiqueta actualizada',
-          variant: 'success'
-        });
-        setShowManageTagsModal(false);
-        setTagToEdit(null);
-        // Also refresh contacts to show updated tag
-        mutateContacts();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al editar etiqueta');
-      }
+      // Invalidate tags cache to refetch updated data
+      mutateTags();
+      setToast({
+        show: true,
+        title: 'Etiqueta actualizada',
+        variant: 'success'
+      });
+      setShowManageTagsModal(false);
+      setTagToEdit(null);
+      // Also refresh contacts to show updated tag
+      mutateContacts();
     } catch (err) {
       setToast({
         show: true,
@@ -247,27 +178,16 @@ export default function ContactsPage() {
     if (!token || !confirm('¿Estás seguro de eliminar esta etiqueta?')) return;
     
     try {
-      const response = await fetch(`${apiUrl}/tags/${tagId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      await deleteTag(tagId);
+      // Invalidate tags cache to refetch updated data
+      mutateTags();
+      setToast({
+        show: true,
+        title: 'Etiqueta eliminada',
+        variant: 'success'
       });
-      
-      if (response.ok) {
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setToast({
-          show: true,
-          title: 'Etiqueta eliminada',
-          variant: 'success'
-        });
-        // Also refresh contacts to show updated tags
-        mutateContacts();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar etiqueta');
-      }
+      // Also refresh contacts to show updated tags
+      mutateContacts();
     } catch (err) {
       setToast({
         show: true,
@@ -311,34 +231,21 @@ export default function ContactsPage() {
     router.push(`/contacts?${newSearchParams.toString()}`);
   };
 
+
   // Funciones para edición inline
-  const updateContactField = async (contactId: string, field: string, value: any) => {
+  const updateContactFieldLocal = async (contactId: string, field: string, value: ContactFieldValue) => {
     if (!token) return;
     
     setSavingContactId(contactId);
     try {
-      const response = await fetch(`${apiUrl}/contacts/${contactId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fields: [{ field, value }]
-        })
+      await updateContactFieldApi(contactId, field, value);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setToast({
+        show: true,
+        title: 'Campo actualizado',
+        variant: 'success'
       });
-
-      if (response.ok) {
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setToast({
-          show: true,
-          title: 'Campo actualizado',
-          variant: 'success'
-        });
-      } else {
-        throw new Error('Error al actualizar contacto');
-      }
     } catch (err) {
       setToast({
         show: true,
@@ -352,32 +259,26 @@ export default function ContactsPage() {
     }
   };
 
-  const updateContactTags = async (contactId: string, add: string[], remove: string[]) => {
+  const updateContactTagsLocal = async (contactId: string, add: string[], remove: string[]) => {
     if (!token) return;
     
     setSavingContactId(contactId);
     try {
-      const response = await fetch(`${apiUrl}/tags/contacts/${contactId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ add, remove })
+      // Obtener tags actuales del contacto
+      const contact = contacts?.find((c: Contact) => c.id === contactId);
+      const currentTagIds = contact?.tags?.map((t: Tag) => t.id) || [];
+      
+      // Calcular nuevos tags
+      const newTagIds = [...currentTagIds.filter((id: string) => !remove.includes(id)), ...add.filter((id: string) => !currentTagIds.includes(id))];
+      
+      await updateContactTagsApi(contactId, newTagIds);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setToast({
+        show: true,
+        title: 'Etiquetas actualizadas',
+        variant: 'success'
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setToast({
-          show: true,
-          title: 'Etiquetas actualizadas',
-          variant: 'success'
-        });
-      } else {
-        throw new Error('Error al actualizar etiquetas');
-      }
     } catch (err) {
       setToast({
         show: true,
@@ -398,7 +299,7 @@ export default function ContactsPage() {
 
     const handleStageChange = (newStageId: string) => {
       const value = newStageId === 'none' ? null : newStageId;
-      updateContactField(contact.id, 'pipelineStageId', value);
+      updateContactFieldLocal(contact.id, 'pipelineStageId', value);
     };
 
     if (isSaving) {
@@ -496,7 +397,7 @@ export default function ContactsPage() {
 
       // Guardar cambios en el backend
       if (toAdd.length > 0 || toRemove.length > 0) {
-        await updateContactTags(contact.id, toAdd, toRemove);
+        await updateContactTagsLocal(contact.id, toAdd, toRemove);
       }
     };
 
@@ -570,7 +471,7 @@ export default function ContactsPage() {
       const currentValue = contact[field as keyof Contact] as string || '';
       if (value !== currentValue && value.trim() !== '') {
         // Guardar siempre, incluso si el valor cambió
-        await updateContactField(contact.id, field, value);
+        await updateContactFieldLocal(contact.id, field, value);
       } else if (value === currentValue) {
         // Solo cerrar el editor si no hubo cambios
         setIsEditing(false);
@@ -968,7 +869,7 @@ export default function ContactsPage() {
           <ModalHeader>
             <ModalTitle>Confirmar eliminación</ModalTitle>
             <ModalDescription>
-              ¿Estás seguro de que quieres eliminar el contacto "{contactToDelete?.fullName}"? Esta acción no se puede deshacer.
+              ¿Estás seguro de que quieres eliminar el contacto &quot;{contactToDelete?.fullName}&quot;? Esta acción no se puede deshacer.
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
@@ -1160,7 +1061,7 @@ export default function ContactsPage() {
         {toast.show && (
           <Toast
             title={toast.title}
-            description={toast.description}
+            {...(toast.description ? { description: toast.description } : {})}
             variant={toast.variant}
             open={toast.show}
             onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}

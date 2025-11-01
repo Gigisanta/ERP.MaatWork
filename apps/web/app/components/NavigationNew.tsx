@@ -25,9 +25,9 @@ export default function NavigationNew() {
 
   const navItems: NavItem[] = [
     { label: 'Inicio', href: '/', icon: 'Home' },
-    { label: '📈 Finviz', href: 'https://finviz.com', icon: undefined },
-    { label: '🏦 Productores Balanz', href: 'https://productores.balanz.com?forward=/home', icon: undefined },
-    { label: '🛡️ Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F', icon: undefined },
+    { label: '📈 Finviz', href: 'https://finviz.com' },
+    { label: '🏦 Productores Balanz', href: 'https://productores.balanz.com?forward=/home' },
+    { label: '🛡️ Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F' },
   ];
 
   const headerUser: User = {

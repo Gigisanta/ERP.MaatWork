@@ -22,21 +22,13 @@ import {
   Alert,
 } from '@cactus/ui';
 import { useTasks } from '../../../lib/api-hooks';
+import { createTask, deleteTask } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { Task } from '@/types';
 
 // AI_DECISION: Extracted to client island for task management isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface Task {
-  id: string;
-  contactId: string;
-  title: string;
-  description?: string;
-  status: string;
-  dueDate?: string;
-  priority?: string;
-  createdAt: string;
-}
 
 interface TasksSectionProps {
   contactId: string;
@@ -69,28 +61,17 @@ export default function TasksSection({
   const handleCreateTask = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/tasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newTask,
-          contactId,
-          status: 'pending'
-        })
+      await createTask({
+        ...newTask,
+        contactId,
+        status: 'pending'
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create task');
-      }
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     } catch (err) {
-      console.error('Error creating task:', err);
+      logger.error('Error creating task', { err, contactId, task: newTask });
     } finally {
       setSaving(false);
     }
@@ -100,41 +81,21 @@ export default function TasksSection({
     if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete task');
-      }
-
+      await deleteTask(taskId);
       await mutate(); // Refresh data
     } catch (err) {
-      console.error('Error deleting task:', err);
+      logger.error('Error deleting task', { err, taskId });
     }
   };
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update task status');
-      }
+      const { updateTask } = await import('@/lib/api/tasks');
+      await updateTask(taskId, { status: newStatus });
 
       await mutate(); // Refresh data
     } catch (err) {
-      console.error('Error updating task status:', err);
+      logger.error('Error updating task status', { err, taskId, newStatus });
     }
   };
 

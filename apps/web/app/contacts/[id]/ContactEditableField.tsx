@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { Text, Spinner, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 // AI_DECISION: Client wrapper for Server Action to avoid prop passing
 // Justificación: Server Actions cannot be passed as props to Client Components
@@ -63,7 +64,7 @@ export default function ContactEditableField({
         // Revalidate the page data to show updated values
         router.refresh();
       } catch (err) {
-        console.error('Error updating contact field:', err);
+        logger.error('Error updating contact field', { err, contactId, field, value });
         setLocalValue(value || '');
       }
     });
@@ -86,7 +87,7 @@ export default function ContactEditableField({
             if (e.key === 'Enter') handleSave();
             if (e.key === 'Escape') handleCancel();
           }}
-          placeholder={placeholder}
+          {...(placeholder ? { placeholder } : {})}
           className="flex-1"
           autoFocus
           size="sm"

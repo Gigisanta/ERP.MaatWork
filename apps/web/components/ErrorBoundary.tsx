@@ -1,7 +1,10 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { logger } from '../lib/logger';
+import { Toast } from '@cactus/ui';
+import { Button } from '@cactus/ui';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +16,117 @@ interface State {
   hasError: boolean;
   error?: Error;
   errorInfo?: ErrorInfo;
+}
+
+/**
+ * Componente funcional interno para mostrar errores con hooks
+ */
+function ErrorDisplay({ 
+  error, 
+  errorInfo, 
+  onRetry, 
+  onReportError 
+}: { 
+  error?: Error; 
+  errorInfo?: ErrorInfo; 
+  onRetry: () => void;
+  onReportError: () => void;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [showToast, setShowToast] = React.useState(false);
+
+  const handleReportError = () => {
+    onReportError();
+    setShowToast(true);
+  };
+
+  const handleGoHome = () => {
+    router.push('/');
+  };
+
+  return (
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-8 w-8 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-medium text-gray-900">
+                Algo salió mal
+              </h3>
+              <p className="text-sm text-gray-500">
+                Ha ocurrido un error inesperado en la aplicación.
+              </p>
+            </div>
+          </div>
+
+          {process.env.NODE_ENV === 'development' && error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <h4 className="text-sm font-medium text-red-800 mb-2">
+                Detalles del error (solo en desarrollo):
+              </h4>
+              <pre className="text-xs text-red-700 whitespace-pre-wrap">
+                {error.message}
+                {error.stack && `\n\n${error.stack}`}
+              </pre>
+            </div>
+          )}
+
+          <div className="flex space-x-3">
+            <Button
+              variant="primary"
+              onClick={onRetry}
+              className="flex-1"
+            >
+              Intentar de nuevo
+            </Button>
+            
+            <Button
+              variant="secondary"
+              onClick={handleReportError}
+              className="flex-1"
+            >
+              Reportar error
+            </Button>
+          </div>
+
+          <div className="mt-4 text-center">
+            <Button
+              variant="ghost"
+              onClick={handleGoHome}
+              size="sm"
+            >
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast notification */}
+      <Toast
+        title="Error reportado"
+        description="Gracias por tu feedback."
+        variant="success"
+        open={showToast}
+        onOpenChange={setShowToast}
+      />
+    </>
+  );
 }
 
 /**
@@ -33,6 +147,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Loggear el error con contexto completo
+    // Usar pathname si está disponible, sino window.location.href como fallback
+    const url = typeof window !== 'undefined' ? window.location.href : undefined;
+    
     logger.error('Error de renderizado capturado por ErrorBoundary', {
       error: {
         name: error.name,
@@ -42,7 +159,7 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo: {
         componentStack: errorInfo.componentStack
       },
-      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      url,
       userAgent: typeof window !== 'undefined' ? navigator.userAgent : undefined,
       timestamp: new Date().toISOString()
     });
@@ -57,7 +174,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({ hasError: false });
   };
 
   private handleReportError = () => {
@@ -67,9 +184,6 @@ export class ErrorBoundary extends Component<Props, State> {
         error: this.state.error.message,
         stack: this.state.error.stack
       });
-      
-      // Mostrar confirmación al usuario
-      alert('Error reportado. Gracias por tu feedback.');
     }
   };
 
@@ -80,74 +194,14 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // UI de error por defecto
+      // UI de error por defecto usando componente funcional con hooks
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-            <div className="flex items-center mb-4">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-8 w-8 text-red-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Algo salió mal
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Ha ocurrido un error inesperado en la aplicación.
-                </p>
-              </div>
-            </div>
-
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <h4 className="text-sm font-medium text-red-800 mb-2">
-                  Detalles del error (solo en desarrollo):
-                </h4>
-                <pre className="text-xs text-red-700 whitespace-pre-wrap">
-                  {this.state.error.message}
-                  {this.state.error.stack && `\n\n${this.state.error.stack}`}
-                </pre>
-              </div>
-            )}
-
-            <div className="flex space-x-3">
-              <button
-                onClick={this.handleRetry}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Intentar de nuevo
-              </button>
-              
-              <button
-                onClick={this.handleReportError}
-                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Reportar error
-              </button>
-            </div>
-
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                Volver al inicio
-              </button>
-            </div>
-          </div>
-        </div>
+        <ErrorDisplay
+          error={this.state.error}
+          errorInfo={this.state.errorInfo}
+          onRetry={this.handleRetry}
+          onReportError={this.handleReportError}
+        />
       );
     }
 
@@ -159,6 +213,8 @@ export class ErrorBoundary extends Component<Props, State> {
  * Hook para usar el Error Boundary en componentes funcionales
  */
 export function useErrorHandler() {
+  const pathname = usePathname();
+  
   return (error: Error, errorInfo?: { componentStack?: string }) => {
     logger.error('Error manejado por useErrorHandler', {
       error: {
@@ -167,7 +223,8 @@ export function useErrorHandler() {
         stack: error.stack
       },
       errorInfo,
-      url: typeof window !== 'undefined' ? window.location.href : undefined
+      url: typeof window !== 'undefined' ? window.location.href : undefined,
+      pathname
     });
   };
 }

@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, X, BarChart3, Target, TrendingUp, Users, CheckCircle } from 'lucide-react';
 import PerformanceChart from './PerformanceChart';
+import { comparePortfolios } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import type { ComparisonResult } from '@/types';
 import {
   Card,
   CardHeader,
@@ -64,7 +67,6 @@ export default function PortfolioComparator({
       
       const fetchComparisonData = async () => {
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
           const token = localStorage.getItem('token');
 
           if (!token) {
@@ -72,43 +74,40 @@ export default function PortfolioComparator({
             return;
           }
 
-          const response = await fetch(`${apiUrl}/v1/analytics/compare`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              portfolioIds: selectedPortfolios,
-              benchmarkIds: selectedBenchmarks,
-              period: '1Y' // Por defecto 1 año
-            })
+          const result = await comparePortfolios({
+            portfolioIds: selectedPortfolios,
+            benchmarkIds: selectedBenchmarks,
+            period: '1Y' // Por defecto 1 año
           });
-
-          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-          }
-
-          const result = await response.json();
           
           if (result.success && result.data && result.data.results) {
             // Mapear datos de la API al formato del componente
-            const comparisonData: ComparisonItem[] = result.data.results.map((item: any) => ({
-              id: item.id,
-              name: item.name,
-              type: item.type as 'portfolio' | 'benchmark',
-              performance: item.metrics?.totalReturn || 0,
-              volatility: item.metrics?.volatility || 0,
-              sharpe: item.metrics?.sharpeRatio || undefined,
-              maxDrawdown: item.metrics?.maxDrawdown || undefined
-            }));
+            const comparisonData: ComparisonItem[] = result.data.results.map((item: ComparisonResult) => {
+              const result: ComparisonItem = {
+                id: item.id,
+                name: item.name,
+                type: item.type,
+                performance: item.metrics?.totalReturn || 0,
+                volatility: item.metrics?.volatility || 0,
+              };
+              
+              if (item.metrics?.sharpeRatio !== undefined) {
+                result.sharpe = item.metrics.sharpeRatio;
+              }
+              
+              if (item.metrics?.maxDrawdown !== undefined) {
+                result.maxDrawdown = item.metrics.maxDrawdown;
+              }
+              
+              return result;
+            });
             
             setComparisonData(comparisonData);
           } else {
             setComparisonData([]);
           }
         } catch (err) {
-          console.error('Error fetching comparison data:', err);
+          logger.error('Error fetching comparison data', { err, selectedPortfolios, selectedBenchmarks });
           setComparisonData([]);
         } finally {
           setIsLoading(false);

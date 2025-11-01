@@ -20,6 +20,9 @@ import {
   type Column,
 } from '@cactus/ui';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { getPortfolioLines, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { AddPortfolioLineRequest } from '@/types';
 
 interface PortfolioTemplate {
   id: string;
@@ -32,8 +35,8 @@ interface PortfolioTemplate {
 interface TemplateLine {
   id: string;
   targetType: string;
-  assetClass?: string;
-  instrumentId?: string;
+  assetClass?: string | null;
+  instrumentId?: string | null;
   targetWeight: number;
   instrumentName?: string;
   instrumentSymbol?: string;
@@ -82,7 +85,12 @@ export default function PortfolioDetailPage() {
   });
 
   const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setToast({ show: true, title, description, variant });
+    setToast({ 
+      show: true, 
+      title, 
+      ...(description && { description }), 
+      variant 
+    });
   };
 
   // AI_DECISION: Usar cliente API centralizado en lugar de fetch directo
@@ -94,11 +102,13 @@ export default function PortfolioDetailPage() {
     try {
       setDataLoading(true);
       
-      const { getPortfolioLines } = await import('@/lib/api');
       const response = await getPortfolioLines(templateId);
       
       if (response.success && response.data) {
-        setTemplateData(response.data);
+        const lines = response.data.lines;
+        const totalWeight = lines.reduce((sum, line) => sum + line.targetWeight, 0);
+        const isValid = Math.abs(totalWeight - 1.0) < 0.01;
+        setTemplateData({ lines, totalWeight, isValid });
       } else {
         throw new Error('Failed to fetch portfolio template');
       }
@@ -120,8 +130,8 @@ export default function PortfolioDetailPage() {
         throw new Error('El peso debe estar entre 0 y 1');
       }
 
-      const payload: any = {
-        targetType: createLineData.targetType,
+      const payload: AddPortfolioLineRequest = {
+        targetType: createLineData.targetType as 'instrument' | 'assetClass',
         targetWeight: weight
       };
 
@@ -131,21 +141,11 @@ export default function PortfolioDetailPage() {
         payload.instrumentId = createLineData.instrumentId;
       }
 
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create template line');
+      const response = await addPortfolioLine(templateId, payload);
+      
+      if (!response.success || !response.data) {
+        throw new Error('Failed to create template line');
       }
-
-      const data = await response.json();
       
       // Actualizar la lista de líneas
       await fetchTemplate();
@@ -155,7 +155,16 @@ export default function PortfolioDetailPage() {
       setShowCreateLineModal(false);
       
     } catch (err) {
-      console.error('Error creating template line:', err);
+      const payload: AddPortfolioLineRequest = {
+        targetType: createLineData.targetType as 'instrument' | 'assetClass',
+        targetWeight: parseFloat(createLineData.targetWeight)
+      };
+      if (createLineData.targetType === 'asset_class' && createLineData.assetClass) {
+        payload.assetClass = createLineData.assetClass;
+      } else if (createLineData.targetType === 'instrument' && createLineData.instrumentId) {
+        payload.instrumentId = createLineData.instrumentId;
+      }
+      logger.error('Error creating template line', { err, templateId, payload });
       showToast('Error al crear línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsCreating(false);
@@ -168,25 +177,14 @@ export default function PortfolioDetailPage() {
     if (!confirm('¿Estás seguro de eliminar esta línea?')) return;
 
     try {
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines/${lineId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete template line');
-      }
+      await deletePortfolioLine(templateId, lineId);
 
       // Actualizar la lista de líneas
       await fetchTemplate();
       
       showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
     } catch (err) {
-      console.error('Error deleting template line:', err);
+      logger.error('Error deleting template line', { err, lineId, templateId });
       showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
   };
@@ -515,7 +513,7 @@ export default function PortfolioDetailPage() {
       {/* Toast Notifications */}
       <Toast
         title={toast.title}
-        description={toast.description}
+        {...(toast.description && { description: toast.description })}
         variant={toast.variant}
         open={toast.show}
         onOpenChange={(open: boolean) => setToast(prev => ({ ...prev, show: open }))}

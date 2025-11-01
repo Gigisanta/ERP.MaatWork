@@ -55,16 +55,41 @@ export interface CompareResponse {
  */
 export interface DashboardKPIs {
   totalAUM?: number;
+  totalAum?: number; // Alias usado por la API
   clientCount?: number;
   portfolioCount?: number;
+  clientsWithPortfolio?: number; // Usado por la API
   avgReturn?: number;
   deviationAlerts?: number;
   // Manager específicos
   teamAUM?: number;
+  teamAum?: number; // Alias usado por la API
   advisorCount?: number;
   // Admin específicos
   activeTemplates?: number;
+  globalAum?: number; // Usado por la API
   clientsWithoutPortfolio?: number;
   instrumentsWithoutPrice?: number;
+}
+
+/**
+ * Datos completos del dashboard (incluye KPIs + datos adicionales)
+ */
+export interface DashboardData {
+  role: string;
+  kpis: DashboardKPIs;
+  riskDistribution?: Array<{
+    riskLevel: string;
+    count: number;
+  }>;
+  topClients?: Array<{
+    contactId: string;
+    contactName: string;
+    aum: number;
+  }>;
+  aumTrend?: Array<{
+    date: string;
+    value: number;
+  }>;
 }
 

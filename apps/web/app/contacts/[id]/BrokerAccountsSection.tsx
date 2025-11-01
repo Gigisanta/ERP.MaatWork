@@ -22,21 +22,13 @@ import {
   Alert,
 } from '@cactus/ui';
 import { useBrokerAccounts } from '../../../lib/api-hooks';
+import { createBrokerAccount, deleteBrokerAccount } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { BrokerAccount } from '@/types';
 
 // AI_DECISION: Extracted to client island for CRUD operations isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface BrokerAccount {
-  id: string;
-  broker: string;
-  accountNumber: string;
-  holderName?: string;
-  contactId: string;
-  status: 'active' | 'closed';
-  lastSyncedAt?: string;
-  createdAt: string;
-}
 
 interface BrokerAccountsSectionProps {
   contactId: string;
@@ -69,27 +61,16 @@ export default function BrokerAccountsSection({
   const handleCreateAccount = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/broker-accounts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newAccount,
-          contactId
-        })
+      await createBrokerAccount({
+        ...newAccount,
+        contactId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create broker account');
-      }
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewAccount({ broker: '', accountNumber: '', holderName: '', status: 'active' });
     } catch (err) {
-      console.error('Error creating broker account:', err);
+      logger.error('Error creating broker account', { err, contactId, account: newAccount });
     } finally {
       setSaving(false);
     }
@@ -99,20 +80,10 @@ export default function BrokerAccountsSection({
     if (!confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/broker-accounts/${accountId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete broker account');
-      }
-
+      await deleteBrokerAccount(accountId);
       await mutate(); // Refresh data
     } catch (err) {
-      console.error('Error deleting broker account:', err);
+      logger.error('Error deleting broker account', { err, accountId });
     }
   };
 

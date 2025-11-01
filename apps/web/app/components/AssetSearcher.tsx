@@ -13,9 +13,11 @@ import {
   CardContent,
 } from '@cactus/ui';
 import { useAuth } from '../auth/AuthContext';
+import { logger } from '@/lib/logger';
+import type { InstrumentSearchResult, Currency, AssetType } from '@/types';
 
 interface AssetSearcherProps {
-  onAssetSelect: (asset: any) => void;
+  onAssetSelect: (asset: InstrumentSearchResult) => void;
   placeholder?: string;
 }
 
@@ -37,7 +39,6 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   const [error, setError] = useState<string | null>(null);
   const { token } = useAuth();
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const search = useCallback(
     async (searchQuery: string) => {
@@ -55,38 +56,23 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       setError(null);
       
       try {
-        const response = await fetch(`${apiUrl}/v1/instruments/search`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            query: searchQuery,
-            max_results: 10
-          })
-        });
+        const { searchInstruments } = await import('@/lib/api');
+        const response = await searchInstruments(searchQuery);
 
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.success && data.data && data.data.results) {
-          setSearchResults(data.data.results);
+        if (response.success && response.data) {
+          setSearchResults(response.data);
         } else {
           setSearchResults([]);
         }
       } catch (err) {
-        console.error('Error searching instruments:', err);
+        logger.error('Error searching instruments', { err, query: searchQuery });
         setError('Error al buscar activos. Intenta nuevamente.');
         setSearchResults([]);
       } finally {
         setLoading(false);
       }
     },
-    [token, apiUrl]
+    [token]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,16 +92,16 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
 
   const handleSelectAsset = (asset: SearchResult) => {
     // Mapear resultado de API a formato esperado
-    const instrument = {
-      id: `temp-${Date.now()}`,
+    const instrument: InstrumentSearchResult = {
       symbol: asset.symbol,
       name: asset.name || asset.shortName || asset.symbol,
+      shortName: asset.shortName || asset.name || asset.symbol,
       exchange: asset.exchange || 'Unknown',
-      currency: asset.currency || 'USD',
-      assetClass: asset.type === 'EQUITY' ? 'equity' : 'other',
-      isActive: true,
-      sector: asset.sector,
-      industry: asset.industry
+      currency: (asset.currency || 'USD') as Currency,
+      type: (asset.type || 'EQUITY') as AssetType,
+      ...(asset.sector && { sector: asset.sector }),
+      ...(asset.industry && { industry: asset.industry }),
+      success: true
     };
     
     onAssetSelect(instrument);
@@ -130,46 +116,40 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       // Validar símbolo directamente
       try {
         setLoading(true);
-        const response = await fetch(`${apiUrl}/v1/instruments/search/validate/${symbol}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data && data.data.valid) {
-            const instrument = {
-              id: `temp-${Date.now()}`,
-              symbol: data.data.symbol,
-              name: data.data.name || symbol,
-              exchange: data.data.exchange || 'Unknown',
-              currency: data.data.currency || 'USD',
-              assetClass: 'equity',
-              isActive: true
-            };
-            
-            onAssetSelect(instrument);
-            setQuery('');
-            setSearchResults([]);
-            return;
-          }
+        const { validateSymbol } = await import('@/lib/api');
+        const response = await validateSymbol(symbol);
+        
+        if (response.success && response.data?.valid) {
+          const instrument: InstrumentSearchResult = {
+            symbol: response.data.symbol || symbol,
+            name: response.data.name || symbol,
+            shortName: response.data.name || symbol,
+            exchange: response.data.exchange || 'Unknown',
+            currency: (response.data.currency || 'USD') as Currency,
+            type: (response.data.type || 'EQUITY') as AssetType,
+            success: true
+          };
+          
+          onAssetSelect(instrument);
+          setQuery('');
+          setSearchResults([]);
+          return;
         }
       } catch (err) {
-        console.error('Error validating symbol:', err);
+        logger.error('Error validating symbol', { err, symbol });
       } finally {
         setLoading(false);
       }
       
       // Si la validación falla, usar símbolo directo
-      const instrument = {
-        id: `temp-${Date.now()}`,
+      const instrument: InstrumentSearchResult = {
         symbol: symbol,
         name: symbol,
+        shortName: symbol,
         exchange: 'UNKNOWN',
-        currency: 'USD',
-        assetClass: 'equity',
-        isActive: true
+        currency: 'USD' as Currency,
+        type: 'EQUITY' as AssetType,
+        success: false
       };
       
       onAssetSelect(instrument);
@@ -254,7 +234,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         {!loading && query.length >= 2 && searchResults.length === 0 && (
           <Alert variant="warning">
             <Text size="sm">
-              No se encontraron resultados para "{query}". 
+              No se encontraron resultados para &quot;{query}&quot;. 
               Puedes usar el símbolo directo o probar con términos más generales.
             </Text>
           </Alert>

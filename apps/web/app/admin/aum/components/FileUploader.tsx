@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { uploadAumFile } from '@/lib/api';
+import type { ApiErrorWithMessage } from '@/types';
+import type { AumUploadResponse } from '@/types';
 import {
   Modal,
   ModalHeader,
@@ -39,7 +41,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
-  const [uploadSummary, setUploadSummary] = useState<{ fileId: string; totals: any } | null>(null);
+  const [uploadSummary, setUploadSummary] = useState<{ fileId: string; totals: AumUploadResponse['totals'] } | null>(null);
 
   const onChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -68,12 +70,13 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           router.push(`/admin/aum/${fileId}`);
         }
       }
-    } catch (err: any) {
-      const errorMessage = err.userMessage || err.message || 'Error subiendo archivo';
+    } catch (err: unknown) {
+      const error = err as ApiErrorWithMessage;
+      const errorMessage = error.userMessage || error.message || 'Error subiendo archivo';
       setError(errorMessage);
     } finally {
       setLoading(false);
-      (e.target as any).value = '';
+      (e.target as HTMLInputElement).value = '';
     }
   };
 
@@ -92,15 +95,16 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   return (
     <>
       <div className="flex items-center gap-3">
-        <Button
-          as="label"
-          htmlFor="aum-file-input"
-          variant="primary"
-          disabled={loading}
-          className="cursor-pointer"
-        >
-          {loading ? 'Subiendo…' : 'Cargar archivo de Balanz (CSV o Excel)'}
-        </Button>
+        <label htmlFor="aum-file-input">
+          <Button
+            variant="primary"
+            disabled={loading}
+            className="cursor-pointer"
+            type="button"
+          >
+            {loading ? 'Subiendo…' : 'Cargar archivo de Balanz (CSV o Excel)'}
+          </Button>
+        </label>
         <input 
           id="aum-file-input" 
           type="file" 

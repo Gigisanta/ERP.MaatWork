@@ -20,10 +20,15 @@ const router = Router();
 // ==========================================================
 
 // Query parameter schemas
-const listContactsQuerySchema = paginationQuerySchema.extend({
-  pipelineStageId: z.string().uuid().optional(),
-  assignedAdvisorId: z.string().uuid().optional()
-});
+// AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects
+// Justificación: .extend() solo funciona en ZodObject, pero paginationQuerySchema tiene .refine()
+// Impacto: Schema combinado correctamente manteniendo validación de paginación
+const listContactsQuerySchema = paginationQuerySchema.and(
+  z.object({
+    pipelineStageId: z.string().uuid().optional(),
+    assignedAdvisorId: z.string().uuid().optional()
+  })
+);
 
 const contactDetailQuerySchema = z.object({
   includeTimeline: z.enum(['true', 'false']).optional().default('true')
@@ -1001,7 +1006,7 @@ router.patch('/:id',
       await db()
         .insert(contactFieldHistory)
         .values(
-          fields.map(({ field, value }) => ({
+          fields.map(({ field, value }: { field: string; value: unknown }) => ({
             contactId: id,
             fieldName: field,
             oldValue: String(existing[field as keyof typeof existing] || ''),
@@ -1011,7 +1016,7 @@ router.patch('/:id',
         );
     }
 
-    req.log.info({ contactId: id, fields: fields.map(f => f.field) }, 'contact patched');
+    req.log.info({ contactId: id, fields: fields.map((f: { field: string; value: unknown }) => f.field) }, 'contact patched');
     res.json({ 
       data: updated,
       warning: advisorWarning 
