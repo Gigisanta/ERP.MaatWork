@@ -12,6 +12,7 @@ import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { v4 as uuidv4 } from 'uuid';
 import compression from 'compression';
+import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import contactsRouter from './routes/contacts';
@@ -34,22 +35,6 @@ import helmet from 'helmet';
 import { initializeDatabase } from './db-init';
 
 const isProduction = process.env.NODE_ENV === 'production';
-
-type PinoLoggerOptions = {
-  level: string;
-  transport?: {
-    target: string;
-    options: {
-      colorize: boolean;
-      translateTime: string;
-      singleLine: boolean;
-      ignore: string;
-      errorLikeObjectKeys: string[];
-      messageFormat: string;
-      errorProps: string;
-    };
-  };
-};
 
 const loggerOptions: PinoLoggerOptions = {
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
@@ -144,7 +129,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Helmet config (disable CSP by default unless provided)
-const helmetOptions: any = {
+const helmetOptions: HelmetOptions = {
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   crossOriginEmbedderPolicy: false
 };

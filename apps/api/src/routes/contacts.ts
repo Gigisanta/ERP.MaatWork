@@ -12,6 +12,14 @@ import {
   idParamSchema,
   paginationQuerySchema 
 } from '../utils/common-schemas';
+import { 
+  type Contact, 
+  type ContactTag,
+  type ContactTagWithInfo, 
+  type ContactWithTags, 
+  type TimelineItem,
+  type ContactUpdateFields
+} from '../types/contacts';
 
 const router = Router();
 
@@ -221,24 +229,25 @@ router.get('/',
       );
       
       // Verify that returned contacts actually have the correct assignedAdvisorId
-      const itemsWithCorrectAdvisor = (items as any[]).filter((c: any) => c.assignedAdvisorId === advisorIdStr);
-      const itemsWithWrongAdvisor = (items as any[]).filter((c: any) => c.assignedAdvisorId !== advisorIdStr);
+      const contactsList = items as Contact[];
+      const itemsWithCorrectAdvisor = contactsList.filter((c: Contact) => c.assignedAdvisorId === advisorIdStr);
+      const itemsWithWrongAdvisor = contactsList.filter((c: Contact) => c.assignedAdvisorId !== advisorIdStr);
       
       if (itemsWithWrongAdvisor.length > 0) {
         req.log.error({
           userId,
           userRole,
           requestedAdvisorId: advisorIdStr,
-          itemsCount: (items as any[]).length,
+          itemsCount: contactsList.length,
           itemsWithCorrectAdvisor: itemsWithCorrectAdvisor.length,
           itemsWithWrongAdvisor: itemsWithWrongAdvisor.length,
-          wrongAdvisorIds: itemsWithWrongAdvisor.map((c: any) => c.assignedAdvisorId),
+          wrongAdvisorIds: itemsWithWrongAdvisor.map((c: Contact) => c.assignedAdvisorId),
           action: 'contacts_with_wrong_advisor_detected'
         }, 'CRITICAL: Query returned contacts with incorrect assignedAdvisorId');
       }
       
       req.log.info({ 
-        itemsCount: (items as any[]).length,
+        itemsCount: contactsList.length,
         requestedAdvisorId: advisorIdStr,
         itemsWithCorrectAdvisor: itemsWithCorrectAdvisor.length,
         itemsWithWrongAdvisor: itemsWithWrongAdvisor.length,
@@ -246,8 +255,8 @@ router.get('/',
       }, 'Main contacts query completed');
       
       // Obtener etiquetas para cada contacto
-      const contactIds = (items as any[]).map((c: any) => c.id);
-      const contactTagsMap = new Map<string, any[]>();
+      const contactIds = contactsList.map((c: Contact) => c.id);
+      const contactTagsMap = new Map<string, ContactTag[]>();
       
       if (contactIds.length > 0) {
         req.log.info({ contactIdsCount: contactIds.length }, 'Fetching tags for contacts');
@@ -264,25 +273,27 @@ router.get('/',
             .from(contactTags)
             .innerJoin(tags, eq(contactTags.tagId, tags.id))
             .where(inArray(contactTags.contactId, contactIds))
-        );
-        req.log.info({ tagsCount: (contactTagsList as any[]).length }, 'Tags query completed');
+        ) as ContactTagWithInfo[];
+        req.log.info({ tagsCount: contactTagsList.length }, 'Tags query completed');
 
         // Agrupar etiquetas por contacto
-        (contactTagsList as any[]).forEach((ct: any) => {
-          if (!contactTagsMap.has(ct.contactId)) {
-            contactTagsMap.set(ct.contactId, []);
+        contactTagsList.forEach((ct: ContactTagWithInfo) => {
+          if (ct.contactId) {
+            if (!contactTagsMap.has(ct.contactId)) {
+              contactTagsMap.set(ct.contactId, []);
+            }
+            contactTagsMap.get(ct.contactId)!.push({
+              id: ct.id,
+              name: ct.name,
+              color: ct.color,
+              icon: ct.icon
+            });
           }
-          contactTagsMap.get(ct.contactId)!.push({
-            id: ct.id,
-            name: ct.name,
-            color: ct.color,
-            icon: ct.icon
-          });
         });
       }
 
       // Agregar etiquetas a cada contacto
-      const itemsWithTags = (items as any[]).map((contact: any) => ({
+      const itemsWithTags = contactsList.map((contact: Contact): ContactWithTags => ({
         ...contact,
         tags: contactTagsMap.get(contact.id) || []
       }));
@@ -354,15 +365,16 @@ router.get('/',
         .orderBy(desc(contacts.updatedAt))
     );
     
-    req.log.info({ itemsCount: (items as any[]).length }, 'Main contacts query completed');
+    const contactsListMain = items as Contact[];
+    req.log.info({ itemsCount: contactsListMain.length }, 'Main contacts query completed');
 
     // Obtener etiquetas para cada contacto
-    const contactIds = (items as any[]).map((c: any) => c.id);
-    const contactTagsMap = new Map<string, any[]>();
+    const contactIdsMain = contactsListMain.map((c: Contact) => c.id);
+    const contactTagsMapMain = new Map<string, ContactTag[]>();
     
-    if (contactIds.length > 0) {
-      req.log.info({ contactIdsCount: contactIds.length }, 'Fetching tags for contacts');
-      const contactTagsList = await dbLogger.select(
+    if (contactIdsMain.length > 0) {
+      req.log.info({ contactIdsCount: contactIdsMain.length }, 'Fetching tags for contacts');
+      const contactTagsListMain = await dbLogger.select(
         'list_contacts_tags_query',
         () => db()
           .select({
@@ -374,28 +386,30 @@ router.get('/',
           })
           .from(contactTags)
           .innerJoin(tags, eq(contactTags.tagId, tags.id))
-          .where(inArray(contactTags.contactId, contactIds))
-      );
-      req.log.info({ tagsCount: (contactTagsList as any[]).length }, 'Tags query completed');
+          .where(inArray(contactTags.contactId, contactIdsMain))
+      ) as ContactTagWithInfo[];
+      req.log.info({ tagsCount: contactTagsListMain.length }, 'Tags query completed');
 
       // Agrupar etiquetas por contacto
-      (contactTagsList as any[]).forEach((ct: any) => {
-        if (!contactTagsMap.has(ct.contactId)) {
-          contactTagsMap.set(ct.contactId, []);
+      contactTagsListMain.forEach((ct: ContactTagWithInfo) => {
+        if (ct.contactId) {
+          if (!contactTagsMapMain.has(ct.contactId)) {
+            contactTagsMapMain.set(ct.contactId, []);
+          }
+          contactTagsMapMain.get(ct.contactId)!.push({
+            id: ct.id,
+            name: ct.name,
+            color: ct.color,
+            icon: ct.icon
+          });
         }
-        contactTagsMap.get(ct.contactId)!.push({
-          id: ct.id,
-          name: ct.name,
-          color: ct.color,
-          icon: ct.icon
-        });
       });
     }
 
     // Agregar etiquetas a cada contacto
-    const itemsWithTags = (items as any[]).map((contact: any) => ({
+    const itemsWithTags = contactsListMain.map((contact: Contact): ContactWithTags => ({
       ...contact,
-      tags: contactTagsMap.get(contact.id) || []
+      tags: contactTagsMapMain.get(contact.id) || []
     }));
 
     const duration = Date.now() - startTime;
@@ -495,9 +509,11 @@ router.get('/:id',
         .limit(10);
 
       // Unificar y ordenar por fecha
-      timeline = [
-        ...recentTasks.map((t: any) => ({ ...t, type: 'task', timestamp: t.createdAt }))
-      ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      timeline = recentTasks.map((t): TimelineItem => ({ 
+        ...t, 
+        type: 'task', 
+        timestamp: t.createdAt 
+      })).sort((a: TimelineItem, b: TimelineItem) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     }
 
     // Obtener adjuntos
@@ -942,7 +958,7 @@ router.patch('/:id',
     }
 
     // Construir objeto de actualización
-    const updates: any = {
+    const updates: ContactUpdateFields = {
       version: existing.version + 1,
       updatedAt: new Date()
     };
@@ -955,7 +971,10 @@ router.patch('/:id',
     let advisorWarning = null;
     
     if (updates.assignedAdvisorId !== undefined && updates.assignedAdvisorId !== existing.assignedAdvisorId) {
-      const canAssign = await canAssignContactTo(userId, userRole, updates.assignedAdvisorId);
+      const targetAdvisorId = typeof updates.assignedAdvisorId === 'string' || updates.assignedAdvisorId === null 
+        ? updates.assignedAdvisorId as string | null 
+        : null;
+      const canAssign = await canAssignContactTo(userId, userRole, targetAdvisorId);
       
       if (!canAssign) {
         req.log.warn({ 

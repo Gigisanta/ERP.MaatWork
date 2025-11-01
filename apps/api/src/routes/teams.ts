@@ -5,6 +5,7 @@ import { eq, and, notInArray } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, getTeamMembers, getUserTeams } from '../auth/authorization';
 import { z } from 'zod';
+import { type PendingInvite } from '../types/teams';
 
 const router = Router();
 
@@ -728,7 +729,7 @@ router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, nex
         .select({ userId: teamMembershipRequests.userId })
         .from(teamMembershipRequests)
         .where(and(eq(teamMembershipRequests.managerId, managerId), eq(teamMembershipRequests.status, 'pending')));
-      pending.forEach((p: any) => pendingInviteIds.add(p.userId));
+      pending.forEach((p: PendingInvite) => pendingInviteIds.add(p.userId));
     }
 
     // Advisors not in any team and without pending invite to this manager

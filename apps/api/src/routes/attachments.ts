@@ -7,6 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { z } from 'zod';
+import { AttachmentInsert } from '../types/routes';
 
 const router = Router();
 
@@ -121,7 +122,7 @@ router.post(
       // Crear registros de adjuntos en la base de datos
       const newAttachments = [];
       for (const file of req.files) {
-        const attachmentData: any = {
+        const attachmentData: AttachmentInsert = {
           fileName: file.originalname,
           filePath: file.path,
           mimeType: file.mimetype,

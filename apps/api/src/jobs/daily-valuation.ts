@@ -15,6 +15,7 @@ import {
 import { eq, and, sql, desc, gte, lte, type InferSelectModel } from 'drizzle-orm';
 import axios from 'axios';
 import pino from 'pino';
+import { PositionWithMarketValue } from '../types/daily-valuation';
 
 const logger = pino({ name: 'daily-valuation' });
 
@@ -377,7 +378,7 @@ export class DailyValuationJob {
         ));
 
       // Calcular AUM total del contacto
-      const totalAUM = currentPositions.reduce((sum: number, pos: any) => sum + Number(pos.marketValue || 0), 0);
+      const totalAUM = currentPositions.reduce((sum: number, pos: PositionWithMarketValue) => sum + Number(pos.marketValue || 0), 0);
 
       if (totalAUM === 0) {
         logger.warn({ contactId }, '⚠️ Contacto sin AUM para calcular desvíos');

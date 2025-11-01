@@ -111,7 +111,7 @@ async function seed() {
       try {
         await db().insert(notificationTemplates).values(template);
         console.log(`  ✓ Template creado: ${template.name}`);
-      } catch (err: any) {
+      } catch (err: unknown) {
         type ErrorWithMessage = {
           message?: string;
         };
