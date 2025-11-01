@@ -1,5 +1,4 @@
 import React from 'react';
-import Link from 'next/link';
 import { cn } from '../../utils/cn';
 import Icon from '../Icon';
 import { Text } from '../../primitives/Text';
@@ -14,10 +13,15 @@ export interface BreadcrumbsProps extends React.HTMLAttributes<HTMLElement> {
   items: BreadcrumbItem[];
   separator?: React.ReactNode;
   className?: string;
+  /**
+   * Custom Link component (e.g., Next.js Link, React Router Link)
+   * If not provided, will use a regular <a> tag
+   */
+  LinkComponent?: React.ComponentType<any>;
 }
 
 export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
-  ({ items, separator, className, ...props }, ref) => {
+  ({ items, separator, className, LinkComponent, ...props }, ref) => {
     const defaultSeparator = <Icon name="ChevronRight" size={16} className="text-text-muted" />;
 
     return (
@@ -32,6 +36,13 @@ export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
             const isLast = index === items.length - 1;
             const isFirst = index === 0;
 
+            const linkClassName = cn(
+              'text-text-secondary hover:text-text',
+              'transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+              'rounded-sm px-1 py-0.5'
+            );
+
             return (
               <li key={index} className="flex items-center">
                 {!isFirst && (
@@ -44,17 +55,15 @@ export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
                 )}
 
                 {item.href && !isLast ? (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'text-text-secondary hover:text-text',
-                      'transition-colors',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-                      'rounded-sm px-1 py-0.5'
-                    )}
-                  >
-                    {item.label}
-                  </Link>
+                  LinkComponent ? (
+                    <LinkComponent href={item.href} className={linkClassName}>
+                      {item.label}
+                    </LinkComponent>
+                  ) : (
+                    <a href={item.href} className={linkClassName}>
+                      {item.label}
+                    </a>
+                  )
                 ) : (
                   <span
                     className={cn(

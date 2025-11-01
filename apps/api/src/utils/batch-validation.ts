@@ -98,11 +98,16 @@ export function validateBatchIds(
     errors.push(`Warning: ${duplicateCount} duplicate ID(s) removed`);
   }
 
-  return {
+  const result: BatchValidationResult = {
     valid: uniqueIds.length > 0 && invalidIds.length === 0,
-    ids: uniqueIds,
-    errors: errors.length > 0 ? errors : undefined
+    ids: uniqueIds
   };
+
+  if (errors.length > 0) {
+    result.errors = errors;
+  }
+
+  return result;
 }
 
 /**

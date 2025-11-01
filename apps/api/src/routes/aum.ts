@@ -758,7 +758,7 @@ router.post('/uploads/:fileId/match',
       .set({
         matchedContactId: matchedContactId || null,
         matchedUserId: matchedUserId || null,
-        matchStatus: newStatus,
+        matchStatus: status,
         ...(typeof isPreferred === 'boolean' && { isPreferred })
       })
       .where(and(
