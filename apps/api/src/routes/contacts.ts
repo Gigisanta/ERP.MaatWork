@@ -281,13 +281,23 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       });
     }
     
-    // Default behavior when not filtering by assignedAdvisorId
-    const accessFilter = buildContactAccessFilter(accessScope);
-    req.log.info({ 
-      filterDescription: accessFilter.description 
-    }, 'Contact access filter built');
+    // AI_DECISION: Default behavior - show only user's own contacts when no advisorId filter
+    // Justificación: Cada usuario debe ver SOLO sus propios contactos en /contacts por defecto.
+    // Para ver contactos de otros usuarios (miembros del equipo), debe usar /contacts?advisorId=xxx explícitamente
+    // o acceder desde /teams. Esto asegura data isolation por defecto.
+    // Impacto: Managers y admins solo verán sus propios contactos en su CRM personal, no los de otros
+    req.log.info({
+      userId,
+      userRole,
+      action: 'default_contacts_list_own_only',
+      message: 'Showing only user\'s own contacts (no advisorId filter provided)'
+    }, 'Building default filter - user\'s own contacts only');
 
-    const conditions = [isNull(contacts.deletedAt), accessFilter.whereClause];
+    // When no assignedAdvisorId is provided, show ONLY the current user's contacts
+    const conditions = [
+      isNull(contacts.deletedAt),
+      eq(contacts.assignedAdvisorId, userId)
+    ];
 
     if (pipelineStageId) {
       if (pipelineStageId === 'null' || pipelineStageId === '') {
@@ -542,7 +552,7 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
     } else {
       // assignedAdvisorId was provided - validate permissions and advisor existence
       const canAssign = await canAssignContactTo(userId, userRole, validated.assignedAdvisorId);
-      
+    
       req.log.info({
         userId,
         userRole,
@@ -552,13 +562,13 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       }, 'Permission check for advisor assignment completed');
       
       if (!canAssign) {
-        req.log.warn({ 
-          providedAdvisorId: validated.assignedAdvisorId,
-          userRole,
+      req.log.warn({ 
+        providedAdvisorId: validated.assignedAdvisorId,
+        userRole,
           userId,
           action: 'enforcing_auto_assignment_to_creator'
         }, 'user cannot assign contact to requested advisor, auto-assigning to creator');
-        
+      
         // Auto-assign to creator when permission denied
         validatedAdvisorId = userId;
         advisorWarning = `No tiene permisos para asignar a ese asesor. El contacto se asignó automáticamente a usted.`;
@@ -570,21 +580,21 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
           action: 'auto_assignment'
         }, 'Auto-assigned contact to creator (permission denied)');
       } else {
-        // Validate that the advisor ID exists and is active
-        const [advisor] = await db()
-          .select({ id: users.id })
-          .from(users)
-          .where(and(eq(users.id, validated.assignedAdvisorId), eq(users.isActive, true)))
-          .limit(1);
-        
-        if (!advisor) {
-          req.log.warn({ 
+      // Validate that the advisor ID exists and is active
+      const [advisor] = await db()
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.id, validated.assignedAdvisorId), eq(users.isActive, true)))
+        .limit(1);
+      
+      if (!advisor) {
+        req.log.warn({ 
             providedAdvisorId: validated.assignedAdvisorId,
             action: 'advisor_not_found_or_inactive'
           }, 'assigned advisor ID does not exist or is inactive, auto-assigning to creator');
           
           // Auto-assign to creator when advisor not found
-          validatedAdvisorId = userId;
+      validatedAdvisorId = userId;
           advisorWarning = `El asesor asignado (${validated.assignedAdvisorId}) no existe o está inactivo. El contacto se asignó automáticamente a usted.`;
           req.log.info({
             userId,

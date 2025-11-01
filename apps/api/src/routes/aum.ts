@@ -5,10 +5,69 @@ import { promises as fs } from 'node:fs';
 import type { Request } from 'express';
 import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership } from '@cactus/db';
 import { eq, and, sql, inArray } from 'drizzle-orm';
-import { requireAuth } from '../auth/middlewares';
+import { requireAuth, requireRole } from '../auth/middlewares';
+import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
 import { Pool } from 'pg';
+import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema, 
+  fileIdParamSchema, 
+  paginationQuerySchema,
+  brokerSchema 
+} from '../utils/common-schemas';
 
 const router = Router();
+
+// ==========================================================
+// Zod Validation Schemas
+// ==========================================================
+
+// Path parameter schemas
+const fileIdParamsSchema = fileIdParamSchema;
+
+// Query parameter schemas
+const exportQuerySchema = z.object({}).optional(); // No query params for export
+
+const commitQuerySchema = z.object({
+  broker: brokerSchema.optional()
+});
+
+const previewQuerySchema = z.object({
+  limit: z.string()
+    .regex(/^\d+$/, 'Limit must be a number')
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(500))
+    .optional()
+    .default('50')
+});
+
+const historyQuerySchema = z.intersection(
+  paginationQuerySchema,
+  z.object({
+    limit: z.string()
+      .regex(/^\d+$/, 'Limit must be a number')
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(200))
+      .optional()
+      .default('50')
+  })
+);
+
+const uploadQuerySchema = z.object({
+  broker: brokerSchema.optional()
+});
+
+// Body schemas
+const matchRowBodySchema = z.object({
+  rowId: uuidSchema,
+  matchedContactId: uuidSchema.optional().nullable(),
+  matchedUserId: uuidSchema.optional().nullable()
+});
+
+// ==========================================================
+// File Upload Configuration
+// ==========================================================
 
 // AI_DECISION: Guardar uploads en FS local bajo apps/api/uploads y registrar metadata en DB
 // Justificación: Simplicidad y trazabilidad en MVP; mover a S3 en el futuro si es necesario
@@ -37,9 +96,25 @@ const storage = multer.diskStorage({
 });
 
 // GET /admin/aum/uploads/:fileId/export
-router.get('/uploads/:fileId/export', requireAuth, async (req, res) => {
+router.get('/uploads/:fileId/export', 
+  requireAuth,
+  validate({ params: fileIdParamsSchema, query: exportQuerySchema }),
+  async (req, res) => {
   try {
-    const fileId = req.params.fileId;
+    const { fileId } = req.params; // Validated UUID
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
     const dbi = db();
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
     if (!file) return res.status(404).json({ error: 'File not found' });
@@ -103,10 +178,29 @@ router.get('/uploads/:fileId/export', requireAuth, async (req, res) => {
 });
 
 // POST /admin/aum/uploads/:fileId/commit
-router.post('/uploads/:fileId/commit', requireAuth, async (req, res) => {
+// AI_DECISION: Require manager+ role for commit operation
+// Justificación: Operación crítica que modifica broker_accounts y contacts, requiere supervisión
+// Impacto: Advisors no pueden commitear importaciones sin aprobación de manager/admin
+router.post('/uploads/:fileId/commit', 
+  requireAuth, 
+  requireRole(['admin', 'manager']),
+  validate({ params: fileIdParamsSchema, query: commitQuerySchema }),
+  async (req, res) => {
   try {
-    const fileId = req.params.fileId;
-    const broker = (req.query.broker as string) || 'balanz';
+    const { fileId } = req.params; // Validated UUID
+    const { broker = 'balanz' } = req.query; // Validated broker enum
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
     const dbi = db();
 
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
@@ -288,7 +382,11 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
 }
 
 // POST /admin/aum/uploads
-router.post('/uploads', requireAuth, upload.single('file'), async (req: Request, res) => {
+router.post('/uploads', 
+  requireAuth, 
+  validate({ query: uploadQuerySchema }),
+  upload.single('file'), 
+  async (req: Request, res) => {
   try {
     const userId = (req as any).user?.id as string | undefined;
     if (!userId) {
@@ -299,7 +397,7 @@ router.post('/uploads', requireAuth, upload.single('file'), async (req: Request,
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const broker = (req.query.broker as string) || 'balanz';
+    const { broker = 'balanz' } = req.query; // Validated broker enum
 
     const dbi = db();
     let inserted;
@@ -511,10 +609,25 @@ router.post('/uploads', requireAuth, upload.single('file'), async (req: Request,
 });
 
 // GET /admin/aum/uploads/:fileId/preview
-router.get('/uploads/:fileId/preview', requireAuth, async (req, res) => {
+router.get('/uploads/:fileId/preview', 
+  requireAuth,
+  validate({ params: fileIdParamsSchema, query: previewQuerySchema }),
+  async (req, res) => {
   try {
-    const fileId = req.params.fileId;
-    const limit = Math.min(Number(req.query.limit || 50), 500);
+    const { fileId } = req.params; // Validated UUID
+    const { limit = 50 } = req.query; // Validated number, min 1, max 500
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
     const dbi = db();
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
     if (!file) {
@@ -522,7 +635,7 @@ router.get('/uploads/:fileId/preview', requireAuth, async (req, res) => {
     }
     const rows = await dbi.select().from(aumImportRows)
       .where(eq(aumImportRows.fileId, fileId))
-      .limit(limit);
+      .limit(limit as number);
 
     return res.json({
       ok: true,
@@ -546,53 +659,84 @@ router.get('/uploads/:fileId/preview', requireAuth, async (req, res) => {
 });
 
 // GET /admin/aum/uploads/history
-router.get('/uploads/history', requireAuth, async (req, res) => {
+router.get('/uploads/history', 
+  requireAuth,
+  validate({ query: historyQuerySchema }),
+  async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit || 50), 200);
+    const { limit = 50 } = req.query; // Validated number, min 1, max 200
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
     const dbi = db();
-    const result = await dbi.execute(sql`
-      SELECT id, broker, original_filename, mime_type, size_bytes, uploaded_by_user_id, status,
-             total_parsed, total_matched, total_unmatched, created_at
-      FROM aum_import_files
-      ORDER BY created_at DESC
-      LIMIT ${limit}
-    `);
-    const files = (result.rows || []).map((r: any) => ({
-      id: r.id,
-      broker: r.broker,
-      originalFilename: r.original_filename,
-      mimeType: r.mime_type,
-      sizeBytes: r.size_bytes,
-      uploadedByUserId: r.uploaded_by_user_id,
-      status: r.status,
-      totalParsed: r.total_parsed,
-      totalMatched: r.total_matched,
-      totalUnmatched: r.total_unmatched,
-      createdAt: r.created_at
-    }));
-    return res.json({ ok: true, files });
-  } catch (error: any) {
-    // Si la tabla aún no existe (migración no aplicada en este DB), devolver lista vacía
-    if (error?.code === '42P01') {
-      (req as any).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
+
+    // Filter files based on user role and access scope
+    let whereClause;
+    if (userRole === 'admin') {
+      // Admin can see all files
+      whereClause = undefined; // No filter
+    } else if (userRole === 'advisor') {
+      // Advisor can only see their own files
+      whereClause = eq(aumImportFiles.uploadedByUserId, userId);
+    } else if (userRole === 'manager') {
+      // Manager can see files from themselves and their team members
+      const accessScope = await getUserAccessScope(userId, userRole);
+      const accessibleUserIds = [...new Set([...accessScope.accessibleAdvisorIds, userId])];
+      whereClause = inArray(aumImportFiles.uploadedByUserId, accessibleUserIds);
+    } else {
+      // Unknown role - no access
       return res.json({ ok: true, files: [] });
     }
+
+    try {
+      const rows = whereClause
+        ? await dbi.select().from(aumImportFiles).where(whereClause).limit(limit as number)
+        : await dbi.select().from(aumImportFiles).limit(limit as number);
+
+      return res.json({ ok: true, files: rows });
+    } catch (error: any) {
+      // Si la tabla aún no existe (migración no aplicada en este DB), devolver lista vacía
+      if (error?.code === '42P01') {
+        (req as any).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
+        return res.json({ ok: true, files: [] });
+      }
+      throw error;
+    }
+  } catch (error) {
     (req as any).log?.error?.({ err: error }, 'AUM history failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
 
 // POST /admin/aum/uploads/:fileId/match
-router.post('/uploads/:fileId/match', requireAuth, async (req, res) => {
+router.post('/uploads/:fileId/match', 
+  requireAuth,
+  validate({ 
+    params: fileIdParamsSchema, 
+    body: matchRowBodySchema 
+  }),
+  async (req, res) => {
   try {
-    const fileId = req.params.fileId;
-    const { rowId, matchedContactId, matchedUserId, isPreferred } = req.body as {
-      rowId: string;
-      matchedContactId?: string | null;
-      matchedUserId?: string | null;
-      isPreferred?: boolean;
-    };
-    if (!rowId) return res.status(400).json({ error: 'rowId is required' });
+    const { fileId } = req.params; // Validated UUID
+    const { rowId, matchedContactId, matchedUserId } = req.body; // Validated schema
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify user has access to this file
+    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+    if (!hasAccess) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Support isPreferred from body if provided (for backward compatibility)
+    const isPreferred = (req.body as any).isPreferred;
 
     const dbi = db();
     // Ensure file exists
@@ -846,6 +990,69 @@ router.get('/rows/duplicates/:accountNumber', requireAuth, async (req, res) => {
     });
   } catch (error) {
     (req as any).log?.error?.({ err: error, accountNumber: req.params.accountNumber }, 'failed to get duplicates');
+    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// DELETE /admin/aum/uploads/:fileId
+// AI_DECISION: Require admin role for delete operation
+// Justificación: Operación destructiva que elimina importaciones, solo admin debe tener acceso
+// Impacto: Solo administradores pueden eliminar importaciones
+router.delete('/uploads/:fileId', 
+  requireAuth, 
+  requireRole(['admin']),
+  validate({ params: fileIdParamsSchema }),
+  async (req, res) => {
+  try {
+    const { fileId } = req.params; // Validated UUID
+    const userId = (req as any).user?.id as string;
+    const userRole = (req as any).user?.role as string;
+    
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const dbi = db();
+    
+    // Verify file exists
+    const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Prevent deletion of committed files (safety measure)
+    if (file.status === 'committed') {
+      return res.status(400).json({ 
+        error: 'Cannot delete committed import. Contact administrator if removal is necessary.' 
+      });
+    }
+
+    // Delete associated rows first (CASCADE should handle this, but being explicit)
+    await dbi.delete(aumImportRows).where(eq(aumImportRows.fileId, fileId));
+
+    // Delete the file record
+    await dbi.delete(aumImportFiles).where(eq(aumImportFiles.id, fileId));
+
+    // Optionally delete physical file if it exists
+    try {
+      const filePath = join(uploadDir, file.originalFilename);
+      await fs.unlink(filePath).catch(() => {
+        // Ignore if file doesn't exist
+      });
+    } catch {
+      // Ignore file system errors
+    }
+
+    (req as any).log?.info?.({ 
+      fileId, 
+      userId, 
+      filename: file.originalFilename,
+      status: file.status 
+    }, 'AUM import file deleted');
+
+    return res.json({ ok: true, message: 'File deleted successfully' });
+  } catch (error) {
+    (req as any).log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM delete failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });

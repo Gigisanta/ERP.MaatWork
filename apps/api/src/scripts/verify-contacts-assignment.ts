@@ -54,7 +54,7 @@ async function verifyContactsAssignment() {
         .limit(10);
       
       console.log('📋 Ejemplos de contactos sin asignar:');
-      unassignedList.forEach((c, i) => {
+      unassignedList.forEach((c: { id: string; fullName: string | null; email: string | null }, i: number) => {
         console.log(`   ${i + 1}. ${c.fullName || 'Sin nombre'} (${c.email || 'Sin email'}) - ID: ${c.id}`);
       });
       if (unassigned > 10) {

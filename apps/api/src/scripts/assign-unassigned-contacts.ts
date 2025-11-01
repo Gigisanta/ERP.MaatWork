@@ -30,7 +30,7 @@ async function assignUnassignedContacts() {
         .select({ id: users.id, email: users.email, fullName: users.fullName, role: users.role })
         .from(users)
         .limit(20);
-      allUsers.forEach(u => {
+      allUsers.forEach((u: { fullName: string | null; email: string; role: string }) => {
         console.log(`   - ${u.fullName} (${u.email}) - ${u.role}`);
       });
       process.exit(1);
@@ -100,7 +100,7 @@ async function assignContactsToUser(userId: string, userName: string) {
       .limit(10);
     
     console.log('📋 Ejemplos de contactos a asignar:');
-    sampleContacts.forEach((c, i) => {
+    sampleContacts.forEach((c: { fullName: string | null; email: string | null }, i: number) => {
       console.log(`   ${i + 1}. ${c.fullName || 'Sin nombre'} (${c.email || 'Sin email'})`);
     });
     if (count > 10) {

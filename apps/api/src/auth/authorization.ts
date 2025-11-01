@@ -1,4 +1,4 @@
-import { db, users, teamMembership, teams, contacts } from '@cactus/db';
+import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
 import { eq, and, or, sql, inArray, isNull } from 'drizzle-orm';
 import { UserRole } from './types';
 
@@ -241,4 +241,51 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
     name: t.name,
     role: t.isManager ? 'manager' as const : 'member' as const
   }));
+}
+
+/**
+ * Check if a user can access a specific AUM import file
+ * AI_DECISION: Implement access control for AUM files based on user role
+ * Justificación: Los usuarios solo deben poder ver archivos que tienen permiso según su rol
+ * Impacto: Previene acceso no autorizado a importaciones de AUM
+ */
+export async function canAccessAumFile(userId: string, role: UserRole, fileId: string): Promise<boolean> {
+  try {
+    // Admin can access all files
+    if (role === 'admin') {
+      return true;
+    }
+
+    // Get the file to check who uploaded it
+    const [file] = await db()
+      .select({ uploadedByUserId: aumImportFiles.uploadedByUserId })
+      .from(aumImportFiles)
+      .where(eq(aumImportFiles.id, fileId))
+      .limit(1);
+
+    if (!file) {
+      return false; // File doesn't exist
+    }
+
+    // Advisor can only access their own files
+    if (role === 'advisor') {
+      return file.uploadedByUserId === userId;
+    }
+
+    // Manager can access their own files and team members' files
+    if (role === 'manager') {
+      if (file.uploadedByUserId === userId) {
+        return true; // Own file
+      }
+
+      // Check if file was uploaded by a team member
+      const accessScope = await getUserAccessScope(userId, role);
+      return accessScope.accessibleAdvisorIds.includes(file.uploadedByUserId);
+    }
+
+    return false; // Unknown role or no access
+  } catch (error) {
+    console.error('Error checking AUM file access:', error);
+    return false; // Fail closed
+  }
 }

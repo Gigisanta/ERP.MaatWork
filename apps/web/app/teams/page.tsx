@@ -125,6 +125,20 @@ export default function TeamsPage() {
     }
   };
 
+  const handleVincularAsesores = () => {
+    // Si hay un solo equipo, abrir directamente
+    if (teams.length === 1) {
+      openLinkModal(teams[0]);
+      return;
+    }
+    // Si hay varios equipos, abrir modal de selección primero
+    // Por ahora, si hay equipos disponibles, abrir el primero o mostrar selector
+    // Simplificado: abrir modal para el primer equipo (el usuario puede cambiar desde ahí)
+    if (teams.length > 0) {
+      openLinkModal(teams[0]);
+    }
+  };
+
   const inviteAdvisor = async (userId: string) => {
     if (!token || !linkModalOpen) return;
     try {
@@ -318,15 +332,21 @@ export default function TeamsPage() {
       <Stack direction="column" gap="lg">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Heading level={3}>Equipos</Heading>
+          <Heading level={3}>Equipos</Heading>
+          <div className="flex items-center gap-2">
+            {(['manager','admin'].includes(user?.role || '') && teams.length > 0) && (
+              <Button variant="primary" onClick={handleVincularAsesores}>
+                <Icon name="Users" size={16} className="mr-2" />
+                Vincular asesores
+              </Button>
+            )}
+            {(['manager','admin'].includes(user?.role || '') && teams.length === 0) && (
+              <Button onClick={() => setShowCreateTeam(true)}>
+                <Icon name="plus" size={16} className="mr-2" />
+                Crear Equipo
+              </Button>
+            )}
           </div>
-          {(['manager','admin'].includes(user?.role || '') && teams.length === 0) && (
-            <Button onClick={() => setShowCreateTeam(true)}>
-              <Icon name="plus" size={16} className="mr-2" />
-              Crear Equipo
-            </Button>
-          )}
         </div>
 
         {error && (
@@ -339,62 +359,60 @@ export default function TeamsPage() {
         <Grid cols={1} gap="lg">
           {teams.map((team) => (
             <Card key={team.id} className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base">{team.name}</CardTitle>
-                <Text size="sm" color="secondary">
-                  Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
-                </Text>
-              </CardHeader>
-              <CardContent className="p-4">
-                <Stack direction="column" gap="sm">
-                  <div>
-                    <Text size="sm" weight="medium" color="secondary">
-                      Miembros
-                    </Text>
-                    <Text>
-                      {team.members?.length || 0} miembros
-                    </Text>
-                  </div>
-                  
-                  {team.members && team.members.length > 0 && (
-                    <div>
-                      <Text size="sm" weight="medium" color="secondary">
-                        Miembros activos
+              <CardHeader className="p-4 pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base mb-1">{team.name}</CardTitle>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Text size="xs" color="secondary">
+                        Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
                       </Text>
-                      <Stack direction="column" gap="xs">
-                        {team.members.slice(0, 3).map((member) => (
-                          <Text key={member.id} size="sm">
-                            {member.fullName}
-                          </Text>
-                        ))}
-                        {team.members.length > 3 && (
-                          <Text size="sm" color="secondary">
-                            +{team.members.length - 3} más
-                          </Text>
-                        )}
-                      </Stack>
+                      <span className="text-text-secondary">•</span>
+                      <Text size="xs" color="secondary" weight="medium">
+                        {team.members?.length || 0} miembros
+                      </Text>
                     </div>
-                  )}
-                </Stack>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                {team.members && team.members.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    {team.members.map((member) => (
+                      <div
+                        key={member.id}
+                        className="rounded-md border border-border hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer p-2.5 bg-surface"
+                        onClick={() => router.push(`/teams/${team.id}/member/${member.id}`)}
+                      >
+                        <div className="flex items-start gap-2 mb-1.5">
+                          <Text weight="medium" className="text-sm truncate flex-1 min-w-0">
+                            {member.fullName || member.email}
+                          </Text>
+                          <Badge variant="default" className="text-xs px-1.5 py-0.5 leading-tight flex-shrink-0 mt-0.5">
+                            {member.role}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Text size="xs" color="secondary" className="truncate flex-1 min-w-0">
+                            {member.email}
+                          </Text>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="flex-shrink-0 px-2 py-1 h-6 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/contacts?advisorId=${member.id}`);
+                            }}
+                          >
+                            CRM
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
-              <CardFooter className="p-4">
-                <Stack direction="row" gap="sm" className="w-full">
-                  <Button 
-                    variant="secondary" 
-                    className="w-full"
-                    onClick={() => router.push(`/teams/${team.id}`)}
-                  >
-                    Ver asesores
-                  </Button>
-                  <Button
-                    variant="primary"
-                    className="w-full"
-                    onClick={() => openLinkModal(team)}
-                  >
-                    Vincular asesores
-                  </Button>
-                </Stack>
-              </CardFooter>
             </Card>
           ))}
         </Grid>

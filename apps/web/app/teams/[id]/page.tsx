@@ -138,7 +138,7 @@ export default function TeamDetailsPage() {
         <div>
           <Heading level={3} className="mb-4">Miembros del Equipo</Heading>
           {members.length === 0 ? (
-            <Card>
+        <Card>
               <CardContent className="p-6">
                 <Text color="secondary" className="text-center">No hay miembros en este equipo.</Text>
               </CardContent>
@@ -165,7 +165,7 @@ export default function TeamDetailsPage() {
                         <Text size="sm" color="secondary" className="truncate">
                           {member.email}
                         </Text>
-                      </div>
+                  </div>
                       <Button
                         variant="primary"
                         size="sm"
@@ -177,9 +177,9 @@ export default function TeamDetailsPage() {
                       >
                         Ver CRM
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                </div>
+          </CardContent>
+        </Card>
               ))}
             </div>
           )}
