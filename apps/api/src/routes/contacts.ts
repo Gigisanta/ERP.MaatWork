@@ -1,7 +1,7 @@
 // REGLA CURSOR: Endpoint principal de contactos - mantener RBAC y data isolation, no alterar sin documentar breaking changes
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, contacts, contactFieldHistory, contactTags, tags, tasks, attachments, pipelineStages, users } from '@cactus/db';
-import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../auth/authorization';
 import { createDrizzleLogger } from '../utils/db-logger';
