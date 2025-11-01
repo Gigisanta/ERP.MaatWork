@@ -1,7 +1,7 @@
 // REGLA CURSOR: Sistema de etiquetas - mantener case-insensitive, autocompletado con debounce, validación Zod
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, tags, contactTags, tagRules, segments, segmentMembers, contacts } from '@cactus/db';
-import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessContact, getUserAccessScope, buildContactAccessFilter } from '../auth/authorization';
 import { z } from 'zod';
@@ -740,7 +740,8 @@ router.get('/segments/:id/contacts',
       .limit(parseInt(limit as string))
       .offset(parseInt(offset as string));
 
-    const contactIds = members.map((m: any) => m.contactId);
+    type SegmentMember = InferSelectModel<typeof segmentMembers>;
+    const contactIds = members.map((m: SegmentMember) => m.contactId);
 
     let contactsList = [];
     if (contactIds.length > 0) {
@@ -785,7 +786,8 @@ router.get('/segments/:id/export', requireAuth, async (req: Request, res: Respon
       .from(segmentMembers)
       .where(eq(segmentMembers.segmentId, id));
 
-    const contactIds = members.map((m: any) => m.contactId);
+    type SegmentMember = InferSelectModel<typeof segmentMembers>;
+    const contactIds = members.map((m: SegmentMember) => m.contactId);
 
     let contactsList = [];
     if (contactIds.length > 0) {
@@ -803,7 +805,7 @@ router.get('/segments/:id/export', requireAuth, async (req: Request, res: Respon
     const headers = ['id', 'fullName', 'email', 'phone', 'pipelineStageId', 'assignedAdvisorId'];
     const csv = [
       headers.join(','),
-      ...contactsList.map((item: any) => headers.map(h => item[h as keyof typeof item] || '').join(','))
+      ...contactsList.map((item: InferSelectModel<typeof contacts>) => headers.map(h => item[h as keyof typeof item] || '').join(','))
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');

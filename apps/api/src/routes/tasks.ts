@@ -558,7 +558,8 @@ router.get('/export/csv',
     const headers = ['id', 'title', 'status', 'priority', 'dueDate', 'assignedToUserId', 'contactId', 'createdAt'];
     const csv = [
       headers.join(','),
-      ...items.map((item: any) => headers.map(h => item[h as keyof typeof item] || '').join(','))
+      type TaskItem = InferSelectModel<typeof tasks>;
+      ...items.map((item: TaskItem) => headers.map(h => item[h as keyof typeof item] || '').join(','))
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');

@@ -1,7 +1,7 @@
 // REGLA CURSOR: Pipeline Kanban - mantener RBAC, data isolation, validación Zod, logging con req.log
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
-import { eq, desc, and, isNull, sql, count, avg, sum, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql, count, avg, sum, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
@@ -73,9 +73,14 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     // AI_DECISION: Replace N+2 loop with single GROUP BY query for 80% latency reduction
     // Justificación: Promise.all with individual queries creates N+2 pattern (1 for stages + N for counts)
     // Impacto: API p95 reduction from ~80ms → ~15ms for 7 stages
-    const stageIds = stages.map((stage: any) => stage.id);
+    type PipelineStage = InferSelectModel<typeof pipelineStages>;
+    const stageIds = stages.map((stage: PipelineStage) => stage.id);
     
     // Single query to get counts for all stages at once
+    type StageCount = {
+      pipelineStageId: string | null;
+      count: number | bigint;
+    };
     const stageCounts = stageIds.length > 0 ? await db()
       .select({
         pipelineStageId: contacts.pipelineStageId,
@@ -87,15 +92,15 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
         isNull(contacts.deletedAt),
         accessFilter.whereClause
       ))
-      .groupBy(contacts.pipelineStageId) : [];
+      .groupBy(contacts.pipelineStageId) as StageCount[] : [];
 
     // Create a map for O(1) lookup
     const countsMap = new Map(
-      stageCounts.map((sc: any) => [sc.pipelineStageId, Number(sc.count)])
+      stageCounts.map((sc: StageCount) => [sc.pipelineStageId, Number(sc.count)])
     );
 
     // Merge counts with stages
-    const stagesWithCounts = stages.map((stage: any) => ({
+    const stagesWithCounts = stages.map((stage: PipelineStage) => ({
       ...stage,
       contactCount: countsMap.get(stage.id) || 0
     }));
@@ -186,7 +191,7 @@ router.get('/board',
 
     // Para cada etapa, obtener contactos
     const board = await Promise.all(
-      stages.map(async (stage: any) => {
+      stages.map(async (stage: PipelineStage) => {
         const conditions = [
           eq(contacts.pipelineStageId, stage.id),
           isNull(contacts.deletedAt)
@@ -344,7 +349,7 @@ router.get('/metrics',
 
     // Métricas por etapa
     const stageMetrics = await Promise.all(
-      stages.map(async (stage: any) => {
+      stages.map(async (stage: PipelineStage) => {
         // Total de contactos que entraron a esta etapa
         const historyConditions = [eq(pipelineStageHistory.toStage, stage.id)];
         
@@ -453,7 +458,16 @@ router.get('/metrics/export',
       .where(eq(pipelineStages.isActive, true))
       .orderBy(pipelineStages.order);
 
-    const metrics: any[] = [];
+    type StageMetric = {
+      stageId: string;
+      stageName: string;
+      entered: number;
+      exited: number;
+      averageTimeInDays: number;
+      totalValue: number;
+    };
+    
+    const metrics: StageMetric[] = [];
 
     for (const stage of stages) {
       const historyConditions = [eq(pipelineStageHistory.toStage, stage.id)];

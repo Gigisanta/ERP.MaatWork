@@ -708,11 +708,14 @@ router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, nex
     const dbi = db();
     // Members of this team
     const teamMembers = await dbi.select({ userId: teamMembership.userId }).from(teamMembership).where(eq(teamMembership.teamId, teamId));
-    const teamMemberIds = new Set<string>(teamMembers.map((r: any) => r.userId));
+    type TeamMemberWithUserId = {
+      userId: string | null;
+    };
+    const teamMemberIds = new Set<string>(teamMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter(id => id));
 
     // Users that are in any team (enforce one-team policy)
     const allMembers = await dbi.select({ userId: teamMembership.userId }).from(teamMembership);
-    const anyTeamMemberIds = new Set<string>(allMembers.map((r: any) => r.userId));
+    const anyTeamMemberIds = new Set<string>(allMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter(id => id));
 
     // Manager of this team
     const [teamRow] = await dbi.select().from(teams).where(eq(teams.id, teamId)).limit(1);
@@ -735,7 +738,10 @@ router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, nex
       .where(eq(users.role, 'advisor'))
       .limit(500);
 
-    const eligible = advisors.filter((a: any) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
+    type Advisor = {
+      id: string;
+    };
+    const eligible = advisors.filter((a: Advisor) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
 
     return res.json({ data: eligible });
   } catch (err) {
