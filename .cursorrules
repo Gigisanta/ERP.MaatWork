@@ -264,9 +264,25 @@ router.push('/portfolios/123');
 window.location.href = '/portfolios/123';
 ```
 
-### 7. Tests Unitarios Básicos
+### 7. Estrategia de Testing
 
-**Crear tests para:**
+**Framework Stack:**
+- ✅ **Vitest** para unit tests (NO Jest)
+- ✅ **Playwright** para E2E tests
+- ✅ **Testing Library** para componentes React
+
+**Pirámide de Testing:**
+```
+        ╱╲
+       ╱E2E╲         ← 10-20% (Playwright)
+      ╱────╲
+     ╱ Integ╲        ← 20-30% (Supertest + DB)
+    ╱────────╲
+   ╱  Unit    ╲      ← 50-70% (Vitest)
+  ╱────────────╲
+```
+
+**Crear unit tests para:**
 - ✅ Funciones de validación
 - ✅ Cálculos de negocio
 - ✅ Utilidades/helpers
@@ -274,9 +290,26 @@ window.location.href = '/portfolios/123';
 
 **Ubicación:** `[file].test.ts` al lado del archivo original
 
+**Comandos:**
+```bash
+# Unit tests
+pnpm test                    # Run all unit tests
+pnpm -F @cactus/api test     # Backend only
+pnpm -F @cactus/web test     # Frontend only
+pnpm test:coverage           # With coverage
+
+# E2E tests (futuro)
+pnpm test:e2e                # Run E2E tests
+```
+
+**Coverage Targets:**
+- Backend: ≥70% (lines, functions, branches, statements)
+- Frontend: ≥60% (lines, functions, branches, statements)
+
 **Ejemplo:**
 ```typescript
 // batch-validation.test.ts
+import { describe, it, expect } from 'vitest';
 import { validateBatchIds } from './batch-validation';
 
 describe('validateBatchIds', () => {
@@ -297,6 +330,12 @@ describe('validateBatchIds', () => {
   });
 });
 ```
+
+**E2E Testing (Playwright):**
+- Page Object Model (POM) obligatorio
+- Tests en `tests/e2e/specs/[feature]/`
+- API-first setup (crear data vía API, testear solo UI)
+- Ver `E2E_TESTING_GUIDE.md` para detalles completos
 
 ### 8. Logging Estructurado
 
@@ -443,7 +482,9 @@ const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
 - **Validaciones:** `apps/api/src/schemas/[domain].ts`
 - **Utils:** `apps/api/src/utils/[feature].ts`
 - **Config:** `apps/api/src/config/[feature].ts`
-- **Tests:** `[file].test.ts` (mismo directorio)
+- **Tests Unitarios:** `[file].test.ts` (mismo directorio)
+- **Tests E2E:** `tests/e2e/specs/[feature]/` (Page Object Model)
+- **Testing Guide:** `E2E_TESTING_GUIDE.md`
 
 **Score objetivo:** 8.5+/10 en todas las categorías de calidad
 
