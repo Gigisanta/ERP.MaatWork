@@ -5,6 +5,7 @@
 // Impacto: New UI component for AUM normalization workflow
 
 import { useState } from 'react';
+import { apiClient } from '@/lib/api-client';
 
 interface ContactUserPickerProps {
   fileId: string;
@@ -12,7 +13,6 @@ interface ContactUserPickerProps {
   initialContactId?: string | null;
   initialUserId?: string | null;
   onSave?: () => void;
-  token: string | null;
 }
 
 export default function ContactUserPicker({
@@ -20,8 +20,7 @@ export default function ContactUserPicker({
   rowId,
   initialContactId,
   initialUserId,
-  onSave,
-  token
+  onSave
 }: ContactUserPickerProps) {
   const [contactId, setContactId] = useState(initialContactId || '');
   const [userId, setUserId] = useState(initialUserId || '');
@@ -34,28 +33,16 @@ export default function ContactUserPicker({
     setError(null);
     setSuccess(false);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${base}/admin/aum/uploads/${fileId}/match`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}) 
-        },
-        body: JSON.stringify({ 
-          rowId, 
-          matchedContactId: contactId || null, 
-          matchedUserId: userId || null 
-        })
+      await apiClient.post(`/admin/aum/uploads/${fileId}/match`, { 
+        rowId, 
+        matchedContactId: contactId || null, 
+        matchedUserId: userId || null 
       });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text);
-      }
       setSuccess(true);
       if (onSave) onSave();
       setTimeout(() => setSuccess(false), 2000);
     } catch (e: any) {
-      setError(e.message || 'Error al guardar');
+      setError(e.userMessage || e.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -92,6 +79,3 @@ export default function ContactUserPicker({
     </div>
   );
 }
-
-
-

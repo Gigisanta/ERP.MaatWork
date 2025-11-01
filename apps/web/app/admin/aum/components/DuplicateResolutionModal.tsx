@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface DuplicateRow {
   id: string;
@@ -42,7 +42,6 @@ export default function DuplicateResolutionModal({
   onClose,
   onResolved
 }: DuplicateResolutionModalProps) {
-  const { token } = useAuth();
   const [rows, setRows] = useState<DuplicateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,18 +58,13 @@ export default function DuplicateResolutionModal({
     setLoading(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${base}/admin/aum/rows/duplicates/${accountNumber}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      const data = await apiClient.get<{ok: boolean; accountNumber: string; rows: DuplicateRow[]; hasConflicts: boolean}>(`/admin/aum/rows/duplicates/${accountNumber}`);
       setRows(data.rows || []);
       // Auto-select the preferred row if exists
       const preferred = data.rows.find((r: DuplicateRow) => r.isPreferred);
       if (preferred) setSelectedRowId(preferred.id);
     } catch (e: any) {
-      setError(e.message || 'Error');
+      setError(e.userMessage || e.message || 'Error');
     } finally {
       setLoading(false);
     }
@@ -81,22 +75,13 @@ export default function DuplicateResolutionModal({
     setSaving(true);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      
       // Update is_preferred for all rows for this account
       for (const row of rows) {
-        await fetch(`${base}/admin/aum/uploads/${row.fileId}/match`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            rowId: row.id,
-            matchedContactId: row.matchedContactId,
-            matchedUserId: row.matchedUserId,
-            isPreferred: row.id === selectedRowId
-          })
+        await apiClient.post(`/admin/aum/uploads/${row.fileId}/match`, {
+          rowId: row.id,
+          matchedContactId: row.matchedContactId,
+          matchedUserId: row.matchedUserId,
+          isPreferred: row.id === selectedRowId
         });
       }
       
