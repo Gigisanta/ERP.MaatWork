@@ -1,14 +1,16 @@
 # CACTUS Monorepo — Arquitectura y Decisiones
 
 ## Estructura general
-- Monorepo pnpm + Turborepo
-- Apps:
+- **Monorepo:** `pnpm workspaces` + `turborepo`
+- **Apps:**
   - API: `apps/api` (Express 5 + TypeScript + Pino + Helmet + CORS)
   - Web: `apps/web` (Next.js App Router)
   - Analytics: `apps/analytics-service` (Python + yfinance)
-- Paquetes:
-  - DB: `packages/db` (Drizzle ORM + PostgreSQL)
-  - UI: `packages/ui` (Design system)
+- **Packages:**
+  - DB: `packages/db` (Drizzle ORM + PostgreSQL 16)
+  - UI: `packages/ui` (Design System + React Components)
+- **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
+- **Requisitos:** Node.js >=22.0.0, pnpm >=9.0.0
 
 ## Decisiones claves recientes
 // AI_DECISION: Endurecer validación de variables de entorno
@@ -141,21 +143,35 @@ POST   /analytics/compare                 # Comparar portfolios
 - **Ambos coexisten**: Templates referencian instrumentos que Epic-D analiza
 
 ## Frontend (Web)
-- App Router; islas cliente para interactividad
-- Auth: token en localStorage + cookie corta para middleware
-- CSP ajustada por entorno
+- **Next.js App Router:** Server/Client Components
+- **Pattern Client Islands:** Extract interactive sections into small components (< 100 lines)
+- **Auth:** Token en localStorage + cookie corta para middleware
+- **Data Fetching:** SWR para client-side mutations
+- **CSP:** Ajustada por entorno (desarrollo vs producción)
 
 ## DB (Drizzle)
-- `packages/db/migrations` es la fuente de verdad
-- Seeds idempotentes; `db:init` compone seeds esenciales
-- Prohibido usar `push` en CI/producción
+- **Schema:** `packages/db/src/schema.ts` (definiciones de tablas)
+- **Migraciones:** `packages/db/migrations` es la fuente de verdad
+- **Flujo:** Modificar schema → `pnpm -F @cactus/db generate` → `pnpm -F @cactus/db migrate`
+- **Seeds:** Idempotentes; `pnpm -F @cactus/db seed:all` compone seeds esenciales
+- **Prohibido:** Usar `drizzle-kit push` en CI/producción (es destructivo)
 
 ## Analytics (Python)
 - yfinance con backoff exponencial y cache en memoria (TTL)
 - Endpoints consumidos por API (`/search`, `/prices/*`)
 
-## UI
-- Componentes con props accesibles (`aria-*`) y tamaños acotados
+## UI (@cactus/ui)
+
+**Estructura:**
+- **Componentes:** Organizados por categoría (`forms/`, `feedback/`, `nav/`)
+- **Primitives:** Building blocks (Box, Text, Stack, Grid, etc.)
+- **Exports específicos:** NO usar `export *` (tree-shaking)
+- **Tests:** Co-ubicados con componentes (`Component.test.tsx`)
+
+**Reglas:**
+- ✅ Componentes accesibles (`aria-*`) y tamaños acotados
+- ✅ Tipos exportados explícitamente (`type ComponentProps`)
+- ✅ Build genera `dist/` con `.js` y `.d.ts`
 
 ## Variables de entorno
 - API: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`, `JWT_SECRET`, `JWT_EXPIRES_IN`
