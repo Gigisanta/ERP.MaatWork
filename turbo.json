@@ -60,8 +60,7 @@
         "**/*.test.tsx",
         "vitest.config.*",
         "package.json"
-      ],
-      "outputs": ["coverage/**"]
+      ]
     },
     "test:watch": {
       "cache": false,

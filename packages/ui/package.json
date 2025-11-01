@@ -22,8 +22,9 @@
     "build": "tsc && pnpm run build:styles",
     "build:styles": "copyfiles -u 2 src/styles/**/*.css dist/styles",
     "dev": "echo 'UI package does not need dev mode'",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts,.tsx --no-error-on-unmatched-pattern",
     "type-check": "tsc --noEmit",
     "typecheck": "pnpm run type-check"
@@ -46,15 +47,17 @@
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^13.3.0",
-    "@types/jest": "^28.1.4",
+    "@testing-library/user-event": "^14.5.1",
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/ui": "^4.0.6",
     "copyfiles": "^2.4.1",
-    "jest": "^28.1.2",
-    "jest-environment-jsdom": "^28.1.2",
-    "typescript": "^5.0.4"
+    "jsdom": "^27.1.0",
+    "typescript": "^5.0.4",
+    "vitest": "^4.0.6"
   },
   "engines": {
     "node": ">=22.0.0"
