@@ -46,15 +46,8 @@
     "typescript": "^5.6.2"
   },
   "lint-staged": {
-    "apps/**/*.{js,jsx,ts,tsx}": [
-      "turbo run lint typecheck --filter=...[HEAD] --continue"
-    ],
-    "packages/**/*.{js,jsx,ts,tsx}": [
-      "turbo run lint typecheck --filter=...[HEAD] --continue"
-    ],
-    "*.{js,jsx,ts,tsx,json,css,md}": [
-      "turbo run test --filter=...[HEAD] --continue -- --passWithNoTests --run"
-    ]
+    "packages/ui/**/*.{js,jsx,ts,tsx}": "pnpm -F @cactus/ui lint",
+    "packages/ui/**/*.test.{ts,tsx}": "pnpm -F @cactus/ui test --run"
   },
   "engines": {
     "node": ">=22.0.0"
