@@ -7,7 +7,6 @@ import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, tea
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
-import { Pool } from 'pg';
 import { z } from 'zod';
 import { validate } from '../utils/validation';
 import { 
@@ -16,6 +15,8 @@ import {
   paginationQuerySchema,
   brokerSchema 
 } from '../utils/common-schemas';
+import { AUM_LIMITS } from '../config/aum-limits';
+import { createErrorResponse } from '../utils/error-response';
 
 const router = Router();
 
@@ -76,14 +77,10 @@ const matchRowBodySchema = z.object({
 
 const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
 
-// Singleton Pool for raw SQL queries
-let _rawPool: Pool | null = null;
-function getRawPool(): Pool {
-  if (!_rawPool) {
-    _rawPool = new Pool({ connectionString: process.env.DATABASE_URL });
-  }
-  return _rawPool;
-}
+// AI_DECISION: Eliminar Pool manual - usar solo Drizzle
+// Justificación: Drizzle ya maneja conexiones con pool interno, duplicar pool causa problemas
+// Impacto: Mejor gestión de conexiones, sin riesgo de pool exhaustion
+
 const storage = multer.diskStorage({
   destination: async (_req, _file, cb) => {
     try {
@@ -286,14 +283,20 @@ router.post('/uploads/:fileId/commit',
       message: `${upserts} cuentas sincronizadas` + (skipped > 0 ? `, ${skipped} omitidas` : '')
     });
   } catch (error) {
-    (req as any).log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM commit failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    req.log.error({ err: error, fileId: req.params.fileId }, 'AUM commit failed');
+    return res.status(500).json(
+      createErrorResponse({
+        error,
+        requestId: (req as any).requestId,
+        userMessage: 'Error procesando commit de archivo'
+      })
+    );
   }
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 } // 25MB
+  limits: { fileSize: AUM_LIMITS.MAX_FILE_SIZE }
 });
 
 async function ensureAumTables(dbi: any) {
@@ -354,32 +357,36 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
     const ws = wb.Sheets[sheetName];
     const json = XLSX.utils.sheet_to_json(ws, { defval: null }) as Array<Record<string, unknown>>;
     return json.map((r: Record<string, unknown>) => ({
-      accountNumber: (r['Cuenta comitente'] as string) ?? null,
-      holderName: (r['Titular'] as string) ?? null,
-      advisorRaw: (r['asesor'] as string) ?? null,
+      accountNumber: (r['Cuenta comitente'] as string) ?? (r['comitente'] as string) ?? null,
+      holderName: (r['Titular'] as string) ?? (r['Descripcion'] as string) ?? null,
+      advisorRaw: (r['asesor'] as string) ?? (r['Asesor'] as string) ?? null,
       raw: r
     }));
   }
-  // CSV simple usando Node (para MVP mejor XLSX)
+  
+  // AI_DECISION: Usar csv-parse para parsing robusto en lugar de split manual
+  // Justificación: Maneja correctamente comillas escapadas, campos con comas, multilinea, encoding
+  // Impacto: Parsing más seguro y confiable, especialmente con CSVs complejos
+  const { parse } = await import('csv-parse/sync');
   const content = await fs.readFile(filePath, 'utf-8');
-  const [headerLine, ...lines] = content.split(/\r?\n/).filter(Boolean);
-  const headers = headerLine.split(',').map((h) => h.trim().replace(/^"|"$/g, ''));
-  const idxCuenta = headers.findIndex((h) => h.toLowerCase() === 'cuenta comitente');
-  const idxTitular = headers.findIndex((h) => h.toLowerCase() === 'titular');
-  const idxAsesor = headers.findIndex((h) => h.toLowerCase() === 'asesor');
-  const rows: Array<{ accountNumber: string | null; holderName: string | null; advisorRaw: string | null; raw: Record<string, unknown>; }> = [];
-  for (const line of lines) {
-    const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-    const record: Record<string, unknown> = {};
-    headers.forEach((h, i) => { record[h] = cols[i] ?? null; });
-    rows.push({
-      accountNumber: idxCuenta >= 0 ? (cols[idxCuenta] || null) : null,
-      holderName: idxTitular >= 0 ? (cols[idxTitular] || null) : null,
-      advisorRaw: idxAsesor >= 0 ? (cols[idxAsesor] || null) : null,
-      raw: record
-    });
-  }
-  return rows;
+  
+  const records = parse(content, {
+    columns: true,           // Usar primera fila como headers
+    skip_empty_lines: true,  // Ignorar líneas vacías
+    trim: true,              // Trim whitespace
+    bom: true,               // Handle UTF-8 BOM
+    relax_quotes: true,      // Más tolerante con comillas
+    escape: '"',             // Comillas escapadas con ""
+    quote: '"',              // Comillas para campos
+    cast: false              // No convertir tipos automáticamente
+  }) as Array<Record<string, string>>;
+
+  return records.map((r) => ({
+    accountNumber: r['Cuenta comitente'] || r['comitente'] || null,
+    holderName: r['Titular'] || r['Descripcion'] || null,
+    advisorRaw: r['asesor'] || r['Asesor'] || null,
+    raw: r as Record<string, unknown>
+  }));
 }
 
 // POST /admin/aum/uploads
@@ -510,12 +517,12 @@ router.post('/uploads',
             WHERE deleted_at IS NULL
               AND full_name % ${r.holderName}
             ORDER BY sim_score DESC
-            LIMIT 5
+            LIMIT ${AUM_LIMITS.MAX_SIMILARITY_RESULTS}
           `);
           
-          // If we get a high-confidence match (threshold > 0.5), use it
+          // If we get a high-confidence match (threshold), use it
           const rows = res.rows as any[];
-          if (rows.length > 0 && rows[0].sim_score > 0.5) {
+          if (rows.length > 0 && rows[0].sim_score > AUM_LIMITS.SIMILARITY_THRESHOLD) {
             matchedContactId = rows[0].id as string;
           }
         } catch (e) {
@@ -570,7 +577,7 @@ router.post('/uploads',
     }
 
     // Insert rows in batches (raw SQL for robustness)
-    const batchSize = 250;
+    const batchSize = AUM_LIMITS.BATCH_INSERT_SIZE;
     for (let i = 0; i < rowsToInsert.length; i += batchSize) {
       const chunk = rowsToInsert.slice(i, i + batchSize);
       for (const r of chunk) {
@@ -744,46 +751,20 @@ router.post('/uploads/:fileId/match',
     const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
     if (!file) return res.status(404).json({ error: 'File not found' });
 
-    // Update row matching - use raw SQL with proper escaping
-    const newStatus = matchedContactId ? 'matched' : 'unmatched';
-    
-    const updateFields: string[] = [];
-    const updateValues: any[] = [];
-    let paramNum = 1;
-    
-    if (matchedContactId) {
-      updateFields.push(`matched_contact_id = $${paramNum++}`);
-      updateValues.push(matchedContactId);
-    } else {
-      updateFields.push('matched_contact_id = NULL');
-    }
-    
-    if (matchedUserId) {
-      updateFields.push(`matched_user_id = $${paramNum++}`);
-      updateValues.push(matchedUserId);
-    } else {
-      updateFields.push('matched_user_id = NULL');
-    }
-    
-    updateFields.push(`match_status = $${paramNum++}`);
-    updateValues.push(newStatus);
-    
-    if (typeof isPreferred === 'boolean') {
-      updateFields.push(`is_preferred = $${paramNum++}`);
-      updateValues.push(isPreferred);
-    }
-    
-    const whereConditions: string[] = [
-      `id = $${paramNum++}`,
-      `file_id = $${paramNum++}`
-    ];
-    updateValues.push(rowId, fileId);
-    
-    const updateQuery = `UPDATE aum_import_rows SET ${updateFields.join(', ')} WHERE ${whereConditions.join(' AND ')}`;
-    
-    // Execute with raw Pool query
-    const pool = getRawPool();
-    await pool.query(updateQuery, updateValues);
+    // AI_DECISION: Usar Drizzle query builder en lugar de Pool manual
+    // Justificación: Más seguro, tipado, y usa el pool existente de Drizzle
+    // Impacto: Código más limpio y sin duplicación de conexiones
+    await dbi.update(aumImportRows)
+      .set({
+        matchedContactId: matchedContactId || null,
+        matchedUserId: matchedUserId || null,
+        matchStatus: newStatus,
+        ...(typeof isPreferred === 'boolean' && { isPreferred })
+      })
+      .where(and(
+        eq(aumImportRows.id, rowId),
+        eq(aumImportRows.fileId, fileId)
+      ));
 
     // Recompute file totals
     const totals = await dbi.execute(sql`
@@ -811,7 +792,10 @@ router.post('/uploads/:fileId/match',
 // GET /admin/aum/rows/all - Get all imported rows with pagination and filters
 router.get('/rows/all', requireAuth, async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit || 50), 200);
+    const limit = Math.min(
+      Number(req.query.limit || AUM_LIMITS.DEFAULT_PAGE_SIZE), 
+      AUM_LIMITS.MAX_ROWS_PER_PAGE
+    );
     const offset = Number(req.query.offset || 0);
     const broker = req.query.broker as string | undefined;
     const status = req.query.status as string | undefined;
