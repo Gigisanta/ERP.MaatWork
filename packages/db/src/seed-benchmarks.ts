@@ -6,6 +6,7 @@ import {
   metricDefinitions,
   lookupAssetClass 
 } from './schema';
+import { type InferSelectModel } from 'drizzle-orm';
 
 export async function seedBenchmarks() {
   console.log('🌱 Seeding benchmarks and instruments...');
@@ -104,58 +105,58 @@ export async function seedBenchmarks() {
   const benchmarkComponentsData = [
     // MERVAL (100% MERVAL index)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'MERVAL')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === '^MERV')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'MERVAL')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === '^MERV')!.id,
       weight: 1.0000
     },
     
     // S&P 500 (100% SP500 index)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'SP500')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === '^GSPC')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'SP500')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === '^GSPC')!.id,
       weight: 1.0000
     },
     
     // MSCI EM (100% EEM ETF)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'MSCI_EM')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === 'EEM')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'MSCI_EM')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === 'EEM')!.id,
       weight: 1.0000
     },
     
     // Cartera Balanceada Argentina (60% MERVAL + 40% Bonos)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'BALANCED_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === '^MERV')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'BALANCED_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === '^MERV')!.id,
       weight: 0.6000
     },
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'BALANCED_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === 'AL30D.BA')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'BALANCED_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === 'AL30D.BA')!.id,
       weight: 0.4000
     },
     
     // Cartera Conservadora Argentina (40% MERVAL + 60% Bonos)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'CONSERVATIVE_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === '^MERV')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'CONSERVATIVE_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === '^MERV')!.id,
       weight: 0.4000
     },
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'CONSERVATIVE_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === 'AL30D.BA')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'CONSERVATIVE_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === 'AL30D.BA')!.id,
       weight: 0.6000
     },
     
     // Cartera Agresiva Argentina (80% MERVAL + 20% Bonos)
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'AGGRESSIVE_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === '^MERV')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'AGGRESSIVE_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === '^MERV')!.id,
       weight: 0.8000
     },
     {
-      benchmarkId: insertedBenchmarks.find((b: any) => b.code === 'AGGRESSIVE_AR')!.id,
-      instrumentId: insertedInstruments.find((i: any) => i.symbol === 'AL30D.BA')!.id,
+      benchmarkId: insertedBenchmarks.find((b: InferSelectModel<typeof benchmarkDefinitions>) => b.code === 'AGGRESSIVE_AR')!.id,
+      instrumentId: insertedInstruments.find((i: InferSelectModel<typeof instruments>) => i.symbol === 'AL30D.BA')!.id,
       weight: 0.2000
     }
   ];

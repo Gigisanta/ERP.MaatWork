@@ -112,7 +112,11 @@ async function seed() {
         await db().insert(notificationTemplates).values(template);
         console.log(`  ✓ Template creado: ${template.name}`);
       } catch (err: any) {
-        if (err.message?.includes('UNIQUE')) {
+        type ErrorWithMessage = {
+          message?: string;
+        };
+        const error = err as ErrorWithMessage;
+        if (error.message?.includes('UNIQUE')) {
           console.log(`  ⊙ Template ya existe: ${template.name}`);
         } else {
           throw err;

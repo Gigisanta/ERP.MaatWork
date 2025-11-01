@@ -134,7 +134,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const requestId = req.headers['x-request-id'] as string || uuidv4();
   
   // Adjuntar al objeto req para uso posterior
-  (req as any).requestId = requestId;
+  type RequestWithRequestId = Request & { requestId?: string };
+  (req as RequestWithRequestId).requestId = requestId;
   
   // Incluir en response headers para rastreo frontend
   res.setHeader('X-Request-ID', requestId);

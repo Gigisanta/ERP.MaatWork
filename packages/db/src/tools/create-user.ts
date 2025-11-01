@@ -26,7 +26,7 @@ async function createUser() {
     console.log('   3. No necesitas contraseña\n');
     
     process.exit(0);
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err.message && err.message.includes('duplicate key')) {
       console.log('ℹ️  El usuario ya existe!');
       console.log('   Email: test@example.com\n');

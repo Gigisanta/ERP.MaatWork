@@ -144,8 +144,12 @@ async function seedLookupTables() {
         .values(status)
         .onConflictDoNothing();
       console.log(`  ✓ Task status: ${status.label}`);
-    } catch (err: any) {
-      if (!err.message?.includes('UNIQUE')) {
+    } catch (err: unknown) {
+      type ErrorWithMessage = {
+        message?: string;
+      };
+      const error = err as ErrorWithMessage;
+      if (!error.message?.includes('UNIQUE')) {
         console.error(`  ✗ Error with task status ${status.label}:`, err.message);
       }
     }
@@ -166,9 +170,13 @@ async function seedLookupTables() {
         .values(priority)
         .onConflictDoNothing();
       console.log(`  ✓ Priority: ${priority.label}`);
-    } catch (err: any) {
-      if (!err.message?.includes('UNIQUE')) {
-        console.error(`  ✗ Error with priority ${priority.label}:`, err.message);
+    } catch (err: unknown) {
+      type ErrorWithMessage = {
+        message?: string;
+      };
+      const error = err as ErrorWithMessage;
+      if (!error.message?.includes('UNIQUE')) {
+        console.error(`  ✗ Error with priority ${priority.label}:`, error.message);
       }
     }
   }
@@ -189,8 +197,12 @@ async function seedLookupTables() {
         .values(type)
         .onConflictDoNothing();
       console.log(`  ✓ Notification type: ${type.label}`);
-    } catch (err: any) {
-      if (!err.message?.includes('UNIQUE')) {
+    } catch (err: unknown) {
+      type ErrorWithMessage = {
+        message?: string;
+      };
+      const error = err as ErrorWithMessage;
+      if (!error.message?.includes('UNIQUE')) {
         console.error(`  ✗ Error with notification type ${type.label}:`, err.message);
       }
     }
@@ -212,8 +224,12 @@ async function seedLookupTables() {
         .values(assetClass)
         .onConflictDoNothing();
       console.log(`  ✓ Asset class: ${assetClass.label}`);
-    } catch (err: any) {
-      if (!err.message?.includes('UNIQUE')) {
+    } catch (err: unknown) {
+      type ErrorWithMessage = {
+        message?: string;
+      };
+      const error = err as ErrorWithMessage;
+      if (!error.message?.includes('UNIQUE')) {
         console.error(`  ✗ Error with asset class ${assetClass.label}:`, err.message);
       }
     }
