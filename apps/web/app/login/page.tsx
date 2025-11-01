@@ -116,7 +116,7 @@ export default function LoginPage() {
                   placeholder="Tu contraseña"
                   disabled={loading}
                   required
-                  showPasswordToggle
+                  showPasswordToggle={true}
                 />
 
                 {/* Remember me */}

@@ -19,6 +19,26 @@ import {
 } from 'lucide-react';
 import AssetSearcher from '../components/AssetSearcher';
 import PortfolioComparator from '../components/PortfolioComparator';
+import { 
+  getPortfolios, 
+  getPortfolioLinesBatch, 
+  getBenchmarks, 
+  getBenchmarkComponentsBatch,
+  createPortfolio,
+  updatePortfolio as updatePortfolioApi,
+  deletePortfolio,
+  addPortfolioLine,
+  getPortfolioLines,
+  createBenchmark,
+  updateBenchmark,
+  deleteBenchmark,
+  getBenchmarkById,
+  addBenchmarkComponent
+} from '@/lib/api';
+import { createInstrument, getInstruments } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import { API_BASE_URL } from '../../lib/api-url';
+import type { Portfolio, PortfolioLine, Benchmark, BenchmarkComponent, BenchmarkComponentForm, Instrument, InstrumentSearchResult, RiskLevel } from '@/types';
 import {
   Grid,
   Card,
@@ -56,35 +76,26 @@ interface PortfolioTemplate {
   lines?: PortfolioLine[];
 }
 
-interface PortfolioLine {
-  id: string;
-  instrumentId: string;
-  instrumentSymbol: string;
-  instrumentName: string;
-  targetWeight: number;
+// Helper para convertir Portfolio a PortfolioTemplate
+function portfolioToTemplate(portfolio: Portfolio): PortfolioTemplate {
+  return {
+    id: portfolio.id,
+    name: portfolio.name,
+    description: portfolio.description ?? '',
+    riskLevel: portfolio.riskLevel,
+    isActive: true,
+    createdAt: portfolio.createdAt,
+    lines: portfolio.lines ?? []
+  };
 }
 
-interface Benchmark {
-  id: string;
-  name: string;
-  description: string;
-  code: string;
-  isSystem: boolean;
-  components?: BenchmarkComponent[];
-}
-
-interface BenchmarkComponent {
-  id: string;
-  instrumentId: string;
-  instrumentSymbol: string;
-  weight: number;
-}
+// Types ahora importados desde @/types
 
 export default function PortfoliosPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter(); // AI_DECISION: Use Next.js router instead of window.location
   const [activeSection, setActiveSection] = useState<string>('portfolios');
-  const [portfolios, setPortfolios] = useState<PortfolioTemplate[]>([]);
+  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,11 +107,11 @@ export default function PortfoliosPage() {
     description: '',
     riskLevel: 'moderate'
   });
-  const [portfolioLines, setPortfolioLines] = useState<any[]>([]);
+  const [portfolioLines, setPortfolioLines] = useState<PortfolioLine[]>([]);
   const [totalWeight, setTotalWeight] = useState(0);
 
   // Estados para editar carteras
-  const [editingPortfolio, setEditingPortfolio] = useState<PortfolioTemplate | null>(null);
+  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
   const [showEditPortfolio, setShowEditPortfolio] = useState(false);
 
   // Estados para crear/editar benchmarks
@@ -112,7 +123,7 @@ export default function PortfoliosPage() {
     description: '',
     code: ''
   });
-  const [benchmarkComponents, setBenchmarkComponents] = useState<any[]>([]);
+  const [benchmarkComponents, setBenchmarkComponents] = useState<BenchmarkComponentForm[]>([]);
 
   // Estado para toast notifications
   const [toast, setToast] = useState<{
@@ -127,7 +138,12 @@ export default function PortfoliosPage() {
   });
 
   const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setToast({ show: true, title, description, variant });
+    setToast({ 
+      show: true, 
+      title, 
+      ...(description && { description }), 
+      variant 
+    });
   };
 
   // Obtener datos reales desde API
@@ -137,112 +153,78 @@ export default function PortfoliosPage() {
       
       setIsLoading(true);
       setError(null);
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
       try {
         // Fetch portfolios
-        const portfoliosResponse = await fetch(`${apiUrl}/v1/portfolios/templates`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const portfoliosResponse = await getPortfolios();
 
-        if (portfoliosResponse.ok) {
-          const portfoliosData = await portfoliosResponse.json();
-          if (portfoliosData.success && portfoliosData.data) {
-            // Obtener líneas para TODOS los portfolios en una sola request (batch)
-            const portfolioIds = portfoliosData.data.map((p: any) => p.id);
-            
-            if (portfolioIds.length > 0) {
-              try {
-                const linesBatchResponse = await fetch(
-                  `${apiUrl}/v1/portfolios/templates/lines/batch?ids=${portfolioIds.join(',')}`,
-                  {
-                    headers: {
-                      'Authorization': `Bearer ${token}`
-                    }
-                  }
-                );
+        if (portfoliosResponse.success && portfoliosResponse.data) {
+          const portfolioIds = portfoliosResponse.data.map((p: Portfolio) => p.id);
+          
+          if (portfolioIds.length > 0) {
+            try {
+              const linesBatchResponse = await getPortfolioLinesBatch(portfolioIds);
+              
+              if (linesBatchResponse.success && linesBatchResponse.data) {
+                const linesByTemplate = linesBatchResponse.data || {};
 
-                if (linesBatchResponse.ok) {
-                  const linesBatchData = await linesBatchResponse.json();
-                  const linesByTemplate = linesBatchData.data || {};
+                // Agregar líneas a cada portfolio
+                const portfoliosWithLines = portfoliosResponse.data.map((portfolio: Portfolio) => ({
+                  ...portfolio,
+                  lines: linesByTemplate[portfolio.id] || []
+                }));
 
-                  // Agregar líneas a cada portfolio
-                  const portfoliosWithLines = portfoliosData.data.map((portfolio: any) => ({
-                    ...portfolio,
-                    lines: linesByTemplate[portfolio.id] || []
-                  }));
-
-                  setPortfolios(portfoliosWithLines);
-                } else {
-                  // Fallback: portfolios sin líneas
-                  setPortfolios(portfoliosData.data.map((p: any) => ({ ...p, lines: [] })));
-                }
-              } catch (err) {
-                console.error('Error fetching portfolio lines batch:', err);
-                setPortfolios(portfoliosData.data.map((p: any) => ({ ...p, lines: [] })));
+                setPortfolios(portfoliosWithLines);
+              } else {
+                // Fallback: portfolios sin líneas
+                setPortfolios(portfoliosResponse.data.map((p: Portfolio) => ({ ...p, lines: [] })));
               }
-            } else {
-              setPortfolios([]);
+            } catch (err) {
+              logger.error('Error fetching portfolio lines batch', { err, portfolioIds });
+              setPortfolios(portfoliosResponse.data.map((p: Portfolio) => ({ ...p, lines: [] })));
             }
+          } else {
+            setPortfolios([]);
           }
         }
 
         // Fetch benchmarks (solo si es admin/manager)
         if (user?.role === 'admin' || user?.role === 'manager') {
-          const benchmarksResponse = await fetch(`${apiUrl}/v1/benchmarks`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+          const benchmarksResponse = await getBenchmarks();
 
-          if (benchmarksResponse.ok) {
-            const benchmarksData = await benchmarksResponse.json();
-            if (benchmarksData.success && benchmarksData.data) {
-              // Obtener componentes para TODOS los benchmarks en una sola request (batch)
-              const benchmarkIds = benchmarksData.data.map((b: any) => b.id);
+          if (benchmarksResponse.success && benchmarksResponse.data) {
+            // Obtener componentes para TODOS los benchmarks en una sola request (batch)
+            const benchmarkIds = benchmarksResponse.data.map((b: Benchmark) => b.id);
 
-              if (benchmarkIds.length > 0) {
-                try {
-                  const componentsBatchResponse = await fetch(
-                    `${apiUrl}/v1/benchmarks/components/batch?ids=${benchmarkIds.join(',')}`,
-                    {
-                      headers: {
-                        'Authorization': `Bearer ${token}`
-                      }
-                    }
-                  );
+            if (benchmarkIds.length > 0) {
+              try {
+                const componentsBatchResponse = await getBenchmarkComponentsBatch(benchmarkIds);
 
-                  if (componentsBatchResponse.ok) {
-                    const componentsBatchData = await componentsBatchResponse.json();
-                    const componentsByBenchmark = componentsBatchData.data || {};
+                if (componentsBatchResponse.success && componentsBatchResponse.data) {
+                  const componentsByBenchmark = componentsBatchResponse.data || {};
 
-                    // Agregar componentes a cada benchmark
-                    const benchmarksWithComponents = benchmarksData.data.map((benchmark: any) => ({
-                      ...benchmark,
-                      components: componentsByBenchmark[benchmark.id] || []
-                    }));
+                  // Agregar componentes a cada benchmark
+                  const benchmarksWithComponents = benchmarksResponse.data.map((benchmark: Benchmark) => ({
+                    ...benchmark,
+                    components: componentsByBenchmark[benchmark.id] || []
+                  }));
 
-                    setBenchmarks(benchmarksWithComponents);
-                  } else {
-                    // Fallback: benchmarks sin componentes
-                    setBenchmarks(benchmarksData.data.map((b: any) => ({ ...b, components: [] })));
-                  }
-                } catch (err) {
-                  console.error('Error fetching benchmark components batch:', err);
-                  setBenchmarks(benchmarksData.data.map((b: any) => ({ ...b, components: [] })));
+                  setBenchmarks(benchmarksWithComponents);
+                } else {
+                  // Fallback: benchmarks sin componentes
+                  setBenchmarks(benchmarksResponse.data.map((b: Benchmark) => ({ ...b, components: [] })));
                 }
-              } else {
-                setBenchmarks([]);
+              } catch (err) {
+                logger.error('Error fetching benchmark components batch', { err, benchmarkIds });
+                setBenchmarks(benchmarksResponse.data.map((b: Benchmark) => ({ ...b, components: [] })));
               }
+            } else {
+              setBenchmarks([]);
             }
           }
         }
-
       } catch (err) {
-        console.error('Error fetching portfolios/benchmarks:', err);
+        logger.error('Error fetching portfolios/benchmarks', { err });
         setError('Error al cargar carteras y benchmarks');
       } finally {
         setIsLoading(false);
@@ -252,7 +234,7 @@ export default function PortfoliosPage() {
     fetchData();
   }, [token, loading, user?.role]);
 
-  const handleAssetSelect = (asset: any) => {
+  const handleAssetSelect = (asset: InstrumentSearchResult) => {
     // Verificar si ya existe
     const exists = portfolioLines.find(line => line.instrumentSymbol === asset.symbol);
     if (exists) {
@@ -260,8 +242,10 @@ export default function PortfoliosPage() {
       return;
     }
 
-    const newLine = {
+    const newLine: PortfolioLine = {
       id: `temp-${Date.now()}`,
+      templateId: '', // Temporary, will be set when portfolio is created
+      targetType: 'instrument',
       instrumentSymbol: asset.symbol,
       instrumentName: asset.name,
       instrumentId: null,
@@ -289,7 +273,7 @@ export default function PortfoliosPage() {
     setTotalWeight(total);
   };
 
-  const createPortfolio = async () => {
+  const handleCreatePortfolio = async () => {
     if (!newPortfolio.name.trim()) {
       showToast('Campo requerido', 'El nombre de la cartera es requerido', 'warning');
       return;
@@ -311,7 +295,6 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
       // Paso 1: Crear instrumentos si no existen
@@ -320,31 +303,18 @@ export default function PortfoliosPage() {
         if (!line.instrumentId) {
           // Crear instrumento desde símbolo
           try {
-            const instrumentResponse = await fetch(`${apiUrl}/v1/instruments`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                symbol: line.instrumentSymbol,
-                backfill_days: 365
-              })
+            const instrumentResponse = await createInstrument({
+              symbol: line.instrumentSymbol,
+              backfill_days: 365
             });
 
-            if (instrumentResponse.ok) {
-              const instrumentData = await instrumentResponse.json();
-              instrumentIds.push(instrumentData.data.instrument.id);
+            if (instrumentResponse.success && instrumentResponse.data?.instrument?.id) {
+              instrumentIds.push(instrumentResponse.data.instrument.id);
             } else {
               // Si falla, intentar buscar si ya existe
-              const searchResponse = await fetch(`${apiUrl}/v1/instruments?search=${line.instrumentSymbol}`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-              if (searchResponse.ok) {
-                const searchData = await searchResponse.json();
-                const existing = searchData.data.instruments.find((inst: any) => inst.symbol === line.instrumentSymbol);
+              const searchResponse = await getInstruments({ search: line.instrumentSymbol });
+              if (searchResponse.success && searchResponse.data?.instruments) {
+                const existing = searchResponse.data.instruments.find((inst: Instrument) => inst.symbol === line.instrumentSymbol);
                 if (existing) {
                   instrumentIds.push(existing.id);
                 } else {
@@ -355,6 +325,7 @@ export default function PortfoliosPage() {
               }
             }
           } catch (err) {
+            logger.error('Error creating/finding instrument', { err, symbol: line.instrumentSymbol });
             showToast('Error al crear instrumento', `No se pudo crear ${line.instrumentSymbol}: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
             setIsLoading(false);
             return;
@@ -365,72 +336,43 @@ export default function PortfoliosPage() {
       }
 
       // Paso 2: Crear portfolio template
-      const portfolioResponse = await fetch(`${apiUrl}/v1/portfolios/templates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newPortfolio.name,
-          description: newPortfolio.description,
-          riskLevel: newPortfolio.riskLevel
-        })
+      const portfolioResponse = await createPortfolio({
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+        riskLevel: newPortfolio.riskLevel as RiskLevel
       });
 
-      if (!portfolioResponse.ok) {
-        const errorData = await portfolioResponse.json();
-        throw new Error(errorData.error || 'Error al crear cartera');
+      if (!portfolioResponse.success || !portfolioResponse.data) {
+        throw new Error('Error al crear cartera');
       }
 
-      const portfolioData = await portfolioResponse.json();
-      const portfolioId = portfolioData.data.id;
+      const portfolioId = portfolioResponse.data.id;
 
       // Paso 3: Agregar líneas al portfolio
       for (let i = 0; i < portfolioLines.length; i++) {
         const line = portfolioLines[i];
         const instrumentId = instrumentIds[i];
         
-        const lineResponse = await fetch(`${apiUrl}/v1/portfolios/templates/${portfolioId}/lines`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            targetType: 'instrument',
-            instrumentId: instrumentId,
-            targetWeight: line.targetWeight / 100 // Convertir de % a decimal
-          })
+        await addPortfolioLine(portfolioId, {
+          targetType: 'instrument',
+          instrumentId: instrumentId,
+          targetWeight: line.targetWeight / 100 // Convertir de % a decimal
         });
-
-        if (!lineResponse.ok) {
-          throw new Error(`Error al agregar línea ${line.instrumentSymbol}`);
-        }
       }
 
       // Recargar portfolios
-      const refreshResponse = await fetch(`${apiUrl}/v1/portfolios/templates`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const refreshResponse = await getPortfolios();
       
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        if (refreshData.success && refreshData.data) {
-          // Obtener líneas para el nuevo portfolio
-          const linesResponse = await fetch(`${apiUrl}/v1/portfolios/templates/${portfolioId}/lines`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
+      if (refreshResponse.success && refreshResponse.data) {
+        // Obtener líneas para el nuevo portfolio
+        const linesResponse = await getPortfolioLines(portfolioId);
 
-          if (linesResponse.ok) {
-            const linesData = await linesResponse.json();
-            const newPortfolio = {
-              ...refreshData.data.find((p: any) => p.id === portfolioId),
-              lines: linesData.data?.lines || []
+        if (linesResponse.success && linesResponse.data) {
+          const foundPortfolio = refreshResponse.data.find((p: Portfolio) => p.id === portfolioId);
+          if (foundPortfolio) {
+            const newPortfolio: Portfolio = {
+              ...foundPortfolio,
+              lines: linesResponse.data.lines || []
             };
             setPortfolios([...portfolios, newPortfolio]);
           }
@@ -445,21 +387,21 @@ export default function PortfoliosPage() {
       
       showToast('Cartera creada', 'La cartera se creó exitosamente', 'success');
     } catch (err) {
-      console.error('Error creating portfolio:', err);
+      logger.error('Error creating portfolio', { err, portfolio: newPortfolio, lines: portfolioLines });
       showToast('Error al crear cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBenchmarkAssetSelect = (asset: any) => {
+  const handleBenchmarkAssetSelect = (asset: InstrumentSearchResult) => {
     const exists = benchmarkComponents.find(comp => comp.instrumentSymbol === asset.symbol);
     if (exists) {
       showToast('Activo duplicado', 'Este activo ya está en el benchmark', 'warning');
       return;
     }
 
-    const newComponent = {
+    const newComponent: BenchmarkComponentForm = {
       id: `temp-${Date.now()}`,
       instrumentSymbol: asset.symbol,
       instrumentName: asset.name,
@@ -482,7 +424,16 @@ export default function PortfoliosPage() {
   };
 
   const handleEditPortfolio = (portfolio: PortfolioTemplate) => {
-    setEditingPortfolio(portfolio);
+    const portfolioData: Portfolio = {
+      id: portfolio.id,
+      name: portfolio.name,
+      description: portfolio.description ?? null,
+      riskLevel: (portfolio.riskLevel as RiskLevel) || 'moderate',
+      createdAt: portfolio.createdAt,
+      updatedAt: portfolio.createdAt, // Usar createdAt como fallback
+      lines: portfolio.lines ?? []
+    };
+    setEditingPortfolio(portfolioData);
     setNewPortfolio({
       name: portfolio.name,
       description: portfolio.description || '',
@@ -505,31 +456,18 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
-      const response = await fetch(`${apiUrl}/v1/portfolios/templates/${editingPortfolio.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newPortfolio.name,
-          description: newPortfolio.description,
-          riskLevel: newPortfolio.riskLevel
-        })
+      await updatePortfolioApi(editingPortfolio.id, {
+        name: newPortfolio.name,
+        description: newPortfolio.description,
+        riskLevel: newPortfolio.riskLevel as RiskLevel
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al actualizar cartera');
-      }
 
       // Actualizar en el estado local
       setPortfolios(portfolios.map(p => 
         p.id === editingPortfolio.id 
-          ? { ...p, name: newPortfolio.name, description: newPortfolio.description, riskLevel: newPortfolio.riskLevel }
+          ? { ...p, name: newPortfolio.name, description: newPortfolio.description, riskLevel: newPortfolio.riskLevel as RiskLevel }
           : p
       ));
 
@@ -540,7 +478,7 @@ export default function PortfoliosPage() {
       
       showToast('Cartera actualizada', 'La cartera se actualizó exitosamente', 'success');
     } catch (err) {
-      console.error('Error updating portfolio:', err);
+      logger.error('Error updating portfolio', { err, portfolioId: editingPortfolio.id, data: newPortfolio });
       showToast('Error al actualizar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
@@ -558,27 +496,16 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
-      const response = await fetch(`${apiUrl}/v1/portfolios/templates/${portfolioId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar cartera');
-      }
+      await deletePortfolio(portfolioId);
 
       // Remover del estado local
       setPortfolios(portfolios.filter(p => p.id !== portfolioId));
       
       showToast('Cartera eliminada', 'La cartera se eliminó exitosamente', 'success');
     } catch (err) {
-      console.error('Error deleting portfolio:', err);
+      logger.error('Error deleting portfolio', { err, portfolioId });
       showToast('Error al eliminar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
@@ -590,7 +517,7 @@ export default function PortfoliosPage() {
     setNewBenchmark({
       name: benchmark.name,
       description: benchmark.description || '',
-      code: benchmark.code
+      code: benchmark.code || ''
     });
     setBenchmarkComponents(benchmark.components?.map(comp => ({
       id: comp.id,
@@ -602,7 +529,7 @@ export default function PortfoliosPage() {
     setShowEditBenchmark(true);
   };
 
-  const updateBenchmark = async () => {
+  const handleUpdateBenchmark = async () => {
     if (!editingBenchmark) return;
 
     if (!newBenchmark.name.trim() || !newBenchmark.code.trim()) {
@@ -627,26 +554,13 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
-      const response = await fetch(`${apiUrl}/v1/benchmarks/${editingBenchmark.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newBenchmark.name,
-          description: newBenchmark.description,
-          code: newBenchmark.code
-        })
+      await updateBenchmark(editingBenchmark.id, {
+        name: newBenchmark.name,
+        description: newBenchmark.description,
+        code: newBenchmark.code
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al actualizar benchmark');
-      }
 
       // Actualizar en el estado local
       setBenchmarks(benchmarks.map(b => 
@@ -663,7 +577,7 @@ export default function PortfoliosPage() {
       
       showToast('Benchmark actualizado', 'El benchmark se actualizó exitosamente', 'success');
     } catch (err) {
-      console.error('Error updating benchmark:', err);
+      logger.error('Error updating benchmark', { err, benchmarkId: editingBenchmark.id, data: newBenchmark });
       showToast('Error al actualizar benchmark', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
@@ -681,34 +595,23 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
-      const response = await fetch(`${apiUrl}/v1/benchmarks/${benchmarkId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar benchmark');
-      }
+      await deleteBenchmark(benchmarkId);
 
       // Remover del estado local
       setBenchmarks(benchmarks.filter(b => b.id !== benchmarkId));
       
       showToast('Benchmark eliminado', 'El benchmark se eliminó exitosamente', 'success');
     } catch (err) {
-      console.error('Error deleting benchmark:', err);
+      logger.error('Error deleting benchmark', { err, benchmarkId });
       showToast('Error al eliminar benchmark', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const createBenchmark = async () => {
+  const handleCreateBenchmark = async () => {
     if (!newBenchmark.name.trim() || !newBenchmark.code.trim()) {
       showToast('Campos requeridos', 'El nombre y código del benchmark son requeridos', 'warning');
       return;
@@ -731,7 +634,6 @@ export default function PortfoliosPage() {
     }
 
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
     try {
       // Paso 1: Crear instrumentos si no existen
@@ -740,31 +642,18 @@ export default function PortfoliosPage() {
         if (!comp.instrumentId) {
           // Crear instrumento desde símbolo
           try {
-            const instrumentResponse = await fetch(`${apiUrl}/v1/instruments`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                symbol: comp.instrumentSymbol,
-                backfill_days: 365
-              })
+            const instrumentResponse = await createInstrument({
+              symbol: comp.instrumentSymbol,
+              backfill_days: 365
             });
 
-            if (instrumentResponse.ok) {
-              const instrumentData = await instrumentResponse.json();
-              instrumentIds.push(instrumentData.data.instrument.id);
+            if (instrumentResponse.success && instrumentResponse.data?.instrument?.id) {
+              instrumentIds.push(instrumentResponse.data.instrument.id);
             } else {
               // Si falla, intentar buscar si ya existe
-              const searchResponse = await fetch(`${apiUrl}/v1/instruments?search=${comp.instrumentSymbol}`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-              if (searchResponse.ok) {
-                const searchData = await searchResponse.json();
-                const existing = searchData.data.instruments.find((inst: any) => inst.symbol === comp.instrumentSymbol);
+              const searchResponse = await getInstruments({ search: comp.instrumentSymbol });
+              if (searchResponse.success && searchResponse.data?.instruments) {
+                const existing = searchResponse.data.instruments.find((inst: Instrument) => inst.symbol === comp.instrumentSymbol);
                 if (existing) {
                   instrumentIds.push(existing.id);
                 } else {
@@ -775,6 +664,7 @@ export default function PortfoliosPage() {
               }
             }
           } catch (err) {
+            logger.error('Error creating/finding instrument for benchmark', { err, symbol: comp.instrumentSymbol });
             showToast('Error al crear instrumento', `No se pudo crear ${comp.instrumentSymbol}: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
             setIsLoading(false);
             return;
@@ -784,54 +674,44 @@ export default function PortfoliosPage() {
         }
       }
 
-      // Paso 2: Crear benchmark con componentes
-      const benchmarkResponse = await fetch(`${apiUrl}/v1/benchmarks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          code: newBenchmark.code,
-          name: newBenchmark.name,
-          description: newBenchmark.description,
-          components: benchmarkComponents.map((comp, index) => ({
-            instrumentId: instrumentIds[index],
-            weight: comp.weight / 100 // Convertir de % a decimal
-          }))
-        })
+      // Paso 2: Crear benchmark primero
+      const benchmarkResponse = await createBenchmark({
+        name: newBenchmark.name,
+        type: 'composite',
+        description: newBenchmark.description,
+        ...(newBenchmark.code && { code: newBenchmark.code })
       });
 
-      if (!benchmarkResponse.ok) {
-        const errorData = await benchmarkResponse.json();
-        throw new Error(errorData.error || 'Error al crear benchmark');
+      if (!benchmarkResponse.success || !benchmarkResponse.data) {
+        throw new Error('Error al crear benchmark');
       }
 
-      const benchmarkData = await benchmarkResponse.json();
-      const benchmarkId = benchmarkData.data.id;
+      const benchmarkId = benchmarkResponse.data.id;
+
+      // Paso 3: Agregar componentes al benchmark
+      for (let i = 0; i < benchmarkComponents.length; i++) {
+        const comp = benchmarkComponents[i];
+        const instrumentId = instrumentIds[i];
+        
+        await addBenchmarkComponent(benchmarkId, {
+          instrumentId: instrumentId,
+          weight: comp.weight / 100 // Convertir de % a decimal
+        });
+      }
 
       // Recargar benchmarks
-      const refreshResponse = await fetch(`${apiUrl}/v1/benchmarks`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const refreshResponse = await getBenchmarks();
+      
+      if (refreshResponse.success && refreshResponse.data) {
+        // Obtener componentes para el nuevo benchmark
+        const benchmarkDetailResponse = await getBenchmarkById(benchmarkId);
 
-      if (refreshResponse.ok) {
-        const refreshData = await refreshResponse.json();
-        if (refreshData.success && refreshData.data) {
-          // Obtener componentes para el nuevo benchmark
-          const benchmarkDetailResponse = await fetch(`${apiUrl}/v1/benchmarks/${benchmarkId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (benchmarkDetailResponse.ok) {
-            const benchmarkDetail = await benchmarkDetailResponse.json();
-            const newBenchmarkData = {
-              ...refreshData.data.find((b: any) => b.id === benchmarkId),
-              components: benchmarkDetail.data?.components || []
+        if (benchmarkDetailResponse.success && benchmarkDetailResponse.data) {
+          const foundBenchmark = refreshResponse.data.find((b: Benchmark) => b.id === benchmarkId);
+          if (foundBenchmark) {
+            const newBenchmarkData: Benchmark = {
+              ...foundBenchmark,
+              components: benchmarkDetailResponse.data.components || []
             };
             setBenchmarks([...benchmarks, newBenchmarkData]);
           }
@@ -845,7 +725,7 @@ export default function PortfoliosPage() {
       
       showToast('Benchmark creado', 'El benchmark se creó exitosamente', 'success');
     } catch (err) {
-      console.error('Error creating benchmark:', err);
+      logger.error('Error creating benchmark', { err, benchmark: newBenchmark, components: benchmarkComponents });
       showToast('Error al crear benchmark', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsLoading(false);
@@ -1006,7 +886,7 @@ export default function PortfoliosPage() {
                               variant="outline" 
                               size="sm" 
                               className="flex-1"
-                              onClick={() => handleEditPortfolio(portfolio)}
+                              onClick={() => handleEditPortfolio(portfolioToTemplate(portfolio))}
                             >
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
@@ -1154,7 +1034,7 @@ export default function PortfoliosPage() {
                       </Card>
 
                       <Button
-                        onClick={createPortfolio}
+                        onClick={handleCreatePortfolio}
                         disabled={Math.abs(totalWeight - 100) > 0.01 || portfolioLines.length === 0}
                         variant="primary"
                         className="w-full"
@@ -1180,21 +1060,44 @@ export default function PortfoliosPage() {
           <Card className="rounded-md border border-border">
             <CardContent className="p-4">
               <PortfolioComparator
-                portfolios={portfolios.map(p => ({
-                  id: p.id,
-                  name: p.name,
-                  type: 'portfolio' as const,
-                  riskLevel: p.riskLevel,
-                  description: p.description,
-                  createdAt: p.createdAt
-                }))}
-                benchmarks={benchmarks.map(b => ({
-                  id: b.id,
-                  name: b.name,
-                  type: 'benchmark' as const,
-                  description: b.description,
-                  createdAt: ''
-                }))}
+                portfolios={portfolios.map(p => {
+                  const item: {
+                    id: string;
+                    name: string;
+                    type: 'portfolio';
+                    riskLevel: RiskLevel;
+                    createdAt: string;
+                    description?: string;
+                  } = {
+                    id: p.id,
+                    name: p.name,
+                    type: 'portfolio',
+                    riskLevel: p.riskLevel,
+                    createdAt: p.createdAt
+                  };
+                  if (p.description) {
+                    item.description = p.description;
+                  }
+                  return item;
+                })}
+                benchmarks={benchmarks.map(b => {
+                  const item: {
+                    id: string;
+                    name: string;
+                    type: 'benchmark';
+                    createdAt: string;
+                    description?: string;
+                  } = {
+                    id: b.id,
+                    name: b.name,
+                    type: 'benchmark',
+                    createdAt: b.createdAt || ''
+                  };
+                  if (b.description) {
+                    item.description = b.description;
+                  }
+                  return item;
+                })}
               />
             </CardContent>
           </Card>
@@ -1399,7 +1302,7 @@ export default function PortfoliosPage() {
 
                     <Stack direction="row" gap="sm">
                       <Button
-                        onClick={createBenchmark}
+                        onClick={handleCreateBenchmark}
                         disabled={Math.abs(benchmarkComponents.reduce((sum, comp) => sum + (comp.weight || 0), 0) - 100) > 0.01 || benchmarkComponents.length === 0}
                         variant="primary"
                         className="flex-1"
@@ -1602,7 +1505,7 @@ export default function PortfoliosPage() {
 
                     <Stack direction="row" gap="sm">
                       <Button
-                        onClick={updateBenchmark}
+                        onClick={handleUpdateBenchmark}
                         disabled={Math.abs(benchmarkComponents.reduce((sum, comp) => sum + (comp.weight || 0), 0) - 100) > 0.01 || benchmarkComponents.length === 0 || isLoading}
                         variant="primary"
                         className="flex-1"
@@ -1638,7 +1541,7 @@ export default function PortfoliosPage() {
       {/* Toast Notifications */}
       <Toast
         title={toast.title}
-        description={toast.description}
+        {...(toast.description && { description: toast.description })}
         variant={toast.variant}
         open={toast.show}
         onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}

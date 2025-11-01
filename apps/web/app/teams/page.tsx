@@ -3,6 +3,9 @@ import { useRequireAuth } from '../auth/useRequireAuth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getTeams, getTeamAdvisors, createTeamInvitation, getMembershipRequests, createTeam, respondToMembershipRequest } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import type { Team, TeamMember, MembershipRequest } from '@/types';
 import {
   Card,
   CardHeader,
@@ -29,32 +32,6 @@ import {
   type Column,
 } from '@cactus/ui';
 
-interface Team {
-  id: string;
-  name: string;
-  managerUserId: string;
-  createdAt: string;
-  members?: TeamMember[];
-}
-
-interface TeamMember {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-}
-
-interface MembershipRequest {
-  id: string;
-  userId: string;
-  managerId: string;
-  status: string;
-  createdAt: string;
-  userEmail: string;
-  userFullName: string;
-  userRole: string;
-}
-
 export default function TeamsPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
@@ -71,7 +48,6 @@ export default function TeamsPage() {
   const [advisorCandidates, setAdvisorCandidates] = useState<Array<{ id: string; email: string; fullName: string }>>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Redirect if not manager or admin
   useEffect(() => {
@@ -111,12 +87,9 @@ export default function TeamsPage() {
     if (!token) return;
     try {
       setLinkModalOpen({ teamId: team.id, teamName: team.name });
-      const response = await fetch(`${apiUrl}/teams/${team.id}/advisors`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAdvisorCandidates(data.data || []);
+      const response = await getTeamAdvisors(team.id);
+      if (response.success && response.data) {
+        setAdvisorCandidates(response.data || []);
       } else {
         setAdvisorCandidates([]);
       }
@@ -143,18 +116,11 @@ export default function TeamsPage() {
     if (!token || !linkModalOpen) return;
     try {
       setInviteLoading(userId);
-      const response = await fetch(`${apiUrl}/teams/${linkModalOpen.teamId}/invitations`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ userId })
-      });
-      if (response.ok) {
-        // Optimistic feedback: remove invited advisor from list
-        setAdvisorCandidates(prev => prev.filter(a => a.id !== userId));
-      }
+      await createTeamInvitation(linkModalOpen.teamId, { userId });
+      // Optimistic feedback: remove invited advisor from list
+      setAdvisorCandidates(prev => prev.filter(a => a.id !== userId));
+    } catch (err) {
+      logger.error('Error inviting advisor', { err, teamId: linkModalOpen.teamId, userId });
     } finally {
       setInviteLoading(null);
     }
@@ -164,18 +130,15 @@ export default function TeamsPage() {
     if (!token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/teams`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await getTeams();
       
-      if (response.ok) {
-        const data = await response.json();
-        setTeams(data.data || []);
+      if (response.success && response.data) {
+        setTeams(response.data || []);
       } else {
         throw new Error('Error al cargar equipos');
       }
     } catch (err) {
-      console.error('Error fetching teams:', err);
+      logger.error('Error fetching teams', { err });
       throw err;
     }
   };
@@ -184,73 +147,55 @@ export default function TeamsPage() {
     if (!token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/teams/membership-requests`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await getMembershipRequests();
       
-      if (response.ok) {
-        const data = await response.json();
-        setMembershipRequests(data.data || []);
+      if (response.success && response.data) {
+        setMembershipRequests(response.data || []);
       }
     } catch (err) {
-      console.error('Error fetching membership requests:', err);
+      logger.error('Error fetching membership requests', { err });
     }
   };
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !token) return;
+    if (!newTeamName.trim() || !token || !user) return;
     
     try {
       setActionLoading('create');
       setError(null);
       
-      const response = await fetch(`${apiUrl}/teams`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ name: newTeamName.trim() })
+      const response = await createTeam({
+        name: newTeamName.trim(),
+        managerUserId: user.id
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setTeams(prev => [...prev, data.data]);
+      if (response.success && response.data) {
+        setTeams(prev => [...prev, response.data].filter((t): t is Team => t !== undefined));
         setNewTeamName('');
         setShowCreateTeam(false);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear equipo');
+        throw new Error('Error al crear equipo');
       }
     } catch (err) {
+      logger.error('Error creating team', { err, teamName: newTeamName });
       setError(err instanceof Error ? err.message : 'Error al crear equipo');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleMembershipAction = async (requestId: string, action: 'approve' | 'reject') => {
+  const handleMembershipAction = async (requestId: string, action: 'accept' | 'reject') => {
     if (!token) return;
     
     try {
       setActionLoading(requestId);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/teams/membership-requests/${requestId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        setMembershipRequests(prev => prev.filter(req => req.id !== requestId));
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Error al ${action === 'approve' ? 'aprobar' : 'rechazar'} solicitud`);
-      }
+      await respondToMembershipRequest(requestId, action);
+      setMembershipRequests(prev => prev.filter(req => req.id !== requestId));
     } catch (err) {
+      logger.error('Error responding to membership request', { err, requestId, action });
       setError(err instanceof Error ? err.message : 'Error al procesar solicitud');
     } finally {
       setActionLoading(null);
@@ -260,20 +205,20 @@ export default function TeamsPage() {
   // Configuración de columnas para la tabla de solicitudes
   const membershipColumns: Column<MembershipRequest>[] = [
     {
-      key: 'userFullName',
+      key: 'user',
       header: 'Usuario',
       render: (request) => (
         <div>
-          <Text weight="medium">{request.userFullName}</Text>
-          <Text size="sm" color="secondary">{request.userEmail}</Text>
+          <Text weight="medium">{request.user?.fullName || 'N/A'}</Text>
+          <Text size="sm" color="secondary">{request.user?.email || 'N/A'}</Text>
         </div>
       )
     },
     {
-      key: 'userRole',
+      key: 'user',
       header: 'Rol',
       render: (request) => (
-        <Badge variant="default">{request.userRole}</Badge>
+        <Badge variant="default">{request.user?.role || 'N/A'}</Badge>
       )
     },
     {
@@ -294,7 +239,7 @@ export default function TeamsPage() {
             variant="primary"
             size="sm"
             disabled={actionLoading === request.id}
-            onClick={() => handleMembershipAction(request.id, 'approve')}
+            onClick={() => handleMembershipAction(request.id, 'accept')}
           >
             Aprobar
           </Button>
@@ -400,8 +345,7 @@ export default function TeamsPage() {
                             variant="primary"
                             size="sm"
                             className="flex-shrink-0 px-2 py-1 h-6 text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            onClick={() => {
                               router.push(`/contacts?advisorId=${member.id}`);
                             }}
                           >

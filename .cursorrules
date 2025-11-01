@@ -1,140 +1,139 @@
 # Proyecto: CACTUS CRM (Monorepo pnpm + Turborepo)
 
-## Arquitectura general
-- Monorepo gestionado con `pnpm workspaces` y `turborepo`.
-- Apps en `apps/` y paquetes compartidos en `packages/`.
-- Apps:
-  - `apps/api`: API en Node.js + Express. Logging con `pino`/`pino-http`. Despliegue en VPS con `pm2` (cluster mode). Envía logs a stdout y a archivos bajo `apps/api/logs/`.
-  - `apps/web`: Frontend en Next.js (App Router). Consume la API vía `NEXT_PUBLIC_API_URL`.
-- Paquetes compartidos:
-  - `packages/db`: Drizzle ORM (PostgreSQL) con `schema.ts`, conexión `db`, migraciones (`drizzle-kit`).
+## Arquitectura General
 
-## Decisiones clave
-- Logging: `pino` por performance y logs JSON estructurados. En dev puede usarse `pino-pretty` si se agrega, pero por defecto JSON.
-- Process manager: `pm2` en VPS (sin Docker/K8s). Modo `cluster` con `instances: 'max'` en `ecosystem.config.js`.
-- DB: Postgres 16 local con `docker-compose.yml`. Variable de conexión `DATABASE_URL` compartida.
-- TypeScript: base común en `tsconfig.base.json`. Cada app extiende y define `outDir`/`rootDir`.
-- Tareas: `turbo` orquesta `build/dev/lint/test` con cacheo por tareas.
+**Monorepo:** `pnpm workspaces` + `turborepo`
+- **Apps:** `apps/api` (Node.js + Express), `apps/web` (Next.js App Router), `apps/analytics-service` (Python)
+- **Packages:** `packages/db` (Drizzle ORM), `packages/ui` (React Components)
+- **Tech Stack:** TypeScript estricto, PostgreSQL 16, PM2 para deploy
 
-## Rutas relevantes
-- API entrypoint: `apps/api/src/index.ts`.
-- Rutas API: `apps/api/src/routes/*` (ejemplo: `users.ts`).
-- PM2 config: `apps/api/ecosystem.config.js`.
-- Next.js raíz: `apps/web/app/*` (`layout.tsx`, `page.tsx`).
-- Drizzle:
-  - Config: `packages/db/drizzle.config.ts`.
-  - Schema: `packages/db/src/schema.ts`.
-  - Cliente/exports: `packages/db/src/index.ts`.
+**Rutas clave:**
+- API: `apps/api/src/routes/*`, entrypoint `apps/api/src/index.ts`
+- Web: `apps/web/app/*` (Server/Client components)
+- DB: `packages/db/src/schema.ts`, migraciones con `drizzle-kit`
+- UI: `packages/ui/src/components/*`
 
-## Ejecución local (desarrollo)
-- Prerrequisitos: Node 20+, pnpm 9+, Docker (opcional para Postgres local).
-- Comandos:
-  - `pnpm install`
-  - `docker compose up -d` (levanta Postgres 16)
-  - `pnpm dev` (ejecuta `web` y `api` en paralelo si están configuradas)
-  - API: `http://localhost:3001/health`
-  - Web: `http://localhost:3000`
+---
 
-## Despliegue en VPS (PM2)
-- Construir API: `pnpm -F @cactus/api build` → genera `apps/api/dist`.
-- Iniciar con PM2: `pm2 start apps/api/ecosystem.config.js --env production`.
-- Logs: `pm2 logs cactus-api` o archivos en `apps/api/logs/`.
-- Asegurar variables: `.env` por app; al menos `DATABASE_URL`, `PORT`, `LOG_LEVEL`.
+## Principios Fundamentales
 
-## Convenciones de código
-- Usar TypeScript estricto.
-- Evitar comentarios triviales; añadir comentarios cuando la intención no sea obvia.
-- Logging: registrar eventos de negocio clave con contexto (ids, tamaños, tiempos) y sanitizar datos sensibles (`redact` en `pino-http`).
-- Errores: loguear con `req.log.error({ err }, msg)` y retornar JSON con mensaje genérico.
+### Antes de Modificar Código
 
-## Reglas de Base de Datos y Migraciones
-
-**NUNCA usar `drizzle-kit push`** - es destructivo y elimina datos.
-
-**Flujo correcto:**
-1. Modificar schema: `packages/db/src/schema.ts`
-2. Generar migración: `pnpm -F @cactus/db generate`
-3. Aplicar migración: `pnpm -F @cactus/db migrate`
-
-**Seeds disponibles:**
-- `pnpm -F @cactus/db seed:all` - Seed sistema completo (CRM + Analytics)
-- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline (CRM)
-- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos (Epic-D)
-- `pnpm -F @cactus/db db:init` - Inicialización completa
-
-**Nota:** El proyecto contiene dos dominios:
-- **CRM (Legacy)**: Contactos, pipeline, tags
-- **Portfolio/Analytics (Epic-D)**: Portfolios, benchmarks, instrumentos financieros
-
-## Principios de Ingeniería
-
-**Antes de cualquier modificación:**
-
-1. **Prioridad**: Elegir la solución MÁS ESTABLE, no la más creativa
-2. **Decision flow**:
+1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
+2. **Verificar primero:**
    - ¿Es necesario? → Si NO, detener
    - ¿Es seguro? → Si NO, agregar tests primero
    - ¿Romperá código existente? → Si SÍ, versionarlo
    - ¿Está documentado? → Si NO, agregar comentarios inline
 
-**Principios críticos:**
-- Fallar rápido con mensajes claros
-- Tests antes de refactorizar
-- Cambios pequeños y atómicos
-- Documentar decisiones de arquitectura con `AI_DECISION` comments
+3. **Ejecutar typecheck ANTES de modificar:**
+   ```bash
+   pnpm -F @cactus/web typecheck    # Verificar errores actuales
+   pnpm -F @cactus/api typecheck
+   ```
 
-**Formato para decisiones no obvias:**
-```typescript
-// AI_DECISION: [Motivo del cambio]
-// Justificación: [Por qué es mejor esta implementación]
-// Impacto: [Qué áreas del código afecta]
-```
-
-**Checklist Pre-Modificación:**
-- [ ] TypeScript estricto (sin `any`)
-- [ ] Sin dependencias nuevas sin justificación
-- [ ] Sin breaking changes sin versionado
-- [ ] Tests existentes pasan
-- [ ] Nuevos tests agregados
-- [ ] Linter limpio
-- [ ] Documentado con comentarios inline
-
-## Server Component Architecture Pattern
-
-### When to Use Server vs Client Components
-- **Server Component**: Data fetching, static rendering, SEO-critical content
-- **Client Component**: Interactivity, hooks (useState, useEffect), browser APIs
-
-### Pattern: Client Islands
-Extract interactive sections into small, focused client components:
-- Keep components < 100 lines
-- Pass server data as props
-- Use SWR for client-side mutations
-- Prefix with "use client" directive
-
-### Example Structure
-```
-app/route/
-  page.tsx           # Server Component (data fetch + layout)
-  SomeSection.tsx    # Client Island (interactive logic)
-  api-hooks.ts       # SWR hooks for mutations
-```
-
-### Performance Benefits
-- **Bundle Size**: Server components reduce First Load JS by 60-70%
-- **LCP**: Server-rendered content improves Largest Contentful Paint
-- **SEO**: Static content is crawlable and indexable
-- **Maintainability**: Clear separation of concerns
+4. **Construir paquetes compartidos si hay cambios en tipos:**
+   ```bash
+   pnpm -F @cactus/ui build    # Si hay cambios en tipos exportados
+   pnpm -F @cactus/db build     # Si hay cambios en schema
+   ```
 
 ---
 
-## 🎯 Mejores Prácticas Profesionales (Post Epic-D)
+## Reglas Críticas TypeScript (exactOptionalPropertyTypes: true)
 
-### 1. Arquitectura de Tipos TypeScript
+**Configuración:** `tsconfig.base.json` tiene `exactOptionalPropertyTypes: true` y `strict: true`
+
+### 1. Manejo de Propiedades Opcionales
+
+```typescript
+// ❌ MAL - Con exactOptionalPropertyTypes: true
+interface User {
+  name?: string;
+}
+const user: User = { name: undefined };  // ERROR: undefined no es válido
+
+// ✅ BIEN - Opción 1: Omitir la propiedad si es undefined
+const user: User = {};
+if (someValue) {
+  user.name = someValue;
+}
+
+// ✅ BIEN - Opción 2: Permitir null explícitamente
+interface User {
+  name?: string | null;
+}
+const user: User = { name: null };
+
+// ✅ BIEN - Opción 3: Usar nullish coalescing
+const description = portfolio.description ?? null;  // NO usar ||
+```
+
+### 2. Evitar Shadowing de Funciones
+
+```typescript
+// ❌ MAL - Función local oculta import
+import { createPortfolio } from '@/lib/api';
+
+const createPortfolio = async () => {  // ERROR: oculta el import
+  // ...
+};
+
+// ✅ BIEN - Usar prefijo handle/do/perform
+import { createPortfolio } from '@/lib/api';
+
+const handleCreatePortfolio = async () => {
+  await createPortfolio({ ... });  // Import funciona correctamente
+};
+```
+
+### 3. Verificar Tipos de Componentes UI Antes de Usar
+
+**SIEMPRE verificar props aceptadas antes de usar componentes:**
+
+```typescript
+// ❌ MAL - Asumir props sin verificar
+<Text color="error">Error message</Text>  // Si Text no acepta "error"
+
+// ✅ BIEN - Verificar tipos en packages/ui/src
+// Text acepta: 'primary' | 'secondary' | 'muted'
+<Text color="secondary">Error message</Text>
+
+// ✅ BIEN - Verificar Button onClick
+// Button onClick espera: () => void
+<Button onClick={() => router.push('/path')} />  // NO onClick={(e) => ...}
+```
+
+### 4. Evitar Tipos Duplicados
+
+```typescript
+// ❌ MAL - Definición duplicada
+export interface BenchmarkComponentForm { ... }
+// ... más código ...
+export interface BenchmarkComponentForm { ... }  // ERROR: conflicto
+
+// ✅ BIEN - Una sola definición, reutilizar
+export interface BenchmarkComponentForm { ... }
+// Usar esta definición en todo el proyecto
+```
+
+### 5. Construir Paquetes Compartidos Antes de Typecheck
+
+```bash
+# Si modificas tipos exportados en @cactus/ui o @cactus/db:
+pnpm -F @cactus/ui build
+pnpm -F @cactus/db build
+# Luego:
+pnpm -F @cactus/web typecheck
+```
+
+---
+
+## Arquitectura de Tipos
 
 **NUNCA usar `any`** - Crear tipos explícitos siempre.
 
-**Estructura de archivos:**
+**Estructura:**
 ```
 types/
 ├── index.ts          # Barrel export
@@ -145,19 +144,12 @@ types/
 **Reglas:**
 - Archivos de tipos: 50-150 líneas máximo
 - Separar por dominio, no por "tipo de tipo"
-- Usar barrel exports (`types/index.ts`)
 - Definir Request/Response types para cada endpoint
+- Evitar definiciones duplicadas
 
-**Ejemplo:**
-```typescript
-// ✅ BIEN
-import type { Portfolio, CreatePortfolioRequest } from '@/types';
+---
 
-// ❌ MAL
-const data: any = await fetch(...);
-```
-
-### 2. Cliente API Centralizado
+## Cliente API Centralizado
 
 **NUNCA usar `fetch` directamente** - Usar cliente centralizado.
 
@@ -171,56 +163,25 @@ lib/
     └── index.ts      # Barrel export
 ```
 
-**Features requeridos:**
-- ✅ Retry automático (errores 5xx)
-- ✅ Refresh token automático (401)
-- ✅ Timeout configurable
-- ✅ Headers automáticos (Authorization)
-- ✅ Error handling consistente
+**Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos, error handling consistente
 
-**Ejemplo:**
-```typescript
-// ✅ BIEN
-import { getPortfolios } from '@/lib/api';
-const response = await getPortfolios();
+---
 
-// ❌ MAL
-const res = await fetch(`${apiUrl}/portfolios`, {
-  headers: { 'Authorization': `Bearer ${token}` }
-});
-```
+## Validaciones con Zod
 
-### 3. Validaciones con Zod
+**Validar en backend SIEMPRE** con schemas y middleware `validate()`.
 
-**Validar en backend SIEMPRE** con Zod schemas y middleware `validate()`.
-
-**Ubicación:** Definir schemas en cada archivo de rutas (`apps/api/src/routes/*.ts`)  
-bajo la sección `// Zod Validation Schemas`
+**Ubicación:** Definir schemas en `apps/api/src/routes/*.ts` bajo `// Zod Validation Schemas`
 
 **Estructura estándar:**
 ```typescript
-import { z } from 'zod';
 import { validate } from '../utils/validation';
-import { 
-  uuidSchema,
-  paginationQuerySchema,
-  idParamSchema,
-  // ... otros schemas comunes
-} from '../utils/common-schemas';
+import { uuidSchema, paginationQuerySchema } from '../utils/common-schemas';
 
 // ==========================================================
 // Zod Validation Schemas
 // ==========================================================
 
-// Path params
-const contactIdParams = z.object({ id: uuidSchema });
-
-// Query params
-const listQuerySchema = paginationQuerySchema.extend({
-  status: z.enum(['active', 'inactive']).optional()
-});
-
-// Body schemas
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().optional()
@@ -232,353 +193,164 @@ const createSchema = z.object({
 
 router.post('/',
   requireAuth,
-  validate({ body: createSchema }),
+  validate({ body: createSchema }),  // ✅ Middleware validate()
   async (req, res) => {
     // req.body ya está validado y tipado
-    const data = req.body;
-    // ...
   }
 );
 ```
 
 **Reglas:**
 - ✅ Usar middleware `validate()` en la definición del endpoint
-- ✅ Importar schemas comunes desde `common-schemas.ts`
-- ✅ Validación ejecutada ANTES de entrar al handler
 - ❌ NO usar `.parse()` manual en el handler
-- ❌ NO manejar `ZodError` manualmente (validate() lo hace)
+- ❌ NO manejar `ZodError` manualmente
 
-### 4. Validaciones de Batch Endpoints
+---
 
-**Prevenir DoS y validar formato:**
+## Server Component Architecture (Next.js)
 
-```typescript
-import { validateBatchIds, BATCH_LIMITS } from '../utils/batch-validation';
+**Server Component:** Data fetching, static rendering, SEO-critical content
+**Client Component:** Interactivity, hooks, browser APIs
 
-const validation = validateBatchIds(req.query.ids as string, {
-  maxCount: BATCH_LIMITS.MAX_PORTFOLIOS,  // Límite
-  requireUuid: true,                      // Validar UUID
-  fieldName: 'ids'
-});
+**Pattern: Client Islands**
+- Extract interactive sections into small components (< 100 lines)
+- Pass server data as props
+- Use SWR for client-side mutations
+- Prefix with `"use client"` directive
 
-if (!validation.valid) {
-  return res.status(400).json({ error: 'Invalid request', details: validation.errors });
-}
+**Estructura:**
+```
+app/route/
+  page.tsx           # Server Component (data fetch + layout)
+  SomeSection.tsx    # Client Island (interactive logic)
+  api-hooks.ts       # SWR hooks for mutations
 ```
 
-### 5. Configuración de Timeouts
+---
 
-**NUNCA hardcodear timeouts** - Usar configuración centralizada.
-
-**Ubicación:** `apps/api/src/config/timeouts.ts`
-
-```typescript
-export const TIMEOUTS = {
-  PORTFOLIO_PERFORMANCE: parseInt(process.env.PORTFOLIO_PERFORMANCE_TIMEOUT || '60000', 10),
-  // ... más timeouts
-};
-
-// Timeout dinámico basado en carga
-export function calculateDynamicTimeout(baseTimeout, itemCount, perItemTimeout, maxTimeout) {
-  return Math.min(baseTimeout + (itemCount * perItemTimeout), maxTimeout);
-}
-```
-
-### 6. Next.js Router (No window.location)
-
-```typescript
-// ✅ BIEN
-import { useRouter } from 'next/navigation';
-const router = useRouter();
-router.push('/portfolios/123');
-
-// ❌ MAL
-window.location.href = '/portfolios/123';
-```
-
-### 7. Estrategia de Testing
+## Testing
 
 **Framework Stack:**
 - ✅ **Vitest** para unit tests (NO Jest)
 - ✅ **Playwright** para E2E tests
 - ✅ **Testing Library** para componentes React
 
-**Pirámide de Testing:**
-```
-        ╱╲
-       ╱E2E╲         ← 10-20% (Playwright)
-      ╱────╲         tests/e2e/*.spec.ts
-     ╱      ╲
-    ╱  Unit  ╲       ← 80-90% (Vitest)
-   ╱──────────╲      src/**/*.test.ts
-  ╱────────────╲
-```
-
-**Arquitectura de Testing:**
-- **Unit tests:** Vitest, `[file].test.ts` al lado del archivo original
-- **E2E tests:** Playwright, `tests/e2e/*.spec.ts` (separados)
-- **NO usar:** Supertest para E2E (Playwright cubre integración completa)
-
-**Crear unit tests para:**
-- ✅ Funciones de validación
-- ✅ Cálculos de negocio
-- ✅ Utilidades/helpers
-- ✅ Cliente API (mocks)
-
-**Ubicación estricta:**
-- Unit: `src/utils/feature.test.ts` (mismo directorio que `feature.ts`)
-- E2E: `tests/e2e/feature.spec.ts` (carpeta raíz del monorepo)
-
-**Comandos:**
-```bash
-# Unit tests
-pnpm test                    # Run all unit tests
-pnpm -F @cactus/api test     # Backend only
-pnpm -F @cactus/web test     # Frontend only
-pnpm test:coverage           # With coverage
-
-# E2E tests (futuro)
-pnpm test:e2e                # Run E2E tests
-```
+**Ubicación:**
+- Unit: `src/**/*.test.ts` (mismo directorio que el archivo)
+- E2E: `tests/e2e/[feature].spec.ts` (raíz del monorepo)
 
 **Coverage Targets:**
 - Backend: ≥70% (lines, functions, branches, statements)
 - Frontend: ≥60% (lines, functions, branches, statements)
 
-**Ejemplo:**
-```typescript
-// batch-validation.test.ts
-import { describe, it, expect } from 'vitest';
-import { validateBatchIds } from './batch-validation';
+---
 
-describe('validateBatchIds', () => {
-  it('should validate UUIDs correctly', () => {
-    const result = validateBatchIds('uuid1,uuid2');
-    expect(result.valid).toBe(true);
-  });
+## Base de Datos y Migraciones
 
-  it('should reject non-UUIDs', () => {
-    const result = validateBatchIds('invalid,ids');
-    expect(result.valid).toBe(false);
-  });
+**NUNCA usar `drizzle-kit push`** - es destructivo y elimina datos.
 
-  it('should enforce limits', () => {
-    const ids = Array(101).fill('uuid').join(',');
-    const result = validateBatchIds(ids, { maxCount: 100 });
-    expect(result.valid).toBe(false);
-  });
-});
-```
+**Flujo correcto:**
+1. Modificar schema: `packages/db/src/schema.ts`
+2. Generar migración: `pnpm -F @cactus/db generate`
+3. Aplicar migración: `pnpm -F @cactus/db migrate`
 
-**E2E Testing (Playwright):**
-- Tests en `tests/e2e/[feature].spec.ts`
-- Testear flujos críticos de usuario (login, CRUD, navegación)
-- API-first setup cuando sea posible (crear data vía API, testear solo UI)
-- Ver `TESTING_ARCHITECTURE.md` para detalles completos
-
-### 8. Logging Estructurado
-
-```typescript
-// ✅ BIEN - Con contexto
-req.log.info({ userId, portfolioId, duration }, 'Portfolio created');
-
-// ❌ MAL - Sin contexto
-console.log('Portfolio created');
-```
-
-### 9. Queries Optimizadas (Anti N+1)
-
-**NUNCA hacer queries en loops** - Usar batch queries.
-
-```typescript
-// ❌ MAL - N+1 problem
-for (const id of portfolioIds) {
-  const data = await db().select().where(eq(portfolio.id, id));
-}
-
-// ✅ BIEN - Batch query
-const allData = await db().select()
-  .where(sql`${portfolio.id} = ANY(${portfolioIds})`);
-```
-
-### 10. Manejo de Errores
-
-```typescript
-try {
-  const result = await operation();
-} catch (error) {
-  // ✅ BIEN - Error tipado
-  if (error instanceof ApiError) {
-    if (error.isAuthError) {
-      router.push('/login');
-    }
-    showToast('Error', error.userMessage, 'error');
-  }
-  
-  // ❌ MAL - Error genérico
-  // alert('Error');
-}
-```
-
-### 11. Path Aliases en tsconfig.json
-
-```json
-{
-  "paths": {
-    "@/*": ["./*"],
-    "@/types": ["./types"],
-    "@/lib/*": ["./lib/*"],
-    "@/components/*": ["./app/components/*"]
-  }
-}
-```
-
-### 12. Comentarios AI_DECISION
-
-**Documentar decisiones no obvias:**
-
-```typescript
-// AI_DECISION: Timeout dinámico basado en cantidad de items
-// Justificación: Evita timeouts en comparaciones grandes
-// Impacto: Mejor UX y uso de recursos
-const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
-```
+**Seeds disponibles:**
+- `pnpm -F @cactus/db seed:all` - Seed sistema completo
+- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
+- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos
 
 ---
 
-## 📦 Propósito de Apps y Packages
-
-### Apps
-
-**`apps/api`** (Node.js + Express)
-- API REST principal
-- Orquestación de servicios
-- Auth, CRUD, validaciones
-- Logging con Pino
-- Deploy: VPS con PM2
-
-**`apps/web`** (Next.js App Router)
-- Frontend React
-- Server/Client components
-- Consume API vía cliente centralizado
-- Deploy: Vercel/VPS
-
-**`apps/analytics-service`** (Python + FastAPI)
-- Cálculos financieros pesados
-- Fetch de precios (yfinance)
-- Métricas: Sharpe, volatility, drawdown
-- Deploy: VPS con PM2/uvicorn
-
-### Packages
-
-**`packages/db`** (Drizzle ORM)
-- Schema de PostgreSQL
-- Migraciones con drizzle-kit
-- Cliente DB exportado
-- Seeds automáticos
-
-**`packages/ui`** (React Components)
-- Componentes compartidos
-- Design system
-- Sin lógica de negocio
-
----
-
-## 🚫 Anti-Patterns a Evitar
+## Anti-Patterns a Evitar
 
 1. ❌ Tipos `any` sin justificación
-2. ❌ Fetch manual sin cliente centralizado
+2. ❌ `fetch` manual sin cliente centralizado
 3. ❌ Magic numbers (usar constantes/config)
-4. ❌ Listas hardcodeadas como única fuente de datos
-5. ❌ `window.location` en Next.js (usar router)
-6. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
-7. ❌ Queries N+1 en loops
-8. ❌ Sin validación de inputs
-9. ❌ Timeouts hardcodeados
-10. ❌ `console.log` en producción (usar logger)
+4. ❌ `window.location` en Next.js (usar `useRouter`)
+5. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
+6. ❌ Queries N+1 en loops (usar batch queries)
+7. ❌ Sin validación de inputs (usar Zod)
+8. ❌ Timeouts hardcodeados (usar config centralizada)
+9. ❌ `console.log` en producción (usar logger estructurado)
+10. ❌ Shadowing de funciones importadas (usar prefijos `handle/do`)
+11. ❌ Asumir props de componentes UI (verificar tipos primero)
+12. ❌ Definir tipos duplicados (reutilizar definiciones)
+13. ❌ Asignar `undefined` a propiedades opcionales con `exactOptionalPropertyTypes` (omitir o usar `null`)
 
 ---
 
-## ✅ Checklist Pre-Commit
+## Checklist Pre-Modificación
 
+**Antes de cambiar código:**
+- [ ] Ejecutar `pnpm typecheck` para verificar estado actual
+- [ ] Construir paquetes compartidos si hay cambios en tipos (`pnpm -F @cactus/ui build`)
+- [ ] Verificar tipos de componentes UI antes de usar
 - [ ] Sin tipos `any` sin justificación
-- [ ] Validaciones Zod en endpoints nuevos (usar middleware `validate()`)
-- [ ] Tests unitarios para lógica de negocio
-- [ ] Tipos TypeScript para request/response
-- [ ] Cliente API usado (no fetch directo)
-- [ ] Queries optimizadas (no N+1)
-- [ ] Configuración externalizada (no hardcoded)
-- [ ] Logging estructurado con contexto
-- [ ] Error handling con ApiError
+- [ ] Sin dependencias nuevas sin justificación
+- [ ] Sin breaking changes sin versionado
+- [ ] Tests existentes pasan
+- [ ] Nuevos tests agregados
 - [ ] Linter limpio (`pnpm lint`)
+- [ ] Documentado con comentarios inline para decisiones no obvias
 
-### Checklist de Validación (Nuevo Endpoint)
-
-Al crear un nuevo endpoint, verificar:
-
-- [ ] Schemas definidos bajo `// Zod Validation Schemas`
-- [ ] Imports de common schemas cuando aplique (`uuidSchema`, `paginationQuerySchema`, etc.)
+**Para nuevos endpoints:**
+- [ ] Schemas Zod definidos bajo `// Zod Validation Schemas`
 - [ ] Middleware `validate()` aplicado en la definición del endpoint
-- [ ] NO usar `.parse()` manual en el handler
-- [ ] Validar params, query y body según corresponda
-- [ ] Path params: Usar `idParamSchema`, `fileIdParamSchema`, etc.
-- [ ] Query params: Usar `paginationQuerySchema` para listados
-- [ ] Body: Crear schema específico o reutilizar existente
-- [ ] Tests de validación: Casos de error 400 con detalles claros
-
-**Anti-patterns a evitar:**
-- ❌ `const validated = schema.parse(req.body)` en handler
-- ❌ `try/catch` manual para `ZodError`
-- ❌ Acceder a `req.query.limit` sin validar
-- ❌ Hardcodear valores de enums
-- ❌ Crear schemas UUID custom (usar `uuidSchema`)
+- [ ] Tipos Request/Response definidos
+- [ ] Tests de validación (casos de error 400)
 
 ---
 
-## 📚 Referencias Rápidas
+## Comandos Útiles
 
-- **Tipos:** `apps/web/types/[domain].ts`
-- **Cliente API:** `apps/web/lib/api/[domain].ts`
-- **Validaciones:** `apps/api/src/schemas/[domain].ts`
-- **Utils:** `apps/api/src/utils/[feature].ts`
-- **Config:** `apps/api/src/config/[feature].ts`
-- **Tests Unitarios:** `[file].test.ts` (mismo directorio que el archivo)
-- **Tests E2E:** `tests/e2e/[feature].spec.ts` (raíz del monorepo)
-- **Testing Guide:** `TESTING_ARCHITECTURE.md`
-
-**Score objetivo:** 8.5+/10 en todas las categorías de calidad
-
-## Operativa
-
-### Desarrollo
-**Comandos:**
+**Desarrollo:**
 ```bash
 pnpm dev                   # Dev mode (web + api)
 pnpm -F @cactus/api dev    # Solo API
 pnpm -F @cactus/web dev    # Solo frontend
 ```
 
-**Logging:**
-- `pino-pretty` se activa automáticamente en desarrollo
-- Logs JSON estructurados en producción
-
-### Producción (VPS con PM2)
-**Deploy API:**
+**Typecheck (SIEMPRE antes de commit):**
 ```bash
-pnpm -F @cactus/api build
-pm2 start apps/api/ecosystem.config.js --env production
+pnpm typecheck             # Todos los workspaces
+pnpm -F @cactus/web typecheck
+pnpm -F @cactus/api typecheck
 ```
 
-**Variables requeridas:**
-- `DATABASE_URL` - Conexión PostgreSQL
-- `PORT` - Puerto API (default: 3001)
-- `LOG_LEVEL` - Nivel logging (info, debug, error)
-- `CORS_ORIGINS` - Orígenes permitidos (separados por comas)
-- `ANALYTICS_SERVICE_URL` - URL del servicio Python (default: http://localhost:8000)
+**Build:**
+```bash
+pnpm -F @cactus/ui build   # Construir paquete UI
+pnpm -F @cactus/db build   # Construir paquete DB
+pnpm build                 # Build completo
+```
 
-**Logs:**
-- Ver: `pm2 logs cactus-api`
-- Archivos: `apps/api/logs/`
-- Rotación: `pm2 install pm2-logrotate`
+**Tests:**
+```bash
+pnpm test                  # Unit tests
+pnpm test:coverage         # Con coverage
+pnpm test:e2e              # E2E tests
+```
 
+---
 
+## Referencias Rápidas
+
+- **Tipos:** `apps/web/types/[domain].ts`
+- **Cliente API:** `apps/web/lib/api/[domain].ts`
+- **Validaciones:** `apps/api/src/routes/*.ts` (sección `// Zod Validation Schemas`)
+- **Utils:** `apps/api/src/utils/[feature].ts`
+- **Config:** `apps/api/src/config/[feature].ts`
+- **UI Components:** `packages/ui/src/components/*` (verificar tipos antes de usar)
+
+**Score objetivo:** 8.5+/10 en todas las categorías de calidad
+
+---
+
+## Documentación de Decisiones
+
+**Para decisiones no obvias, usar formato:**
+```typescript
+// AI_DECISION: [Motivo del cambio]
+// Justificación: [Por qué es mejor esta implementación]
+// Impacto: [Qué áreas del código afecta]
+```

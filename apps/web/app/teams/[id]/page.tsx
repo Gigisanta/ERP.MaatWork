@@ -2,6 +2,9 @@
 import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { getTeams, getTeamMembers, getTeamAdvisors, createTeamInvitation } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { Team, TeamMember } from '@/types';
 import { 
   Card,
   CardHeader,
@@ -24,16 +27,13 @@ import {
   Badge,
 } from '@cactus/ui';
 
-interface Member { id: string; email: string; fullName: string; role: string }
-
 export default function TeamDetailsPage() {
   const { user, token, loading } = useRequireAuth();
   const params = useParams();
   const router = useRouter();
   const teamId = String(params?.id || '');
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [teamName, setTeamName] = useState<string>('Equipo');
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,17 +57,18 @@ export default function TeamDetailsPage() {
       setError(null);
 
       // Get my teams then derive name of this team
-      const teamsRes = await fetch(`${apiUrl}/teams`, { headers: { Authorization: `Bearer ${token}` } });
-      if (teamsRes.ok) {
-        const tjson = await teamsRes.json();
-        const t = (tjson.data || []).find((x: any) => x.id === teamId);
+      const teamsRes = await getTeams();
+      if (teamsRes.success && teamsRes.data) {
+        const t = teamsRes.data.find((x: Team) => x.id === teamId);
         if (t && t.name) setTeamName(t.name);
       }
 
-      const memRes = await fetch(`${apiUrl}/teams/${teamId}/members`, { headers: { Authorization: `Bearer ${token}` } });
-      if (!memRes.ok) throw new Error('No se pudieron cargar los miembros');
-      const mjson = await memRes.json();
-      setMembers(mjson.data || []);
+      const memRes = await getTeamMembers(teamId);
+      if (memRes.success && memRes.data) {
+        setMembers(memRes.data || []);
+      } else {
+        throw new Error('No se pudieron cargar los miembros');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar equipo');
     } finally {
@@ -79,10 +80,9 @@ export default function TeamDetailsPage() {
     if (!token) return;
     setLinkModalOpen(true);
     try {
-      const res = await fetch(`${apiUrl}/teams/${teamId}/advisors`, { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) {
-        const data = await res.json();
-        setAdvisorCandidates(data.data || []);
+      const res = await getTeamAdvisors(teamId);
+      if (res.success && res.data) {
+        setAdvisorCandidates(res.data || []);
       } else {
         setAdvisorCandidates([]);
       }
@@ -95,12 +95,8 @@ export default function TeamDetailsPage() {
     if (!token) return;
     try {
       setInviteLoading(inviteeId);
-      const res = await fetch(`${apiUrl}/teams/${teamId}/invitations`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: inviteeId })
-      });
-      if (res.ok) {
+      const res = await createTeamInvitation(teamId, { userId: inviteeId });
+      if (res.success) {
         setAdvisorCandidates(prev => prev.filter(a => a.id !== inviteeId));
       }
     } finally {
@@ -130,7 +126,7 @@ export default function TeamDetailsPage() {
         {error && (
           <Card>
             <CardContent>
-              <Text color="danger">{error}</Text>
+              <Text color="secondary">{error}</Text>
             </CardContent>
           </Card>
         )}
@@ -156,27 +152,26 @@ export default function TeamDetailsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Text weight="medium" className="text-sm truncate">
-                            {member.fullName || member.email}
+                            {member.fullName || member.email || member.user?.fullName || member.user?.email || 'Miembro'}
                           </Text>
                           <Badge variant="default" className="text-xs px-1.5 py-0.5">
-                            {member.role}
+                            {member.role || member.user?.role || 'N/A'}
                           </Badge>
                         </div>
                         <Text size="sm" color="secondary" className="truncate">
-                          {member.email}
+                          {member.email || member.user?.email || 'N/A'}
                         </Text>
                   </div>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="flex-shrink-0 px-3"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/contacts?advisorId=${member.id}`);
-                        }}
-                      >
-                        Ver CRM
-                      </Button>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="flex-shrink-0 px-3"
+                          onClick={() => {
+                            router.push(`/contacts?advisorId=${member.id}`);
+                          }}
+                        >
+                          Ver CRM
+                        </Button>
                 </div>
           </CardContent>
         </Card>
