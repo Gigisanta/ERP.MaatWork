@@ -9,10 +9,11 @@ export interface TabItem {
   disabled?: boolean;
 }
 
-export interface TabsProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> {
+export interface TabsProps extends Omit<React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>, 'className' | 'children'> {
   items?: TabItem[];
   variant?: 'line' | 'pill' | 'enclosed';
   className?: string;
+  children?: React.ReactNode;
 }
 
 export const Tabs = React.forwardRef<

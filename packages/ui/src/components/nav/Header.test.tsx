@@ -7,7 +7,7 @@ import type { NavItem, User } from './Header';
 const mockNavItems: NavItem[] = [
   { label: 'Home', href: '/', icon: 'Home' },
   { label: 'About', href: '/about', badge: 'New' },
-  { label: 'External', href: 'https://example.com', icon: 'link' },
+  { label: 'External', href: 'https://example.com', icon: 'list' },
 ];
 
 const mockUser: User = {
