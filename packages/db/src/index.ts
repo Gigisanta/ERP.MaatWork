@@ -6,6 +6,7 @@ if (!process.env.DATABASE_URL) {
 
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './schema';
 export * from './schema';
 
@@ -38,9 +39,9 @@ function createDb() {
  * 
  * REGLA CURSOR: Siempre usar db() para obtener instancia - no crear pools manuales
  */
-let _db: any = null;
+let _db: NodePgDatabase<typeof schema> | null = null;
 
-export function db() {
+export function db(): NodePgDatabase<typeof schema> {
   if (!_db) {
     _db = createDb();
   }

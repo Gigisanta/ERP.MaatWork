@@ -1,5 +1,5 @@
 import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
-import { eq, and, or, sql, inArray, isNull } from 'drizzle-orm';
+import { eq, and, or, sql, inArray, isNull, type SQL } from 'drizzle-orm';
 import { UserRole } from './types';
 
 export interface AccessScope {
@@ -12,7 +12,7 @@ export interface AccessScope {
 }
 
 export interface ContactAccessFilter {
-  whereClause: any;
+  whereClause: SQL | ReturnType<typeof sql>;
   description: string;
 }
 
