@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiClient } from '@/lib/api-client';
+import { getAumRows } from '@/lib/api';
 import FileUploader from './components/FileUploader';
 import ContactUserPicker from './components/ContactUserPicker';
 import DuplicateResolutionModal from './components/DuplicateResolutionModal';
@@ -52,16 +52,17 @@ export default function AumAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const params: Record<string, string> = {
-        limit: String(pagination.limit),
-        offset: String(pagination.offset)
-      };
-      if (filters.broker) params.broker = filters.broker;
-      if (filters.status) params.status = filters.status;
+      const response = await getAumRows({
+        limit: pagination.limit,
+        offset: pagination.offset,
+        broker: filters.broker || undefined,
+        status: filters.status || undefined,
+      });
       
-      const data = await apiClient.get<{ rows: Row[]; pagination: any }>('/admin/aum/rows/all', { params });
-      setRows(data.rows || []);
-      setPagination(prev => ({ ...prev, ...data.pagination }));
+      if (response.success && response.data) {
+        setRows(response.data.rows || []);
+        setPagination(prev => ({ ...prev, ...response.data.pagination }));
+      }
     } catch (e: any) {
       setError(e.userMessage || e.message || 'Error cargando datos');
     } finally {

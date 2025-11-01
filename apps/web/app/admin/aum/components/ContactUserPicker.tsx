@@ -5,7 +5,7 @@
 // Impacto: New UI component for AUM normalization workflow
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { matchAumRow } from '@/lib/api';
 
 interface ContactUserPickerProps {
   fileId: string;
@@ -33,10 +33,10 @@ export default function ContactUserPicker({
     setError(null);
     setSuccess(false);
     try {
-      await apiClient.post(`/admin/aum/uploads/${fileId}/match`, { 
-        rowId, 
-        matchedContactId: contactId || null, 
-        matchedUserId: userId || null 
+      await matchAumRow(fileId, {
+        rowId,
+        matchedContactId: contactId || null,
+        matchedUserId: userId || null,
       });
       setSuccess(true);
       if (onSave) onSave();

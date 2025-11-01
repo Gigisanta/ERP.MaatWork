@@ -85,27 +85,23 @@ export default function PortfolioDetailPage() {
     setToast({ show: true, title, description, variant });
   };
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
+  // AI_DECISION: Usar cliente API centralizado en lugar de fetch directo
+  // Justificación: Retry automático, refresh token, timeout configurable, error handling consistente
+  // Impacto: Mejor resiliencia y mantenibilidad
   const fetchTemplate = async () => {
     if (!token || !templateId) return;
     
     try {
       setDataLoading(true);
       
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
+      const { getPortfolioLines } = await import('@/lib/api');
+      const response = await getPortfolioLines(templateId);
+      
+      if (response.success && response.data) {
+        setTemplateData(response.data);
+      } else {
         throw new Error('Failed to fetch portfolio template');
       }
-
-      const data = await response.json();
-      setTemplateData(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

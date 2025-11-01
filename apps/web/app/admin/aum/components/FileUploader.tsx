@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { uploadAumFile } from '@/lib/api';
 import {
   Modal,
   ModalHeader,
@@ -47,12 +47,13 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setLoading(true);
     setError(null);
     try {
-      const form = new FormData();
-      form.append('file', file);
+      const response = await uploadAumFile(file, 'balanz');
       
-      const data = await apiClient.post<UploadResponse>('/admin/aum/uploads', form, {
-        params: { broker: 'balanz' }
-      });
+      if (!response.success || !response.data) {
+        throw new Error('Error al subir archivo');
+      }
+      
+      const data = response.data;
       const fileId = data.fileId;
       // Show summary modal if there are conflicts or interesting stats
       if (data.totals.conflicts > 0 || data.totals.ambiguous > 0) {

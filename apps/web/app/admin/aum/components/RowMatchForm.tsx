@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { matchAumRow } from '@/lib/api';
+import { Input, Button, Spinner, Text } from '@cactus/ui';
 
 export default function RowMatchForm({ fileId, rowId, initialContactId, initialUserId }: { fileId: string; rowId: string; initialContactId?: string | null; initialUserId?: string | null; }) {
   const [contactId, setContactId] = useState(initialContactId || '');
@@ -13,10 +14,10 @@ export default function RowMatchForm({ fileId, rowId, initialContactId, initialU
     setSaving(true);
     setError(null);
     try {
-      await apiClient.post(`/admin/aum/uploads/${fileId}/match`, {
+      await matchAumRow(fileId, {
         rowId,
         matchedContactId: contactId || null,
-        matchedUserId: userId || null
+        matchedUserId: userId || null,
       });
     } catch (e: any) {
       setError(e.userMessage || e.message || 'Error al guardar');
@@ -27,10 +28,41 @@ export default function RowMatchForm({ fileId, rowId, initialContactId, initialU
 
   return (
     <div className="flex items-center gap-2">
-      <input value={contactId} onChange={(e) => setContactId(e.target.value)} placeholder="contactId" className="border rounded px-2 py-1 text-xs" />
-      <input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="userId (advisor)" className="border rounded px-2 py-1 text-xs" />
-      <button onClick={save} disabled={saving} className="px-2 py-1 text-xs bg-gray-800 text-white rounded">{saving ? '...' : 'Guardar'}</button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      <Input 
+        value={contactId} 
+        onChange={(e) => setContactId(e.target.value)} 
+        placeholder="contactId" 
+        size="sm"
+        className="text-xs"
+      />
+      <Input 
+        value={userId} 
+        onChange={(e) => setUserId(e.target.value)} 
+        placeholder="userId (advisor)" 
+        size="sm"
+        className="text-xs"
+      />
+      <Button 
+        onClick={save} 
+        disabled={saving} 
+        size="sm"
+        variant="primary"
+        className="text-xs"
+      >
+        {saving ? (
+          <>
+            <Spinner size="sm" className="mr-1" />
+            Guardando...
+          </>
+        ) : (
+          'Guardar'
+        )}
+      </Button>
+      {error && (
+        <Text size="sm" className="text-error">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }

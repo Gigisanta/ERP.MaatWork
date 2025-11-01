@@ -21,3 +21,6 @@ export * from './instruments';
 // Analytics methods
 export * from './analytics';
 
+// AUM methods
+export * from './aum';
+

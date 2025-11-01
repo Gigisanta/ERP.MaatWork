@@ -8,8 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { apiClient } from '@/lib/api-client';
-import { getApiUrl } from '@/lib/api-url';
+import { getAumFilePreview, getAumFileExportUrl, commitAumFile } from '@/lib/api';
 import ContactUserPicker from '../components/ContactUserPicker';
 
 export default function AumPreviewPage() {
@@ -21,9 +20,12 @@ export default function AumPreviewPage() {
 
   const loadRows = async () => {
     try {
-      const data = await apiClient.get<{ok: boolean; file: any; rows: any[]}>(`/admin/aum/uploads/${fileId}/preview`);
-      setFile(data.file);
-      setRows(data.rows || []);
+      const response = await getAumFilePreview(fileId);
+      
+      if (response.success && response.data) {
+        setFile(response.data.file);
+        setRows(response.data.rows || []);
+      }
     } catch (e: any) {
       setError(e.userMessage || e.message || 'Error');
     }
@@ -42,12 +44,23 @@ export default function AumPreviewPage() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href={getApiUrl(`/admin/aum/uploads/${fileId}/export`)}
+            href={getAumFileExportUrl(fileId)}
             className="px-3 py-2 text-sm border rounded"
           >Descargar CSV</a>
-          <form action={getApiUrl(`/admin/aum/uploads/${fileId}/commit`)} method="post">
-            <button className="px-3 py-2 text-sm bg-indigo-600 text-white rounded">Confirmar sincronización</button>
-          </form>
+          <button 
+            onClick={async () => {
+              try {
+                await commitAumFile(fileId);
+                alert('Sincronización confirmada');
+                loadRows();
+              } catch (e: any) {
+                alert(e.userMessage || e.message || 'Error al confirmar');
+              }
+            }}
+            className="px-3 py-2 text-sm bg-indigo-600 text-white rounded"
+          >
+            Confirmar sincronización
+          </button>
         </div>
       </div>
 

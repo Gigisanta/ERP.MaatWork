@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useTransition } from 'react';
-import { Text, Spinner } from '@cactus/ui';
+import { Text, Spinner, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
 
 // AI_DECISION: Client wrapper for Server Action to avoid prop passing
@@ -77,7 +77,7 @@ export default function ContactEditableField({
   if (isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type={type === 'tel' ? 'tel' : type === 'email' ? 'email' : 'text'}
           value={localValue}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
@@ -87,8 +87,9 @@ export default function ContactEditableField({
             if (e.key === 'Escape') handleCancel();
           }}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1"
           autoFocus
+          size="sm"
         />
         {isPending && <Spinner size="sm" />}
       </div>

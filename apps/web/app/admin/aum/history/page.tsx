@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiClient } from '@/lib/api-client';
+import { getAumRows } from '@/lib/api';
 import ContactUserPicker from '../components/ContactUserPicker';
 import DuplicateResolutionModal from '../components/DuplicateResolutionModal';
 
@@ -51,17 +51,24 @@ export default function AumHistoryPage() {
     setLoading(true);
     setError(null);
     try {
-      const params: Record<string, string> = {
-        limit: String(pagination.limit),
-        offset: String(pagination.offset)
-      };
-      if (filters.broker) params.broker = filters.broker;
-      if (filters.status) params.status = filters.status;
-      if (filters.fileId) params.fileId = filters.fileId;
+      // TODO: Agregar soporte para fileId en getAumRows si el backend lo soporta
+      const response = await getAumRows({
+        limit: pagination.limit,
+        offset: pagination.offset,
+        broker: filters.broker || undefined,
+        status: filters.status || undefined,
+        // fileId: filters.fileId || undefined, // Pendiente agregar si backend lo soporta
+      });
       
-      const data = await apiClient.get<{ rows: Row[]; pagination: any }>('/admin/aum/rows/all', { params });
-      setRows(data.rows || []);
-      setPagination(prev => ({ ...prev, ...data.pagination }));
+      if (response.success && response.data) {
+        // Filtrar por fileId en cliente si es necesario hasta que backend lo soporte
+        let rows = response.data.rows || [];
+        if (filters.fileId) {
+          rows = rows.filter(r => r.fileId === filters.fileId);
+        }
+        setRows(rows);
+        setPagination(prev => ({ ...prev, ...response.data.pagination }));
+      }
     } catch (e: any) {
       setError(e.userMessage || e.message || 'Error cargando datos');
     } finally {
