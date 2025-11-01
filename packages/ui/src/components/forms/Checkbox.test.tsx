@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -41,12 +42,12 @@ describe('Checkbox Component', () => {
     });
 
     it('should be checked when defaultChecked is true', () => {
-      render(<Checkbox defaultChecked />);
+      render(<Checkbox defaultChecked={true} />);
       expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
     it('should be disabled when disabled prop is true', () => {
-      render(<Checkbox disabled />);
+      render(<Checkbox disabled={true} />);
       expect(screen.getByRole('checkbox')).toBeDisabled();
     });
 
@@ -73,7 +74,7 @@ describe('Checkbox Component', () => {
     });
 
     it('should call onCheckedChange when toggled', async () => {
-      const handleChange = vi.fn();
+      const handleChange = vi.fn<[boolean], void>();
       const user = userEvent.setup();
       
       render(<Checkbox onCheckedChange={handleChange} />);
@@ -94,10 +95,10 @@ describe('Checkbox Component', () => {
     });
 
     it('should not toggle when disabled', async () => {
-      const handleChange = vi.fn();
+      const handleChange = vi.fn<[boolean], void>();
       const user = userEvent.setup();
       
-      render(<Checkbox disabled onCheckedChange={handleChange} />);
+      render(<Checkbox disabled={true} onCheckedChange={handleChange} />);
       
       await user.click(screen.getByRole('checkbox'));
       expect(handleChange).not.toHaveBeenCalled();
@@ -152,8 +153,8 @@ describe('Checkbox Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Checkbox ref={ref as any} />);
+      const ref = React.createRef<React.ElementRef<typeof import('@radix-ui/react-checkbox').Root>>();
+      render(<Checkbox ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
   });

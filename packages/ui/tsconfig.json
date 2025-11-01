@@ -21,15 +21,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
   },
-  "include": ["src/**/*", "src/tailwind-preset.ts"],
+  "include": ["src/**/*", "src/tailwind-preset.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
   "exclude": [
     "node_modules", 
     "dist", 
     "tests", 
-    "**/*.test.ts", 
-    "**/*.test.tsx", 
     "**/*.stories.tsx",
     "src/components/Select.tsx",
     "src/components/Switch.tsx",

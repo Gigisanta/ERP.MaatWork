@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import Icon from './Icon';
+import type { IconName } from './Icon';
 
 describe('Icon Component', () => {
   describe('Rendering', () => {
@@ -90,7 +91,8 @@ describe('Icon Component', () => {
     });
 
     it('should show fallback for unknown icon', () => {
-      const { container } = render(<Icon name={'UnknownIcon' as any} />);
+      // Test que el componente maneja nombres de iconos no válidos
+      const { container } = render(<Icon name={'UnknownIcon' as IconName} />);
       expect(container.querySelector('span')).toHaveTextContent('?');
     });
   });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Breadcrumbs, type BreadcrumbItem } from './Breadcrumbs';
+import { Breadcrumbs, type BreadcrumbItem, type LinkComponentProps } from './Breadcrumbs';
 
 const mockItems: BreadcrumbItem[] = [
   { label: 'Home', href: '/' },
@@ -68,7 +68,7 @@ describe('Breadcrumbs Component', () => {
 
   describe('Custom Link Component', () => {
     it('should use custom LinkComponent when provided', () => {
-      const CustomLink = ({ href, children, ...props }: any) => (
+      const CustomLink = ({ href, children, ...props }: LinkComponentProps) => (
         <a href={href} data-custom="true" {...props}>{children}</a>
       );
 

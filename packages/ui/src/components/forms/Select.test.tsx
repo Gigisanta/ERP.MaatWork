@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Select, type SelectItem } from './Select';
 
@@ -124,8 +125,8 @@ describe('Select Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Select items={mockItems} ref={ref as any} />);
+      const ref = React.createRef<React.ElementRef<typeof import('@radix-ui/react-select').Trigger>>();
+      render(<Select items={mockItems} ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
 

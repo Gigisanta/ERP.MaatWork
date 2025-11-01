@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Badge } from './Badge';
@@ -82,8 +83,8 @@ describe('Badge Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Badge ref={ref as any}>With Ref</Badge>);
+      const ref = React.createRef<HTMLSpanElement>();
+      render(<Badge ref={ref}>With Ref</Badge>);
       expect(ref.current).not.toBeNull();
     });
 

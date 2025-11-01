@@ -3,13 +3,15 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check, Minus } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-export interface CheckboxProps extends React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
+export interface CheckboxProps extends Omit<React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>, 'className' | 'id' | 'onCheckedChange'> {
   label?: string;
   helperText?: string;
   error?: string;
   className?: string;
   id?: string;
   indeterminate?: boolean;
+  // Props heredadas de Radix UI que necesitan ser explícitas
+  onCheckedChange?: (checked: boolean) => void;
 }
 
 export const Checkbox = React.forwardRef<

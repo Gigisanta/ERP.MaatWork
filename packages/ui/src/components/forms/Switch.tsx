@@ -2,7 +2,7 @@ import React from 'react';
 import * as SwitchPrimitive from '@radix-ui/react-switch';
 import { cn } from '../../utils/cn';
 
-export interface SwitchProps extends React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root> {
+export interface SwitchProps extends Omit<React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>, 'className' | 'id'> {
   label?: string;
   helperText?: string;
   error?: string;

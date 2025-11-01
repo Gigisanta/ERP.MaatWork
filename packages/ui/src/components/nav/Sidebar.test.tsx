@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sidebar } from './Sidebar';
-import type { SidebarSection } from './Sidebar';
+import type { SidebarSection, SidebarProps } from './Sidebar';
+import type { ComponentProps } from 'react';
+
+/**
+ * Tipo para LinkComponent basado en SidebarProps
+ */
+type LinkComponentProps = NonNullable<SidebarProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
 
 const mockSections: SidebarSection[] = [
   {
@@ -21,7 +27,7 @@ const mockSections: SidebarSection[] = [
   },
 ];
 
-const MockLink = ({ href, className, children, ...props }: any) => (
+const MockLink = ({ href, className, children, ...props }: LinkComponentProps & ComponentProps<'a'>) => (
   <a href={href} className={className} {...props}>
     {children}
   </a>

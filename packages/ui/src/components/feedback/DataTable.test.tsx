@@ -413,8 +413,8 @@ describe('DataTable Component', () => {
     });
 
     it('should handle missing column values', () => {
-      const dataWithMissing = [{ id: '1', name: 'Alice', age: undefined, status: null }];
-      render(<DataTable data={dataWithMissing as any} columns={mockColumns} keyField="id" />);
+      const dataWithMissing: Partial<TestData>[] = [{ id: '1', name: 'Alice', age: undefined, status: null as unknown as string }];
+      render(<DataTable data={dataWithMissing as TestData[]} columns={mockColumns} keyField="id" />);
       expect(screen.getByText('Alice')).toBeInTheDocument();
     });
 

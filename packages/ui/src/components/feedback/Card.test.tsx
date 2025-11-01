@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { 
@@ -83,8 +84,8 @@ describe('Card Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Card ref={ref as any}>With Ref</Card>);
+      const ref = React.createRef<HTMLDivElement>();
+      render(<Card ref={ref}>With Ref</Card>);
       expect(ref.current).not.toBeNull();
     });
 
@@ -123,9 +124,9 @@ describe('CardHeader Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<CardHeader ref={ref as any}>Header</CardHeader>);
-    expect(ref.current).not.toBeNull();
+    const headerRef = React.createRef<HTMLDivElement>();
+    render(<CardHeader ref={headerRef}>Header</CardHeader>);
+    expect(headerRef.current).not.toBeNull();
   });
 });
 
@@ -148,8 +149,8 @@ describe('CardTitle Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<CardTitle ref={ref as any}>Title</CardTitle>);
+    const ref = React.createRef<HTMLHeadingElement>();
+    render(<CardTitle ref={ref}>Title</CardTitle>);
     expect(ref.current).not.toBeNull();
   });
 });
@@ -173,8 +174,8 @@ describe('CardDescription Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<CardDescription ref={ref as any}>Description</CardDescription>);
+    const ref = React.createRef<HTMLParagraphElement>();
+    render(<CardDescription ref={ref}>Description</CardDescription>);
     expect(ref.current).not.toBeNull();
   });
 });
@@ -192,8 +193,8 @@ describe('CardContent Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<CardContent ref={ref as any}>Content</CardContent>);
+    const ref = React.createRef<HTMLDivElement>();
+    render(<CardContent ref={ref}>Content</CardContent>);
     expect(ref.current).not.toBeNull();
   });
 });
@@ -217,8 +218,8 @@ describe('CardFooter Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<CardFooter ref={ref as any}>Footer</CardFooter>);
+    const ref = React.createRef<HTMLDivElement>();
+    render(<CardFooter ref={ref}>Footer</CardFooter>);
     expect(ref.current).not.toBeNull();
   });
 });

@@ -1,6 +1,14 @@
-import '@testing-library/jest-dom/vitest';
 import { expect, vi, afterEach, beforeAll, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+
+// Extender tipos de vitest con jest-dom matchers
+declare module 'vitest' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface Assertion<T = any> extends jest.Matchers<void, T> {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  interface AsymmetricMatchersContaining extends jest.Matchers<void, any> {}
+}
 
 // Cleanup after each test
 afterEach(() => {

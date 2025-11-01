@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Alert, AlertTitle, AlertDescription } from './Alert';
@@ -75,8 +76,8 @@ describe('Alert Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Alert ref={ref as any}>With Ref</Alert>);
+      const ref = React.createRef<HTMLDivElement>();
+      render(<Alert ref={ref}>With Ref</Alert>);
       expect(ref.current).not.toBeNull();
     });
 
@@ -156,8 +157,8 @@ describe('AlertTitle Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<AlertTitle ref={ref as any}>Title</AlertTitle>);
+    const ref = React.createRef<HTMLHeadingElement>();
+    render(<AlertTitle ref={ref}>Title</AlertTitle>);
     expect(ref.current).not.toBeNull();
   });
 });
@@ -187,8 +188,8 @@ describe('AlertDescription Component', () => {
   });
 
   it('should forward ref correctly', () => {
-    const ref = { current: null };
-    render(<AlertDescription ref={ref as any}>Description</AlertDescription>);
+    const ref = React.createRef<HTMLDivElement>();
+    render(<AlertDescription ref={ref}>Description</AlertDescription>);
     expect(ref.current).not.toBeNull();
   });
 });

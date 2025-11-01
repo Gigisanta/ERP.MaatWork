@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Nav } from './Nav';
-import type { NavItem } from './Nav';
+import type { NavItem, NavProps } from './Nav';
+import type { ComponentProps } from 'react';
+
+/**
+ * Tipo para LinkComponent basado en NavProps
+ */
+type LinkComponentProps = NonNullable<NavProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
 
 const mockItems: NavItem[] = [
   { label: 'Home', href: '/home', icon: 'Home' },
@@ -9,7 +15,7 @@ const mockItems: NavItem[] = [
   { label: 'Contact', href: '/contact', badge: 5 },
 ];
 
-const MockLink = ({ href, className, children, ...props }: any) => (
+const MockLink = ({ href, className, children, ...props }: LinkComponentProps & ComponentProps<'a'>) => (
   <a href={href} className={className} {...props}>
     {children}
   </a>

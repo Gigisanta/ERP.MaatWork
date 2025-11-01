@@ -7,6 +7,16 @@ export interface BreadcrumbItem {
   href?: string;
 }
 
+/**
+ * Props para LinkComponent customizado
+ */
+export interface LinkComponentProps {
+  href: string;
+  className?: string;
+  'aria-current'?: 'page' | undefined;
+  children: React.ReactNode;
+}
+
 export interface BreadcrumbsProps extends React.HTMLAttributes<HTMLElement> {
   items: BreadcrumbItem[];
   separator?: React.ReactNode;
@@ -15,7 +25,7 @@ export interface BreadcrumbsProps extends React.HTMLAttributes<HTMLElement> {
    * Custom Link component (e.g., Next.js Link, React Router Link)
    * If not provided, will use a regular <a> tag
    */
-  LinkComponent?: React.ComponentType<any>;
+  LinkComponent?: React.ComponentType<LinkComponentProps>;
 }
 
 export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
@@ -82,8 +92,3 @@ export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
 );
 
 Breadcrumbs.displayName = 'Breadcrumbs';
-
-
-
-
-

@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -179,8 +180,8 @@ describe('Switch Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Switch ref={ref as any} />);
+      const ref = React.createRef<React.ElementRef<typeof import('@radix-ui/react-switch').Root>>();
+      render(<Switch ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
   });

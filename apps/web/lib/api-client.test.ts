@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ApiClient, ApiError } from './api-client';
 
 // Mock fetch global
-global.fetch = vi.fn() as any;
+global.fetch = vi.fn() as typeof fetch;
 
 describe('ApiError', () => {
   it('debería crear error con status y mensaje', () => {
@@ -96,7 +96,7 @@ describe('ApiError', () => {
 
 describe('ApiClient', () => {
   let client: ApiClient;
-  const mockFetch = global.fetch as any;
+  const mockFetch = vi.mocked(global.fetch);
 
   beforeEach(() => {
     // Reset mocks
@@ -141,8 +141,7 @@ describe('ApiClient', () => {
 
     it('debería incluir Authorization header si hay token', async () => {
       // Simular token en localStorage usando el mock
-      const localStorageMock = window.localStorage as any;
-      localStorageMock.getItem.mockReturnValue('test-token');
+      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('test-token');
 
       mockFetch.mockResolvedValueOnce({
         ok: true,

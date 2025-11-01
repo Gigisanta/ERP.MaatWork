@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Spinner, LoadingOverlay } from './Spinner';
@@ -64,8 +65,8 @@ describe('Spinner Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = { current: null };
-      render(<Spinner ref={ref as any} />);
+      const ref = React.createRef<HTMLDivElement>();
+      render(<Spinner ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
   });
@@ -157,9 +158,9 @@ describe('LoadingOverlay Component', () => {
 
   describe('Accessibility', () => {
     it('should forward ref correctly', () => {
-      const ref = { current: null };
+      const ref = React.createRef<HTMLDivElement>();
       render(
-        <LoadingOverlay loading={false} ref={ref as any}>
+        <LoadingOverlay loading={false} ref={ref}>
           <div>Content</div>
         </LoadingOverlay>
       );
