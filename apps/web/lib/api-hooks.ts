@@ -19,17 +19,26 @@ const fetcher = async (url: string, token: string) => {
 };
 
 // Hook for contacts list
-export function useContacts() {
+export function useContacts(assignedAdvisorId?: string | null) {
   const { token } = useAuth();
   const apiUrl = 'http://localhost:3001';
   
+  // Build URL with query params if assignedAdvisorId is provided
+  const url = assignedAdvisorId 
+    ? `${apiUrl}/contacts?assignedAdvisorId=${assignedAdvisorId}`
+    : `${apiUrl}/contacts`;
+  
+  // Use the full URL as the SWR key to ensure proper cache separation for different advisorIds
+  // This ensures each advisorId gets its own cached result
+  const swrKey = token ? [url, token] : null;
+  
   const { data, error, isLoading, mutate } = useSWR(
-    token ? [`${apiUrl}/contacts`, token] : null,
+    swrKey,
     ([url, token]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // Dedupe requests within 2 seconds
+      dedupingInterval: 2000,
     }
   );
   

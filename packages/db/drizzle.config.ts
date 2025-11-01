@@ -18,8 +18,8 @@ config({ path: existsSync(envLocalPath) ? envLocalPath : envPath });
  */
 export default {
   schema: './src/schema.ts',
-  // Point to the squashed baseline migrations folder
-  out: './migrations_squashed',
+  // Use canonical migrations directory (with meta/_journal.json)
+  out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/CRM'

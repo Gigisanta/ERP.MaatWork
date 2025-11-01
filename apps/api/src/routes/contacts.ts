@@ -79,6 +79,209 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       }
     }, 'User access scope obtained');
     
+    // AI_DECISION: Validate and build access filter with assignedAdvisorId support
+    // Justificación: When filtering by assignedAdvisorId, we need to ensure the user has access
+    // to that advisor AND exclude unassigned contacts from the filter
+    // Impacto: Fixes the issue where managers see wrong contacts when filtering by team member
+    
+    // If filtering by assignedAdvisorId, validate access first
+    if (assignedAdvisorId) {
+      const advisorIdStr = assignedAdvisorId as string;
+      
+      req.log.info({
+        userId,
+        userRole,
+        requestedAdvisorId: advisorIdStr,
+        accessibleAdvisorIdsCount: accessScope.accessibleAdvisorIds.length,
+        accessibleAdvisorIds: accessScope.accessibleAdvisorIds,
+        canSeeUnassigned: accessScope.canSeeUnassigned,
+        action: 'filter_by_assigned_advisor_initiated'
+      }, 'Filtering contacts by assignedAdvisorId - initializing');
+      
+      // For non-admin users, validate that the advisor is accessible
+      if (userRole !== 'admin') {
+        // Check if the advisor is in the accessible list
+        const hasAccess = accessScope.accessibleAdvisorIds.length === 0 || 
+                         accessScope.accessibleAdvisorIds.includes(advisorIdStr);
+        
+        req.log.info({
+          userId,
+          userRole,
+          requestedAdvisorId: advisorIdStr,
+          accessibleAdvisorIds: accessScope.accessibleAdvisorIds,
+          hasAccess,
+          action: 'access_check_for_advisor_filter'
+        }, `Access check for advisor filter: ${hasAccess ? 'GRANTED' : 'DENIED'}`);
+        
+        if (!hasAccess && accessScope.accessibleAdvisorIds.length > 0) {
+          req.log.warn({ 
+            userId, 
+            userRole, 
+            requestedAdvisorId: advisorIdStr,
+            accessibleAdvisorIds: accessScope.accessibleAdvisorIds,
+            reason: 'advisor_not_in_accessible_list',
+            action: 'access_denied_advisor_filter'
+          }, 'User attempted to filter by advisor they do not have access to');
+          
+          // Return empty result instead of error (more user-friendly)
+          return res.json({
+            data: [],
+            meta: {
+              limit: parseInt(limit as string),
+              offset: parseInt(offset as string)
+            }
+          });
+        }
+      } else {
+        req.log.info({
+          userId,
+          userRole,
+          requestedAdvisorId: advisorIdStr,
+          action: 'admin_access_always_granted'
+        }, 'Admin access - filtering by advisor granted automatically');
+      }
+      
+      // Build a more specific access filter that excludes unassigned contacts
+      // when filtering by a specific advisor
+      const specificAccessFilter = accessScope.role === 'admin'
+        ? sql`1=1` // Admin sees everything
+        : accessScope.accessibleAdvisorIds.length > 0
+          ? inArray(contacts.assignedAdvisorId, accessScope.accessibleAdvisorIds)
+          : sql`1=0`; // No access
+      
+      req.log.info({
+        userId,
+        userRole,
+        requestedAdvisorId: advisorIdStr,
+        accessFilterType: accessScope.role === 'admin' ? 'admin_unrestricted' : 
+                         accessScope.accessibleAdvisorIds.length > 0 ? 'team_members_filter' : 'no_access',
+        action: 'building_access_filter'
+      }, 'Building access filter for advisor-specific query');
+      
+      const conditions = [
+        isNull(contacts.deletedAt),
+        specificAccessFilter,
+        eq(contacts.assignedAdvisorId, advisorIdStr) // Explicit filter for the specific advisor
+      ];
+      
+      if (pipelineStageId) {
+        if (pipelineStageId === 'null' || pipelineStageId === '') {
+          conditions.push(isNull(contacts.pipelineStageId));
+        } else {
+          conditions.push(eq(contacts.pipelineStageId, pipelineStageId as string));
+        }
+      }
+      
+      req.log.info({ 
+        conditionsCount: conditions.length,
+        assignedAdvisorId: advisorIdStr,
+        pipelineStageId: pipelineStageId || null,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string),
+        action: 'executing_advisor_filtered_query'
+      }, 'Executing contacts query with specific advisor filter');
+      
+      const dbLogger = createDrizzleLogger(req.log);
+      const items = await dbLogger.select(
+        'list_contacts_main_query',
+        () => db()
+          .select()
+          .from(contacts)
+          .where(and(...conditions))
+          .limit(parseInt(limit as string))
+          .offset(parseInt(offset as string))
+          .orderBy(desc(contacts.updatedAt))
+      );
+      
+      // Verify that returned contacts actually have the correct assignedAdvisorId
+      const itemsWithCorrectAdvisor = (items as any[]).filter((c: any) => c.assignedAdvisorId === advisorIdStr);
+      const itemsWithWrongAdvisor = (items as any[]).filter((c: any) => c.assignedAdvisorId !== advisorIdStr);
+      
+      if (itemsWithWrongAdvisor.length > 0) {
+        req.log.error({
+          userId,
+          userRole,
+          requestedAdvisorId: advisorIdStr,
+          itemsCount: (items as any[]).length,
+          itemsWithCorrectAdvisor: itemsWithCorrectAdvisor.length,
+          itemsWithWrongAdvisor: itemsWithWrongAdvisor.length,
+          wrongAdvisorIds: itemsWithWrongAdvisor.map((c: any) => c.assignedAdvisorId),
+          action: 'contacts_with_wrong_advisor_detected'
+        }, 'CRITICAL: Query returned contacts with incorrect assignedAdvisorId');
+      }
+      
+      req.log.info({ 
+        itemsCount: (items as any[]).length,
+        requestedAdvisorId: advisorIdStr,
+        itemsWithCorrectAdvisor: itemsWithCorrectAdvisor.length,
+        itemsWithWrongAdvisor: itemsWithWrongAdvisor.length,
+        action: 'main_contacts_query_completed'
+      }, 'Main contacts query completed');
+      
+      // Obtener etiquetas para cada contacto
+      const contactIds = (items as any[]).map((c: any) => c.id);
+      const contactTagsMap = new Map<string, any[]>();
+      
+      if (contactIds.length > 0) {
+        req.log.info({ contactIdsCount: contactIds.length }, 'Fetching tags for contacts');
+        const contactTagsList = await dbLogger.select(
+          'list_contacts_tags_query',
+          () => db()
+            .select({
+              contactId: contactTags.contactId,
+              id: tags.id,
+              name: tags.name,
+              color: tags.color,
+              icon: tags.icon
+            })
+            .from(contactTags)
+            .innerJoin(tags, eq(contactTags.tagId, tags.id))
+            .where(inArray(contactTags.contactId, contactIds))
+        );
+        req.log.info({ tagsCount: (contactTagsList as any[]).length }, 'Tags query completed');
+
+        // Agrupar etiquetas por contacto
+        (contactTagsList as any[]).forEach((ct: any) => {
+          if (!contactTagsMap.has(ct.contactId)) {
+            contactTagsMap.set(ct.contactId, []);
+          }
+          contactTagsMap.get(ct.contactId)!.push({
+            id: ct.id,
+            name: ct.name,
+            color: ct.color,
+            icon: ct.icon
+          });
+        });
+      }
+
+      // Agregar etiquetas a cada contacto
+      const itemsWithTags = (items as any[]).map((contact: any) => ({
+        ...contact,
+        tags: contactTagsMap.get(contact.id) || []
+      }));
+
+      const duration = Date.now() - startTime;
+      req.log.info({ 
+        duration, 
+        count: itemsWithTags.length,
+        userId,
+        userRole,
+        requestedAdvisorId: advisorIdStr,
+        accessibleAdvisorIds: accessScope.accessibleAdvisorIds,
+        accessGranted: true,
+        action: 'list_contacts_filtered_by_advisor'
+      }, 'Listado de contactos exitoso - filtrado por advisor');
+
+      return res.json({
+        data: itemsWithTags,
+        meta: {
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string)
+        }
+      });
+    }
+    
+    // Default behavior when not filtering by assignedAdvisorId
     const accessFilter = buildContactAccessFilter(accessScope);
     req.log.info({ 
       filterDescription: accessFilter.description 
@@ -93,9 +296,6 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       } else {
         conditions.push(eq(contacts.pipelineStageId, pipelineStageId as string));
       }
-    }
-    if (assignedAdvisorId) {
-      conditions.push(eq(contacts.assignedAdvisorId, assignedAdvisorId as string));
     }
 
     // Usar helper de logging para la query principal
@@ -316,49 +516,103 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
   try {
     const validated = createContactSchema.parse(req.body);
 
-    // Enforce assignment rules based on user role
+    // AI_DECISION: Auto-assign contacts to creator for ALL user roles
+    // Justificación: Cada usuario debe tener sus contactos asignados a su ID, independientemente del rol
+    // Impacto: Todos los usuarios (advisor/manager/admin) tendrán sus contactos correctamente asignados
     let validatedAdvisorId = validated.assignedAdvisorId;
     let advisorWarning = null;
     
-    // Check if user can assign to the requested advisor
-    const canAssign = await canAssignContactTo(userId, userRole, validated.assignedAdvisorId || null);
+    req.log.info({
+      userId,
+      userRole,
+      providedAdvisorId: validated.assignedAdvisorId,
+      action: 'evaluating_advisor_assignment'
+    }, 'Evaluating assignedAdvisorId assignment for contact creation');
     
-    if (validated.assignedAdvisorId && !canAssign) {
-      req.log.warn({ 
-        providedAdvisorId: validated.assignedAdvisorId,
-        userRole,
-        userId
-      }, 'user cannot assign contact to requested advisor, enforcing role-based assignment');
-      
-      // Enforce role-based assignment
-      if (userRole === 'advisor') {
-        validatedAdvisorId = userId; // Advisors can only assign to themselves
-        advisorWarning = `Como asesor, el contacto se asignó automáticamente a usted.`;
-      } else {
-        validatedAdvisorId = null; // Managers/admins can leave unassigned
-        advisorWarning = `No tiene permisos para asignar a ese asesor. El contacto se creó sin asignar.`;
-      }
-    } else if (validated.assignedAdvisorId && canAssign) {
-      // Validate that the advisor ID exists and is active
-      const [advisor] = await db()
-        .select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.id, validated.assignedAdvisorId), eq(users.isActive, true)))
-        .limit(1);
-      
-      if (!advisor) {
-        req.log.warn({ 
-          providedAdvisorId: validated.assignedAdvisorId 
-        }, 'assigned advisor ID does not exist or is inactive, setting to null');
-        
-        validatedAdvisorId = null;
-        advisorWarning = `El asesor asignado (${validated.assignedAdvisorId}) no existe o está inactivo. El contacto se creó sin asesor asignado.`;
-      }
-    } else if (!validated.assignedAdvisorId && userRole === 'advisor') {
-      // Advisors must assign contacts to themselves
+    // If no assignedAdvisorId provided, auto-assign to creator (ALL roles)
+    if (!validated.assignedAdvisorId) {
       validatedAdvisorId = userId;
-      advisorWarning = `Como asesor, el contacto se asignó automáticamente a usted.`;
+      req.log.info({
+        userId,
+        userRole,
+        autoAssignedAdvisorId: validatedAdvisorId,
+        reason: 'no_assignment_provided_auto_assign_to_creator',
+        action: 'auto_assignment'
+      }, 'Auto-assigned contact to creator (no assignment provided)');
+    } else {
+      // assignedAdvisorId was provided - validate permissions and advisor existence
+      const canAssign = await canAssignContactTo(userId, userRole, validated.assignedAdvisorId);
+      
+      req.log.info({
+        userId,
+        userRole,
+        providedAdvisorId: validated.assignedAdvisorId,
+        canAssign,
+        action: 'permission_check_result'
+      }, 'Permission check for advisor assignment completed');
+      
+      if (!canAssign) {
+        req.log.warn({ 
+          providedAdvisorId: validated.assignedAdvisorId,
+          userRole,
+          userId,
+          action: 'enforcing_auto_assignment_to_creator'
+        }, 'user cannot assign contact to requested advisor, auto-assigning to creator');
+        
+        // Auto-assign to creator when permission denied
+        validatedAdvisorId = userId;
+        advisorWarning = `No tiene permisos para asignar a ese asesor. El contacto se asignó automáticamente a usted.`;
+        req.log.info({
+          userId,
+          userRole,
+          autoAssignedAdvisorId: validatedAdvisorId,
+          reason: 'permission_denied_auto_assign_to_creator',
+          action: 'auto_assignment'
+        }, 'Auto-assigned contact to creator (permission denied)');
+      } else {
+        // Validate that the advisor ID exists and is active
+        const [advisor] = await db()
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.id, validated.assignedAdvisorId), eq(users.isActive, true)))
+          .limit(1);
+        
+        if (!advisor) {
+          req.log.warn({ 
+            providedAdvisorId: validated.assignedAdvisorId,
+            action: 'advisor_not_found_or_inactive'
+          }, 'assigned advisor ID does not exist or is inactive, auto-assigning to creator');
+          
+          // Auto-assign to creator when advisor not found
+          validatedAdvisorId = userId;
+          advisorWarning = `El asesor asignado (${validated.assignedAdvisorId}) no existe o está inactivo. El contacto se asignó automáticamente a usted.`;
+          req.log.info({
+            userId,
+            userRole,
+            autoAssignedAdvisorId: validatedAdvisorId,
+            reason: 'advisor_not_found_auto_assign_to_creator',
+            action: 'auto_assignment'
+          }, 'Auto-assigned contact to creator (advisor not found)');
+        } else {
+          req.log.info({
+            userId,
+            userRole,
+            assignedAdvisorId: validatedAdvisorId,
+            advisorId: advisor.id,
+            action: 'advisor_validated'
+          }, 'Advisor ID validated successfully');
+        }
+      }
     }
+    
+    // Log final assignment decision before insertion
+    req.log.info({
+      userId,
+      userRole,
+      finalAssignedAdvisorId: validatedAdvisorId,
+      providedAdvisorId: validated.assignedAdvisorId,
+      action: 'final_assignment_decision'
+    }, 'Final assignedAdvisorId decision before contact insertion');
 
     // Generar fullName
     const fullName = `${validated.firstName} ${validated.lastName}`;
@@ -373,12 +627,63 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
           ...validated,
           assignedAdvisorId: validatedAdvisorId,
           fullName,
-          lifecycleStage: 'lead', // Valor por defecto para lifecycleStage
           customFields: validated.customFields || {}
         })
         .returning()
     );
     const newContact = (newContactResult as any[])[0];
+
+    // AI_DECISION: Verify assignedAdvisorId was saved correctly after insertion
+    // Justificación: Ensures data integrity and catches any assignment failures
+    // Impacto: Provides immediate verification that assignedAdvisorId was correctly persisted
+    const savedAssignedAdvisorId = newContact.assignedAdvisorId;
+    if (savedAssignedAdvisorId !== validatedAdvisorId) {
+      req.log.error({
+        contactId: newContact.id,
+        expectedAssignedAdvisorId: validatedAdvisorId,
+        actualAssignedAdvisorId: savedAssignedAdvisorId,
+        userId,
+        userRole,
+        action: 'assigned_advisor_id_mismatch'
+      }, 'CRITICAL: assignedAdvisorId mismatch detected after contact creation');
+    } else {
+      req.log.info({
+        contactId: newContact.id,
+        assignedAdvisorId: savedAssignedAdvisorId,
+        userId,
+        userRole,
+        action: 'assigned_advisor_id_verified'
+      }, 'assignedAdvisorId verified successfully after contact creation');
+    }
+
+    // Query database to double-check assignedAdvisorId was persisted correctly
+    const [verifiedContact] = await db()
+      .select({ assignedAdvisorId: contacts.assignedAdvisorId })
+      .from(contacts)
+      .where(eq(contacts.id, newContact.id))
+      .limit(1);
+    
+    if (verifiedContact) {
+      if (verifiedContact.assignedAdvisorId !== validatedAdvisorId) {
+        req.log.error({
+          contactId: newContact.id,
+          expectedAssignedAdvisorId: validatedAdvisorId,
+          dbAssignedAdvisorId: verifiedContact.assignedAdvisorId,
+          action: 'db_verification_failed'
+        }, 'CRITICAL: Database verification failed - assignedAdvisorId mismatch');
+      } else {
+        req.log.info({
+          contactId: newContact.id,
+          dbAssignedAdvisorId: verifiedContact.assignedAdvisorId,
+          action: 'db_verification_success'
+        }, 'Database verification successful - assignedAdvisorId correctly persisted');
+      }
+    } else {
+      req.log.error({
+        contactId: newContact.id,
+        action: 'db_verification_contact_not_found'
+      }, 'CRITICAL: Could not verify contact in database after creation');
+    }
 
     // Si hay notas
     if (validated.notes && validated.notes.trim()) {
@@ -403,8 +708,11 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       userRole,
       action: 'create_contact',
       hasNote: !!validated.notes?.trim(),
-      assignedAdvisorId: validatedAdvisorId,
-      advisorWarning: !!advisorWarning
+      expectedAssignedAdvisorId: validatedAdvisorId,
+      savedAssignedAdvisorId: savedAssignedAdvisorId,
+      dbVerifiedAssignedAdvisorId: verifiedContact?.assignedAdvisorId,
+      advisorWarning: !!advisorWarning,
+      assignmentVerified: savedAssignedAdvisorId === validatedAdvisorId
     }, 'Creación de contacto exitosa');
 
     res.status(201).json({ 

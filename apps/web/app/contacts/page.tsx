@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import {
   Card,
@@ -74,6 +74,8 @@ interface Advisor {
 export default function ContactsPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const advisorIdFilter = searchParams.get('advisorId');
   const apiUrl = typeof window !== 'undefined' 
     ? window.location.protocol + '//' + window.location.hostname + ':3001'
     : 'http://localhost:3001';
@@ -81,7 +83,8 @@ export default function ContactsPage() {
   // AI_DECISION: Replace manual API calls with SWR hooks for request deduplication
   // Justificación: Eliminates redundant requests on navigation, provides automatic caching
   // Impacto: Reduces API load, improves perceived performance with instant cache hits
-  const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts();
+  // SWR automatically handles revalidation when advisorIdFilter changes because the key includes the URL
+  const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts(advisorIdFilter || undefined);
   const { stages: pipelineStages, error: stagesError, isLoading: stagesLoading } = usePipelineStages();
   const { advisors, error: advisorsError, isLoading: advisorsLoading } = useAdvisors();
   const { tags: allTags, error: tagsError, isLoading: tagsLoading, mutate: mutateTags } = useTags('contact');
@@ -93,6 +96,9 @@ export default function ContactsPage() {
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+
+  // Get advisor name for filter badge
+  const filteredAdvisor = advisorIdFilter ? advisors?.find((a: Advisor) => a.id === advisorIdFilter) : null;
 
   // Estados para modales
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -288,6 +294,18 @@ export default function ContactsPage() {
     setSearchTerm('');
     setSelectedStage('all');
     setSelectedTags([]);
+    // Clear advisor filter from URL
+    if (advisorIdFilter) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('advisorId');
+      router.push(`/contacts?${newSearchParams.toString()}`);
+    }
+  };
+
+  const clearAdvisorFilter = () => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.delete('advisorId');
+    router.push(`/contacts?${newSearchParams.toString()}`);
   };
 
   // Funciones para edición inline
@@ -601,6 +619,10 @@ export default function ContactsPage() {
   };
 
   // Filtrar contactos
+  // AI_DECISION: Remove redundant advisor filter from frontend - API already filters correctly
+  // Justificación: The backend now properly filters by assignedAdvisorId, so frontend filtering
+  // is redundant and could cause inconsistencies if API returns wrong data
+  // Impacto: Simpler code, API is single source of truth for advisor filtering
   const filteredContacts = contacts.filter((contact: Contact) => {
     const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -690,9 +712,6 @@ export default function ContactsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-              ← Volver al inicio
-            </Link>
             <Heading level={3}>Contactos</Heading>
           </div>
           <Button onClick={() => router.push('/contacts/new')}>
@@ -797,8 +816,20 @@ export default function ContactsPage() {
               </div>
 
               {/* Segunda fila: Chips de filtros activos */}
-              {(selectedStage !== 'all' || selectedTags.length > 0 || searchTerm) && (
+              {(selectedStage !== 'all' || selectedTags.length > 0 || searchTerm || advisorIdFilter) && (
                 <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-200">
+                  {advisorIdFilter && filteredAdvisor && (
+                    <Badge className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800">
+                      Asesor: {filteredAdvisor.fullName}
+                      <button 
+                        onClick={clearAdvisorFilter}
+                        className="ml-1 hover:opacity-70"
+                        aria-label="Remover filtro de asesor"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
                   {selectedStage !== 'all' && (
                     <Badge className="flex items-center gap-1 px-2 py-1">
                       Etapa: {pipelineStages.find((s: PipelineStage) => s.id === selectedStage)?.name}

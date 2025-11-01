@@ -41,7 +41,9 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
       break;
 
     case 'manager':
-      // Managers see their team members' contacts + unassigned
+      // AI_DECISION: Managers see their own contacts + team members' contacts + unassigned
+      // Justificación: Managers deben poder ver los contactos que crean (auto-asignados a su ID)
+      // Impacto: Managers pueden ver y gestionar sus propios contactos además de los de su equipo
       try {
         const teamMembers = await db()
           .select({ id: users.id })
@@ -50,10 +52,12 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
           .innerJoin(teams, eq(teamMembership.teamId, teams.id))
           .where(eq(teams.managerUserId, userId));
 
-        accessibleAdvisorIds = teamMembers.map((m: { id: string }) => m.id);
+        // Include manager's own ID so they can see contacts they created
+        accessibleAdvisorIds = [userId, ...teamMembers.map((m: { id: string }) => m.id)];
       } catch (error) {
         console.warn(`Manager ${userId} has no team members or team setup issue:`, error);
-        accessibleAdvisorIds = []; // No team members found
+        // Even without team members, manager should see their own contacts
+        accessibleAdvisorIds = [userId];
       }
       canSeeUnassigned = true;
       canAssignToOthers = true;

@@ -168,6 +168,31 @@ export default function NewContactPage() {
       });
       
       if (response.ok) {
+        const responseData = await response.json();
+        const createdContact = responseData.data;
+        
+        // AI_DECISION: Log assignedAdvisorId verification in development
+        // Justificación: Helps debug assignment issues and verify backend is working correctly
+        // Impacto: Provides visibility into assignment flow from frontend perspective
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Contact Creation] Contact created successfully:', {
+            contactId: createdContact?.id,
+            assignedAdvisorId: createdContact?.assignedAdvisorId,
+            expectedAdvisorId: user?.id, // For advisors, should match their own ID
+            userRole: user?.role,
+            warning: responseData.warning || null,
+            fullContact: createdContact
+          });
+          
+          // Verify assignment for advisors
+          if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
+            console.warn('[Contact Creation] WARNING: Advisor created contact but assignedAdvisorId does not match user ID:', {
+              expected: user.id,
+              actual: createdContact?.assignedAdvisorId
+            });
+          }
+        }
+        
         setSuccess(true);
         setFormData(initialFormData);
         setTimeout(() => {

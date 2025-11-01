@@ -70,3 +70,7 @@
 - Pino redacta headers sensibles en prod
 - Cookies `SameSite=Lax` y `Secure` cuando hay HTTPS
 
+
+
+
+

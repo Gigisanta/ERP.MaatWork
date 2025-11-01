@@ -804,3 +804,7 @@ ALTER TABLE "contacts" DROP COLUMN IF EXISTS "city";
 
 
 
+
+
+
+

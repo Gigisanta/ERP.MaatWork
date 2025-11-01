@@ -39,3 +39,7 @@ CREATE INDEX IF NOT EXISTS "idx_aum_rows_account" ON "aum_import_rows" ("account
 CREATE INDEX IF NOT EXISTS "idx_aum_rows_file" ON "aum_import_rows" ("file_id");
 
 
+
+
+
+

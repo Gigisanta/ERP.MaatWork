@@ -369,9 +369,6 @@ export default function PortfoliosPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-4 mb-4">
-          <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-            ← Volver al inicio
-          </Link>
         </div>
         <Heading level={3}>Carteras</Heading>
         <Text size="lg" color="secondary">

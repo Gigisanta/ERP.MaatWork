@@ -900,6 +900,8 @@ export const aumImportRows = pgTable(
     matchedContactId: uuid('matched_contact_id').references(() => contacts.id),
     matchedUserId: uuid('matched_user_id').references(() => users.id),
     matchStatus: text('match_status').notNull().default('unmatched'), // matched, ambiguous, unmatched
+    isPreferred: boolean('is_preferred').notNull().default(true),
+    conflictDetected: boolean('conflict_detected').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({

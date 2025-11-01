@@ -67,6 +67,9 @@ export default function TeamsPage() {
   // Form states
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
+  const [linkModalOpen, setLinkModalOpen] = useState<null | { teamId: string; teamName: string }>(null);
+  const [advisorCandidates, setAdvisorCandidates] = useState<Array<{ id: string; email: string; fullName: string }>>([]);
+  const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -101,6 +104,45 @@ export default function TeamsPage() {
       setError(err instanceof Error ? err.message : 'Error al cargar datos');
     } finally {
       setDataLoading(false);
+    }
+  };
+
+  const openLinkModal = async (team: Team) => {
+    if (!token) return;
+    try {
+      setLinkModalOpen({ teamId: team.id, teamName: team.name });
+      const response = await fetch(`${apiUrl}/teams/${team.id}/advisors`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdvisorCandidates(data.data || []);
+      } else {
+        setAdvisorCandidates([]);
+      }
+    } catch {
+      setAdvisorCandidates([]);
+    }
+  };
+
+  const inviteAdvisor = async (userId: string) => {
+    if (!token || !linkModalOpen) return;
+    try {
+      setInviteLoading(userId);
+      const response = await fetch(`${apiUrl}/teams/${linkModalOpen.teamId}/invitations`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      });
+      if (response.ok) {
+        // Optimistic feedback: remove invited advisor from list
+        setAdvisorCandidates(prev => prev.filter(a => a.id !== userId));
+      }
+    } finally {
+      setInviteLoading(null);
     }
   };
 
@@ -182,7 +224,7 @@ export default function TeamsPage() {
       setError(null);
       
       const response = await fetch(`${apiUrl}/teams/membership-requests/${requestId}/${action}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -277,15 +319,14 @@ export default function TeamsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-              ← Volver al inicio
-            </Link>
             <Heading level={3}>Equipos</Heading>
           </div>
-          <Button onClick={() => setShowCreateTeam(true)}>
-            <Icon name="plus" size={16} className="mr-2" />
-            Crear Equipo
-          </Button>
+          {(['manager','admin'].includes(user?.role || '') && teams.length === 0) && (
+            <Button onClick={() => setShowCreateTeam(true)}>
+              <Icon name="plus" size={16} className="mr-2" />
+              Crear Equipo
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -337,13 +378,22 @@ export default function TeamsPage() {
                 </Stack>
               </CardContent>
               <CardFooter className="p-4">
-                <Button 
-                  variant="secondary" 
-                  className="w-full"
-                  onClick={() => router.push(`/teams/${team.id}`)}
-                >
-                  Ver detalles
-                </Button>
+                <Stack direction="row" gap="sm" className="w-full">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full"
+                    onClick={() => router.push(`/teams/${team.id}`)}
+                  >
+                    Ver asesores
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={() => openLinkModal(team)}
+                  >
+                    Vincular asesores
+                  </Button>
+                </Stack>
               </CardFooter>
             </Card>
           ))}
@@ -416,6 +466,33 @@ export default function TeamsPage() {
                 </ModalFooter>
               </Stack>
             </form>
+          </ModalContent>
+        </Modal>
+
+        {/* Modal vincular asesores */}
+        <Modal open={!!linkModalOpen} onOpenChange={() => setLinkModalOpen(null)}>
+          <ModalHeader>
+            <ModalTitle>Vincular asesores {linkModalOpen ? `a ${linkModalOpen.teamName}` : ''}</ModalTitle>
+            <ModalDescription>Selecciona asesores para enviar invitación al equipo.</ModalDescription>
+          </ModalHeader>
+          <ModalContent>
+            <Stack direction="column" gap="sm">
+              {advisorCandidates.length === 0 && (
+                <Text color="secondary">No hay asesores disponibles para invitar.</Text>
+              )}
+              {advisorCandidates.map((a) => (
+                <div key={a.id} className="flex items-center justify-between border rounded-md px-3 py-2">
+                  <div>
+                    <Text weight="medium">{a.fullName || a.email}</Text>
+                    <Text size="sm" color="secondary">{a.email}</Text>
+                  </div>
+                  <Button size="sm" disabled={inviteLoading === a.id} onClick={() => inviteAdvisor(a.id)}>Invitar</Button>
+                </div>
+              ))}
+            </Stack>
+            <ModalFooter>
+              <Button variant="secondary" onClick={() => setLinkModalOpen(null)}>Cerrar</Button>
+            </ModalFooter>
           </ModalContent>
         </Modal>
       </Stack>

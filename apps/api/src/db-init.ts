@@ -10,7 +10,7 @@
  */
 
 import { Pool } from 'pg';
-import { db, pipelineStages, lookupTaskStatus, lookupPriority, lookupNotificationType, lookupAssetClass } from '@cactus/db';
+import { db, pipelineStages, lookupTaskStatus, lookupPriority, lookupNotificationType, lookupAssetClass, teams, users, teamMembership } from '@cactus/db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { resolve } from 'node:path';
 import { eq } from 'drizzle-orm';
@@ -295,10 +295,41 @@ export async function initializeDatabase(): Promise<void> {
     // Step 4: Ensure critical columns exist for auth to work in dev
     await ensureCriticalColumns();
     
+    // Step 5: Seed idempotent team "cactus"
+    await seedCactusTeam();
+    
     logger.info('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
     logger.info('ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios');
   } catch (error) {
     logger.error({ err: error }, '❌ Database initialization failed');
     throw error;
+  }
+}
+
+/** Seed idempotent team "cactus" for Teams feature */
+async function seedCactusTeam(): Promise<void> {
+  const dbi = db();
+  try {
+    const existing = await dbi.select().from(teams).where((teams.name as any).eq?.('cactus') ?? (eq as any)(teams.name as any, 'cactus')).limit(1);
+    if (existing.length > 0) {
+      logger.info({ teamId: existing[0].id }, '🌵 Team "cactus" already exists');
+      return;
+    }
+
+    // Find a manager to assign as team manager
+    const manager = await dbi.select().from(users).where(eq(users.role, 'manager')).limit(1);
+    const managerUserId = manager[0]?.id || null;
+
+    const [teamRow] = await dbi
+      .insert(teams)
+      .values({ name: 'cactus', managerUserId })
+      .returning();
+
+    if (managerUserId) {
+      await dbi.insert(teamMembership).values({ teamId: teamRow.id, userId: managerUserId, role: 'lead' }).onConflictDoNothing();
+    }
+    logger.info({ teamId: teamRow.id, managerUserId }, '🌵 Seeded team "cactus"');
+  } catch (err) {
+    logger.warn({ err }, 'Failed to seed team "cactus" (non-fatal)');
   }
 }

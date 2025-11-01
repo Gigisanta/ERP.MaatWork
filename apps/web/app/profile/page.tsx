@@ -48,6 +48,15 @@ interface TeamMember {
   isActive: boolean;
 }
 
+interface TeamInvitationRow {
+  id: string;
+  managerId: string;
+  status: string;
+  createdAt: string;
+  managerEmail: string;
+  managerFullName: string;
+}
+
 export default function ProfilePage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
@@ -56,6 +65,7 @@ export default function ProfilePage() {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [invitations, setInvitations] = useState<TeamInvitationRow[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -134,11 +144,44 @@ export default function ProfilePage() {
           }
         }
       }
+
+      // Fetch pending team invitations for current user
+      const invitationsResponse = await fetch(`${apiUrl}/teams/invitations/pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (invitationsResponse.ok) {
+        const invData = await invitationsResponse.json();
+        setInvitations(invData.data || []);
+      }
     } catch (err) {
       setError('Error al cargar la información del usuario');
       console.error('Error:', err);
     } finally {
       setDataLoading(false);
+    }
+  };
+
+  const handleInvitation = async (id: string, action: 'accept' | 'reject') => {
+    try {
+      setActionLoading(`inv-${id}`);
+      setError(null);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/teams/invitations/${id}/${action}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e?.error || 'Error al procesar invitación');
+      }
+      setInvitations(prev => prev.filter(r => r.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al procesar invitación');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -257,6 +300,29 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLeaveTeam = async (teamId: string) => {
+    if (!token || !user) return;
+    const confirm = window.confirm('¿Seguro que deseas abandonar este equipo?');
+    if (!confirm) return;
+    try {
+      setActionLoading(`leave-${teamId}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/teams/${teamId}/members/${user.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e?.error || 'No se pudo abandonar el equipo');
+      }
+      await fetchUserInfo();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al abandonar equipo');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // Columnas para la tabla de miembros
   const memberColumns: Column<TeamMember>[] = [
     {
@@ -356,18 +422,20 @@ export default function ProfilePage() {
           </Card>
 
           {/* Equipos */}
-          {(user?.role === 'manager' || user?.role === 'admin') && (
+          {(user?.role === 'manager' || user?.role === 'admin' || teams.length > 0) && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Mis Equipos</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTeamForm(true)}
-                  >
-                    Crear Equipo
-                  </Button>
+                  {(user?.role === 'manager' || user?.role === 'admin') && teams.length === 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTeamForm(true)}
+                    >
+                      Crear Equipo
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -383,12 +451,49 @@ export default function ProfilePage() {
                             Rol: {team.role}
                           </Text>
                         </div>
-                        <Badge variant={team.role === 'manager' ? 'brand' : 'default'}>
-                          {team.role}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={team.role === 'manager' ? 'brand' : 'default'}>
+                            {team.role}
+                          </Badge>
+                          {team.role !== 'manager' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={actionLoading === `leave-${team.id}`}
+                              onClick={() => handleLeaveTeam(team.id)}
+                            >
+                              Abandonar equipo
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
+                </Stack>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Invitaciones a equipos */}
+          {invitations.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Invitaciones a equipos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Stack direction="column" gap="sm">
+                  {invitations.map((inv) => (
+                    <div key={inv.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <Text weight="medium">Invitación de {inv.managerFullName || inv.managerEmail}</Text>
+                        <Text size="sm" color="secondary">{new Date(inv.createdAt).toLocaleString('es-ES')}</Text>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" disabled={actionLoading === `inv-${inv.id}`} onClick={() => handleInvitation(inv.id, 'accept')}>Aceptar</Button>
+                        <Button size="sm" variant="outline" disabled={actionLoading === `inv-${inv.id}`} onClick={() => handleInvitation(inv.id, 'reject')}>Rechazar</Button>
+                      </div>
+                    </div>
+                  ))}
                 </Stack>
               </CardContent>
             </Card>

@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -19,7 +19,7 @@ import {
 } from '@cactus/ui';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, token } = useAuth();
   const router = useRouter();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -27,6 +27,18 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // AI_DECISION: Redirigir automáticamente si ya hay sesión
+  // Justificación: Evita que usuarios autenticados vean el formulario de login (estado inconsistente
+  // entre cookie/localStorage o navegación directa a /login). Mejora UX y previene loops.
+  // Impacto: Afecta navegación en la ruta `/login` cuando `user` o `token` están presentes.
+  useEffect(() => {
+    if (user || token) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectTo = searchParams.get('redirect') || '/';
+      router.replace(redirectTo);
+    }
+  }, [user, token, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
