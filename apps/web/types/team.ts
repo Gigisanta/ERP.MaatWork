@@ -2,16 +2,20 @@
  * Tipos relacionados con teams/equipos
  */
 
+import type { TimestampedEntity } from './common';
 import type { User } from './auth';
 
 /**
- * Equipo base
+ * Rol de miembro de equipo
  */
-export interface Team {
-  id: string;
+export type TeamMemberRole = 'member' | 'lead';
+
+/**
+ * Equipo base - extiende TimestampedEntity
+ */
+export interface Team extends TimestampedEntity {
   name: string;
   managerUserId: string;
-  createdAt: string;
   members?: TeamMember[];
   role?: string; // Role del usuario actual en el equipo
 }
@@ -23,71 +27,57 @@ export interface TeamMember {
   id: string;
   teamId: string;
   userId: string;
-  role: 'member' | 'lead';
+  role: TeamMemberRole;
   email?: string;
   fullName?: string;
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-  };
+  user?: Pick<User, 'id' | 'email' | 'fullName' | 'role'>;
 }
 
 /**
  * Advisor candidato para equipo
  */
-export interface TeamAdvisor {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  active: boolean;
-}
+export interface TeamAdvisor extends Pick<User, 'id' | 'email' | 'fullName' | 'role' | 'active'> {}
 
 /**
- * Solicitud de membresía a equipo
+ * Estado de solicitud de membresía
  */
-export interface MembershipRequest {
-  id: string;
+export type MembershipRequestStatus = 'pending' | 'accepted' | 'rejected';
+
+/**
+ * Solicitud de membresía a equipo - extiende TimestampedEntity
+ */
+export interface MembershipRequest extends TimestampedEntity {
   teamId: string;
   userId: string;
   requestedBy: string;
-  status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
-  updatedAt: string;
-  team?: {
-    id: string;
-    name: string;
-  };
+  status: MembershipRequestStatus;
+  team?: Pick<Team, 'id' | 'name'>;
   user?: User;
 }
 
 /**
- * Invitación a equipo
+ * Estado de invitación a equipo
  */
-export interface TeamInvitation {
-  id: string;
+export type TeamInvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired';
+
+/**
+ * Invitación a equipo - extiende TimestampedEntity
+ */
+export interface TeamInvitation extends TimestampedEntity {
   teamId: string;
   invitedBy: string;
   invitedUserId?: string;
   invitedEmail?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired';
+  status: TeamInvitationStatus;
   expiresAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  team?: {
-    id: string;
-    name: string;
-  };
+  team?: Pick<Team, 'id' | 'name'>;
   invitedUser?: User;
 }
 
 /**
- * Respuesta de invitación/creación de invitación
+ * Response de invitación/creación de invitación
  */
 export interface TeamInvitationResponse {
   invitation: TeamInvitation;
   message?: string;
 }
-

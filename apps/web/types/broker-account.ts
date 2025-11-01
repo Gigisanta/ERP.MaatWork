@@ -2,27 +2,24 @@
  * Tipos relacionados con cuentas de broker
  */
 
+import type { BaseEntity } from './common';
+
 /**
- * Cuenta de broker
+ * Cuenta de broker - extiende BaseEntity (solo createdAt)
  */
-export interface BrokerAccount {
-  id: string;
+export interface BrokerAccount extends BaseEntity {
   contactId: string;
   broker: string;
   accountNumber: string;
-  holderName?: string | null;
-  status?: 'active' | 'closed';
-  lastSyncedAt?: string | null;
+  accountType?: string | null;
+  currency?: string | null;
   createdAt: string;
 }
 
 /**
- * Request para crear cuenta de broker
+ * Request para crear cuenta de broker - usando Pick para campos requeridos
  */
-export interface CreateBrokerAccountRequest {
-  contactId: string;
-  broker: string;
-  accountNumber: string;
-  holderName?: string;
+export interface CreateBrokerAccountRequest extends Pick<BrokerAccount, 'contactId' | 'broker' | 'accountNumber'> {
+  accountType?: string | null;
+  currency?: string | null;
 }
-

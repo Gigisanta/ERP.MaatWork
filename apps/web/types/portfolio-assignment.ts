@@ -2,28 +2,31 @@
  * Tipos relacionados con asignaciones de portfolio a contactos
  */
 
+import type { TimestampedEntity } from './common';
+
 /**
- * Asignación de portfolio a contacto
+ * Estado de asignación de portfolio
  */
-export interface PortfolioAssignment {
-  id: string;
+export type PortfolioAssignmentStatus = 'active' | 'paused' | 'ended';
+
+/**
+ * Asignación de portfolio a contacto - extiende TimestampedEntity
+ */
+export interface PortfolioAssignment extends TimestampedEntity {
   contactId: string;
   templateId: string;
   templateName?: string; // Nombre del template (para UI)
-  status: 'active' | 'paused' | 'ended';
+  status: PortfolioAssignmentStatus;
   startDate?: string | null;
   endDate?: string | null;
   notes?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 /**
  * Request para asignar portfolio a contacto
  */
-export interface AssignPortfolioRequest {
-  templateId: string;
-  status?: 'active' | 'paused' | 'ended';
+export interface AssignPortfolioRequest extends Pick<PortfolioAssignment, 'templateId'> {
+  status?: PortfolioAssignmentStatus;
   startDate?: string;
   endDate?: string;
   notes?: string;
@@ -36,4 +39,3 @@ export interface AssignPortfolioResponse {
   assignment: PortfolioAssignment;
   message?: string;
 }
-

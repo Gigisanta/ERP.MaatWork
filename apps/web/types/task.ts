@@ -2,11 +2,12 @@
  * Tipos relacionados con tareas
  */
 
+import type { TimestampedEntity, UpdateRequest } from './common';
+
 /**
- * Tarea base
+ * Tarea base - extiende TimestampedEntity
  */
-export interface Task {
-  id: string;
+export interface Task extends TimestampedEntity {
   contactId: string;
   title: string;
   description?: string | null;
@@ -14,16 +15,12 @@ export interface Task {
   status: string;
   priority: string;
   assignedToId?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 /**
- * Request para crear tarea
+ * Request para crear tarea - usando Pick para campos requeridos
  */
-export interface CreateTaskRequest {
-  contactId: string;
-  title: string;
+export interface CreateTaskRequest extends Pick<Task, 'contactId' | 'title'> {
   description?: string;
   dueDate?: string;
   status?: string;
@@ -32,14 +29,13 @@ export interface CreateTaskRequest {
 }
 
 /**
- * Request para actualizar tarea
+ * Request para actualizar tarea - usando utility type UpdateRequest
  */
-export interface UpdateTaskRequest {
+export interface UpdateTaskRequest extends UpdateRequest<Task> {
   title?: string;
-  description?: string;
-  dueDate?: string;
+  description?: string | null;
+  dueDate?: string | null;
   status?: string;
   priority?: string;
-  assignedToId?: string;
+  assignedToId?: string | null;
 }
-

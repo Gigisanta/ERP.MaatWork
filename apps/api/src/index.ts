@@ -155,8 +155,7 @@ app.use(
       requestId: req.requestId,
       traceparent: req.headers['traceparent'],
       userId: req.user?.id,
-      userRole: req.user?.role,
-      teamId: req.user?.teamId
+      userRole: req.user?.role
     }),
     customSuccessMessage: (req: Request, res: Response) => {
       return `${req.method} ${req.url} - ${res.statusCode}`;

@@ -3,10 +3,11 @@
  * Centralizados para evitar duplicidad según patrones de arquitectura
  */
 
-/**
- * Pending invite con userId
- */
-export type PendingInvite = {
-  userId: string;
-};
+import type { BaseEntity } from './common';
 
+/**
+ * Pending invite con userId - extiende BaseEntity
+ */
+export interface PendingInvite extends Pick<BaseEntity, 'id'> {
+  userId: string;
+}

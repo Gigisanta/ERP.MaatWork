@@ -3,18 +3,26 @@
  * Centralizados para evitar duplicidad según patrones de arquitectura
  */
 
+import type { BaseEntity } from './common';
+
 /**
- * Datos de attachment para inserción
+ * Base para attachment - extiende BaseEntity
  */
-export type AttachmentInsert = {
+export interface AttachmentBase extends BaseEntity {
   fileName: string;
   filePath: string;
   mimeType: string;
   fileSize: number;
   uploadedByUserId: string;
   description: string | null;
+}
+
+/**
+ * Datos de attachment para inserción
+ * Usa Partial para hacer opcionales las relaciones
+ */
+export type AttachmentInsert = AttachmentBase & {
   contactId?: string;
   noteId?: string;
   meetingId?: string;
 };
-

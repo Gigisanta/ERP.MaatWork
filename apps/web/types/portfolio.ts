@@ -2,16 +2,17 @@
  * Tipos relacionados con portfolios/carteras
  */
 
+import type { TimestampedEntity, UpdateRequest } from './common';
 import type { RiskLevel } from './common';
 
-export interface Portfolio {
-  id: string;
+/**
+ * Portfolio base - extiende TimestampedEntity
+ */
+export interface Portfolio extends TimestampedEntity {
   name: string;
   description?: string | null;
   riskLevel: RiskLevel;
   clientCount?: number;
-  createdAt: string;
-  updatedAt: string;
   lines?: PortfolioLine[];
 }
 
@@ -23,25 +24,32 @@ export interface PortfolioLine {
   templateId: string;
   targetType: 'instrument' | 'assetClass';
   assetClass?: string | null;
-  instrumentId: string | null; // Puede ser null si aún no está resuelto
+  instrumentId: string | null;
   targetWeight: number; // Decimal (0.25 = 25%)
-  instrumentSymbol: string; // Required para UI
+  instrumentSymbol: string;
   instrumentName?: string;
   assetClassName?: string;
 }
 
-export interface CreatePortfolioRequest {
-  name: string;
+/**
+ * Request para crear portfolio - usando Pick para campos requeridos
+ */
+export interface CreatePortfolioRequest extends Pick<Portfolio, 'name' | 'riskLevel'> {
   description?: string;
-  riskLevel: RiskLevel;
 }
 
-export interface UpdatePortfolioRequest {
+/**
+ * Request para actualizar portfolio - usando utility type UpdateRequest
+ */
+export interface UpdatePortfolioRequest extends UpdateRequest<Portfolio> {
   name?: string;
-  description?: string;
+  description?: string | null;
   riskLevel?: RiskLevel;
 }
 
+/**
+ * Request para agregar línea de portfolio
+ */
 export interface AddPortfolioLineRequest {
   targetType: 'instrument' | 'assetClass';
   instrumentId?: string;
@@ -49,6 +57,9 @@ export interface AddPortfolioLineRequest {
   targetWeight: number; // Decimal
 }
 
+/**
+ * Portfolio con líneas completas
+ */
 export interface PortfolioWithLines extends Portfolio {
   lines: PortfolioLine[];
   totalWeight: number;
@@ -57,6 +68,7 @@ export interface PortfolioWithLines extends Portfolio {
 
 /**
  * Tipos para composición de portfolio (UI)
+ * Comparte estructura base con BenchmarkComponent
  */
 export interface PortfolioComponent {
   instrumentId?: string;
@@ -65,10 +77,12 @@ export interface PortfolioComponent {
   targetWeight: number; // Percentage (25 = 25%)
 }
 
+/**
+ * Datos de formulario de portfolio
+ */
 export interface PortfolioFormData {
   name: string;
   description: string;
   riskLevel: RiskLevel;
   components: PortfolioComponent[];
 }
-

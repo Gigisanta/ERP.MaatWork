@@ -2,11 +2,28 @@
  * Tipos relacionados con AUM (Assets Under Management)
  */
 
+import type { BaseEntity, TimestampedEntity } from './common';
+
 /**
- * Archivo AUM
+ * Estado de match de fila AUM
  */
-export interface AumFile {
-  id: string;
+export type AumMatchStatus = 'matched' | 'ambiguous' | 'unmatched';
+
+/**
+ * Totales de upload de archivo AUM
+ */
+export interface AumTotals {
+  parsed: number;
+  matched: number;
+  ambiguous: number;
+  conflicts: number;
+  unmatched: number;
+}
+
+/**
+ * Archivo AUM - extiende BaseEntity (solo createdAt)
+ */
+export interface AumFile extends BaseEntity {
   broker: string;
   originalFilename: string;
   mimeType: string;
@@ -16,65 +33,58 @@ export interface AumFile {
   totalParsed?: number;
   totalMatched?: number;
   totalUnmatched?: number;
-  totals?: {
-    parsed: number;
-    matched: number;
-    ambiguous: number;
-    conflicts: number;
-    unmatched: number;
-  };
+  totals?: AumTotals;
   createdAt: string;
 }
 
 /**
- * Fila AUM
+ * Información básica de contacto para AUM
  */
-export interface AumRow {
+export interface AumContactInfo {
   id: string;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Información básica de usuario para AUM
+ */
+export interface AumUserInfo {
+  id: string;
+  name: string;
+  email: string;
+}
+
+/**
+ * Fila AUM base - usando intersection type
+ */
+export interface AumRow extends BaseEntity {
   fileId: string;
   accountNumber: string | null;
   holderName: string | null;
   advisorRaw: string | null;
   matchedContactId: string | null;
   matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
+  matchStatus: AumMatchStatus;
   isPreferred: boolean;
   conflictDetected: boolean;
   rowCreatedAt: string;
   file?: AumFile;
-  contact?: {
-    id: string;
-    fullName: string;
-    firstName: string;
-    lastName: string;
-  } | null;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
+  contact?: AumContactInfo | null;
+  user?: AumUserInfo | null;
   raw?: Record<string, unknown>; // Datos raw del parseo (sin estructura conocida)
 }
 
 /**
- * Fila duplicada (para resolución)
+ * Fila duplicada (para resolución) - usando Pick para campos requeridos
  */
-export interface DuplicateRow {
-  id: string;
-  fileId: string;
+export interface DuplicateRow extends Omit<AumRow, 'accountNumber'> {
   accountNumber: string; // Required en duplicados
-  holderName: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  rowCreatedAt: string;
 }
 
 /**
- * Row para tabla de historial (extiende AumRow)
+ * Row para tabla de historial - extiende AumRow
  */
 export interface Row extends AumRow {
   file: AumFile; // Required en historial
@@ -85,13 +95,7 @@ export interface Row extends AumRow {
  */
 export interface AumUploadSummary {
   fileId: string;
-  totals: {
-    parsed: number;
-    matched: number;
-    ambiguous: number;
-    conflicts: number;
-    unmatched: number;
-  };
+  totals: AumTotals;
 }
 
 /**
@@ -101,13 +105,7 @@ export interface AumUploadResponse {
   ok: boolean;
   fileId: string;
   filename: string;
-  totals: {
-    parsed: number;
-    matched: number;
-    ambiguous: number;
-    conflicts: number;
-    unmatched: number;
-  };
+  totals: AumTotals;
 }
 
 /**
@@ -121,7 +119,7 @@ export interface AumMatchRequest {
 }
 
 /**
- * Response de filas AUM
+ * Response de filas AUM con paginación
  */
 export interface AumRowsResponse {
   rows: AumRow[];
@@ -151,4 +149,3 @@ export interface ApiErrorWithMessage {
   userMessage?: string;
   error?: string;
 }
-

@@ -2,13 +2,13 @@
  * Tipos relacionados con pipeline
  */
 
+import type { BaseEntity } from './common';
 import type { Contact } from './contact';
 
 /**
- * Etapa de pipeline
+ * Etapa de pipeline - extiende BaseEntity (sin timestamps requeridos)
  */
-export interface PipelineStage {
-  id: string;
+export interface PipelineStage extends BaseEntity {
   name: string;
   order: number;
   color?: string;
@@ -30,4 +30,3 @@ export interface PipelineStageWithContacts extends PipelineStage {
 export interface PipelineBoard {
   [stageId: string]: Contact[];
 }
-

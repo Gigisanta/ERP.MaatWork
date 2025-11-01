@@ -2,11 +2,27 @@
  * Tipos relacionados con contactos
  */
 
+import type { TimestampedEntity } from './common';
+
 /**
- * Contacto base
+ * Tag simplificado para contacto
  */
-export interface Contact {
+export interface ContactTag {
   id: string;
+  name: string;
+  color: string | null;
+  icon?: string | null;
+}
+
+/**
+ * Tipos de valores permitidos para actualizar campos de contacto
+ */
+export type ContactFieldValue = string | number | boolean | null | Date;
+
+/**
+ * Contacto base - extiende TimestampedEntity
+ */
+export interface Contact extends TimestampedEntity {
   firstName: string;
   lastName: string;
   fullName: string;
@@ -26,15 +42,8 @@ export interface Contact {
   pipelineStageUpdatedAt?: string | null;
   deletedAt?: string | null;
   version?: number;
-  tags?: Array<{ id: string; name: string; color: string; icon?: string }>;
-  createdAt: string;
-  updatedAt: string;
+  tags?: ContactTag[];
 }
-
-/**
- * Tipos de valores permitidos para actualizar campos de contacto
- */
-export type ContactFieldValue = string | number | boolean | null | Date;
 
 /**
  * Nombres de campos válidos para actualizar contacto
@@ -68,11 +77,9 @@ export interface ContactFieldUpdate {
 }
 
 /**
- * Request para crear contacto
+ * Request para crear contacto - usando Pick para campos requeridos
  */
-export interface CreateContactRequest {
-  firstName: string;
-  lastName: string;
+export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> {
   email?: string | null;
   phone?: string | null;
   dni?: string | null;
@@ -89,4 +96,3 @@ export interface UpdateContactRequest {
   fields?: ContactFieldUpdate[];
   [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
 }
-

@@ -2,65 +2,63 @@
  * Tipos relacionados con instrumentos financieros
  */
 
+import type { BaseEntity, TimestampedEntity } from './common';
 import type { AssetType, Currency } from './common';
 
-export interface Instrument {
-  id: string;
+/**
+ * Instrumento base - extiende TimestampedEntity
+ */
+export interface Instrument extends TimestampedEntity {
   symbol: string;
   name: string;
-  assetClass: string | null;
-  currency: Currency;
-  exchange: string | null;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface InstrumentSearchResult {
-  symbol: string;
-  name: string;
-  shortName: string;
-  currency: Currency;
-  exchange: string;
   type: AssetType;
-  sector?: string;
-  industry?: string;
-  marketCap?: number;
-  success: boolean;
+  currency: Currency;
+  exchange?: string | null;
+  sector?: string | null;
+  country?: string | null;
+  isActive: boolean;
 }
 
+/**
+ * Resultado de búsqueda de instrumento (simplificado)
+ */
+export interface InstrumentSearchResult extends Pick<Instrument, 'id' | 'symbol' | 'name' | 'type' | 'currency'> {}
+
+/**
+ * Validación de instrumento
+ */
 export interface InstrumentValidation {
-  valid: boolean;
-  symbol: string;
-  name?: string;
-  currency?: Currency;
-  exchange?: string;
-  type?: AssetType;
-  error?: string;
-  success: boolean;
+  isValid: boolean;
+  errors?: string[];
+  warnings?: string[];
 }
 
-export interface CreateInstrumentRequest {
-  symbol: string;
-  backfill_days?: number;
+/**
+ * Request para crear instrumento - usando Pick para campos requeridos
+ */
+export interface CreateInstrumentRequest extends Pick<Instrument, 'symbol' | 'name' | 'type' | 'currency'> {
+  exchange?: string | null;
+  sector?: string | null;
+  country?: string | null;
+  isActive?: boolean;
 }
 
+/**
+ * Response de creación de instrumento
+ */
 export interface CreateInstrumentResponse {
   instrument: Instrument;
-  pricesCount: number;
-  message: string;
+  validation: InstrumentValidation;
 }
 
-export interface PriceSnapshot {
-  id: string;
+/**
+ * Snapshot de precio
+ */
+export interface PriceSnapshot extends BaseEntity {
   instrumentId: string;
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  adjustedClose: number;
+  symbol: string;
+  closePrice: string | null;
+  currency: string;
+  asOfDate: string;
   createdAt: string;
 }
-
