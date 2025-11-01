@@ -57,46 +57,69 @@ export default function PortfolioComparator({
   const [comparisonData, setComparisonData] = useState<ComparisonItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Simular datos de comparación
+  // Obtener datos de comparación reales desde API
   useEffect(() => {
     if (selectedPortfolios.length > 0 || selectedBenchmarks.length > 0) {
       setIsLoading(true);
       
-      setTimeout(() => {
-        const mockComparisonData: ComparisonItem[] = [
-          ...selectedPortfolios.map(id => {
-            const portfolio = portfolios.find(p => p.id === id);
-            return {
-              id,
-              name: portfolio?.name || `Portfolio ${id}`,
-              type: 'portfolio' as const,
-              performance: Math.random() * 20 - 5, // -5% a +15%
-              volatility: Math.random() * 15 + 5, // 5% a 20%
-              sharpe: Math.random() * 2 - 0.5, // -0.5 a 1.5
-              maxDrawdown: -(Math.random() * 20 + 5) // -5% a -25%
-            };
-          }),
-          ...selectedBenchmarks.map(id => {
-            const benchmark = benchmarks.find(b => b.id === id);
-            return {
-              id,
-              name: benchmark?.name || `Benchmark ${id}`,
-              type: 'benchmark' as const,
-              performance: Math.random() * 15 - 3, // -3% a +12%
-              volatility: Math.random() * 12 + 3, // 3% a 15%
-              sharpe: Math.random() * 1.5, // 0 a 1.5
-              maxDrawdown: -(Math.random() * 15 + 3) // -3% a -18%
-            };
-          })
-        ];
-        
-        setComparisonData(mockComparisonData);
-        setIsLoading(false);
-      }, 1000);
+      const fetchComparisonData = async () => {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+          const token = localStorage.getItem('token');
+
+          if (!token) {
+            setIsLoading(false);
+            return;
+          }
+
+          const response = await fetch(`${apiUrl}/v1/analytics/compare`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              portfolioIds: selectedPortfolios,
+              benchmarkIds: selectedBenchmarks,
+              period: '1Y' // Por defecto 1 año
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.success && result.data && result.data.results) {
+            // Mapear datos de la API al formato del componente
+            const comparisonData: ComparisonItem[] = result.data.results.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              type: item.type as 'portfolio' | 'benchmark',
+              performance: item.metrics?.totalReturn || 0,
+              volatility: item.metrics?.volatility || 0,
+              sharpe: item.metrics?.sharpeRatio || undefined,
+              maxDrawdown: item.metrics?.maxDrawdown || undefined
+            }));
+            
+            setComparisonData(comparisonData);
+          } else {
+            setComparisonData([]);
+          }
+        } catch (err) {
+          console.error('Error fetching comparison data:', err);
+          setComparisonData([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchComparisonData();
     } else {
       setComparisonData([]);
     }
-  }, [selectedPortfolios, selectedBenchmarks, portfolios, benchmarks]);
+  }, [selectedPortfolios, selectedBenchmarks]);
 
   const handleAddToComparison = (id: string, type: 'portfolio' | 'benchmark') => {
     if (type === 'portfolio' && !selectedPortfolios.includes(id)) {

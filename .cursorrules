@@ -127,6 +127,326 @@ app/route/
 - **SEO**: Static content is crawlable and indexable
 - **Maintainability**: Clear separation of concerns
 
+---
+
+## 🎯 Mejores Prácticas Profesionales (Post Epic-D)
+
+### 1. Arquitectura de Tipos TypeScript
+
+**NUNCA usar `any`** - Crear tipos explícitos siempre.
+
+**Estructura de archivos:**
+```
+types/
+├── index.ts          # Barrel export
+├── common.ts         # Tipos compartidos (ApiResponse, Currency, etc)
+├── [domain].ts       # Un archivo por dominio (portfolio, benchmark, etc)
+```
+
+**Reglas:**
+- Archivos de tipos: 50-150 líneas máximo
+- Separar por dominio, no por "tipo de tipo"
+- Usar barrel exports (`types/index.ts`)
+- Definir Request/Response types para cada endpoint
+
+**Ejemplo:**
+```typescript
+// ✅ BIEN
+import type { Portfolio, CreatePortfolioRequest } from '@/types';
+
+// ❌ MAL
+const data: any = await fetch(...);
+```
+
+### 2. Cliente API Centralizado
+
+**NUNCA usar `fetch` directamente** - Usar cliente centralizado.
+
+**Estructura:**
+```
+lib/
+├── api-client.ts     # Cliente base con retry, timeout, auth
+├── api-error.ts      # ApiError class custom
+└── api/
+    ├── [domain].ts   # Métodos por dominio
+    └── index.ts      # Barrel export
+```
+
+**Features requeridos:**
+- ✅ Retry automático (errores 5xx)
+- ✅ Refresh token automático (401)
+- ✅ Timeout configurable
+- ✅ Headers automáticos (Authorization)
+- ✅ Error handling consistente
+
+**Ejemplo:**
+```typescript
+// ✅ BIEN
+import { getPortfolios } from '@/lib/api';
+const response = await getPortfolios();
+
+// ❌ MAL
+const res = await fetch(`${apiUrl}/portfolios`, {
+  headers: { 'Authorization': `Bearer ${token}` }
+});
+```
+
+### 3. Validaciones con Zod
+
+**Validar en backend SIEMPRE** con Zod schemas.
+
+**Ubicación:** `apps/api/src/schemas/[domain].ts`
+
+**Ejemplo:**
+```typescript
+import { z } from 'zod';
+
+export const createPortfolioSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional(),
+  riskLevel: z.enum(['conservative', 'moderate', 'aggressive'])
+});
+
+// En route:
+const validated = createPortfolioSchema.parse(req.body);
+```
+
+**Reglas:**
+- Validar en edge (inicio del endpoint)
+- Retornar 400 con detalles claros si falla
+- Usar `.parse()` para throw o `.safeParse()` para manejo manual
+
+### 4. Validaciones de Batch Endpoints
+
+**Prevenir DoS y validar formato:**
+
+```typescript
+import { validateBatchIds, BATCH_LIMITS } from '../utils/batch-validation';
+
+const validation = validateBatchIds(req.query.ids as string, {
+  maxCount: BATCH_LIMITS.MAX_PORTFOLIOS,  // Límite
+  requireUuid: true,                      // Validar UUID
+  fieldName: 'ids'
+});
+
+if (!validation.valid) {
+  return res.status(400).json({ error: 'Invalid request', details: validation.errors });
+}
+```
+
+### 5. Configuración de Timeouts
+
+**NUNCA hardcodear timeouts** - Usar configuración centralizada.
+
+**Ubicación:** `apps/api/src/config/timeouts.ts`
+
+```typescript
+export const TIMEOUTS = {
+  PORTFOLIO_PERFORMANCE: parseInt(process.env.PORTFOLIO_PERFORMANCE_TIMEOUT || '60000', 10),
+  // ... más timeouts
+};
+
+// Timeout dinámico basado en carga
+export function calculateDynamicTimeout(baseTimeout, itemCount, perItemTimeout, maxTimeout) {
+  return Math.min(baseTimeout + (itemCount * perItemTimeout), maxTimeout);
+}
+```
+
+### 6. Next.js Router (No window.location)
+
+```typescript
+// ✅ BIEN
+import { useRouter } from 'next/navigation';
+const router = useRouter();
+router.push('/portfolios/123');
+
+// ❌ MAL
+window.location.href = '/portfolios/123';
+```
+
+### 7. Tests Unitarios Básicos
+
+**Crear tests para:**
+- ✅ Funciones de validación
+- ✅ Cálculos de negocio
+- ✅ Utilidades/helpers
+- ✅ Cliente API (mocks)
+
+**Ubicación:** `[file].test.ts` al lado del archivo original
+
+**Ejemplo:**
+```typescript
+// batch-validation.test.ts
+import { validateBatchIds } from './batch-validation';
+
+describe('validateBatchIds', () => {
+  it('should validate UUIDs correctly', () => {
+    const result = validateBatchIds('uuid1,uuid2');
+    expect(result.valid).toBe(true);
+  });
+
+  it('should reject non-UUIDs', () => {
+    const result = validateBatchIds('invalid,ids');
+    expect(result.valid).toBe(false);
+  });
+
+  it('should enforce limits', () => {
+    const ids = Array(101).fill('uuid').join(',');
+    const result = validateBatchIds(ids, { maxCount: 100 });
+    expect(result.valid).toBe(false);
+  });
+});
+```
+
+### 8. Logging Estructurado
+
+```typescript
+// ✅ BIEN - Con contexto
+req.log.info({ userId, portfolioId, duration }, 'Portfolio created');
+
+// ❌ MAL - Sin contexto
+console.log('Portfolio created');
+```
+
+### 9. Queries Optimizadas (Anti N+1)
+
+**NUNCA hacer queries en loops** - Usar batch queries.
+
+```typescript
+// ❌ MAL - N+1 problem
+for (const id of portfolioIds) {
+  const data = await db().select().where(eq(portfolio.id, id));
+}
+
+// ✅ BIEN - Batch query
+const allData = await db().select()
+  .where(sql`${portfolio.id} = ANY(${portfolioIds})`);
+```
+
+### 10. Manejo de Errores
+
+```typescript
+try {
+  const result = await operation();
+} catch (error) {
+  // ✅ BIEN - Error tipado
+  if (error instanceof ApiError) {
+    if (error.isAuthError) {
+      router.push('/login');
+    }
+    showToast('Error', error.userMessage, 'error');
+  }
+  
+  // ❌ MAL - Error genérico
+  // alert('Error');
+}
+```
+
+### 11. Path Aliases en tsconfig.json
+
+```json
+{
+  "paths": {
+    "@/*": ["./*"],
+    "@/types": ["./types"],
+    "@/lib/*": ["./lib/*"],
+    "@/components/*": ["./app/components/*"]
+  }
+}
+```
+
+### 12. Comentarios AI_DECISION
+
+**Documentar decisiones no obvias:**
+
+```typescript
+// AI_DECISION: Timeout dinámico basado en cantidad de items
+// Justificación: Evita timeouts en comparaciones grandes
+// Impacto: Mejor UX y uso de recursos
+const timeout = getPortfolioCompareTimeout(portfolioCount, benchmarkCount);
+```
+
+---
+
+## 📦 Propósito de Apps y Packages
+
+### Apps
+
+**`apps/api`** (Node.js + Express)
+- API REST principal
+- Orquestación de servicios
+- Auth, CRUD, validaciones
+- Logging con Pino
+- Deploy: VPS con PM2
+
+**`apps/web`** (Next.js App Router)
+- Frontend React
+- Server/Client components
+- Consume API vía cliente centralizado
+- Deploy: Vercel/VPS
+
+**`apps/analytics-service`** (Python + FastAPI)
+- Cálculos financieros pesados
+- Fetch de precios (yfinance)
+- Métricas: Sharpe, volatility, drawdown
+- Deploy: VPS con PM2/uvicorn
+
+### Packages
+
+**`packages/db`** (Drizzle ORM)
+- Schema de PostgreSQL
+- Migraciones con drizzle-kit
+- Cliente DB exportado
+- Seeds automáticos
+
+**`packages/ui`** (React Components)
+- Componentes compartidos
+- Design system
+- Sin lógica de negocio
+
+---
+
+## 🚫 Anti-Patterns a Evitar
+
+1. ❌ Tipos `any` sin justificación
+2. ❌ Fetch manual sin cliente centralizado
+3. ❌ Magic numbers (usar constantes/config)
+4. ❌ Listas hardcodeadas como única fuente de datos
+5. ❌ `window.location` en Next.js (usar router)
+6. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
+7. ❌ Queries N+1 en loops
+8. ❌ Sin validación de inputs
+9. ❌ Timeouts hardcodeados
+10. ❌ `console.log` en producción (usar logger)
+
+---
+
+## ✅ Checklist Pre-Commit
+
+- [ ] Sin tipos `any` sin justificación
+- [ ] Validaciones Zod en endpoints nuevos
+- [ ] Tests unitarios para lógica de negocio
+- [ ] Tipos TypeScript para request/response
+- [ ] Cliente API usado (no fetch directo)
+- [ ] Queries optimizadas (no N+1)
+- [ ] Configuración externalizada (no hardcoded)
+- [ ] Logging estructurado con contexto
+- [ ] Error handling con ApiError
+- [ ] Linter limpio (`pnpm lint`)
+
+---
+
+## 📚 Referencias Rápidas
+
+- **Tipos:** `apps/web/types/[domain].ts`
+- **Cliente API:** `apps/web/lib/api/[domain].ts`
+- **Validaciones:** `apps/api/src/schemas/[domain].ts`
+- **Utils:** `apps/api/src/utils/[feature].ts`
+- **Config:** `apps/api/src/config/[feature].ts`
+- **Tests:** `[file].test.ts` (mismo directorio)
+
+**Score objetivo:** 8.5+/10 en todas las categorías de calidad
+
 ## Operativa (dev y prod)
 - Desarrollo:
   - Logs legibles con `pino-pretty` (se activa automáticamente cuando `NODE_ENV !== 'production'`).

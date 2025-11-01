@@ -3,6 +3,23 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  Heading,
+  Text,
+  Stack,
+  Spinner,
+  Alert,
+  Toast,
+  Badge,
+  DataTable,
+  type Column,
+} from '@cactus/ui';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 interface PortfolioTemplate {
   id: string;
@@ -51,6 +68,22 @@ export default function PortfolioDetailPage() {
     targetWeight: '0'
   });
   const [isCreating, setIsCreating] = useState(false);
+
+  // Estado para toast notifications
+  const [toast, setToast] = useState<{
+    show: boolean;
+    title: string;
+    description?: string;
+    variant: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    show: false,
+    title: '',
+    variant: 'info'
+  });
+
+  const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setToast({ show: true, title, description, variant });
+  };
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -127,14 +160,16 @@ export default function PortfolioDetailPage() {
       
     } catch (err) {
       console.error('Error creating template line:', err);
-      alert(err instanceof Error ? err.message : 'Error al crear línea');
+      showToast('Error al crear línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleDeleteLine = async (lineId: string) => {
-    if (!token || !templateId || !confirm('¿Estás seguro de eliminar esta línea?')) return;
+    if (!token || !templateId) return;
+    
+    if (!confirm('¿Estás seguro de eliminar esta línea?')) return;
 
     try {
       const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines/${lineId}`, {
@@ -153,9 +188,10 @@ export default function PortfolioDetailPage() {
       // Actualizar la lista de líneas
       await fetchTemplate();
       
+      showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
     } catch (err) {
       console.error('Error deleting template line:', err);
-      alert(err instanceof Error ? err.message : 'Error al eliminar línea');
+      showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
   };
 
@@ -479,6 +515,15 @@ export default function PortfolioDetailPage() {
           </div>
         </>
       )}
+
+      {/* Toast Notifications */}
+      <Toast
+        title={toast.title}
+        description={toast.description}
+        variant={toast.variant}
+        open={toast.show}
+        onOpenChange={(open: boolean) => setToast(prev => ({ ...prev, show: open }))}
+      />
     </main>
   );
 }

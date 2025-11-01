@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Search, Plus } from 'lucide-react';
 import {
   Input,
@@ -12,74 +12,110 @@ import {
   Card,
   CardContent,
 } from '@cactus/ui';
-// import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../auth/AuthContext';
 
 interface AssetSearcherProps {
   onAssetSelect: (asset: any) => void;
   placeholder?: string;
 }
 
-// Lista de activos comunes para demostración
-const COMMON_ASSETS = [
-  { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
-  { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NASDAQ' },
-  { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ' },
-  { symbol: 'AMZN', name: 'Amazon.com Inc.', exchange: 'NASDAQ' },
-  { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ' },
-  { symbol: 'META', name: 'Meta Platforms Inc.', exchange: 'NASDAQ' },
-  { symbol: 'NVDA', name: 'NVIDIA Corporation', exchange: 'NASDAQ' },
-  { symbol: '^GSPC', name: 'S&P 500', exchange: 'INDEX' },
-  { symbol: '^MERV', name: 'MERVAL', exchange: 'INDEX' },
-  { symbol: 'GGAL.BA', name: 'Grupo Financiero Galicia', exchange: 'BYMA' },
-  { symbol: 'PAMP.BA', name: 'Pampa Energía', exchange: 'BYMA' },
-  { symbol: 'ALUA.BA', name: 'Aluar Aluminio Argentino', exchange: 'BYMA' },
-];
+interface SearchResult {
+  symbol: string;
+  name: string;
+  shortName?: string;
+  currency: string;
+  exchange: string;
+  type: string;
+  sector?: string;
+  industry?: string;
+}
 
 const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholder = "Buscar por símbolo o nombre (ej: AAPL, Apple)" }) => {
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  // const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { token } = useAuth();
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const search = useCallback(
-    (searchQuery: string) => {
+    async (searchQuery: string) => {
       if (searchQuery.length < 2) {
         setSearchResults([]);
         return;
       }
       
-      setLoading(true);
+      if (!token) {
+        setError('Debes iniciar sesión para buscar activos');
+        return;
+      }
       
-      // Simular búsqueda con delay
-      setTimeout(() => {
-        const filtered = COMMON_ASSETS.filter(asset => 
-          asset.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          asset.name.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await fetch(`${apiUrl}/v1/instruments/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            query: searchQuery,
+            max_results: 10
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
         
-        setSearchResults(filtered);
+        if (data.success && data.data && data.data.results) {
+          setSearchResults(data.data.results);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error('Error searching instruments:', err);
+        setError('Error al buscar activos. Intenta nuevamente.');
+        setSearchResults([]);
+      } finally {
         setLoading(false);
-      }, 300);
+      }
     },
-    []
+    [token, apiUrl]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    search(value);
+    
+    // Debounce: cancelar búsqueda anterior
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    
+    // Nueva búsqueda después de 300ms
+    debounceTimeout.current = setTimeout(() => {
+      search(value);
+    }, 300);
   };
 
-  const handleSelectAsset = (asset: any) => {
-    // Crear objeto de instrumento simulado
+  const handleSelectAsset = (asset: SearchResult) => {
+    // Mapear resultado de API a formato esperado
     const instrument = {
       id: `temp-${Date.now()}`,
       symbol: asset.symbol,
-      name: asset.name,
-      exchange: asset.exchange,
-      currency: asset.exchange === 'BYMA' ? 'ARS' : 'USD',
-      assetClass: 'equity',
-      isActive: true
+      name: asset.name || asset.shortName || asset.symbol,
+      exchange: asset.exchange || 'Unknown',
+      currency: asset.currency || 'USD',
+      assetClass: asset.type === 'EQUITY' ? 'equity' : 'other',
+      isActive: true,
+      sector: asset.sector,
+      industry: asset.industry
     };
     
     onAssetSelect(instrument);
@@ -87,12 +123,49 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
     setSearchResults([]);
   };
 
-  const handleDirectSymbol = () => {
-    if (query.trim()) {
+  const handleDirectSymbol = async () => {
+    if (query.trim() && token) {
+      const symbol = query.trim().toUpperCase();
+      
+      // Validar símbolo directamente
+      try {
+        setLoading(true);
+        const response = await fetch(`${apiUrl}/v1/instruments/search/validate/${symbol}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data && data.data.valid) {
+            const instrument = {
+              id: `temp-${Date.now()}`,
+              symbol: data.data.symbol,
+              name: data.data.name || symbol,
+              exchange: data.data.exchange || 'Unknown',
+              currency: data.data.currency || 'USD',
+              assetClass: 'equity',
+              isActive: true
+            };
+            
+            onAssetSelect(instrument);
+            setQuery('');
+            setSearchResults([]);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error validating symbol:', err);
+      } finally {
+        setLoading(false);
+      }
+      
+      // Si la validación falla, usar símbolo directo
       const instrument = {
         id: `temp-${Date.now()}`,
-        symbol: query.trim().toUpperCase(),
-        name: query.trim().toUpperCase(),
+        symbol: symbol,
+        name: symbol,
         exchange: 'UNKNOWN',
         currency: 'USD',
         assetClass: 'equity',
@@ -137,6 +210,12 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
           </Stack>
         )}
         
+        {error && (
+          <Alert variant="error">
+            <Text size="sm">{error}</Text>
+          </Alert>
+        )}
+        
         {!loading && searchResults.length > 0 && (
           <Card className="max-h-60 overflow-y-auto">
             <CardContent className="p-0">
@@ -150,10 +229,18 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
                     <Stack direction="row" gap="sm" align="center">
                       <Text weight="semibold">{asset.symbol}</Text>
                       <span className="px-2 py-0.5 text-xs bg-background-surface text-foreground-secondary rounded">
-                        {asset.exchange}
+                        {asset.exchange || 'Unknown'}
                       </span>
+                      {asset.currency && (
+                        <span className="px-2 py-0.5 text-xs bg-background-surface text-foreground-secondary rounded">
+                          {asset.currency}
+                        </span>
+                      )}
                     </Stack>
-                    <Text size="sm" color="secondary">{asset.name}</Text>
+                    <Text size="sm" color="secondary">{asset.name || asset.shortName || asset.symbol}</Text>
+                    {asset.sector && (
+                      <Text size="xs" color="muted">{asset.sector} • {asset.industry || ''}</Text>
+                    )}
                   </div>
                   <Button variant="ghost" size="sm" className="text-accent-text hover:bg-accent-subtle">
                     <Plus className="w-4 h-4" />

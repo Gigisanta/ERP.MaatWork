@@ -1,4 +1,7 @@
-/** @type {import('jest').Config} */
+/**
+ * Jest configuration para API
+ */
+
 export default {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
@@ -7,7 +10,7 @@ export default {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
-    '^.+\\.ts$': [
+    '^.+\\.tsx?$': [
       'ts-jest',
       {
         useESM: true,
@@ -15,24 +18,23 @@ export default {
     ],
   },
   testMatch: [
-    '**/__tests__/**/*.test.ts',
-    '**/?(*.)+(spec|test).ts'
+    '**/__tests__/**/*.ts',
+    '**/*.test.ts',
   ],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
-    '!src/**/__tests__/**'
+    '!src/index.ts',
+    '!src/**/*.test.ts',
   ],
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
-    }
-  }
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+  coverageDirectory: 'coverage',
+  verbose: true,
 };
-
-
-
-

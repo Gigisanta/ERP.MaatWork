@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db, contacts, pipelineStages, tasks, notes, tags, notifications, users } from '@cactus/db';
 import { eq, isNull } from 'drizzle-orm';
 
