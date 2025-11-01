@@ -5,7 +5,7 @@
 **Monorepo:** `pnpm workspaces` + `turborepo`
 - **Apps:** `apps/api` (Node.js + Express), `apps/web` (Next.js App Router), `apps/analytics-service` (Python)
 - **Packages:** `packages/db` (Drizzle ORM), `packages/ui` (React Components)
-- **Tech Stack:** TypeScript estricto, PostgreSQL 16, PM2 para deploy
+- **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
 
 **Rutas clave:**
 - API: `apps/api/src/routes/*`, entrypoint `apps/api/src/index.ts`
@@ -20,23 +20,9 @@
 ### Antes de Modificar Código
 
 1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
-2. **Verificar primero:**
-   - ¿Es necesario? → Si NO, detener
-   - ¿Es seguro? → Si NO, agregar tests primero
-   - ¿Romperá código existente? → Si SÍ, versionarlo
-   - ¿Está documentado? → Si NO, agregar comentarios inline
-
-3. **Ejecutar typecheck ANTES de modificar:**
-   ```bash
-   pnpm -F @cactus/web typecheck    # Verificar errores actuales
-   pnpm -F @cactus/api typecheck
-   ```
-
-4. **Construir paquetes compartidos si hay cambios en tipos:**
-   ```bash
-   pnpm -F @cactus/ui build    # Si hay cambios en tipos exportados
-   pnpm -F @cactus/db build     # Si hay cambios en schema
-   ```
+2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
+3. **Ejecutar typecheck ANTES:** `pnpm -F @cactus/web typecheck` y `pnpm -F @cactus/api typecheck`
+4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
 
 ---
 
@@ -48,25 +34,19 @@
 
 ```typescript
 // ❌ MAL - Con exactOptionalPropertyTypes: true
-interface User {
-  name?: string;
-}
-const user: User = { name: undefined };  // ERROR: undefined no es válido
+interface User { name?: string; }
+const user: User = { name: undefined };  // ERROR
 
-// ✅ BIEN - Opción 1: Omitir la propiedad si es undefined
+// ✅ BIEN - Omitir propiedad si es undefined
 const user: User = {};
-if (someValue) {
-  user.name = someValue;
-}
+if (someValue) user.name = someValue;
 
-// ✅ BIEN - Opción 2: Permitir null explícitamente
-interface User {
-  name?: string | null;
-}
+// ✅ BIEN - Permitir null explícitamente
+interface User { name?: string | null; }
 const user: User = { name: null };
 
-// ✅ BIEN - Opción 3: Usar nullish coalescing
-const description = portfolio.description ?? null;  // NO usar ||
+// ✅ BIEN - Usar nullish coalescing (NO ||)
+const description = portfolio.description ?? null;
 ```
 
 ### 2. Evitar Shadowing de Funciones
@@ -74,53 +54,43 @@ const description = portfolio.description ?? null;  // NO usar ||
 ```typescript
 // ❌ MAL - Función local oculta import
 import { createPortfolio } from '@/lib/api';
-
-const createPortfolio = async () => {  // ERROR: oculta el import
-  // ...
-};
+const createPortfolio = async () => { ... };  // ERROR
 
 // ✅ BIEN - Usar prefijo handle/do/perform
-import { createPortfolio } from '@/lib/api';
-
 const handleCreatePortfolio = async () => {
-  await createPortfolio({ ... });  // Import funciona correctamente
+  await createPortfolio({ ... });
 };
 ```
 
 ### 3. Verificar Tipos de Componentes UI Antes de Usar
 
-**SIEMPRE verificar props aceptadas antes de usar componentes:**
+**SIEMPRE verificar props aceptadas en `packages/ui/src/components/*` antes de usar:**
 
 ```typescript
 // ❌ MAL - Asumir props sin verificar
-<Text color="error">Error message</Text>  // Si Text no acepta "error"
+<Text color="error">Error</Text>  // Text no acepta "error"
 
-// ✅ BIEN - Verificar tipos en packages/ui/src
-// Text acepta: 'primary' | 'secondary' | 'muted'
-<Text color="secondary">Error message</Text>
+// ✅ BIEN - Text acepta: 'primary' | 'secondary' | 'muted'
+<Text color="secondary">Error</Text>
 
-// ✅ BIEN - Verificar Button onClick
-// Button onClick espera: () => void
+// ✅ BIEN - Button onClick espera: () => void
 <Button onClick={() => router.push('/path')} />  // NO onClick={(e) => ...}
 ```
 
 ### 4. Evitar Tipos Duplicados
 
 ```typescript
-// ❌ MAL - Definición duplicada
+// ❌ MAL - Definición duplicada causa conflictos
 export interface BenchmarkComponentForm { ... }
-// ... más código ...
-export interface BenchmarkComponentForm { ... }  // ERROR: conflicto
+export interface BenchmarkComponentForm { ... }  // ERROR
 
-// ✅ BIEN - Una sola definición, reutilizar
-export interface BenchmarkComponentForm { ... }
-// Usar esta definición en todo el proyecto
+// ✅ BIEN - Una sola definición, reutilizar desde types/
 ```
 
 ### 5. Construir Paquetes Compartidos Antes de Typecheck
 
 ```bash
-# Si modificas tipos exportados en @cactus/ui o @cactus/db:
+# Si modificas tipos exportados:
 pnpm -F @cactus/ui build
 pnpm -F @cactus/db build
 # Luego:
@@ -137,33 +107,19 @@ pnpm -F @cactus/web typecheck
 ```
 types/
 ├── index.ts          # Barrel export
-├── common.ts         # Tipos compartidos (ApiResponse, Currency, etc)
-├── [domain].ts       # Un archivo por dominio (portfolio, benchmark, etc)
+├── common.ts         # Tipos compartidos
+├── [domain].ts       # Un archivo por dominio
 ```
 
-**Reglas:**
-- Archivos de tipos: 50-150 líneas máximo
-- Separar por dominio, no por "tipo de tipo"
-- Definir Request/Response types para cada endpoint
-- Evitar definiciones duplicadas
+**Reglas:** 50-150 líneas máximo por archivo, separar por dominio, evitar definiciones duplicadas.
 
 ---
 
 ## Cliente API Centralizado
 
-**NUNCA usar `fetch` directamente** - Usar cliente centralizado.
+**NUNCA usar `fetch` directamente** - Usar cliente centralizado (`lib/api/[domain].ts`).
 
-**Estructura:**
-```
-lib/
-├── api-client.ts     # Cliente base con retry, timeout, auth
-├── api-error.ts      # ApiError class custom
-└── api/
-    ├── [domain].ts   # Métodos por dominio
-    └── index.ts      # Barrel export
-```
-
-**Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos, error handling consistente
+**Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos.
 
 ---
 
@@ -173,7 +129,6 @@ lib/
 
 **Ubicación:** Definir schemas en `apps/api/src/routes/*.ts` bajo `// Zod Validation Schemas`
 
-**Estructura estándar:**
 ```typescript
 import { validate } from '../utils/validation';
 import { uuidSchema, paginationQuerySchema } from '../utils/common-schemas';
@@ -221,9 +176,9 @@ router.post('/',
 **Estructura:**
 ```
 app/route/
-  page.tsx           # Server Component (data fetch + layout)
-  SomeSection.tsx    # Client Island (interactive logic)
-  api-hooks.ts       # SWR hooks for mutations
+  page.tsx           # Server Component
+  SomeSection.tsx    # Client Island
+  api-hooks.ts       # SWR hooks
 ```
 
 ---
