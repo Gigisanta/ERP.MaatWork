@@ -9,13 +9,16 @@ export { Heading, type HeadingProps } from '../primitives/Heading';
 // Basic components
 export { default as Input } from './forms/Input';
 export { default as Button } from './nav/Button';
-export { Checkbox } from './Checkbox';
-export { Select, type SelectProps, type SelectItem } from './Select';
-export { Badge, type BadgeProps } from './Badge';
-export { Switch, type SwitchProps } from './Switch';
+export { Checkbox } from './forms/Checkbox';
+export { Select, type SelectProps, type SelectItem } from './forms/Select';
+export { Badge, type BadgeProps } from './feedback/Badge';
+export { Switch, type SwitchProps } from './forms/Switch';
 
 // Navigation components
 export { Header, type HeaderProps, type NavItem, type User } from './nav/Header';
+export { Nav, type NavProps } from './nav/Nav';
+export { Sidebar, type SidebarProps } from './nav/Sidebar';
+export { Pagination, type PaginationProps } from './nav/Pagination';
 export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbItem } from './nav/Breadcrumbs';
 export { Tabs, TabsList, TabsTrigger, TabsContent, type TabsProps, type TabItem } from './nav/Tabs';
 

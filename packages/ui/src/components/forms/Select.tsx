@@ -1,8 +1,8 @@
 import React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { ChevronDown, Check } from 'lucide-react';
-import { cn } from '../utils/cn';
-import Icon from './Icon';
+import { cn } from '../../utils/cn';
+import Icon from '../Icon';
 
 export interface SelectItem {
   value: string;
