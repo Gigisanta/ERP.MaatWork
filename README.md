@@ -19,7 +19,7 @@ CactusDashboard-epic-D/
 ```
 
 ## Requisitos
-- Node.js 20+
+- Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
 - pnpm 9+
 - TMUX (recomendado) - `brew install tmux` en macOS, `sudo apt-get install tmux` en Ubuntu
 - (Opcional) Docker para Postgres local
@@ -32,7 +32,7 @@ pnpm install
 ## Desarrollo
 
 ### Prerrequisitos
-- Node.js 20+
+- Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
 - pnpm 9+
 - TMUX (recomendado para mejor experiencia de desarrollo)
 - Docker (opcional, para PostgreSQL local)
