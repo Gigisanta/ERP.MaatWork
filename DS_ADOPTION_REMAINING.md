@@ -9,36 +9,13 @@
 - ✅ `FileUploader.tsx` - modal custom
 - ✅ `admin/users/page.tsx` - spinner custom
 
-### ⚠️ **Pendiente (Fase 2)**
+### ✅ **Completado (Fase 2)**
+- ✅ `RowMatchForm.tsx` - 2 inputs + 1 botón
+- ✅ `DuplicateResolutionModal.tsx` - Modal custom completo
+- ✅ `InlineEditableField.tsx` - Input nativo
+- ✅ `ContactEditableField.tsx` - Input nativo
 
-#### **1. RowMatchForm.tsx** (Prioridad ALTA)
-**Ubicación:** `apps/web/app/admin/aum/components/RowMatchForm.tsx`
-
-**Problemas:**
-```tsx
-// ❌ MAL: 2 inputs nativos
-<input value={contactId} onChange={(e) => setContactId(e.target.value)} placeholder="contactId" className="border rounded px-2 py-1 text-xs" />
-<input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="userId (advisor)" className="border rounded px-2 py-1 text-xs" />
-
-// ❌ MAL: Botón custom
-<button onClick={save} disabled={saving} className="px-2 py-1 text-xs bg-gray-800 text-white rounded">{saving ? '...' : 'Guardar'}</button>
-```
-
-**✅ DEBERÍA SER:**
-```tsx
-<Input value={contactId} onChange={(e) => setContactId(e.target.value)} placeholder="contactId" size="sm" />
-<Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="userId (advisor)" size="sm" />
-<Button onClick={save} disabled={saving} size="sm">{saving ? <Spinner size="sm" /> : 'Guardar'}</Button>
-```
-
-**Impacto:**
-- **-15 líneas** de código
-- Consistencia visual
-- Estados de loading automáticos
-
----
-
-#### **2. DuplicateResolutionModal.tsx** (Prioridad ALTA)
+### ⚠️ **Pendiente (Fase 3 - Opcional)**
 **Ubicación:** `apps/web/app/admin/aum/components/DuplicateResolutionModal.tsx`
 
 **Problema:** Modal custom completo de 93 líneas
