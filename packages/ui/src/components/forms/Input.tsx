@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import Icon, { type IconName } from '../Icon';
 import { cn } from '../../utils/cn';

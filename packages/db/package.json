@@ -2,6 +2,7 @@
   "name": "@cactus/db",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -28,7 +29,10 @@
     "seed:all": "tsx src/seed-all.ts",
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",
     "seed:benchmarks": "tsx src/seed-benchmarks.ts",
-    "db:init": "tsx src/seed-all.ts"
+    "db:init": "tsx src/seed-all.ts",
+    "db:reset": "node reset-db.js",
+    "db:reset-migrations": "node reset-migrations.js",
+    "db:full-reset": "node full-reset.js"
   },
   "dependencies": {
     "dotenv": "^16.6.1",

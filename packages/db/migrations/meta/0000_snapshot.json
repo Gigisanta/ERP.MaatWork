@@ -1,5 +1,5 @@
 {
-  "id": "4dab7952-3d01-4e8f-bd23-b322eef7c063",
+  "id": "fa550d81-cf10-4e26-9485-0c0a02b5e79d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -277,12 +277,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "uploaded_by_user_id": {
           "name": "uploaded_by_user_id",
           "type": "uuid",
@@ -333,21 +327,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "idx_attachments_meeting": {
-          "name": "idx_attachments_meeting",
-          "columns": [
-            {
-              "expression": "meeting_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -370,19 +349,6 @@
           "tableTo": "notes",
           "columnsFrom": [
             "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "attachments_meeting_id_meetings_id_fk": {
-          "name": "attachments_meeting_id_meetings_id_fk",
-          "tableFrom": "attachments",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
           ],
           "columnsTo": [
             "id"
@@ -623,6 +589,260 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "public.aum_import_files": {
+      "name": "aum_import_files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "broker": {
+          "name": "broker",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "original_filename": {
+          "name": "original_filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_by_user_id": {
+          "name": "uploaded_by_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total_parsed": {
+          "name": "total_parsed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "total_matched": {
+          "name": "total_matched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "total_unmatched": {
+          "name": "total_unmatched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "aum_import_files_uploaded_by_user_id_users_id_fk": {
+          "name": "aum_import_files_uploaded_by_user_id_users_id_fk",
+          "tableFrom": "aum_import_files",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uploaded_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.aum_import_rows": {
+      "name": "aum_import_rows",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "file_id": {
+          "name": "file_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw": {
+          "name": "raw",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "account_number": {
+          "name": "account_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "holder_name": {
+          "name": "holder_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "advisor_raw": {
+          "name": "advisor_raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "matched_contact_id": {
+          "name": "matched_contact_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "matched_user_id": {
+          "name": "matched_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "match_status": {
+          "name": "match_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unmatched'"
+        },
+        "is_preferred": {
+          "name": "is_preferred",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "conflict_detected": {
+          "name": "conflict_detected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_aum_rows_account": {
+          "name": "idx_aum_rows_account",
+          "columns": [
+            {
+              "expression": "account_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_aum_rows_file": {
+          "name": "idx_aum_rows_file",
+          "columns": [
+            {
+              "expression": "file_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "aum_import_rows_file_id_aum_import_files_id_fk": {
+          "name": "aum_import_rows_file_id_aum_import_files_id_fk",
+          "tableFrom": "aum_import_rows",
+          "tableTo": "aum_import_files",
+          "columnsFrom": [
+            "file_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "aum_import_rows_matched_contact_id_contacts_id_fk": {
+          "name": "aum_import_rows_matched_contact_id_contacts_id_fk",
+          "tableFrom": "aum_import_rows",
+          "tableTo": "contacts",
+          "columnsFrom": [
+            "matched_contact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "aum_import_rows_matched_user_id_users_id_fk": {
+          "name": "aum_import_rows_matched_user_id_users_id_fk",
+          "tableFrom": "aum_import_rows",
+          "tableTo": "users",
+          "columnsFrom": [
+            "matched_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "public.aum_snapshots": {
       "name": "aum_snapshots",
       "schema": "",
@@ -694,8 +914,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.benchmark_prices": {
-      "name": "benchmark_prices",
+    "public.benchmark_components": {
+      "name": "benchmark_components",
       "schema": "",
       "columns": {
         "id": {
@@ -711,23 +931,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "close": {
-          "name": "close",
-          "type": "numeric(18, 6)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "adj_close": {
-          "name": "adj_close",
-          "type": "numeric(18, 6)",
+        "instrument_id": {
+          "name": "instrument_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "numeric(7, 4)",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -738,33 +952,42 @@
         }
       },
       "indexes": {
-        "idx_benchmark_prices_unique": {
-          "name": "idx_benchmark_prices_unique",
+        "idx_benchmark_components_benchmark": {
+          "name": "idx_benchmark_components_benchmark",
           "columns": [
             {
               "expression": "benchmark_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_benchmark_components_instrument": {
+          "name": "idx_benchmark_components_instrument",
+          "columns": [
             {
-              "expression": "date",
+              "expression": "instrument_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": true,
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
         }
       },
       "foreignKeys": {
-        "benchmark_prices_benchmark_id_benchmarks_id_fk": {
-          "name": "benchmark_prices_benchmark_id_benchmarks_id_fk",
-          "tableFrom": "benchmark_prices",
-          "tableTo": "benchmarks",
+        "benchmark_components_benchmark_id_benchmark_definitions_id_fk": {
+          "name": "benchmark_components_benchmark_id_benchmark_definitions_id_fk",
+          "tableFrom": "benchmark_components",
+          "tableTo": "benchmark_definitions",
           "columnsFrom": [
             "benchmark_id"
           ],
@@ -773,13 +996,26 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "benchmark_components_instrument_id_instruments_id_fk": {
+          "name": "benchmark_components_instrument_id_instruments_id_fk",
+          "tableFrom": "benchmark_components",
+          "tableTo": "instruments",
+          "columnsFrom": [
+            "instrument_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.benchmarks": {
-      "name": "benchmarks",
+    "public.benchmark_definitions": {
+      "name": "benchmark_definitions",
       "schema": "",
       "columns": {
         "id": {
@@ -807,25 +1043,18 @@
           "primaryKey": false,
           "notNull": false
         },
-        "yahoo_symbol": {
-          "name": "yahoo_symbol",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'USD'"
-        },
-        "active": {
-          "name": "active",
+        "is_system": {
+          "name": "is_system",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -836,11 +1065,11 @@
         }
       },
       "indexes": {
-        "idx_benchmarks_active": {
-          "name": "idx_benchmarks_active",
+        "idx_benchmark_code": {
+          "name": "idx_benchmark_code",
           "columns": [
             {
-              "expression": "active",
+              "expression": "code",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -852,11 +1081,25 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "benchmark_definitions_created_by_user_id_users_id_fk": {
+          "name": "benchmark_definitions_created_by_user_id_users_id_fk",
+          "tableFrom": "benchmark_definitions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "benchmarks_code_unique": {
-          "name": "benchmarks_code_unique",
+        "benchmark_definitions_code_unique": {
+          "name": "benchmark_definitions_code_unique",
           "nullsNotDistinct": false,
           "columns": [
             "code"
@@ -910,6 +1153,19 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -1725,168 +1981,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.contact_portfolio_assignments": {
-      "name": "contact_portfolio_assignments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "contact_id": {
-          "name": "contact_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "portfolio_id": {
-          "name": "portfolio_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "assigned_date": {
-          "name": "assigned_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "CURRENT_DATE"
-        },
-        "initial_value": {
-          "name": "initial_value",
-          "type": "numeric(18, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "assigned_by_user_id": {
-          "name": "assigned_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_cpa_contact": {
-          "name": "idx_cpa_contact",
-          "columns": [
-            {
-              "expression": "contact_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_cpa_portfolio": {
-          "name": "idx_cpa_portfolio",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_cpa_status": {
-          "name": "idx_cpa_status",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"contact_portfolio_assignments\".\"status\" = 'active'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "contact_portfolio_assignments_contact_id_contacts_id_fk": {
-          "name": "contact_portfolio_assignments_contact_id_contacts_id_fk",
-          "tableFrom": "contact_portfolio_assignments",
-          "tableTo": "contacts",
-          "columnsFrom": [
-            "contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "contact_portfolio_assignments_portfolio_id_model_portfolios_id_fk": {
-          "name": "contact_portfolio_assignments_portfolio_id_model_portfolios_id_fk",
-          "tableFrom": "contact_portfolio_assignments",
-          "tableTo": "model_portfolios",
-          "columnsFrom": [
-            "portfolio_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "contact_portfolio_assignments_assigned_by_user_id_users_id_fk": {
-          "name": "contact_portfolio_assignments_assigned_by_user_id_users_id_fk",
-          "tableFrom": "contact_portfolio_assignments",
-          "tableTo": "users",
-          "columnsFrom": [
-            "assigned_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.contact_tags": {
       "name": "contact_tags",
       "schema": "",
@@ -1936,6 +2030,21 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_contact_tags_contact": {
+          "name": "idx_contact_tags_contact",
+          "columns": [
+            {
+              "expression": "contact_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2013,30 +2122,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "phone_secondary": {
-          "name": "phone_secondary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "whatsapp": {
-          "name": "whatsapp",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address": {
-          "name": "address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "city": {
-          "name": "city",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "country": {
           "name": "country",
           "type": "text",
@@ -2044,17 +2129,11 @@
           "notNull": false,
           "default": "'AR'"
         },
-        "date_of_birth": {
-          "name": "date_of_birth",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lifecycle_stage": {
-          "name": "lifecycle_stage",
+        "dni": {
+          "name": "dni",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "pipeline_stage_id": {
           "name": "pipeline_stage_id",
@@ -2086,6 +2165,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "next_step": {
+          "name": "next_step",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "notes": {
           "name": "notes",
           "type": "text",
@@ -2107,19 +2192,6 @@
         },
         "pipeline_stage_updated_at": {
           "name": "pipeline_stage_updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sla_status": {
-          "name": "sla_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'ok'"
-        },
-        "sla_due_at": {
-          "name": "sla_due_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -2168,21 +2240,6 @@
           "method": "btree",
           "with": {}
         },
-        "idx_contacts_stage": {
-          "name": "idx_contacts_stage",
-          "columns": [
-            {
-              "expression": "lifecycle_stage",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_contacts_pipeline_stage": {
           "name": "idx_contacts_pipeline_stage",
           "columns": [
@@ -2203,27 +2260,6 @@
           "columns": [
             {
               "expression": "contact_last_touch_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_contacts_sla_status": {
-          "name": "idx_contacts_sla_status",
-          "columns": [
-            {
-              "expression": "sla_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sla_due_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2359,13 +2395,6 @@
           "notNull": true,
           "default": 0
         },
-        "num_meetings": {
-          "name": "num_meetings",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "num_tasks_completed": {
           "name": "num_tasks_completed",
           "type": "integer",
@@ -2446,89 +2475,6 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.fx_rates": {
-      "name": "fx_rates",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "from_currency": {
-          "name": "from_currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "to_currency": {
-          "name": "to_currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "rate": {
-          "name": "rate",
-          "type": "numeric(18, 8)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'yahoo'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_fx_rates_unique": {
-          "name": "idx_fx_rates_unique",
-          "columns": [
-            {
-              "expression": "from_currency",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "to_currency",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -3030,28 +2976,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.lookup_meeting_source": {
-      "name": "lookup_meeting_source",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.lookup_notification_type": {
       "name": "lookup_notification_type",
       "schema": "",
@@ -3115,449 +3039,6 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.meeting_ai": {
-      "name": "meeting_ai",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "model": {
-          "name": "model",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "prompt_version": {
-          "name": "prompt_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "summary": {
-          "name": "summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "action_items": {
-          "name": "action_items",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "commitments": {
-          "name": "commitments",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "keywords": {
-          "name": "keywords",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "sentiment": {
-          "name": "sentiment",
-          "type": "numeric(4, 3)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "duration_ms": {
-          "name": "duration_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_meeting_ai_keywords_dummy": {
-          "name": "idx_meeting_ai_keywords_dummy",
-          "columns": [
-            {
-              "expression": "meeting_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "meeting_ai_meeting_id_meetings_id_fk": {
-          "name": "meeting_ai_meeting_id_meetings_id_fk",
-          "tableFrom": "meeting_ai",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "meeting_ai_meeting_id_unique": {
-          "name": "meeting_ai_meeting_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "meeting_id"
-          ]
-        }
-      }
-    },
-    "public.meeting_participants": {
-      "name": "meeting_participants",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "participant_type": {
-          "name": "participant_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "contact_id": {
-          "name": "contact_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "meeting_participants_meeting_id_meetings_id_fk": {
-          "name": "meeting_participants_meeting_id_meetings_id_fk",
-          "tableFrom": "meeting_participants",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "meeting_participants_user_id_users_id_fk": {
-          "name": "meeting_participants_user_id_users_id_fk",
-          "tableFrom": "meeting_participants",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "meeting_participants_contact_id_contacts_id_fk": {
-          "name": "meeting_participants_contact_id_contacts_id_fk",
-          "tableFrom": "meeting_participants",
-          "tableTo": "contacts",
-          "columnsFrom": [
-            "contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.meeting_tags": {
-      "name": "meeting_tags",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tag_id": {
-          "name": "tag_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "meeting_tags_unique": {
-          "name": "meeting_tags_unique",
-          "columns": [
-            {
-              "expression": "meeting_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "tag_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "meeting_tags_meeting_id_meetings_id_fk": {
-          "name": "meeting_tags_meeting_id_meetings_id_fk",
-          "tableFrom": "meeting_tags",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "meeting_tags_tag_id_tags_id_fk": {
-          "name": "meeting_tags_tag_id_tags_id_fk",
-          "tableFrom": "meeting_tags",
-          "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.meetings": {
-      "name": "meetings",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "contact_id": {
-          "name": "contact_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "organizer_user_id": {
-          "name": "organizer_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "started_at": {
-          "name": "started_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ended_at": {
-          "name": "ended_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "external_meeting_id": {
-          "name": "external_meeting_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "recording_url": {
-          "name": "recording_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_meetings_contact_started": {
-          "name": "idx_meetings_contact_started",
-          "columns": [
-            {
-              "expression": "contact_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "started_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "meetings_contact_id_contacts_id_fk": {
-          "name": "meetings_contact_id_contacts_id_fk",
-          "tableFrom": "meetings",
-          "tableTo": "contacts",
-          "columnsFrom": [
-            "contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "meetings_organizer_user_id_users_id_fk": {
-          "name": "meetings_organizer_user_id_users_id_fk",
-          "tableFrom": "meetings",
-          "tableTo": "users",
-          "columnsFrom": [
-            "organizer_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "meetings_source_lookup_meeting_source_id_fk": {
-          "name": "meetings_source_lookup_meeting_source_id_fk",
-          "tableFrom": "meetings",
-          "tableTo": "lookup_meeting_source",
-          "columnsFrom": [
-            "source"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -3647,8 +3128,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.model_portfolio_allocations": {
-      "name": "model_portfolio_allocations",
+    "public.metric_definitions": {
+      "name": "metric_definitions",
       "schema": "",
       "columns": {
         "id": {
@@ -3658,159 +3139,11 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "portfolio_id": {
-          "name": "portfolio_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "allocation_type": {
-          "name": "allocation_type",
+        "code": {
+          "name": "code",
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "asset_class": {
-          "name": "asset_class",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "instrument_id": {
-          "name": "instrument_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target_weight_pct": {
-          "name": "target_weight_pct",
-          "type": "numeric(7, 4)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_mpa_portfolio": {
-          "name": "idx_mpa_portfolio",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_mpa_portfolio_asset": {
-          "name": "idx_mpa_portfolio_asset",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "asset_class",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"model_portfolio_allocations\".\"allocation_type\" = 'asset_class'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_mpa_portfolio_instrument": {
-          "name": "idx_mpa_portfolio_instrument",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "instrument_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"model_portfolio_allocations\".\"allocation_type\" = 'instrument'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "model_portfolio_allocations_portfolio_id_model_portfolios_id_fk": {
-          "name": "model_portfolio_allocations_portfolio_id_model_portfolios_id_fk",
-          "tableFrom": "model_portfolio_allocations",
-          "tableTo": "model_portfolios",
-          "columnsFrom": [
-            "portfolio_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "model_portfolio_allocations_asset_class_lookup_asset_class_id_fk": {
-          "name": "model_portfolio_allocations_asset_class_lookup_asset_class_id_fk",
-          "tableFrom": "model_portfolio_allocations",
-          "tableTo": "lookup_asset_class",
-          "columnsFrom": [
-            "asset_class"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "model_portfolio_allocations_instrument_id_instruments_id_fk": {
-          "name": "model_portfolio_allocations_instrument_id_instruments_id_fk",
-          "tableFrom": "model_portfolio_allocations",
-          "tableTo": "instruments",
-          "columnsFrom": [
-            "instrument_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.model_portfolios": {
-      "name": "model_portfolios",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
         },
         "name": {
           "name": "name",
@@ -3824,60 +3157,31 @@
           "primaryKey": false,
           "notNull": false
         },
-        "risk_level": {
-          "name": "risk_level",
+        "calculation_formula": {
+          "name": "calculation_formula",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "currency": {
-          "name": "currency",
+        "category": {
+          "name": "category",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'USD'"
-        },
-        "initial_value": {
-          "name": "initial_value",
-          "type": "numeric(18, 2)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'100000'"
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
           "notNull": true
-        },
-        "is_active": {
-          "name": "is_active",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {
-        "idx_model_portfolios_created_by": {
-          "name": "idx_model_portfolios_created_by",
+        "idx_metric_code": {
+          "name": "idx_metric_code",
           "columns": [
             {
-              "expression": "created_by_user_id",
+              "expression": "code",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3888,11 +3192,11 @@
           "method": "btree",
           "with": {}
         },
-        "idx_model_portfolios_active": {
-          "name": "idx_model_portfolios_active",
+        "idx_metric_category": {
+          "name": "idx_metric_category",
           "columns": [
             {
-              "expression": "is_active",
+              "expression": "category",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3904,23 +3208,17 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "model_portfolios_created_by_user_id_users_id_fk": {
-          "name": "model_portfolios_created_by_user_id_users_id_fk",
-          "tableFrom": "model_portfolios",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "metric_definitions_code_unique": {
+          "name": "metric_definitions_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "code"
+          ]
+        }
+      }
     },
     "public.note_tags": {
       "name": "note_tags",
@@ -4024,12 +3322,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "author_user_id": {
           "name": "author_user_id",
           "type": "uuid",
@@ -4053,37 +3345,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "audio_file_id": {
-          "name": "audio_file_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "transcription_status": {
-          "name": "transcription_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "keywords": {
-          "name": "keywords",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
-        "sentiment": {
-          "name": "sentiment",
-          "type": "numeric(4, 3)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "deleted_at": {
           "name": "deleted_at",
@@ -4120,36 +3381,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "idx_notes_transcription_status": {
-          "name": "idx_notes_transcription_status",
-          "columns": [
-            {
-              "expression": "transcription_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_notes_keywords_dummy": {
-          "name": "idx_notes_keywords_dummy",
-          "columns": [
-            {
-              "expression": "contact_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -4166,38 +3397,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "notes_meeting_id_meetings_id_fk": {
-          "name": "notes_meeting_id_meetings_id_fk",
-          "tableFrom": "notes",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
         "notes_author_user_id_users_id_fk": {
           "name": "notes_author_user_id_users_id_fk",
           "tableFrom": "notes",
           "tableTo": "users",
           "columnsFrom": [
             "author_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "notes_audio_file_id_audio_files_id_fk": {
-          "name": "notes_audio_file_id_audio_files_id_fk",
-          "tableFrom": "notes",
-          "tableTo": "audio_files",
-          "columnsFrom": [
-            "audio_file_id"
           ],
           "columnsTo": [
             "id"
@@ -4793,108 +3998,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.portfolio_benchmark_comparisons": {
-      "name": "portfolio_benchmark_comparisons",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "performance_snapshot_id": {
-          "name": "performance_snapshot_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "benchmark_id": {
-          "name": "benchmark_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "excess_return_pct": {
-          "name": "excess_return_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tracking_error_pct": {
-          "name": "tracking_error_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "correlation": {
-          "name": "correlation",
-          "type": "numeric(5, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "alpha_pct": {
-          "name": "alpha_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "beta": {
-          "name": "beta",
-          "type": "numeric(7, 4)",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "idx_pbc_snapshot": {
-          "name": "idx_pbc_snapshot",
-          "columns": [
-            {
-              "expression": "performance_snapshot_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "portfolio_benchmark_comparisons_performance_snapshot_id_portfolio_performance_snapshots_id_fk": {
-          "name": "portfolio_benchmark_comparisons_performance_snapshot_id_portfolio_performance_snapshots_id_fk",
-          "tableFrom": "portfolio_benchmark_comparisons",
-          "tableTo": "portfolio_performance_snapshots",
-          "columnsFrom": [
-            "performance_snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "portfolio_benchmark_comparisons_benchmark_id_benchmarks_id_fk": {
-          "name": "portfolio_benchmark_comparisons_benchmark_id_benchmarks_id_fk",
-          "tableFrom": "portfolio_benchmark_comparisons",
-          "tableTo": "benchmarks",
-          "columnsFrom": [
-            "benchmark_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.portfolio_monitoring_details": {
       "name": "portfolio_monitoring_details",
       "schema": "",
@@ -5072,358 +4175,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.portfolio_performance_snapshots": {
-      "name": "portfolio_performance_snapshots",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "portfolio_id": {
-          "name": "portfolio_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "as_of_date": {
-          "name": "as_of_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "period": {
-          "name": "period",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "start_date": {
-          "name": "start_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_date": {
-          "name": "end_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "total_return_pct": {
-          "name": "total_return_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "annualized_return_pct": {
-          "name": "annualized_return_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "volatility_pct": {
-          "name": "volatility_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sharpe_ratio": {
-          "name": "sharpe_ratio",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "max_drawdown_pct": {
-          "name": "max_drawdown_pct",
-          "type": "numeric(9, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "current_value": {
-          "name": "current_value",
-          "type": "numeric(18, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "generated_at": {
-          "name": "generated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_pps_portfolio_date": {
-          "name": "idx_pps_portfolio_date",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "as_of_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_pps_unique": {
-          "name": "idx_pps_unique",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "period",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "as_of_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "portfolio_performance_snapshots_portfolio_id_model_portfolios_id_fk": {
-          "name": "portfolio_performance_snapshots_portfolio_id_model_portfolios_id_fk",
-          "tableFrom": "portfolio_performance_snapshots",
-          "tableTo": "model_portfolios",
-          "columnsFrom": [
-            "portfolio_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.portfolio_rebalance_changes": {
-      "name": "portfolio_rebalance_changes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "rebalance_event_id": {
-          "name": "rebalance_event_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "instrument_id": {
-          "name": "instrument_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "change_type": {
-          "name": "change_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "weight_before_pct": {
-          "name": "weight_before_pct",
-          "type": "numeric(7, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "weight_after_pct": {
-          "name": "weight_after_pct",
-          "type": "numeric(7, 4)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "idx_prc_event": {
-          "name": "idx_prc_event",
-          "columns": [
-            {
-              "expression": "rebalance_event_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "portfolio_rebalance_changes_rebalance_event_id_portfolio_rebalance_events_id_fk": {
-          "name": "portfolio_rebalance_changes_rebalance_event_id_portfolio_rebalance_events_id_fk",
-          "tableFrom": "portfolio_rebalance_changes",
-          "tableTo": "portfolio_rebalance_events",
-          "columnsFrom": [
-            "rebalance_event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "portfolio_rebalance_changes_instrument_id_instruments_id_fk": {
-          "name": "portfolio_rebalance_changes_instrument_id_instruments_id_fk",
-          "tableFrom": "portfolio_rebalance_changes",
-          "tableTo": "instruments",
-          "columnsFrom": [
-            "instrument_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "public.portfolio_rebalance_events": {
-      "name": "portfolio_rebalance_events",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "portfolio_id": {
-          "name": "portfolio_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_date": {
-          "name": "event_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "executed_by_user_id": {
-          "name": "executed_by_user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_pre_portfolio_date": {
-          "name": "idx_pre_portfolio_date",
-          "columns": [
-            {
-              "expression": "portfolio_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "event_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "portfolio_rebalance_events_portfolio_id_model_portfolios_id_fk": {
-          "name": "portfolio_rebalance_events_portfolio_id_model_portfolios_id_fk",
-          "tableFrom": "portfolio_rebalance_events",
-          "tableTo": "model_portfolios",
-          "columnsFrom": [
-            "portfolio_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "portfolio_rebalance_events_executed_by_user_id_users_id_fk": {
-          "name": "portfolio_rebalance_events_executed_by_user_id_users_id_fk",
-          "tableFrom": "portfolio_rebalance_events",
-          "tableTo": "users",
-          "columnsFrom": [
-            "executed_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.portfolio_template_lines": {
       "name": "portfolio_template_lines",
       "schema": "",
@@ -5573,8 +4324,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.prices": {
-      "name": "prices",
+    "public.price_snapshots": {
+      "name": "price_snapshots",
       "schema": "",
       "columns": {
         "id": {
@@ -5590,54 +4341,29 @@
           "primaryKey": false,
           "notNull": true
         },
-        "date": {
-          "name": "date",
+        "as_of_date": {
+          "name": "as_of_date",
           "type": "date",
           "primaryKey": false,
           "notNull": true
         },
-        "open": {
-          "name": "open",
-          "type": "numeric(18, 6)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "high": {
-          "name": "high",
-          "type": "numeric(18, 6)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "low": {
-          "name": "low",
-          "type": "numeric(18, 6)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "close": {
-          "name": "close",
+        "close_price": {
+          "name": "close_price",
           "type": "numeric(18, 6)",
           "primaryKey": false,
           "notNull": true
         },
-        "adj_close": {
-          "name": "adj_close",
-          "type": "numeric(18, 6)",
+        "currency": {
+          "name": "currency",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false
-        },
-        "volume": {
-          "name": "volume",
-          "type": "numeric(18, 2)",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "source": {
           "name": "source",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'yahoo'"
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -5648,8 +4374,8 @@
         }
       },
       "indexes": {
-        "idx_prices_unique": {
-          "name": "idx_prices_unique",
+        "price_snapshots_unique": {
+          "name": "price_snapshots_unique",
           "columns": [
             {
               "expression": "instrument_id",
@@ -5658,7 +4384,7 @@
               "nulls": "last"
             },
             {
-              "expression": "date",
+              "expression": "as_of_date",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -5669,11 +4395,26 @@
           "method": "btree",
           "with": {}
         },
-        "idx_prices_date": {
-          "name": "idx_prices_date",
+        "idx_price_snapshots_date": {
+          "name": "idx_price_snapshots_date",
           "columns": [
             {
-              "expression": "date",
+              "expression": "as_of_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_price_snapshots_instrument": {
+          "name": "idx_price_snapshots_instrument",
+          "columns": [
+            {
+              "expression": "instrument_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -5686,9 +4427,9 @@
         }
       },
       "foreignKeys": {
-        "prices_instrument_id_instruments_id_fk": {
-          "name": "prices_instrument_id_instruments_id_fk",
-          "tableFrom": "prices",
+        "price_snapshots_instrument_id_instruments_id_fk": {
+          "name": "price_snapshots_instrument_id_instruments_id_fk",
+          "tableFrom": "price_snapshots",
           "tableTo": "instruments",
           "columnsFrom": [
             "instrument_id"
@@ -5696,7 +4437,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -6484,12 +5225,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "title": {
           "name": "title",
           "type": "text",
@@ -6663,19 +5398,6 @@
           "tableTo": "contacts",
           "columnsFrom": [
             "contact_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "tasks_meeting_id_meetings_id_fk": {
-          "name": "tasks_meeting_id_meetings_id_fk",
-          "tableFrom": "tasks",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
           ],
           "columnsTo": [
             "id"
@@ -6996,67 +5718,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "public.transcription_segments": {
-      "name": "transcription_segments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "meeting_id": {
-          "name": "meeting_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "start_ms": {
-          "name": "start_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_ms": {
-          "name": "end_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "speaker_label": {
-          "name": "speaker_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "transcription_segments_meeting_id_meetings_id_fk": {
-          "name": "transcription_segments_meeting_id_meetings_id_fk",
-          "tableFrom": "transcription_segments",
-          "tableTo": "meetings",
-          "columnsFrom": [
-            "meeting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
     "public.user_channel_preferences": {
       "name": "user_channel_preferences",
       "schema": "",
@@ -7159,6 +5820,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username_normalized": {
+          "name": "username_normalized",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "full_name": {
           "name": "full_name",
           "type": "text",
@@ -7217,6 +5890,38 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_username_normalized_unique": {
+          "name": "users_username_normalized_unique",
+          "columns": [
+            {
+              "expression": "username_normalized",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"users\".\"username_normalized\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_users_username_normalized": {
+          "name": "idx_users_username_normalized",
+          "columns": [
+            {
+              "expression": "username_normalized",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"users\".\"username_normalized\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}

@@ -70,6 +70,9 @@ export type ErrorWithMessage = {
  */
 export type PinoLoggerOptions = {
   level: string;
+  base?: {
+    hostname?: string;
+  };
   transport?: {
     target: string;
     options: {

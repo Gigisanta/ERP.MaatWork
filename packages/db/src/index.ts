@@ -1,13 +1,21 @@
-// Cargar .env si no está disponible
-if (!process.env.DATABASE_URL) {
-  const { config } = require('dotenv');
-  config();
-}
-
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import * as schema from './schema';
+
+// Cargar .env desde el directorio del paquete db si no está disponible
+if (!process.env.DATABASE_URL) {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  // En desarrollo, buscar .env en src/../.env
+  // En producción compilado, buscar .env en dist/../.env
+  const envPath = join(__dirname, '..', '.env');
+  config({ path: envPath });
+}
+
 export * from './schema';
 
 /**

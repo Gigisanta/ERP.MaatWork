@@ -6,10 +6,10 @@
   "scripts": {
     "build": "turbo run build",
     "build:clean": "turbo run build:clean && turbo run build",
-    "dev": "bash scripts/dev-tmux.sh",
+    "dev": "node scripts/dev.js",
     "dev:basic": "turbo run dev --parallel",
     "dev:clean": "pnpm dev:kill && pnpm -F @cactus/web clean && pnpm dev",
-    "dev:kill": "tmux kill-session -t cactus-dev 2>/dev/null || true",
+    "dev:kill": "node scripts/dev-kill.js",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
@@ -27,8 +27,8 @@
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
     "lighthouse": "lhci autorun --config=lighthouserc.json",
-    "predev": "bash scripts/dev-clean.sh",
-    "predev:basic": "bash scripts/dev-clean.sh",
+    "predev": "node scripts/dev-clean.js",
+    "predev:basic": "node scripts/dev-clean.js",
     "prepare": "husky install",
     "guard:artifacts": "node scripts/guard-artifacts.js"
   },
