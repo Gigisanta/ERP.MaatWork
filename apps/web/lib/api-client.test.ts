@@ -140,8 +140,23 @@ describe('ApiClient', () => {
     });
 
     it('debería incluir Authorization header si hay token', async () => {
-      // Simular token en localStorage usando el mock
-      const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('test-token');
+      // Mock localStorage.getItem para retornar el token
+      const localStorageGetItem = vi.fn((key: string) => {
+        if (key === 'token') {
+          return 'test-token';
+        }
+        return null;
+      });
+      
+      // Reemplazar el mock del localStorage del setup
+      Object.defineProperty(window, 'localStorage', {
+        value: {
+          ...window.localStorage,
+          getItem: localStorageGetItem,
+        },
+        writable: true,
+        configurable: true,
+      });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -152,7 +167,16 @@ describe('ApiClient', () => {
 
       expect(mockFetch).toHaveBeenCalled();
       const callArgs = mockFetch.mock.calls[0];
-      expect(callArgs[1].headers['Authorization']).toBe('Bearer test-token');
+      const headers = callArgs[1]?.headers;
+      
+      // Headers puede ser un objeto plano o un objeto Headers
+      if (headers instanceof Headers) {
+        expect(headers.get('Authorization')).toBe('Bearer test-token');
+      } else if (headers && typeof headers === 'object') {
+        expect((headers as Record<string, string>)['Authorization']).toBe('Bearer test-token');
+      } else {
+        throw new Error('Headers format not recognized');
+      }
     });
   });
 
