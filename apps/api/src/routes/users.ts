@@ -8,6 +8,9 @@ import { z } from 'zod';
 
 const router = Router();
 
+import { validate } from '../utils/validation';
+import { idParamSchema } from '../utils/common-schemas';
+
 const createUserSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1).max(255),
@@ -25,9 +28,13 @@ router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Requ
   }
 });
 
-router.post('/', requireAuth, requireRole(['admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', 
+  requireAuth, 
+  requireRole(['admin']),
+  validate({ body: createUserSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createUserSchema.parse(req.body);
+    const validated = req.body;
     
     // Check if user already exists
     const existingUser = await db()
@@ -48,9 +55,6 @@ router.post('/', requireAuth, requireRole(['admin']), async (req: Request, res: 
     req.log.info({ userId: newUser.id, email: newUser.email, role: newUser.role }, 'user created');
     res.status(201).json({ data: newUser });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create user');
     next(err);
   }

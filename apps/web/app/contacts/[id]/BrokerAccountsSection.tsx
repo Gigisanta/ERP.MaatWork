@@ -21,22 +21,15 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useBrokerAccounts } from '../../../lib/api-hooks';
+import { createBrokerAccount, deleteBrokerAccount } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { BrokerAccount } from '@/types';
 
 // AI_DECISION: Extracted to client island for CRUD operations isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface BrokerAccount {
-  id: string;
-  broker: string;
-  accountNumber: string;
-  holderName?: string;
-  contactId: string;
-  status: 'active' | 'closed';
-  lastSyncedAt?: string;
-  createdAt: string;
-}
 
 interface BrokerAccountsSectionProps {
   contactId: string;
@@ -59,6 +52,20 @@ export default function BrokerAccountsSection({
   const { brokerAccounts, error, isLoading, mutate } = useBrokerAccounts(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newAccount, setNewAccount] = useState({
     broker: '',
     accountNumber: '',
@@ -69,51 +76,36 @@ export default function BrokerAccountsSection({
   const handleCreateAccount = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/broker-accounts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newAccount,
-          contactId
-        })
+      await createBrokerAccount({
+        ...newAccount,
+        contactId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create broker account');
-      }
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewAccount({ broker: '', accountNumber: '', holderName: '', status: 'active' });
     } catch (err) {
-      console.error('Error creating broker account:', err);
+      logger.error('Error creating broker account', { err, contactId, account: newAccount });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteAccount = async (accountId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta cuenta?')) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/broker-accounts/${accountId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+  const handleDeleteAccount = (accountId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar cuenta',
+      description: '¿Estás seguro de que quieres eliminar esta cuenta?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteBrokerAccount(accountId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting broker account', { err, accountId });
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete broker account');
       }
-
-      await mutate(); // Refresh data
-    } catch (err) {
-      console.error('Error deleting broker account:', err);
-    }
+    });
   };
 
   const accounts = brokerAccounts.length > 0 ? brokerAccounts : initialBrokerAccounts;
@@ -251,6 +243,18 @@ export default function BrokerAccountsSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

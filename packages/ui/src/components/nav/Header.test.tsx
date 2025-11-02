@@ -1,0 +1,313 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Header } from './Header';
+import type { NavItem, User } from './Header';
+
+const mockNavItems: NavItem[] = [
+  { label: 'Home', href: '/', icon: 'Home' },
+  { label: 'About', href: '/about', badge: 'New' },
+  { label: 'External', href: 'https://example.com', icon: 'list' },
+];
+
+const mockUser: User = {
+  name: 'John Doe',
+  email: 'john@example.com',
+  role: 'Admin',
+};
+
+describe('Header Component', () => {
+  describe('Rendering', () => {
+    it('should render header element', () => {
+      render(<Header />);
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+    });
+
+    it('should render logo when provided', () => {
+      render(<Header logo={<div data-testid="logo">Logo</div>} />);
+      expect(screen.getByTestId('logo')).toBeInTheDocument();
+    });
+
+    it('should render navigation items', () => {
+      render(<Header navItems={mockNavItems} />);
+      expect(screen.getByText('Home')).toBeInTheDocument();
+      expect(screen.getByText('About')).toBeInTheDocument();
+    });
+
+    it('should render user section when user provided', () => {
+      render(<Header user={mockUser} />);
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    it('should render user initial when no avatar', () => {
+      render(<Header user={mockUser} />);
+      expect(screen.getByText('J')).toBeInTheDocument();
+    });
+
+    it('should render user avatar when provided', () => {
+      const userWithAvatar = { ...mockUser, avatar: 'https://example.com/avatar.jpg' };
+      render(<Header user={userWithAvatar} />);
+      const avatar = screen.getByAltText('');
+      expect(avatar).toBeInTheDocument();
+      expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
+    });
+
+    it('should render mobile menu button when onToggleSidebar provided', () => {
+      const handleToggle = vi.fn();
+      render(<Header onToggleSidebar={handleToggle} />);
+      expect(screen.getByLabelText(/open sidebar/i)).toBeInTheDocument();
+    });
+
+    it('should not render mobile menu button when no onToggleSidebar', () => {
+      render(<Header />);
+      expect(screen.queryByLabelText(/sidebar/i)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Navigation Items', () => {
+    it('should render internal links', () => {
+      render(<Header navItems={mockNavItems} />);
+      const homeLink = screen.getByText('Home').closest('a');
+      expect(homeLink).toHaveAttribute('href', '/');
+    });
+
+    it('should render external links with target="_blank"', () => {
+      render(<Header navItems={mockNavItems} />);
+      const externalLink = screen.getByText('External').closest('a');
+      expect(externalLink).toHaveAttribute('href', 'https://example.com');
+      expect(externalLink).toHaveAttribute('target', '_blank');
+      expect(externalLink).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('should render badges on nav items', () => {
+      render(<Header navItems={mockNavItems} />);
+      expect(screen.getByText('New')).toBeInTheDocument();
+    });
+
+    it('should render icons on nav items', () => {
+      const { container } = render(<Header navItems={mockNavItems} />);
+      const icons = container.querySelectorAll('span');
+      expect(icons.length).toBeGreaterThan(0);
+    });
+
+    it('should not render navigation when no items', () => {
+      render(<Header navItems={[]} />);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('User Menu', () => {
+    it('should render user menu button', () => {
+      render(<Header user={mockUser} />);
+      const button = screen.getByLabelText(/user menu for john doe/i);
+      expect(button).toBeInTheDocument();
+    });
+
+    it('should have aria-haspopup on user menu button', () => {
+      render(<Header user={mockUser} />);
+      const button = screen.getByLabelText(/user menu/i);
+      expect(button).toHaveAttribute('aria-haspopup', 'menu');
+    });
+
+    it('should have aria-expanded false by default', () => {
+      render(<Header user={mockUser} />);
+      const button = screen.getByLabelText(/user menu/i);
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    // Note: DropdownMenu items (Profile, Settings, Log out) are rendered in a portal
+    // and are not accessible in jsdom tests. These should be tested in E2E tests.
+    it('should render user menu trigger with proper structure', () => {
+      render(<Header user={mockUser} />);
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('J')).toBeInTheDocument(); // Initial
+    });
+
+    it('should accept onLogout callback', () => {
+      const handleLogout = vi.fn();
+      render(<Header user={mockUser} onLogout={handleLogout} />);
+      expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Sidebar Toggle', () => {
+    it('should call onToggleSidebar when mobile menu clicked', async () => {
+      const handleToggle = vi.fn();
+      const user = userEvent.setup();
+
+      render(<Header onToggleSidebar={handleToggle} />);
+
+      const toggleButton = screen.getByLabelText(/open sidebar/i);
+      await user.click(toggleButton);
+
+      expect(handleToggle).toHaveBeenCalled();
+    });
+
+    it('should change aria-label based on sidebarOpen state', () => {
+      render(<Header onToggleSidebar={vi.fn()} sidebarOpen={true} />);
+      expect(screen.getByLabelText(/close sidebar/i)).toBeInTheDocument();
+    });
+
+    it('should be hidden on large screens', () => {
+      render(<Header onToggleSidebar={vi.fn()} />);
+      const button = screen.getByLabelText(/sidebar/i);
+      expect(button).toHaveClass('lg:hidden');
+    });
+  });
+
+  describe('Layout', () => {
+    it('should have sticky positioning', () => {
+      const { container } = render(<Header />);
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('sticky', 'top-0');
+    });
+
+    it('should have proper height', () => {
+      const { container } = render(<Header />);
+      const headerContent = container.querySelector('.flex.h-12');
+      expect(headerContent).toBeInTheDocument();
+    });
+
+    it('should use flexbox for layout', () => {
+      const { container } = render(<Header />);
+      const headerContent = container.querySelector('.flex');
+      expect(headerContent).toHaveClass('items-center', 'justify-between');
+    });
+
+    it('should have responsive padding', () => {
+      const { container } = render(<Header />);
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('px-3', 'sm:px-4', 'lg:px-6');
+    });
+  });
+
+  describe('Styling', () => {
+    it('should have border and background', () => {
+      const { container } = render(<Header />);
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('bg-surface', 'border-b', 'border-border');
+    });
+
+    it('should have proper z-index', () => {
+      const { container } = render(<Header />);
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('z-40');
+    });
+
+    it('should apply custom className', () => {
+      const { container } = render(<Header className="custom-header" />);
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('custom-header');
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have role="banner"', () => {
+      render(<Header />);
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+    });
+
+    it('should have navigation with role="navigation"', () => {
+      render(<Header navItems={mockNavItems} />);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
+
+    it('should have accessible user menu button', () => {
+      render(<Header user={mockUser} />);
+      expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();
+    });
+
+    it('should have accessible mobile menu button', () => {
+      render(<Header onToggleSidebar={vi.fn()} />);
+      expect(screen.getByLabelText(/sidebar/i)).toBeInTheDocument();
+    });
+
+    it('should have focus styles', () => {
+      render(<Header navItems={mockNavItems} />);
+      const link = screen.getByText('Home').closest('a');
+      expect(link).toHaveClass('focus-visible:ring-2');
+    });
+  });
+
+  describe('Responsive Behavior', () => {
+    it('should hide user name on mobile', () => {
+      render(<Header user={mockUser} />);
+      const userName = screen.getByText('John Doe').closest('div');
+      expect(userName).toHaveClass('hidden', 'lg:block');
+    });
+
+    it('should show mobile menu button only on small screens', () => {
+      render(<Header onToggleSidebar={vi.fn()} />);
+      const button = screen.getByLabelText(/sidebar/i);
+      expect(button).toHaveClass('lg:hidden');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle no props', () => {
+      render(<Header />);
+      expect(screen.getByRole('banner')).toBeInTheDocument();
+    });
+
+    it('should handle empty navItems array', () => {
+      render(<Header navItems={[]} />);
+      expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+
+    it('should handle long user names', () => {
+      const longNameUser = { ...mockUser, name: 'Very Long Name That Might Overflow' };
+      render(<Header user={longNameUser} />);
+      expect(screen.getByText('Very Long Name That Might Overflow')).toBeInTheDocument();
+    });
+
+    it('should handle many nav items', () => {
+      const manyItems: NavItem[] = Array.from({ length: 10 }, (_, i) => ({
+        label: `Item ${i + 1}`,
+        href: `/item${i + 1}`,
+      }));
+      render(<Header navItems={manyItems} />);
+      expect(screen.getByText('Item 1')).toBeInTheDocument();
+      expect(screen.getByText('Item 10')).toBeInTheDocument();
+    });
+
+    it('should handle special characters in user name', () => {
+      const specialUser = { ...mockUser, name: 'Ñoño O\'Brien' };
+      render(<Header user={specialUser} />);
+      expect(screen.getByText('Ñoño O\'Brien')).toBeInTheDocument();
+    });
+  });
+
+  describe('User Avatar Initial', () => {
+    it('should extract first character of name for initial', () => {
+      render(<Header user={mockUser} />);
+      expect(screen.getByText('J')).toBeInTheDocument();
+    });
+
+    it('should uppercase the initial', () => {
+      const lowerUser = { ...mockUser, name: 'john doe' };
+      render(<Header user={lowerUser} />);
+      expect(screen.getByText('J')).toBeInTheDocument();
+    });
+
+    it('should style initial with background', () => {
+      render(<Header user={mockUser} />);
+      const initial = screen.getByText('J').closest('div');
+      expect(initial).toHaveClass('bg-primary', 'text-text-inverse');
+    });
+  });
+
+  describe('Navigation Center Alignment', () => {
+    it('should center navigation on larger screens', () => {
+      const { container } = render(<Header navItems={mockNavItems} />);
+      const nav = container.querySelector('nav');
+      expect(nav).toHaveClass('justify-center');
+    });
+
+    it('should handle horizontal scrolling for many items', () => {
+      const { container } = render(<Header navItems={mockNavItems} />);
+      const nav = container.querySelector('nav');
+      expect(nav).toHaveClass('overflow-x-auto');
+    });
+  });
+});
+

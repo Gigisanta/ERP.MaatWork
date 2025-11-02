@@ -3,6 +3,9 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getUsers, updateUserRole, updateUserStatus, deleteUser as deleteUserApi } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { UserRole, UserApiResponse } from '@/types';
 import {
   Card,
   CardHeader,
@@ -28,49 +31,19 @@ import {
   type Column,
 } from '@cactus/ui';
 
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  role: 'admin' | 'manager' | 'advisor';
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function AdminUsersPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserApiResponse[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserApiResponse | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-  // Early return for loading
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p>Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not admin
-  if (user && user.role !== 'admin') {
-    router.push('/');
-    return null;
-  }
-
-  // Fetch users
+  // Fetch users (must be declared before any early return to keep hooks order)
   useEffect(() => {
     if (user?.role === 'admin' && token) {
       fetchUsers();
@@ -82,52 +55,58 @@ export default function AdminUsersPage() {
       setDataLoading(true);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await getUsers();
 
-      if (!response.ok) {
+      if (response.success && response.data) {
+        setUsers(response.data || []);
+      } else {
         throw new Error('Failed to fetch users');
       }
-
-      const data = await response.json();
-      setUsers(data.data || []);
     } catch (err) {
-      console.error('Error fetching users:', err);
+      logger.error('Error fetching users', { err });
       setError(err instanceof Error ? err.message : 'Error al cargar usuarios');
     } finally {
       setDataLoading(false);
     }
   };
+  // Early return for loading
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
+        <div className="text-center">
+          <Spinner size="lg" className="mx-auto mb-2" />
+          <Text>Cargando...</Text>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not admin
+  if (user && user.role !== 'admin') {
+    router.push('/');
+    return null;
+  }
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!token) return;
+    
+    // Validar que el rol sea válido (excluir 'client')
+    if (newRole === 'client' || !['advisor', 'manager', 'admin'].includes(newRole)) {
+      setError('Rol no válido');
+      return;
+    }
     
     try {
       setActionLoading(userId);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/users/${userId}/role`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update user role');
-      }
+      await updateUserRole(userId, newRole as Exclude<UserRole, 'client'>);
 
       setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, role: newRole as any } : user
+        user.id === userId ? { ...user, role: newRole as Exclude<UserRole, 'client'> } : user
       ));
     } catch (err) {
+      logger.error('Error updating user role', { err, userId, newRole });
       setError(err instanceof Error ? err.message : 'Error al actualizar rol');
     } finally {
       setActionLoading(null);
@@ -141,24 +120,13 @@ export default function AdminUsersPage() {
       setActionLoading(userId);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/users/${userId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ isActive }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update user status');
-      }
+      await updateUserStatus(userId, isActive);
 
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, isActive } : user
       ));
     } catch (err) {
+      logger.error('Error updating user status', { err, userId, isActive });
       setError(err instanceof Error ? err.message : 'Error al actualizar estado');
     } finally {
       setActionLoading(null);
@@ -172,17 +140,7 @@ export default function AdminUsersPage() {
       setActionLoading(userToDelete.id);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/users/${userToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete user');
-      }
+      await deleteUserApi(userToDelete.id);
 
       setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
       setShowDeleteModal(false);
@@ -213,7 +171,7 @@ export default function AdminUsersPage() {
   };
 
   // Configuración de columnas del DataTable
-  const columns: Column<User>[] = [
+  const columns: Column<UserApiResponse>[] = [
     {
       key: 'fullName',
       header: 'Usuario',
@@ -254,11 +212,11 @@ export default function AdminUsersPage() {
       )
     },
     {
-      key: 'createdAt',
-      header: 'Fecha de registro',
-      render: (user) => (
-        <Text size="sm">
-          {new Date(user.createdAt).toLocaleDateString('es-ES')}
+      key: 'actions',
+      header: 'Fecha',
+      render: () => (
+        <Text size="sm" color="secondary">
+          N/A
         </Text>
       )
     },
@@ -344,7 +302,7 @@ export default function AdminUsersPage() {
           <ModalHeader>
             <ModalTitle>Confirmar eliminación</ModalTitle>
             <ModalDescription>
-              ¿Estás seguro de que quieres eliminar el usuario "{userToDelete?.fullName}"? 
+              ¿Estás seguro de que quieres eliminar el usuario &quot;{userToDelete?.fullName}&quot;? 
               Esta acción no se puede deshacer y eliminará todos los datos asociados.
             </ModalDescription>
           </ModalHeader>

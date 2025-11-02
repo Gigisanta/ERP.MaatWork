@@ -1,7 +1,6 @@
 import React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { cn } from '../../utils/cn';
-import { Text } from '../../primitives/Text';
 
 export interface TabItem {
   value: string;
@@ -10,10 +9,11 @@ export interface TabItem {
   disabled?: boolean;
 }
 
-export interface TabsProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> {
+export interface TabsProps extends Omit<React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>, 'className' | 'children'> {
   items?: TabItem[];
   variant?: 'line' | 'pill' | 'enclosed';
   className?: string;
+  children?: React.ReactNode;
 }
 
 export const Tabs = React.forwardRef<
@@ -22,12 +22,6 @@ export const Tabs = React.forwardRef<
 >(({ items, variant = 'line', className, children, ...props }, ref) => {
   // If items are provided, use the items-based pattern
   if (items) {
-    const variantClasses = {
-      line: 'border-b border-border',
-      pill: 'bg-surface-hover p-1 rounded-lg',
-      enclosed: 'border border-border rounded-lg overflow-hidden',
-    };
-
     const tabClasses = {
       line: cn(
         'px-4 py-2 text-sm font-medium',

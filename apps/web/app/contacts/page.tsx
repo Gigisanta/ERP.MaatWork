@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
+import { deleteContact, createTag, updateTag, deleteTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
+import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag } from '@/types';
 import {
   Card,
   CardHeader,
@@ -33,55 +35,26 @@ import {
   Spinner,
   Icon,
   Toast,
+  Tabs,
+  TabsList,
+  TabsTrigger,
   type Column,
 } from '@cactus/ui';
+import ConfirmDialog from '../components/ConfirmDialog';
 
-interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  pipelineStageId?: string;
-  assignedAdvisorId?: string;
-  nextStep?: string;
-  tags?: Tag[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Tag {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
-
-interface PipelineStage {
-  id: string;
-  name: string;
-  color: string;
-  order: number;
-}
-
-interface Advisor {
-  id: string;
-  fullName: string;
-  email: string;
-}
+// Types Contact y Tag importados desde @/types
 
 export default function ContactsPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
-  const apiUrl = typeof window !== 'undefined' 
-    ? window.location.protocol + '//' + window.location.hostname + ':3001'
-    : 'http://localhost:3001';
+  const searchParams = useSearchParams();
+  const advisorIdFilter = searchParams.get('advisorId');
   
   // AI_DECISION: Replace manual API calls with SWR hooks for request deduplication
   // Justificación: Eliminates redundant requests on navigation, provides automatic caching
   // Impacto: Reduces API load, improves perceived performance with instant cache hits
-  const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts();
+  // SWR automatically handles revalidation when advisorIdFilter changes because the key includes the URL
+  const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts(advisorIdFilter || undefined);
   const { stages: pipelineStages, error: stagesError, isLoading: stagesLoading } = usePipelineStages();
   const { advisors, error: advisorsError, isLoading: advisorsLoading } = useAdvisors();
   const { tags: allTags, error: tagsError, isLoading: tagsLoading, mutate: mutateTags } = useTags('contact');
@@ -93,6 +66,9 @@ export default function ContactsPage() {
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+
+  // Get advisor name for filter badge
+  const filteredAdvisor = advisorIdFilter ? advisors?.find((a: Advisor) => a.id === advisorIdFilter) : null;
 
   // Estados para modales
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -113,6 +89,19 @@ export default function ContactsPage() {
   // Estados para edición inline
   const [savingContactId, setSavingContactId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<{ contactId: string; field: string } | null>(null);
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [toast, setToast] = useState<{ show: boolean; title: string; description?: string; variant: 'success' | 'error' }>({
     show: false,
     title: '',
@@ -129,19 +118,11 @@ export default function ContactsPage() {
     if (!contactToDelete || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/contacts/${contactToDelete.id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setShowDeleteModal(false);
-        setContactToDelete(null);
-      } else {
-        throw new Error('Error al eliminar contacto');
-      }
+      await deleteContact(contactToDelete.id);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setShowDeleteModal(false);
+      setContactToDelete(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar contacto');
     }
@@ -151,36 +132,23 @@ export default function ContactsPage() {
     if (!newTagName.trim() || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/tags`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          scope: 'contact',
-          name: newTagName.trim(),
-          color: newTagColor
-        })
+      await createTag({
+        entityType: 'contact',
+        name: newTagName.trim(),
+        color: newTagColor
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setNewTagName('');
-        setNewTagColor('#6B7280');
-        setIsCreatingTag(false);
-        setToast({
-          show: true,
-          title: 'Etiqueta creada',
-          variant: 'success'
-        });
-        // Also refresh contacts to show new tag
-        mutateContacts();
-      } else {
-        throw new Error('Error al crear etiqueta');
-      }
+      // Invalidate tags cache to refetch updated data
+      mutateTags();
+      setNewTagName('');
+      setNewTagColor('#6B7280');
+      setIsCreatingTag(false);
+      setToast({
+        show: true,
+        title: 'Etiqueta creada',
+        variant: 'success'
+      });
+      // Also refresh contacts to show new tag
+      mutateContacts();
     } catch (err) {
       setToast({
         show: true,
@@ -195,35 +163,21 @@ export default function ContactsPage() {
     if (!tagToEdit || !editedTagName.trim() || !token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/tags/${tagToEdit.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: editedTagName.trim(),
-          color: editedTagColor
-        })
+      await updateTag(tagToEdit.id, {
+        name: editedTagName.trim(),
+        color: editedTagColor
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setToast({
-          show: true,
-          title: 'Etiqueta actualizada',
-          variant: 'success'
-        });
-        setShowManageTagsModal(false);
-        setTagToEdit(null);
-        // Also refresh contacts to show updated tag
-        mutateContacts();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al editar etiqueta');
-      }
+      // Invalidate tags cache to refetch updated data
+      mutateTags();
+      setToast({
+        show: true,
+        title: 'Etiqueta actualizada',
+        variant: 'success'
+      });
+      setShowManageTagsModal(false);
+      setTagToEdit(null);
+      // Also refresh contacts to show updated tag
+      mutateContacts();
     } catch (err) {
       setToast({
         show: true,
@@ -234,39 +188,36 @@ export default function ContactsPage() {
     }
   };
 
-  const handleDeleteTag = async (tagId: string) => {
-    if (!token || !confirm('¿Estás seguro de eliminar esta etiqueta?')) return;
+  const handleDeleteTag = (tagId: string) => {
+    if (!token) return;
     
-    try {
-      const response = await fetch(`${apiUrl}/tags/${tagId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar etiqueta',
+      description: '¿Estás seguro de eliminar esta etiqueta?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteTag(tagId);
+          // Invalidate tags cache to refetch updated data
+          mutateTags();
+          setToast({
+            show: true,
+            title: 'Etiqueta eliminada',
+            variant: 'success'
+          });
+          // Also refresh contacts to show updated tags
+          mutateContacts();
+        } catch (err) {
+          setToast({
+            show: true,
+            title: 'Error al eliminar etiqueta',
+            description: err instanceof Error ? err.message : 'Error desconocido',
+            variant: 'error'
+          });
         }
-      });
-      
-      if (response.ok) {
-        // Invalidate tags cache to refetch updated data
-        mutateTags();
-        setToast({
-          show: true,
-          title: 'Etiqueta eliminada',
-          variant: 'success'
-        });
-        // Also refresh contacts to show updated tags
-        mutateContacts();
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al eliminar etiqueta');
       }
-    } catch (err) {
-      setToast({
-        show: true,
-        title: 'Error al eliminar etiqueta',
-        description: err instanceof Error ? err.message : 'Error desconocido',
-        variant: 'error'
-      });
-    }
+    });
   };
 
   const openEditTag = (tag: Tag) => {
@@ -288,36 +239,35 @@ export default function ContactsPage() {
     setSearchTerm('');
     setSelectedStage('all');
     setSelectedTags([]);
+    // Clear advisor filter from URL
+    if (advisorIdFilter) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('advisorId');
+      router.push(`/contacts?${newSearchParams.toString()}`);
+    }
   };
 
+  const clearAdvisorFilter = () => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.delete('advisorId');
+    router.push(`/contacts?${newSearchParams.toString()}`);
+  };
+
+
   // Funciones para edición inline
-  const updateContactField = async (contactId: string, field: string, value: any) => {
+  const updateContactFieldLocal = async (contactId: string, field: string, value: ContactFieldValue) => {
     if (!token) return;
     
     setSavingContactId(contactId);
     try {
-      const response = await fetch(`${apiUrl}/contacts/${contactId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fields: [{ field, value }]
-        })
+      await updateContactFieldApi(contactId, field, value);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setToast({
+        show: true,
+        title: 'Campo actualizado',
+        variant: 'success'
       });
-
-      if (response.ok) {
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setToast({
-          show: true,
-          title: 'Campo actualizado',
-          variant: 'success'
-        });
-      } else {
-        throw new Error('Error al actualizar contacto');
-      }
     } catch (err) {
       setToast({
         show: true,
@@ -331,32 +281,26 @@ export default function ContactsPage() {
     }
   };
 
-  const updateContactTags = async (contactId: string, add: string[], remove: string[]) => {
+  const updateContactTagsLocal = async (contactId: string, add: string[], remove: string[]) => {
     if (!token) return;
     
     setSavingContactId(contactId);
     try {
-      const response = await fetch(`${apiUrl}/tags/contacts/${contactId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ add, remove })
+      // Obtener tags actuales del contacto
+      const contact = contacts?.find((c: Contact) => c.id === contactId);
+      const currentTagIds = contact?.tags?.map((t: Tag) => t.id) || [];
+      
+      // Calcular nuevos tags
+      const newTagIds = [...currentTagIds.filter((id: string) => !remove.includes(id)), ...add.filter((id: string) => !currentTagIds.includes(id))];
+      
+      await updateContactTagsApi(contactId, newTagIds);
+      // Invalidate contacts cache to refetch updated data
+      mutateContacts();
+      setToast({
+        show: true,
+        title: 'Etiquetas actualizadas',
+        variant: 'success'
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Invalidate contacts cache to refetch updated data
-        mutateContacts();
-        setToast({
-          show: true,
-          title: 'Etiquetas actualizadas',
-          variant: 'success'
-        });
-      } else {
-        throw new Error('Error al actualizar etiquetas');
-      }
     } catch (err) {
       setToast({
         show: true,
@@ -377,7 +321,7 @@ export default function ContactsPage() {
 
     const handleStageChange = (newStageId: string) => {
       const value = newStageId === 'none' ? null : newStageId;
-      updateContactField(contact.id, 'pipelineStageId', value);
+      updateContactFieldLocal(contact.id, 'pipelineStageId', value);
     };
 
     if (isSaving) {
@@ -475,7 +419,7 @@ export default function ContactsPage() {
 
       // Guardar cambios en el backend
       if (toAdd.length > 0 || toRemove.length > 0) {
-        await updateContactTags(contact.id, toAdd, toRemove);
+        await updateContactTagsLocal(contact.id, toAdd, toRemove);
       }
     };
 
@@ -549,7 +493,7 @@ export default function ContactsPage() {
       const currentValue = contact[field as keyof Contact] as string || '';
       if (value !== currentValue && value.trim() !== '') {
         // Guardar siempre, incluso si el valor cambió
-        await updateContactField(contact.id, field, value);
+        await updateContactFieldLocal(contact.id, field, value);
       } else if (value === currentValue) {
         // Solo cerrar el editor si no hubo cambios
         setIsEditing(false);
@@ -576,14 +520,15 @@ export default function ContactsPage() {
 
     if (isEditing) {
       return (
-        <input
+        <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus
-          className="min-w-[200px] px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          size="sm"
+          className="min-w-[200px]"
         />
       );
     }
@@ -601,6 +546,10 @@ export default function ContactsPage() {
   };
 
   // Filtrar contactos
+  // AI_DECISION: Remove redundant advisor filter from frontend - API already filters correctly
+  // Justificación: The backend now properly filters by assignedAdvisorId, so frontend filtering
+  // is redundant and could cause inconsistencies if API returns wrong data
+  // Impacto: Simpler code, API is single source of truth for advisor filtering
   const filteredContacts = contacts.filter((contact: Contact) => {
     const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -690,9 +639,6 @@ export default function ContactsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-              ← Volver al inicio
-            </Link>
             <Heading level={3}>Contactos</Heading>
           </div>
           <Button onClick={() => router.push('/contacts/new')}>
@@ -715,12 +661,13 @@ export default function ContactsPage() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Input de búsqueda compacto con icono */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Icon name="search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
+                  <Input
                     placeholder="Buscar contactos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-9 pl-10 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                    leftIcon="search"
+                    size="sm"
+                    className="w-full"
                   />
                 </div>
 
@@ -770,35 +717,41 @@ export default function ContactsPage() {
                 </DropdownMenu>
 
                 {/* Toggle vista tabla/kanban */}
-                <div className="flex border border-gray-300 rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`px-3 py-1.5 text-sm flex items-center gap-1 transition-colors ${
-                      viewMode === 'table' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon name="list" size={16} />
-                    <span className="text-xs">Tabla</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode('kanban')}
-                    className={`px-3 py-1.5 text-sm flex items-center gap-1 transition-colors ${
-                      viewMode === 'kanban' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon name="grid" size={16} />
-                    <span className="text-xs">Kanban</span>
-                  </button>
-                </div>
+                <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'kanban')}>
+                  <TabsList className="border border-gray-300 rounded-md overflow-hidden p-0 h-auto bg-white">
+                    <TabsTrigger 
+                      value="table" 
+                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
+                    >
+                      <Icon name="list" size={16} />
+                      <span className="text-xs">Tabla</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="kanban" 
+                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
+                    >
+                      <Icon name="grid" size={16} />
+                      <span className="text-xs">Kanban</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               {/* Segunda fila: Chips de filtros activos */}
-              {(selectedStage !== 'all' || selectedTags.length > 0 || searchTerm) && (
+              {(selectedStage !== 'all' || selectedTags.length > 0 || searchTerm || advisorIdFilter) && (
                 <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-200">
+                  {advisorIdFilter && filteredAdvisor && (
+                    <Badge className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800">
+                      Asesor: {filteredAdvisor.fullName}
+                      <button 
+                        onClick={clearAdvisorFilter}
+                        className="ml-1 hover:opacity-70"
+                        aria-label="Remover filtro de asesor"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  )}
                   {selectedStage !== 'all' && (
                     <Badge className="flex items-center gap-1 px-2 py-1">
                       Etapa: {pipelineStages.find((s: PipelineStage) => s.id === selectedStage)?.name}
@@ -938,7 +891,7 @@ export default function ContactsPage() {
           <ModalHeader>
             <ModalTitle>Confirmar eliminación</ModalTitle>
             <ModalDescription>
-              ¿Estás seguro de que quieres eliminar el contacto "{contactToDelete?.fullName}"? Esta acción no se puede deshacer.
+              ¿Estás seguro de que quieres eliminar el contacto &quot;{contactToDelete?.fullName}&quot;? Esta acción no se puede deshacer.
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
@@ -963,17 +916,12 @@ export default function ContactsPage() {
           </ModalHeader>
           <ModalContent>
             <Stack direction="column" gap="md">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre de la etiqueta
-                </label>
-                <input
-                  value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
-                  placeholder="Ej: Cliente VIP, Prospecto caliente..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              <Input
+                label="Nombre de la etiqueta"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                placeholder="Ej: Cliente VIP, Prospecto caliente..."
+              />
               <div>
                 <Text size="sm" weight="medium" className="mb-2">Color</Text>
                 <div className="flex gap-2">
@@ -1014,17 +962,12 @@ export default function ContactsPage() {
               {isCreatingTag ? (
                 // Vista de creación
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre de la etiqueta
-                    </label>
-                    <input
-                      value={newTagName}
-                      onChange={(e) => setNewTagName(e.target.value)}
-                      placeholder="Ej: Cliente VIP, Prospecto caliente..."
-                      className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
+                  <Input
+                    label="Nombre de la etiqueta"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    placeholder="Ej: Cliente VIP, Prospecto caliente..."
+                  />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color
@@ -1048,17 +991,12 @@ export default function ContactsPage() {
               ) : tagToEdit ? (
                 // Vista de edición
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre de la etiqueta
-                    </label>
-                    <input
-                      value={editedTagName}
-                      onChange={(e) => setEditedTagName(e.target.value)}
-                      placeholder="Nombre de la etiqueta"
-                      className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
+                  <Input
+                    label="Nombre de la etiqueta"
+                    value={editedTagName}
+                    onChange={(e) => setEditedTagName(e.target.value)}
+                    placeholder="Nombre de la etiqueta"
+                  />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Color
@@ -1145,12 +1083,24 @@ export default function ContactsPage() {
         {toast.show && (
           <Toast
             title={toast.title}
-            description={toast.description}
+            {...(toast.description ? { description: toast.description } : {})}
             variant={toast.variant}
             open={toast.show}
             onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
           />
         )}
+
+        {/* Confirm Dialog */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+          onConfirm={confirmDialog.onConfirm}
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          variant={confirmDialog.variant || 'default'}
+          confirmLabel="Confirmar"
+          cancelLabel="Cancelar"
+        />
       </Stack>
     </div>
   );

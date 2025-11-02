@@ -1,10 +1,11 @@
 // REGLA CURSOR: Teams management - mantener RBAC, validación Zod, logging estructurado, data isolation
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactus/db';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, notInArray } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, getTeamMembers, getUserTeams } from '../auth/authorization';
 import { z } from 'zod';
+import { type PendingInvite } from '../types/teams';
 
 const router = Router();
 
@@ -36,7 +37,34 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
     // Get user's teams
     const userTeams = await getUserTeams(userId, userRole);
 
-    res.json({ data: userTeams });
+    // For each team, get the team details and members
+    const teamsWithDetails = await Promise.all(
+      userTeams.map(async (team) => {
+        const [teamDetails] = await db()
+          .select()
+          .from(teams)
+          .where(eq(teams.id, team.id))
+          .limit(1);
+
+        let members: Array<{ id: string; email: string; fullName: string; role: string }> = [];
+        
+        // If user is manager of this team, get members
+        if (team.role === 'manager') {
+          members = await getTeamMembers(userId);
+        } else if (userRole === 'admin' && teamDetails?.managerUserId) {
+          // Admins can see members of all teams
+          members = await getTeamMembers(teamDetails.managerUserId);
+        }
+
+        return {
+          ...team,
+          ...teamDetails,
+          members
+        };
+      })
+    );
+
+    res.json({ data: teamsWithDetails });
   } catch (err) {
     req.log.error({ err }, 'failed to list teams');
     next(err);
@@ -134,6 +162,16 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       })
       .returning();
 
+    // Ensure manager is part of the team as lead/manager
+    await db()
+      .insert(teamMembership)
+      .values({
+        teamId: newTeam.id,
+        userId: managerUserId,
+        role: 'lead'
+      })
+      .onConflictDoNothing();
+
     req.log.info({ teamId: newTeam.id }, 'team created');
     res.status(201).json({ data: newTeam });
   } catch (err) {
@@ -220,13 +258,13 @@ router.post('/:id/members', requireAuth, async (req: Request, res: Response, nex
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Add member to team
+    // Add member to team (default role member)
     await db()
       .insert(teamMembership)
       .values({
         teamId: id,
         userId: memberUserId,
-        joinedAt: new Date()
+        role: 'member'
       })
       .onConflictDoNothing();
 
@@ -304,7 +342,7 @@ router.get('/membership-requests', requireAuth, async (req: Request, res: Respon
       })
       .from(teamMembershipRequests)
       .innerJoin(users, eq(teamMembershipRequests.userId, users.id))
-      .where(eq(teamMembershipRequests.managerId, userId))
+      .where(and(eq(teamMembershipRequests.managerId, userId), eq(teamMembershipRequests.status, 'pending')))
       .orderBy(teamMembershipRequests.createdAt);
 
     res.json({ data: requests });
@@ -339,8 +377,10 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
       return res.status(404).json({ error: 'Membership request not found' });
     }
 
+    // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
-      return res.status(400).json({ error: 'Request is not pending' });
+      // If manager is trying to approve an 'invited' record, it's invite-driven; treat as alreadyResolved
+      return res.json({ data: { approved: request.status === 'approved', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -348,15 +388,39 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
       return res.status(403).json({ error: 'Access denied. You can only approve requests for your team.' });
     }
 
-    // Buscar el equipo del manager
-    const [managerTeam] = await db()
+    // Buscar el equipo del manager (fallbacks: rol 'lead' y creación automática si no existe)
+    const dbi = db();
+    let [managerTeam] = await dbi
       .select()
       .from(teams)
       .where(eq(teams.managerUserId, request.managerId))
       .limit(1);
 
     if (!managerTeam) {
-      return res.status(400).json({ error: 'Manager does not have a team assigned' });
+      const lead = await dbi
+        .select({ teamId: teamMembership.teamId })
+        .from(teamMembership)
+        .where(and(eq(teamMembership.userId, request.managerId), eq(teamMembership.role, 'lead')))
+        .limit(1);
+      type Team = InferSelectModel<typeof teams>;
+      if (lead.length > 0) {
+        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1) as Team[];
+        if (t) managerTeam = t;
+      }
+    }
+
+    if (!managerTeam) {
+      // Crear equipo automáticamente para el manager y asignarlo como lead
+      type NewTeam = InferSelectModel<typeof teams>;
+      const [newTeam] = await dbi
+        .insert(teams)
+        .values({ name: `team-${request.managerId.slice(0, 8)}`, managerUserId: request.managerId })
+        .returning() as NewTeam[];
+      await dbi
+        .insert(teamMembership)
+        .values({ teamId: newTeam.id, userId: request.managerId, role: 'lead' })
+        .onConflictDoNothing();
+      managerTeam = newTeam;
     }
 
     // Actualizar la solicitud como aprobada
@@ -420,8 +484,9 @@ router.post('/membership-requests/:id/reject', requireAuth, async (req: Request,
       return res.status(404).json({ error: 'Membership request not found' });
     }
 
+    // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
-      return res.status(400).json({ error: 'Request is not pending' });
+      return res.json({ data: { rejected: request.status === 'rejected', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -455,4 +520,304 @@ router.post('/membership-requests/:id/reject', requireAuth, async (req: Request,
   }
 });
 
+// ==========================================================
+// DELETE /teams/membership-requests/:id - Eliminar solicitud (manager/admin)
+// ==========================================================
+router.delete('/membership-requests/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    if (userRole !== 'manager' && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Only managers can delete requests.' });
+    }
+
+    const dbi = db();
+    const [request] = await dbi.select().from(teamMembershipRequests).where(eq(teamMembershipRequests.id, id)).limit(1);
+    if (!request) return res.status(404).json({ error: 'Membership request not found' });
+
+    // Managers can only delete their own requests; admins can delete any
+    if (userRole === 'manager' && request.managerId !== userId) {
+      return res.status(403).json({ error: 'Access denied. You can only delete requests for your team.' });
+    }
+
+    await dbi.delete(teamMembershipRequests).where(eq(teamMembershipRequests.id, id));
+    req.log.info({ requestId: id }, 'membership request deleted');
+    return res.json({ ok: true, deleted: true });
+  } catch (err) {
+    req.log.error({ err, requestId: req.params.id }, 'failed to delete membership request');
+    next(err);
+  }
+});
+
 export default router;
+ 
+// ==========================================================
+// Invitations management (create by manager/admin, accept/reject by user)
+// ==========================================================
+
+// POST /teams/:id/invitations - Manager/Admin invites an advisor to join the team
+router.post('/:id/invitations', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = req.user!.id;
+    const currentRole = req.user!.role;
+
+    const bodySchema = z.object({ userId: z.string().uuid() });
+    const { userId } = bodySchema.parse(req.body);
+
+    // Only admin or manager of this team can invite
+    if (currentRole !== 'admin') {
+      const myTeams = await getUserTeams(currentUserId, currentRole);
+      const isManager = myTeams.some(t => t.id === id && t.role === 'manager');
+      if (!isManager) {
+        return res.status(403).json({ error: 'Access denied. Only team managers can invite users.' });
+      }
+    }
+
+    // Find team and its manager
+    const dbi = db();
+    const [teamRow] = await dbi.select().from(teams).where(eq(teams.id, id)).limit(1);
+    if (!teamRow) return res.status(404).json({ error: 'Team not found' });
+    let managerId = teamRow.managerUserId || null;
+    // If no manager assigned, assign current user (admin/manager) and ensure membership as lead
+    if (!managerId && (currentRole === 'admin' || currentRole === 'manager')) {
+      const [updated] = await dbi
+        .update(teams)
+        .set({ managerUserId: currentUserId })
+        .where(eq(teams.id, id))
+        .returning();
+      managerId = updated?.managerUserId || currentUserId;
+      await dbi
+        .insert(teamMembership)
+        .values({ teamId: id, userId: managerId as string, role: 'lead' })
+        .onConflictDoNothing();
+    }
+    if (!managerId) {
+      return res.status(400).json({ error: 'Team has no manager assigned' });
+    }
+
+    // Create membership request as invitation (unique by userId+managerId) with status 'invited'
+    const [reqRow] = await db()
+      .insert(teamMembershipRequests)
+      .values({ userId, managerId, status: 'invited' })
+      .onConflictDoNothing()
+      .returning();
+
+    req.log.info({ teamId: id, userId, managerId }, 'team invitation created');
+    return res.status(201).json({ data: reqRow || { created: false, reason: 'already_exists' } });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Validation error', details: err.errors });
+    }
+    req.log.error({ err, teamId: req.params.id }, 'failed to create invitation');
+    next(err);
+  }
+});
+
+// GET /teams/invitations/pending - Pending invitations for current user
+router.get('/invitations/pending', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.id;
+
+    // List pending requests where current user is the invitee
+    const dbi = db();
+    // Get manager teams to include team info
+    const rows = await dbi
+      .select({
+        id: teamMembershipRequests.id,
+        managerId: teamMembershipRequests.managerId,
+        status: teamMembershipRequests.status,
+        createdAt: teamMembershipRequests.createdAt,
+        managerEmail: users.email,
+        managerFullName: users.fullName,
+      })
+      .from(teamMembershipRequests)
+      .innerJoin(users, eq(teamMembershipRequests.managerId, users.id))
+      .where(and(eq(teamMembershipRequests.userId, userId), (teamMembershipRequests.status as any).in?.(['pending','invited']) ?? eq(teamMembershipRequests.status, 'invited')));
+
+    return res.json({ data: rows });
+  } catch (err) {
+    req.log.error({ err }, 'failed to list pending invitations');
+    next(err);
+  }
+});
+
+// POST /teams/invitations/:id/accept - Invitee accepts invitation
+router.post('/invitations/:id/accept', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id;
+    const userId = req.user!.id;
+
+    const [request] = await db().select().from(teamMembershipRequests).where(eq(teamMembershipRequests.id, id)).limit(1);
+    if (!request) return res.status(404).json({ error: 'Invitation not found' });
+    if (request.status !== 'pending' && request.status !== 'invited') return res.status(400).json({ error: 'Invitation not pending' });
+    if (request.userId !== userId) return res.status(403).json({ error: 'Not your invitation' });
+
+    // Find manager team
+    const [managerTeam] = await db().select().from(teams).where(eq(teams.managerUserId, request.managerId)).limit(1);
+    if (!managerTeam) return res.status(400).json({ error: 'Manager has no team' });
+
+    await db().insert(teamMembership).values({ teamId: managerTeam.id, userId, role: 'member' }).onConflictDoNothing();
+    await db().update(teamMembershipRequests)
+      .set({ status: 'approved', resolvedAt: new Date(), resolvedByUserId: userId })
+      .where(eq(teamMembershipRequests.id, id));
+
+    req.log.info({ requestId: id, userId, teamId: managerTeam.id }, 'invitation accepted');
+    return res.json({ data: { accepted: true } });
+  } catch (err) {
+    req.log.error({ err, requestId: req.params.id }, 'failed to accept invitation');
+    next(err);
+  }
+});
+
+// POST /teams/invitations/:id/reject - Invitee rejects invitation
+router.post('/invitations/:id/reject', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const id = req.params.id;
+    const userId = req.user!.id;
+
+    const [request] = await db().select().from(teamMembershipRequests).where(eq(teamMembershipRequests.id, id)).limit(1);
+    if (!request) return res.status(404).json({ error: 'Invitation not found' });
+    if (request.status !== 'pending' && request.status !== 'invited') return res.status(400).json({ error: 'Invitation not pending' });
+    if (request.userId !== userId) return res.status(403).json({ error: 'Not your invitation' });
+
+    await db().update(teamMembershipRequests)
+      .set({ status: 'rejected', resolvedAt: new Date(), resolvedByUserId: userId })
+      .where(eq(teamMembershipRequests.id, id));
+
+    req.log.info({ requestId: id, userId }, 'invitation rejected');
+    return res.json({ data: { rejected: true } });
+  } catch (err) {
+    req.log.error({ err, requestId: req.params.id }, 'failed to reject invitation');
+    next(err);
+  }
+});
+
+// GET /teams/:id/advisors - List advisors eligible (no team, no pending invite to this manager)
+router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const teamId = req.params.id;
+    const userId = req.user!.id;
+    const role = req.user!.role;
+
+    if (role !== 'admin') {
+      const myTeams = await getUserTeams(userId, role);
+      const isManager = myTeams.some(t => t.id === teamId && t.role === 'manager');
+      if (!isManager) return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const dbi = db();
+    // Members of this team
+    const teamMembers = await dbi.select({ userId: teamMembership.userId }).from(teamMembership).where(eq(teamMembership.teamId, teamId));
+    type TeamMemberWithUserId = {
+      userId: string | null;
+    };
+    const teamMemberIds = new Set<string>(teamMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter(id => id));
+
+    // Users that are in any team (enforce one-team policy)
+    const allMembers = await dbi.select({ userId: teamMembership.userId }).from(teamMembership);
+    const anyTeamMemberIds = new Set<string>(allMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter(id => id));
+
+    // Manager of this team
+    const [teamRow] = await dbi.select().from(teams).where(eq(teams.id, teamId)).limit(1);
+    const managerId = teamRow?.managerUserId as string | undefined;
+
+    // Users with pending invite to this manager
+    const pendingInviteIds = new Set<string>();
+    if (managerId) {
+      const pending = await dbi
+        .select({ userId: teamMembershipRequests.userId })
+        .from(teamMembershipRequests)
+        .where(and(eq(teamMembershipRequests.managerId, managerId), eq(teamMembershipRequests.status, 'pending')));
+      pending.forEach((p: PendingInvite) => pendingInviteIds.add(p.userId));
+    }
+
+    // Advisors not in any team and without pending invite to this manager
+    const advisors = await dbi
+      .select({ id: users.id, email: users.email, fullName: users.fullName })
+      .from(users)
+      .where(eq(users.role, 'advisor'))
+      .limit(500);
+
+    type Advisor = {
+      id: string;
+    };
+    const eligible = advisors.filter((a: Advisor) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
+
+    return res.json({ data: eligible });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id }, 'failed to list advisors');
+    next(err);
+  }
+});
+
+// ==========================================================
+// POST /teams/membership-requests/approve-all - Aprobar todas las solicitudes pendientes del manager
+// ==========================================================
+router.post('/membership-requests/approve-all', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const currentUserId = req.user!.id;
+    const currentRole = req.user!.role;
+
+    if (currentRole !== 'manager' && currentRole !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Only managers or admins can approve requests.' });
+    }
+
+    const dbi = db();
+
+    // Select pending requests for this manager (admins: approve-all requires a managerId query param to scope)
+    let managerId = currentUserId;
+    if (currentRole === 'admin') {
+      const fromQuery = (req.query.managerId as string | undefined) || undefined;
+      if (fromQuery) managerId = fromQuery;
+    }
+
+    const pending = await dbi
+      .select()
+      .from(teamMembershipRequests)
+      .where(and(eq(teamMembershipRequests.managerId, managerId), eq(teamMembershipRequests.status, 'pending')));
+
+    // Find or create manager team
+    let [managerTeam] = await dbi.select().from(teams).where(eq(teams.managerUserId, managerId)).limit(1);
+    if (!managerTeam) {
+      const lead = await dbi
+        .select({ teamId: teamMembership.teamId })
+        .from(teamMembership)
+        .where(and(eq(teamMembership.userId, managerId), eq(teamMembership.role, 'lead')))
+        .limit(1);
+      if (lead.length > 0) {
+        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1);
+        if (t) managerTeam = t as any;
+      }
+    }
+    if (!managerTeam) {
+      const [newTeam] = await dbi
+        .insert(teams)
+        .values({ name: `team-${managerId.slice(0, 8)}`, managerUserId: managerId })
+        .returning();
+      await dbi.insert(teamMembership).values({ teamId: newTeam.id, userId: managerId, role: 'lead' }).onConflictDoNothing();
+      managerTeam = newTeam as any;
+    }
+
+    let approved = 0;
+    for (const reqRow of pending) {
+      await dbi
+        .update(teamMembershipRequests)
+        .set({ status: 'approved', resolvedAt: new Date(), resolvedByUserId: currentUserId })
+        .where(eq(teamMembershipRequests.id, reqRow.id));
+      await dbi
+        .insert(teamMembership)
+        .values({ teamId: (managerTeam as any).id, userId: reqRow.userId, role: 'member' })
+        .onConflictDoNothing();
+      approved += 1;
+    }
+
+    req.log.info({ managerId, approved }, 'approved all pending membership requests');
+    return res.json({ ok: true, approved, teamId: (managerTeam as any).id });
+  } catch (err) {
+    req.log.error({ err }, 'failed to approve all requests');
+    next(err);
+  }
+});

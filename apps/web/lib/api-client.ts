@@ -6,8 +6,9 @@
  * Impacto: 15+ bloques de código duplicado eliminados
  */
 
-import type { ApiResponse } from '@/types';
+import type { ApiResponse, UserApiResponse } from '@/types';
 import { ApiError, createApiErrorFromResponse } from './api-error';
+import { config } from './config';
 
 interface RequestOptions extends RequestInit {
   timeout?: number;
@@ -26,12 +27,12 @@ class ApiClient {
   private tokenKey = 'token';
   private refreshTokenKey = 'refreshToken';
 
-  constructor(config?: Partial<RequestConfig>) {
+  constructor(configOverride?: Partial<RequestConfig>) {
     this.config = {
-      baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-      timeout: 30000, // 30s default
+      baseUrl: config.apiUrl,
+      timeout: config.apiTimeout,
       retries: 1,
-      ...config,
+      ...configOverride,
     };
   }
 
@@ -64,9 +65,9 @@ class ApiClient {
    * Construir headers
    */
   private buildHeaders(options: RequestOptions = {}): HeadersInit {
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string> | undefined),
     };
 
     // Agregar token si se requiere auth (default: true)
@@ -234,15 +235,16 @@ class ApiClient {
    */
   async post<T = unknown>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**
@@ -250,15 +252,16 @@ class ApiClient {
    */
   async put<T = unknown>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**
@@ -266,15 +269,16 @@ class ApiClient {
    */
   async patch<T = unknown>(
     endpoint: string,
-    body?: any,
+    body?: unknown,
     options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.config.baseUrl}${endpoint}`;
-    return this.requestWithRetry<T>(url, {
+    const requestOptions: RequestOptions = {
       ...options,
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+      ...(body && { body: JSON.stringify(body) }),
+    };
+    return this.requestWithRetry<T>(url, requestOptions);
   }
 
   /**
@@ -294,8 +298,8 @@ class ApiClient {
   /**
    * Login helper
    */
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> {
-    const response = await this.post<{ token: string; refreshToken?: string; user: any }>(
+  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: UserApiResponse }>> {
+    const response = await this.post<{ token: string; refreshToken?: string; user: UserApiResponse }>(
       '/v1/auth/login',
       { email, password },
       { requireAuth: false }

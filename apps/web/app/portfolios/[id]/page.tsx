@@ -19,7 +19,11 @@ import {
   DataTable,
   type Column,
 } from '@cactus/ui';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { getPortfolioLines, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { AddPortfolioLineRequest } from '@/types';
 
 interface PortfolioTemplate {
   id: string;
@@ -32,8 +36,8 @@ interface PortfolioTemplate {
 interface TemplateLine {
   id: string;
   targetType: string;
-  assetClass?: string;
-  instrumentId?: string;
+  assetClass?: string | null;
+  instrumentId?: string | null;
   targetWeight: number;
   instrumentName?: string;
   instrumentSymbol?: string;
@@ -81,31 +85,47 @@ export default function PortfolioDetailPage() {
     variant: 'info'
   });
 
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setToast({ show: true, title, description, variant });
+    setToast({ 
+      show: true, 
+      title, 
+      ...(description && { description }), 
+      variant 
+    });
   };
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
+  // AI_DECISION: Usar cliente API centralizado en lugar de fetch directo
+  // Justificación: Retry automático, refresh token, timeout configurable, error handling consistente
+  // Impacto: Mejor resiliencia y mantenibilidad
   const fetchTemplate = async () => {
     if (!token || !templateId) return;
     
     try {
       setDataLoading(true);
       
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
+      const response = await getPortfolioLines(templateId);
+      
+      if (response.success && response.data) {
+        const lines = response.data.lines;
+        const totalWeight = lines.reduce((sum, line) => sum + line.targetWeight, 0);
+        const isValid = Math.abs(totalWeight - 1.0) < 0.01;
+        setTemplateData({ lines, totalWeight, isValid });
+      } else {
         throw new Error('Failed to fetch portfolio template');
       }
-
-      const data = await response.json();
-      setTemplateData(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -124,8 +144,8 @@ export default function PortfolioDetailPage() {
         throw new Error('El peso debe estar entre 0 y 1');
       }
 
-      const payload: any = {
-        targetType: createLineData.targetType,
+      const payload: AddPortfolioLineRequest = {
+        targetType: createLineData.targetType as 'instrument' | 'assetClass',
         targetWeight: weight
       };
 
@@ -135,21 +155,11 @@ export default function PortfolioDetailPage() {
         payload.instrumentId = createLineData.instrumentId;
       }
 
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create template line');
+      const response = await addPortfolioLine(templateId, payload);
+      
+      if (!response.success || !response.data) {
+        throw new Error('Failed to create template line');
       }
-
-      const data = await response.json();
       
       // Actualizar la lista de líneas
       await fetchTemplate();
@@ -159,40 +169,44 @@ export default function PortfolioDetailPage() {
       setShowCreateLineModal(false);
       
     } catch (err) {
-      console.error('Error creating template line:', err);
+      const payload: AddPortfolioLineRequest = {
+        targetType: createLineData.targetType as 'instrument' | 'assetClass',
+        targetWeight: parseFloat(createLineData.targetWeight)
+      };
+      if (createLineData.targetType === 'asset_class' && createLineData.assetClass) {
+        payload.assetClass = createLineData.assetClass;
+      } else if (createLineData.targetType === 'instrument' && createLineData.instrumentId) {
+        payload.instrumentId = createLineData.instrumentId;
+      }
+      logger.error('Error creating template line', { err, templateId, payload });
       showToast('Error al crear línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleDeleteLine = async (lineId: string) => {
+  const handleDeleteLine = (lineId: string) => {
     if (!token || !templateId) return;
     
-    if (!confirm('¿Estás seguro de eliminar esta línea?')) return;
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar línea',
+      description: '¿Estás seguro de eliminar esta línea?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deletePortfolioLine(templateId, lineId);
 
-    try {
-      const response = await fetch(`${apiUrl}/portfolios/templates/${templateId}/lines/${lineId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          // Actualizar la lista de líneas
+          await fetchTemplate();
+          
+          showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
+        } catch (err) {
+          logger.error('Error deleting template line', { err, lineId, templateId });
+          showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
         }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete template line');
       }
-
-      // Actualizar la lista de líneas
-      await fetchTemplate();
-      
-      showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
-    } catch (err) {
-      console.error('Error deleting template line:', err);
-      showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
-    }
+    });
   };
 
   useEffect(() => {
@@ -519,10 +533,22 @@ export default function PortfolioDetailPage() {
       {/* Toast Notifications */}
       <Toast
         title={toast.title}
-        description={toast.description}
+        {...(toast.description && { description: toast.description })}
         variant={toast.variant}
         open={toast.show}
         onOpenChange={(open: boolean) => setToast(prev => ({ ...prev, show: open }))}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
       />
     </main>
   );

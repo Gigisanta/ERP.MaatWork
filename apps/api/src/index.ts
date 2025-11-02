@@ -12,6 +12,7 @@ import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { v4 as uuidv4 } from 'uuid';
 import compression from 'compression';
+import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import contactsRouter from './routes/contacts';
@@ -28,13 +29,14 @@ import analyticsRouter from './routes/analytics';
 import instrumentsRouter from './routes/instruments';
 import logsRouter from './routes/logs';
 import brokerAccountsRouter from './routes/broker-accounts';
+import aumRouter from './routes/aum';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import { initializeDatabase } from './db-init';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-const loggerOptions: any = {
+const loggerOptions: PinoLoggerOptions = {
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
 };
 if (!isProduction) {
@@ -117,7 +119,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const requestId = req.headers['x-request-id'] as string || uuidv4();
   
   // Adjuntar al objeto req para uso posterior
-  (req as any).requestId = requestId;
+  type RequestWithRequestId = Request & { requestId?: string };
+  (req as RequestWithRequestId).requestId = requestId;
   
   // Incluir en response headers para rastreo frontend
   res.setHeader('X-Request-ID', requestId);
@@ -126,7 +129,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Helmet config (disable CSP by default unless provided)
-const helmetOptions: any = {
+const helmetOptions: HelmetOptions = {
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   crossOriginEmbedderPolicy: false
 };
@@ -149,11 +152,10 @@ app.use(
       remove: true
     } : [],  // No redactar nada en desarrollo
     customProps: (req: Request) => ({
-      requestId: (req as any).requestId,
+      requestId: req.requestId,
       traceparent: req.headers['traceparent'],
-      userId: (req as any).user?.id,
-      userRole: (req as any).user?.role,
-      teamId: (req as any).user?.teamId
+      userId: req.user?.id,
+      userRole: req.user?.role
     }),
     customSuccessMessage: (req: Request, res: Response) => {
       return `${req.method} ${req.url} - ${res.statusCode}`;
@@ -258,6 +260,7 @@ app.use('/analytics', analyticsRouter);
 app.use('/instruments', instrumentsRouter);
 app.use('/logs', logsRouter);
 app.use('/broker-accounts', brokerAccountsRouter);
+app.use('/admin/aum', aumRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -276,24 +279,25 @@ app.use('/v1/analytics', analyticsRouter);
 app.use('/v1/instruments', instrumentsRouter);
 app.use('/v1/logs', logsRouter);
 app.use('/v1/broker-accounts', brokerAccountsRouter);
+app.use('/v1/admin/aum', aumRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   req.log.error({
     err,
-    requestId: (req as any).requestId,
+    requestId: req.requestId,
     url: req.url,
     method: req.method,
     body: req.body,
     query: req.query,
     params: req.params,
-    userId: (req as any).user?.id,
-    userRole: (req as any).user?.role
+    userId: req.user?.id,
+    userRole: req.user?.role
   }, 'Unhandled error in request');
   
   res.status(500).json({
     error: 'Internal server error',
-    requestId: (req as any).requestId,
+    requestId: req.requestId,
     message: !isProduction ? err.message : undefined,
     stack: !isProduction ? err.stack : undefined
   });

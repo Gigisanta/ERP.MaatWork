@@ -1,7 +1,7 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Input, 
@@ -19,14 +19,25 @@ import {
 } from '@cactus/ui';
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // AI_DECISION: Redirigir automáticamente si ya hay sesión
+  // Justificación: Evita que usuarios autenticados vean el formulario de login (estado inconsistente
+  // entre cookie/localStorage o navegación directa a /login). Mejora UX y previene loops.
+  // Impacto: Afecta navegación en la ruta `/login` cuando `user` o `token` están presentes.
+  useEffect(() => {
+    if (user || token) {
+      const redirectTo = searchParams.get('redirect') || '/';
+      router.replace(redirectTo);
+    }
+  }, [user, token, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +59,6 @@ export default function LoginPage() {
       await login(identifier, password, rememberMe);
       
       // Obtener URL de redirección desde query params
-      const searchParams = new URLSearchParams(window.location.search);
       const redirectTo = searchParams.get('redirect') || '/';
       
       // Redirigir inmediatamente usando replace para evitar loops
@@ -96,25 +106,17 @@ export default function LoginPage() {
                 />
 
                 {/* Password Input */}
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    label="Contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Tu contraseña"
-                    disabled={loading}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
-                  >
-                    {showPassword ? '👁️' : '👁️‍🗨️'}
-                  </button>
-                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  label="Contraseña"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Tu contraseña"
+                  disabled={loading}
+                  required
+                  showPasswordToggle={true}
+                />
 
                 {/* Remember me */}
                 <div className="flex items-center justify-between text-sm">

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v3
         with:
           version: 9
       - uses: actions/setup-node@v4
@@ -23,7 +23,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       
       - name: Build web app
-        run: pnpm --filter @web build
+        run: pnpm -F @cactus/web build
       
       - name: Run Lighthouse CI
         run: |

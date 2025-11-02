@@ -1,5 +1,5 @@
-import { db, users, teamMembership, teams, contacts } from '@cactus/db';
-import { eq, and, or, sql, inArray, isNull } from 'drizzle-orm';
+import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
+import { eq, and, or, sql, inArray, isNull, type SQL } from 'drizzle-orm';
 import { UserRole } from './types';
 
 export interface AccessScope {
@@ -12,7 +12,7 @@ export interface AccessScope {
 }
 
 export interface ContactAccessFilter {
-  whereClause: any;
+  whereClause: SQL | ReturnType<typeof sql>;
   description: string;
 }
 
@@ -41,7 +41,9 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
       break;
 
     case 'manager':
-      // Managers see their team members' contacts + unassigned
+      // AI_DECISION: Managers see their own contacts + team members' contacts + unassigned
+      // Justificación: Managers deben poder ver los contactos que crean (auto-asignados a su ID)
+      // Impacto: Managers pueden ver y gestionar sus propios contactos además de los de su equipo
       try {
         const teamMembers = await db()
           .select({ id: users.id })
@@ -50,10 +52,16 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
           .innerJoin(teams, eq(teamMembership.teamId, teams.id))
           .where(eq(teams.managerUserId, userId));
 
-        accessibleAdvisorIds = teamMembers.map((m: { id: string }) => m.id);
+        // Include manager's own ID so they can see contacts they created
+        accessibleAdvisorIds = [userId, ...teamMembers.map((m: { id: string }) => m.id)];
       } catch (error) {
+        // AI_DECISION: Mantener console.warn aquí por ser función de utilidad sin request context
+        // Justificación: getUserAccessScope no tiene acceso a req.log, y es llamado antes de handlers
+        // Impacto: Este warning es de configuración/setup, aceptable en console
+        // TODO: Considerar logger global si se vuelve problemático
         console.warn(`Manager ${userId} has no team members or team setup issue:`, error);
-        accessibleAdvisorIds = []; // No team members found
+        // Even without team members, manager should see their own contacts
+        accessibleAdvisorIds = [userId];
       }
       canSeeUnassigned = true;
       canAssignToOthers = true;
@@ -237,4 +245,51 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
     name: t.name,
     role: t.isManager ? 'manager' as const : 'member' as const
   }));
+}
+
+/**
+ * Check if a user can access a specific AUM import file
+ * AI_DECISION: Implement access control for AUM files based on user role
+ * Justificación: Los usuarios solo deben poder ver archivos que tienen permiso según su rol
+ * Impacto: Previene acceso no autorizado a importaciones de AUM
+ */
+export async function canAccessAumFile(userId: string, role: UserRole, fileId: string): Promise<boolean> {
+  try {
+    // Admin can access all files
+    if (role === 'admin') {
+      return true;
+    }
+
+    // Get the file to check who uploaded it
+    const [file] = await db()
+      .select({ uploadedByUserId: aumImportFiles.uploadedByUserId })
+      .from(aumImportFiles)
+      .where(eq(aumImportFiles.id, fileId))
+      .limit(1);
+
+    if (!file) {
+      return false; // File doesn't exist
+    }
+
+    // Advisor can only access their own files
+    if (role === 'advisor') {
+      return file.uploadedByUserId === userId;
+    }
+
+    // Manager can access their own files and team members' files
+    if (role === 'manager') {
+      if (file.uploadedByUserId === userId) {
+        return true; // Own file
+      }
+
+      // Check if file was uploaded by a team member
+      const accessScope = await getUserAccessScope(userId, role);
+      return accessScope.accessibleAdvisorIds.includes(file.uploadedByUserId);
+    }
+
+    return false; // Unknown role or no access
+  } catch (error) {
+    console.error('Error checking AUM file access:', error);
+    return false; // Fail closed
+  }
 }

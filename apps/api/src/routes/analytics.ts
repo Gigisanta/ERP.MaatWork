@@ -16,7 +16,7 @@ import {
   benchmarkDefinitions,
   benchmarkComponents
 } from '@cactus/db/schema';
-import { eq, desc, and, gte, sql, count, sum } from 'drizzle-orm';
+import { eq, desc, and, gte, sql, count, sum, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import fetch from 'node-fetch';
 import { TIMEOUTS, getPortfolioCompareTimeout } from '../config/timeouts';
@@ -37,7 +37,24 @@ router.get('/dashboard', requireAuth, requireRole(['advisor', 'manager', 'admin'
     const today = new Date();
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    let dashboardData: any = {};
+    type AumTrendItem = {
+      date: string;
+      totalAum: string | null;
+    };
+    
+    type DashboardData = {
+      role: string;
+      kpis?: {
+        totalAum: string | null;
+        clientsWithPortfolio: number;
+        deviationAlerts: number;
+      };
+      aumTrend?: Array<{ date: string; value: number }>;
+    };
+    
+    let dashboardData: DashboardData = {
+      role: user.role
+    };
 
     if (user.role === 'advisor') {
       // KPIs para Advisor: AUM de clientes asignados, desvíos, tareas
@@ -106,7 +123,7 @@ router.get('/dashboard', requireAuth, requireRole(['advisor', 'manager', 'admin'
           clientsWithPortfolio: clientCountResult[0]?.count || 0,
           deviationAlerts: deviationAlertsResult[0]?.count || 0
         },
-        aumTrend: aumTrend.map((item: any) => ({
+        aumTrend: aumTrend.map((item: AumTrendItem) => ({
           date: item.date,
           value: Number(item.totalAum) || 0
         }))
@@ -559,8 +576,16 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
           .where(sql`${portfolioTemplates.id} = ANY(${portfolioIds})`);
 
         // Agrupar por portfolioId
-        const portfolioDataById: Record<string, any[]> = {};
-        allPortfolioData.forEach(row => {
+        type PortfolioDataRow = {
+          portfolioId: string;
+          portfolioName: string;
+          instrumentSymbol: string;
+          weight: string | number;
+          instrumentName: string;
+        };
+        
+        const portfolioDataById: Record<string, PortfolioDataRow[]> = {};
+        allPortfolioData.forEach((row: PortfolioDataRow) => {
           if (!portfolioDataById[row.portfolioId]) {
             portfolioDataById[row.portfolioId] = [];
           }
@@ -568,14 +593,14 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
         });
 
         // Crear objetos de portfolio
-        portfolioIds.forEach(portfolioId => {
+        portfolioIds.forEach((portfolioId: string) => {
           const portfolioData = portfolioDataById[portfolioId];
           if (portfolioData && portfolioData.length > 0) {
             portfoliosToCompare.push({
               id: portfolioId,
               name: portfolioData[0]?.portfolioName || `Portfolio ${portfolioId}`,
               type: 'portfolio',
-              components: portfolioData.map((line: { instrumentSymbol: string; weight: string | number; instrumentName: string }) => ({
+              components: portfolioData.map((line: PortfolioDataRow) => ({
                 symbol: line.instrumentSymbol,
                 weight: Number(line.weight),
                 name: line.instrumentName
@@ -605,8 +630,16 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
           .where(sql`${benchmarkDefinitions.id} = ANY(${benchmarkIds})`);
 
         // Agrupar por benchmarkId
-        const benchmarkDataById: Record<string, any[]> = {};
-        allBenchmarkData.forEach(row => {
+        type BenchmarkDataRow = {
+          benchmarkId: string;
+          benchmarkName: string;
+          instrumentSymbol: string;
+          weight: string | number;
+          instrumentName: string;
+        };
+        
+        const benchmarkDataById: Record<string, BenchmarkDataRow[]> = {};
+        allBenchmarkData.forEach((row: BenchmarkDataRow) => {
           if (!benchmarkDataById[row.benchmarkId]) {
             benchmarkDataById[row.benchmarkId] = [];
           }
@@ -614,14 +647,14 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
         });
 
         // Crear objetos de benchmark
-        benchmarkIds.forEach(benchmarkId => {
+        benchmarkIds.forEach((benchmarkId: string) => {
           const benchmarkData = benchmarkDataById[benchmarkId];
           if (benchmarkData && benchmarkData.length > 0) {
             portfoliosToCompare.push({
               id: benchmarkId,
               name: benchmarkData[0]?.benchmarkName || `Benchmark ${benchmarkId}`,
               type: 'benchmark',
-              components: benchmarkData.map((line: { instrumentSymbol: string; weight: string | number; instrumentName: string }) => ({
+              components: benchmarkData.map((line: BenchmarkDataRow) => ({
                 symbol: line.instrumentSymbol,
                 weight: Number(line.weight),
                 name: line.instrumentName
@@ -681,7 +714,7 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
             id: portfolioId,
             name: portfolioInfo?.name || `Portfolio ${portfolioId}`,
             type: portfolioInfo?.type || 'portfolio',
-            performance: (perfData.performance_series || []).map((point: any) => ({
+            performance: (perfData.performance_series || []).map((point: { date: string; value: number }) => ({
               date: point.date,
               value: point.value // Ya viene normalizado a base 100 desde Python
             })),

@@ -2,24 +2,18 @@
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import type { Benchmark } from '@/types';
 
-interface Benchmark {
-  id: string;
-  code: string;
-  name: string;
-  description?: string;
-  isSystem: boolean;
-  componentCount: number;
-  createdAt: string;
-}
+// Extender Benchmark con campos adicionales de la respuesta de API
+type BenchmarkWithCount = Benchmark & {
+  componentCount?: number;
+};
 
 export default function BenchmarksPage() {
   const { user, token, loading } = useRequireAuth();
-  const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkWithCount[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const fetchBenchmarks = async () => {
     if (!token) return;
@@ -27,19 +21,14 @@ export default function BenchmarksPage() {
     try {
       setDataLoading(true);
       
-      const response = await fetch(`${apiUrl}/benchmarks`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const { getBenchmarks } = await import('@/lib/api');
+      const response = await getBenchmarks();
 
-      if (!response.ok) {
+      if (response.success && response.data) {
+        setBenchmarks(response.data || []);
+      } else {
         throw new Error('Failed to fetch benchmarks');
       }
-
-      const data = await response.json();
-      setBenchmarks(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {

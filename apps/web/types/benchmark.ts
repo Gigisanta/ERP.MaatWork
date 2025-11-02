@@ -2,45 +2,81 @@
  * Tipos relacionados con benchmarks
  */
 
+import type { TimestampedEntity, UpdateRequest } from './common';
+
+/**
+ * Tipo de benchmark
+ */
 export type BenchmarkType = 'individual' | 'composite';
 
-export interface Benchmark {
-  id: string;
+/**
+ * Componente base compartido entre Benchmark y Portfolio
+ */
+export interface ComponentBase {
+  instrumentId?: string;
+  instrumentSymbol: string;
+  instrumentName?: string;
+  targetWeight: number;
+}
+
+/**
+ * Benchmark base - extiende TimestampedEntity
+ */
+export interface Benchmark extends TimestampedEntity {
   name: string;
   type: BenchmarkType;
   description?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  code?: string; // Código del benchmark (para benchmarks del sistema)
+  isSystem?: boolean; // Si es un benchmark del sistema
   components?: BenchmarkComponent[];
 }
 
-export interface BenchmarkComponent {
+/**
+ * Componente de benchmark - extiende ComponentBase
+ */
+export interface BenchmarkComponent extends ComponentBase {
   id: string;
   benchmarkId: string;
-  instrumentId: string;
+  instrumentId: string; // Required en componente
   weight: number; // Decimal (0.25 = 25%)
-  instrumentSymbol?: string;
-  instrumentName?: string;
   active?: boolean;
   createdAt?: string;
 }
 
-export interface CreateBenchmarkRequest {
-  name: string;
-  type: BenchmarkType;
-  description?: string;
+/**
+ * Tipo para componentes temporales durante la creación
+ */
+export interface BenchmarkComponentForm extends ComponentBase {
+  id: string;
+  instrumentId?: string | null; // Puede ser null si aún no está resuelto
+  weight: number; // Percentage (25 = 25%)
 }
 
-export interface UpdateBenchmarkRequest {
+/**
+ * Request para crear benchmark - usando Pick para campos requeridos
+ */
+export interface CreateBenchmarkRequest extends Pick<Benchmark, 'name' | 'type'> {
+  description?: string;
+  code?: string;
+}
+
+/**
+ * Request para actualizar benchmark - usando utility type UpdateRequest
+ */
+export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {
   name?: string;
-  description?: string;
+  description?: string | null;
+  code?: string;
 }
 
-export interface AddBenchmarkComponentRequest {
-  instrumentId: string;
-  weight: number; // Decimal
-}
+/**
+ * Request para agregar componente de benchmark
+ */
+export interface AddBenchmarkComponentRequest extends Pick<BenchmarkComponent, 'instrumentId' | 'weight'> {}
 
+/**
+ * Benchmark con componentes completos
+ */
 export interface BenchmarkWithComponents extends Benchmark {
   components: BenchmarkComponent[];
   totalWeight: number;
@@ -48,19 +84,11 @@ export interface BenchmarkWithComponents extends Benchmark {
 }
 
 /**
- * Tipos para composición de benchmark (UI)
+ * Datos de formulario de benchmark
  */
-export interface BenchmarkComponentForm {
-  instrumentId?: string;
-  instrumentSymbol: string;
-  instrumentName?: string;
-  weight: number; // Percentage (25 = 25%)
-}
-
 export interface BenchmarkFormData {
   name: string;
   type: BenchmarkType;
   description: string;
   components: BenchmarkComponentForm[];
 }
-

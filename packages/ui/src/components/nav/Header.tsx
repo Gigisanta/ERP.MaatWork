@@ -81,25 +81,50 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
               role="navigation"
             >
               {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
-                    'text-sm font-medium text-text-secondary',
-                    'hover:text-text hover:bg-surface-hover',
-                    'rounded-md transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
-                  )}
-                >
-                  {item.icon && <Icon name={item.icon} size={16} />}
-                  {item.label}
-                  {item.badge && (
-                    <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
-                      {item.badge}
-                    </span>
-                  )}
-                </a>
+                item.href.startsWith('http') ? (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
+                      'text-sm font-medium text-text-secondary',
+                      'hover:text-text hover:bg-surface-hover',
+                      'rounded-md transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+                    )}
+                  >
+                    {/* AI_DECISION: Abrir links externos en nueva pestaña por seguridad/usabilidad */}
+                    {item.icon && <Icon name={item.icon} size={16} />}
+                    {item.label}
+                    {item.badge && (
+                      <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                ) : (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
+                      'text-sm font-medium text-text-secondary',
+                      'hover:text-text hover:bg-surface-hover',
+                      'rounded-md transition-colors',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+                    )}
+                  >
+                    {item.icon && <Icon name={item.icon} size={16} />}
+                    {item.label}
+                    {item.badge && (
+                      <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                )
               ))}
             </nav>
           )}
@@ -147,16 +172,19 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                     )}
                     sideOffset={5}
                   >
-                    <DropdownMenu.Item
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer',
-                        'text-text hover:bg-surface-hover',
-                        'focus:bg-surface-hover focus:outline-none',
-                        'rounded-sm transition-colors'
-                      )}
-                    >
-                      <Icon name="User" size={16} />
-                      Profile
+                    <DropdownMenu.Item asChild>
+                      <a
+                        href="/profile"
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer no-underline',
+                          'text-text hover:bg-surface-hover',
+                          'focus:bg-surface-hover focus:outline-none',
+                          'rounded-sm transition-colors'
+                        )}
+                      >
+                        <Icon name="User" size={16} />
+                        Profile
+                      </a>
                     </DropdownMenu.Item>
                     
                     <DropdownMenu.Item

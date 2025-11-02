@@ -21,22 +21,15 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useTasks } from '../../../lib/api-hooks';
+import { createTask, deleteTask } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+import type { Task } from '@/types';
 
 // AI_DECISION: Extracted to client island for task management isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface Task {
-  id: string;
-  contactId: string;
-  title: string;
-  description?: string;
-  status: string;
-  dueDate?: string;
-  priority?: string;
-  createdAt: string;
-}
 
 interface TasksSectionProps {
   contactId: string;
@@ -59,6 +52,20 @@ export default function TasksSection({
   const { tasks, error, isLoading, mutate } = useTasks(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -69,72 +76,47 @@ export default function TasksSection({
   const handleCreateTask = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/tasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newTask,
-          contactId,
-          status: 'pending'
-        })
+      await createTask({
+        ...newTask,
+        contactId,
+        status: 'pending'
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create task');
-      }
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     } catch (err) {
-      console.error('Error creating task:', err);
+      logger.error('Error creating task', { err, contactId, task: newTask });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta tarea?')) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+  const handleDeleteTask = (taskId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar tarea',
+      description: '¿Estás seguro de que quieres eliminar esta tarea?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteTask(taskId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting task', { err, taskId });
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete task');
       }
-
-      await mutate(); // Refresh data
-    } catch (err) {
-      console.error('Error deleting task:', err);
-    }
+    });
   };
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/tasks/${taskId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update task status');
-      }
+      const { updateTask } = await import('@/lib/api/tasks');
+      await updateTask(taskId, { status: newStatus });
 
       await mutate(); // Refresh data
     } catch (err) {
-      console.error('Error updating task status:', err);
+      logger.error('Error updating task status', { err, taskId, newStatus });
     }
   };
 
@@ -333,6 +315,18 @@ export default function TasksSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

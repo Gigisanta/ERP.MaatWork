@@ -12,11 +12,16 @@ import {
   portfolioTemplateLines,
   contacts
 } from '@cactus/db/schema';
-import { eq, and, sql, desc, gte, lte } from 'drizzle-orm';
+import { eq, and, sql, desc, gte, lte, type InferSelectModel } from 'drizzle-orm';
 import axios from 'axios';
 import pino from 'pino';
+import { PositionWithMarketValue } from '../types/daily-valuation';
 
 const logger = pino({ name: 'daily-valuation' });
+
+// Tipos inferidos del schema
+type Instrument = InferSelectModel<typeof instruments>;
+type InstrumentSelect = Pick<Instrument, 'id' | 'symbol' | 'name' | 'currency'>;
 
 interface PriceData {
   [symbol: string]: {
@@ -118,7 +123,7 @@ export class DailyValuationJob {
   /**
    * Obtener precios actuales del microservicio Python
    */
-  private async fetchCurrentPrices(instrumentsList: any[]): Promise<PriceData | null> {
+  private async fetchCurrentPrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
     try {
       const symbols = instrumentsList.map(inst => inst.symbol);
       
@@ -151,7 +156,7 @@ export class DailyValuationJob {
   /**
    * Obtener últimos precios disponibles como fallback
    */
-  private async getLastAvailablePrices(instrumentsList: any[]): Promise<PriceData | null> {
+  private async getLastAvailablePrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
     try {
       const instrumentIds = instrumentsList.map(inst => inst.id);
       
@@ -170,21 +175,29 @@ export class DailyValuationJob {
         .orderBy(desc(priceSnapshots.asOfDate));
 
       // Agrupar por instrumento y tomar el más reciente
-      const latestPrices: { [key: string]: any } = {};
+      type PriceSnapshot = {
+        instrumentId: string;
+        symbol: string;
+        closePrice: string | null;
+        currency: string;
+        asOfDate: Date;
+      };
+      
+      const latestPrices: Map<string, PriceSnapshot> = new Map();
       
       for (const price of lastPrices) {
-        if (!latestPrices[price.instrumentId]) {
-          latestPrices[price.instrumentId] = price;
+        if (!latestPrices.has(price.instrumentId)) {
+          latestPrices.set(price.instrumentId, price);
         }
       }
 
       // Convertir a formato esperado
       const result: PriceData = {};
-      for (const price of Object.values(latestPrices)) {
+      for (const price of latestPrices.values()) {
         result[price.symbol] = {
           price: Number(price.closePrice),
           currency: price.currency,
-          date: price.asOfDate,
+          date: price.asOfDate.toISOString(),
           source: 'fallback',
           success: true
         };
@@ -365,7 +378,7 @@ export class DailyValuationJob {
         ));
 
       // Calcular AUM total del contacto
-      const totalAUM = currentPositions.reduce((sum: number, pos: any) => sum + Number(pos.marketValue || 0), 0);
+      const totalAUM = currentPositions.reduce((sum: number, pos: PositionWithMarketValue) => sum + Number(pos.marketValue || 0), 0);
 
       if (totalAUM === 0) {
         logger.warn({ contactId }, '⚠️ Contacto sin AUM para calcular desvíos');
@@ -477,7 +490,7 @@ export async function runPriceBackfillJob(days: number = 365): Promise<void> {
       return;
     }
 
-    const symbols = activeInstruments.map((inst: any) => inst.symbol);
+    const symbols = activeInstruments.map((inst: InstrumentSelect) => inst.symbol);
     
     const response = await axios.post(
       `${job['analyticsServiceUrl']}/prices/backfill`,
@@ -499,11 +512,17 @@ export async function runPriceBackfillJob(days: number = 365): Promise<void> {
     // Guardar datos históricos en price_snapshots
     const historicalData = response.data.data;
     
+    type HistoricalRecord = {
+      date: string;
+      price: number;
+      currency: string;
+    };
+    
     for (const [symbol, records] of Object.entries(historicalData)) {
       if (Array.isArray(records) && records.length > 0) {
-        const instrument = activeInstruments.find((inst: any) => inst.symbol === symbol);
+        const instrument = activeInstruments.find((inst: InstrumentSelect) => inst.symbol === symbol);
         if (instrument) {
-          const snapshotsToInsert = records.map((record: any) => ({
+          const snapshotsToInsert = (records as HistoricalRecord[]).map((record: HistoricalRecord) => ({
             instrumentId: instrument.id,
             asOfDate: record.date,
             closePrice: record.close_price,

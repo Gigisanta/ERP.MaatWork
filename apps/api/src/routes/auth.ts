@@ -10,6 +10,8 @@ import bcrypt from 'bcrypt';
 
 const router = Router();
 
+import { validate } from '../utils/validation';
+
 // AI_DECISION: Login via identifier (email or username)
 // Justificación: Permite autenticación flexible y más rápida por username
 // Impacto: Cambia payload de /login y lógica de búsqueda
@@ -30,7 +32,9 @@ const RegisterSchema = z.object({
   requestedManagerId: z.string().uuid().optional() // Solo para advisors
 });
 
-router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/login', 
+  validate({ body: LoginSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   
   req.log.info({ 
@@ -41,17 +45,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   }, 'Iniciando intento de login');
 
   try {
-    const parsed = LoginSchema.safeParse(req.body);
-    if (!parsed.success) {
-      const duration = Date.now() - startTime;
-      req.log.warn({ 
-        err: parsed.error.errors, 
-        duration,
-        action: 'login_attempt'
-      }, 'Error de validación en login');
-      return res.status(400).json({ message: 'Invalid payload' });
-    }
-    const { identifier, password, rememberMe } = parsed.data;
+    const { identifier, password, rememberMe } = req.body;
     const trimmedIdentifier = identifier.trim();
 
     // Usuario admin temporal - crear o usar usuario admin existente
@@ -228,17 +222,12 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   }
 });
 
-router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/register', 
+  validate({ body: RegisterSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const parsed = RegisterSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ 
-        message: 'Validation error', 
-        details: parsed.error.errors 
-      });
-    }
-    const { email, fullName, password, role, requestedManagerId } = parsed.data;
-    const providedUsername: string | undefined = parsed.data.username?.trim();
+    const { email, fullName, password, role, requestedManagerId, username } = req.body;
+    const providedUsername: string | undefined = username?.trim();
     const usernameNormalized = providedUsername ? providedUsername.toLowerCase() : undefined;
 
     // Verificar que el email no exista

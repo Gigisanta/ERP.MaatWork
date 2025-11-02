@@ -19,22 +19,16 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { useNotes } from '../../../lib/api-hooks';
+import { createNote, deleteNote } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+
+import type { Note } from '@/types';
 
 // AI_DECISION: Extracted to client island for notes management isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface Note {
-  id: string;
-  contactId: string;
-  authorUserId?: string;
-  source: string;
-  noteType: string;
-  content: string;
-  authorName?: string;
-  createdAt: string;
-}
 
 interface NotesSectionProps {
   contactId: string;
@@ -57,6 +51,20 @@ export default function NotesSection({
   const { notes, error, isLoading, mutate } = useNotes(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newNote, setNewNote] = useState({
     content: '',
     noteType: 'general',
@@ -66,51 +74,36 @@ export default function NotesSection({
   const handleCreateNote = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/notes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newNote,
-          contactId
-        })
+      await createNote({
+        content: newNote.content,
+        contactId
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create note');
-      }
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewNote({ content: '', noteType: 'general', source: 'manual' });
     } catch (err) {
-      console.error('Error creating note:', err);
+      logger.error('Error creating note', { err, contactId, note: newNote });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta nota?')) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/notes/${noteId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+  const handleDeleteNote = (noteId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Eliminar nota',
+      description: '¿Estás seguro de que quieres eliminar esta nota?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteNote(noteId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error deleting note', { err, noteId });
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete note');
       }
-
-      await mutate(); // Refresh data
-    } catch (err) {
-      console.error('Error deleting note:', err);
-    }
+    });
   };
 
   const getNoteTypeBadgeVariant = (noteType: string) => {
@@ -190,11 +183,11 @@ export default function NotesSection({
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={getNoteTypeBadgeVariant(note.noteType)}>
-                        {getNoteTypeLabel(note.noteType)}
+                      <Badge variant={getNoteTypeBadgeVariant(note.noteType || 'general')}>
+                        {getNoteTypeLabel(note.noteType || 'general')}
                       </Badge>
-                      <Badge variant={getSourceBadgeVariant(note.source)}>
-                        {getSourceLabel(note.source)}
+                      <Badge variant={getSourceBadgeVariant(note.source || 'manual')}>
+                        {getSourceLabel(note.source || 'manual')}
                       </Badge>
                       {note.authorName && (
                         <Text size="xs" color="muted">
@@ -272,6 +265,18 @@ export default function NotesSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

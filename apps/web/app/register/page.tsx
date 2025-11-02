@@ -3,6 +3,8 @@ import { useAuth } from '../auth/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getManagers } from '@/lib/api';
+import { logger } from '../../lib/logger';
 import { 
   Card, 
   CardContent, 
@@ -51,17 +53,15 @@ export default function RegisterPage() {
   const fetchManagers = async () => {
     try {
       setLoadingManagers(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/users/managers`);
+      const response = await getManagers();
       
-      if (!response.ok) {
+      if (response.success && response.data) {
+        setManagers(response.data || []);
+      } else {
         throw new Error('Failed to fetch managers');
       }
-      
-      const data = await response.json();
-      setManagers(data.data || []);
     } catch (err) {
-      console.error('Error fetching managers:', err);
+      logger.error('Error fetching managers', { err });
       setManagers([]);
     } finally {
       setLoadingManagers(false);
@@ -198,6 +198,7 @@ export default function RegisterPage() {
                   disabled={loading}
                   required
                   minLength={6}
+                  showPasswordToggle={true}
                 />
 
                 <div>

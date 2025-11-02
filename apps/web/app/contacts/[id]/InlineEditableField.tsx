@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Text, Spinner } from '@cactus/ui';
+import { Text, Spinner, Input } from '@cactus/ui';
 
 // AI_DECISION: Extracted to client island for interactivity isolation
 // Justificación: Server component for static data, client only where needed
@@ -10,7 +10,7 @@ interface InlineEditableFieldProps {
   label: string;
   value: string | null | undefined;
   field: string;
-  onSave: (field: any, value: string) => Promise<void>;
+  onSave: (field: string, value: string) => Promise<void>;
   placeholder?: string;
   emptyText?: string;
   type?: 'text' | 'email' | 'tel' | 'number';
@@ -69,7 +69,7 @@ export default function InlineEditableField({
   if (isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type={type === 'tel' ? 'tel' : type === 'email' ? 'email' : 'text'}
           value={localValue}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
@@ -78,9 +78,10 @@ export default function InlineEditableField({
             if (e.key === 'Enter') handleSave();
             if (e.key === 'Escape') handleCancel();
           }}
-          placeholder={placeholder}
-          className="flex-1 px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          {...(placeholder ? { placeholder } : {})}
+          className="flex-1"
           autoFocus
+          size="sm"
         />
         {saving && <Spinner size="sm" />}
       </div>

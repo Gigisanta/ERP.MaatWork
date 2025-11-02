@@ -1,0 +1,97 @@
+"use client";
+
+// AI_DECISION: Create simple picker component for contact/user matching
+// Justificación: Enables manual association of AUM rows with CRM contacts and users
+// Impacto: New UI component for AUM normalization workflow
+
+import { useState } from 'react';
+import { matchAumRow } from '@/lib/api';
+import type { ApiErrorWithMessage } from '@/types';
+import { Input, Button, Spinner, Text } from '@cactus/ui';
+
+interface ContactUserPickerProps {
+  fileId: string;
+  rowId: string;
+  initialContactId?: string | null;
+  initialUserId?: string | null;
+  onSave?: () => void;
+}
+
+export default function ContactUserPicker({
+  fileId,
+  rowId,
+  initialContactId,
+  initialUserId,
+  onSave
+}: ContactUserPickerProps) {
+  const [contactId, setContactId] = useState(initialContactId || '');
+  const [userId, setUserId] = useState(initialUserId || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    setSuccess(false);
+    try {
+      await matchAumRow(fileId, {
+        rowId,
+        matchedContactId: contactId || null,
+        matchedUserId: userId || null,
+      });
+      setSuccess(true);
+      if (onSave) onSave();
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (e: unknown) {
+      const error = e as ApiErrorWithMessage;
+      setError(error.userMessage || error.message || 'Error al guardar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="text"
+        value={contactId}
+        onChange={(e) => setContactId(e.target.value)}
+        placeholder="Contact ID"
+        size="sm"
+        className="text-xs w-40"
+      />
+      <Input
+        type="text"
+        value={userId}
+        onChange={(e) => setUserId(e.target.value)}
+        placeholder="User ID (advisor)"
+        size="sm"
+        className="text-xs w-40"
+      />
+      <Button
+        onClick={save}
+        disabled={saving || success}
+        size="sm"
+        variant="primary"
+        className={`text-xs ${success ? 'bg-green-600 hover:bg-green-700' : ''}`}
+      >
+        {saving ? (
+          <>
+            <Spinner size="sm" className="mr-1" />
+            Guardando...
+          </>
+        ) : success ? (
+          '✓'
+        ) : (
+          'Guardar'
+        )}
+      </Button>
+      {error && (
+        <Text size="sm" className="text-error">
+          {error}
+        </Text>
+      )}
+    </div>
+  );
+}

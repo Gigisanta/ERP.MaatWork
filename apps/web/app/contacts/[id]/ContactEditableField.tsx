@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useTransition } from 'react';
-import { Text, Spinner } from '@cactus/ui';
+import { Text, Spinner, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 // AI_DECISION: Client wrapper for Server Action to avoid prop passing
 // Justificación: Server Actions cannot be passed as props to Client Components
@@ -63,7 +64,7 @@ export default function ContactEditableField({
         // Revalidate the page data to show updated values
         router.refresh();
       } catch (err) {
-        console.error('Error updating contact field:', err);
+        logger.error('Error updating contact field', { err, contactId, field, value });
         setLocalValue(value || '');
       }
     });
@@ -77,7 +78,7 @@ export default function ContactEditableField({
   if (isEditing) {
     return (
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type={type === 'tel' ? 'tel' : type === 'email' ? 'email' : 'text'}
           value={localValue}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalValue(e.target.value)}
@@ -86,9 +87,10 @@ export default function ContactEditableField({
             if (e.key === 'Enter') handleSave();
             if (e.key === 'Escape') handleCancel();
           }}
-          placeholder={placeholder}
-          className="flex-1 px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          {...(placeholder ? { placeholder } : {})}
+          className="flex-1"
           autoFocus
+          size="sm"
         />
         {isPending && <Spinner size="sm" />}
       </div>

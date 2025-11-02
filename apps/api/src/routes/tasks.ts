@@ -5,6 +5,12 @@ import { eq, desc, and, isNull, inArray, lte, gte, sql, or } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema,
+  paginationQuerySchema,
+  dateSchema 
+} from '../utils/common-schemas';
 
 const router = Router();
 
@@ -12,6 +18,30 @@ const router = Router();
 // Schemas de validación
 // ==========================================================
 
+// Query parameter schemas
+// AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects
+// Justificación: .extend() solo funciona en ZodObject, pero paginationQuerySchema tiene .refine()
+// Impacto: Schema combinado correctamente manteniendo validación de paginación
+const listTasksQuerySchema = paginationQuerySchema.and(
+  z.object({
+    status: z.string().optional(),
+    assignedToUserId: z.string().uuid().optional(),
+    contactId: z.string().uuid().optional(),
+    dueDateFrom: dateSchema.optional(),
+    dueDateTo: dateSchema.optional(),
+    priority: z.string().optional(),
+    includeCompleted: z.enum(['true', 'false']).optional().default('false')
+  })
+);
+
+const exportTasksQuerySchema = z.object({
+  status: z.string().optional(),
+  assignedToUserId: z.string().uuid().optional(),
+  dueDateFrom: dateSchema.optional(),
+  dueDateTo: dateSchema.optional()
+});
+
+// Body schemas
 const createTaskSchema = z.object({
   contactId: z.string().uuid(),
   meetingId: z.string().uuid().optional().nullable(),
@@ -41,7 +71,10 @@ const bulkActionSchema = z.object({
 // ==========================================================
 // GET /tasks - Listar tareas con filtros
 // ==========================================================
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', 
+  requireAuth,
+  validate({ query: listTasksQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       limit = '50',
@@ -165,9 +198,12 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 // ==========================================================
 // POST /tasks - Crear nueva tarea
 // ==========================================================
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', 
+  requireAuth,
+  validate({ body: createTaskSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createTaskSchema.parse(req.body);
+    const validated = req.body;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -220,9 +256,6 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
     req.log.info({ taskId: newTask.id }, 'task created');
     res.status(201).json({ data: newTask });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create task');
     next(err);
   }
@@ -231,10 +264,19 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 // ==========================================================
 // PUT /tasks/:id - Actualizar tarea
 // ==========================================================
-router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+
+const taskIdParamsSchema = z.object({ id: uuidSchema });
+
+router.put('/:id', 
+  requireAuth,
+  validate({ 
+    params: taskIdParamsSchema,
+    body: updateTaskSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const validated = updateTaskSchema.parse(req.body);
+    const validated = req.body;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -282,9 +324,6 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     req.log.info({ taskId: id }, 'task updated');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, taskId: req.params.id }, 'failed to update task');
     next(err);
   }
@@ -340,9 +379,12 @@ router.post('/:id/complete', requireAuth, async (req: Request, res: Response, ne
 // ==========================================================
 // POST /tasks/bulk - Acciones masivas sobre tareas
 // ==========================================================
-router.post('/bulk', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/bulk', 
+  requireAuth,
+  validate({ body: bulkActionSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { taskIds, action, params } = bulkActionSchema.parse(req.body);
+    const { taskIds, action, params } = req.body;
 
     let affected = 0;
 
@@ -415,9 +457,6 @@ router.post('/bulk', requireAuth, async (req: Request, res: Response, next: Next
     req.log.info({ action, affected, taskIds }, 'bulk action completed');
     res.json({ data: { affected, action } });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed bulk action');
     next(err);
   }
@@ -481,7 +520,10 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
 // ==========================================================
 // GET /tasks/export/csv - Exportar tareas a CSV
 // ==========================================================
-router.get('/export/csv', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/export/csv', 
+  requireAuth,
+  validate({ query: exportTasksQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       status,
@@ -514,9 +556,10 @@ router.get('/export/csv', requireAuth, async (req: Request, res: Response, next:
 
     // Convertir a CSV simple
     const headers = ['id', 'title', 'status', 'priority', 'dueDate', 'assignedToUserId', 'contactId', 'createdAt'];
+    type TaskItem = InferSelectModel<typeof tasks>;
     const csv = [
       headers.join(','),
-      ...items.map((item: any) => headers.map(h => item[h as keyof typeof item] || '').join(','))
+      ...items.map((item: TaskItem) => headers.map(h => item[h as keyof typeof item] || '').join(','))
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');

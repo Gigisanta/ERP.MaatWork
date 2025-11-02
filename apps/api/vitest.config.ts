@@ -1,3 +1,12 @@
+/**
+ * Vitest config para unit tests
+ * 
+ * Arquitectura de testing:
+ * - Unit tests: Vitest, al lado del archivo con .test.ts
+ * - E2E tests: Playwright, en tests/e2e/ con .spec.ts
+ * 
+ * Coverage target: ≥70% (lines, functions, branches, statements)
+ */
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -6,10 +15,8 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     exclude: [
-      'src/**/*.e2e.test.ts',  // Excluir tests E2E (requieren setup adicional)
-      'src/**/*.spec.ts',      // Excluir specs (si existen)
-      'src/__tests__/**',      // Excluir directorio __tests__ (E2E antiguos)
-      'node_modules/**'
+      'node_modules/**',
+      'dist/**'
     ],
     coverage: {
       provider: 'v8',

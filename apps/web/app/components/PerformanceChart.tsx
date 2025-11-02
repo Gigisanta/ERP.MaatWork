@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Calendar, BarChart3 } from 'lucide-react';
+import { comparePortfolios } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import type { ComparisonResult, PerformanceDataPoint, TimePeriod } from '@/types';
 import {
   Card,
   CardHeader,
@@ -20,7 +23,7 @@ import {
 interface PerformanceChartProps {
   portfolioIds?: string[];
   benchmarkIds?: string[];
-  period?: string;
+  period?: TimePeriod;
   height?: number;
   className?: string;
 }
@@ -64,7 +67,7 @@ export default function PerformanceChart({
   height = 400,
   className = ""
 }: PerformanceChartProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState(period);
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(period || '1Y');
   const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +83,6 @@ export default function PerformanceChart({
       setError(null);
       
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
         const token = localStorage.getItem('token'); // Obtener token de localStorage
 
         if (!token) {
@@ -89,32 +91,19 @@ export default function PerformanceChart({
           return;
         }
 
-        const response = await fetch(`${apiUrl}/v1/analytics/compare`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            portfolioIds,
-            benchmarkIds,
-            period: selectedPeriod
-          })
+        const result = await comparePortfolios({
+          portfolioIds,
+          benchmarkIds,
+          period: selectedPeriod
         });
-
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
         
         if (result.success && result.data && result.data.results) {
           // Mapear datos de la API al formato del componente
-          const data: PerformanceData[] = result.data.results.map((item: any, index: number) => ({
+          const data: PerformanceData[] = result.data.results.map((item: ComparisonResult, index: number) => ({
             id: item.id,
             name: item.name,
-            type: item.type as 'portfolio' | 'benchmark',
-            performance: item.performance.map((p: any) => ({
+            type: item.type,
+            performance: item.performance.map((p: PerformanceDataPoint) => ({
               date: p.date,
               value: p.value // Ya viene normalizado a base 100
             })),
@@ -129,7 +118,7 @@ export default function PerformanceChart({
         }
       } catch (err) {
         setError('Error al cargar datos de rendimiento');
-        console.error('Error fetching performance data:', err);
+        logger.error('Error fetching performance data', { err, portfolioIds, benchmarkIds, period: selectedPeriod });
         setPerformanceData([]);
       } finally {
         setIsLoading(false);
@@ -228,7 +217,7 @@ export default function PerformanceChart({
             <Calendar className="w-4 h-4 text-foreground-tertiary" />
             <Select
               value={selectedPeriod}
-              onValueChange={setSelectedPeriod}
+              onValueChange={(value) => setSelectedPeriod(value as TimePeriod)}
               items={PERIOD_OPTIONS}
               className="w-32"
             />

@@ -3,6 +3,9 @@ import { useRequireAuth } from '../auth/useRequireAuth';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getTeams, getTeamAdvisors, createTeamInvitation, getMembershipRequests, createTeam, respondToMembershipRequest } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import type { Team, TeamMember, MembershipRequest } from '@/types';
 import {
   Card,
   CardHeader,
@@ -29,32 +32,6 @@ import {
   type Column,
 } from '@cactus/ui';
 
-interface Team {
-  id: string;
-  name: string;
-  managerUserId: string;
-  createdAt: string;
-  members?: TeamMember[];
-}
-
-interface TeamMember {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-}
-
-interface MembershipRequest {
-  id: string;
-  userId: string;
-  managerId: string;
-  status: string;
-  createdAt: string;
-  userEmail: string;
-  userFullName: string;
-  userRole: string;
-}
-
 export default function TeamsPage() {
   const { user, token, loading } = useRequireAuth();
   const router = useRouter();
@@ -67,8 +44,10 @@ export default function TeamsPage() {
   // Form states
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
+  const [linkModalOpen, setLinkModalOpen] = useState<null | { teamId: string; teamName: string }>(null);
+  const [advisorCandidates, setAdvisorCandidates] = useState<Array<{ id: string; email: string; fullName: string }>>([]);
+  const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Redirect if not manager or admin
   useEffect(() => {
@@ -104,22 +83,62 @@ export default function TeamsPage() {
     }
   };
 
+  const openLinkModal = async (team: Team) => {
+    if (!token) return;
+    try {
+      setLinkModalOpen({ teamId: team.id, teamName: team.name });
+      const response = await getTeamAdvisors(team.id);
+      if (response.success && response.data) {
+        setAdvisorCandidates(response.data || []);
+      } else {
+        setAdvisorCandidates([]);
+      }
+    } catch {
+      setAdvisorCandidates([]);
+    }
+  };
+
+  const handleVincularAsesores = () => {
+    // Si hay un solo equipo, abrir directamente
+    if (teams.length === 1) {
+      openLinkModal(teams[0]);
+      return;
+    }
+    // Si hay varios equipos, abrir modal de selección primero
+    // Por ahora, si hay equipos disponibles, abrir el primero o mostrar selector
+    // Simplificado: abrir modal para el primer equipo (el usuario puede cambiar desde ahí)
+    if (teams.length > 0) {
+      openLinkModal(teams[0]);
+    }
+  };
+
+  const inviteAdvisor = async (userId: string) => {
+    if (!token || !linkModalOpen) return;
+    try {
+      setInviteLoading(userId);
+      await createTeamInvitation(linkModalOpen.teamId, { userId });
+      // Optimistic feedback: remove invited advisor from list
+      setAdvisorCandidates(prev => prev.filter(a => a.id !== userId));
+    } catch (err) {
+      logger.error('Error inviting advisor', { err, teamId: linkModalOpen.teamId, userId });
+    } finally {
+      setInviteLoading(null);
+    }
+  };
+
   const fetchTeams = async () => {
     if (!token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/teams`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await getTeams();
       
-      if (response.ok) {
-        const data = await response.json();
-        setTeams(data.data || []);
+      if (response.success && response.data) {
+        setTeams(response.data || []);
       } else {
         throw new Error('Error al cargar equipos');
       }
     } catch (err) {
-      console.error('Error fetching teams:', err);
+      logger.error('Error fetching teams', { err });
       throw err;
     }
   };
@@ -128,73 +147,55 @@ export default function TeamsPage() {
     if (!token) return;
     
     try {
-      const response = await fetch(`${apiUrl}/teams/membership-requests`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await getMembershipRequests();
       
-      if (response.ok) {
-        const data = await response.json();
-        setMembershipRequests(data.data || []);
+      if (response.success && response.data) {
+        setMembershipRequests(response.data || []);
       }
     } catch (err) {
-      console.error('Error fetching membership requests:', err);
+      logger.error('Error fetching membership requests', { err });
     }
   };
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !token) return;
+    if (!newTeamName.trim() || !token || !user) return;
     
     try {
       setActionLoading('create');
       setError(null);
       
-      const response = await fetch(`${apiUrl}/teams`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ name: newTeamName.trim() })
+      const response = await createTeam({
+        name: newTeamName.trim(),
+        managerUserId: user.id
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        setTeams(prev => [...prev, data.data]);
+      if (response.success && response.data) {
+        setTeams(prev => [...prev, response.data].filter((t): t is Team => t !== undefined));
         setNewTeamName('');
         setShowCreateTeam(false);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear equipo');
+        throw new Error('Error al crear equipo');
       }
     } catch (err) {
+      logger.error('Error creating team', { err, teamName: newTeamName });
       setError(err instanceof Error ? err.message : 'Error al crear equipo');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleMembershipAction = async (requestId: string, action: 'approve' | 'reject') => {
+  const handleMembershipAction = async (requestId: string, action: 'accept' | 'reject') => {
     if (!token) return;
     
     try {
       setActionLoading(requestId);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/teams/membership-requests/${requestId}/${action}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        setMembershipRequests(prev => prev.filter(req => req.id !== requestId));
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Error al ${action === 'approve' ? 'aprobar' : 'rechazar'} solicitud`);
-      }
+      await respondToMembershipRequest(requestId, action);
+      setMembershipRequests(prev => prev.filter(req => req.id !== requestId));
     } catch (err) {
+      logger.error('Error responding to membership request', { err, requestId, action });
       setError(err instanceof Error ? err.message : 'Error al procesar solicitud');
     } finally {
       setActionLoading(null);
@@ -204,20 +205,20 @@ export default function TeamsPage() {
   // Configuración de columnas para la tabla de solicitudes
   const membershipColumns: Column<MembershipRequest>[] = [
     {
-      key: 'userFullName',
+      key: 'user',
       header: 'Usuario',
       render: (request) => (
         <div>
-          <Text weight="medium">{request.userFullName}</Text>
-          <Text size="sm" color="secondary">{request.userEmail}</Text>
+          <Text weight="medium">{request.user?.fullName || 'N/A'}</Text>
+          <Text size="sm" color="secondary">{request.user?.email || 'N/A'}</Text>
         </div>
       )
     },
     {
-      key: 'userRole',
+      key: 'user',
       header: 'Rol',
       render: (request) => (
-        <Badge variant="default">{request.userRole}</Badge>
+        <Badge variant="default">{request.user?.role || 'N/A'}</Badge>
       )
     },
     {
@@ -238,7 +239,7 @@ export default function TeamsPage() {
             variant="primary"
             size="sm"
             disabled={actionLoading === request.id}
-            onClick={() => handleMembershipAction(request.id, 'approve')}
+            onClick={() => handleMembershipAction(request.id, 'accept')}
           >
             Aprobar
           </Button>
@@ -276,16 +277,21 @@ export default function TeamsPage() {
       <Stack direction="column" gap="lg">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
-              ← Volver al inicio
-            </Link>
-            <Heading level={3}>Equipos</Heading>
+          <Heading level={3}>Equipos</Heading>
+          <div className="flex items-center gap-2">
+            {(['manager','admin'].includes(user?.role || '') && teams.length > 0) && (
+              <Button variant="primary" onClick={handleVincularAsesores}>
+                <Icon name="Users" size={16} className="mr-2" />
+                Vincular asesores
+              </Button>
+            )}
+            {(['manager','admin'].includes(user?.role || '') && teams.length === 0) && (
+              <Button onClick={() => setShowCreateTeam(true)}>
+                <Icon name="plus" size={16} className="mr-2" />
+                Crear Equipo
+              </Button>
+            )}
           </div>
-          <Button onClick={() => setShowCreateTeam(true)}>
-            <Icon name="plus" size={16} className="mr-2" />
-            Crear Equipo
-          </Button>
         </div>
 
         {error && (
@@ -298,53 +304,59 @@ export default function TeamsPage() {
         <Grid cols={1} gap="lg">
           {teams.map((team) => (
             <Card key={team.id} className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base">{team.name}</CardTitle>
-                <Text size="sm" color="secondary">
-                  Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
-                </Text>
-              </CardHeader>
-              <CardContent className="p-4">
-                <Stack direction="column" gap="sm">
-                  <div>
-                    <Text size="sm" weight="medium" color="secondary">
-                      Miembros
-                    </Text>
-                    <Text>
-                      {team.members?.length || 0} miembros
-                    </Text>
-                  </div>
-                  
-                  {team.members && team.members.length > 0 && (
-                    <div>
-                      <Text size="sm" weight="medium" color="secondary">
-                        Miembros activos
+              <CardHeader className="p-4 pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base mb-1">{team.name}</CardTitle>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Text size="xs" color="secondary">
+                        Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
                       </Text>
-                      <Stack direction="column" gap="xs">
-                        {team.members.slice(0, 3).map((member) => (
-                          <Text key={member.id} size="sm">
-                            {member.fullName}
-                          </Text>
-                        ))}
-                        {team.members.length > 3 && (
-                          <Text size="sm" color="secondary">
-                            +{team.members.length - 3} más
-                          </Text>
-                        )}
-                      </Stack>
+                      <span className="text-text-secondary">•</span>
+                      <Text size="xs" color="secondary" weight="medium">
+                        {team.members?.length || 0} miembros
+                      </Text>
                     </div>
-                  )}
-                </Stack>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                {team.members && team.members.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    {team.members.map((member) => (
+                      <div
+                        key={member.id}
+                        className="rounded-md border border-border hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer p-2.5 bg-surface"
+                        onClick={() => router.push(`/teams/${team.id}/member/${member.id}`)}
+                      >
+                        <div className="flex items-start gap-2 mb-1.5">
+                          <Text weight="medium" className="text-sm truncate flex-1 min-w-0">
+                            {member.fullName || member.email}
+                          </Text>
+                          <Badge variant="default" className="text-xs px-1.5 py-0.5 leading-tight flex-shrink-0 mt-0.5">
+                            {member.role}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <Text size="xs" color="secondary" className="truncate flex-1 min-w-0">
+                            {member.email}
+                          </Text>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="flex-shrink-0 px-2 py-1 h-6 text-xs"
+                            onClick={() => {
+                              router.push(`/contacts?advisorId=${member.id}`);
+                            }}
+                          >
+                            CRM
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
-              <CardFooter className="p-4">
-                <Button 
-                  variant="secondary" 
-                  className="w-full"
-                  onClick={() => router.push(`/teams/${team.id}`)}
-                >
-                  Ver detalles
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </Grid>
@@ -416,6 +428,33 @@ export default function TeamsPage() {
                 </ModalFooter>
               </Stack>
             </form>
+          </ModalContent>
+        </Modal>
+
+        {/* Modal vincular asesores */}
+        <Modal open={!!linkModalOpen} onOpenChange={() => setLinkModalOpen(null)}>
+          <ModalHeader>
+            <ModalTitle>Vincular asesores {linkModalOpen ? `a ${linkModalOpen.teamName}` : ''}</ModalTitle>
+            <ModalDescription>Selecciona asesores para enviar invitación al equipo.</ModalDescription>
+          </ModalHeader>
+          <ModalContent>
+            <Stack direction="column" gap="sm">
+              {advisorCandidates.length === 0 && (
+                <Text color="secondary">No hay asesores disponibles para invitar.</Text>
+              )}
+              {advisorCandidates.map((a) => (
+                <div key={a.id} className="flex items-center justify-between border rounded-md px-3 py-2">
+                  <div>
+                    <Text weight="medium">{a.fullName || a.email}</Text>
+                    <Text size="sm" color="secondary">{a.email}</Text>
+                  </div>
+                  <Button size="sm" disabled={inviteLoading === a.id} onClick={() => inviteAdvisor(a.id)}>Invitar</Button>
+                </div>
+              ))}
+            </Stack>
+            <ModalFooter>
+              <Button variant="secondary" onClick={() => setLinkModalOpen(null)}>Cerrar</Button>
+            </ModalFooter>
           </ModalContent>
         </Modal>
       </Stack>

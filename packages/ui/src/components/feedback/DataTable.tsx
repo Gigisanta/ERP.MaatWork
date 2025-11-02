@@ -2,8 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import Icon from '../Icon';
 import { cn } from '../../utils/cn';
-import Button from '../nav/Button';
-import { Checkbox } from '../Checkbox';
+import { Checkbox } from '../forms/Checkbox';
 import EmptyState from './EmptyState';
 import { Spinner } from './Spinner';
 
@@ -92,11 +91,11 @@ export const DataTable = <T extends Record<string, any>>({
     }
   };
 
-  const handleSelectItem = (item: T, checked: boolean) => {
+  const handleSelectItem = (item: T, checked: boolean | 'indeterminate') => {
     const itemKey = String(item[keyField]);
     const newSelected = new Set(selectedItems);
     
-    if (checked) {
+    if (checked === true) {
       newSelected.add(itemKey);
     } else {
       newSelected.delete(itemKey);
@@ -195,8 +194,8 @@ export const DataTable = <T extends Record<string, any>>({
                   <td className="px-4 py-3">
                     <Checkbox
                       checked={selectedItems.has(String(item[keyField]))}
-                      onCheckedChange={(checked) => handleSelectItem(item, checked as boolean)}
-                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={(checked) => handleSelectItem(item, checked)}
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
                       aria-label={`Select ${String(item[keyField])}`}
                     />
                   </td>

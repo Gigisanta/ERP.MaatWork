@@ -25,17 +25,10 @@ export default function NavigationNew() {
 
   const navItems: NavItem[] = [
     { label: 'Inicio', href: '/', icon: 'Home' },
-    { label: 'Contactos', href: '/contacts', icon: 'Users' },
-    { label: 'Pipeline', href: '/pipeline', icon: 'BarChart3' },
+    { label: '📈 Finviz', href: 'https://finviz.com' },
+    { label: '🏦 Productores Balanz', href: 'https://productores.balanz.com?forward=/home' },
+    { label: '🛡️ Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F' },
   ];
-
-  // Add role-based navigation items
-  if (user.role === 'admin') {
-    navItems.push({ label: 'Administración', href: '/admin/users', icon: 'Settings' });
-    navItems.push({ label: 'Equipos', href: '/teams', icon: 'Users' });
-  } else if (user.role === 'manager') {
-    navItems.push({ label: 'Mi Equipo', href: '/teams', icon: 'Users' });
-  }
 
   const headerUser: User = {
     name: user.fullName || user.email,

@@ -3,6 +3,9 @@ import { useRequireAuth } from '../auth/useRequireAuth';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getPipelineBoard, moveContactToStage } from '@/lib/api';
+import { logger } from '../../lib/logger';
+import type { PipelineStageWithContacts } from '@/types';
 import {
   Card,
   CardHeader,
@@ -19,25 +22,8 @@ import {
   Icon,
 } from '@cactus/ui';
 
-interface Contact {
-  id: string;
-  fullName: string;
-  email?: string;
-  phone?: string;
-  nextStep?: string;
-  tags?: Array<{ id: string; name: string; color: string }>;
-}
-
-interface PipelineStage {
-  id: string;
-  name: string;
-  description?: string;
-  order: number;
-  color: string;
-  wipLimit?: number;
-  contacts: Contact[];
-  currentCount: number;
-}
+// Alias para simplificar el código
+type PipelineStage = PipelineStageWithContacts;
 
 export default function PipelinePage() {
   const { user, token, loading } = useRequireAuth();
@@ -49,33 +35,25 @@ export default function PipelinePage() {
   const [movingContactId, setMovingContactId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
   const fetchBoard = useCallback(async () => {
     if (!token) return;
     try {
       setDataLoading(true);
       setError(null);
-      const response = await fetch(`${apiUrl}/pipeline/board`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await getPipelineBoard();
 
-      if (!response.ok) {
+      if (response.success && response.data) {
+        setStages(response.data);
+      } else {
         throw new Error('Failed to fetch pipeline board');
       }
-
-      const data = await response.json();
-      setStages(data.data || []);
     } catch (err) {
-      console.error('Error fetching pipeline board:', err);
+      logger.error('Error fetching pipeline board', { err });
       setError(err instanceof Error ? err.message : 'Error al cargar el pipeline');
     } finally {
       setDataLoading(false);
     }
-  }, [token, apiUrl]);
+  }, [token]);
 
   useEffect(() => {
     if (user && token) {
@@ -124,22 +102,7 @@ export default function PipelinePage() {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/pipeline/move`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ 
-          contactId: contactId,
-          toStageId: targetStageId 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to move contact');
-      }
+      await moveContactToStage(contactId, targetStageId);
 
       // Actualizar el estado local
       setStages(prevStages => {
@@ -162,7 +125,7 @@ export default function PipelinePage() {
         });
       });
     } catch (err) {
-      console.error('Error moving contact:', err);
+      logger.error('Error moving contact', { err, contactId, targetStageId });
       setMoveError(err instanceof Error ? err.message : 'Error al mover contacto');
     } finally {
       setMovingContactId(null);

@@ -4,6 +4,7 @@
 
 import useSWR from 'swr';
 import { useAuth } from '../app/auth/AuthContext';
+import { API_BASE_URL } from './api-url';
 
 // Generic fetcher function with auth headers
 const fetcher = async (url: string, token: string) => {
@@ -19,17 +20,25 @@ const fetcher = async (url: string, token: string) => {
 };
 
 // Hook for contacts list
-export function useContacts() {
+export function useContacts(assignedAdvisorId?: string | null) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
+  
+  // Build URL with query params if assignedAdvisorId is provided
+  const url = assignedAdvisorId 
+    ? `${API_BASE_URL}/contacts?assignedAdvisorId=${assignedAdvisorId}`
+    : `${API_BASE_URL}/contacts`;
+  
+  // Use the full URL as the SWR key to ensure proper cache separation for different advisorIds
+  // This ensures each advisorId gets its own cached result
+  const swrKey = token ? [url, token] : null;
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? [`${apiUrl}/contacts`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    swrKey,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 2000, // Dedupe requests within 2 seconds
+      dedupingInterval: 2000,
     }
   );
   
@@ -44,11 +53,10 @@ export function useContacts() {
 // Hook for pipeline stages
 export function usePipelineStages() {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? [`${apiUrl}/pipeline/stages`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token ? [`${API_BASE_URL}/pipeline/stages`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -67,11 +75,10 @@ export function usePipelineStages() {
 // Hook for advisors
 export function useAdvisors() {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? [`${apiUrl}/users/advisors`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token ? [`${API_BASE_URL}/users/advisors`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -90,11 +97,10 @@ export function useAdvisors() {
 // Hook for tags
 export function useTags(scope: string = 'contact') {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token ? [`${apiUrl}/tags?scope=${scope}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token ? [`${API_BASE_URL}/tags?scope=${scope}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -117,11 +123,10 @@ export function useTags(scope: string = 'contact') {
 // Hook for contact detail
 export function useContactDetail(id: string) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && id ? [`${apiUrl}/contacts/${id}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token && id ? [`${API_BASE_URL}/contacts/${id}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -140,11 +145,10 @@ export function useContactDetail(id: string) {
 // Hook for broker accounts
 export function useBrokerAccounts(contactId: string) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && contactId ? [`${apiUrl}/broker-accounts?contactId=${contactId}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token && contactId ? [`${API_BASE_URL}/broker-accounts?contactId=${contactId}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -163,11 +167,10 @@ export function useBrokerAccounts(contactId: string) {
 // Hook for portfolio assignments
 export function usePortfolioAssignments(contactId: string) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && contactId ? [`${apiUrl}/portfolios/assignments?contactId=${contactId}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token && contactId ? [`${API_BASE_URL}/portfolios/assignments?contactId=${contactId}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -186,11 +189,10 @@ export function usePortfolioAssignments(contactId: string) {
 // Hook for tasks
 export function useTasks(contactId: string) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && contactId ? [`${apiUrl}/tasks?contactId=${contactId}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token && contactId ? [`${API_BASE_URL}/tasks?contactId=${contactId}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -209,11 +211,10 @@ export function useTasks(contactId: string) {
 // Hook for notes
 export function useNotes(contactId: string) {
   const { token } = useAuth();
-  const apiUrl = 'http://localhost:3001';
   
   const { data, error, isLoading, mutate } = useSWR(
-    token && contactId ? [`${apiUrl}/notes?contactId=${contactId}`, token] : null,
-    ([url, token]) => fetcher(url, token),
+    token && contactId ? [`${API_BASE_URL}/notes?contactId=${contactId}`, token] : null,
+    ([url, token]: [string, string]) => fetcher(url, token),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,

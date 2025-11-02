@@ -1,10 +1,16 @@
 // REGLA CURSOR: Sistema de etiquetas - mantener case-insensitive, autocompletado con debounce, validación Zod
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, tags, contactTags, tagRules, segments, segmentMembers, contacts } from '@cactus/db';
-import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessContact, getUserAccessScope, buildContactAccessFilter } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema,
+  idParamSchema,
+  paginationQuerySchema
+} from '../utils/common-schemas';
 
 const router = Router();
 const TAGS_RULES_ENABLED = process.env.TAGS_RULES_ENABLED === 'true';
@@ -13,6 +19,29 @@ const TAGS_RULES_ENABLED = process.env.TAGS_RULES_ENABLED === 'true';
 // Schemas de validación
 // ==========================================================
 
+// Query parameter schemas
+const listTagsQuerySchema = z.object({
+  scope: z.enum(['contact', 'meeting', 'note']).optional(),
+  q: z.string().min(1).max(255).optional(),
+  limit: z.string()
+    .regex(/^\d+$/, 'Limit must be a number')
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(100))
+    .optional()
+    .default('10')
+});
+
+const listRulesQuerySchema = z.object({
+  tagId: z.string().uuid().optional()
+});
+
+const listSegmentsQuerySchema = z.object({
+  includeShared: z.enum(['true', 'false']).optional().default('true')
+});
+
+const segmentContactsQuerySchema = paginationQuerySchema;
+
+// Body schemas
 const createTagSchema = z.object({
   scope: z.enum(['contact', 'meeting', 'note']),
   name: z.string().min(1).max(100),
@@ -41,7 +70,10 @@ const createSegmentSchema = z.object({
 // ==========================================================
 // GET /tags - Listar etiquetas con autocompletado
 // ==========================================================
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', 
+  requireAuth,
+  validate({ query: listTagsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { scope, q, limit = '10' } = req.query;
 
@@ -77,9 +109,12 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // ==========================================================
 // POST /tags - Crear nueva etiqueta (idempotente)
 // ==========================================================
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', 
+  requireAuth,
+  validate({ body: createTagSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createTagSchema.parse(req.body);
+    const validated = req.body;
     const userId = req.user!.id;
 
     // Buscar etiqueta existente (case-insensitive)
@@ -108,9 +143,6 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
     req.log.info({ tagId: newTag.id }, 'tag created');
     res.status(201).json({ data: newTag });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create tag');
     next(err);
   }
@@ -119,12 +151,18 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 // ==========================================================
 // PUT /tags/:id - Actualizar etiqueta
 // ==========================================================
-router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: updateTagSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
     const userRole = req.user!.role;
-    const validated = updateTagSchema.parse(req.body);
+    const validated = req.body;
 
     // Verificar que la etiqueta existe
     const [existingTag] = await db()
@@ -157,9 +195,6 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     req.log.info({ tagId: id }, 'tag updated');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, tagId: req.params.id }, 'failed to update tag');
     next(err);
   }
@@ -209,12 +244,21 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
 // ==========================================================
 // POST /tags/:id/contacts - Asignar etiqueta a contactos
 // ==========================================================
-router.post('/:id/contacts', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+
+const assignTagsSchema = z.object({
+  contactIds: z.array(z.string().uuid()).min(1)
+});
+
+router.post('/:id/contacts', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: assignTagsSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { contactIds } = z.object({
-      contactIds: z.array(z.string().uuid()).min(1)
-    }).parse(req.body);
+    const { contactIds } = req.body;
 
     // Verify user has access to all contacts before adding tags
     const userId = req.user!.id;
@@ -266,9 +310,6 @@ router.post('/:id/contacts', requireAuth, async (req: Request, res: Response, ne
       } 
     });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, tagId: req.params.id }, 'failed to assign tag');
     next(err);
   }
@@ -353,13 +394,22 @@ router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
 // ==========================================================
 // PUT /tags/contacts/:id - Actualizar etiquetas de un contacto
 // ==========================================================
-router.put('/contacts/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+
+const updateContactTagsSchema = z.object({
+  add: z.array(z.union([z.string().uuid(), z.string()])).default([]),
+  remove: z.array(z.string().uuid()).default([])
+});
+
+router.put('/contacts/:id', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    body: updateContactTagsSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { add = [], remove = [] } = z.object({
-      add: z.array(z.union([z.string().uuid(), z.string()])).default([]),
-      remove: z.array(z.string().uuid()).default([])
-    }).parse(req.body);
+    const { add = [], remove = [] } = req.body;
 
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -445,9 +495,6 @@ router.put('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
     req.log.info({ contactId: id, added: tagsToAdd.length, removed: remove.length }, 'contact tags updated');
     res.json({ data: updatedTags });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact tags');
     next(err);
   }
@@ -456,7 +503,10 @@ router.put('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
 // ==========================================================
 // GET /tag-rules - Listar reglas de etiquetas
 // ==========================================================
-router.get('/rules', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/rules', 
+  requireAuth,
+  validate({ query: listRulesQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { tagId } = req.query;
 
@@ -481,9 +531,13 @@ router.get('/rules', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // POST /tag-rules - Crear regla de etiqueta
 // ==========================================================
-router.post('/rules', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/rules', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ body: createTagRuleSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createTagRuleSchema.parse(req.body);
+    const validated = req.body;
     const userId = req.user!.id;
 
     const [newRule] = await db()
@@ -497,9 +551,6 @@ router.post('/rules', requireAuth, requireRole(['manager', 'admin']), async (req
     req.log.info({ ruleId: newRule.id }, 'tag rule created');
     res.status(201).json({ data: newRule });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create tag rule');
     next(err);
   }
@@ -546,7 +597,10 @@ router.post('/rules/:id/evaluate', requireAuth, requireRole(['manager', 'admin']
 // ==========================================================
 // GET /segments - Listar segmentos
 // ==========================================================
-router.get('/segments', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/segments', 
+  requireAuth,
+  validate({ query: listSegmentsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.id;
     const { includeShared = 'true' } = req.query;
@@ -573,9 +627,12 @@ router.get('/segments', requireAuth, async (req: Request, res: Response, next: N
 // ==========================================================
 // POST /segments - Crear nuevo segmento
 // ==========================================================
-router.post('/segments', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/segments', 
+  requireAuth,
+  validate({ body: createSegmentSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createSegmentSchema.parse(req.body);
+    const validated = req.body;
     const userId = req.user!.id;
 
     const [newSegment] = await db()
@@ -590,9 +647,6 @@ router.post('/segments', requireAuth, async (req: Request, res: Response, next: 
     req.log.info({ segmentId: newSegment.id }, 'segment created');
     res.status(201).json({ data: newSegment });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create segment');
     next(err);
   }
@@ -662,7 +716,13 @@ router.post('/segments/:id/refresh', requireAuth, async (req: Request, res: Resp
 // ==========================================================
 // GET /segments/:id/contacts - Listar contactos de segmento
 // ==========================================================
-router.get('/segments/:id/contacts', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/segments/:id/contacts', 
+  requireAuth,
+  validate({ 
+    params: idParamSchema,
+    query: segmentContactsQuerySchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { limit = '50', offset = '0' } = req.query;
@@ -680,7 +740,8 @@ router.get('/segments/:id/contacts', requireAuth, async (req: Request, res: Resp
       .limit(parseInt(limit as string))
       .offset(parseInt(offset as string));
 
-    const contactIds = members.map((m: any) => m.contactId);
+    type SegmentMember = InferSelectModel<typeof segmentMembers>;
+    const contactIds = members.map((m: SegmentMember) => m.contactId);
 
     let contactsList = [];
     if (contactIds.length > 0) {
@@ -725,7 +786,8 @@ router.get('/segments/:id/export', requireAuth, async (req: Request, res: Respon
       .from(segmentMembers)
       .where(eq(segmentMembers.segmentId, id));
 
-    const contactIds = members.map((m: any) => m.contactId);
+    type SegmentMember = InferSelectModel<typeof segmentMembers>;
+    const contactIds = members.map((m: SegmentMember) => m.contactId);
 
     let contactsList = [];
     if (contactIds.length > 0) {
@@ -743,7 +805,7 @@ router.get('/segments/:id/export', requireAuth, async (req: Request, res: Respon
     const headers = ['id', 'fullName', 'email', 'phone', 'pipelineStageId', 'assignedAdvisorId'];
     const csv = [
       headers.join(','),
-      ...contactsList.map((item: any) => headers.map(h => item[h as keyof typeof item] || '').join(','))
+      ...contactsList.map((item: InferSelectModel<typeof contacts>) => headers.map(h => item[h as keyof typeof item] || '').join(','))
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');

@@ -10,7 +10,7 @@ import {
   instruments,
   lookupAssetClass
 } from '@cactus/db/schema';
-import { eq, and, sql, desc, asc } from 'drizzle-orm';
+import { eq, and, sql, desc, asc, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope } from '../auth/authorization';
 import { UserRole } from '../auth/types';
@@ -213,7 +213,17 @@ router.get('/templates/lines/batch', requireAuth, async (req, res) => {
       linesByTemplate[id] = [];
     });
 
-    allLines.forEach(line => {
+    type PortfolioLineWithMetadata = {
+      portfolioId: string;
+      lineId: string;
+      instrumentId: string;
+      targetWeight: string | number;
+      instrumentSymbol: string;
+      instrumentName: string;
+      active: boolean;
+    };
+    
+    allLines.forEach((line: PortfolioLineWithMetadata) => {
       if (linesByTemplate[line.templateId]) {
         linesByTemplate[line.templateId].push({
           id: line.lineId,
@@ -275,7 +285,10 @@ router.get('/templates/:id/lines', requireAuth, async (req, res) => {
       .orderBy(asc(portfolioTemplateLines.targetType), asc(portfolioTemplateLines.targetWeight));
 
     // Calcular suma de pesos para validación
-      const totalWeight = lines.reduce((sum: number, line: any) => sum + Number(line.targetWeight), 0);
+      type LineWithWeight = {
+        targetWeight: string | number;
+      };
+      const totalWeight = lines.reduce((sum: number, line: LineWithWeight) => sum + Number(line.targetWeight), 0);
 
     res.json({
       success: true,
@@ -336,7 +349,10 @@ router.post('/templates/:id/lines', requireAuth, requireRole(['admin', 'manager'
       .from(portfolioTemplateLines)
       .where(eq(portfolioTemplateLines.templateId, templateId));
 
-    const currentTotal = existingLines.reduce((sum: number, line: any) => sum + Number(line.weight), 0);
+    type ExistingLineWithWeight = {
+      weight: string;
+    };
+    const currentTotal = existingLines.reduce((sum: number, line: ExistingLineWithWeight) => sum + Number(line.weight), 0);
     if (currentTotal + weight > 1.0) {
       return res.status(400).json({ 
         error: `La suma de pesos excedería 100%. Peso actual: ${(currentTotal * 100).toFixed(2)}%, nuevo peso: ${(weight * 100).toFixed(2)}%` 

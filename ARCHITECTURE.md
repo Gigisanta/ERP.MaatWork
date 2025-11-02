@@ -1,14 +1,16 @@
 # CACTUS Monorepo — Arquitectura y Decisiones
 
 ## Estructura general
-- Monorepo pnpm + Turborepo
-- Apps:
+- **Monorepo:** `pnpm workspaces` + `turborepo`
+- **Apps:**
   - API: `apps/api` (Express 5 + TypeScript + Pino + Helmet + CORS)
   - Web: `apps/web` (Next.js App Router)
   - Analytics: `apps/analytics-service` (Python + yfinance)
-- Paquetes:
-  - DB: `packages/db` (Drizzle ORM + PostgreSQL)
-  - UI: `packages/ui` (Design system)
+- **Packages:**
+  - DB: `packages/db` (Drizzle ORM + PostgreSQL 16)
+  - UI: `packages/ui` (Design System + React Components)
+- **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
+- **Requisitos:** Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x), pnpm >=9.0.0
 
 ## Decisiones claves recientes
 // AI_DECISION: Endurecer validación de variables de entorno
@@ -44,22 +46,132 @@
 - Error handler devuelve JSON y oculta detalles en prod
 - Shutdown graceful (SIGTERM/SIGINT) con timeout de 10s
 
+## Portfolio Systems
+
+**AI_DECISION: Clarificar coexistencia de Portfolio Templates (CRM) y Epic-D (Analytics)**
+**Justificación: Evitar confusión sobre dos sistemas con propósitos diferentes pero relacionados**
+**Impacto: Equipo entiende cuándo usar cada sistema**
+
+### Portfolio Templates (CRM Legacy - Activo)
+- **Propósito:** Modelos de inversión predefinidos para asignar a clientes
+- **Ubicación Backend:** `apps/api/src/routes/portfolio.ts` (endpoints `/portfolios/templates`)
+- **DB Tables:** `portfolioTemplates`, `portfolioTemplateLines`, `clientPortfolioAssignments`
+- **Usado por:** Advisors/Managers para asignar estrategias de inversión a contactos
+- **Features:**
+  - Crear templates con líneas de inversión (instrumentos o asset classes)
+  - Validar que pesos sumen 100%
+  - Asignar templates a contactos (clientes)
+  - Ver historial de asignaciones
+- **Estado:** ✅ **Activo** - Feature operativa del CRM
+
+**Endpoints Portfolio Templates:**
+```
+GET    /portfolios/templates              # Listar templates
+POST   /portfolios/templates              # Crear template
+PUT    /portfolios/templates/:id          # Editar template
+GET    /portfolios/templates/:id/lines    # Ver líneas
+POST   /portfolios/templates/:id/lines    # Agregar línea
+DELETE /portfolios/templates/:id/lines/:lineId
+GET    /portfolios/templates/lines/batch  # Batch fetch
+
+POST   /portfolios/assignments            # Asignar template a contacto
+GET    /portfolios/assignments/:contactId # Ver asignaciones de contacto
+```
+
+### Portfolios & Benchmarks (Epic-D - Activo)
+- **Propósito:** Sistema de analytics para performance y comparación de instrumentos
+- **Ubicación Backend:** `apps/api/src/routes/benchmarks.ts`, `apps/api/src/routes/instruments.ts`
+- **DB Tables:** `instruments`, `benchmarks`, `benchmark_components`, `metrics`
+- **Usado por:** Sistema de analytics para cálculos financieros
+- **Features:**
+  - Gestión de instrumentos financieros (acciones, ETFs, bonos)
+  - Definición de benchmarks (S&P 500, MSCI World, etc.)
+  - Cálculo de performance (Python microservice)
+  - Comparación de portfolios vs benchmarks
+- **Estado:** ✅ **Activo** - Feature nueva de analytics
+
+**Endpoints Epic-D:**
+```
+GET    /benchmarks                        # Listar benchmarks
+POST   /benchmarks                        # Crear benchmark
+GET    /benchmarks/:id/components         # Ver componentes
+POST   /benchmarks/:id/components         # Agregar componente
+
+GET    /instruments                       # Listar instrumentos
+POST   /instruments                       # Crear instrumento
+GET    /instruments/:symbol/price         # Precio actual
+
+POST   /analytics/performance             # Calcular performance
+POST   /analytics/compare                 # Comparar portfolios
+```
+
+### Relación entre Sistemas
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CRM Legacy System                        │
+│                                                             │
+│  Portfolio Templates → Define QUÉ instrumentos recomendar   │
+│  - Template: "Conservador"                                  │
+│    • 60% Bonos (asset class)                               │
+│    • 30% Acciones AAPL (instrumento)                       │
+│    • 10% Cash                                              │
+│                                                             │
+│  Asignación: Contact ← Template                            │
+└────────────────┬────────────────────────────────────────────┘
+                 │
+                 │ Referencia instrumentos
+                 ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Epic-D Analytics                         │
+│                                                             │
+│  Instruments & Benchmarks → Analiza CÓMO performan         │
+│  - Instrumento: AAPL                                       │
+│    • Precio actual                                         │
+│    • Performance histórica                                 │
+│    • Volatilidad, Sharpe ratio                            │
+│                                                             │
+│  - Benchmark: S&P 500                                      │
+│    • Comparación con portfolios                            │
+│    • Drawdown, correlación                                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**En resumen:**
+- **Templates (CRM)**: Receta de inversión para asignar a clientes
+- **Epic-D**: Motor de análisis financiero con datos de mercado
+- **Ambos coexisten**: Templates referencian instrumentos que Epic-D analiza
+
 ## Frontend (Web)
-- App Router; islas cliente para interactividad
-- Auth: token en localStorage + cookie corta para middleware
-- CSP ajustada por entorno
+- **Next.js App Router:** Server/Client Components
+- **Pattern Client Islands:** Extract interactive sections into small components (< 100 lines)
+- **Auth:** Token en localStorage + cookie corta para middleware
+- **Data Fetching:** SWR para client-side mutations
+- **CSP:** Ajustada por entorno (desarrollo vs producción)
 
 ## DB (Drizzle)
-- `packages/db/migrations` es la fuente de verdad
-- Seeds idempotentes; `db:init` compone seeds esenciales
-- Prohibido usar `push` en CI/producción
+- **Schema:** `packages/db/src/schema.ts` (definiciones de tablas)
+- **Migraciones:** `packages/db/migrations` es la fuente de verdad
+- **Flujo:** Modificar schema → `pnpm -F @cactus/db generate` → `pnpm -F @cactus/db migrate`
+- **Seeds:** Idempotentes; `pnpm -F @cactus/db seed:all` compone seeds esenciales
+- **Prohibido:** Usar `drizzle-kit push` en CI/producción (es destructivo)
 
 ## Analytics (Python)
 - yfinance con backoff exponencial y cache en memoria (TTL)
 - Endpoints consumidos por API (`/search`, `/prices/*`)
 
-## UI
-- Componentes con props accesibles (`aria-*`) y tamaños acotados
+## UI (@cactus/ui)
+
+**Estructura:**
+- **Componentes:** Organizados por categoría (`forms/`, `feedback/`, `nav/`)
+- **Primitives:** Building blocks (Box, Text, Stack, Grid, etc.)
+- **Exports específicos:** NO usar `export *` (tree-shaking)
+- **Tests:** Co-ubicados con componentes (`Component.test.tsx`)
+
+**Reglas:**
+- ✅ Componentes accesibles (`aria-*`) y tamaños acotados
+- ✅ Tipos exportados explícitamente (`type ComponentProps`)
+- ✅ Build genera `dist/` con `.js` y `.d.ts`
 
 ## Variables de entorno
 - API: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`, `JWT_SECRET`, `JWT_EXPIRES_IN`

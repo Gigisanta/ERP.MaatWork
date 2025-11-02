@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
 const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
@@ -26,8 +26,12 @@ test.describe('Auth and protected routes', () => {
 
     // Cookie for middleware should be present
     const cookies = await context.cookies();
-    const tokenCookie = cookies.find(c => c.name === 'token');
+    const tokenCookie = cookies.find((c: { name: string; value: string }) => c.name === 'token');
     expect(tokenCookie).toBeDefined();
   });
 });
+
+
+
+
 

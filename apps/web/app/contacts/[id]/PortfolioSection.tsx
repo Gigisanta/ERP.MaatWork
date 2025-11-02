@@ -19,23 +19,16 @@ import {
   EmptyState,
   Alert,
 } from '@cactus/ui';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { usePortfolioAssignments } from '../../../lib/api-hooks';
+import { assignPortfolioToContact, removePortfolioAssignment, updatePortfolioAssignmentStatus } from '@/lib/api';
+import { logger } from '../../../lib/logger';
+
+import type { PortfolioAssignment } from '@/types';
 
 // AI_DECISION: Extracted to client island for portfolio management isolation
 // Justificación: Server component for static data, client only where needed
 // Impacto: Reduces First Load JS ~400KB → ~150KB for this route
-
-interface PortfolioAssignment {
-  id: string;
-  contactId: string;
-  templateId: string;
-  templateName: string;
-  status: 'active' | 'paused' | 'ended';
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-  createdAt: string;
-}
 
 interface PortfolioSectionProps {
   contactId: string;
@@ -58,6 +51,20 @@ export default function PortfolioSection({
   const { portfolioAssignments, error, isLoading, mutate } = usePortfolioAssignments(contactId);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estado para ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'default';
+  }>({
+    open: false,
+    title: '',
+    onConfirm: () => {}
+  });
+
   const [newAssignment, setNewAssignment] = useState({
     templateId: '',
     templateName: '',
@@ -67,71 +74,44 @@ export default function PortfolioSection({
   const handleAssignPortfolio = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`http://localhost:3001/contacts/${contactId}/portfolio-assignments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...newAssignment,
-          startDate: new Date().toISOString()
-        })
+      await assignPortfolioToContact(contactId, {
+        ...newAssignment,
+        startDate: new Date().toISOString()
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to assign portfolio');
-      }
 
       await mutate(); // Refresh data
       setShowAssignModal(false);
       setNewAssignment({ templateId: '', templateName: '', notes: '' });
     } catch (err) {
-      console.error('Error assigning portfolio:', err);
+      logger.error('Error assigning portfolio', { err, contactId, assignment: newAssignment });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUnassignPortfolio = async (assignmentId: string) => {
-    if (!confirm('¿Estás seguro de que quieres desasignar este portfolio?')) return;
-
-    try {
-      const response = await fetch(`http://localhost:3001/portfolio-assignments/${assignmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+  const handleUnassignPortfolio = (assignmentId: string) => {
+    setConfirmDialog({
+      open: true,
+      title: 'Desasignar portfolio',
+      description: '¿Estás seguro de que quieres desasignar este portfolio?',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await removePortfolioAssignment(assignmentId);
+          await mutate(); // Refresh data
+        } catch (err) {
+          logger.error('Error unassigning portfolio', { err, assignmentId });
         }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to unassign portfolio');
       }
-
-      await mutate(); // Refresh data
-    } catch (err) {
-      console.error('Error unassigning portfolio:', err);
-    }
+    });
   };
 
   const handleUpdateStatus = async (assignmentId: string, newStatus: 'active' | 'paused' | 'ended') => {
     try {
-      const response = await fetch(`http://localhost:3001/portfolio-assignments/${assignmentId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update portfolio status');
-      }
-
+      await updatePortfolioAssignmentStatus(assignmentId, newStatus);
       await mutate(); // Refresh data
     } catch (err) {
-      console.error('Error updating portfolio status:', err);
+      logger.error('Error updating portfolio assignment status', { err, assignmentId, newStatus });
     }
   };
 
@@ -195,9 +175,11 @@ export default function PortfolioSection({
                         {getStatusLabel(assignment.status)}
                       </Badge>
                     </div>
-                    <Text size="sm" color="secondary">
-                      Inicio: {new Date(assignment.startDate).toLocaleDateString()}
-                    </Text>
+                    {assignment.startDate && (
+                      <Text size="sm" color="secondary">
+                        Inicio: {new Date(assignment.startDate).toLocaleDateString()}
+                      </Text>
+                    )}
                     {assignment.endDate && (
                       <Text size="sm" color="secondary">
                         Fin: {new Date(assignment.endDate).toLocaleDateString()}
@@ -299,6 +281,18 @@ export default function PortfolioSection({
           </Button>
         </ModalFooter>
       </Modal>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant || 'default'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+      />
     </Card>
   );
 }

@@ -3,6 +3,9 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { logger } from '../../../lib/logger';
+import { createContact, getPipelineStages, getAdvisors } from '@/lib/api';
+import type { PipelineStage, Advisor } from '@/types';
 import {
   Card,
   CardHeader,
@@ -19,22 +22,6 @@ import {
   Breadcrumbs,
   BreadcrumbItem,
 } from '@cactus/ui';
-
-interface PipelineStage {
-  id: string;
-  name: string;
-  description?: string;
-  order: number;
-  color: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  fullName: string;
-  role: string;
-  teamId?: string;
-}
 
 interface FormData {
   firstName: string;
@@ -65,12 +52,10 @@ export default function NewContactPage() {
   const { user, token, loading } = useRequireAuth();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
-  const [advisors, setAdvisors] = useState<User[]>([]);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   useEffect(() => {
     if (user && token) {
@@ -90,36 +75,24 @@ export default function NewContactPage() {
   };
 
   const fetchPipelineStages = async () => {
-    if (!token) return;
-    
     try {
-      const response = await fetch(`${apiUrl}/pipeline/stages`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPipelineStages(data.data || []);
+      const response = await getPipelineStages();
+      if (response.success && response.data) {
+        setPipelineStages(response.data || []);
       }
     } catch (err) {
-      console.error('Error fetching pipeline stages:', err);
+      logger.error('Error fetching pipeline stages', { err });
     }
   };
 
   const fetchAdvisors = async () => {
-    if (!token) return;
-    
     try {
-      const response = await fetch(`${apiUrl}/users/advisors`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setAdvisors(data.data || []);
+      const response = await getAdvisors();
+      if (response.success && response.data) {
+        setAdvisors(response.data || []);
       }
     } catch (err) {
-      console.error('Error fetching advisors:', err);
+      logger.error('Error fetching advisors', { err });
     }
   };
 
@@ -148,34 +121,46 @@ export default function NewContactPage() {
       setDataLoading(true);
       setError(null);
       
-      const response = await fetch(`${apiUrl}/contacts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          email: formData.email.trim() || null,
-          phone: formData.phone.trim() || null,
-          dni: formData.dni.trim() || null,
-          pipelineStageId: formData.pipelineStageId || null,
-          source: formData.source.trim() || null,
-          riskProfile: formData.riskProfile || null,
-          notes: formData.notes.trim() || null
-        })
+      const response = await createContact({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        dni: formData.dni.trim() || null,
+        pipelineStageId: formData.pipelineStageId || null,
+        source: formData.source.trim() || null,
+        riskProfile: formData.riskProfile || null,
+        notes: formData.notes.trim() || null
       });
       
-      if (response.ok) {
+      if (response.success && response.data) {
+        const createdContact = response.data;
+        
+        // Justificación: Mejor observabilidad y correlación con logs de API
+        // Impacto: Logs estructurados y rastreables en producción
+        logger.info('Contact created successfully', {
+          contactId: createdContact?.id,
+          assignedAdvisorId: createdContact?.assignedAdvisorId,
+          expectedAdvisorId: user?.id,
+          userRole: user?.role
+        });
+        
+        // Verify assignment for advisors
+        if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
+          logger.warn('Advisor mismatch on contact creation', {
+            expected: user.id,
+            actual: createdContact?.assignedAdvisorId,
+            contactId: createdContact?.id
+          });
+        }
+        
         setSuccess(true);
         setFormData(initialFormData);
         setTimeout(() => {
           router.push('/contacts');
         }, 2000);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear contacto');
+        throw new Error(response.error || 'Error al crear contacto');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear contacto');

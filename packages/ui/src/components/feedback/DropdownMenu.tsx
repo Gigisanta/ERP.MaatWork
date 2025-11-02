@@ -1,6 +1,5 @@
 import React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import Icon from '../Icon';
 import { cn } from '../../utils/cn';
 
 export interface DropdownMenuProps {

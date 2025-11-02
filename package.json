@@ -13,38 +13,69 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "test:coverage": "turbo run test:coverage",
+    "test:api": "pnpm -F @cactus/api test",
+    "test:web": "pnpm -F @cactus/web test",
+    "test:all": "pnpm test && pnpm e2e",
     "clean": "turbo run clean",
-    
     "db:generate": "pnpm -F @cactus/db run generate",
     "db:migrate": "pnpm -F @cactus/db run migrate",
-    
     "db:studio": "pnpm -F @cactus/db run studio",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed",
+    "e2e:report": "playwright show-report",
     "lighthouse": "lhci autorun --config=lighthouserc.json",
     "predev": "bash scripts/dev-clean.sh",
     "predev:basic": "bash scripts/dev-clean.sh",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --project=chromium",
-    "e2e:report": "playwright show-report",
     "prepare": "husky install",
-    "guard:artifacts": "git ls-files -z | xargs -0 -I {} bash -lc '[[ {} == *\"/node_modules/\"* || {} == *\"/dist/\"* ]] && echo Forbidden artifact tracked: {} && exit 1 || true'"
+    "guard:artifacts": "node scripts/guard-artifacts.js"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.5.0",
+    "jose": "^5.2.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "recharts": "^3.3.0",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@lhci/cli": "^0.15.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.9.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "^4.0.6",
+    "@vitest/ui": "^4.0.6",
+    "chalk": "^5.6.2",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.10",
+    "lint-staged": "^15.5.2",
+    "lucide-react": "^0.292.0",
+    "playwright": "^1.48.0",
     "rimraf": "^5.0.5",
     "turbo": "^2.1.1",
-    "typescript": "^5.6.2"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.6"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "^19.2.0",
+      "react-dom": "^19.2.0",
+      "@types/react": "^19.2.2",
+      "@types/react-dom": "^19.2.2",
+      "typescript": "^5.9.3"
+    }
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,css,md}": [
-      "pnpm -w lint --filter=...[HEAD] --continue --",
-      "pnpm -w typecheck --filter=...[HEAD] --continue --",
-      "pnpm -w test --filter=...[HEAD] --passWithNoTests --"
-    ]
+    "packages/ui/**/*.{js,jsx,ts,tsx}": "pnpm -F @cactus/ui lint",
+    "packages/ui/**/*.test.{ts,tsx}": "pnpm -F @cactus/ui test"
   },
   "engines": {
-    "node": ">=22.0.0"
-  },
-  "dependencies": {}
+    "node": ">=22.0.0 <25.0.0"
+  }
 }

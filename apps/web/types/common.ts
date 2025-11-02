@@ -6,8 +6,58 @@
  * Impacto: Código más organizado y escalable
  */
 
+// ==========================================================
+// Tipos Base - Entidades comunes
+// ==========================================================
+
 /**
- * Respuesta estándar de la API
+ * Entidad base con identificador único
+ */
+export interface BaseEntity {
+  id: string;
+}
+
+/**
+ * Entidad con timestamps estándar
+ */
+export interface TimestampedEntity extends BaseEntity {
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Entidad con timestamps opcionales (para casos de creación)
+ */
+export interface TimestampedEntityOptional extends BaseEntity {
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ==========================================================
+// Utility Types - Patrones comunes
+// ==========================================================
+
+/**
+ * Utility type para crear tipos de Request a partir de entidades
+ * Omite campos automáticos (id, createdAt, updatedAt) y hace opcionales los campos opcionales
+ */
+export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'> & {
+  // Hace opcionales todos los campos que son opcionales en el tipo original
+  [K in keyof T]?: T[K] extends string | number | boolean | null | undefined
+    ? T[K]
+    : T[K] extends Date
+    ? string | Date
+    : T[K];
+};
+
+/**
+ * Utility type para actualizar entidades
+ * Hace todos los campos opcionales excepto los que se deben mantener requeridos
+ */
+export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+
+/**
+ * Tipo para respuestas de API con data genérica
  */
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -19,6 +69,17 @@ export interface ApiResponse<T = unknown> {
 }
 
 /**
+ * Respuesta con paginación
+ */
+export interface PaginatedResponse<T> extends ApiResponse<T> {
+  pagination: Pagination;
+}
+
+// ==========================================================
+// Tipos de Soporte Común
+// ==========================================================
+
+/**
  * Paginación
  */
 export interface Pagination {
@@ -26,13 +87,6 @@ export interface Pagination {
   limit: number;
   total: number;
   totalPages: number;
-}
-
-/**
- * Respuesta con paginación
- */
-export interface PaginatedResponse<T> extends ApiResponse<T> {
-  pagination: Pagination;
 }
 
 /**
@@ -78,4 +132,3 @@ export interface LoadingState {
   isLoading: boolean;
   error?: string | null;
 }
-

@@ -36,7 +36,17 @@ router.post('/client', async (req: Request, res: Response, next: NextFunction) =
 
   try {
     // Validar si es un batch de logs o un log individual
-    let logsToProcess: any[];
+    type LogEntryToProcess = {
+      id: string;
+      message: string;
+      context: Record<string, unknown>;
+      level: string;
+      userId: string | null;
+      userRole: string | null;
+      createdAt: Date;
+    };
+    
+    let logsToProcess: LogEntryToProcess[];
     
     if (Array.isArray(req.body)) {
       // Batch de logs
@@ -63,7 +73,7 @@ router.post('/client', async (req: Request, res: Response, next: NextFunction) =
         context: sanitizedContext,
         source: 'client',
         receivedAt: new Date().toISOString(),
-        requestId: req.headers['x-request-id'] || (req as any).requestId
+        requestId: req.headers['x-request-id'] || req.requestId
       };
 
       // Loggear usando el logger del servidor
@@ -140,7 +150,7 @@ router.get('/health', (req: Request, res: Response) => {
 /**
  * Sanitizar contexto de logs para remover datos sensibles
  */
-function sanitizeLogContext(context: Record<string, any>): Record<string, any> {
+function sanitizeLogContext(context: Record<string, unknown>): Record<string, unknown> {
   const sensitiveKeys = [
     'password', 'token', 'secret', 'key', 'auth', 'authorization',
     'cookie', 'session', 'jwt', 'bearer', 'apiKey', 'accessToken',
@@ -149,7 +159,7 @@ function sanitizeLogContext(context: Record<string, any>): Record<string, any> {
 
   const sanitized = { ...context };
 
-  function sanitizeValue(key: string, value: any): any {
+  function sanitizeValue(key: string, value: unknown): unknown {
     if (typeof value === 'string') {
       // Si la clave contiene palabras sensibles, redactar el valor
       const isSensitive = sensitiveKeys.some(sensitive => 
@@ -172,8 +182,8 @@ function sanitizeLogContext(context: Record<string, any>): Record<string, any> {
       if (Array.isArray(value)) {
         return value.map((item, index) => sanitizeValue(`${key}[${index}]`, item));
       } else {
-        const sanitizedObj: any = {};
-        for (const [objKey, objValue] of Object.entries(value)) {
+        const sanitizedObj: Record<string, unknown> = {};
+        for (const [objKey, objValue] of Object.entries(value as Record<string, unknown>)) {
           sanitizedObj[objKey] = sanitizeValue(objKey, objValue);
         }
         return sanitizedObj;

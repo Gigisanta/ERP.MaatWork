@@ -7,6 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { z } from 'zod';
+import { AttachmentInsert } from '../types/routes';
 
 const router = Router();
 
@@ -29,7 +30,7 @@ const storage = multer.diskStorage({
     try {
       await fs.mkdir(entityDir, { recursive: true });
       cb(null, entityDir);
-    } catch (err: any) {
+    } catch (err: unknown) {
       cb(err, entityDir);
     }
   },
@@ -42,7 +43,7 @@ const storage = multer.diskStorage({
 });
 
 // Filtro de tipos de archivo permitidos
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedMimeTypes = [
     'image/jpeg',
     'image/png',
@@ -121,7 +122,7 @@ router.post(
       // Crear registros de adjuntos en la base de datos
       const newAttachments = [];
       for (const file of req.files) {
-        const attachmentData: any = {
+        const attachmentData: AttachmentInsert = {
           fileName: file.originalname,
           filePath: file.path,
           mimeType: file.mimetype,

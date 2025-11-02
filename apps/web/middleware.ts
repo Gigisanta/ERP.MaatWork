@@ -24,8 +24,22 @@ const publicRoutes = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  
-  
+  // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
+  if (pathname === '/login') {
+    const token = request.cookies.get('token')?.value;
+    if (token) {
+      try {
+        const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
+        const secret = new TextEncoder().encode(JWT_SECRET);
+        await jwtVerify(token, secret);
+        const redirect = request.nextUrl.searchParams.get('redirect') || '/';
+        return NextResponse.redirect(new URL(redirect, request.url));
+      } catch {
+        // si el token es inválido/expirado, seguimos al login normal
+      }
+    }
+  }
+
   // Si es una ruta pública, permitir acceso
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))) {
     return NextResponse.next();

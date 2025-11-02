@@ -1,10 +1,16 @@
 // REGLA CURSOR: Pipeline Kanban - mantener RBAC, data isolation, validación Zod, logging con req.log
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
-import { eq, desc, and, isNull, sql, count, avg, sum, inArray } from 'drizzle-orm';
+import { eq, desc, and, isNull, sql, count, avg, sum, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { 
+  uuidSchema,
+  idParamSchema,
+  dateSchema
+} from '../utils/common-schemas';
 
 const router = Router();
 
@@ -12,6 +18,25 @@ const router = Router();
 // Schemas de validación
 // ==========================================================
 
+// Query parameter schemas
+const boardQuerySchema = z.object({
+  assignedAdvisorId: z.string().uuid().optional(),
+  assignedTeamId: z.string().uuid().optional()
+});
+
+const metricsQuerySchema = z.object({
+  fromDate: dateSchema.optional(),
+  toDate: dateSchema.optional(),
+  assignedAdvisorId: z.string().uuid().optional(),
+  assignedTeamId: z.string().uuid().optional()
+});
+
+const metricsExportQuerySchema = z.object({
+  fromDate: dateSchema.optional(),
+  toDate: dateSchema.optional()
+});
+
+// Body schemas
 const createStageSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().nullable(),
@@ -48,9 +73,14 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     // AI_DECISION: Replace N+2 loop with single GROUP BY query for 80% latency reduction
     // Justificación: Promise.all with individual queries creates N+2 pattern (1 for stages + N for counts)
     // Impacto: API p95 reduction from ~80ms → ~15ms for 7 stages
-    const stageIds = stages.map((stage: any) => stage.id);
+    type PipelineStage = InferSelectModel<typeof pipelineStages>;
+    const stageIds = stages.map((stage: PipelineStage) => stage.id);
     
     // Single query to get counts for all stages at once
+    type StageCount = {
+      pipelineStageId: string | null;
+      count: number | bigint;
+    };
     const stageCounts = stageIds.length > 0 ? await db()
       .select({
         pipelineStageId: contacts.pipelineStageId,
@@ -62,15 +92,15 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
         isNull(contacts.deletedAt),
         accessFilter.whereClause
       ))
-      .groupBy(contacts.pipelineStageId) : [];
+      .groupBy(contacts.pipelineStageId) as StageCount[] : [];
 
     // Create a map for O(1) lookup
     const countsMap = new Map(
-      stageCounts.map((sc: any) => [sc.pipelineStageId, Number(sc.count)])
+      stageCounts.map((sc: StageCount) => [sc.pipelineStageId, Number(sc.count)])
     );
 
     // Merge counts with stages
-    const stagesWithCounts = stages.map((stage: any) => ({
+    const stagesWithCounts = stages.map((stage: PipelineStage) => ({
       ...stage,
       contactCount: countsMap.get(stage.id) || 0
     }));
@@ -85,9 +115,13 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
 // ==========================================================
 // POST /pipeline/stages - Crear nueva etapa
 // ==========================================================
-router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/stages', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ body: createStageSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createStageSchema.parse(req.body);
+    const validated = req.body;
 
     const [newStage] = await db()
       .insert(pipelineStages)
@@ -97,9 +131,6 @@ router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (re
     req.log.info({ stageId: newStage.id }, 'pipeline stage created');
     res.status(201).json({ data: newStage });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create pipeline stage');
     next(err);
   }
@@ -108,10 +139,17 @@ router.post('/stages', requireAuth, requireRole(['manager', 'admin']), async (re
 // ==========================================================
 // PUT /pipeline/stages/:id - Actualizar etapa
 // ==========================================================
-router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.put('/stages/:id', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ 
+    params: idParamSchema,
+    body: updateStageSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const validated = updateStageSchema.parse(req.body);
+    const validated = req.body;
 
     const [updated] = await db()
       .update(pipelineStages)
@@ -129,9 +167,6 @@ router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async 
     req.log.info({ stageId: id }, 'pipeline stage updated');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, stageId: req.params.id }, 'failed to update pipeline stage');
     next(err);
   }
@@ -140,7 +175,10 @@ router.put('/stages/:id', requireAuth, requireRole(['manager', 'admin']), async 
 // ==========================================================
 // GET /pipeline/board - Obtener board kanban completo
 // ==========================================================
-router.get('/board', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/board', 
+  requireAuth,
+  validate({ query: boardQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { assignedAdvisorId, assignedTeamId } = req.query;
 
@@ -153,7 +191,7 @@ router.get('/board', requireAuth, async (req: Request, res: Response, next: Next
 
     // Para cada etapa, obtener contactos
     const board = await Promise.all(
-      stages.map(async (stage: any) => {
+      stages.map(async (stage: PipelineStage) => {
         const conditions = [
           eq(contacts.pipelineStageId, stage.id),
           isNull(contacts.deletedAt)
@@ -190,9 +228,12 @@ router.get('/board', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // POST /pipeline/move - Mover contacto entre etapas
 // ==========================================================
-router.post('/move', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/move', 
+  requireAuth,
+  validate({ body: moveContactSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { contactId, toStageId, reason } = moveContactSchema.parse(req.body);
+    const { contactId, toStageId, reason } = req.body;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -279,9 +320,6 @@ router.post('/move', requireAuth, async (req: Request, res: Response, next: Next
     req.log.info({ contactId, fromStage: contact.pipelineStageId, toStage: toStageId }, 'contact moved in pipeline');
     res.json({ data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to move contact in pipeline');
     next(err);
   }
@@ -290,7 +328,10 @@ router.post('/move', requireAuth, async (req: Request, res: Response, next: Next
 // ==========================================================
 // GET /pipeline/metrics - Obtener métricas de conversión
 // ==========================================================
-router.get('/metrics', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/metrics', 
+  requireAuth,
+  validate({ query: metricsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
       fromDate,
@@ -308,7 +349,7 @@ router.get('/metrics', requireAuth, async (req: Request, res: Response, next: Ne
 
     // Métricas por etapa
     const stageMetrics = await Promise.all(
-      stages.map(async (stage: any) => {
+      stages.map(async (stage: PipelineStage) => {
         // Total de contactos que entraron a esta etapa
         const historyConditions = [eq(pipelineStageHistory.toStage, stage.id)];
         
@@ -404,7 +445,10 @@ router.get('/metrics', requireAuth, async (req: Request, res: Response, next: Ne
 // ==========================================================
 // GET /pipeline/metrics/export - Exportar métricas
 // ==========================================================
-router.get('/metrics/export', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/metrics/export', 
+  requireAuth,
+  validate({ query: metricsExportQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { fromDate, toDate } = req.query;
 
@@ -414,7 +458,16 @@ router.get('/metrics/export', requireAuth, async (req: Request, res: Response, n
       .where(eq(pipelineStages.isActive, true))
       .orderBy(pipelineStages.order);
 
-    const metrics: any[] = [];
+    type StageMetric = {
+      stageId: string;
+      stageName: string;
+      entered: number;
+      exited: number;
+      averageTimeInDays: number;
+      totalValue: number;
+    };
+    
+    const metrics: StageMetric[] = [];
 
     for (const stage of stages) {
       const historyConditions = [eq(pipelineStageHistory.toStage, stage.id)];

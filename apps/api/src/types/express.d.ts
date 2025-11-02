@@ -6,6 +6,7 @@ declare global {
     interface Request {
       user?: AuthUser;
       log?: Logger;
+      requestId?: string;
     }
   }
 }

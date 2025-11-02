@@ -1,0 +1,98 @@
+/**
+ * Tipos relacionados con contactos
+ */
+
+import type { TimestampedEntity } from './common';
+
+/**
+ * Tag simplificado para contacto
+ */
+export interface ContactTag {
+  id: string;
+  name: string;
+  color: string | null;
+  icon?: string | null;
+}
+
+/**
+ * Tipos de valores permitidos para actualizar campos de contacto
+ */
+export type ContactFieldValue = string | number | boolean | null | Date;
+
+/**
+ * Contacto base - extiende TimestampedEntity
+ */
+export interface Contact extends TimestampedEntity {
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email?: string | null;
+  phone?: string | null;
+  dni?: string | null;
+  country?: string | null;
+  pipelineStageId?: string | null;
+  assignedAdvisorId?: string | null;
+  assignedTeamId?: string | null;
+  source?: string | null;
+  riskProfile?: string | null;
+  nextStep?: string | null;
+  notes?: string | null;
+  customFields?: Record<string, ContactFieldValue>;
+  contactLastTouchAt?: string | null;
+  pipelineStageUpdatedAt?: string | null;
+  deletedAt?: string | null;
+  version?: number;
+  tags?: ContactTag[];
+}
+
+/**
+ * Nombres de campos válidos para actualizar contacto
+ */
+export type ContactFieldName = 
+  | 'firstName'
+  | 'lastName'
+  | 'email'
+  | 'phone'
+  | 'phoneSecondary'
+  | 'whatsapp'
+  | 'address'
+  | 'city'
+  | 'country'
+  | 'dateOfBirth'
+  | 'dni'
+  | 'pipelineStageId'
+  | 'source'
+  | 'riskProfile'
+  | 'assignedAdvisorId'
+  | 'assignedTeamId'
+  | 'nextStep'
+  | 'notes';
+
+/**
+ * Campo de actualización de contacto
+ */
+export interface ContactFieldUpdate {
+  field: ContactFieldName | string; // string para flexibilidad con customFields
+  value: ContactFieldValue;
+}
+
+/**
+ * Request para crear contacto - usando Pick para campos requeridos
+ */
+export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> {
+  email?: string | null;
+  phone?: string | null;
+  dni?: string | null;
+  pipelineStageId?: string | null;
+  source?: string | null;
+  riskProfile?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Request para actualizar contacto
+ */
+export interface UpdateContactRequest {
+  fields?: ContactFieldUpdate[];
+  [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
+}
