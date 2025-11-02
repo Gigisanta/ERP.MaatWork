@@ -1,8 +1,9 @@
 import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './auth/AuthContext';
-import { ThemeProvider } from '@cactus/ui';
+import ThemeProviderWrapper from './components/ThemeProviderWrapper';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
+import DebugConsole from './components/DebugConsole';
 import '@cactus/ui/styles.css';
 import './globals.css';
 
@@ -12,14 +13,9 @@ import './globals.css';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <head>
-      </head>
       <body className="bg-background">
-        {/* REGLA CURSOR: Orden de providers es crítico - NO CAMBIAR SIN JUSTIFICACIÓN
-            ThemeProvider (más externo, no depende de nada) >
-            ErrorBoundary (captura errores de auth) >
-            AuthProvider (depende de theme para estilos) */}
-        <ThemeProvider defaultTheme="light">
+        <DebugConsole />
+        <ThemeProviderWrapper defaultTheme="light">
           <ErrorBoundary>
             <AuthProvider>
               <NavigationNew />
@@ -28,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </main>
             </AuthProvider>
           </ErrorBoundary>
-        </ThemeProvider>
+        </ThemeProviderWrapper>
         <Analytics />
       </body>
     </html>

@@ -1,1 +1,0 @@
-ALTER TABLE "contacts" ADD COLUMN "next_step" text;

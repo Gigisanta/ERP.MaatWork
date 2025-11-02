@@ -27,12 +27,16 @@ async function createUser() {
     
     process.exit(0);
   } catch (err: unknown) {
-    if (err.message && err.message.includes('duplicate key')) {
+    type ErrorWithMessage = {
+      message?: string;
+    };
+    const error = err as ErrorWithMessage;
+    if (error.message && error.message.includes('duplicate key')) {
       console.log('ℹ️  El usuario ya existe!');
       console.log('   Email: test@example.com\n');
       process.exit(0);
     }
-    console.error('❌ Error:', err);
+    console.error('❌ Error:', error.message || err);
     process.exit(1);
   }
 }

@@ -103,6 +103,7 @@ export default function LoginPage() {
                   placeholder="tu@email.com o tu_usuario"
                   disabled={loading}
                   required
+                  autoComplete="username"
                 />
 
                 {/* Password Input */}
@@ -116,6 +117,7 @@ export default function LoginPage() {
                   disabled={loading}
                   required
                   showPasswordToggle={true}
+                  autoComplete="current-password"
                 />
 
                 {/* Remember me */}

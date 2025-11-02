@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // AI_DECISION: Solo transpilar @cactus/ui, dejar que Next.js maneje Radix UI nativamente
+  // Justificación: Transpilar todos los paquetes Radix UI causa problemas de resolución
+  // Impacto: Evita problemas de resolución de módulos y truncamiento
   transpilePackages: ['@cactus/ui'],
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
@@ -55,11 +58,18 @@ const nextConfig = {
   // Justificación: Errores "next-flight-client-entry-loader" se deben a cache desincronizado en monorepo
   // Impacto: Reduce errores de compilación y "internal server error" en desarrollo
   webpack: (config, { dev, isServer }) => {
+    // AI_DECISION: Configuración simplificada para evitar problemas de resolución
+    // Justificación: Configuración compleja está causando problemas de resolución de módulos
+    // Impacto: Resuelve errores de truncamiento y resolución de módulos
+    
+    // Habilitar symlinks para monorepo pnpm
+    config.resolve.symlinks = true;
+    
+    // Mejorar source maps en desarrollo para debugging
     if (dev) {
-      // AI_DECISION: Re-enable webpack cache for 40-60% faster dev rebuilds
-      // Justificación: Cache issues were workspace-specific, now resolved with symlinks: true
-      // Impacto: Dev rebuild time reduction from ~12s to ~6s
-      // config.cache = false; // DISABLED: Restore cache for performance
+      config.devtool = 'eval-source-map'; // Mejor debugging que 'eval'
+      
+      config.cache = false;
       
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -68,8 +78,10 @@ const nextConfig = {
         tls: false,
       };
       
-      // Forzar resolución correcta de @cactus/ui en monorepo
-      config.resolve.symlinks = true;
+      // Agregar logging de webpack para debugging
+      config.infrastructureLogging = {
+        level: 'verbose',
+      };
     }
     
     return config;

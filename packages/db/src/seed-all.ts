@@ -150,7 +150,7 @@ async function seedLookupTables() {
       };
       const error = err as ErrorWithMessage;
       if (!error.message?.includes('UNIQUE')) {
-        console.error(`  ✗ Error with task status ${status.label}:`, err.message);
+        console.error(`  ✗ Error with task status ${status.label}:`, error.message);
       }
     }
   }
@@ -203,7 +203,7 @@ async function seedLookupTables() {
       };
       const error = err as ErrorWithMessage;
       if (!error.message?.includes('UNIQUE')) {
-        console.error(`  ✗ Error with notification type ${type.label}:`, err.message);
+        console.error(`  ✗ Error with notification type ${type.label}:`, error.message);
       }
     }
   }
@@ -230,7 +230,7 @@ async function seedLookupTables() {
       };
       const error = err as ErrorWithMessage;
       if (!error.message?.includes('UNIQUE')) {
-        console.error(`  ✗ Error with asset class ${assetClass.label}:`, err.message);
+        console.error(`  ✗ Error with asset class ${assetClass.label}:`, error.message);
       }
     }
   }

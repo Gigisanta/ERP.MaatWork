@@ -39,6 +39,18 @@ const isProduction = process.env.NODE_ENV === 'production';
 const loggerOptions: PinoLoggerOptions = {
   level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
 };
+
+// Personalizar o deshabilitar hostname en los logs
+if (process.env.LOG_HOSTNAME_DISABLE === 'true') {
+  // Deshabilitar hostname en los logs
+  loggerOptions.base = {};
+} else if (process.env.LOG_HOSTNAME) {
+  // Usar hostname personalizado
+  loggerOptions.base = {
+    hostname: process.env.LOG_HOSTNAME
+  };
+}
+// Si no se especifica nada, Pino usará el hostname del sistema por defecto
 if (!isProduction) {
   loggerOptions.transport = {
     target: 'pino-pretty',

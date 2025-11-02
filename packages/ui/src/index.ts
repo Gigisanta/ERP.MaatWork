@@ -57,10 +57,8 @@ export { Spinner, LoadingOverlay, type SpinnerProps, type LoadingOverlayProps } 
 export { Toast, ToastAction, ToastClose, type ToastProps } from './components/feedback/Toast';
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip';
 
-// Theme Provider - specific export
-export const ThemeProvider = ({ children }: { children: React.ReactNode; defaultTheme?: string }) => {
-  return React.createElement('div', { className: 'theme-provider' }, children);
-};
+// Theme Provider - specific export (Client Component)
+export { ThemeProvider, useTheme } from './hooks/useTheme';
 
 // Exportar estilos
 import './styles/index.css';
