@@ -1,10 +1,11 @@
 "use client";
 import { useRequireAuth } from '../../auth/useRequireAuth';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logger } from '../../../lib/logger';
-import { createContact, getPipelineStages, getAdvisors } from '@/lib/api';
+import { createContact } from '@/lib/api';
+import { usePipelineStages, useAdvisors } from '@/lib/api-hooks';
 import type { PipelineStage, Advisor } from '@/types';
 import {
   Card,
@@ -49,52 +50,27 @@ const initialFormData: FormData = {
 
 export default function NewContactPage() {
   const router = useRouter();
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
+  
+  // Use SWR hooks for data fetching with automatic caching and deduplication
+  const { stages: pipelineStages, isLoading: stagesLoading, error: stagesError } = usePipelineStages();
+  const { advisors, isLoading: advisorsLoading, error: advisorsError } = useAdvisors();
+  
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
-  const [advisors, setAdvisors] = useState<Advisor[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (user && token) {
-      fetchInitialData();
-    }
-  }, [user, token]);
-
-  const fetchInitialData = async () => {
-    try {
-      await Promise.all([
-        fetchPipelineStages(),
-        fetchAdvisors()
-      ]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar datos');
-    }
-  };
-
-  const fetchPipelineStages = async () => {
-    try {
-      const response = await getPipelineStages();
-      if (response.success && response.data) {
-        setPipelineStages(response.data || []);
-      }
-    } catch (err) {
-      logger.error('Error fetching pipeline stages', { err });
-    }
-  };
-
-  const fetchAdvisors = async () => {
-    try {
-      const response = await getAdvisors();
-      if (response.success && response.data) {
-        setAdvisors(response.data || []);
-      }
-    } catch (err) {
-      logger.error('Error fetching advisors', { err });
-    }
-  };
+  // Derive loading state from SWR hooks
+  const dataLoading = stagesLoading || advisorsLoading;
+  
+  // Set error if SWR hooks have errors
+  if (stagesError && !error) {
+    logger.error('Error fetching pipeline stages', { err: stagesError });
+  }
+  if (advisorsError && !error) {
+    logger.error('Error fetching advisors', { err: advisorsError });
+  }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -115,11 +91,18 @@ export default function NewContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !token) return;
+    if (!validateForm() || !user) return;
     
     try {
-      setDataLoading(true);
+      setSubmitLoading(true);
       setError(null);
+      
+      logger.info('Contact creation form submitted', {
+        userId: user?.id,
+        userRole: user?.role,
+        hasFirstName: !!formData.firstName.trim(),
+        hasLastName: !!formData.lastName.trim()
+      });
       
       const response = await createContact({
         firstName: formData.firstName.trim(),
@@ -131,6 +114,13 @@ export default function NewContactPage() {
         source: formData.source.trim() || null,
         riskProfile: formData.riskProfile || null,
         notes: formData.notes.trim() || null
+      });
+      
+      logger.info('Contact creation API response received', {
+        responseSuccess: response.success,
+        hasData: !!response.data,
+        hasError: !!response.error,
+        responseKeys: Object.keys(response)
       });
       
       if (response.success && response.data) {
@@ -163,9 +153,14 @@ export default function NewContactPage() {
         throw new Error(response.error || 'Error al crear contacto');
       }
     } catch (err) {
+      logger.error('Contact creation failed', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        errorType: err?.constructor?.name,
+        userId: user?.id
+      });
       setError(err instanceof Error ? err.message : 'Error al crear contacto');
     } finally {
-      setDataLoading(false);
+      setSubmitLoading(false);
     }
   };
 
@@ -174,7 +169,10 @@ export default function NewContactPage() {
     { href: '/contacts/new', label: 'Nuevo Contacto' }
   ];
 
-  if (loading) {
+  // Show loading state while auth or data is loading
+  const isLoading = loading || dataLoading;
+  
+  if (isLoading && !pipelineStages.length) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
         <div className="text-center">
@@ -250,7 +248,7 @@ export default function NewContactPage() {
                         value={formData.firstName}
                         onChange={(e) => handleInputChange('firstName', e.target.value)}
                         placeholder="Juan"
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         required
                         className="w-full"
                       />
@@ -259,7 +257,7 @@ export default function NewContactPage() {
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
                         placeholder="Pérez"
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         required
                         className="w-full"
                       />
@@ -281,7 +279,7 @@ export default function NewContactPage() {
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         placeholder="+54 9 11 1234-5678"
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         className="w-full"
                       />
                       <Input
@@ -289,7 +287,7 @@ export default function NewContactPage() {
                         value={formData.dni}
                         onChange={(e) => handleInputChange('dni', e.target.value)}
                         placeholder="12.345.678"
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         className="w-full"
                       />
                     </div>
@@ -311,7 +309,7 @@ export default function NewContactPage() {
                         label="Etapa del Pipeline"
                         value={formData.pipelineStageId}
                         onValueChange={(value) => handleInputChange('pipelineStageId', value)}
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         items={pipelineStages.map(stage => ({
                           value: stage.id,
                           label: stage.name
@@ -323,7 +321,7 @@ export default function NewContactPage() {
                         label="Perfil de Riesgo"
                         value={formData.riskProfile}
                         onValueChange={(value) => handleInputChange('riskProfile', value)}
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         items={[
                           { value: 'low', label: 'Bajo' },
                           { value: 'mid', label: 'Medio' },
@@ -340,7 +338,7 @@ export default function NewContactPage() {
                         value={formData.source}
                         onChange={(e) => handleInputChange('source', e.target.value)}
                         placeholder="Ej: LinkedIn, Referido, Google Ads..."
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         className="w-full"
                       />
                     </div>
@@ -365,7 +363,7 @@ export default function NewContactPage() {
                         value={formData.notes}
                         onChange={(e) => handleInputChange('notes', e.target.value)}
                         placeholder="Información adicional sobre el contacto..."
-                        disabled={loading}
+                        disabled={isLoading || submitLoading}
                         rows={4}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                       />
@@ -380,17 +378,17 @@ export default function NewContactPage() {
                       type="button" 
                       variant="secondary" 
                       onClick={() => router.push('/contacts')}
-                      disabled={loading}
+                      disabled={submitLoading}
                       className="px-6"
                     >
                       Cancelar
                     </Button>
                     <Button 
                       type="submit" 
-                      disabled={loading}
+                      disabled={isLoading || submitLoading}
                       className="px-8"
                     >
-                      {loading ? 'Creando...' : 'Crear Contacto'}
+                      {submitLoading ? 'Creando...' : 'Crear Contacto'}
                     </Button>
                   </div>
                 </CardFooter>
