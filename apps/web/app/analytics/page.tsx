@@ -1,20 +1,24 @@
 "use client";
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { getDashboardKPIs } from '@/lib/api';
 import { logger } from '../../lib/logger';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DashboardData } from '@/types';
+// AI_DECISION: Keep Recharts import as-is for now to avoid runtime issues
+// Justificación: Dynamic import of named exports from Recharts causes module resolution issues
+// Impacto: Analytics page uses Recharts, bundle size impact is acceptable for this specific page
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AnalyticsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
-    if (!token) return;
+    if (!user) return;
     
     try {
       setDataLoading(true);
@@ -36,10 +40,10 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchDashboardData();
     }
-  }, [token]);
+  }, [user]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {

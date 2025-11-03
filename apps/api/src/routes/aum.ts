@@ -3,7 +3,7 @@ import multer from 'multer';
 import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import type { Request } from 'express';
-import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership } from '@cactus/db';
+import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership, advisorAliases } from '@cactus/db';
 import { eq, and, sql, inArray, type SQL } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
@@ -17,8 +17,14 @@ import {
 } from '../utils/common-schemas';
 import { AUM_LIMITS } from '../config/aum-limits';
 import { createErrorResponse } from '../utils/error-response';
+import { normalizeAccountNumber, normalizeAdvisorAlias } from '../utils/aum-normalization';
 
 const router = Router();
+
+// Export small helpers for testing
+export function computeMatchStatus(matchedContactId: string | null | undefined): 'matched' | 'unmatched' {
+  return matchedContactId ? 'matched' : 'unmatched';
+}
 
 // ==========================================================
 // Zod Validation Schemas
@@ -56,6 +62,17 @@ const historyQuerySchema = z.intersection(
 );
 
 const uploadQuerySchema = z.object({
+  broker: brokerSchema.optional()
+});
+
+const purgeQuerySchema = z.object({
+  force: z
+    .string()
+    .transform((v) => v === 'true')
+    .optional()
+});
+
+const purgeAllQuerySchema = z.object({
   broker: brokerSchema.optional()
 });
 
@@ -100,8 +117,8 @@ router.get('/uploads/:fileId/export',
   async (req, res) => {
   try {
     const { fileId } = req.params; // Validated UUID
-    const userId = (req as any).user?.id as string;
-    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    const userId = req.user?.id as string;
+    const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
     
     if (!userId || !userRole) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -332,7 +349,7 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
     const ws = wb.Sheets[sheetName];
     const json = XLSX.utils.sheet_to_json(ws, { defval: null }) as Array<Record<string, unknown>>;
     return json.map((r: Record<string, unknown>) => ({
-      accountNumber: (r['Cuenta comitente'] as string) ?? (r['comitente'] as string) ?? null,
+      accountNumber: normalizeAccountNumber(((r['Cuenta comitente'] as string) ?? (r['comitente'] as string) ?? null) as string | null),
       holderName: (r['Titular'] as string) ?? (r['Descripcion'] as string) ?? null,
       advisorRaw: (r['asesor'] as string) ?? (r['Asesor'] as string) ?? null,
       raw: r
@@ -357,7 +374,7 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
   }) as Array<Record<string, string>>;
 
   return records.map((r) => ({
-    accountNumber: r['Cuenta comitente'] || r['comitente'] || null,
+    accountNumber: normalizeAccountNumber((r['Cuenta comitente'] || r['comitente'] || null) as string | null),
     holderName: r['Titular'] || r['Descripcion'] || null,
     advisorRaw: r['asesor'] || r['Asesor'] || null,
     raw: r as Record<string, unknown>
@@ -371,7 +388,7 @@ router.post('/uploads',
   upload.single('file'), 
   async (req: Request, res) => {
   try {
-    const userId = (req as any).user?.id as string | undefined;
+    const userId = req.user?.id as string | undefined;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -477,6 +494,13 @@ router.post('/uploads',
       let matchStatus: 'matched' | 'ambiguous' | 'unmatched' = 'unmatched';
       let conflictDetected = false;
 
+      // AI_DECISION: Normalizar número de cuenta antes de cualquier matching
+      // Justificación: Consistencia en comparaciones y claves únicas por broker+cuenta
+      // Impacto: Evita duplicados por formatos distintos del mismo número
+      if (r.accountNumber) {
+        r.accountNumber = normalizeAccountNumber(r.accountNumber);
+      }
+
       // Check for duplicates in existing import rows
       if (r.accountNumber && existingAccounts.has(r.accountNumber)) {
         const existingRows = existingAccounts.get(r.accountNumber)!;
@@ -549,6 +573,17 @@ router.post('/uploads',
             matchedUserId = row.id as string;
           }
         } catch {}
+      } else if (r.advisorRaw) {
+        // AI_DECISION: Usar alias exacto (trim + lowercase) para mapear asesor
+        // Justificación: Permite normalización desde Settings sin exponer emails en CSV
+        // Impacto: Mejora tasa de match de asesores
+        try {
+          const normalized = normalizeAdvisorAlias(r.advisorRaw);
+          const res = await dbi.select().from(advisorAliases).where(eq(advisorAliases.aliasNormalized, normalized)).limit(1);
+          if (res.length > 0) {
+            matchedUserId = (res[0] as any).userId as string;
+          }
+        } catch {}
       }
 
       if (!conflictDetected && matchStatus !== 'ambiguous') {
@@ -579,6 +614,18 @@ router.post('/uploads',
     for (let i = 0; i < rowsToInsert.length; i += batchSize) {
       const chunk = rowsToInsert.slice(i, i + batchSize);
       for (const r of chunk) {
+        // Desmarcar como preferidas las filas previas del mismo broker+account_number
+        if (r.accountNumber) {
+          await dbi.execute(sql`
+            UPDATE aum_import_rows ar
+            SET is_preferred = false
+            FROM aum_import_files af
+            WHERE ar.file_id = af.id
+              AND af.broker = ${broker}
+              AND ar.account_number = ${r.accountNumber}
+          `);
+        }
+
         await dbi.execute(sql`
           INSERT INTO aum_import_rows (file_id, raw, account_number, holder_name, advisor_raw, matched_contact_id, matched_user_id, match_status, is_preferred, conflict_detected)
           VALUES (${r.fileId}, ${JSON.stringify(r.raw)}::jsonb, ${r.accountNumber}, ${r.holderName}, ${r.advisorRaw}, ${r.matchedContactId}, ${r.matchedUserId}, ${r.matchStatus}, ${r.isPreferred}, ${r.conflictDetected})
@@ -609,7 +656,7 @@ router.post('/uploads',
       }
     });
   } catch (error) {
-    (req as any).log?.error?.({ err: error }, 'AUM upload failed');
+    req.log?.error?.({ err: error }, 'AUM upload failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
@@ -622,8 +669,8 @@ router.get('/uploads/:fileId/preview',
   try {
     const { fileId } = req.params; // Validated UUID
     const { limit = 50 } = req.query; // Validated number, min 1, max 500
-    const userId = (req as any).user?.id as string;
-    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    const userId = req.user?.id as string;
+    const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
     
     if (!userId || !userRole) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -710,13 +757,13 @@ router.get('/uploads/history',
       };
       const pgError = error as PostgresError;
       if (pgError?.code === '42P01') {
-        (req as Request & { log?: { warn?: (context: unknown, message: string) => void } }).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
+    (req as Request & { log?: { warn?: (context: unknown, message: string) => void } }).log?.warn?.({ err: error }, 'AUM history table missing - returning empty list');
         return res.json({ ok: true, files: [] });
       }
       throw error;
     }
   } catch (error) {
-    (req as any).log?.error?.({ err: error }, 'AUM history failed');
+    req.log?.error?.({ err: error }, 'AUM history failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
@@ -732,8 +779,8 @@ router.post('/uploads/:fileId/match',
   try {
     const { fileId } = req.params; // Validated UUID
     const { rowId, matchedContactId, matchedUserId } = req.body; // Validated schema
-    const userId = (req as any).user?.id as string;
-    const userRole = (req as any).user?.role as 'admin' | 'manager' | 'advisor';
+    const userId = req.user?.id as string;
+    const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
     
     if (!userId || !userRole) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -756,11 +803,31 @@ router.post('/uploads/:fileId/match',
     // AI_DECISION: Usar Drizzle query builder en lugar de Pool manual
     // Justificación: Más seguro, tipado, y usa el pool existente de Drizzle
     // Impacto: Código más limpio y sin duplicación de conexiones
+    // Compute new match status: matched if we have a contact, otherwise unmatched
+    const newStatus: 'matched' | 'ambiguous' | 'unmatched' = matchedContactId ? 'matched' : 'unmatched';
+
+    // If setting this row as preferred, unset others for the same account_number within the same file
+    if (isPreferred === true) {
+      // First, fetch the target row to know its account_number
+      const [targetRow] = await dbi.select({ accountNumber: aumImportRows.accountNumber })
+        .from(aumImportRows)
+        .where(and(eq(aumImportRows.id, rowId), eq(aumImportRows.fileId, fileId)))
+        .limit(1);
+      const accountNumber = (targetRow && (targetRow as any).accountNumber) as string | null;
+      if (accountNumber) {
+        await dbi.execute(sql`
+          UPDATE aum_import_rows
+          SET is_preferred = false
+          WHERE file_id = ${fileId} AND account_number = ${accountNumber} AND id <> ${rowId}
+        `);
+      }
+    }
+
     await dbi.update(aumImportRows)
       .set({
         matchedContactId: matchedContactId || null,
         matchedUserId: matchedUserId || null,
-        matchStatus: status,
+        matchStatus: newStatus,
         ...(typeof isPreferred === 'boolean' && { isPreferred })
       })
       .where(and(
@@ -802,6 +869,7 @@ router.get('/rows/all', requireAuth, async (req, res) => {
     const broker = req.query.broker as string | undefined;
     const status = req.query.status as string | undefined;
     const fileId = req.query.fileId as string | undefined;
+    const preferredOnly = (req.query.preferredOnly ?? 'true') === 'true';
     
     const dbi = db();
     
@@ -815,6 +883,9 @@ router.get('/rows/all', requireAuth, async (req, res) => {
     }
     if (fileId) {
       conditions.push(sql`r.file_id = ${fileId}`);
+    }
+    if (preferredOnly) {
+      conditions.push(sql`r.is_preferred = true`);
     }
     const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
     
@@ -885,8 +956,27 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       ORDER BY f.created_at DESC, r.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    
-    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
+    // Build alias map for advisor suggestions when not yet matched
+    const rawRows = (result.rows || []) as AumRowResult[];
+    const advisorNames = Array.from(new Set(
+      rawRows
+        .filter((r) => !r.matched_user_id && r.advisor_raw)
+        .map((r) => normalizeAdvisorAlias(String(r.advisor_raw)))
+    ));
+    const aliasMap = new Map<string, string>();
+    if (advisorNames.length > 0) {
+      try {
+        const aliasRes = await dbi
+          .select({ aliasNormalized: advisorAliases.aliasNormalized, userId: advisorAliases.userId })
+          .from(advisorAliases)
+          .where(inArray(advisorAliases.aliasNormalized, advisorNames));
+        for (const a of aliasRes as Array<{ aliasNormalized: string; userId: string }>) {
+          aliasMap.set(a.aliasNormalized, a.userId);
+        }
+      } catch {}
+    }
+
+    const rows = (rawRows as AumRowResult[]).map((r: AumRowResult) => ({
       id: r.id,
       fileId: r.file_id,
       accountNumber: r.account_number,
@@ -894,6 +984,9 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       advisorRaw: r.advisor_raw,
       matchedContactId: r.matched_contact_id,
       matchedUserId: r.matched_user_id,
+      suggestedUserId: (!r.matched_user_id && r.advisor_raw)
+        ? aliasMap.get(normalizeAdvisorAlias(String(r.advisor_raw))) || null
+        : null,
       matchStatus: r.match_status,
       isPreferred: r.is_preferred,
       conflictDetected: r.conflict_detected,
@@ -1002,7 +1095,7 @@ router.get('/rows/duplicates/:accountNumber', requireAuth, async (req, res) => {
       hasConflicts: rows.some(r => r.conflictDetected)
     });
   } catch (error) {
-    (req as any).log?.error?.({ err: error, accountNumber: req.params.accountNumber }, 'failed to get duplicates');
+    req.log?.error?.({ err: error, accountNumber: req.params.accountNumber }, 'failed to get duplicates');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
@@ -1018,8 +1111,8 @@ router.delete('/uploads/:fileId',
   async (req, res) => {
   try {
     const { fileId } = req.params; // Validated UUID
-    const userId = (req as any).user?.id as string;
-    const userRole = (req as any).user?.role as string;
+    const userId = req.user?.id as string;
+    const userRole = req.user?.role as string;
     
     if (!userId || !userRole) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -1056,7 +1149,7 @@ router.delete('/uploads/:fileId',
       // Ignore file system errors
     }
 
-    (req as any).log?.info?.({ 
+    req.log?.info?.({ 
       fileId, 
       userId, 
       filename: file.originalFilename,
@@ -1065,7 +1158,73 @@ router.delete('/uploads/:fileId',
 
     return res.json({ ok: true, message: 'File deleted successfully' });
   } catch (error) {
-    (req as any).log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM delete failed');
+    req.log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM delete failed');
+    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// DELETE /admin/aum/uploads (purgar todos)
+// AI_DECISION: Añadir endpoint de limpieza para reiniciar staging AUM
+// Justificación: Facilita comenzar de cero sin tocar datos comprometidos por defecto
+// Impacto: Admin puede vaciar importaciones; opcionalmente incluye committed con force=true
+router.delete('/uploads',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ query: purgeQuerySchema.optional() }),
+  async (req, res) => {
+  try {
+    const dbi = db();
+    const force = (req.query?.force as unknown as boolean) === true;
+
+    if (force) {
+      // Eliminar todas las filas y archivos
+      await dbi.execute(sql`DELETE FROM aum_import_rows`);
+      await dbi.execute(sql`DELETE FROM aum_import_files`);
+      return res.json({ ok: true, message: 'AUM uploads purgados (incluye committed)' });
+    }
+
+    // Solo eliminar uploads no comprometidos
+    // 1) Borrar filas asociadas a archivos no comprometidos
+    await dbi.execute(sql`
+      DELETE FROM aum_import_rows r
+      USING aum_import_files f
+      WHERE r.file_id = f.id AND f.status <> 'committed'
+    `);
+    // 2) Borrar archivos no comprometidos
+    await dbi.execute(sql`DELETE FROM aum_import_files WHERE status <> 'committed'`);
+
+    return res.json({ ok: true, message: 'AUM uploads purgados (solo no committed)' });
+  } catch (error) {
+    (req as Request & { log?: { error?: (context: unknown, message: string) => void } }).log?.error?.({ err: error }, 'AUM purge failed');
+    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+// DELETE /admin/aum/purge-all (destructivo: broker_* + aum_*)
+// AI_DECISION: Endpoint definitivo para dejar el sistema en 0 respecto a AUM/broker
+// Justificación: Usuario necesita reiniciar por completo AUM (staging + cuentas broker)
+// Impacto: Elimina broker_accounts (con cascade a balances/positions/transactions) y AUM staging
+router.delete('/purge-all',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ query: purgeAllQuerySchema.optional() }),
+  async (req, res) => {
+  try {
+    const dbi = db();
+    const broker = req.query?.broker as string | undefined;
+
+    if (broker) {
+      await dbi.execute(sql`DELETE FROM broker_accounts WHERE broker = ${broker}`);
+    } else {
+      await dbi.execute(sql`DELETE FROM broker_accounts`);
+    }
+
+    await dbi.execute(sql`DELETE FROM aum_import_rows`);
+    await dbi.execute(sql`DELETE FROM aum_import_files`);
+
+    return res.json({ ok: true, message: 'Sistema AUM/broker purgado completamente' });
+  } catch (error) {
+    (req as Request & { log?: { error?: (context: unknown, message: string) => void } }).log?.error?.({ err: error }, 'AUM purge-all failed');
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });

@@ -9,6 +9,7 @@ import { logger } from './logger';
 export interface FetchOptions extends RequestInit {
   skipLogging?: boolean;
   requestId?: string;
+  timeout?: number; // Timeout en milisegundos (por defecto: 30000)
 }
 
 /**
@@ -20,6 +21,9 @@ function generateRequestId(): string {
 
 /**
  * Wrapper de fetch con logging automático y correlación
+ * AI_DECISION: Agregar timeout por defecto para prevenir requests colgadas
+ * Justificación: Previene que el frontend se quede esperando indefinidamente
+ * Impacto: Todas las requests tienen timeout de 30s por defecto
  */
 export async function fetchWithLogging(
   url: string | URL,
@@ -47,12 +51,22 @@ export async function fetchWithLogging(
     });
   }
 
+  // Timeout por defecto de 30 segundos para prevenir requests colgadas
+  const timeout = options.timeout ?? 30000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
   try {
     const response = await fetch(fullUrl, {
       ...fetchOptions,
-      headers
+      headers,
+      signal: controller.signal,
+      credentials: 'include'  // NUEVO: Incluir cookies en todas las requests
     });
 
+    clearTimeout(timeoutId);
     const duration = Date.now() - startTime;
 
     // Log de la respuesta
@@ -64,9 +78,27 @@ export async function fetchWithLogging(
 
     return response;
   } catch (error) {
+    clearTimeout(timeoutId);
     const duration = Date.now() - startTime;
 
-    // Log del error de red
+    // Convertir AbortError en timeout error más descriptivo
+    if (error instanceof Error && error.name === 'AbortError') {
+      const timeoutError = new Error(`Request timeout after ${timeout}ms`);
+      
+      if (!skipLogging) {
+        logger.logNetworkError(
+          method,
+          fullUrl,
+          timeoutError,
+          requestId,
+          { duration, timeout }
+        );
+      }
+      
+      throw timeoutError;
+    }
+
+    // Para otros errores, loguear y relanzar
     if (!skipLogging) {
       logger.logNetworkError(
         method,

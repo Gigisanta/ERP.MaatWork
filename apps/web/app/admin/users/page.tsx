@@ -32,7 +32,7 @@ import {
 } from '@cactus/ui';
 
 export default function AdminUsersPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   const [users, setUsers] = useState<UserApiResponse[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
@@ -45,10 +45,10 @@ export default function AdminUsersPage() {
 
   // Fetch users (must be declared before any early return to keep hooks order)
   useEffect(() => {
-    if (user?.role === 'admin' && token) {
+    if (user?.role === 'admin') {
       fetchUsers();
     }
-  }, [user, token]);
+  }, [user]);
 
   const fetchUsers = async () => {
     try {
@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
   }
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    if (!token) return;
+    if (!user) return;
     
     // Validar que el rol sea válido (excluir 'client')
     if (newRole === 'client' || !['advisor', 'manager', 'admin'].includes(newRole)) {
@@ -114,7 +114,7 @@ export default function AdminUsersPage() {
   };
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
-    if (!token) return;
+    if (!user) return;
 
     try {
       setActionLoading(userId);
@@ -134,7 +134,7 @@ export default function AdminUsersPage() {
   };
 
   const handleDeleteUser = async () => {
-    if (!userToDelete || !token) return;
+    if (!userToDelete || !user) return;
     
     try {
       setActionLoading(userToDelete.id);

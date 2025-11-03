@@ -66,6 +66,7 @@ export interface AumRow extends BaseEntity {
   advisorRaw: string | null;
   matchedContactId: string | null;
   matchedUserId: string | null;
+  suggestedUserId?: string | null;
   matchStatus: AumMatchStatus;
   isPreferred: boolean;
   conflictDetected: boolean;

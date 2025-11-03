@@ -99,7 +99,7 @@ router.get('/',
       .orderBy(sql`LOWER(${tags.name})`)
       .limit(parseInt(limit as string));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list tags');
     next(err);
@@ -193,7 +193,7 @@ router.put('/:id',
       .returning();
 
     req.log.info({ tagId: id }, 'tag updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to update tag');
     next(err);
@@ -234,7 +234,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
       .where(eq(tags.id, id));
 
     req.log.info({ tagId: id }, 'tag deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to delete tag');
     next(err);
@@ -345,7 +345,7 @@ router.delete('/:id/contacts/:contactId', requireAuth, async (req: Request, res:
       ));
 
     req.log.info({ tagId: id, contactId }, 'tag removed from contact');
-    res.json({ data: { removed: true } });
+    res.json({ success: true, data: { removed: true } });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to remove tag');
     next(err);
@@ -384,7 +384,7 @@ router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
       .where(eq(contactTags.contactId, id));
 
-    res.json({ data: contactTagsList });
+    res.json({ success: true, data: contactTagsList });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to list contact tags');
     next(err);
@@ -493,7 +493,7 @@ router.put('/contacts/:id',
       .where(eq(contactTags.contactId, id));
 
     req.log.info({ contactId: id, added: tagsToAdd.length, removed: remove.length }, 'contact tags updated');
-    res.json({ data: updatedTags });
+    res.json({ success: true, data: updatedTags });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact tags');
     next(err);
@@ -521,7 +521,7 @@ router.get('/rules',
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(tagRules.createdAt));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list tag rules');
     next(err);
@@ -617,7 +617,7 @@ router.get('/segments',
       .where(sql`${segments.ownerId} = ${userId} OR ${segments.isShared} = true`)
       .orderBy(desc(segments.updatedAt));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list segments');
     next(err);

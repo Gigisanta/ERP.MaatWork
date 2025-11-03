@@ -33,7 +33,7 @@ import {
 } from '@cactus/ui';
 
 export default function TeamsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [membershipRequests, setMembershipRequests] = useState<MembershipRequest[]>([]);
@@ -407,7 +407,7 @@ export default function TeamsPage() {
                 <Input
                   label="Nombre del equipo"
                   value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTeamName(e.target.value)}
                   placeholder="Ej: Equipo de Ventas Norte"
                   required
                 />

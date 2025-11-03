@@ -9,7 +9,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     if (auth && auth.startsWith('Bearer ')) {
       token = auth.slice('Bearer '.length);
     }
-    // Fallback: aceptar token por cookie "token" si no viene Authorization
+    // AI_DECISION: Priorizar cookie httpOnly sobre Bearer token
+    // Justificación: Cookie es más seguro (inmune a XSS), Bearer es fallback para compatibilidad
+    // Impacto: La autenticación funciona principalmente vía cookies
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+    // Fallback: parsear cookie manualmente si cookie-parser no funciona
     if (!token && req.headers.cookie) {
       const m = /(?:^|; )token=([^;]+)/.exec(req.headers.cookie);
       if (m && m[1]) token = decodeURIComponent(m[1]);

@@ -20,28 +20,25 @@ export default function AumHistoryPage() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Agregar soporte para fileId en getAumRows si el backend lo soporta
       const params: {
         limit: number;
         offset: number;
         broker?: string;
         status?: string;
+        fileId?: string;
       } = {
         limit: pagination.limit,
         offset: pagination.offset,
       };
       if (filters.broker) params.broker = filters.broker;
       if (filters.status) params.status = filters.status;
+      if (filters.fileId) params.fileId = filters.fileId;
       
       const response = await getAumRows(params);
       
       if (response.success && response.data) {
-        // Filtrar por fileId en cliente si es necesario hasta que backend lo soporte
-        let allRows: AumRow[] = response.data.rows || [];
-        if (filters.fileId) {
-          allRows = allRows.filter(r => r.fileId === filters.fileId);
-        }
         // Convertir AumRow[] a Row[] (requiere file)
+        const allRows: AumRow[] = response.data.rows || [];
         const validRows: Row[] = allRows
           .filter((r): r is Row => r.file !== undefined)
           .map(r => ({ ...r, file: r.file! }));
@@ -108,6 +105,16 @@ export default function AumHistoryPage() {
           <option value="ambiguous">Conflictos</option>
           <option value="unmatched">Sin coincidencia</option>
         </select>
+
+        <input
+          value={filters.fileId}
+          onChange={(e) => {
+            setFilters(prev => ({ ...prev, fileId: e.target.value }));
+            setPagination(prev => ({ ...prev, offset: 0 }));
+          }}
+          placeholder="Filtrar por File ID"
+          className="border rounded px-3 py-1 text-sm font-mono"
+        />
       </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}

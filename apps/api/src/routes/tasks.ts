@@ -121,7 +121,7 @@ router.get('/',
       // Additional check: user must have access to this specific contact
       const hasContactAccess = await canAccessContact(userId, userRole, contactId as string);
       if (!hasContactAccess) {
-        return res.json({ data: [], total: 0 });
+        return res.json({ success: true, data: [], total: 0 });
       }
       conditions.push(eq(tasks.contactId, contactId as string));
     }
@@ -322,7 +322,7 @@ router.put('/:id',
       .returning();
 
     req.log.info({ taskId: id }, 'task updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to update task');
     next(err);
@@ -369,7 +369,7 @@ router.post('/:id/complete', requireAuth, async (req: Request, res: Response, ne
     }
 
     req.log.info({ taskId: id }, 'task completed');
-    res.json({ data: task });
+    res.json({ success: true, data: task });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to complete task');
     next(err);
@@ -455,7 +455,7 @@ router.post('/bulk',
     }
 
     req.log.info({ action, affected, taskIds }, 'bulk action completed');
-    res.json({ data: { affected, action } });
+    res.json({ success: true, data: { affected, action } });
   } catch (err) {
     req.log.error({ err }, 'failed bulk action');
     next(err);
@@ -510,7 +510,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
       .returning();
 
     req.log.info({ taskId: id }, 'task deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to delete task');
     next(err);

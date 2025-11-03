@@ -26,7 +26,7 @@ import {
 type PipelineStage = PipelineStageWithContacts;
 
 export default function PipelinePage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [dataLoading, setDataLoading] = useState(true);

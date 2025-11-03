@@ -20,7 +20,7 @@ describe('Card Component', () => {
     it('should render with default variant (outlined)', () => {
       const { container } = render(<Card>Default Card</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('border', 'border-border-default');
+      expect(card).toHaveClass('border', 'border-border');
     });
 
     it('should render with default padding (md)', () => {
@@ -34,13 +34,13 @@ describe('Card Component', () => {
     it('should apply outlined variant classes', () => {
       const { container } = render(<Card variant="outlined">Outlined</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('border', 'border-border-default', 'bg-bg-surface');
+      expect(card).toHaveClass('border', 'border-border', 'bg-surface');
     });
 
     it('should apply elevated variant classes', () => {
       const { container } = render(<Card variant="elevated">Elevated</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('shadow-md', 'bg-bg-surface');
+      expect(card).toHaveClass('shadow-md', 'bg-surface');
     });
 
     it('should apply interactive variant classes', () => {
@@ -145,7 +145,7 @@ describe('CardTitle Component', () => {
   it('should have title styling', () => {
     const { container } = render(<CardTitle>Title</CardTitle>);
     const title = container.querySelector('h3');
-    expect(title).toHaveClass('text-lg', 'font-semibold', 'text-text-primary');
+    expect(title).toHaveClass('text-lg', 'font-semibold', 'text-text');
   });
 
   it('should forward ref correctly', () => {
@@ -208,7 +208,7 @@ describe('CardFooter Component', () => {
   it('should have top margin and border', () => {
     const { container } = render(<CardFooter>Footer</CardFooter>);
     const footer = container.firstChild as HTMLElement;
-    expect(footer).toHaveClass('mt-4', 'pt-4', 'border-t', 'border-border-default');
+    expect(footer).toHaveClass('mt-4', 'pt-4', 'border-t', 'border-border');
   });
 
   it('should accept custom className', () => {

@@ -64,7 +64,7 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       })
     );
 
-    res.json({ data: teamsWithDetails });
+    res.json({ success: true, data: teamsWithDetails });
   } catch (err) {
     req.log.error({ err }, 'failed to list teams');
     next(err);
@@ -103,7 +103,7 @@ router.get('/my-teams', requireAuth, async (req: Request, res: Response, next: N
       })
     );
 
-    res.json({ data: teamsWithDetails });
+    res.json({ success: true, data: teamsWithDetails });
   } catch (err) {
     req.log.error({ err }, 'failed to get user teams');
     next(err);
@@ -129,7 +129,7 @@ router.get('/:id/members', requireAuth, async (req: Request, res: Response, next
 
     const members = await getTeamMembers(userId);
     
-    res.json({ data: members });
+    res.json({ success: true, data: members });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to get team members');
     next(err);
@@ -217,7 +217,7 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     }
 
     req.log.info({ teamId: id }, 'team updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: err.errors });
@@ -306,7 +306,7 @@ router.delete('/:id/members/:userId', requireAuth, async (req: Request, res: Res
       ));
 
     req.log.info({ teamId: id, memberUserId }, 'member removed from team');
-    res.json({ data: { removed: true } });
+    res.json({ success: true, data: { removed: true } });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to remove team member');
     next(err);
@@ -345,7 +345,7 @@ router.get('/membership-requests', requireAuth, async (req: Request, res: Respon
       .where(and(eq(teamMembershipRequests.managerId, userId), eq(teamMembershipRequests.status, 'pending')))
       .orderBy(teamMembershipRequests.createdAt);
 
-    res.json({ data: requests });
+    res.json({ success: true, data: requests });
   } catch (err) {
     req.log.error({ err }, 'failed to get membership requests');
     next(err);
@@ -380,7 +380,7 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
     // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
       // If manager is trying to approve an 'invited' record, it's invite-driven; treat as alreadyResolved
-      return res.json({ data: { approved: request.status === 'approved', alreadyResolved: true } });
+      return res.json({ success: true, data: { approved: request.status === 'approved', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -486,7 +486,7 @@ router.post('/membership-requests/:id/reject', requireAuth, async (req: Request,
 
     // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
-      return res.json({ data: { rejected: request.status === 'rejected', alreadyResolved: true } });
+      return res.json({ success: true, data: { rejected: request.status === 'rejected', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -637,7 +637,7 @@ router.get('/invitations/pending', requireAuth, async (req: Request, res: Respon
       .innerJoin(users, eq(teamMembershipRequests.managerId, users.id))
       .where(and(eq(teamMembershipRequests.userId, userId), (teamMembershipRequests.status as any).in?.(['pending','invited']) ?? eq(teamMembershipRequests.status, 'invited')));
 
-    return res.json({ data: rows });
+    return res.json({ success: true, data: rows });
   } catch (err) {
     req.log.error({ err }, 'failed to list pending invitations');
     next(err);
@@ -665,7 +665,7 @@ router.post('/invitations/:id/accept', requireAuth, async (req: Request, res: Re
       .where(eq(teamMembershipRequests.id, id));
 
     req.log.info({ requestId: id, userId, teamId: managerTeam.id }, 'invitation accepted');
-    return res.json({ data: { accepted: true } });
+    return res.json({ success: true, data: { accepted: true } });
   } catch (err) {
     req.log.error({ err, requestId: req.params.id }, 'failed to accept invitation');
     next(err);
@@ -688,7 +688,7 @@ router.post('/invitations/:id/reject', requireAuth, async (req: Request, res: Re
       .where(eq(teamMembershipRequests.id, id));
 
     req.log.info({ requestId: id, userId }, 'invitation rejected');
-    return res.json({ data: { rejected: true } });
+    return res.json({ success: true, data: { rejected: true } });
   } catch (err) {
     req.log.error({ err, requestId: req.params.id }, 'failed to reject invitation');
     next(err);
@@ -746,7 +746,7 @@ router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, nex
     };
     const eligible = advisors.filter((a: Advisor) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
 
-    return res.json({ data: eligible });
+    return res.json({ success: true, data: eligible });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to list advisors');
     next(err);

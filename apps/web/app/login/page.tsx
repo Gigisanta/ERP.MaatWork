@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -19,7 +19,7 @@ import {
 } from '@cactus/ui';
 
 export default function LoginPage() {
-  const { login, user, token } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
@@ -27,17 +27,33 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   // AI_DECISION: Redirigir automáticamente si ya hay sesión
   // Justificación: Evita que usuarios autenticados vean el formulario de login (estado inconsistente
-  // entre cookie/localStorage o navegación directa a /login). Mejora UX y previene loops.
-  // Impacto: Afecta navegación en la ruta `/login` cuando `user` o `token` están presentes.
+  // entre cookie o navegación directa a /login). Mejora UX y previene loops.
+  // Impacto: Afecta navegación en la ruta `/login` cuando `user` está presente.
+  // AI_DECISION: Usar useRef para evitar loops infinitos de redirección
+  // Justificación: searchParams es mutable y cambia de referencia, causando re-ejecuciones del useEffect.
+  // Usar useRef previene múltiples redirecciones y rompe el ciclo de recursión.
   useEffect(() => {
-    if (user || token) {
+    // Resetear flag cuando el componente se monta o cuando no hay sesión
+    if (!user) {
+      hasRedirectedRef.current = false;
+      return;
+    }
+
+    // Guard: evitar múltiples redirecciones
+    if (hasRedirectedRef.current) {
+      return;
+    }
+
+    if (user) {
+      hasRedirectedRef.current = true;
       const redirectTo = searchParams.get('redirect') || '/';
       router.replace(redirectTo);
     }
-  }, [user, token, router, searchParams]);
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +74,9 @@ export default function LoginPage() {
       
       await login(identifier, password, rememberMe);
       
+      // Marcar que se hizo redirect para evitar que el useEffect lo haga de nuevo
+      hasRedirectedRef.current = true;
+      
       // Obtener URL de redirección desde query params
       const redirectTo = searchParams.get('redirect') || '/';
       
@@ -65,6 +84,8 @@ export default function LoginPage() {
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      // Si hay error, resetear el flag para permitir redirección futura
+      hasRedirectedRef.current = false;
     } finally {
       setLoading(false);
     }

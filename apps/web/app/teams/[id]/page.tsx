@@ -28,7 +28,7 @@ import {
 } from '@cactus/ui';
 
 export default function TeamDetailsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const params = useParams();
   const router = useRouter();
   const teamId = String(params?.id || '');

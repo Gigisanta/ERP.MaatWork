@@ -187,16 +187,19 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                       </a>
                     </DropdownMenu.Item>
                     
-                    <DropdownMenu.Item
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer',
-                        'text-text hover:bg-surface-hover',
-                        'focus:bg-surface-hover focus:outline-none',
-                        'rounded-sm transition-colors'
-                      )}
-                    >
-                      <Icon name="Settings" size={16} />
-                      Settings
+                    <DropdownMenu.Item asChild>
+                      <a
+                        href="/profile"
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer no-underline',
+                          'text-text hover:bg-surface-hover',
+                          'focus:bg-surface-hover focus:outline-none',
+                          'rounded-sm transition-colors'
+                        )}
+                      >
+                        <Icon name="Settings" size={16} />
+                        Settings
+                      </a>
                     </DropdownMenu.Item>
 
                     <DropdownMenu.Separator className="my-1 h-px bg-border" />

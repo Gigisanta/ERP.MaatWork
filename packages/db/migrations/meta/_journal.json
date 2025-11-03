@@ -8,6 +8,20 @@
       "when": 1762044138036,
       "tag": "0000_burly_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762137010221,
+      "tag": "0001_salty_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762191076596,
+      "tag": "0002_clumsy_guardian",
+      "breakpoints": true
     }
   ]
 }

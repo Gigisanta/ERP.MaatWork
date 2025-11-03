@@ -27,7 +27,8 @@
       "@/lib/*": ["./lib/*"],
       "@/lib/api": ["./lib/api/index.ts"],
       "@/lib/api/*": ["./lib/api/*"],
-      "@/components/*": ["./app/components/*"]
+      "@/components/*": ["./app/components/*"],
+      "@cactus/ui": ["../../packages/ui/dist/index.d.ts"]
     },
     "baseUrl": "."
   },

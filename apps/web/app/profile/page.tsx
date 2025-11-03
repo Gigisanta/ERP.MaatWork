@@ -32,7 +32,7 @@ import {
 import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function ProfilePage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   
   // Estados para la información del usuario
@@ -95,15 +95,67 @@ export default function ProfilePage() {
     email: ''
   });
 
+  // AUM Advisor Aliases (self-service)
+  const [aliases, setAliases] = useState<Array<{ id: string; aliasRaw: string; aliasNormalized: string; userId: string }>>([]);
+  const [newAlias, setNewAlias] = useState('');
+  const [aliasLoading, setAliasLoading] = useState(false);
+  const loadAliases = async () => {
+    try {
+      const m = await import('@/lib/api/settings');
+      const resp = await m.listAdvisorAliases();
+      if (resp.success && resp.data) {
+        const mine = (resp.data.aliases || []).filter(a => a.userId === user?.id);
+        setAliases(mine);
+      }
+    } catch (e) {
+      logger.warn('No se pudieron obtener aliases', { e });
+    }
+  };
+  useEffect(() => { if (user) { void loadAliases(); } }, [user]);
+  const addAlias = async () => {
+    if (!newAlias.trim() || !user) return;
+    try {
+      setAliasLoading(true);
+      const m = await import('@/lib/api/settings');
+      await m.createAdvisorAlias({ alias: newAlias, userId: user.id });
+      setNewAlias('');
+      await loadAliases();
+      showToast('Alias agregado', undefined, 'success');
+    } catch (e) {
+      const err = e as { userMessage?: string; message?: string };
+      const msg = err.userMessage || err.message || 'Error creando alias';
+      setError(msg);
+      showToast('Error', msg, 'error');
+    } finally {
+      setAliasLoading(false);
+    }
+  };
+  const deleteAlias = async (id: string) => {
+    try {
+      setAliasLoading(true);
+      const m = await import('@/lib/api/settings');
+      await m.deleteAdvisorAlias(id);
+      await loadAliases();
+      showToast('Alias eliminado', undefined, 'success');
+    } catch (e) {
+      const err = e as { userMessage?: string; message?: string };
+      const msg = err.userMessage || err.message || 'Error eliminando alias';
+      setError(msg);
+      showToast('Error', msg, 'error');
+    } finally {
+      setAliasLoading(false);
+    }
+  };
+
   // Estados de loading para acciones
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Cargar información del usuario
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchUserInfo();
     }
-  }, [token]);
+  }, [user]);
 
   const fetchUserInfo = async () => {
     try {
@@ -120,11 +172,16 @@ export default function ProfilePage() {
         const teamsResponse = await getTeams();
         if (teamsResponse.success && teamsResponse.data) {
           setTeams(teamsResponse.data || []);
-          
-          // Fetch team members
-          const membersResponse = await getAllTeamMembers();
-          if (membersResponse.success && membersResponse.data) {
-            setTeamMembers(membersResponse.data || []);
+
+          // Fetch team members (tolerar 404 como "sin miembros")
+          try {
+            const membersResponse = await getAllTeamMembers();
+            if (membersResponse.success && membersResponse.data) {
+              setTeamMembers(membersResponse.data || []);
+            }
+          } catch (err) {
+            logger.warn('No se pudo obtener miembros del equipo (continuando)', { err });
+            setTeamMembers([]);
           }
         }
       }
@@ -246,7 +303,7 @@ export default function ProfilePage() {
   };
 
   const handleLeaveTeam = (teamId: string) => {
-    if (!token || !user) return;
+    if (!user) return;
     
     setConfirmDialog({
       open: true,
@@ -366,6 +423,59 @@ export default function ProfilePage() {
                 >
                   Cambiar Contraseña
                 </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* AUM Advisor Aliases (self) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Mi alias de AUM (asesor)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Stack direction="column" gap="md">
+                <Text size="sm" color="secondary">
+                  Este alias se usará para matchear el campo "Asesor" en los CSV de AUM. Coincidencia exacta tras trim + lowercase.
+                </Text>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Ej: Juan Pérez"
+                    value={newAlias}
+                    onChange={(e) => setNewAlias(e.target.value)}
+                    className="w-64"
+                  />
+                  <Button onClick={addAlias} disabled={aliasLoading || !newAlias.trim()}>
+                    Agregar alias
+                  </Button>
+                </div>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alias</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Normalizado</th>
+                        <th className="px-4 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {aliases.length === 0 ? (
+                        <tr>
+                          <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={3}>Sin alias configurados</td>
+                        </tr>
+                      ) : (
+                        aliases.map(a => (
+                          <tr key={a.id}>
+                            <td className="px-4 py-2 text-sm text-gray-700">{a.aliasRaw}</td>
+                            <td className="px-4 py-2 text-sm text-gray-700">{a.aliasNormalized}</td>
+                            <td className="px-4 py-2 text-right">
+                              <Button variant="danger" size="sm" disabled={aliasLoading} onClick={() => deleteAlias(a.id)}>Eliminar</Button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </Stack>
             </CardContent>
           </Card>

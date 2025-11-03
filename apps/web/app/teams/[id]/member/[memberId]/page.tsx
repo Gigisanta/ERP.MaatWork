@@ -19,7 +19,7 @@ import {
 import Link from 'next/link';
 
 export default function TeamMemberPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const params = useParams();
   const router = useRouter();
   const teamId = String(params?.id || '');

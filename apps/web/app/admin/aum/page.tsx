@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getAumRows } from '@/lib/api';
 import FileUploader from './components/FileUploader';
@@ -9,16 +9,22 @@ import DuplicateResolutionModal from './components/DuplicateResolutionModal';
 import type { Row, ApiErrorWithMessage, AumRow } from '@/types';
 import { Button, Select, Text, Badge } from '@cactus/ui';
 
+// AI_DECISION: Debounce filter changes to reduce excessive API calls
+// Justificación: Filter changes can trigger multiple rapid API calls, debouncing improves performance
+// Impacto: Better performance and reduced server load
+const FILTER_DEBOUNCE_MS = 300;
+
 export default function AumAdminPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ total: 0, limit: 50, offset: 0, hasMore: false });
-  const [filters, setFilters] = useState({ broker: '', status: '' });
+  const [filters, setFilters] = useState({ broker: 'all', status: 'all' });
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [selectedAccountNumber, setSelectedAccountNumber] = useState<string | null>(null);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
   
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -31,8 +37,8 @@ export default function AumAdminPage() {
         limit: pagination.limit,
         offset: pagination.offset,
       };
-      if (filters.broker) params.broker = filters.broker;
-      if (filters.status) params.status = filters.status;
+      if (filters.broker && filters.broker !== 'all') params.broker = filters.broker;
+      if (filters.status && filters.status !== 'all') params.status = filters.status;
       
       const response = await getAumRows(params);
       
@@ -51,11 +57,29 @@ export default function AumAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.limit, pagination.offset, filters.broker, filters.status]);
 
+  // Load on mount and pagination changes (no debounce)
   useEffect(() => {
     loadRows();
-  }, [pagination.offset, filters.broker, filters.status]);
+  }, [pagination.offset]);
+
+  // Debounce filter changes
+  useEffect(() => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      loadRows();
+    }, FILTER_DEBOUNCE_MS);
+    
+    setDebounceTimer(timer);
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [filters.broker, filters.status]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -89,27 +113,48 @@ export default function AumAdminPage() {
       {/* Filtros */}
       <div className="flex gap-4 items-center">
         <Select
-          value={filters.broker || ''}
+          value={filters.broker}
           onValueChange={(value) => setFilters(prev => ({ ...prev, broker: value }))}
           placeholder="Todos los Brokers"
           items={[
-            { value: '', label: 'Todos los Brokers' },
+            { value: 'all', label: 'Todos los Brokers' },
             { value: 'balanz', label: 'Balanz' }
           ]}
         />
         <Select
-          value={filters.status || ''}
+          value={filters.status}
           onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
           placeholder="Todos los Estados"
           items={[
-            { value: '', label: 'Todos los Estados' },
+            { value: 'all', label: 'Todos los Estados' },
             { value: 'matched', label: 'Coincidencia' },
             { value: 'ambiguous', label: 'Ambiguo' },
             { value: 'unmatched', label: 'Sin Coincidencia' }
           ]}
         />
         <div className="ml-auto">
-          <FileUploader onUploadSuccess={() => loadRows()} />
+          <FileUploader onUploadSuccess={async (fileId) => {
+            // Bring the newest file to view immediately after upload
+            try {
+              setPagination(prev => ({ ...prev, offset: 0 }));
+              setLoading(true);
+              setError(null);
+              const response = await getAumRows({ limit: 50, offset: 0, fileId });
+              if (response.success && response.data) {
+                const allRows = response.data.rows || [];
+                const validRows = allRows
+                  .filter((r): r is Row => r.file !== undefined)
+                  .map(r => ({ ...r, file: r.file! }));
+                setRows(validRows);
+                setPagination(prev => ({ ...prev, ...(response.data?.pagination || {}) }));
+              }
+            } catch (e: unknown) {
+              const err = e as ApiErrorWithMessage;
+              setError(err.userMessage || err.message || 'Error cargando vista previa');
+            } finally {
+              setLoading(false);
+            }
+          }} />
         </div>
       </div>
 
@@ -119,7 +164,38 @@ export default function AumAdminPage() {
 
       {/* Tabla consolidada */}
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Cargando...</div>
+        <div className="overflow-x-auto border rounded">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Archivo</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Broker</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cuenta</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titular</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asesor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vincular Contacto/Usuario</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {[...Array(5)].map((_, i) => (
+                <tr key={i} className="animate-pulse">
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-40"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-36"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-28"></div></td>
+                  <td className="px-4 py-3"><div className="h-8 bg-gray-200 rounded w-32"></div></td>
+                  <td className="px-4 py-3"><div className="h-6 bg-gray-200 rounded w-24"></div></td>
+                  <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <>
           <div className="overflow-x-auto border rounded">
@@ -158,6 +234,7 @@ export default function AumAdminPage() {
                         rowId={row.id}
                         initialContactId={row.matchedContactId}
                         initialUserId={row.matchedUserId}
+                        suggestedUserId={row.suggestedUserId}
                         onSave={() => loadRows()}
                       />
                     </td>

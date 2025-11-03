@@ -10,13 +10,13 @@ type BenchmarkWithCount = Benchmark & {
 };
 
 export default function BenchmarksPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const [benchmarks, setBenchmarks] = useState<BenchmarkWithCount[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchBenchmarks = async () => {
-    if (!token) return;
+    if (!user) return;
     
     try {
       setDataLoading(true);
@@ -37,10 +37,10 @@ export default function BenchmarksPage() {
   };
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchBenchmarks();
     }
-  }, [token]);
+  }, [user]);
 
   if (loading) {
     return (

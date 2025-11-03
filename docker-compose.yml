@@ -6,7 +6,7 @@ services:
       POSTGRES_DB: CRM
       POSTGRES_USER: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Use 5433 to avoid conflict with local PostgreSQL
     volumes:
       - pg:/var/lib/postgresql/data
     command: >

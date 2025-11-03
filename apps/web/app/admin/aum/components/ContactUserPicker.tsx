@@ -14,6 +14,7 @@ interface ContactUserPickerProps {
   rowId: string;
   initialContactId?: string | null;
   initialUserId?: string | null;
+  suggestedUserId?: string | null;
   onSave?: () => void;
 }
 
@@ -22,10 +23,11 @@ export default function ContactUserPicker({
   rowId,
   initialContactId,
   initialUserId,
+  suggestedUserId,
   onSave
 }: ContactUserPickerProps) {
   const [contactId, setContactId] = useState(initialContactId || '');
-  const [userId, setUserId] = useState(initialUserId || '');
+  const [userId, setUserId] = useState(initialUserId || suggestedUserId || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

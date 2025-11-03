@@ -29,12 +29,15 @@ export async function apiCallWithToken<T>(
     ...options.headers,
   };
 
-  const response = await fetch(url, {
+  const fetchOptions: RequestInit = {
     method: options.method || 'GET',
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
     cache: 'no-store',
-  });
+  };
+  if (options.body !== undefined) {
+    fetchOptions.body = JSON.stringify(options.body);
+  }
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: response.statusText }));

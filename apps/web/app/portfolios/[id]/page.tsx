@@ -58,7 +58,7 @@ interface CreateLineData {
 }
 
 export default function PortfolioDetailPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const params = useParams();
   const templateId = params.id as string;
   

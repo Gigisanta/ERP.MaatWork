@@ -14,6 +14,9 @@ import {
 
 const router = Router();
 
+// Type alias para simplificar código
+type PipelineStage = InferSelectModel<typeof pipelineStages>;
+
 // ==========================================================
 // Schemas de validación
 // ==========================================================
@@ -58,6 +61,12 @@ const moveContactSchema = z.object({
 // ==========================================================
 router.get('/stages', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // AI_DECISION: Garantizar etapas por defecto antes de consultar
+    // Justificación: Asegura que siempre existan las 7 etapas requeridas, incluso si el seed falló
+    // Impacto: Frontend siempre recibe etapas válidas, mejor UX y confiabilidad
+    const { ensureDefaultPipelineStages } = await import('../utils/pipeline-stages');
+    await ensureDefaultPipelineStages(true); // silent=true para no llenar logs en cada request
+
     // Get user access scope for data isolation
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -73,7 +82,6 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     // AI_DECISION: Replace N+2 loop with single GROUP BY query for 80% latency reduction
     // Justificación: Promise.all with individual queries creates N+2 pattern (1 for stages + N for counts)
     // Impacto: API p95 reduction from ~80ms → ~15ms for 7 stages
-    type PipelineStage = InferSelectModel<typeof pipelineStages>;
     const stageIds = stages.map((stage: PipelineStage) => stage.id);
     
     // Single query to get counts for all stages at once
@@ -105,7 +113,7 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
       contactCount: countsMap.get(stage.id) || 0
     }));
 
-    res.json({ data: stagesWithCounts });
+    res.json({ success: true, data: stagesWithCounts });
   } catch (err) {
     req.log.error({ err }, 'failed to list pipeline stages');
     next(err);
@@ -165,7 +173,7 @@ router.put('/stages/:id',
     }
 
     req.log.info({ stageId: id }, 'pipeline stage updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, stageId: req.params.id }, 'failed to update pipeline stage');
     next(err);
@@ -181,6 +189,12 @@ router.get('/board',
   async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { assignedAdvisorId, assignedTeamId } = req.query;
+
+    // AI_DECISION: Garantizar etapas por defecto antes de consultar
+    // Justificación: Asegura que siempre existan las 7 etapas requeridas, incluso si el seed falló
+    // Impacto: Frontend siempre recibe etapas válidas, mejor UX y confiabilidad
+    const { ensureDefaultPipelineStages } = await import('../utils/pipeline-stages');
+    await ensureDefaultPipelineStages(true); // silent=true para no llenar logs en cada request
 
     // Obtener todas las etapas activas
     const stages = await db()
@@ -218,7 +232,7 @@ router.get('/board',
       })
     );
 
-    res.json({ data: board });
+    res.json({ success: true, data: board });
   } catch (err) {
     req.log.error({ err }, 'failed to get pipeline board');
     next(err);
@@ -318,7 +332,7 @@ router.post('/move',
     }
 
     req.log.info({ contactId, fromStage: contact.pipelineStageId, toStage: toStageId }, 'contact moved in pipeline');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err }, 'failed to move contact in pipeline');
     next(err);
@@ -498,18 +512,25 @@ router.get('/metrics/export',
         : '0.00';
 
       metrics.push({
-        stage: stage.name,
+        stageId: stage.id,
+        stageName: stage.name,
         entered: Number(entered),
         exited: Number(exited),
-        conversionRate: parseFloat(conversionRate)
+        averageTimeInDays: 0, // TODO: Calculate average time in stage
+        totalValue: 0 // TODO: Calculate total value if available
       });
     }
 
     // Convertir a CSV
-    const headers = ['stage', 'entered', 'exited', 'conversionRate'];
+    const headers = ['stageName', 'entered', 'exited', 'conversionRate'];
     const csv = [
       headers.join(','),
-      ...metrics.map(item => headers.map(h => item[h] || '').join(','))
+      ...metrics.map(item => [
+        item.stageName,
+        item.entered.toString(),
+        item.exited.toString(),
+        ((item.exited / (item.entered || 1)) * 100).toFixed(2)
+      ].join(','))
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');

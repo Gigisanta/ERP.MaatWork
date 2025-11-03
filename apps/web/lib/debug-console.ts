@@ -23,6 +23,7 @@ class DebugConsole {
   private maxLogs = 100;
   private panel: HTMLDivElement | null = null;
   private isPanelVisible = false;
+  private isLogging = false; // Guard para prevenir recursión infinita
 
   constructor() {
     if (typeof window === 'undefined') return;
@@ -86,10 +87,25 @@ class DebugConsole {
     });
 
     // Interceptar console.error
+    // AI_DECISION: Agregar guard para prevenir recursión infinita
+    // Justificación: Si log() llama a console.error durante logging, crea un loop infinito.
+    // El guard isLogging previene que se intercepten logs generados por el propio debug-console.
     const originalError = console.error;
     console.error = (...args: unknown[]) => {
       originalError.apply(console, args);
       
+      // Guard: evitar interceptar errores mientras estamos logueando (previene recursión)
+      if (this.isLogging) {
+        return;
+      }
+      
+      // Filtrar mensajes del logger para evitar loops
+      const message = args.map(arg => String(arg)).join(' ');
+      if (message.includes('[Logger]') || message.includes('Failed to send log to backend')) {
+        return; // Ignorar errores del logger para evitar recursión
+      }
+      
+      const errorArg = args.find(arg => arg instanceof Error) as Error | undefined;
       this.log({
         type: 'error',
         message: args.map(arg => {
@@ -98,14 +114,14 @@ class DebugConsole {
           }
           return String(arg);
         }).join(' '),
-        stack: args.find(arg => arg instanceof Error)?.stack,
+        ...(errorArg?.stack && { stack: errorArg.stack }),
         url: window.location.href,
         details: {
           args: args.map(arg => {
             if (arg instanceof Error) {
               return {
                 message: arg.message,
-                stack: arg.stack,
+                ...(arg.stack && { stack: arg.stack }),
                 name: arg.name,
               };
             }
@@ -120,6 +136,17 @@ class DebugConsole {
     console.warn = (...args: unknown[]) => {
       originalWarn.apply(console, args);
       
+      // Guard: evitar interceptar warnings mientras estamos logueando (previene recursión)
+      if (this.isLogging) {
+        return;
+      }
+      
+      // Filtrar mensajes del logger para evitar loops
+      const message = args.map(arg => String(arg)).join(' ');
+      if (message.includes('[Logger]')) {
+        return; // Ignorar warnings del logger para evitar recursión
+      }
+      
       this.log({
         type: 'warn',
         message: args.map(arg => String(arg)).join(' '),
@@ -129,42 +156,53 @@ class DebugConsole {
   }
 
   private log(errorLog: Partial<ErrorLog>) {
-    const completeLog: ErrorLog = {
-      timestamp: new Date().toISOString(),
-      type: errorLog.type || 'log',
-      message: errorLog.message || '',
-      stack: errorLog.stack || undefined,
-      source: errorLog.source || undefined,
-      line: errorLog.line || undefined,
-      col: errorLog.col || undefined,
-      url: errorLog.url || undefined,
-      userAgent: errorLog.userAgent || undefined,
-      details: errorLog.details || undefined,
-    };
-    this.logs.unshift(completeLog);
-    
-    // Limitar número de logs
-    if (this.logs.length > this.maxLogs) {
-      this.logs = this.logs.slice(0, this.maxLogs);
+    // Guard: prevenir recursión infinita
+    if (this.isLogging) {
+      return;
     }
-    
-    this.saveLogs();
-    
-    // Mostrar en panel si está visible
-    if (this.isPanelVisible && this.panel) {
-      this.updatePanel();
-    }
-    
-    // En desarrollo, siempre mostrar errores críticos
-    if (errorLog.type === 'error' && process.env.NODE_ENV === 'development') {
-      console.group('🔴 Error capturado por Debug Console');
-      console.error('Mensaje:', errorLog.message);
-      if (errorLog.stack) {
-        console.error('Stack:', errorLog.stack);
+
+    this.isLogging = true;
+    try {
+      const completeLog: ErrorLog = {
+        timestamp: new Date().toISOString(),
+        type: errorLog.type || 'log',
+        message: errorLog.message || '',
+        ...(errorLog.stack && { stack: errorLog.stack }),
+        ...(errorLog.source && { source: errorLog.source }),
+        ...(errorLog.line && { line: errorLog.line }),
+        ...(errorLog.col && { col: errorLog.col }),
+        ...(errorLog.url && { url: errorLog.url }),
+        ...(errorLog.userAgent && { userAgent: errorLog.userAgent }),
+        ...(errorLog.details && { details: errorLog.details }),
+      };
+      this.logs.unshift(completeLog);
+      
+      // Limitar número de logs
+      if (this.logs.length > this.maxLogs) {
+        this.logs = this.logs.slice(0, this.maxLogs);
       }
-      console.error('URL:', errorLog.url);
-      console.error('Detalles completos:', errorLog);
-      console.groupEnd();
+      
+      this.saveLogs();
+      
+      // Mostrar en panel si está visible
+      if (this.isPanelVisible && this.panel) {
+        this.updatePanel();
+      }
+      
+      // En desarrollo, mostrar errores críticos (pero sin usar console.error para evitar loops)
+      if (errorLog.type === 'error' && process.env.NODE_ENV === 'development') {
+        // Usar console.group y console.log en lugar de console.error para evitar recursión
+        console.group('🔴 Error capturado por Debug Console');
+        console.log('Mensaje:', errorLog.message);
+        if (errorLog.stack) {
+          console.log('Stack:', errorLog.stack);
+        }
+        console.log('URL:', errorLog.url);
+        console.log('Detalles completos:', errorLog);
+        console.groupEnd();
+      }
+    } finally {
+      this.isLogging = false;
     }
   }
 

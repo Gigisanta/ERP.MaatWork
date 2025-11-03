@@ -35,9 +35,6 @@ import {
   Spinner,
   Icon,
   Toast,
-  Tabs,
-  TabsList,
-  TabsTrigger,
   type Column,
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -45,7 +42,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 // Types Contact y Tag importados desde @/types
 
 export default function ContactsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const advisorIdFilter = searchParams.get('advisorId');
@@ -658,9 +655,9 @@ export default function ContactsPage() {
           <CardContent className="p-4">
             <div className="flex flex-col gap-3">
               {/* Primera fila: Controles en línea horizontal */}
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
                 {/* Input de búsqueda compacto con icono */}
-                <div className="relative flex-1 min-w-[200px]">
+                <div className="relative w-[200px] shrink-0">
                   <Input
                     placeholder="Buscar contactos..."
                     value={searchTerm}
@@ -672,7 +669,7 @@ export default function ContactsPage() {
                 </div>
 
                 {/* Select de etapa */}
-                <div className="min-w-[180px]">
+                <div className="w-[160px] shrink-0">
                   <Select
                     value={selectedStage}
                     onValueChange={setSelectedStage}
@@ -687,54 +684,67 @@ export default function ContactsPage() {
                 </div>
 
                 {/* Dropdown de etiquetas */}
-                <DropdownMenu
-                  trigger={
-                    <Button variant="outline">
-                      Etiquetas ({selectedTags.length})
-                      <Icon name="chevron-down" size={16} className="ml-2" />
-                    </Button>
-                  }
-                >
-                  {allTags.map((tag: Tag) => (
-                    <DropdownMenuItem key={tag.id} onClick={() => handleTagToggle(tag.id)}>
-                      <div className="flex items-center">
-                        <div 
-                          className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: tag.color }}
-                        />
-                        <Text>{tag.name}</Text>
-                        {selectedTags.includes(tag.id) && (
-                          <Icon name="check" size={16} className="ml-auto" />
-                        )}
-                      </div>
+                <div className="shrink-0">
+                  <DropdownMenu
+                    trigger={
+                      <Button variant="outline">
+                        Etiquetas ({selectedTags.length})
+                        <Icon name="chevron-down" size={16} className="ml-2" />
+                      </Button>
+                    }
+                  >
+                    {allTags.map((tag: Tag) => (
+                      <DropdownMenuItem key={tag.id} onClick={() => handleTagToggle(tag.id)}>
+                        <div className="flex items-center">
+                          <div 
+                            className="w-3 h-3 rounded-full mr-2" 
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          <Text>{tag.name}</Text>
+                          {selectedTags.includes(tag.id) && (
+                            <Icon name="check" size={16} className="ml-auto" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowManageTagsModal(true)}>
+                      <Icon name="edit" size={16} className="mr-2" />
+                      Gestionar etiquetas
                     </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowManageTagsModal(true)}>
-                    <Icon name="edit" size={16} className="mr-2" />
-                    Gestionar etiquetas
-                  </DropdownMenuItem>
-                </DropdownMenu>
+                  </DropdownMenu>
+                </div>
 
                 {/* Toggle vista tabla/kanban */}
-                <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'kanban')}>
-                  <TabsList className="border border-gray-300 rounded-md overflow-hidden p-0 h-auto bg-white">
-                    <TabsTrigger 
-                      value="table" 
-                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
-                    >
-                      <Icon name="list" size={16} />
-                      <span className="text-xs">Tabla</span>
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="kanban" 
-                      className="px-3 py-1.5 text-sm flex items-center gap-1 data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-700 data-[state=inactive]:hover:bg-gray-50"
-                    >
-                      <Icon name="grid" size={16} />
-                      <span className="text-xs">Kanban</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div className="shrink-0 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50 p-0.5">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all rounded ${
+                      viewMode === 'table'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    aria-pressed={viewMode === 'table'}
+                    aria-label="Vista de tabla"
+                  >
+                    <Icon name="list" size={16} />
+                    <span>Tabla</span>
+                  </button>
+                  <div className="w-px h-4 bg-gray-300 mx-0.5" aria-hidden="true" />
+                  <button
+                    onClick={() => setViewMode('kanban')}
+                    className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all rounded ${
+                      viewMode === 'kanban'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                    aria-pressed={viewMode === 'kanban'}
+                    aria-label="Vista kanban"
+                  >
+                    <Icon name="grid" size={16} />
+                    <span>Kanban</span>
+                  </button>
+                </div>
               </div>
 
               {/* Segunda fila: Chips de filtros activos */}

@@ -12,15 +12,19 @@
     },
     "./styles": "./dist/styles/index.css",
     "./styles.css": "./dist/styles/index.css",
-    "./tailwind-preset": "./dist/tailwind-preset.js"
+    "./tailwind-preset": {
+      "require": "./dist/tailwind-preset.js",
+      "import": "./dist/tailwind-preset.js"
+    }
   },
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc && pnpm run build:styles",
+    "build": "tsc && pnpm run build:styles && pnpm run build:link-styles",
     "build:styles": "copyfiles -u 2 src/styles/**/*.css dist/styles",
+    "build:link-styles": "node -e \"require('fs').symlinkSync('styles/index.css', 'dist/styles.css', 'file');\" || true",
     "dev": "echo 'UI package does not need dev mode'",
     "test": "vitest run",
     "test:watch": "vitest",

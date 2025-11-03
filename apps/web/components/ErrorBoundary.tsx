@@ -3,8 +3,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { logger } from '../lib/logger';
-import { Toast } from '@cactus/ui';
-import { Button } from '@cactus/ui';
+import { Toast, Button } from '@cactus/ui';
 
 interface Props {
   children: ReactNode;
@@ -197,8 +196,8 @@ export class ErrorBoundary extends Component<Props, State> {
       // UI de error por defecto usando componente funcional con hooks
       return (
         <ErrorDisplay
-          error={this.state.error}
-          errorInfo={this.state.errorInfo}
+          {...(this.state.error && { error: this.state.error })}
+          {...(this.state.errorInfo && { errorInfo: this.state.errorInfo })}
           onRetry={this.handleRetry}
           onReportError={this.handleReportError}
         />

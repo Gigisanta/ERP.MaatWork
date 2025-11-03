@@ -37,7 +37,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { token } = useAuth();
+  const { user } = useAuth();
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const search = useCallback(
@@ -47,7 +47,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         return;
       }
       
-      if (!token) {
+      if (!user) {
         setError('Debes iniciar sesión para buscar activos');
         return;
       }
@@ -72,7 +72,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         setLoading(false);
       }
     },
-    [token]
+    [user]
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,7 +110,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   };
 
   const handleDirectSymbol = async () => {
-    if (query.trim() && token) {
+    if (query.trim() && user) {
       const symbol = query.trim().toUpperCase();
       
       // Validar símbolo directamente

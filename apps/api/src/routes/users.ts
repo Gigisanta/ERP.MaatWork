@@ -1,7 +1,7 @@
 // REGLA CURSOR: Endpoint de usuarios - mantener RBAC estricto (requireRole middleware), validación Zod
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users, teamMembershipRequests } from '@cactus/db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
@@ -21,7 +21,7 @@ const createUserSchema = z.object({
 router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const all = await db().select().from(users).limit(25);
-    res.json({ data: all });
+    res.json({ success: true, data: all });
   } catch (err) {
     req.log.error({ err }, 'failed to list users');
     next(err);
@@ -53,7 +53,7 @@ router.post('/',
       .returning();
     
     req.log.info({ userId: newUser.id, email: newUser.email, role: newUser.role }, 'user created');
-    res.status(201).json({ data: newUser });
+    res.status(201).json({ success: true, data: newUser });
   } catch (err) {
     req.log.error({ err }, 'failed to create user');
     next(err);
@@ -69,7 +69,7 @@ router.get('/pending', requireAuth, requireRole(['admin']), async (req: Request,
       .where(eq(users.isActive, false))
       .orderBy(users.createdAt);
     
-    res.json({ data: pendingUsers });
+    res.json({ success: true, data: pendingUsers });
   } catch (err) {
     req.log.error({ err }, 'failed to list pending users');
     next(err);
@@ -86,11 +86,10 @@ router.get('/managers', async (req: Request, res: Response, next: NextFunction) 
         fullName: users.fullName
       })
       .from(users)
-      .where(eq(users.role, 'manager'))
-      .where(eq(users.isActive, true))
+      .where(and(eq(users.role, 'manager'), eq(users.isActive, true)))
       .orderBy(users.fullName);
     
-    res.json({ data: managers });
+    res.json({ success: true, data: managers });
   } catch (err) {
     req.log.error({ err }, 'failed to list managers');
     next(err);
@@ -107,11 +106,10 @@ router.get('/advisors', requireAuth, async (req: Request, res: Response, next: N
         fullName: users.fullName
       })
       .from(users)
-      .where(eq(users.role, 'advisor'))
-      .where(eq(users.isActive, true))
+      .where(and(eq(users.role, 'advisor'), eq(users.isActive, true)))
       .orderBy(users.fullName);
     
-    res.json({ data: advisors });
+    res.json({ success: true, data: advisors });
   } catch (err) {
     req.log.error({ err }, 'failed to list advisors');
     next(err);
@@ -143,7 +141,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    res.json({ data: user });
+    res.json({ success: true, data: user });
   } catch (err) {
     req.log.error({ err }, 'failed to get current user');
     next(err);
@@ -197,7 +195,7 @@ router.post('/change-password', requireAuth, async (req: Request, res: Response,
       .where(eq(users.id, userId));
 
     req.log.info({ userId }, 'user password changed');
-    res.json({ message: 'Contraseña actualizada exitosamente' });
+    res.json({ success: true, message: 'Contraseña actualizada exitosamente' });
   } catch (err) {
     req.log.error({ err }, 'failed to change password');
     next(err);
@@ -261,7 +259,7 @@ router.post('/', requireAuth, requireRole(['admin']), async (req: Request, res: 
     }
 
     req.log.info({ userId: newUser.id, email: newUser.email }, 'user created by admin');
-    res.status(201).json({ data: newUser });
+    res.status(201).json({ success: true, data: newUser });
   } catch (err) {
     req.log.error({ err }, 'failed to create user');
     next(err);
@@ -285,6 +283,7 @@ router.post('/:id/approve', requireAuth, requireRole(['admin']), async (req: Req
     
     req.log.info({ userId: id, email: updatedUser.email }, 'user approved');
     res.json({ 
+      success: true,
       data: updatedUser,
       message: 'User approved successfully'
     });
@@ -317,6 +316,7 @@ router.post('/:id/reject', requireAuth, requireRole(['admin']), async (req: Requ
     
     req.log.info({ userId: id, email: userToDelete.email }, 'user rejected and deleted');
     res.json({ 
+      success: true,
       message: 'User rejected and removed from system'
     });
   } catch (err) {

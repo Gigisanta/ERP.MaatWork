@@ -13,7 +13,7 @@ export type BenchmarkType = 'individual' | 'composite';
  * Componente base compartido entre Benchmark y Portfolio
  */
 export interface ComponentBase {
-  instrumentId?: string;
+  instrumentId?: string | null;
   instrumentSymbol: string;
   instrumentName?: string;
   targetWeight: number;

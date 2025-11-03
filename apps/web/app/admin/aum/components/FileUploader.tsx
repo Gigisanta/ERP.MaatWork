@@ -1,178 +1,213 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { uploadAumFile } from '@/lib/api';
-import type { ApiErrorWithMessage } from '@/types';
-import type { AumUploadResponse } from '@/types';
-import {
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  ModalDescription,
-  ModalContent,
-  ModalFooter,
-  Button,
-  Text,
-  Stack,
-  Alert,
-  Heading,
-} from '@cactus/ui';
+import type { ApiErrorWithMessage } from '@/types/aum';
+import { Button, Select, Spinner, Text } from '@cactus/ui';
+
+// AI_DECISION: File upload limits aligned with backend
+// Justificación: Client-side validation prevents unnecessary uploads and provides better UX
+// Impacto: Better error feedback and reduced server load
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const ALLOWED_TYPES = ['.csv', '.xlsx', '.xls'];
 
 interface FileUploaderProps {
-  onUploadSuccess?: () => void;
+  onUploadSuccess?: (fileId: string) => void;
 }
 
-interface UploadResponse {
-  ok: boolean;
-  fileId: string;
-  filename: string;
-  totals: {
-    parsed: number;
-    matched: number;
-    ambiguous: number;
-    conflicts: number;
-    unmatched: number;
-  };
-}
-
+/**
+ * FileUploader - Component for uploading AUM files
+ * 
+ * Features:
+ * - Hidden native file input with button trigger (better UX than styled input)
+ * - Client-side validation for file type and size
+ * - Visual feedback with filename and size display
+ * - Clear button to reset selection
+ * - Broker selector (currently only Balanz)
+ * - Success/error states with auto-clear
+ * 
+ * @example
+ * <FileUploader onUploadSuccess={() => loadRows()} />
+ */
 export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [broker, setBroker] = useState('balanz');
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSummary, setShowSummary] = useState(false);
-  const [uploadSummary, setUploadSummary] = useState<{ fileId: string; totals: AumUploadResponse['totals'] } | null>(null);
+  const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setLoading(true);
+  /**
+   * Validates file before setting state
+   * Returns error message or null if valid
+   */
+  const validateFile = (f: File): string | null => {
+    // Check file type
+    const extension = f.name.toLowerCase().match(/\.[^.]+$/)?.[0];
+    if (!extension || !ALLOWED_TYPES.includes(extension)) {
+      return `Tipo de archivo no permitido. Solo se aceptan: ${ALLOWED_TYPES.join(', ')}`;
+    }
+
+    // Check file size
+    if (f.size > MAX_FILE_SIZE) {
+      const maxSizeMB = MAX_FILE_SIZE / (1024 * 1024);
+      return `Archivo demasiado grande. Tamaño máximo: ${maxSizeMB}MB`;
+    }
+
+    if (f.size === 0) {
+      return 'El archivo está vacío';
+    }
+
+    return null;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
-    try {
-      const response = await uploadAumFile(file, 'balanz');
-      
-      if (!response.success || !response.data) {
-        throw new Error('Error al subir archivo');
+    setSuccess(false);
+    const f = e.target.files?.[0] || null;
+    
+    if (!f) {
+      setFile(null);
+      return;
+    }
+
+    // Validate file before setting
+    const validationError = validateFile(f);
+    if (validationError) {
+      setError(validationError);
+      // Clear the input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-      
-      const data = response.data;
-      const fileId = data.fileId;
-      // Show summary modal if there are conflicts or interesting stats
-      if (data.totals.conflicts > 0 || data.totals.ambiguous > 0) {
-        setUploadSummary({ fileId, totals: data.totals });
-        setShowSummary(true);
-      } else {
-        // Refresh the table on the main page
-        if (onUploadSuccess) {
-          onUploadSuccess();
-        } else {
-          // Fallback: navigate to preview if callback not provided
-          router.push(`/admin/aum/${fileId}`);
-        }
-      }
-    } catch (err: unknown) {
-      const error = err as ApiErrorWithMessage;
-      const errorMessage = error.userMessage || error.message || 'Error subiendo archivo';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-      (e.target as HTMLInputElement).value = '';
+      setFile(null);
+      return;
+    }
+
+    setFile(f);
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleClearFile = () => {
+    setFile(null);
+    setError(null);
+    setSuccess(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const handleCloseSummary = () => {
-    setShowSummary(false);
-    if (uploadSummary) {
-      // Refresh the table after closing summary
-      if (onUploadSuccess) {
-        onUploadSuccess();
-      } else {
-        router.push(`/admin/aum/${uploadSummary.fileId}`);
+  const handleUpload = async () => {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    setSuccess(false);
+    
+    try {
+      const resp = await uploadAumFile(file, broker);
+      setSuccess(true);
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
+      if (onUploadSuccess && resp?.success && resp.data?.fileId) onUploadSuccess(resp.data.fileId);
+      setTimeout(() => setSuccess(false), 1500);
+    } catch (e: unknown) {
+      const apiErr = e as ApiErrorWithMessage;
+      setError(apiErr.userMessage || apiErr.message || 'Error al subir archivo');
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
-    <>
-      <div className="flex items-center gap-3">
-        <label htmlFor="aum-file-input">
-          <Button
-            variant="primary"
-            disabled={loading}
-            className="cursor-pointer"
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* Hidden native file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        onChange={handleFileChange}
+        className="hidden"
+        disabled={uploading}
+      />
+
+      {/* File selection button */}
+      <Button
+        size="sm"
+        variant={file ? "outline" : "primary"}
+        onClick={handleButtonClick}
+        disabled={uploading}
+        className="text-xs"
+      >
+        {file ? '📄 Cambiar archivo' : '📤 Seleccionar archivo'}
+      </Button>
+
+      {/* File info display */}
+      {file && (
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded border">
+          <span className="text-xs font-medium text-gray-700 truncate max-w-xs">
+            {file.name}
+          </span>
+          <span className="text-xs text-gray-500">
+            {formatFileSize(file.size)}
+          </span>
+          <button
             type="button"
+            onClick={handleClearFile}
+            disabled={uploading}
+            className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+            aria-label="Eliminar archivo"
           >
-            {loading ? 'Subiendo…' : 'Cargar archivo de Balanz (CSV o Excel)'}
-          </Button>
-        </label>
-        <input 
-          id="aum-file-input" 
-          type="file" 
-          className="hidden" 
-          accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
-          onChange={onChange} 
-          disabled={loading} 
-        />
-        {error && (
-          <Text size="sm" className="text-error">{error}</Text>
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Broker selector */}
+      <Select
+        value={broker}
+        onValueChange={(v) => setBroker(v)}
+        items={[{ value: 'balanz', label: 'Balanz' }]}
+        placeholder="Broker"
+        disabled={uploading}
+      />
+
+      {/* Upload button */}
+      <Button
+        size="sm"
+        variant="primary"
+        disabled={!file || uploading}
+        onClick={handleUpload}
+        className={`text-xs ${success ? 'bg-green-600 hover:bg-green-700' : ''}`}
+      >
+        {uploading ? (
+          <>
+            <Spinner size="sm" className="mr-1" /> Subiendo...
+          </>
+        ) : success ? (
+          '✓ Subido'
+        ) : (
+          'Subir'
         )}
-      </div>
+      </Button>
 
-      <Modal open={showSummary && !!uploadSummary} onOpenChange={setShowSummary}>
-        <ModalHeader>
-          <ModalTitle>Resumen de importación</ModalTitle>
-        </ModalHeader>
-        <ModalContent>
-          <Stack direction="column" gap="md">
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <Text>Total procesados:</Text>
-                <Text weight="semibold">{uploadSummary?.totals.parsed}</Text>
-              </div>
-              
-              {uploadSummary?.totals.matched && uploadSummary.totals.matched > 0 && (
-                <div className="flex justify-between">
-                  <Text className="text-success-base">Coincidencias:</Text>
-                  <Text weight="semibold" className="text-success-base">{uploadSummary.totals.matched}</Text>
-                </div>
-              )}
-              
-              {uploadSummary?.totals.conflicts && uploadSummary.totals.conflicts > 0 && (
-                <div className="flex justify-between">
-                  <Text className="text-warning-base">Conflictos detectados:</Text>
-                  <Text weight="semibold" className="text-warning-base">{uploadSummary.totals.conflicts}</Text>
-                </div>
-              )}
-              
-              {uploadSummary?.totals.ambiguous && uploadSummary.totals.ambiguous > 0 && (
-                <div className="flex justify-between">
-                  <Text className="text-warning-base">Requieren revisión:</Text>
-                  <Text weight="semibold" className="text-warning-base">{uploadSummary.totals.ambiguous}</Text>
-                </div>
-              )}
-              
-              {uploadSummary?.totals.unmatched && uploadSummary.totals.unmatched > 0 && (
-                <div className="flex justify-between">
-                  <Text>Sin coincidencia:</Text>
-                  <Text weight="semibold">{uploadSummary.totals.unmatched}</Text>
-                </div>
-              )}
-            </div>
-
-            {uploadSummary?.totals.conflicts && uploadSummary.totals.conflicts > 0 && (
-              <Alert variant="warning" title="Conflictos detectados">
-                Se detectaron conflictos en cuentas duplicadas. Revisa los duplicados en la vista previa.
-              </Alert>
-            )}
-
-            <ModalFooter>
-              <Button variant="primary" onClick={handleCloseSummary}>
-                Ver archivo
-              </Button>
-            </ModalFooter>
-          </Stack>
-        </ModalContent>
-      </Modal>
-    </>
+      {/* Error display */}
+      {error && (
+        <div className="w-full">
+          <Text size="sm" className="text-error">
+            {error}
+          </Text>
+        </div>
+      )}
+    </div>
   );
 }

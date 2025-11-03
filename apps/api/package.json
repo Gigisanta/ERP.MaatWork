@@ -24,6 +24,7 @@
     "axios": "^1.13.1",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csv-parse": "^5.5.6",
     "dotenv": "^16.6.1",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/compression": "^1.8.1",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.15",
     "@types/express": "^4.17.20",
     "@types/multer": "^2.0.0",

@@ -43,9 +43,31 @@ Aplicación web frontend del CRM construida con Next.js 15 y el Design System @c
 
 ## Variables de Entorno
 
+Configurar en archivo `.env.local` en la raíz de `apps/web/`:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
+JWT_SECRET=dev-insecure-secret-change-me
+NEXT_PUBLIC_DEBUG=true
 ```
+
+**Nota:** El archivo `.env.local` debe crearse manualmente ya que está en `.gitignore` para proteger secretos.
+
+## Autenticación
+
+El sistema usa **cookies httpOnly exclusivamente** para autenticación:
+
+- **Más seguro**: Inmune a ataques XSS (JavaScript no puede leer cookies httpOnly)
+- **Simplificado**: Sin dual storage (localStorage + cookies)
+- **Persistente**: La sesión se mantiene entre refrescos de página
+- **Automático**: Las cookies se envían en todas las requests con `credentials: 'include'`
+
+**Flujo:**
+1. Usuario hace login → Backend establece cookie httpOnly
+2. Frontend recibe datos del usuario en respuesta
+3. Cookie se envía automáticamente en todas las requests subsecuentes
+4. Backend valida cookie en cada request con middleware `requireAuth`
+5. Logout limpia la cookie mediante endpoint `/v1/auth/logout`
 
 ## Desarrollo
 

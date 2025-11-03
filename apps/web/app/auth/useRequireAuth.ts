@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from './AuthContext';
 
 export function useRequireAuth() {
-  const { user, token, initialized } = useAuth();
+  const { user, initialized } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = React.useState(true);
@@ -15,14 +15,14 @@ export function useRequireAuth() {
       return;
     }
 
-    // Si no hay token ni usuario después de inicializar, redirigir al login
-    if (!token && !user) {
+    // Si no hay usuario después de inicializar, redirigir al login
+    if (!user) {
       const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
       router.push(redirectUrl);
     } else {
       setLoading(false);
     }
-  }, [initialized, user, token, router, pathname]);
+  }, [initialized, user, router, pathname]);
 
-  return { user, token, loading };
+  return { user, loading };
 }

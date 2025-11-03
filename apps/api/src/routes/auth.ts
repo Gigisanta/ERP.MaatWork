@@ -2,7 +2,6 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users, teamMembershipRequests } from '@cactus/db';
 import { eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { signUserToken } from '../auth/jwt';
 import { requireAuth } from '../auth/middlewares';
@@ -49,15 +48,30 @@ router.post('/login',
     const trimmedIdentifier = identifier.trim();
 
     // Usuario admin temporal - crear o usar usuario admin existente
-    if (trimmedIdentifier === 'giolivosantarelli@gmail.com') {
-      // Buscar usuario admin existente
-      let adminUserRows = await db().select().from(users).where(eq(users.email, trimmedIdentifier)).limit(1);
+    // Soporta tanto email como username "gio"
+    const isAdminEmail = trimmedIdentifier === 'giolivosantarelli@gmail.com';
+    const isAdminUsername = trimmedIdentifier.toLowerCase() === 'gio';
+    
+    if (isAdminEmail || isAdminUsername) {
+      const adminEmail = 'giolivosantarelli@gmail.com';
+      
+      // Buscar usuario admin existente por email o username
+      let adminUserRows = await db().select().from(users)
+        .where(eq(users.email, adminEmail))
+        .limit(1);
+      
+      if (adminUserRows.length === 0) {
+        // Buscar por username también
+        adminUserRows = await db().select().from(users)
+          .where(eq(users.usernameNormalized, 'gio'))
+          .limit(1);
+      }
       
       if (adminUserRows.length === 0) {
         // Crear usuario admin si no existe con contraseña por defecto
         const hashedPassword = await bcrypt.hash('admin123', 10);
         adminUserRows = await db().insert(users).values({
-          email: trimmedIdentifier,
+          email: adminEmail,
           fullName: 'Gio Santarelli',
           role: 'admin',
           isActive: true,
@@ -106,7 +120,17 @@ router.post('/login',
         duration,
         action: 'login_success'
       }, 'Admin user logged in');
-      return res.json({ token });
+      
+      // AI_DECISION: Retornar user en vez de token para consistencia con login normal
+      return res.json({ 
+        success: true,
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          role: 'admin' as const,
+          fullName: adminUser.fullName
+        }
+      });
     }
 
     // Determinar si el identificador es email o username
@@ -201,7 +225,19 @@ router.post('/login',
       duration,
       action: 'login_success'
     }, 'User logged in successfully');
-    return res.json({ token });
+    
+    // AI_DECISION: Retornar user en vez de token para simplificar frontend
+    // Justificación: Cookie ya establecida, frontend solo necesita datos de usuario
+    // Impacto: Elimina necesidad de segundo request a /auth/me después de login
+    return res.json({ 
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName
+      }
+    });
   } catch (err) {
     const duration = Date.now() - startTime;
     // Log detallado del error en desarrollo
@@ -308,6 +344,20 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
   return res.json({ user });
 });
 
+// AI_DECISION: Endpoint de logout para limpiar cookie httpOnly
+// Justificación: Cookie httpOnly no puede limpiarse desde JavaScript, requiere endpoint
+// Impacto: Permite cierre de sesión limpio desde frontend
+router.post('/logout', requireAuth, async (req: Request, res: Response) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+  
+  req.log.info({ userId: req.user!.id }, 'User logged out');
+  res.json({ success: true });
+});
 
 export default router;
 

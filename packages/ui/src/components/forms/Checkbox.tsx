@@ -58,7 +58,7 @@ export const Checkbox = React.forwardRef<
         {label && (
           <label
             htmlFor={checkboxId}
-            className="text-sm font-medium text-text-primary cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+            className="text-sm font-medium text-text cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
           >
             {label}
           </label>
