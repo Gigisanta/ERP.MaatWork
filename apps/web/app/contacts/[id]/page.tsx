@@ -39,6 +39,7 @@ import NotesSection from './NotesSection';
 // Justificación: Permite usar cliente centralizado también en Server Components
 // Impacto: Consistencia con cliente API, mejor manejo de errores
 import { apiCallWithToken } from '@/lib/api-server';
+import { config } from '@/lib/config';
 import type { Contact } from '@/types/contact';
 
 async function getContactData(id: string, token: string) {
@@ -46,7 +47,8 @@ async function getContactData(id: string, token: string) {
     // Usar helper para Server Components
     const contactResponse = await apiCallWithToken<Contact>(`/v1/contacts/${id}`, {
       token,
-      method: 'GET'
+      method: 'GET',
+      timeoutMs: Math.min(config.apiTimeout, 8000)
     });
 
     if (!contactResponse.success || !contactResponse.data) {
@@ -57,12 +59,12 @@ async function getContactData(id: string, token: string) {
 
     // Fetch related data in parallel usando helper
     const [stagesResponse, advisorsResponse, brokerAccountsResponse, portfolioResponse, tasksResponse, notesResponse] = await Promise.all([
-      apiCallWithToken<PipelineStage[]>('/v1/pipeline/stages', { token }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Advisor[]>('/v1/users/advisors', { token }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<BrokerAccount[]>(`/v1/broker-accounts?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<PortfolioAssignment[]>(`/v1/portfolios/assignments?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Task[]>(`/v1/tasks?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Note[]>(`/v1/notes?contactId=${id}`, { token }).catch(() => ({ success: false, data: [] }))
+      apiCallWithToken<PipelineStage[]>('/v1/pipeline/stages', { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Advisor[]>('/v1/users/advisors', { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<BrokerAccount[]>(`/v1/broker-accounts?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<PortfolioAssignment[]>(`/v1/portfolios/assignments?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Task[]>(`/v1/tasks?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
+      apiCallWithToken<Note[]>(`/v1/notes?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] }))
     ]);
 
     const stages = stagesResponse.success ? stagesResponse.data || [] : [];
@@ -89,16 +91,16 @@ async function getContactData(id: string, token: string) {
 }
 
 interface ContactDetailPageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default async function ContactDetailPage({ params }: ContactDetailPageProps) {
-  const { id } = await params;
+  const { id } = params;
   
   // Get token from cookies
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const token = cookieStore.get('token')?.value;
   
   if (!token) {

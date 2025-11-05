@@ -19,6 +19,7 @@ export async function apiCallWithToken<T>(
     body?: unknown;
     token: string;
     headers?: Record<string, string>;
+    timeoutMs?: number;
   }
 ): Promise<ApiResponse<T>> {
   const url = `${config.apiUrl}${endpoint}`;
@@ -29,15 +30,24 @@ export async function apiCallWithToken<T>(
     ...options.headers,
   };
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
+
   const fetchOptions: RequestInit = {
     method: options.method || 'GET',
     headers,
     cache: 'no-store',
+    signal: controller.signal,
   };
   if (options.body !== undefined) {
     fetchOptions.body = JSON.stringify(options.body);
   }
-  const response = await fetch(url, fetchOptions);
+  let response: Response;
+  try {
+    response = await fetch(url, fetchOptions);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: response.statusText }));
