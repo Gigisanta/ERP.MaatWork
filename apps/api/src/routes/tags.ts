@@ -47,7 +47,8 @@ const createTagSchema = z.object({
   name: z.string().min(1).max(100),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#6B7280'),
   icon: z.string().max(50).optional().nullable(),
-  description: z.string().max(500).optional().nullable()
+  description: z.string().max(500).optional().nullable(),
+  businessLine: z.enum(['inversiones', 'zurich', 'patrimonial']).optional().nullable()
 });
 
 const updateTagSchema = createTagSchema.partial().omit({ scope: true });
@@ -92,7 +93,8 @@ router.get('/',
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(tags)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -378,7 +380,8 @@ router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
@@ -486,7 +489,8 @@ router.put('/contacts/:id',
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))

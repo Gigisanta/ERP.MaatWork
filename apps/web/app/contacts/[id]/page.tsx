@@ -33,6 +33,7 @@ import BrokerAccountsSection from './BrokerAccountsSection';
 import PortfolioSection from './PortfolioSection';
 import TasksSection from './TasksSection';
 import NotesSection from './NotesSection';
+import PageTitleSetter from './PageTitleSetter';
 
 // Server-side data fetching
 // AI_DECISION: Usar helper apiCallWithToken para Server Components
@@ -130,6 +131,7 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
   return (
     <div className="p-4 md:p-6">
+      <PageTitleSetter contactName={contact.fullName} />
       <Stack direction="column" gap="lg">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbs} />
@@ -137,7 +139,6 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <Heading size="xl">{contact.fullName}</Heading>
             <div className="flex items-center gap-2 mt-2">
               {currentStage && (
                 <Badge style={{ backgroundColor: currentStage.color, color: 'white' }}>

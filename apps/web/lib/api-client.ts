@@ -24,12 +24,16 @@ interface RequestConfig {
 
 class ApiClient {
   private config: RequestConfig;
+  private isRefreshing: boolean = false;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(configOverride?: Partial<RequestConfig>) {
     this.config = {
       baseUrl: config.apiUrl,
       timeout: config.apiTimeout,
-      retries: 1,
+      retries: 2, // AI_DECISION: Aumentar retries por defecto de 1 a 2 (3 intentos totales)
+      // Justificación: Mejor resiliencia ante errores transitorios de red
+      // Impacto: Más intentos antes de fallar, mejor UX en condiciones de red inestable
       ...configOverride,
     };
   }
@@ -102,9 +106,36 @@ class ApiClient {
           headers,
         });
 
-        // Si no es exitoso, throw error
+        // Si no es exitoso, manejar según código de estado
         if (!response.ok) {
-          throw await createApiErrorFromResponse(response);
+          const error = await createApiErrorFromResponse(response);
+          
+          // AI_DECISION: Manejar 401 con refresh token automático
+          // Justificación: Mejora UX, evita deslogueos por tokens expirados
+          // Solo un refresh por request para evitar loops infinitos
+          // Impacto: Sesiones más largas sin interrupciones
+          if (response.status === 401 && !this.isRefreshing && attempt === 0) {
+            // Solo intentar refresh en el primer intento
+            try {
+              return await this.handle401AuthError<T>(url, options);
+            } catch (refreshError) {
+              // Si el refresh falla, lanzar el error original
+              throw error;
+            }
+          }
+          
+          // AI_DECISION: Extraer Retry-After header para 429
+          // Justificación: Permite respetar el tiempo de espera especificado por el servidor
+          // Impacto: Mejor manejo de rate limits, evita reintentos prematuros
+          if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            if (retryAfter) {
+              // Agregar Retry-After a details para uso en backoff
+              (error as any).retryAfter = retryAfter;
+            }
+          }
+          
+          throw error;
         }
 
         // Parse response and normalize to ApiResponse<T>
@@ -135,8 +166,43 @@ class ApiClient {
           throw error;
         }
 
-        // Esperar antes de reintentar (backoff exponencial)
-        await this.delay(Math.pow(2, attempt) * 1000);
+        // AI_DECISION: Mejorar backoff para 429 usando Retry-After header
+        // Justificación: Rate limiting puede especificar tiempo de espera exacto
+        // Impacto: Respeta límites del servidor, evita reintentos innecesarios
+        let delayMs: number;
+        if (error instanceof ApiError && error.status === 429) {
+          // Intentar usar Retry-After header si está presente (guardado en error.retryAfter)
+          const retryAfter = (error as any).retryAfter;
+          if (retryAfter) {
+            const retryAfterSeconds = parseInt(retryAfter, 10);
+            if (!isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
+              delayMs = retryAfterSeconds * 1000; // Convertir segundos a ms
+            } else {
+              // Si Retry-After es una fecha HTTP, calcular diferencia
+              const retryAfterDate = new Date(retryAfter);
+              if (!isNaN(retryAfterDate.getTime())) {
+                const now = Date.now();
+                const retryTime = retryAfterDate.getTime();
+                delayMs = Math.max(0, retryTime - now);
+              } else {
+                // Fallback a exponential backoff con jitter
+                const baseDelay = Math.pow(2, attempt) * 1000;
+                const jitter = Math.random() * 1000;
+                delayMs = baseDelay + jitter;
+              }
+            }
+          } else {
+            // Exponential backoff con jitter para evitar thundering herd
+            const baseDelay = Math.pow(2, attempt) * 1000;
+            const jitter = Math.random() * 1000; // 0-1 segundo de jitter
+            delayMs = baseDelay + jitter;
+          }
+        } else {
+          // Exponential backoff estándar para otros errores
+          delayMs = Math.pow(2, attempt) * 1000;
+        }
+
+        await this.delay(delayMs);
       }
     }
 
@@ -147,8 +213,10 @@ class ApiClient {
    * Determinar si se debe reintentar
    */
   private shouldRetry(error: ApiError): boolean {
-    // Solo reintentar errores del servidor o timeout
-    return error.status >= 500 || error.status === 504;
+    // AI_DECISION: Agregar retry para 429 (Too Many Requests)
+    // Justificación: Rate limiting puede ser temporal, retry con backoff apropiado
+    // Impacto: Mejor manejo de rate limits, menos errores visibles al usuario
+    return error.status >= 500 || error.status === 504 || error.status === 429;
   }
 
   /**
@@ -156,6 +224,77 @@ class ApiClient {
    */
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Intentar refresh token automáticamente
+   * 
+   * AI_DECISION: Implementar refresh token automático para 401
+   * Justificación: Mejora UX, evita que usuarios sean deslogueados por tokens expirados
+   * Impacto: Sesiones más largas sin interrupciones, mejor experiencia
+   * 
+   * Nota: Actualmente no hay endpoint de refresh, pero la lógica está preparada
+   * Cuando se agregue /v1/auth/refresh, esta función lo usará automáticamente
+   */
+  private async refreshToken(): Promise<boolean> {
+    // Si ya hay un refresh en progreso, esperar a que termine
+    if (this.isRefreshing && this.refreshPromise) {
+      return await this.refreshPromise;
+    }
+
+    // Prevenir múltiples refreshes simultáneos
+    this.isRefreshing = true;
+    this.refreshPromise = (async () => {
+      try {
+        // Intentar llamar a endpoint de refresh (si existe)
+        // Por ahora, como no hay endpoint, retornar false
+        // Cuando se agregue /v1/auth/refresh, descomentar:
+        /*
+        const response = await this.fetchWithTimeout(`${this.config.baseUrl}/v1/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          // Cookie actualizada automáticamente por el servidor
+          return true;
+        }
+        */
+
+        // Por ahora, no hay endpoint de refresh, retornar false
+        return false;
+      } catch (error) {
+        // Si falla el refresh, retornar false
+        return false;
+      } finally {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+      }
+    })();
+
+    return await this.refreshPromise;
+  }
+
+  /**
+   * Manejar error 401 intentando refresh token
+   */
+  private async handle401AuthError<T>(
+    url: string,
+    options: RequestOptions
+  ): Promise<ApiResponse<T>> {
+    // Intentar refresh token
+    const refreshed = await this.refreshToken();
+    
+    if (!refreshed) {
+      // Si no se pudo refrescar, lanzar error de autenticación
+      throw new ApiError(401, 'Session expired');
+    }
+
+    // Retry request original después de refresh exitoso
+    return this.requestWithRetry<T>(url, {
+      ...options,
+      retries: 0 // No retry adicional después de refresh
+    });
   }
 
   /**

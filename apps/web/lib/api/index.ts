@@ -154,6 +154,13 @@ export {
   getAllTeamMembers
 } from './teams';
 
+// Metrics methods
+export {
+  getContactsMetrics,
+  getMonthlyGoals,
+  saveMonthlyGoals
+} from './metrics';
+
 // Export types from teams
 export type {
   CreateTeamRequest,

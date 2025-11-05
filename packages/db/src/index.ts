@@ -85,6 +85,7 @@ export {
   scheduledReports,
   reportRuns,
   dailyMetricsUser,
+  monthlyGoals,
   aumSnapshots,
   // Integration
   integrationAccounts,

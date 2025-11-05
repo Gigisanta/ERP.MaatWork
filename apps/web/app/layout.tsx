@@ -4,6 +4,7 @@ import ThemeProviderWrapper from './components/ThemeProviderWrapper';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
 import DebugConsole from './components/DebugConsole';
+import { PageTitleProvider } from './components/PageTitleContext';
 import '@cactus/ui/styles.css';
 import './globals.css';
 
@@ -18,10 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProviderWrapper defaultTheme="light">
           <ErrorBoundary>
             <AuthProvider>
-              <NavigationNew />
-              <main className="min-h-screen bg-background">
-                {children}
-              </main>
+              <PageTitleProvider>
+                <NavigationNew />
+                <main className="min-h-screen bg-background">
+                  {children}
+                </main>
+              </PageTitleProvider>
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProviderWrapper>

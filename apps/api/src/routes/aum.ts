@@ -18,6 +18,8 @@ import {
 import { AUM_LIMITS } from '../config/aum-limits';
 import { createErrorResponse } from '../utils/error-response';
 import { normalizeAccountNumber, normalizeAdvisorAlias } from '../utils/aum-normalization';
+import { mapAumColumns } from '../utils/aum-column-mapper';
+import { transactionWithLogging } from '../utils/db-transactions';
 
 const router = Router();
 
@@ -250,57 +252,77 @@ router.post('/uploads/:fileId/commit',
         eq(aumImportRows.isPreferred, true)
       ));
 
-    let upserts = 0;
-    let skipped = 0;
-    for (const r of rows) {
-      if (!r.accountNumber || !r.matchedContactId) {
-        skipped += 1;
-        continue;
-      }
+    // AI_DECISION: Usar transacción para asegurar consistencia atómica
+    // Justificación: Operación crítica que modifica múltiples tablas (brokerAccounts, contacts, aumImportFiles)
+    // Si cualquier operación falla, todas deben hacer rollback para mantener consistencia
+    // Impacto: Previene estados inconsistentes si falla a mitad del proceso
+    const result = await transactionWithLogging(
+      req.log,
+      'commit-aum-file',
+      async (tx) => {
+        let upserts = 0;
+        let skipped = 0;
+        
+        for (const r of rows) {
+          if (!r.accountNumber || !r.matchedContactId) {
+            skipped += 1;
+            continue;
+          }
 
-      // Find existing broker account
-      const existing = await dbi.select().from(brokerAccounts)
-        .where(and(eq(brokerAccounts.broker, broker), eq(brokerAccounts.accountNumber, r.accountNumber)))
-        .limit(1);
+          // Find existing broker account
+          const existing = await tx.select().from(brokerAccounts)
+            .where(and(eq(brokerAccounts.broker, broker), eq(brokerAccounts.accountNumber, r.accountNumber)))
+            .limit(1);
 
-      if (existing.length === 0) {
-        await dbi.insert(brokerAccounts).values({
-          broker,
-          accountNumber: r.accountNumber,
-          holderName: r.holderName ?? null,
-          contactId: r.matchedContactId as string,
-          status: 'active'
-        });
-        upserts += 1;
-      } else {
-        // Update holder name/contact if changed (prefer matched contactId)
-        const ex = existing[0];
-        const needsUpdate = (ex.holderName !== (r.holderName ?? null)) || (ex.contactId !== r.matchedContactId);
-        if (needsUpdate) {
-          await dbi.update(brokerAccounts)
-            .set({ holderName: r.holderName ?? null, contactId: r.matchedContactId as string, status: 'active' })
-            .where(eq(brokerAccounts.id, ex.id as string));
-          upserts += 1;
+          if (existing.length === 0) {
+            await tx.insert(brokerAccounts).values({
+              broker,
+              accountNumber: r.accountNumber,
+              holderName: r.holderName ?? null,
+              contactId: r.matchedContactId as string,
+              status: 'active'
+            });
+            upserts += 1;
+          } else {
+            // Update holder name/contact if changed (prefer matched contactId)
+            const ex = existing[0];
+            const needsUpdate = (ex.holderName !== (r.holderName ?? null)) || (ex.contactId !== r.matchedContactId);
+            if (needsUpdate) {
+              await tx.update(brokerAccounts)
+                .set({ holderName: r.holderName ?? null, contactId: r.matchedContactId as string, status: 'active' })
+                .where(eq(brokerAccounts.id, ex.id as string));
+              upserts += 1;
+            }
+          }
+
+          // Optionally set advisor on contact if empty and we have a matched user
+          if (r.matchedUserId) {
+            const [c] = await tx.select({ assignedAdvisorId: contacts.assignedAdvisorId })
+              .from(contacts)
+              .where(eq(contacts.id, r.matchedContactId as string))
+              .limit(1);
+            if (c && !c.assignedAdvisorId) {
+              await tx.update(contacts)
+                .set({ assignedAdvisorId: r.matchedUserId as string })
+                .where(eq(contacts.id, r.matchedContactId as string));
+            }
+          }
         }
-      }
 
-      // Optionally set advisor on contact if empty and we have a matched user
-      if (r.matchedUserId) {
-        const [c] = await dbi.select({ assignedAdvisorId: contacts.assignedAdvisorId })
-          .from(contacts)
-          .where(eq(contacts.id, r.matchedContactId as string))
-          .limit(1);
-        if (c && !c.assignedAdvisorId) {
-          await dbi.update(contacts)
-            .set({ assignedAdvisorId: r.matchedUserId as string })
-            .where(eq(contacts.id, r.matchedContactId as string));
-        }
-      }
-    }
+        // Update file status only if all operations succeeded
+        await tx.update(aumImportFiles)
+          .set({ status: 'committed' })
+          .where(eq(aumImportFiles.id, fileId));
 
-    await dbi.update(aumImportFiles)
-      .set({ status: 'committed' })
-      .where(eq(aumImportFiles.id, fileId));
+        return { upserts, skipped };
+      },
+      {
+        timeout: 60000, // 60 segundos para operaciones batch largas
+        maxRetries: 3
+      }
+    );
+
+    const { upserts, skipped } = result;
 
     return res.json({ 
       ok: true, 
@@ -339,21 +361,89 @@ function isEmailLike(value: string | null | undefined): boolean {
 async function parseFileToRows(filePath: string, originalName: string): Promise<Array<{ accountNumber: string | null; holderName: string | null; advisorRaw: string | null; raw: Record<string, unknown>; }>> {
   const ext = extname(originalName).toLowerCase();
   if (ext === '.xlsx' || ext === '.xls') {
-    // [Unverified] Requires 'xlsx' package at runtime
-    const XLSX = require('xlsx');
-    const wb = XLSX.readFile(filePath);
-    // AI_DECISION: Fix TypeScript implicit 'any' and untyped function call issues; increase strictness and maintain compatibility.
-    // Justificación: sheet_to_json does not accept type arguments and 'r' was not typed; to enforce strict typing, first parse as unknown[], then map with explicit type.
-    // Impacto: Only parseFileToRows XSLX branch affected; code is now type safe and future-proof.
-    const sheetName: string = wb.SheetNames[0];
-    const ws = wb.Sheets[sheetName];
-    const json = XLSX.utils.sheet_to_json(ws, { defval: null }) as Array<Record<string, unknown>>;
-    return json.map((r: Record<string, unknown>) => ({
-      accountNumber: normalizeAccountNumber(((r['Cuenta comitente'] as string) ?? (r['comitente'] as string) ?? null) as string | null),
-      holderName: (r['Titular'] as string) ?? (r['Descripcion'] as string) ?? null,
-      advisorRaw: (r['asesor'] as string) ?? (r['Asesor'] as string) ?? null,
-      raw: r
-    }));
+    try {
+      // [Unverified] Requires 'xlsx' package at runtime
+      const XLSX = require('xlsx');
+      
+      // Leer archivo Excel con manejo de errores
+      let wb;
+      try {
+        wb = XLSX.readFile(filePath, { 
+          cellDates: true,  // Convertir fechas a objetos Date
+          cellNF: false,    // No convertir números formateados
+          cellText: false,  // Usar valores reales, no texto
+          defval: null      // Valor por defecto para celdas vacías
+        });
+      } catch (readError) {
+        throw new Error(`Error al leer archivo Excel: ${readError instanceof Error ? readError.message : String(readError)}`);
+      }
+      
+      // Verificar que tenga al menos una hoja
+      if (!wb.SheetNames || wb.SheetNames.length === 0) {
+        throw new Error('El archivo Excel no contiene hojas');
+      }
+      
+      // AI_DECISION: Fix TypeScript implicit 'any' and untyped function call issues; increase strictness and maintain compatibility.
+      // Justificación: sheet_to_json does not accept type arguments and 'r' was not typed; to enforce strict typing, first parse as unknown[], then map with explicit type.
+      // Impacto: Only parseFileToRows XSLX branch affected; code is now type safe and future-proof.
+      const sheetName: string = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      
+      if (!ws) {
+        throw new Error(`No se pudo acceder a la hoja "${sheetName}"`);
+      }
+      
+      // Convertir hoja a JSON con opciones robustas
+      let json: Array<Record<string, unknown>>;
+      try {
+        json = XLSX.utils.sheet_to_json(ws, { 
+          defval: null,           // Valor por defecto para celdas vacías
+          raw: true,              // Mantener valores originales (números, fechas, etc.)
+          dateNF: 'yyyy-mm-dd'    // Formato de fecha (si raw: false)
+        }) as Array<Record<string, unknown>>;
+      } catch (parseError) {
+        throw new Error(`Error al parsear hoja Excel: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+      }
+      
+      // Verificar que se hayan parseado filas
+      if (!json || json.length === 0) {
+        throw new Error('El archivo Excel no contiene datos o la hoja está vacía');
+      }
+      
+      // Mapear filas con manejo de errores individual
+      const rows: Array<{ accountNumber: string | null; holderName: string | null; advisorRaw: string | null; raw: Record<string, unknown>; }> = [];
+      
+      for (let i = 0; i < json.length; i++) {
+        try {
+          const r = json[i];
+          // AI_DECISION: Usar mapeo flexible de columnas para mayor tolerancia a variaciones
+          // Justificación: Permite reconocer diferentes nombres de columnas sin romper el sistema
+          // Impacto: Mayor flexibilidad para aceptar CSVs con diferentes estructuras
+          const mapped = mapAumColumns(r);
+          rows.push({
+            accountNumber: mapped.accountNumber ? normalizeAccountNumber(mapped.accountNumber) : null,
+            holderName: mapped.holderName,
+            advisorRaw: mapped.advisorRaw,
+            raw: r
+          });
+        } catch (rowError) {
+          // Log error pero continuar con otras filas
+          // Usar console.warn ya que no tenemos acceso a req.log aquí
+          console.warn(`Error procesando fila ${i + 1} del Excel: ${rowError instanceof Error ? rowError.message : String(rowError)}`);
+          // Agregar fila con valores null pero preservar raw
+          rows.push({
+            accountNumber: null,
+            holderName: null,
+            advisorRaw: null,
+            raw: json[i] || {}
+          });
+        }
+      }
+      
+      return rows;
+    } catch (error) {
+      throw new Error(`Error procesando archivo Excel "${originalName}": ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
   
   // AI_DECISION: Usar csv-parse para parsing robusto en lugar de split manual
@@ -373,12 +463,18 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
     cast: false              // No convertir tipos automáticamente
   }) as Array<Record<string, string>>;
 
-  return records.map((r) => ({
-    accountNumber: normalizeAccountNumber((r['Cuenta comitente'] || r['comitente'] || null) as string | null),
-    holderName: r['Titular'] || r['Descripcion'] || null,
-    advisorRaw: r['asesor'] || r['Asesor'] || null,
-    raw: r as Record<string, unknown>
-  }));
+  return records.map((r) => {
+    // AI_DECISION: Usar mapeo flexible de columnas para mayor tolerancia a variaciones
+    // Justificación: Permite reconocer diferentes nombres de columnas sin romper el sistema
+    // Impacto: Mayor flexibilidad para aceptar CSVs con diferentes estructuras
+    const mapped = mapAumColumns(r);
+    return {
+      accountNumber: normalizeAccountNumber(mapped.accountNumber),
+      holderName: mapped.holderName,
+      advisorRaw: mapped.advisorRaw,
+      raw: r as Record<string, unknown>
+    };
+  });
 }
 
 // POST /admin/aum/uploads
@@ -444,7 +540,22 @@ router.post('/uploads',
     } catch {}
 
     // Parse file to rows
-    const parsedRows = await parseFileToRows(file.path, file.originalname);
+    let parsedRows;
+    try {
+      parsedRows = await parseFileToRows(file.path, file.originalname);
+    } catch (parseError) {
+      req.log?.error?.({ err: parseError, filename: file.originalname }, 'Error parsing AUM file');
+      // Limpiar archivo temporal en caso de error
+      try {
+        await fs.unlink(file.path);
+      } catch {
+        // Ignorar error al eliminar archivo temporal
+      }
+      return res.status(400).json({ 
+        error: 'Error al procesar el archivo',
+        details: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+    }
 
     let matched = 0;
     let ambiguous = 0;
@@ -452,6 +563,7 @@ router.post('/uploads',
     
     type AumRowInsert = {
       fileId: string;
+      raw: Record<string, unknown>;
       accountNumber: string | null;
       holderName: string | null;
       advisorRaw: string | null;
@@ -1060,7 +1172,26 @@ router.get('/rows/duplicates/:accountNumber', requireAuth, async (req, res) => {
       ORDER BY f.created_at DESC, r.created_at DESC
     `);
     
-    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
+    type AumRowResultDuplicate = {
+      id: string;
+      file_id: string;
+      account_number: string | null;
+      holder_name: string | null;
+      advisor_raw: string | null;
+      matched_contact_id: string | null;
+      matched_user_id: string | null;
+      match_status: string;
+      is_preferred: boolean;
+      conflict_detected: boolean;
+      row_created_at: Date | string;
+      broker: string;
+      original_filename: string;
+      file_created_at: Date | string;
+      contact_name: string | null;
+      user_name: string | null;
+    };
+    
+    const rows = ((result.rows || []) as AumRowResultDuplicate[]).map((r: AumRowResultDuplicate) => ({
       id: r.id,
       fileId: r.file_id,
       accountNumber: r.account_number,

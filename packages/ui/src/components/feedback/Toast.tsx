@@ -18,19 +18,19 @@ export interface ToastProps {
 const variantConfig: Record<ToastVariant, { icon: IconName; className: string }> = {
   info: { 
     icon: 'info', 
-    className: 'border-accent-base bg-accent-subtle text-accent-text' 
+    className: 'border-info bg-info-subtle text-text' 
   },
   success: { 
     icon: 'check-circle', 
-    className: 'border-success-base bg-success-subtle text-success-text' 
+    className: 'border-success bg-success-subtle text-text' 
   },
   warning: { 
     icon: 'alert-circle', 
-    className: 'border-warning-base bg-warning-subtle text-warning-text' 
+    className: 'border-warning bg-warning-subtle text-text' 
   },
   error: { 
     icon: 'x-circle', 
-    className: 'border-error-base bg-error-subtle text-error-text' 
+    className: 'border-error bg-error-subtle text-text' 
   }
 };
 
@@ -80,7 +80,7 @@ export const Toast = React.forwardRef<
             )}
           </div>
         </div>
-        <ToastPrimitive.Close className="absolute right-2 top-2 rounded-md p-1 text-foreground-secondary opacity-0 transition-opacity hover:text-foreground-base focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100">
+        <ToastPrimitive.Close className="absolute right-2 top-2 rounded-md p-1 text-text-secondary opacity-0 transition-opacity hover:text-text focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100">
           <Icon name="x" size={16} />
         </ToastPrimitive.Close>
         {children}
@@ -117,7 +117,7 @@ export const ToastClose = React.forwardRef<
   <ToastPrimitive.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded-md p-1 text-foreground-secondary opacity-0 transition-opacity hover:text-foreground-base focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
+      'absolute right-2 top-2 rounded-md p-1 text-text-secondary opacity-0 transition-opacity hover:text-text focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100',
       className
     )}
     {...props}

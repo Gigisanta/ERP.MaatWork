@@ -2,7 +2,7 @@
 // Justificación: Eliminates redundant API calls on navigation and provides automatic caching
 // Impacto: Reduces API load, improves perceived performance with instant cache hits
 
-import useSWR from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
@@ -35,9 +35,10 @@ export function useContacts(assignedAdvisorId?: string | null) {
   const { user } = useAuth();
   
   // Build URL with query params if assignedAdvisorId is provided
+  // Use /v1/contacts to match the actual API endpoint
   const url = assignedAdvisorId 
-    ? `${API_BASE_URL}/contacts?assignedAdvisorId=${assignedAdvisorId}`
-    : `${API_BASE_URL}/contacts`;
+    ? `${API_BASE_URL}/v1/contacts?assignedAdvisorId=${assignedAdvisorId}`
+    : `${API_BASE_URL}/v1/contacts`;
   
   // Use the full URL as the SWR key to ensure proper cache separation for different advisorIds
   // This ensures each advisorId gets its own cached result
@@ -98,7 +99,7 @@ export function useTags(scope: string = 'contact') {
   const { user } = useAuth();
   
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
-    user ? `${API_BASE_URL}/tags?scope=${scope}` : null,
+    user ? `${API_BASE_URL}/v1/tags?scope=${scope}` : null,
     fetcher,
     swrConfig
   );
@@ -262,5 +263,50 @@ export function usePortfolioComparison(
     error,
     isLoading,
     mutate
+  };
+}
+
+// AI_DECISION: Add hook for invalidating contacts cache globally
+// Justificación: After creating/updating/deleting contacts, need to invalidate all related cache keys
+// Impacto: Ensures UI updates immediately without requiring page reload
+export function useInvalidateContactsCache() {
+  const { mutate } = useSWRConfig();
+  
+  // Return async function to invalidate all contacts-related cache keys
+  // This includes:
+  // - /v1/contacts (all contacts list)
+  // - /v1/contacts?assignedAdvisorId=* (filtered contacts)
+  // - /v1/pipeline/board (pipeline board view)
+  return async () => {
+    // Matcher function to identify all contacts-related cache keys
+    const matcher = (key: string | readonly unknown[]) => {
+      const keyStr = typeof key === 'string' 
+        ? key 
+        : (Array.isArray(key) && typeof key[0] === 'string' ? key[0] : '');
+      
+      return (
+        keyStr.includes(`${API_BASE_URL}/v1/contacts`) ||
+        keyStr.includes(`${API_BASE_URL}/v1/pipeline/board`) ||
+        keyStr.includes(`${API_BASE_URL}/contacts`)
+      );
+    };
+    
+    // Invalidate and force immediate revalidation of all matching keys
+    // The mutate function with matcher will find all matching keys and revalidate them
+    // We wait for the revalidation to complete before proceeding
+    const revalidationPromise = mutate(matcher, undefined, { revalidate: true });
+    
+    // Also directly invalidate the most common keys to ensure they're cleared
+    // This is a fallback in case the matcher misses any keys
+    const commonKeys = [
+      `${API_BASE_URL}/v1/contacts`,
+      `${API_BASE_URL}/v1/pipeline/board`
+    ];
+    
+    // Wait for all revalidations to complete
+    await Promise.all([
+      revalidationPromise,
+      ...commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
+    ]);
   };
 }

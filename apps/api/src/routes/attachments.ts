@@ -1,13 +1,12 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, attachments, contacts } from '@cactus/db';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+import { eq, and, isNull, desc, type InferInsertModel } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { z } from 'zod';
-import { AttachmentInsert } from '../types/routes';
 
 const router = Router();
 
@@ -23,6 +22,40 @@ const uploadsDir = path.join(process.cwd(), 'uploads');
   }
 })();
 
+/**
+ * Sanitizar nombre de archivo para prevenir path traversal y caracteres peligrosos
+ * 
+ * AI_DECISION: Sanitizar nombres de archivo para seguridad
+ * Justificación: Previene path traversal attacks y caracteres problemáticos
+ * Impacto: Mayor seguridad en uploads, nombres de archivo consistentes
+ */
+function sanitizeFilename(filename: string): string {
+  // Eliminar path traversal y normalizar
+  let sanitized = path.basename(filename); // Elimina cualquier path
+  
+  // Remover caracteres peligrosos o problemáticos
+  sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
+  
+  // Remover espacios múltiples y reemplazar por guión bajo
+  sanitized = sanitized.replace(/\s+/g, '_');
+  
+  // Limitar longitud (máximo 200 caracteres para el nombre base)
+  const ext = path.extname(sanitized);
+  const basename = path.basename(sanitized, ext);
+  const maxBasenameLength = 200 - ext.length;
+  
+  if (basename.length > maxBasenameLength) {
+    sanitized = basename.substring(0, maxBasenameLength) + ext;
+  }
+  
+  // Si después de sanitizar está vacío, usar nombre por defecto
+  if (!sanitized || sanitized === ext) {
+    sanitized = `file${ext || '.bin'}`;
+  }
+  
+  return sanitized;
+}
+
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const { entity, entityId } = req.body;
@@ -31,16 +64,59 @@ const storage = multer.diskStorage({
       await fs.mkdir(entityDir, { recursive: true });
       cb(null, entityDir);
     } catch (err: unknown) {
-      cb(err, entityDir);
+      cb(err instanceof Error ? err : new Error(String(err)), entityDir);
     }
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname);
-    const basename = path.basename(file.originalname, ext);
+    const sanitizedOriginal = sanitizeFilename(file.originalname);
+    const ext = path.extname(sanitizedOriginal);
+    const basename = path.basename(sanitizedOriginal, ext);
     cb(null, `${basename}-${uniqueSuffix}${ext}`);
   },
 });
+
+/**
+ * Mapeo de extensiones a MIME types esperados
+ */
+const EXTENSION_TO_MIME: Record<string, string[]> = {
+  '.jpg': ['image/jpeg'],
+  '.jpeg': ['image/jpeg'],
+  '.png': ['image/png'],
+  '.gif': ['image/gif'],
+  '.webp': ['image/webp'],
+  '.pdf': ['application/pdf'],
+  '.doc': ['application/msword'],
+  '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  '.xls': ['application/vnd.ms-excel'],
+  '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  '.txt': ['text/plain'],
+  '.csv': ['text/csv'],
+  '.mp3': ['audio/mpeg'],
+  '.wav': ['audio/wav'],
+  '.ogg': ['audio/ogg'],
+  '.mp4': ['video/mp4'],
+  '.mov': ['video/quicktime'],
+};
+
+/**
+ * Validar que la extensión del archivo coincida con el MIME type declarado
+ * 
+ * AI_DECISION: Validar extensión vs MIME type para prevenir ataques
+ * Justificación: Previene uploads maliciosos donde extensión no coincide con contenido real
+ * Impacto: Mayor seguridad, detecta posibles intentos de bypass
+ */
+function validateExtensionVsMimeType(filename: string, mimeType: string): boolean {
+  const ext = path.extname(filename).toLowerCase();
+  const expectedMimes = EXTENSION_TO_MIME[ext];
+  
+  if (!expectedMimes) {
+    // Extensión no reconocida, rechazar
+    return false;
+  }
+  
+  return expectedMimes.includes(mimeType);
+}
 
 // Filtro de tipos de archivo permitidos
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -63,11 +139,21 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
     'video/quicktime',
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`));
+  // Verificar MIME type permitido
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    return cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`));
   }
+
+  // AI_DECISION: Validar que extensión coincida con MIME type
+  // Justificación: Previene ataques donde extensión no coincide con contenido real
+  // Impacto: Mayor seguridad, detecta posibles intentos de bypass
+  if (!validateExtensionVsMimeType(file.originalname, file.mimetype)) {
+    return cb(new Error(
+      `Extensión de archivo no coincide con tipo MIME declarado. Extensión: ${path.extname(file.originalname)}, MIME: ${file.mimetype}`
+    ));
+  }
+
+  cb(null, true);
 };
 
 const upload = multer({
@@ -122,21 +208,19 @@ router.post(
       // Crear registros de adjuntos en la base de datos
       const newAttachments = [];
       for (const file of req.files) {
-        const attachmentData: AttachmentInsert = {
-          fileName: file.originalname,
-          filePath: file.path,
+        const attachmentData: Omit<InferInsertModel<typeof attachments>, 'id' | 'createdAt'> = {
+          filename: path.basename(file.path),
+          originalFilename: file.originalname,
           mimeType: file.mimetype,
-          fileSize: file.size,
+          sizeBytes: file.size,
+          storagePath: file.path,
           uploadedByUserId: userId,
-          description: description || null,
         };
 
         if (entity === 'contact') {
           attachmentData.contactId = entityId;
         } else if (entity === 'note') {
           attachmentData.noteId = entityId;
-        } else if (entity === 'meeting') {
-          attachmentData.meetingId = entityId;
         }
 
         const [newAttachment] = await db().insert(attachments).values(attachmentData).returning();

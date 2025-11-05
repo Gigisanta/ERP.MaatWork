@@ -89,11 +89,18 @@ const nextConfig = {
     // Impacto: Permite que webpack resuelva @cactus/ui y @cactus/db
     // Restablecer alias mínimos para workspaces; mantener fuera cualquier vendor splitting experimental
     const path = require('path');
+    // En desarrollo, usar código fuente si dist no está completo; en producción usar dist
+    const uiPath = dev && require('fs').existsSync(path.resolve(__dirname, '../../packages/ui/dist/index.js'))
+      ? path.resolve(__dirname, '../../packages/ui/dist')
+      : path.resolve(__dirname, '../../packages/ui/src');
+    const dbPath = dev && require('fs').existsSync(path.resolve(__dirname, '../../packages/db/dist/index.js'))
+      ? path.resolve(__dirname, '../../packages/db/dist')
+      : path.resolve(__dirname, '../../packages/db/src');
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@cactus/ui': path.resolve(__dirname, '../../packages/ui/dist'),
+      '@cactus/ui': uiPath,
       '@cactus/ui/styles.css': path.resolve(__dirname, '../../packages/ui/dist/styles/index.css'),
-      '@cactus/db': path.resolve(__dirname, '../../packages/db/dist'),
+      '@cactus/db': dbPath,
     };
     
     // Mejorar source maps en desarrollo para debugging

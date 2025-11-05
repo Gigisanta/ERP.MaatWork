@@ -2,10 +2,12 @@
 import { useAuth } from '../auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Header, type NavItem, type User } from '@cactus/ui';
+import { usePageTitleContext } from './PageTitleContext';
 
 export default function NavigationNew() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { pageTitle } = usePageTitleContext();
 
   const handleLogout = () => {
     logout();
@@ -44,6 +46,7 @@ export default function NavigationNew() {
       navItems={navItems}
       user={headerUser}
       onLogout={handleLogout}
+      pageTitle={pageTitle}
     />
   );
 }

@@ -28,6 +28,7 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
   className?: string;
+  pageTitle?: string | null;
 }
 
 export const Header = React.forwardRef<HTMLElement, HeaderProps>(
@@ -39,6 +40,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
     onToggleSidebar,
     sidebarOpen = false,
     className,
+    pageTitle,
     ...props 
   }, ref) => {
     return (
@@ -53,14 +55,14 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
         {...props}
       >
         <div className="flex h-12 items-center justify-between flex-nowrap gap-2">
-          {/* Left section: Logo + Mobile menu button */}
-          <div className="flex items-center gap-3">
+          {/* Left section: Logo + Page Title + Mobile menu button */}
+          <div className="flex items-center gap-3 min-w-0">
             {onToggleSidebar && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onToggleSidebar}
-                className="lg:hidden"
+                className="lg:hidden shrink-0"
                 aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
               >
                 <Icon name="Menu" size={16} />
@@ -68,16 +70,26 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
             )}
             
             {logo && (
-              <div className="flex items-center">
+              <div className="flex items-center shrink-0">
                 {logo}
               </div>
+            )}
+
+            {/* Page Title */}
+            {pageTitle && (
+              <>
+                <div className="h-6 w-px bg-border shrink-0 hidden sm:block" />
+                <h3 className="text-2xl font-semibold text-text truncate hidden sm:block">
+                  {pageTitle}
+                </h3>
+              </>
             )}
           </div>
 
           {/* Center section: Navigation (desktop) */}
           {navItems.length > 0 && (
             <nav
-              className="flex items-center space-x-4 overflow-x-auto whitespace-nowrap flex-1 justify-center"
+              className="flex items-center space-x-4 overflow-x-auto whitespace-nowrap flex-1 justify-center min-w-0"
               role="navigation"
             >
               {navItems.map((item) => (

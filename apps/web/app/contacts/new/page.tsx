@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logger } from '../../../lib/logger';
+import { usePageTitle } from '../../components/PageTitleContext';
 import { createContact } from '@/lib/api';
-import { usePipelineStages, useAdvisors } from '@/lib/api-hooks';
+import { usePipelineStages, useAdvisors, useInvalidateContactsCache } from '@/lib/api-hooks';
 import type { PipelineStage, Advisor } from '@/types';
 import {
   Card,
@@ -52,9 +53,13 @@ export default function NewContactPage() {
   const router = useRouter();
   const { user, loading } = useRequireAuth();
   
+  // Set page title in header
+  usePageTitle('Nuevo Contacto');
+  
   // Use SWR hooks for data fetching with automatic caching and deduplication
   const { stages: pipelineStages, isLoading: stagesLoading, error: stagesError } = usePipelineStages();
   const { advisors, isLoading: advisorsLoading, error: advisorsError } = useAdvisors();
+  const invalidateContactsCache = useInvalidateContactsCache();
   
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -144,11 +149,16 @@ export default function NewContactPage() {
           });
         }
         
+        // Invalidate contacts cache and wait for revalidation to complete
+        // This ensures fresh data is fetched before navigation
+        await invalidateContactsCache();
+        
         setSuccess(true);
         setFormData(initialFormData);
-        setTimeout(() => {
-          router.push('/contacts');
-        }, 2000);
+        
+        // Use replace instead of push to avoid adding to history
+        // This ensures the page updates correctly when navigating
+        router.replace('/contacts');
       } else {
         throw new Error(response.error || 'Error al crear contacto');
       }
@@ -195,9 +205,6 @@ export default function NewContactPage() {
         <div className="mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <Heading level={1} className="text-3xl font-bold text-gray-900 mb-2">
-                Nuevo Contacto
-              </Heading>
               <Text size="lg" color="secondary" className="text-gray-600">
                 Agrega un nuevo contacto al sistema CRM
               </Text>

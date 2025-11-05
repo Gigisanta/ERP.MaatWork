@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { moveContactToStage } from '@/lib/api';
 import { usePipelineBoard } from '../../lib/api-hooks';
 import { logger } from '../../lib/logger';
+import { usePageTitle } from '../components/PageTitleContext';
 import type { ApiResponse } from '../../lib/api-client';
 import type { PipelineStageWithContacts } from '@/types';
 import {
@@ -30,6 +31,10 @@ type PipelineStage = PipelineStageWithContacts;
 export default function PipelinePage() {
   const { user, loading } = useRequireAuth();
   const router = useRouter();
+  
+  // Set page title in header
+  usePageTitle('Pipeline de Ventas');
+  
   // AI_DECISION: Migrate from useState+useEffect to SWR hook
   // Justificación: Eliminates redundant requests, provides automatic caching and revalidation
   // Impacto: Reduces API load, improves perceived performance with instant cache hits
@@ -140,15 +145,6 @@ export default function PipelinePage() {
   return (
     <div className="p-4 md:p-8">
       <Stack direction="column" gap="lg">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <Heading level={1}>Pipeline de Ventas</Heading>
-          <Button onClick={() => router.push('/contacts/new')}>
-            <Icon name="plus" size={16} className="mr-2" />
-            Nuevo Contacto
-          </Button>
-        </div>
-
         {/* Alerts */}
         {error && (
           <Alert variant="error" title="Error">

@@ -1,10 +1,11 @@
 // REGLA CURSOR: Endpoint principal de contactos - mantener RBAC y data isolation, no alterar sin documentar breaking changes
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, contacts, contactFieldHistory, contactTags, tags, tasks, attachments, pipelineStages, users } from '@cactus/db';
+import { db, contacts, contactFieldHistory, contactTags, tags, tasks, attachments, pipelineStages, pipelineStageHistory, users } from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../auth/authorization';
 import { createDrizzleLogger } from '../utils/db-logger';
+import { transactionWithLogging } from '../utils/db-transactions';
 import { z } from 'zod';
 import { validate } from '../utils/validation';
 import { 
@@ -20,6 +21,7 @@ import {
   type TimelineItem,
   type ContactUpdateFields
 } from '../types/contacts';
+import { getProspectoStageId } from '../utils/pipeline-stages';
 
 const router = Router();
 
@@ -678,6 +680,31 @@ router.post('/',
       action: 'final_assignment_decision'
     }, 'Final assignedAdvisorId decision before contact insertion');
 
+    // AI_DECISION: Asignar etapa "Prospecto" por defecto si no se proporciona pipelineStageId
+    // Justificación: Todos los contactos nuevos deben comenzar en la etapa inicial del pipeline
+    // Impacto: Simplifica el flujo de creación y asegura consistencia en el pipeline
+    let validatedPipelineStageId = validated.pipelineStageId;
+    if (!validatedPipelineStageId) {
+      try {
+        validatedPipelineStageId = await getProspectoStageId();
+        req.log.info({
+          userId,
+          userRole,
+          autoAssignedStageId: validatedPipelineStageId,
+          reason: 'no_stage_provided_auto_assign_prospecto',
+          action: 'auto_assignment_stage'
+        }, 'Auto-assigned contact to Prospecto stage (no stage provided)');
+      } catch (error) {
+        req.log.error({
+          err: error,
+          userId,
+          userRole,
+          action: 'failed_to_get_prospecto_stage'
+        }, 'Failed to get Prospecto stage ID, creating contact without stage');
+        // Continuar sin etapa si hay un error (no debería pasar, pero mejor ser resiliente)
+      }
+    }
+
     // Generar fullName
     const fullName = `${validated.firstName} ${validated.lastName}`;
 
@@ -689,6 +716,7 @@ router.post('/',
         .insert(contacts)
         .values({
           ...validated,
+          pipelineStageId: validatedPipelineStageId,
           assignedAdvisorId: validatedAdvisorId,
           fullName,
           customFields: validated.customFields || {}
@@ -750,6 +778,35 @@ router.post('/',
       }, 'CRITICAL: Could not verify contact in database after creation');
     }
 
+    // AI_DECISION: Registrar historial de pipeline stage al crear contacto
+    // Justificación: Garantiza que todos los contactos tengan historial completo, incluso si se crean directamente en una etapa avanzada
+    // Impacto: Métricas más precisas y consistentes, permite rastrear correctamente contactos creados en cualquier etapa
+    if (validatedPipelineStageId && userId && userId !== '00000000-0000-0000-0000-000000000001') {
+      try {
+        await db()
+          .insert(pipelineStageHistory)
+          .values({
+            contactId: newContact.id,
+            fromStage: null,
+            toStage: validatedPipelineStageId,
+            reason: null,
+            changedByUserId: userId
+          });
+        req.log.info({
+          contactId: newContact.id,
+          toStage: validatedPipelineStageId,
+          userId
+        }, 'pipeline stage history registered on contact creation');
+      } catch (historyError) {
+        // No fallar la creación del contacto si falla el registro de historial
+        req.log.error({
+          err: historyError,
+          contactId: newContact.id,
+          toStage: validatedPipelineStageId
+        }, 'failed to register pipeline stage history on contact creation (non-fatal)');
+      }
+    }
+
     // Si hay notas
     if (validated.notes && validated.notes.trim()) {
       req.log.info({ 
@@ -777,7 +834,10 @@ router.post('/',
       savedAssignedAdvisorId: savedAssignedAdvisorId,
       dbVerifiedAssignedAdvisorId: verifiedContact?.assignedAdvisorId,
       advisorWarning: !!advisorWarning,
-      assignmentVerified: savedAssignedAdvisorId === validatedAdvisorId
+      assignmentVerified: savedAssignedAdvisorId === validatedAdvisorId,
+      pipelineStageId: validatedPipelineStageId,
+      providedPipelineStageId: validated.pipelineStageId,
+      stageAutoAssigned: !validated.pipelineStageId
     }, 'Creación de contacto exitosa');
 
     res.status(201).json({ 
@@ -883,37 +943,100 @@ router.put('/:id',
       fullName = `${validated.firstName || existing.firstName} ${validated.lastName || existing.lastName}`;
     }
 
-    // Actualizar contacto con versión incrementada
-    const [updated] = await db()
-      .update(contacts)
-      .set({
-        ...validated,
-        assignedAdvisorId: validatedAdvisorId,
-        fullName,
-        version: existing.version + 1,
-        updatedAt: new Date()
-      })
-      .where(eq(contacts.id, id))
-      .returning();
+    // Verificar si pipelineStageId cambió para registrar en historial
+    const pipelineStageChanged = validated.pipelineStageId !== undefined && 
+      validated.pipelineStageId !== existing.pipelineStageId;
+    const oldPipelineStageId = existing.pipelineStageId;
+    const newPipelineStageId = validated.pipelineStageId;
 
-    // Registrar cambios en historial para campos clave
+    // Actualizar contacto con versión incrementada
+    const updateData: {
+      [key: string]: unknown;
+    } = {
+      ...validated,
+      assignedAdvisorId: validatedAdvisorId,
+      fullName,
+      version: existing.version + 1,
+      updatedAt: new Date()
+    };
+
+    // Si pipelineStageId cambió, actualizar también pipelineStageUpdatedAt
+    if (pipelineStageChanged && newPipelineStageId) {
+      updateData.pipelineStageUpdatedAt = new Date();
+    }
+
+    // Registrar cambios en historial para campos clave (antes de la transacción para logging)
     const changedFields = Object.keys(validated).filter(key => {
       return validated[key as keyof typeof validated] !== existing[key as keyof typeof existing];
     });
 
-    if (changedFields.length > 0 && req.user?.id) {
-      await db()
-        .insert(contactFieldHistory)
-        .values(
-          changedFields.map(field => ({
-            contactId: id,
-            fieldName: field,
-            oldValue: String(existing[field as keyof typeof existing] || ''),
-            newValue: String(validated[field as keyof typeof validated] || ''),
-            changedByUserId: req.user!.id
-          }))
-        );
-    }
+    // AI_DECISION: Usar transacción para asegurar consistencia entre update de contacto e historial
+    // Justificación: Update de contacto y registros de historial deben ser atómicos
+    // Si falla el insert de historial, el update de contacto debe hacer rollback
+    // Impacto: Historial siempre consistente con el estado actual del contacto
+    const updated = await transactionWithLogging(
+      req.log,
+      'update-contact-with-history',
+      async (tx) => {
+        // Actualizar contacto dentro de la transacción con validación de versión (optimistic locking)
+        const [updatedContact] = await tx
+          .update(contacts)
+          .set(updateData)
+          .where(and(
+            eq(contacts.id, id),
+            eq(contacts.version, existing.version) // Validar versión para optimistic locking
+          ))
+          .returning();
+
+        if (!updatedContact) {
+          // Si no se actualizó, puede ser por versión conflict o contacto no encontrado
+          // Verificar si el contacto existe con versión diferente
+          const [current] = await tx
+            .select({ version: contacts.version })
+            .from(contacts)
+            .where(eq(contacts.id, id))
+            .limit(1);
+          
+          if (current && current.version !== existing.version) {
+            const versionError = new Error('Version conflict');
+            versionError.name = 'VersionConflictError';
+            throw versionError;
+          }
+          throw new Error('Contact not found');
+        }
+
+        // Registrar cambios en historial para campos clave dentro de la transacción
+        if (changedFields.length > 0 && req.user?.id) {
+          await tx
+            .insert(contactFieldHistory)
+            .values(
+              changedFields.map(field => ({
+                contactId: id,
+                fieldName: field,
+                oldValue: String(existing[field as keyof typeof existing] || ''),
+                newValue: String(validated[field as keyof typeof validated] || ''),
+                changedByUserId: req.user!.id
+              }))
+            );
+        }
+
+        // Registrar cambio de pipeline stage en historial dentro de la transacción si cambió
+        if (pipelineStageChanged && newPipelineStageId && req.user?.id && req.user.id !== '00000000-0000-0000-0000-000000000001') {
+          await tx
+            .insert(pipelineStageHistory)
+            .values({
+              contactId: id,
+              fromStage: oldPipelineStageId || null,
+              toStage: newPipelineStageId,
+              reason: null,
+              changedByUserId: req.user.id
+            });
+          req.log.info({ contactId: id, fromStage: oldPipelineStageId, toStage: newPipelineStageId }, 'pipeline stage changed via contact update');
+        }
+
+        return updatedContact;
+      }
+    );
 
     req.log.info({ contactId: id, changedFields }, 'contact updated');
     res.json({ 
@@ -922,6 +1045,14 @@ router.put('/:id',
       warning: advisorWarning 
     });
   } catch (err) {
+    // Manejar errores de versión conflict en PUT
+    if (err instanceof Error && err.name === 'VersionConflictError') {
+      return res.status(409).json({
+        error: 'Version conflict',
+        message: 'El recurso fue modificado por otro usuario. Por favor recarga la página.'
+      });
+    }
+    
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact');
     next(err);
   }
@@ -1017,12 +1148,44 @@ router.patch('/:id',
       }
     }
 
-    // Actualizar contacto
+    // Verificar si pipelineStageId cambió para registrar en historial
+    const pipelineStageField = fields.find((f: { field: string; value: unknown }) => f.field === 'pipelineStageId');
+    const pipelineStageChanged = pipelineStageField && 
+      pipelineStageField.value !== existing.pipelineStageId;
+    const oldPipelineStageId = existing.pipelineStageId;
+    const newPipelineStageId = pipelineStageField?.value as string | null | undefined;
+
+    // Si pipelineStageId cambió, actualizar también pipelineStageUpdatedAt
+    if (pipelineStageChanged && newPipelineStageId) {
+      updates.pipelineStageUpdatedAt = new Date();
+    }
+
+    // AI_DECISION: Validar versión en where clause para optimistic locking
+    // Justificación: Previene sobrescribir cambios concurrentes en PATCH
+    // Si la versión no coincide, el update no afecta ningún registro
+    // Impacto: Frontend debe manejar 409 Conflict y recargar datos
     const [updated] = await db()
       .update(contacts)
       .set(updates)
-      .where(eq(contacts.id, id))
+      .where(and(
+        eq(contacts.id, id),
+        eq(contacts.version, existing.version) // Validar versión para optimistic locking
+      ))
       .returning();
+
+    // Si no se actualizó ningún registro, significa conflicto de versión
+    if (updated.length === 0) {
+      req.log.warn({ 
+        contactId: id, 
+        expectedVersion: existing.version,
+        message: 'Version conflict detected in PATCH'
+      }, 'Contact PATCH failed due to version conflict');
+      
+      return res.status(409).json({
+        error: 'Version conflict',
+        message: 'El recurso fue modificado por otro usuario. Por favor recarga la página.'
+      });
+    }
 
     // Registrar cambios en historial
     if (req.user?.id) {
@@ -1037,6 +1200,20 @@ router.patch('/:id',
             changedByUserId: req.user!.id
           }))
         );
+    }
+
+    // Registrar cambio de pipeline stage en historial si cambió
+    if (pipelineStageChanged && newPipelineStageId && req.user?.id && req.user.id !== '00000000-0000-0000-0000-000000000001') {
+      await db()
+        .insert(pipelineStageHistory)
+        .values({
+          contactId: id,
+          fromStage: oldPipelineStageId || null,
+          toStage: newPipelineStageId,
+          reason: null,
+          changedByUserId: req.user.id
+        });
+      req.log.info({ contactId: id, fromStage: oldPipelineStageId, toStage: newPipelineStageId }, 'pipeline stage changed via contact patch');
     }
 
     req.log.info({ contactId: id, fields: fields.map((f: { field: string; value: unknown }) => f.field) }, 'contact patched');

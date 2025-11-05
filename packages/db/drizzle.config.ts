@@ -22,6 +22,6 @@ export default {
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/CRM'
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/CRM'
   }
 } satisfies Config;

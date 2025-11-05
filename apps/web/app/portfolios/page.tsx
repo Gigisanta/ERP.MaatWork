@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useRouter } from 'next/navigation';
+import { usePageTitle } from '../components/PageTitleContext';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -105,6 +106,10 @@ function portfolioToTemplate(portfolio: Portfolio): PortfolioTemplate {
 export default function PortfoliosPage() {
   const { user, loading } = useRequireAuth();
   const router = useRouter(); // AI_DECISION: Use Next.js router instead of window.location
+  
+  // Set page title in header
+  usePageTitle('Carteras');
+  
   const [activeSection, setActiveSection] = useState<string>('portfolios');
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [benchmarks, setBenchmarks] = useState<Benchmark[]>([]);
@@ -818,7 +823,6 @@ export default function PortfoliosPage() {
       <div>
         <div className="flex items-center gap-4 mb-4">
         </div>
-        <Heading level={3}>Carteras</Heading>
         <Text size="lg" color="secondary">
           Sistema unificado de gestión de carteras modelo, benchmarks y análisis de rendimiento
         </Text>

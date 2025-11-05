@@ -154,8 +154,37 @@ export async function ensureDefaultPipelineStages(silent = false): Promise<void>
   }
 }
 
-
-
-
+/**
+ * Obtiene el ID de la etapa "Prospecto" del pipeline.
+ * 
+ * Garantiza que la etapa exista antes de buscarla y retorna su ID.
+ * Si la etapa no existe o no se puede encontrar, lanza un error.
+ * 
+ * @returns Promise<string> - ID de la etapa "Prospecto"
+ * 
+ * AI_DECISION: Función helper para obtener ID de etapa por defecto
+ * Justificación: Centraliza la lógica de obtención de etapa por defecto, evitando duplicación
+ * Impacto: Permite asignar "Prospecto" como etapa por defecto al crear contactos
+ */
+export async function getProspectoStageId(): Promise<string> {
+  const dbInstance = db();
+  
+  // Garantizar que las etapas por defecto existan
+  await ensureDefaultPipelineStages(true); // silent=true para no llenar logs
+  
+  // Obtener la etapa "Prospecto"
+  const [prospectoStage] = await dbInstance
+    .select({ id: pipelineStages.id })
+    .from(pipelineStages)
+    .where(eq(pipelineStages.name, 'Prospecto'))
+    .limit(1);
+  
+  if (!prospectoStage) {
+    logger.error({}, 'CRITICAL: Prospecto stage not found after ensureDefaultPipelineStages');
+    throw new Error('La etapa "Prospecto" no existe en el sistema. Contacte al administrador.');
+  }
+  
+  return prospectoStage.id;
+}
 
 

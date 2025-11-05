@@ -85,8 +85,17 @@ export const DataTable = <T extends Record<string, unknown>>({
       const aValue = a[sortColumn];
       const bValue = b[sortColumn];
       
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+      
+      // Compare values - convert to comparable types
+      const aComparable = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
+      const bComparable = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
+      
+      if (aComparable < bComparable) return sortDirection === 'asc' ? -1 : 1;
+      if (aComparable > bComparable) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
   }, [data, sortColumn, sortDirection]);
@@ -149,7 +158,7 @@ export const DataTable = <T extends Record<string, unknown>>({
       <tr
         key={String(item[keyField])}
         className={cn(
-          'hover:bg-background-surface transition-colors',
+          'hover:bg-surface-hover transition-colors',
           onRowClick && 'cursor-pointer',
           selectedItems.has(String(item[keyField])) && 'bg-accent-subtle'
         )}
@@ -193,10 +202,10 @@ export const DataTable = <T extends Record<string, unknown>>({
   const isVirtualized = shouldVirtualize;
 
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-border-base', className)} {...props}>
+    <div className={cn('overflow-hidden rounded-lg border border-border', className)} {...props}>
       <div className="overflow-x-auto" ref={isVirtualized ? parentRef : undefined} style={isVirtualized ? { height: `${virtualizedHeight}px`, overflow: 'auto' } : undefined}>
         <table className="w-full">
-          <thead className="bg-background-surface" style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}>
+          <thead className="bg-surface" style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}>
             <tr>
               {selectable && (
                 <th className="w-12 px-4 py-3">
@@ -212,7 +221,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                 <th
                   key={String(column.key)}
                   className={cn(
-                    'px-4 py-3 text-left text-sm font-medium text-foreground-secondary bg-background-surface',
+                    'px-4 py-3 text-left text-sm font-medium text-text-secondary bg-surface',
                     column.align === 'center' && 'text-center',
                     column.align === 'right' && 'text-right',
                     column.width && `w-[${column.width}]`
@@ -221,7 +230,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                 >
                   <button
                     className={cn(
-                      'flex items-center space-x-1 hover:text-foreground-base',
+                      'flex items-center space-x-1 hover:text-text',
                       !column.sortable && 'cursor-default'
                     )}
                     onClick={() => column.sortable && handleSort(String(column.key))}
@@ -234,16 +243,16 @@ export const DataTable = <T extends Record<string, unknown>>({
                           name="chevron-up"
                           size={12}
                           className={cn(
-                            'text-foreground-tertiary',
-                            sortColumn === String(column.key) && sortDirection === 'asc' && 'text-foreground-base'
+                            'text-text-muted',
+                            sortColumn === String(column.key) && sortDirection === 'asc' && 'text-text'
                           )}
                         />
                         <Icon
                           name="chevron-down"
                           size={12}
                           className={cn(
-                            'text-foreground-tertiary -mt-1',
-                            sortColumn === String(column.key) && sortDirection === 'desc' && 'text-foreground-base'
+                            'text-text-muted -mt-1',
+                            sortColumn === String(column.key) && sortDirection === 'desc' && 'text-text'
                           )}
                         />
                       </div>
@@ -253,7 +262,7 @@ export const DataTable = <T extends Record<string, unknown>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-base" style={isVirtualized ? { position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` } : undefined}>
+          <tbody className="divide-y divide-border" style={isVirtualized ? { position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` } : undefined}>
             {isVirtualized ? (
               rowVirtualizer.getVirtualItems().map((virtualRow) => {
                 const item = sortedData[virtualRow.index];

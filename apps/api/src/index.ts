@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import compression from 'compression';
 import crypto from 'crypto';
 import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
+import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/rate-limiter';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import contactsRouter from './routes/contacts';
@@ -32,6 +33,7 @@ import logsRouter from './routes/logs';
 import brokerAccountsRouter from './routes/broker-accounts';
 import aumRouter from './routes/aum';
 import settingsAdvisorsRouter from './routes/settings-advisors';
+import metricsRouter from './routes/metrics';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -105,31 +107,48 @@ app.use(express.json({ limit: '1mb' }));
 // Impacto: Permite req.cookies en todos los endpoints
 app.use(cookieParser());
 
-// Optional rate limiting for /auth endpoints (simple token bucket, per-IP) behind flag
-if (process.env.RATE_LIMIT_AUTH_ENABLED === 'true') {
-  const buckets = new Map<string, { tokens: number; lastRefill: number }>();
-  const capacity = Number(process.env.RATE_LIMIT_AUTH_CAPACITY || 60); // tokens
-  const refillPerSec = Number(process.env.RATE_LIMIT_AUTH_REFILL || 30); // tokens per second
-  const limiter = (req: Request, res: Response, next: NextFunction) => {
-    const xf = req.headers['x-forwarded-for'];
-    const forwarded = typeof xf === 'string' ? xf.split(',')[0]?.trim() : undefined;
-    const ip = forwarded || req.ip || 'unknown';
-    const now = Date.now() / 1000;
-    const bucket = buckets.get(ip) || { tokens: capacity, lastRefill: now };
-    // Refill
-    const elapsed = now - bucket.lastRefill;
-    bucket.tokens = Math.min(capacity, bucket.tokens + elapsed * refillPerSec);
-    bucket.lastRefill = now;
-    // Cost 1 token
-    if (bucket.tokens < 1) {
-      return res.status(429).json({ error: 'Too Many Requests' });
-    }
-    bucket.tokens -= 1;
-    buckets.set(ip, bucket);
-    next();
-  };
-  app.use('/auth', limiter);
-  app.use('/v1/auth', limiter);
+// AI_DECISION: Rate limiting global usando RateLimiter reutilizable
+// Justificación: Protección contra abuso en todos los endpoints, no solo auth
+// Configuración diferenciada por tipo de endpoint (auth, uploads, general)
+// Impacto: Mejor seguridad, protección contra DoS y abuse
+
+const rateLimiters: RateLimiter[] = [];
+
+// Rate limiting para endpoints de autenticación (más restrictivo)
+if (process.env.RATE_LIMIT_AUTH_ENABLED !== 'false') {
+  const authLimiter = new RateLimiter({
+    capacity: Number(process.env.RATE_LIMIT_AUTH_CAPACITY || RATE_LIMIT_PRESETS.auth.capacity),
+    refillPerSec: Number(process.env.RATE_LIMIT_AUTH_REFILL || RATE_LIMIT_PRESETS.auth.refillPerSec)
+  });
+  rateLimiters.push(authLimiter);
+  app.use('/auth', authLimiter.middleware());
+  app.use('/v1/auth', authLimiter.middleware());
+}
+
+// Rate limiting para uploads (muy restrictivo)
+if (process.env.RATE_LIMIT_UPLOADS_ENABLED !== 'false') {
+  const uploadLimiter = new RateLimiter({
+    capacity: Number(process.env.RATE_LIMIT_UPLOADS_CAPACITY || RATE_LIMIT_PRESETS.uploads.capacity),
+    refillPerSec: Number(process.env.RATE_LIMIT_UPLOADS_REFILL || RATE_LIMIT_PRESETS.uploads.refillPerSec)
+  });
+  rateLimiters.push(uploadLimiter);
+  app.use('/v1/admin/aum/uploads', uploadLimiter.middleware());
+  app.use('/v1/attachments/upload', uploadLimiter.middleware());
+}
+
+// Rate limiting general (menos restrictivo, solo si está habilitado)
+if (process.env.RATE_LIMIT_GLOBAL_ENABLED === 'true') {
+  const globalLimiter = new RateLimiter({
+    capacity: Number(process.env.RATE_LIMIT_GLOBAL_CAPACITY || RATE_LIMIT_PRESETS.general.capacity),
+    refillPerSec: Number(process.env.RATE_LIMIT_GLOBAL_REFILL || RATE_LIMIT_PRESETS.general.refillPerSec)
+  });
+  rateLimiters.push(globalLimiter);
+  app.use(globalLimiter.middleware());
+}
+
+// Limpiar buckets periódicamente para evitar memory leaks
+if (rateLimiters.length > 0) {
+  setupRateLimiterCleanup(rateLimiters);
 }
 
 // REGLA CURSOR: Request ID DEBE ir antes de pinoHttp para correlation en logs
@@ -315,6 +334,7 @@ app.use('/logs', logsRouter);
 app.use('/broker-accounts', brokerAccountsRouter);
 app.use('/admin/aum', aumRouter);
 app.use('/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/metrics', metricsRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -335,6 +355,7 @@ app.use('/v1/logs', logsRouter);
 app.use('/v1/broker-accounts', brokerAccountsRouter);
 app.use('/v1/admin/aum', aumRouter);
 app.use('/v1/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/v1/metrics', metricsRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

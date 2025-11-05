@@ -273,7 +273,8 @@ export const pipelineStageHistory = pgTable(
     changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    pipelineHistoryIdx: index('idx_pipeline_history_contact').on(table.contactId, table.changedAt)
+    pipelineHistoryIdx: index('idx_pipeline_history_contact').on(table.contactId, table.changedAt),
+    pipelineHistoryToStageIdx: index('idx_pipeline_history_to_stage').on(table.toStage, table.changedAt)
   })
 );
 
@@ -325,6 +326,7 @@ export const tags = pgTable(
     color: text('color').notNull().default('#6B7280'),
     icon: text('icon'), // emoji o icon name
     description: text('description'),
+    businessLine: text('business_line'), // inversiones, zurich, patrimonial
     isSystem: boolean('is_system').notNull().default(false),
     createdByUserId: uuid('created_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -1150,6 +1152,28 @@ export const dailyMetricsUser = pgTable(
   },
   (table) => ({
     dailyMetricsUserUnique: uniqueIndex('daily_metrics_user_unique').on(table.userId, table.date)
+  })
+);
+
+/**
+ * monthly_goals
+ * Objetivos mensuales globales para métricas del pipeline.
+ */
+export const monthlyGoals = pgTable(
+  'monthly_goals',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    month: integer('month').notNull(), // 1-12
+    year: integer('year').notNull(),
+    newProspectsGoal: integer('new_prospects_goal').notNull().default(0),
+    firstMeetingsGoal: integer('first_meetings_goal').notNull().default(0),
+    secondMeetingsGoal: integer('second_meetings_goal').notNull().default(0),
+    newClientsGoal: integer('new_clients_goal').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    monthlyGoalsUnique: uniqueIndex('monthly_goals_unique').on(table.month, table.year)
   })
 );
 

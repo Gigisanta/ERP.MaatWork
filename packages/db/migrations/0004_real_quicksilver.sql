@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "idx_pipeline_history_to_stage" ON "pipeline_stage_history" USING btree ("to_stage","changed_at");

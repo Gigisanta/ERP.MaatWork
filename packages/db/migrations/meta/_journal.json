@@ -22,6 +22,20 @@
       "when": 1762191076596,
       "tag": "0002_clumsy_guardian",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1762381831466,
+      "tag": "0003_loving_apocalypse",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762383507566,
+      "tag": "0004_real_quicksilver",
+      "breakpoints": true
     }
   ]
 }

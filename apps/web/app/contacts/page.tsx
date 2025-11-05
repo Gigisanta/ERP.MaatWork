@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import { deleteContact, createTag, updateTag, deleteTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
 import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag } from '@/types';
+import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
@@ -50,6 +51,9 @@ export default function ContactsPage() {
   const searchParams = useSearchParams();
   const advisorIdFilter = searchParams.get('advisorId');
   
+  // Set page title in header
+  usePageTitle('Contactos');
+  
   // AI_DECISION: Replace manual API calls with SWR hooks for request deduplication
   // Justificación: Eliminates redundant requests on navigation, provides automatic caching
   // Impacto: Reduces API load, improves perceived performance with instant cache hits
@@ -78,12 +82,14 @@ export default function ContactsPage() {
   const [showCreateTagModal, setShowCreateTagModal] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#6B7280');
+  const [newTagBusinessLine, setNewTagBusinessLine] = useState<'inversiones' | 'zurich' | 'patrimonial' | null>(null);
 
   // Estados para gestionar etiquetas existentes
   const [showManageTagsModal, setShowManageTagsModal] = useState(false);
   const [tagToEdit, setTagToEdit] = useState<Tag | null>(null);
   const [editedTagName, setEditedTagName] = useState('');
   const [editedTagColor, setEditedTagColor] = useState('#6B7280');
+  const [editedTagBusinessLine, setEditedTagBusinessLine] = useState<'inversiones' | 'zurich' | 'patrimonial' | null>(null);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
 
   // Estados para edición inline
@@ -135,12 +141,14 @@ export default function ContactsPage() {
       await createTag({
         entityType: 'contact',
         name: newTagName.trim(),
-        color: newTagColor
+        color: newTagColor,
+        businessLine: newTagBusinessLine
       });
       // Invalidate tags cache to refetch updated data
       mutateTags();
       setNewTagName('');
       setNewTagColor('#6B7280');
+      setNewTagBusinessLine(null);
       setIsCreatingTag(false);
       setToast({
         show: true,
@@ -165,7 +173,8 @@ export default function ContactsPage() {
     try {
       await updateTag(tagToEdit.id, {
         name: editedTagName.trim(),
-        color: editedTagColor
+        color: editedTagColor,
+        businessLine: editedTagBusinessLine
       });
       // Invalidate tags cache to refetch updated data
       mutateTags();
@@ -222,6 +231,7 @@ export default function ContactsPage() {
     setTagToEdit(tag);
     setEditedTagName(tag.name);
     setEditedTagColor(tag.color);
+    setEditedTagBusinessLine(tag.businessLine ?? null);
     setShowManageTagsModal(true);
   };
 
@@ -282,14 +292,8 @@ export default function ContactsPage() {
   const updateContactTagsLocal = useCallback(async (contactId: string, add: string[], remove: string[]) => {
     setSavingContactId(contactId);
     try {
-      // Obtener tags actuales del contacto
-      const contact = Array.isArray(contacts) ? (contacts as Contact[]).find((c: Contact) => c.id === contactId) : null;
-      const currentTagIds = contact?.tags && Array.isArray(contact.tags) ? contact.tags.map((t: { id: string }) => t.id) : [];
-      
-      // Calcular nuevos tags
-      const newTagIds = [...currentTagIds.filter((id: string) => !remove.includes(id)), ...add.filter((id: string) => !currentTagIds.includes(id))];
-      
-      await updateContactTagsApi(contactId, newTagIds);
+      // Enviar add y remove directamente al backend
+      await updateContactTagsApi(contactId, add, remove);
       // Invalidate contacts cache to refetch updated data
       mutateContacts();
       setToast({
@@ -308,7 +312,7 @@ export default function ContactsPage() {
       setSavingContactId(null);
       setEditingField(null);
     }
-  }, [contacts, mutateContacts]);
+  }, [mutateContacts]);
 
   const handleStageChange = useCallback((contactId: string, stageId: string | null) => {
     updateContactFieldLocal(contactId, 'pipelineStageId', stageId);
@@ -365,6 +369,15 @@ export default function ContactsPage() {
           pipelineStages={Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []}
           isSaving={savingContactId === contact.id}
           onStageChange={handleStageChange}
+          onMutate={mutateContacts}
+          onError={(error: Error) => {
+            setToast({
+              show: true,
+              title: 'Error al avanzar etapa',
+              description: error.message,
+              variant: 'error'
+            });
+          }}
         />
       )
     },
@@ -440,17 +453,6 @@ export default function ContactsPage() {
   return (
     <div className="p-4 md:p-6">
       <Stack direction="column" gap="lg">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Heading level={3}>Contactos</Heading>
-          </div>
-          <Button onClick={() => router.push('/contacts/new')}>
-            <Icon name="plus" size={16} className="mr-2" />
-            Nuevo Contacto
-          </Button>
-        </div>
-
         {combinedError && (
           <Alert variant="error" title="Error">
             {combinedError instanceof Error ? combinedError.message : 'Error al cargar datos'}
@@ -552,6 +554,25 @@ export default function ContactsPage() {
                     <span>Kanban</span>
                   </button>
                 </div>
+
+                {/* Botón Métricas */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/contacts/metrics')}
+                >
+                  Métricas
+                </Button>
+
+                {/* Botón Nuevo Contacto */}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => router.push('/contacts/new')}
+                >
+                  <Icon name="plus" size={16} className="mr-1.5" />
+                  Nuevo Contacto
+                </Button>
               </div>
 
               {/* Segunda fila: Chips de filtros activos */}
@@ -748,7 +769,7 @@ export default function ContactsPage() {
                     <button
                       key={color}
                       className={`w-8 h-8 rounded-full border-2 ${
-                        newTagColor === color ? 'border-foreground-base' : 'border-border-base'
+                        newTagColor === color ? 'border-primary' : 'border-border'
                       }`}
                       style={{ backgroundColor: color }}
                       onClick={() => setNewTagColor(color)}
@@ -788,7 +809,7 @@ export default function ContactsPage() {
                     placeholder="Ej: Cliente VIP, Prospecto caliente..."
                   />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Color
                     </label>
                     <input
@@ -798,6 +819,17 @@ export default function ContactsPage() {
                       className="w-full h-12 rounded-md cursor-pointer"
                     />
                   </div>
+                  <Select
+                    label="Línea de negocio"
+                    value={newTagBusinessLine ?? ''}
+                    onValueChange={(value) => setNewTagBusinessLine(value === '' ? null : value as 'inversiones' | 'zurich' | 'patrimonial')}
+                    items={[
+                      { value: '', label: 'Sin categoría' },
+                      { value: 'inversiones', label: 'Inversiones' },
+                      { value: 'zurich', label: 'Zurich' },
+                      { value: 'patrimonial', label: 'Patrimonial' }
+                    ]}
+                  />
                   <ModalFooter>
                     <Button variant="secondary" onClick={() => setIsCreatingTag(false)}>
                       Cancelar
@@ -817,7 +849,7 @@ export default function ContactsPage() {
                     placeholder="Nombre de la etiqueta"
                   />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-2">
                       Color
                     </label>
                     <input
@@ -827,6 +859,17 @@ export default function ContactsPage() {
                       className="w-full h-12 rounded-md cursor-pointer"
                     />
                   </div>
+                  <Select
+                    label="Línea de negocio"
+                    value={editedTagBusinessLine ?? ''}
+                    onValueChange={(value) => setEditedTagBusinessLine(value === '' ? null : value as 'inversiones' | 'zurich' | 'patrimonial')}
+                    items={[
+                      { value: '', label: 'Sin categoría' },
+                      { value: 'inversiones', label: 'Inversiones' },
+                      { value: 'zurich', label: 'Zurich' },
+                      { value: 'patrimonial', label: 'Patrimonial' }
+                    ]}
+                  />
                   <ModalFooter>
                     <Button variant="secondary" onClick={() => setTagToEdit(null)}>
                       Cancelar
@@ -847,7 +890,7 @@ export default function ContactsPage() {
                     ) : (
                       <div className="space-y-2">
                         {Array.isArray(allTags) ? (allTags as Tag[]).map((tag: Tag) => (
-                          <div key={tag.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50">
+                          <div key={tag.id} className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-surface-hover">
                             <div className="flex items-center gap-3">
                               <div 
                                 className="w-4 h-4 rounded-full" 

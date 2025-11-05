@@ -6,6 +6,7 @@ import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../utils/validation';
+import { transactionWithLogging } from '../utils/db-transactions';
 import { 
   uuidSchema,
   idParamSchema,
@@ -308,56 +309,76 @@ router.post('/move',
       return res.status(404).json({ error: 'Target stage not found' });
     }
 
-    // Verificar WIP limit si está configurado
-    if (toStage.wipLimit !== null) {
-      const [{ count: currentCount }] = await db()
-        .select({ count: count() })
-        .from(contacts)
-        .where(and(
-          eq(contacts.pipelineStageId, toStageId),
-          isNull(contacts.deletedAt)
-        ));
+    // AI_DECISION: Usar transacción para asegurar consistencia y prevenir race conditions
+    // Justificación: Validación de WIP limit y update de contacto deben ser atómicos
+    // Si WIP limit se excede, toda la operación debe hacer rollback
+    // Mover validación dentro de transacción previene race conditions
+    // Impacto: WIP limit respetado 100% del tiempo, historial siempre consistente
+    const updated = await transactionWithLogging(
+      req.log,
+      'move-contact-pipeline',
+      async (tx) => {
+        // Verificar WIP limit dentro de la transacción (previene race condition)
+        if (toStage.wipLimit !== null) {
+          const [{ count: currentCount }] = await tx
+            .select({ count: count() })
+            .from(contacts)
+            .where(and(
+              eq(contacts.pipelineStageId, toStageId),
+              isNull(contacts.deletedAt)
+            ));
 
-      if (Number(currentCount) >= toStage.wipLimit) {
-        req.log.warn({ stageId: toStageId, wipLimit: toStage.wipLimit }, 'WIP limit would be exceeded');
-        // Opcionalmente podrías permitir con un warning o requerir override
-        return res.status(400).json({ 
-          error: 'WIP limit exceeded',
-          currentCount: Number(currentCount),
-          wipLimit: toStage.wipLimit
-        });
+          if (Number(currentCount) >= toStage.wipLimit) {
+            req.log.warn({ stageId: toStageId, wipLimit: toStage.wipLimit }, 'WIP limit would be exceeded');
+            throw new Error('WIP limit exceeded');
+          }
+        }
+
+        // Actualizar contacto dentro de la transacción
+        const [updatedContact] = await tx
+          .update(contacts)
+          .set({
+            pipelineStageId: toStageId,
+            pipelineStageUpdatedAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(contacts.id, contactId))
+          .returning();
+
+        if (!updatedContact) {
+          throw new Error('Contact not found');
+        }
+
+        // Registrar en historial dentro de la transacción (solo si userId es válido)
+        if (userId && userId !== '00000000-0000-0000-0000-000000000001') {
+          await tx
+            .insert(pipelineStageHistory)
+            .values({
+              contactId,
+              fromStage: contact.pipelineStageId || null,
+              toStage: toStageId,
+              reason: reason || null,
+              changedByUserId: userId
+            });
+        } else {
+          req.log.info({ userId }, 'Skipping history entry for temp admin user');
+        }
+
+        return updatedContact;
       }
-    }
-
-    // Actualizar contacto
-    const [updated] = await db()
-      .update(contacts)
-      .set({
-        pipelineStageId: toStageId,
-        pipelineStageUpdatedAt: new Date(),
-        updatedAt: new Date()
-      })
-      .where(eq(contacts.id, contactId))
-      .returning();
-
-    // Registrar en historial (solo si userId es un UUID válido)
-    if (userId && userId !== '00000000-0000-0000-0000-000000000001') {
-      await db()
-        .insert(pipelineStageHistory)
-        .values({
-          contactId,
-          fromStage: contact.pipelineStageId || null,
-          toStage: toStageId,
-          reason: reason || null,
-          changedByUserId: userId
-        });
-    } else {
-      req.log.info({ userId }, 'Skipping history entry for temp admin user');
-    }
+    );
 
     req.log.info({ contactId, fromStage: contact.pipelineStageId, toStage: toStageId }, 'contact moved in pipeline');
     res.json({ success: true, data: updated });
   } catch (err) {
+    // Manejar errores específicos de WIP limit
+    if (err instanceof Error && err.message === 'WIP limit exceeded') {
+      return res.status(400).json({ 
+        error: 'WIP limit exceeded',
+        message: 'El límite de trabajo en progreso (WIP) para esta etapa ha sido alcanzado. Por favor, mueve contactos a otras etapas primero.'
+      });
+    }
+    
     req.log.error({ err }, 'failed to move contact in pipeline');
     next(err);
   }
