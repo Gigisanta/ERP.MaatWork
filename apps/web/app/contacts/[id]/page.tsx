@@ -40,39 +40,42 @@ import NotesSection from './NotesSection';
 // Impacto: Consistencia con cliente API, mejor manejo de errores
 import { apiCallWithToken } from '@/lib/api-server';
 import { config } from '@/lib/config';
-import type { Contact } from '@/types/contact';
 
 async function getContactData(id: string, token: string) {
   try {
     // Usar helper para Server Components
+    // apiCallWithToken returns { data: {...} } directly from the API response
     const contactResponse = await apiCallWithToken<Contact>(`/v1/contacts/${id}`, {
       token,
       method: 'GET',
       timeoutMs: Math.min(config.apiTimeout, 8000)
     });
 
-    if (!contactResponse.success || !contactResponse.data) {
+    // Check if response has data property (API returns { data: {...} })
+    if (!contactResponse?.data) {
       return null;
     }
 
     const contact = contactResponse.data;
 
     // Fetch related data in parallel usando helper
+    // Catch errors and return empty arrays wrapped in response structure
     const [stagesResponse, advisorsResponse, brokerAccountsResponse, portfolioResponse, tasksResponse, notesResponse] = await Promise.all([
-      apiCallWithToken<PipelineStage[]>('/v1/pipeline/stages', { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Advisor[]>('/v1/users/advisors', { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<BrokerAccount[]>(`/v1/broker-accounts?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<PortfolioAssignment[]>(`/v1/portfolios/assignments?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Task[]>(`/v1/tasks?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] })),
-      apiCallWithToken<Note[]>(`/v1/notes?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ success: false, data: [] }))
+      apiCallWithToken<PipelineStage[]>('/v1/pipeline/stages', { token, timeoutMs: 8000 }).catch(() => ({ data: [] })),
+      apiCallWithToken<Advisor[]>('/v1/users/advisors', { token, timeoutMs: 8000 }).catch(() => ({ data: [] })),
+      apiCallWithToken<BrokerAccount[]>(`/v1/broker-accounts?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ data: [] })),
+      apiCallWithToken<PortfolioAssignment[]>(`/v1/portfolios/assignments?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ data: [] })),
+      apiCallWithToken<Task[]>(`/v1/tasks?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ data: [] })),
+      apiCallWithToken<Note[]>(`/v1/notes?contactId=${id}`, { token, timeoutMs: 8000 }).catch(() => ({ data: [] }))
     ]);
 
-    const stages = stagesResponse.success ? stagesResponse.data || [] : [];
-    const advisors = advisorsResponse.success ? advisorsResponse.data || [] : [];
-    const brokerAccounts = brokerAccountsResponse.success ? brokerAccountsResponse.data || [] : [];
-    const portfolioAssignments = portfolioResponse.success ? portfolioResponse.data || [] : [];
-    const tasks = tasksResponse.success ? tasksResponse.data || [] : [];
-    const notes = notesResponse.success ? notesResponse.data || [] : [];
+    // Extract data from responses (all have { data: [...] } structure)
+    const stages = stagesResponse?.data || [];
+    const advisors = advisorsResponse?.data || [];
+    const brokerAccounts = brokerAccountsResponse?.data || [];
+    const portfolioAssignments = portfolioResponse?.data || [];
+    const tasks = tasksResponse?.data || [];
+    const notes = notesResponse?.data || [];
 
     return {
       contact,

@@ -1,10 +1,12 @@
 "use client";
 import { useRequireAuth } from '../auth/useRequireAuth';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getPipelineBoard, moveContactToStage } from '@/lib/api';
+import { moveContactToStage } from '@/lib/api';
+import { usePipelineBoard } from '../../lib/api-hooks';
 import { logger } from '../../lib/logger';
+import type { ApiResponse } from '../../lib/api-client';
 import type { PipelineStageWithContacts } from '@/types';
 import {
   Card,
@@ -28,38 +30,13 @@ type PipelineStage = PipelineStageWithContacts;
 export default function PipelinePage() {
   const { user, loading } = useRequireAuth();
   const router = useRouter();
-  const [stages, setStages] = useState<PipelineStage[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // AI_DECISION: Migrate from useState+useEffect to SWR hook
+  // Justificación: Eliminates redundant requests, provides automatic caching and revalidation
+  // Impacto: Reduces API load, improves perceived performance with instant cache hits
+  const { stages, error, isLoading: dataLoading, mutate: mutateBoard } = usePipelineBoard();
   const [draggingOverStageId, setDraggingOverStageId] = useState<string | null>(null);
   const [movingContactId, setMovingContactId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
-
-  const fetchBoard = useCallback(async () => {
-    if (!token) return;
-    try {
-      setDataLoading(true);
-      setError(null);
-      const response = await getPipelineBoard();
-
-      if (response.success && response.data) {
-        setStages(response.data);
-      } else {
-        throw new Error('Failed to fetch pipeline board');
-      }
-    } catch (err) {
-      logger.error('Error fetching pipeline board', { err });
-      setError(err instanceof Error ? err.message : 'Error al cargar el pipeline');
-    } finally {
-      setDataLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (user && token) {
-      fetchBoard();
-    }
-  }, [user, token, fetchBoard]);
 
   const handleDragStart = (e: React.DragEvent, contactId: string) => {
     e.dataTransfer.setData('text/plain', contactId);
@@ -76,16 +53,21 @@ export default function PipelinePage() {
     setDraggingOverStageId(null);
   };
 
-  const handleDrop = async (e: React.DragEvent, targetStageId: string) => {
+  const handleDrop = useCallback(async (e: React.DragEvent, targetStageId: string) => {
     e.preventDefault();
     setDraggingOverStageId(null);
     
     const contactId = e.dataTransfer.getData('text/plain');
-    if (!contactId || !token) return;
+    if (!contactId) return;
+
+    if (!Array.isArray(stages)) {
+      setMovingContactId(null);
+      return;
+    }
 
     // Encontrar el contacto y su etapa actual
-    const sourceStage = stages.find(stage => 
-      stage.contacts.some(contact => contact.id === contactId)
+    const sourceStage = (stages as PipelineStage[]).find((stage: PipelineStage) => 
+      Array.isArray(stage.contacts) && stage.contacts.some((contact: { id: string }) => contact.id === contactId)
     );
     
     if (!sourceStage || sourceStage.id === targetStageId) {
@@ -94,7 +76,7 @@ export default function PipelinePage() {
     }
 
     // Verificar límite WIP
-    const targetStage = stages.find(stage => stage.id === targetStageId);
+    const targetStage = (stages as PipelineStage[]).find((stage: PipelineStage) => stage.id === targetStageId);
     if (targetStage?.wipLimit && targetStage.currentCount >= targetStage.wipLimit) {
       setMoveError(`No se puede mover el contacto. El límite WIP de "${targetStage.name}" ha sido alcanzado (${targetStage.wipLimit}).`);
       setMovingContactId(null);
@@ -104,33 +86,39 @@ export default function PipelinePage() {
     try {
       await moveContactToStage(contactId, targetStageId);
 
-      // Actualizar el estado local
-      setStages(prevStages => {
-        return prevStages.map(stage => {
-          if (stage.id === sourceStage.id) {
-            return {
-              ...stage,
-              contacts: stage.contacts.filter(contact => contact.id !== contactId),
-              currentCount: stage.currentCount - 1
-            };
-          } else if (stage.id === targetStageId) {
-            const movedContact = sourceStage.contacts.find(contact => contact.id === contactId);
-            return {
-              ...stage,
-              contacts: [...stage.contacts, movedContact!],
-              currentCount: stage.currentCount + 1
-            };
-          }
-          return stage;
-        });
+      // Optimistic update: actualizar el estado local inmediatamente
+      const movedContact = Array.isArray(sourceStage.contacts) ? sourceStage.contacts.find((contact: { id: string }) => contact.id === contactId) : null;
+      const updatedStages = (stages as PipelineStage[]).map((stage: PipelineStage) => {
+        if (stage.id === sourceStage.id) {
+          return {
+            ...stage,
+            contacts: stage.contacts.filter((contact: { id: string }) => contact.id !== contactId),
+            currentCount: stage.currentCount - 1
+          };
+        } else if (stage.id === targetStageId) {
+          return {
+            ...stage,
+            contacts: [...stage.contacts, movedContact!],
+            currentCount: stage.currentCount + 1
+          };
+        }
+        return stage;
       });
+      
+      // Actualizar cache de SWR optimistically
+      mutateBoard({ data: updatedStages } as ApiResponse<PipelineStage[]>, false);
+      
+      // Revalidar en background para asegurar consistencia
+      mutateBoard();
     } catch (err) {
-      logger.error('Error moving contact', { err, contactId, targetStageId });
+      logger.error('Error moving contact', { err: err instanceof Error ? err.message : String(err), contactId, targetStageId });
       setMoveError(err instanceof Error ? err.message : 'Error al mover contacto');
+      // Revalidar en caso de error para restaurar estado correcto
+      mutateBoard();
     } finally {
       setMovingContactId(null);
     }
-  };
+  }, [stages, mutateBoard]);
 
   const getWipLimitStatus = (stage: PipelineStage) => {
     if (!stage.wipLimit) return null;
@@ -183,7 +171,7 @@ export default function PipelinePage() {
         )}
 
         {/* Pipeline Board */}
-        {stages.length === 0 ? (
+        {!Array.isArray(stages) || stages.length === 0 ? (
           <Card>
             <CardContent>
               <EmptyState 
@@ -194,9 +182,9 @@ export default function PipelinePage() {
           </Card>
         ) : (
           <div className="flex gap-6 overflow-x-auto pb-4">
-            {stages
-              .sort((a, b) => a.order - b.order)
-              .map((stage) => (
+            {Array.isArray(stages) && (stages as PipelineStage[])
+              .sort((a: PipelineStage, b: PipelineStage) => a.order - b.order)
+              .map((stage: PipelineStage) => (
                 <Card 
                   key={stage.id}
                   className={`min-w-[280px] flex-shrink-0 ${
@@ -231,14 +219,14 @@ export default function PipelinePage() {
                   
                   <CardContent className="pt-0">
                     <Stack direction="column" gap="sm" className="min-h-[200px]">
-                      {stage.contacts.length === 0 ? (
+                      {!Array.isArray(stage.contacts) || stage.contacts.length === 0 ? (
                         <div className="flex items-center justify-center h-32 text-center">
                           <Text size="sm" color="secondary">
                             Arrastra contactos aquí
                           </Text>
                         </div>
                       ) : (
-                        stage.contacts.map((contact) => (
+                        (stage.contacts as Array<{ id: string; fullName: string; email?: string; nextStep?: string; tags?: Array<{ id: string; name: string; color: string }> }>).map((contact: { id: string; fullName: string; email?: string; nextStep?: string; tags?: Array<{ id: string; name: string; color: string }> }) => (
                           <Card 
                             key={contact.id}
                             variant="interactive"
@@ -266,9 +254,9 @@ export default function PipelinePage() {
                                   </Text>
                                 )}
                                 
-                                {contact.tags && contact.tags.length > 0 && (
+                                    {contact.tags && contact.tags.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
-                                    {contact.tags.slice(0, 2).map((tag) => (
+                                    {contact.tags.slice(0, 2).map((tag: { id: string; name: string; color: string }) => (
                                       <Badge 
                                         key={tag.id} 
                                         variant="default" 
@@ -308,14 +296,14 @@ export default function PipelinePage() {
         )}
 
         {/* Stats */}
-        {stages.length > 0 && (
+        {Array.isArray(stages) && stages.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Estadísticas del Pipeline</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {stages.map((stage) => (
+                {(stages as PipelineStage[]).map((stage: PipelineStage) => (
                   <div key={stage.id} className="text-center">
                     <Text size="lg" weight="bold" style={{ color: stage.color }}>
                       {stage.currentCount}

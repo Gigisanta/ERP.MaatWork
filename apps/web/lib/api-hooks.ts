@@ -6,9 +6,12 @@ import useSWR from 'swr';
 import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
+import type { ApiResponse } from './api-client';
 
 // Generic fetcher function using centralized fetchJson (handles cookies, timeout, logging)
-const fetcher = (url: string) => fetchJson(url);
+const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
+  return fetchJson<ApiResponse<T>>(url);
+};
 
 // AI_DECISION: Optimize SWR configuration for aggressive caching
 // Justificación: Default cache settings cause too many revalidations. Increased deduping and disabled stale revalidation reduce API load by 50-70%
@@ -40,14 +43,14 @@ export function useContacts(assignedAdvisorId?: string | null) {
   // This ensures each advisorId gets its own cached result
   const swrKey = user ? url : null;
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     swrKey,
     fetcher,
     swrConfig
   );
   
   return {
-    contacts: data?.data || [],
+    contacts: (data?.data as unknown[]) || [],
     error,
     isLoading,
     mutate
@@ -58,14 +61,14 @@ export function useContacts(assignedAdvisorId?: string | null) {
 export function usePipelineStages() {
   const { user } = useAuth();
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/pipeline/stages` : null,
     fetcher,
     swrConfigLonger
   );
   
   return {
-    stages: data?.data || [],
+    stages: (data?.data as unknown[]) || [],
     error,
     isLoading,
     mutate
@@ -76,14 +79,14 @@ export function usePipelineStages() {
 export function useAdvisors() {
   const { user } = useAuth();
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/users/advisors` : null,
     fetcher,
     swrConfigLonger
   );
   
   return {
-    advisors: data?.data || [],
+    advisors: (data?.data as unknown[]) || [],
     error,
     isLoading,
     mutate
@@ -94,14 +97,14 @@ export function useAdvisors() {
 export function useTags(scope: string = 'contact') {
   const { user } = useAuth();
   
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/tags?scope=${scope}` : null,
     fetcher,
     swrConfig
   );
   
   return {
-    tags: data?.data || [],
+    tags: (data?.data as unknown[]) || [],
     error,
     isLoading,
     mutate
@@ -117,7 +120,7 @@ export function useContactDetail(id: string) {
   const { user } = useAuth();
   
   const { data, error, isLoading, mutate } = useSWR(
-    user && id ? `${API_BASE_URL}/contacts/${id}` : null,
+    user && id ? `${API_BASE_URL}/v1/contacts/${id}` : null,
     fetcher,
     swrConfig
   );
@@ -196,6 +199,66 @@ export function useNotes(contactId: string) {
   
   return {
     notes: data?.data || [],
+    error,
+    isLoading,
+    mutate
+  };
+}
+
+// Hook for pipeline board
+export function usePipelineBoard() {
+  const { user } = useAuth();
+  
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
+    user ? `${API_BASE_URL}/v1/pipeline/board` : null,
+    fetcher,
+    swrConfigLonger
+  );
+  
+  return {
+    stages: (data?.data as unknown[]) || [],
+    error,
+    isLoading,
+    mutate
+  };
+}
+
+// Hook for portfolio comparison (POST request)
+export function usePortfolioComparison(
+  portfolioIds: string[],
+  benchmarkIds: string[],
+  period: string = '1Y'
+) {
+  const { user } = useAuth();
+  
+  // Create a fetcher for POST requests
+  const postFetcher = async ([url, body]: [string, unknown]): Promise<ApiResponse<{ results: unknown[] }>> => {
+    const { fetchJson } = await import('./fetch-client');
+    return fetchJson<ApiResponse<{ results: unknown[] }>>(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+  };
+  
+  // Generate a stable key based on inputs
+  const key = user && (portfolioIds.length > 0 || benchmarkIds.length > 0)
+    ? [`${API_BASE_URL}/v1/analytics/compare`, { portfolioIds, benchmarkIds, period }] as const
+    : null;
+  
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<{ results: unknown[] }>>(
+    key,
+    postFetcher,
+    {
+      ...swrConfig,
+      revalidateIfStale: true, // Revalidate for comparison data
+    }
+  );
+  
+  return {
+    comparisonData: data?.data || null,
     error,
     isLoading,
     mutate
