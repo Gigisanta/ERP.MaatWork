@@ -2,12 +2,10 @@
 import { useAuth } from '../auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Header, type NavItem, type User } from '@cactus/ui';
-import { usePageTitleContext } from './PageTitleContext';
 
 export default function NavigationNew() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const { pageTitle } = usePageTitleContext();
 
   const handleLogout = () => {
     logout();
@@ -27,6 +25,7 @@ export default function NavigationNew() {
 
   const navItems: NavItem[] = [
     { label: 'Inicio', href: '/', icon: 'Home' },
+    { label: '📚 Capacitaciones', href: '/capacitaciones' },
     { label: '📈 Finviz', href: 'https://finviz.com' },
     { label: '🏦 Productores Balanz', href: 'https://productores.balanz.com?forward=/home' },
     { label: '🛡️ Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F' },
@@ -46,7 +45,6 @@ export default function NavigationNew() {
       navItems={navItems}
       user={headerUser}
       onLogout={handleLogout}
-      pageTitle={pageTitle}
     />
   );
 }

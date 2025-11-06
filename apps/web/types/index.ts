@@ -164,3 +164,13 @@ export type {
   ContactsMetricsResponse
 } from './metrics';
 
+// Capacitaciones types
+export type {
+  Capacitacion,
+  CreateCapacitacionRequest,
+  UpdateCapacitacionRequest,
+  ImportCapacitacionesResponse,
+  ListCapacitacionesParams,
+  CapacitacionesListResponse
+} from './capacitaciones';
+

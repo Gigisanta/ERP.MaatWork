@@ -178,7 +178,7 @@ export default function PortfoliosPage() {
   // Obtener datos reales desde API
   useEffect(() => {
     const fetchData = async () => {
-      if (!token || loading) return;
+      if (!user || loading) return;
       
       setIsLoading(true);
       setError(null);
@@ -261,7 +261,7 @@ export default function PortfoliosPage() {
     };
 
     fetchData();
-  }, [token, loading, user?.role]);
+  }, [user, loading, user?.role]);
 
   const handleAssetSelect = (asset: InstrumentSearchResult) => {
     // Verificar si ya existe
@@ -318,7 +318,7 @@ export default function PortfoliosPage() {
       return;
     }
 
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para crear carteras', 'warning');
       return;
     }
@@ -479,7 +479,7 @@ export default function PortfoliosPage() {
       return;
     }
 
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para editar carteras', 'warning');
       return;
     }
@@ -515,7 +515,7 @@ export default function PortfoliosPage() {
   };
 
   const handleDeletePortfolio = (portfolioId: string) => {
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para eliminar carteras', 'warning');
       return;
     }
@@ -581,7 +581,7 @@ export default function PortfoliosPage() {
       return;
     }
 
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para editar benchmarks', 'warning');
       return;
     }
@@ -618,7 +618,7 @@ export default function PortfoliosPage() {
   };
 
   const handleDeleteBenchmark = (benchmarkId: string) => {
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para eliminar benchmarks', 'warning');
       return;
     }
@@ -665,7 +665,7 @@ export default function PortfoliosPage() {
       return;
     }
 
-    if (!token) {
+    if (!user) {
       showToast('Autenticación requerida', 'Debes iniciar sesión para crear benchmarks', 'warning');
       return;
     }

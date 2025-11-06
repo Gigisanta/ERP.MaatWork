@@ -107,16 +107,42 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     
     try {
       const resp = await uploadAumFile(file, broker);
-      setSuccess(true);
-      setFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      
+      // Verificar respuesta del servidor
+      if (resp?.success && resp.data) {
+        setSuccess(true);
+        setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        // Log información de procesamiento
+        if (resp.data.totals) {
+          console.log('[AUM Upload] Archivo procesado:', {
+            fileId: resp.data.fileId,
+            filename: resp.data.filename,
+            totals: resp.data.totals
+          });
+        }
+        
+        if (onUploadSuccess && resp.data.fileId) {
+          onUploadSuccess(resp.data.fileId);
+        }
+        setTimeout(() => setSuccess(false), 5000); // Mostrar éxito por más tiempo
+      } else {
+        // Respuesta sin éxito
+        const details = resp?.details 
+          ? (Array.isArray(resp.details) ? resp.details.join('; ') : resp.details)
+          : null;
+        const errorMsg = resp?.error || details || 'Error desconocido al procesar archivo';
+        setError(errorMsg);
+        console.error('[AUM Upload] Error en respuesta:', resp);
       }
-      if (onUploadSuccess && resp?.success && resp.data?.fileId) onUploadSuccess(resp.data.fileId);
-      setTimeout(() => setSuccess(false), 1500);
     } catch (e: unknown) {
       const apiErr = e as ApiErrorWithMessage;
-      setError(apiErr.userMessage || apiErr.message || 'Error al subir archivo');
+      const errorMsg = apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
+      setError(errorMsg);
+      console.error('[AUM Upload] Error al subir archivo:', e);
     } finally {
       setUploading(false);
     }
@@ -200,10 +226,19 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         )}
       </Button>
 
+      {/* Success display */}
+      {success && (
+        <div className="w-full bg-green-50 border border-green-200 rounded p-2">
+          <Text size="sm" className="text-green-700">
+            ✓ Archivo subido exitosamente. Revisa la consola del navegador para ver detalles del procesamiento.
+          </Text>
+        </div>
+      )}
+
       {/* Error display */}
       {error && (
-        <div className="w-full">
-          <Text size="sm" className="text-error">
+        <div className="w-full bg-red-50 border border-red-200 rounded p-2">
+          <Text size="sm" className="text-red-700">
             {error}
           </Text>
         </div>

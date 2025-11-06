@@ -944,11 +944,43 @@ export const aumImportRows = pgTable(
     matchStatus: text('match_status').notNull().default('unmatched'), // matched, ambiguous, unmatched
     isPreferred: boolean('is_preferred').notNull().default(true),
     conflictDetected: boolean('conflict_detected').notNull().default(false),
+    // Columnas financieras extendidas
+    aumDollars: numeric('aum_dollars', { precision: 18, scale: 6 }),
+    bolsaArg: numeric('bolsa_arg', { precision: 18, scale: 6 }),
+    fondosArg: numeric('fondos_arg', { precision: 18, scale: 6 }),
+    bolsaBci: numeric('bolsa_bci', { precision: 18, scale: 6 }),
+    pesos: numeric('pesos', { precision: 18, scale: 6 }),
+    mep: numeric('mep', { precision: 18, scale: 6 }),
+    cable: numeric('cable', { precision: 18, scale: 6 }),
+    cv7000: numeric('cv7000', { precision: 18, scale: 6 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     aumRowsAccountIdx: index('idx_aum_rows_account').on(table.accountNumber),
-    aumRowsFileIdx: index('idx_aum_rows_file').on(table.fileId)
+    aumRowsFileIdx: index('idx_aum_rows_file').on(table.fileId),
+    aumRowsFileStatusPreferredIdx: index('idx_aum_rows_file_status_preferred').on(table.fileId, table.matchStatus, table.isPreferred),
+    aumRowsCreatedAtIdx: index('idx_aum_rows_created_at').on(table.createdAt)
+  })
+);
+
+/**
+ * advisor_account_mapping
+ * Mapeo estático cuenta -> asesor, cargado una vez y aplicado a todas las importaciones futuras.
+ */
+export const advisorAccountMapping = pgTable(
+  'advisor_account_mapping',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    accountNumber: text('account_number').notNull(),
+    advisorName: text('advisor_name'), // Nombre del asesor del archivo
+    advisorRaw: text('advisor_raw'), // Normalizado para matching
+    matchedUserId: uuid('matched_user_id').references(() => users.id), // User ID si se matchea automáticamente
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    advisorAccountMappingUnique: uniqueIndex('advisor_account_mapping_account_unique').on(table.accountNumber),
+    advisorAccountMappingAccountIdx: index('idx_advisor_account_mapping_account').on(table.accountNumber)
   })
 );
 
@@ -1327,6 +1359,34 @@ export const metricDefinitions = pgTable(
   (table) => ({
     metricCodeIdx: index('idx_metric_code').on(table.code),
     metricCategoryIdx: index('idx_metric_category').on(table.category)
+  })
+);
+
+// ==========================================================
+// Capacitaciones
+// ==========================================================
+
+/**
+ * capacitaciones
+ * Biblioteca de capacitaciones con título, tema, link y fecha.
+ * Permite importación masiva desde CSV y gestión manual.
+ */
+export const capacitaciones = pgTable(
+  'capacitaciones',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    titulo: text('titulo').notNull(),
+    tema: text('tema').notNull(), // Podcast, Libros, TED, Administración, Carácter, Método, Role Play, Mktg Digital, Producto, Vida, Zurich
+    link: text('link').notNull(),
+    fecha: date('fecha'), // Fecha opcional en formato DATE
+    createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    capacitacionesTemaIdx: index('idx_capacitaciones_tema').on(table.tema),
+    capacitacionesFechaIdx: index('idx_capacitaciones_fecha').on(table.fecha),
+    capacitacionesCreatedByIdx: index('idx_capacitaciones_created_by').on(table.createdByUserId)
   })
 );
 

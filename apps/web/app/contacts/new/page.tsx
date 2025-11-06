@@ -156,9 +156,9 @@ export default function NewContactPage() {
         setSuccess(true);
         setFormData(initialFormData);
         
-        // Use replace instead of push to avoid adding to history
-        // This ensures the page updates correctly when navigating
-        router.replace('/contacts');
+        // Navigate with refresh parameter to force revalidation on contacts page
+        // This ensures the page updates immediately with the new contact
+        router.replace('/contacts?refresh=true');
       } else {
         throw new Error(response.error || 'Error al crear contacto');
       }

@@ -2,7 +2,6 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 import Button from './Button';
 import Icon, { type IconName } from '../Icon';
-import { Text } from '../../primitives/Text';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 export interface NavItem {
@@ -28,7 +27,6 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
   className?: string;
-  pageTitle?: string | null;
 }
 
 export const Header = React.forwardRef<HTMLElement, HeaderProps>(
@@ -40,7 +38,6 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
     onToggleSidebar,
     sidebarOpen = false,
     className,
-    pageTitle,
     ...props 
   }, ref) => {
     return (
@@ -73,16 +70,6 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
               <div className="flex items-center shrink-0">
                 {logo}
               </div>
-            )}
-
-            {/* Page Title */}
-            {pageTitle && (
-              <>
-                <div className="h-6 w-px bg-border shrink-0 hidden sm:block" />
-                <h3 className="text-2xl font-semibold text-text truncate hidden sm:block">
-                  {pageTitle}
-                </h3>
-              </>
             )}
           </div>
 
@@ -148,27 +135,20 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                 <DropdownMenu.Trigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center gap-2 px-2 py-1"
+                    className="flex items-center justify-center p-1"
                     aria-label={`User menu for ${user.name}`}
                   >
                     {user.avatar ? (
                       <img
                         src={user.avatar}
                         alt=""
-                        className="h-7 w-7 rounded-full"
+                        className="h-8 w-8 rounded-full"
                       />
                     ) : (
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-medium text-text-inverse">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-medium text-text-inverse">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div className="hidden lg:block text-left">
-                      <Text size="sm" weight="medium" className="text-text">
-                        {user.name}
-                      </Text>
-                      {/* Hide role to keep header compact */}
-                    </div>
-                    <Icon name="ChevronDown" size={16} className="text-text-secondary" />
                   </Button>
                 </DropdownMenu.Trigger>
 

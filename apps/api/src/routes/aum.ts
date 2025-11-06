@@ -3,7 +3,7 @@ import multer from 'multer';
 import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import type { Request } from 'express';
-import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership, advisorAliases } from '@cactus/db';
+import { db, aumImportFiles, aumImportRows, brokerAccounts, contacts, users, teams, teamMembership, advisorAliases, advisorAccountMapping } from '@cactus/db';
 import { eq, and, sql, inArray, type SQL } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { canAccessAumFile, getUserAccessScope } from '../auth/authorization';
@@ -77,6 +77,25 @@ const purgeQuerySchema = z.object({
 const purgeAllQuerySchema = z.object({
   broker: brokerSchema.optional()
 });
+
+const rowsAllQuerySchema = z.intersection(
+  paginationQuerySchema,
+  z.object({
+    limit: z.string()
+      .regex(/^\d+$/, 'Limit must be a number')
+      .transform(Number)
+      .pipe(z.number().int().min(1).max(200))
+      .optional()
+      .default('50'),
+    broker: brokerSchema.optional(),
+    status: z.enum(['matched', 'ambiguous', 'unmatched']).optional(),
+    fileId: uuidSchema.optional(),
+    preferredOnly: z.string()
+      .transform((v) => v === 'true')
+      .optional()
+      .default('true')
+  })
+);
 
 // Body schemas
 const matchRowBodySchema = z.object({
@@ -358,21 +377,37 @@ function isEmailLike(value: string | null | undefined): boolean {
   return /@/.test(value);
 }
 
-async function parseFileToRows(filePath: string, originalName: string): Promise<Array<{ accountNumber: string | null; holderName: string | null; advisorRaw: string | null; raw: Record<string, unknown>; }>> {
+async function parseFileToRows(filePath: string, originalName: string): Promise<Array<{ 
+  accountNumber: string | null; 
+  holderName: string | null; 
+  advisorRaw: string | null; 
+  aumDollars: number | null;
+  bolsaArg: number | null;
+  fondosArg: number | null;
+  bolsaBci: number | null;
+  pesos: number | null;
+  mep: number | null;
+  cable: number | null;
+  cv7000: number | null;
+  raw: Record<string, unknown>; 
+}>> {
   const ext = extname(originalName).toLowerCase();
   if (ext === '.xlsx' || ext === '.xls') {
     try {
-      // [Unverified] Requires 'xlsx' package at runtime
-      const XLSX = require('xlsx');
+      // AI_DECISION: Usar import dinámico en lugar de require para compatibilidad con ES modules
+      // Justificación: require no está disponible en ES modules, necesitamos usar import dinámico
+      // Impacto: Compatibilidad con módulos ES6/TypeScript moderno
+      const XLSX = await import('xlsx');
       
       // Leer archivo Excel con manejo de errores
       let wb;
       try {
-        wb = XLSX.readFile(filePath, { 
+        // XLSX es un módulo CommonJS, necesitamos acceder a default o usar la sintaxis correcta
+        const xlsxModule = 'default' in XLSX ? XLSX.default : XLSX;
+        wb = xlsxModule.readFile(filePath, { 
           cellDates: true,  // Convertir fechas a objetos Date
           cellNF: false,    // No convertir números formateados
-          cellText: false,  // Usar valores reales, no texto
-          defval: null      // Valor por defecto para celdas vacías
+          cellText: false   // Usar valores reales, no texto
         });
       } catch (readError) {
         throw new Error(`Error al leer archivo Excel: ${readError instanceof Error ? readError.message : String(readError)}`);
@@ -382,6 +417,9 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
       if (!wb.SheetNames || wb.SheetNames.length === 0) {
         throw new Error('El archivo Excel no contiene hojas');
       }
+      
+      // Logging de todas las hojas disponibles
+      console.log('[AUM Parser] Hojas disponibles en Excel:', wb.SheetNames);
       
       // AI_DECISION: Fix TypeScript implicit 'any' and untyped function call issues; increase strictness and maintain compatibility.
       // Justificación: sheet_to_json does not accept type arguments and 'r' was not typed; to enforce strict typing, first parse as unknown[], then map with explicit type.
@@ -396,11 +434,29 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
       // Convertir hoja a JSON con opciones robustas
       let json: Array<Record<string, unknown>>;
       try {
-        json = XLSX.utils.sheet_to_json(ws, { 
+        const xlsxModule = 'default' in XLSX ? XLSX.default : XLSX;
+        json = xlsxModule.utils.sheet_to_json(ws, { 
           defval: null,           // Valor por defecto para celdas vacías
           raw: true,              // Mantener valores originales (números, fechas, etc.)
-          dateNF: 'yyyy-mm-dd'    // Formato de fecha (si raw: false)
+          dateNF: 'yyyy-mm-dd',   // Formato de fecha (si raw: false)
+          blankrows: false          // No incluir filas completamente vacías
         }) as Array<Record<string, unknown>>;
+        
+        // AI_DECISION: Logging de diagnóstico para columnas detectadas - siempre activo
+        // Justificación: Es crítico para diagnosticar problemas de mapeo
+        // Impacto: Permite identificar problemas rápidamente
+        if (json.length > 0) {
+          const firstRow = json[0];
+          const detectedColumns = Object.keys(firstRow);
+          console.log('[AUM Parser] ==========================================');
+          console.log('[AUM Parser] Columnas detectadas en Excel:', detectedColumns);
+          console.log('[AUM Parser] Total de columnas:', detectedColumns.length);
+          console.log('[AUM Parser] Primera fila completa:', JSON.stringify(firstRow, null, 2));
+          if (json.length > 1) {
+            console.log('[AUM Parser] Segunda fila (para referencia):', JSON.stringify(json[1], null, 2));
+          }
+          console.log('[AUM Parser] ==========================================');
+        }
       } catch (parseError) {
         throw new Error(`Error al parsear hoja Excel: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
       }
@@ -411,11 +467,35 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
       }
       
       // Mapear filas con manejo de errores individual
-      const rows: Array<{ accountNumber: string | null; holderName: string | null; advisorRaw: string | null; raw: Record<string, unknown>; }> = [];
+      const rows: Array<{ 
+        accountNumber: string | null; 
+        holderName: string | null; 
+        advisorRaw: string | null;
+        aumDollars: number | null;
+        bolsaArg: number | null;
+        fondosArg: number | null;
+        bolsaBci: number | null;
+        pesos: number | null;
+        mep: number | null;
+        cable: number | null;
+        cv7000: number | null;
+        raw: Record<string, unknown>; 
+      }> = [];
+      let errorCount = 0;
       
       for (let i = 0; i < json.length; i++) {
         try {
           const r = json[i];
+          
+          // Verificar que la fila no esté completamente vacía
+          const hasData = r && typeof r === 'object' && Object.keys(r).length > 0 && 
+                         Object.values(r).some(v => v !== null && v !== undefined && v !== '');
+          
+          if (!hasData) {
+            // Saltar filas completamente vacías sin error
+            continue;
+          }
+          
           // AI_DECISION: Usar mapeo flexible de columnas para mayor tolerancia a variaciones
           // Justificación: Permite reconocer diferentes nombres de columnas sin romper el sistema
           // Impacto: Mayor flexibilidad para aceptar CSVs con diferentes estructuras
@@ -424,9 +504,18 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
             accountNumber: mapped.accountNumber ? normalizeAccountNumber(mapped.accountNumber) : null,
             holderName: mapped.holderName,
             advisorRaw: mapped.advisorRaw,
+            aumDollars: mapped.aumDollars,
+            bolsaArg: mapped.bolsaArg,
+            fondosArg: mapped.fondosArg,
+            bolsaBci: mapped.bolsaBci,
+            pesos: mapped.pesos,
+            mep: mapped.mep,
+            cable: mapped.cable,
+            cv7000: mapped.cv7000,
             raw: r
           });
         } catch (rowError) {
+          errorCount++;
           // Log error pero continuar con otras filas
           // Usar console.warn ya que no tenemos acceso a req.log aquí
           console.warn(`Error procesando fila ${i + 1} del Excel: ${rowError instanceof Error ? rowError.message : String(rowError)}`);
@@ -435,9 +524,27 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
             accountNumber: null,
             holderName: null,
             advisorRaw: null,
+            aumDollars: null,
+            bolsaArg: null,
+            fondosArg: null,
+            bolsaBci: null,
+            pesos: null,
+            mep: null,
+            cable: null,
+            cv7000: null,
             raw: json[i] || {}
           });
         }
+      }
+      
+      // Verificar que al menos haya una fila procesada (aunque tenga errores)
+      if (rows.length === 0) {
+        throw new Error('El archivo Excel no contiene filas válidas con datos procesables');
+      }
+      
+      // Si todas las filas tuvieron errores, advertir pero continuar
+      if (errorCount === json.length && rows.length > 0) {
+        console.warn(`Advertencia: Todas las filas del Excel tuvieron errores, pero se procesaron ${rows.length} filas con datos parciales`);
       }
       
       return rows;
@@ -449,39 +556,134 @@ async function parseFileToRows(filePath: string, originalName: string): Promise<
   // AI_DECISION: Usar csv-parse para parsing robusto en lugar de split manual
   // Justificación: Maneja correctamente comillas escapadas, campos con comas, multilinea, encoding
   // Impacto: Parsing más seguro y confiable, especialmente con CSVs complejos
-  const { parse } = await import('csv-parse/sync');
-  const content = await fs.readFile(filePath, 'utf-8');
-  
-  const records = parse(content, {
-    columns: true,           // Usar primera fila como headers
-    skip_empty_lines: true,  // Ignorar líneas vacías
-    trim: true,              // Trim whitespace
-    bom: true,               // Handle UTF-8 BOM
-    relax_quotes: true,      // Más tolerante con comillas
-    escape: '"',             // Comillas escapadas con ""
-    quote: '"',              // Comillas para campos
-    cast: false              // No convertir tipos automáticamente
-  }) as Array<Record<string, string>>;
-
-  return records.map((r) => {
-    // AI_DECISION: Usar mapeo flexible de columnas para mayor tolerancia a variaciones
-    // Justificación: Permite reconocer diferentes nombres de columnas sin romper el sistema
-    // Impacto: Mayor flexibilidad para aceptar CSVs con diferentes estructuras
-    const mapped = mapAumColumns(r);
-    return {
-      accountNumber: normalizeAccountNumber(mapped.accountNumber),
-      holderName: mapped.holderName,
-      advisorRaw: mapped.advisorRaw,
-      raw: r as Record<string, unknown>
-    };
-  });
+  try {
+    const { parse } = await import('csv-parse/sync');
+    
+    // Leer archivo CSV con manejo de errores
+    let content: string;
+    try {
+      content = await fs.readFile(filePath, 'utf-8');
+    } catch (readError) {
+      throw new Error(`Error al leer archivo CSV: ${readError instanceof Error ? readError.message : String(readError)}`);
+    }
+    
+    // Parsear CSV con manejo de errores
+    let records: Array<Record<string, string>>;
+    try {
+      records = parse(content, {
+        columns: true,           // Usar primera fila como headers
+        skip_empty_lines: true,  // Ignorar líneas vacías
+        trim: true,              // Trim whitespace
+        bom: true,               // Handle UTF-8 BOM
+        relax_quotes: true,      // Más tolerante con comillas
+        escape: '"',             // Comillas escapadas con ""
+        quote: '"',              // Comillas para campos
+        cast: false              // No convertir tipos automáticamente
+      }) as Array<Record<string, string>>;
+    } catch (parseError) {
+      throw new Error(`Error al parsear archivo CSV: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+    }
+    
+    // Verificar que se hayan parseado filas
+    if (!records || records.length === 0) {
+      throw new Error('El archivo CSV no contiene datos o está vacío');
+    }
+    
+    // Mapear filas con manejo de errores individual (similar a Excel)
+    const rows: Array<{ 
+      accountNumber: string | null; 
+      holderName: string | null; 
+      advisorRaw: string | null;
+      aumDollars: number | null;
+      bolsaArg: number | null;
+      fondosArg: number | null;
+      bolsaBci: number | null;
+      pesos: number | null;
+      mep: number | null;
+      cable: number | null;
+      cv7000: number | null;
+      raw: Record<string, unknown>; 
+    }> = [];
+    
+    for (let i = 0; i < records.length; i++) {
+      try {
+        const r = records[i];
+        // AI_DECISION: Usar mapeo flexible de columnas para mayor tolerancia a variaciones
+        // Justificación: Permite reconocer diferentes nombres de columnas sin romper el sistema
+        // Impacto: Mayor flexibilidad para aceptar CSVs con diferentes estructuras
+        const mapped = mapAumColumns(r);
+        rows.push({
+          accountNumber: mapped.accountNumber ? normalizeAccountNumber(mapped.accountNumber) : null,
+          holderName: mapped.holderName,
+          advisorRaw: mapped.advisorRaw,
+          aumDollars: mapped.aumDollars,
+          bolsaArg: mapped.bolsaArg,
+          fondosArg: mapped.fondosArg,
+          bolsaBci: mapped.bolsaBci,
+          pesos: mapped.pesos,
+          mep: mapped.mep,
+          cable: mapped.cable,
+          cv7000: mapped.cv7000,
+          raw: r as Record<string, unknown>
+        });
+      } catch (rowError) {
+        // Log error pero continuar con otras filas
+        // Usar console.warn ya que no tenemos acceso a req.log aquí
+        console.warn(`Error procesando fila ${i + 1} del CSV: ${rowError instanceof Error ? rowError.message : String(rowError)}`);
+        // Agregar fila con valores null pero preservar raw
+        rows.push({
+          accountNumber: null,
+          holderName: null,
+          advisorRaw: null,
+          aumDollars: null,
+          bolsaArg: null,
+          fondosArg: null,
+          bolsaBci: null,
+          pesos: null,
+          mep: null,
+          cable: null,
+          cv7000: null,
+          raw: records[i] || {}
+        });
+      }
+    }
+    
+    return rows;
+  } catch (error) {
+    throw new Error(`Error procesando archivo CSV "${originalName}": ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // POST /admin/aum/uploads
 router.post('/uploads', 
-  requireAuth, 
+  requireAuth,
+  requireRole(['admin']),
   validate({ query: uploadQuerySchema }),
-  upload.single('file'), 
+  (req, res, next) => {
+    // Middleware para manejar errores de multer antes de llegar al handler
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        req.log?.error?.({ err, filename: (req as any).file?.originalname }, 'Error en multer upload');
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ 
+              error: 'Error al procesar el archivo',
+              details: `Archivo demasiado grande. Tamaño máximo: ${AUM_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`
+            });
+          }
+          return res.status(400).json({ 
+            error: 'Error al procesar el archivo',
+            details: `Error de upload: ${err.message}`
+          });
+        }
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: err instanceof Error ? err.message : String(err)
+        });
+      }
+      next();
+    });
+  },
   async (req: Request, res) => {
   try {
     const userId = req.user?.id as string | undefined;
@@ -490,8 +692,16 @@ router.post('/uploads',
     }
     const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) {
+      req.log?.warn?.({ userId }, 'Upload request sin archivo');
       return res.status(400).json({ error: 'No file uploaded' });
     }
+    
+    req.log?.info?.({ 
+      filename: file.originalname, 
+      size: file.size, 
+      mimetype: file.mimetype,
+      userId 
+    }, 'Iniciando procesamiento de archivo AUM');
 
     const { broker = 'balanz' } = req.query; // Validated broker enum
 
@@ -542,18 +752,86 @@ router.post('/uploads',
     // Parse file to rows
     let parsedRows;
     try {
+      // Verificar que el archivo existe y es accesible
+      try {
+        await fs.access(file.path);
+        req.log?.info?.({ filePath: file.path, filename: file.originalname, fileSize: file.size }, 'Archivo verificado, iniciando parseo');
+      } catch (accessError) {
+        req.log?.error?.({ err: accessError, filePath: file.path }, 'Archivo no accesible');
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: 'El archivo subido no está disponible o fue eliminado'
+        });
+      }
+      
+      // Resetear flag de logging para nuevo archivo
+      (global as any).__aumMapperLogged = false;
+      
+      req.log?.info?.({ filePath: file.path, filename: file.originalname }, 'Iniciando parseo de archivo');
       parsedRows = await parseFileToRows(file.path, file.originalname);
+      req.log?.info?.({ rowCount: parsedRows?.length, filename: file.originalname }, 'Archivo parseado exitosamente');
+      
+      // Validar que se hayan parseado filas
+      if (!parsedRows || parsedRows.length === 0) {
+        req.log?.warn?.({ filename: file.originalname }, 'Archivo parseado pero sin filas válidas');
+        // Limpiar archivo temporal en caso de error
+        try {
+          await fs.unlink(file.path);
+        } catch {
+          // Ignorar error al eliminar archivo temporal
+        }
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: 'El archivo no contiene datos válidos o todas las filas están vacías'
+        });
+      }
+
+      // Logging de diagnóstico: verificar cuántas filas tienen accountNumber
+      const rowsWithAccount = parsedRows.filter(r => r.accountNumber).length;
+      req.log?.info?.({ 
+        totalRows: parsedRows.length,
+        rowsWithAccount,
+        filename: file.originalname 
+      }, 'Filas parseadas - diagnóstico');
+      
+      // Muestra de ejemplo de primera fila
+      if (parsedRows.length > 0) {
+        const firstRow = parsedRows[0];
+        req.log?.info?.({ 
+          firstRowSample: {
+            accountNumber: firstRow.accountNumber,
+            holderName: firstRow.holderName,
+            aumDollars: firstRow.aumDollars,
+            bolsaArg: firstRow.bolsaArg,
+            fondosArg: firstRow.fondosArg,
+            pesos: firstRow.pesos
+          }
+        }, 'Primera fila parseada - muestra');
+      }
     } catch (parseError) {
-      req.log?.error?.({ err: parseError, filename: file.originalname }, 'Error parsing AUM file');
+      const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
+      const errorStack = parseError instanceof Error ? parseError.stack : undefined;
+      req.log?.error?.({ 
+        err: parseError, 
+        filename: file.originalname,
+        errorMessage,
+        errorStack,
+        filePath: file.path,
+        fileSize: file.size,
+        mimetype: file.mimetype
+      }, 'Error parsing AUM file');
+      
       // Limpiar archivo temporal en caso de error
       try {
         await fs.unlink(file.path);
-      } catch {
-        // Ignorar error al eliminar archivo temporal
+        req.log?.debug?.({ filePath: file.path }, 'Archivo temporal eliminado después de error');
+      } catch (unlinkError) {
+        req.log?.warn?.({ err: unlinkError, filePath: file.path }, 'Error al eliminar archivo temporal');
       }
+      
       return res.status(400).json({ 
         error: 'Error al procesar el archivo',
-        details: parseError instanceof Error ? parseError.message : String(parseError)
+        details: errorMessage
       });
     }
 
@@ -572,6 +850,14 @@ router.post('/uploads',
       matchStatus: 'matched' | 'ambiguous' | 'unmatched';
       isPreferred: boolean;
       conflictDetected: boolean;
+      aumDollars: number | null;
+      bolsaArg: number | null;
+      fondosArg: number | null;
+      bolsaBci: number | null;
+      pesos: number | null;
+      mep: number | null;
+      cable: number | null;
+      cv7000: number | null;
     };
     
     const rowsToInsert: AumRowInsert[] = [];
@@ -611,6 +897,28 @@ router.post('/uploads',
       // Impacto: Evita duplicados por formatos distintos del mismo número
       if (r.accountNumber) {
         r.accountNumber = normalizeAccountNumber(r.accountNumber);
+      }
+
+      // AI_DECISION: Aplicar mapeo estático de asesores antes de procesar fila
+      // Justificación: El mapeo asesor-cuenta se carga una vez y prevalece sobre valores del archivo mensual
+      // Impacto: Asegura consistencia en asignación de asesores independientemente del archivo cargado
+      if (r.accountNumber) {
+        try {
+          const advisorMapping = await dbi.select().from(advisorAccountMapping)
+            .where(eq(advisorAccountMapping.accountNumber, r.accountNumber))
+            .limit(1);
+          if (advisorMapping.length > 0) {
+            const mapping = advisorMapping[0];
+            // Usar advisorRaw del mapeo (no del archivo mensual)
+            if (mapping.advisorRaw) {
+              r.advisorRaw = mapping.advisorRaw;
+            }
+            // Si el mapeo ya tiene matchedUserId, usarlo directamente
+            if (mapping.matchedUserId) {
+              matchedUserId = mapping.matchedUserId;
+            }
+          }
+        } catch {}
       }
 
       // Check for duplicates in existing import rows
@@ -717,41 +1025,163 @@ router.post('/uploads',
         matchedUserId,
         matchStatus,
         conflictDetected,
-        isPreferred: !conflictDetected // Only new non-conflicting rows are preferred by default
+        isPreferred: !conflictDetected, // Only new non-conflicting rows are preferred by default
+        aumDollars: r.aumDollars,
+        bolsaArg: r.bolsaArg,
+        fondosArg: r.fondosArg,
+        bolsaBci: r.bolsaBci,
+        pesos: r.pesos,
+        mep: r.mep,
+        cable: r.cable,
+        cv7000: r.cv7000
       });
     }
 
     // Insert rows in batches (raw SQL for robustness)
     const batchSize = AUM_LIMITS.BATCH_INSERT_SIZE;
-    for (let i = 0; i < rowsToInsert.length; i += batchSize) {
-      const chunk = rowsToInsert.slice(i, i + batchSize);
-      for (const r of chunk) {
-        // Desmarcar como preferidas las filas previas del mismo broker+account_number
-        if (r.accountNumber) {
-          await dbi.execute(sql`
-            UPDATE aum_import_rows ar
-            SET is_preferred = false
-            FROM aum_import_files af
-            WHERE ar.file_id = af.id
-              AND af.broker = ${broker}
-              AND ar.account_number = ${r.accountNumber}
-          `);
-        }
+    let insertErrors = 0;
+    
+    try {
+      for (let i = 0; i < rowsToInsert.length; i += batchSize) {
+        const chunk = rowsToInsert.slice(i, i + batchSize);
+        for (const r of chunk) {
+          try {
+            // AI_DECISION: Implementar UPSERT basado en accountNumber + fileId
+            // Justificación: Actualizar filas existentes del mismo archivo en lugar de crear duplicados
+            // Impacto: Evita duplicados y mantiene datos actualizados cuando se re-carga el mismo archivo
+            
+            // Buscar fila existente con mismo accountNumber + fileId
+            const existingRow = r.accountNumber 
+              ? await dbi.select().from(aumImportRows)
+                  .where(and(
+                    eq(aumImportRows.fileId, r.fileId),
+                    eq(aumImportRows.accountNumber, r.accountNumber)
+                  ))
+                  .limit(1)
+              : [];
+            
+            if (existingRow.length > 0) {
+              // Actualizar fila existente con todos los campos
+              // AI_DECISION: Convertir números a string para campos numeric de PostgreSQL
+              // Justificación: Drizzle numeric() espera strings para valores numéricos
+              // Impacto: Manejo correcto de tipos numéricos en PostgreSQL
+              await dbi.update(aumImportRows)
+                .set({
+                  raw: r.raw,
+                  holderName: r.holderName,
+                  advisorRaw: r.advisorRaw,
+                  matchedContactId: r.matchedContactId,
+                  matchedUserId: r.matchedUserId,
+                  matchStatus: r.matchStatus,
+                  isPreferred: r.isPreferred,
+                  conflictDetected: r.conflictDetected,
+                  aumDollars: r.aumDollars !== null ? String(r.aumDollars) : null,
+                  bolsaArg: r.bolsaArg !== null ? String(r.bolsaArg) : null,
+                  fondosArg: r.fondosArg !== null ? String(r.fondosArg) : null,
+                  bolsaBci: r.bolsaBci !== null ? String(r.bolsaBci) : null,
+                  pesos: r.pesos !== null ? String(r.pesos) : null,
+                  mep: r.mep !== null ? String(r.mep) : null,
+                  cable: r.cable !== null ? String(r.cable) : null,
+                  cv7000: r.cv7000 !== null ? String(r.cv7000) : null
+                })
+                .where(eq(aumImportRows.id, existingRow[0].id));
+            } else {
+              // Insertar nueva fila
+              // Desmarcar como preferidas las filas previas del mismo broker+account_number
+              if (r.accountNumber) {
+                await dbi.execute(sql`
+                  UPDATE aum_import_rows ar
+                  SET is_preferred = false
+                  FROM aum_import_files af
+                  WHERE ar.file_id = af.id
+                    AND af.broker = ${broker}
+                    AND ar.account_number = ${r.accountNumber}
+                `);
+              }
 
-        await dbi.execute(sql`
-          INSERT INTO aum_import_rows (file_id, raw, account_number, holder_name, advisor_raw, matched_contact_id, matched_user_id, match_status, is_preferred, conflict_detected)
-          VALUES (${r.fileId}, ${JSON.stringify(r.raw)}::jsonb, ${r.accountNumber}, ${r.holderName}, ${r.advisorRaw}, ${r.matchedContactId}, ${r.matchedUserId}, ${r.matchStatus}, ${r.isPreferred}, ${r.conflictDetected})
-        `);
+              await dbi.execute(sql`
+                INSERT INTO aum_import_rows (
+                  file_id, raw, account_number, holder_name, advisor_raw, 
+                  matched_contact_id, matched_user_id, match_status, is_preferred, conflict_detected,
+                  aum_dollars, bolsa_arg, fondos_arg, bolsa_bci, pesos, mep, cable, cv7000
+                )
+                VALUES (
+                  ${r.fileId}, ${JSON.stringify(r.raw)}::jsonb, ${r.accountNumber}, ${r.holderName}, ${r.advisorRaw}, 
+                  ${r.matchedContactId}, ${r.matchedUserId}, ${r.matchStatus}, ${r.isPreferred}, ${r.conflictDetected},
+                  ${r.aumDollars !== null ? String(r.aumDollars) : null}, 
+                  ${r.bolsaArg !== null ? String(r.bolsaArg) : null}, 
+                  ${r.fondosArg !== null ? String(r.fondosArg) : null}, 
+                  ${r.bolsaBci !== null ? String(r.bolsaBci) : null}, 
+                  ${r.pesos !== null ? String(r.pesos) : null}, 
+                  ${r.mep !== null ? String(r.mep) : null}, 
+                  ${r.cable !== null ? String(r.cable) : null}, 
+                  ${r.cv7000 !== null ? String(r.cv7000) : null}
+                )
+              `);
+            }
+          } catch (insertError) {
+            insertErrors++;
+            req.log?.error?.({ 
+              err: insertError, 
+              rowIndex: i,
+              accountNumber: r.accountNumber,
+              fileId: fileRow.id 
+            }, 'Error insertando/actualizando fila AUM');
+            // Continuar con otras filas aunque esta falle
+          }
+        }
       }
+      
+      // Si todas las inserciones fallaron, lanzar error
+      if (insertErrors === rowsToInsert.length) {
+        throw new Error(`No se pudieron insertar las filas del archivo. Todos los intentos de inserción fallaron.`);
+      }
+      
+      // Si algunas inserciones fallaron, advertir pero continuar
+      if (insertErrors > 0) {
+        req.log?.warn?.({ 
+          insertErrors, 
+          totalRows: rowsToInsert.length,
+          fileId: fileRow.id 
+        }, `Se insertaron ${rowsToInsert.length - insertErrors} de ${rowsToInsert.length} filas`);
+      }
+    } catch (insertBatchError) {
+      req.log?.error?.({ err: insertBatchError, fileId: fileRow.id }, 'Error crítico al insertar filas AUM');
+      // Limpiar archivo temporal en caso de error crítico
+      try {
+        await fs.unlink(file.path);
+      } catch {
+        // Ignorar error al eliminar archivo temporal
+      }
+      return res.status(500).json({ 
+        error: 'Error al guardar los datos del archivo',
+        details: insertBatchError instanceof Error ? insertBatchError.message : String(insertBatchError)
+      });
     }
 
+    // Calcular totales basados en filas insertadas exitosamente
+    const successfullyInserted = rowsToInsert.length - insertErrors;
+    
+    req.log?.info?.({ 
+      fileId: fileRow.id,
+      filename: file.originalname,
+      totals: {
+        parsed: successfullyInserted,
+        matched,
+        ambiguous,
+        conflicts: conflictsDetected,
+        unmatched: successfullyInserted - matched - ambiguous,
+        insertErrors
+      }
+    }, 'AUM upload completado - resumen');
+    
     // Update file totals
     await dbi.execute(sql`
       UPDATE aum_import_files
       SET status = 'parsed',
-          total_parsed = ${rowsToInsert.length},
+          total_parsed = ${successfullyInserted},
           total_matched = ${matched},
-          total_unmatched = ${rowsToInsert.length - matched}
+          total_unmatched = ${successfullyInserted - matched - ambiguous}
       WHERE id = ${fileRow.id}
     `);
 
@@ -760,12 +1190,15 @@ router.post('/uploads',
       fileId: fileRow.id,
       filename: file.originalname,
       totals: {
-        parsed: rowsToInsert.length,
+        parsed: successfullyInserted,
         matched,
         ambiguous,
         conflicts: conflictsDetected,
-        unmatched: rowsToInsert.length - matched - ambiguous
-      }
+        unmatched: successfullyInserted - matched - ambiguous
+      },
+      ...(insertErrors > 0 && { 
+        warnings: [`Se procesaron ${successfullyInserted} de ${rowsToInsert.length} filas. ${insertErrors} filas no pudieron ser insertadas.`] 
+      })
     });
   } catch (error) {
     req.log?.error?.({ err: error }, 'AUM upload failed');
@@ -971,17 +1404,12 @@ router.post('/uploads/:fileId/match',
 });
 
 // GET /admin/aum/rows/all - Get all imported rows with pagination and filters
-router.get('/rows/all', requireAuth, async (req, res) => {
+router.get('/rows/all', 
+  requireAuth,
+  validate({ query: rowsAllQuerySchema }),
+  async (req, res) => {
   try {
-    const limit = Math.min(
-      Number(req.query.limit || AUM_LIMITS.DEFAULT_PAGE_SIZE), 
-      AUM_LIMITS.MAX_ROWS_PER_PAGE
-    );
-    const offset = Number(req.query.offset || 0);
-    const broker = req.query.broker as string | undefined;
-    const status = req.query.status as string | undefined;
-    const fileId = req.query.fileId as string | undefined;
-    const preferredOnly = (req.query.preferredOnly ?? 'true') === 'true';
+    const { limit = 50, offset = 0, broker, status, fileId, preferredOnly = true } = req.query;
     
     const dbi = db();
     
@@ -1001,13 +1429,24 @@ router.get('/rows/all', requireAuth, async (req, res) => {
     }
     const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
     
-    // Get total count for pagination
-    const countResult = await dbi.execute(sql`
+    // AI_DECISION: Agregar timeout explícito (30s) para queries SQL
+    // Justificación: Previene queries colgadas que consumen recursos indefinidamente
+    // Impacto: Mejora robustez y permite recuperación de errores de timeout
+    const QUERY_TIMEOUT_MS = 30000; // 30 segundos
+    
+    // Get total count for pagination with timeout
+    const countPromise = dbi.execute(sql`
       SELECT COUNT(*) as total
       FROM aum_import_rows r
       INNER JOIN aum_import_files f ON r.file_id = f.id
       ${whereClause}
     `);
+    const countTimeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout: COUNT query exceeded 30s'));
+      }, QUERY_TIMEOUT_MS);
+    });
+    const countResult = await Promise.race([countPromise, countTimeoutPromise]);
     type CountResult = {
       total: string | number;
     };
@@ -1026,6 +1465,14 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       is_preferred: boolean;
       conflict_detected: boolean;
       row_created_at: Date;
+      aum_dollars: string | number | null;
+      bolsa_arg: string | number | null;
+      fondos_arg: string | number | null;
+      bolsa_bci: string | number | null;
+      pesos: string | number | null;
+      mep: string | number | null;
+      cable: string | number | null;
+      cv7000: string | number | null;
       broker: string;
       original_filename: string;
       file_status: string;
@@ -1035,9 +1482,21 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       contact_last_name: string | null;
       user_name: string | null;
       user_email: string | null;
+      suggested_user_id: string | null;
     };
     
-    const result = await dbi.execute(sql`
+    // Helper function to convert numeric string to number
+    const parseNumeric = (value: string | number | null | undefined): number | null => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'number') return value;
+      const parsed = parseFloat(String(value));
+      return isNaN(parsed) ? null : parsed;
+    };
+    
+    // AI_DECISION: Optimizar query de advisor aliases usando LEFT JOIN en lugar de query separada
+    // Justificación: Reduce número de queries y mejora performance al hacer todo en una sola query
+    // Impacto: Mejora tiempo de respuesta y reduce carga en la base de datos
+    const rowsPromise = dbi.execute(sql`
       SELECT 
         r.id,
         r.file_id,
@@ -1050,6 +1509,14 @@ router.get('/rows/all', requireAuth, async (req, res) => {
         r.is_preferred,
         r.conflict_detected,
         r.created_at as row_created_at,
+        r.aum_dollars,
+        r.bolsa_arg,
+        r.fondos_arg,
+        r.bolsa_bci,
+        r.pesos,
+        r.mep,
+        r.cable,
+        r.cv7000,
         f.id as file_id,
         f.broker,
         f.original_filename,
@@ -1059,36 +1526,31 @@ router.get('/rows/all', requireAuth, async (req, res) => {
         c.first_name as contact_first_name,
         c.last_name as contact_last_name,
         u.full_name as user_name,
-        u.email as user_email
+        u.email as user_email,
+        CASE 
+          WHEN r.matched_user_id IS NULL AND r.advisor_raw IS NOT NULL 
+          THEN aa.user_id 
+          ELSE NULL 
+        END as suggested_user_id
       FROM aum_import_rows r
       INNER JOIN aum_import_files f ON r.file_id = f.id
       LEFT JOIN contacts c ON r.matched_contact_id = c.id
       LEFT JOIN users u ON r.matched_user_id = u.id
+      LEFT JOIN advisor_aliases aa ON r.matched_user_id IS NULL 
+        AND r.advisor_raw IS NOT NULL 
+        AND LOWER(TRIM(r.advisor_raw)) = aa.alias_normalized
       ${whereClause}
       ORDER BY f.created_at DESC, r.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    // Build alias map for advisor suggestions when not yet matched
-    const rawRows = (result.rows || []) as AumRowResult[];
-    const advisorNames = Array.from(new Set(
-      rawRows
-        .filter((r) => !r.matched_user_id && r.advisor_raw)
-        .map((r) => normalizeAdvisorAlias(String(r.advisor_raw)))
-    ));
-    const aliasMap = new Map<string, string>();
-    if (advisorNames.length > 0) {
-      try {
-        const aliasRes = await dbi
-          .select({ aliasNormalized: advisorAliases.aliasNormalized, userId: advisorAliases.userId })
-          .from(advisorAliases)
-          .where(inArray(advisorAliases.aliasNormalized, advisorNames));
-        for (const a of aliasRes as Array<{ aliasNormalized: string; userId: string }>) {
-          aliasMap.set(a.aliasNormalized, a.userId);
-        }
-      } catch {}
-    }
+    const rowsTimeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Query timeout: SELECT rows query exceeded 30s'));
+      }, QUERY_TIMEOUT_MS);
+    });
+    const result = await Promise.race([rowsPromise, rowsTimeoutPromise]);
 
-    const rows = (rawRows as AumRowResult[]).map((r: AumRowResult) => ({
+    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
       id: r.id,
       fileId: r.file_id,
       accountNumber: r.account_number,
@@ -1096,13 +1558,19 @@ router.get('/rows/all', requireAuth, async (req, res) => {
       advisorRaw: r.advisor_raw,
       matchedContactId: r.matched_contact_id,
       matchedUserId: r.matched_user_id,
-      suggestedUserId: (!r.matched_user_id && r.advisor_raw)
-        ? aliasMap.get(normalizeAdvisorAlias(String(r.advisor_raw))) || null
-        : null,
+      suggestedUserId: r.suggested_user_id || null,
       matchStatus: r.match_status,
       isPreferred: r.is_preferred,
       conflictDetected: r.conflict_detected,
       rowCreatedAt: r.row_created_at,
+      aumDollars: parseNumeric(r.aum_dollars),
+      bolsaArg: parseNumeric(r.bolsa_arg),
+      fondosArg: parseNumeric(r.fondos_arg),
+      bolsaBci: parseNumeric(r.bolsa_bci),
+      pesos: parseNumeric(r.pesos),
+      mep: parseNumeric(r.mep),
+      cable: parseNumeric(r.cable),
+      cv7000: parseNumeric(r.cv7000),
       file: {
         id: r.file_id,
         broker: r.broker,
@@ -1130,7 +1598,7 @@ router.get('/rows/all', requireAuth, async (req, res) => {
         total,
         limit,
         offset,
-        hasMore: offset + rows.length < total
+        hasMore: Number(offset) + rows.length < total
       }
     });
   } catch (error) {
@@ -1359,5 +1827,169 @@ router.delete('/purge-all',
     return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
+
+// POST /admin/aum/advisor-mapping/upload
+// AI_DECISION: Endpoint para cargar mapeo estático asesor-cuenta una vez
+// Justificación: Permite cargar un archivo con mapeo cuenta->asesor que se aplica a todas las importaciones futuras
+// Impacto: Asegura consistencia en asignación de asesores independientemente del archivo mensual cargado
+router.post('/advisor-mapping/upload',
+  requireAuth,
+  requireRole(['admin']),
+  (req, res, next) => {
+    upload.single('file')(req, res, (err) => {
+      if (err) {
+        req.log?.error?.({ err, filename: (req as any).file?.originalname }, 'Error en multer upload');
+        if (err instanceof multer.MulterError) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ 
+              error: 'Error al procesar el archivo',
+              details: `Archivo demasiado grande. Tamaño máximo: ${AUM_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`
+            });
+          }
+          return res.status(400).json({ 
+            error: 'Error al procesar el archivo',
+            details: `Error de upload: ${err.message}`
+          });
+        }
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: err instanceof Error ? err.message : String(err)
+        });
+      }
+      next();
+    });
+  },
+  async (req: Request, res) => {
+    try {
+      const userId = req.user?.id as string | undefined;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const file = (req as any).file as Express.Multer.File | undefined;
+      if (!file) {
+        req.log?.warn?.({ userId }, 'Upload request sin archivo');
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      req.log?.info?.({ 
+        filename: file.originalname, 
+        size: file.size, 
+        mimetype: file.mimetype,
+        userId 
+      }, 'Iniciando procesamiento de mapeo asesor-cuenta');
+
+      const dbi = db();
+
+      // Parsear archivo usando la misma función de parseo
+      let parsedRows;
+      try {
+        await fs.access(file.path);
+        parsedRows = await parseFileToRows(file.path, file.originalname);
+      } catch (accessError) {
+        req.log?.error?.({ err: accessError, filePath: file.path }, 'Archivo no accesible');
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: 'El archivo subido no está disponible o fue eliminado'
+        });
+      }
+
+      if (!parsedRows || parsedRows.length === 0) {
+        try {
+          await fs.unlink(file.path);
+        } catch {}
+        return res.status(400).json({ 
+          error: 'Error al procesar el archivo',
+          details: 'El archivo no contiene datos válidos'
+        });
+      }
+
+      let inserted = 0;
+      let updated = 0;
+      let errors = 0;
+
+      // Procesar cada fila del archivo
+      for (const row of parsedRows) {
+        if (!row.accountNumber) {
+          errors++;
+          continue;
+        }
+
+        const normalizedAccountNumber = normalizeAccountNumber(row.accountNumber);
+        const advisorName = row.advisorRaw || null;
+        const advisorRaw = advisorName ? normalizeAdvisorAlias(advisorName) : null;
+
+        try {
+          // Buscar mapeo existente
+          const existing = await dbi.select().from(advisorAccountMapping)
+            .where(eq(advisorAccountMapping.accountNumber, normalizedAccountNumber))
+            .limit(1);
+
+          // Intentar match automático con advisorAliases si tenemos advisorRaw
+          let matchedUserId: string | null = null;
+          if (advisorRaw) {
+            try {
+              const advisorMatch = await dbi.select().from(advisorAliases)
+                .where(eq(advisorAliases.aliasNormalized, advisorRaw))
+                .limit(1);
+              if (advisorMatch.length > 0) {
+                matchedUserId = (advisorMatch[0] as any).userId as string;
+              }
+            } catch {}
+          }
+
+          if (existing.length > 0) {
+            // Actualizar mapeo existente
+            await dbi.update(advisorAccountMapping)
+              .set({
+                advisorName: advisorName,
+                advisorRaw: advisorRaw,
+                matchedUserId: matchedUserId,
+                updatedAt: new Date()
+              })
+              .where(eq(advisorAccountMapping.accountNumber, normalizedAccountNumber));
+            updated++;
+          } else {
+            // Insertar nuevo mapeo
+            await dbi.insert(advisorAccountMapping).values({
+              accountNumber: normalizedAccountNumber,
+              advisorName: advisorName,
+              advisorRaw: advisorRaw,
+              matchedUserId: matchedUserId
+            });
+            inserted++;
+          }
+        } catch (error) {
+          errors++;
+          req.log?.error?.({ 
+            err: error, 
+            accountNumber: normalizedAccountNumber,
+            filename: file.originalname 
+          }, 'Error procesando fila de mapeo asesor');
+        }
+      }
+
+      // Limpiar archivo temporal
+      try {
+        await fs.unlink(file.path);
+      } catch {}
+
+      return res.status(201).json({
+        ok: true,
+        message: 'Mapeo de asesores cargado exitosamente',
+        totals: {
+          inserted,
+          updated,
+          errors,
+          total: parsedRows.length
+        }
+      });
+    } catch (error) {
+      req.log?.error?.({ err: error }, 'AUM advisor mapping upload failed');
+      return res.status(500).json({ 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  }
+);
 
 export default router;

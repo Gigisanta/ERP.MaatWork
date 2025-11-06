@@ -147,3 +147,69 @@ export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> 
   return apiClient.post<void>(`/v1/admin/aum/uploads/${fileId}/commit`);
 }
 
+/**
+ * Subir archivo de mapeo asesor-cuenta
+ * 
+ * AI_DECISION: Implementar retry con exponential backoff para FormData uploads
+ * Justificación: FormData no tiene retry automático como apiClient, necesitamos manejarlo manualmente
+ * Impacto: Mejor resiliencia ante errores de red temporales
+ */
+export async function uploadAdvisorMapping(
+  file: File,
+  maxRetries: number = 3
+): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+  totals: {
+    inserted: number;
+    updated: number;
+    errors: number;
+    total: number;
+  };
+}>> {
+  let lastError: Error | unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const data = await apiClient.post<{
+        ok: boolean;
+        message: string;
+        totals: {
+          inserted: number;
+          updated: number;
+          errors: number;
+          total: number;
+        };
+      }>(
+        `/v1/admin/aum/advisor-mapping/upload`,
+        formData,
+        { retries: 0 } // manual retry handled here
+      );
+      return data;
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on client errors (4xx) except 408, 429
+      if (error && typeof error === 'object' && 'status' in error) {
+        const status = (error as any).status as number;
+        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          throw error;
+        }
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+    }
+  }
+
+  // All retries exhausted
+  throw lastError;
+}
+

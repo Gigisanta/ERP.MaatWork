@@ -90,8 +90,8 @@ export default function AdminUsersPage() {
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!user) return;
     
-    // Validar que el rol sea válido (excluir 'client')
-    if (newRole === 'client' || !['advisor', 'manager', 'admin'].includes(newRole)) {
+    // Validar que el rol sea válido
+    if (!['advisor', 'manager', 'admin'].includes(newRole)) {
       setError('Rol no válido');
       return;
     }
@@ -100,10 +100,10 @@ export default function AdminUsersPage() {
       setActionLoading(userId);
       setError(null);
       
-      await updateUserRole(userId, newRole as Exclude<UserRole, 'client'>);
+      await updateUserRole(userId, newRole as UserRole);
 
       setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, role: newRole as Exclude<UserRole, 'client'> } : user
+        user.id === userId ? { ...user, role: newRole as UserRole } : user
       ));
     } catch (err) {
       logger.error('Error updating user role', { err, userId, newRole });

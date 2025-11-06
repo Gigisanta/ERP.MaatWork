@@ -34,6 +34,7 @@ import brokerAccountsRouter from './routes/broker-accounts';
 import aumRouter from './routes/aum';
 import settingsAdvisorsRouter from './routes/settings-advisors';
 import metricsRouter from './routes/metrics';
+import capacitacionesRouter from './routes/capacitaciones';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -335,6 +336,7 @@ app.use('/broker-accounts', brokerAccountsRouter);
 app.use('/admin/aum', aumRouter);
 app.use('/admin/settings/advisors', settingsAdvisorsRouter);
 app.use('/metrics', metricsRouter);
+app.use('/capacitaciones', capacitacionesRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -356,6 +358,7 @@ app.use('/v1/broker-accounts', brokerAccountsRouter);
 app.use('/v1/admin/aum', aumRouter);
 app.use('/v1/admin/settings/advisors', settingsAdvisorsRouter);
 app.use('/v1/metrics', metricsRouter);
+app.use('/v1/capacitaciones', capacitacionesRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

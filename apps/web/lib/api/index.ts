@@ -66,7 +66,8 @@ export {
   getAumFileExportUrl,
   matchAumRow,
   getAumDuplicates,
-  commitAumFile
+  commitAumFile,
+  uploadAdvisorMapping
 } from './aum';
 
 // Contacts methods
@@ -160,6 +161,16 @@ export {
   getMonthlyGoals,
   saveMonthlyGoals
 } from './metrics';
+
+// Capacitaciones methods
+export {
+  getCapacitaciones,
+  getCapacitacionById,
+  createCapacitacion,
+  updateCapacitacion,
+  deleteCapacitacion,
+  importCapacitacionesCSV
+} from './capacitaciones';
 
 // Export types from teams
 export type {

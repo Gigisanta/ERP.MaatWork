@@ -63,6 +63,7 @@ export {
   aumImportRows,
   // Settings / mappings
   advisorAliases,
+  advisorAccountMapping,
   // Broker domain
   brokerAccounts,
   brokerBalances,
@@ -91,7 +92,9 @@ export {
   integrationAccounts,
   integrationJobs,
   integrationRuns,
-  integrationFiles
+  integrationFiles,
+  // Capacitaciones
+  capacitaciones
 } from './schema';
 
 /**

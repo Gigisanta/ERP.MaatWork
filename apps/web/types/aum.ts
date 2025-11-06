@@ -71,6 +71,15 @@ export interface AumRow extends BaseEntity {
   isPreferred: boolean;
   conflictDetected: boolean;
   rowCreatedAt: string;
+  // Columnas financieras extendidas
+  aumDollars: number | null;
+  bolsaArg: number | null;
+  fondosArg: number | null;
+  bolsaBci: number | null;
+  pesos: number | null;
+  mep: number | null;
+  cable: number | null;
+  cv7000: number | null;
   file?: AumFile;
   contact?: AumContactInfo | null;
   user?: AumUserInfo | null;

@@ -120,6 +120,27 @@ export default function ContactsPage() {
   // Combine all errors
   const combinedError = contactsError || stagesError || advisorsError || tagsError || error;
 
+  // AI_DECISION: Force revalidation when coming from contact creation
+  // Justificación: After creating a contact, we navigate with ?refresh=true to force immediate data update
+  // Impacto: Ensures UI shows new contact immediately without manual page reload
+  useEffect(() => {
+    const refreshParam = searchParams.get('refresh');
+    if (refreshParam === 'true') {
+      // Force immediate revalidation of contacts data
+      // mutate with revalidate: true forces revalidation even if revalidateIfStale is false
+      void mutateContacts(undefined, { revalidate: true });
+      
+      // Remove refresh parameter from URL to clean up the address bar
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('refresh');
+      const newUrl = newSearchParams.toString() 
+        ? `/contacts?${newSearchParams.toString()}`
+        : '/contacts';
+      router.replace(newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const handleDeleteContact = useCallback(async () => {
     if (!contactToDelete) return;
     

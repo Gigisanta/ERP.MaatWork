@@ -1,10 +1,11 @@
 // REGLA CURSOR: Mantener pattern consistente: validación con Zod, logging con req.log, error handling con try/catch
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users, teamMembershipRequests } from '@cactus/db';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { signUserToken } from '../auth/jwt';
 import { requireAuth } from '../auth/middlewares';
+import { ROLES, type UserRole } from '../auth/types';
 import bcrypt from 'bcrypt';
 
 const router = Router();
@@ -133,20 +134,25 @@ router.post('/login',
       });
     }
 
-    // Determinar si el identificador es email o username
-    let user = null as any;
-    if (trimmedIdentifier.includes('@')) {
-      const rows = await db().select().from(users).where(eq(users.email, trimmedIdentifier)).limit(1);
-      user = rows[0];
-    } else {
-      const usernameLower = trimmedIdentifier.toLowerCase();
-      const rows = await db()
-        .select()
-        .from(users)
-        .where(eq(users.usernameNormalized, usernameLower))
-        .limit(1);
-      user = rows[0];
-    }
+    // AI_DECISION: Optimizar búsqueda de usuario usando OR en una sola query
+    // Justificación: Más eficiente que dos queries separadas, permite búsqueda flexible
+    // Impacto: Mejor performance y código más limpio
+    // Buscar siempre por email o usernameNormalized para cubrir todos los casos
+    const usernameLower = trimmedIdentifier.toLowerCase();
+    
+    // Buscar por email o username en una sola query optimizada
+    const rows = await db()
+      .select()
+      .from(users)
+      .where(
+        or(
+          eq(users.email, trimmedIdentifier),
+          eq(users.usernameNormalized, usernameLower)
+        )!
+      )
+      .limit(1);
+    
+    const user = rows[0];
     if (!user) {
       const duration = Date.now() - startTime;
       req.log.warn({ 
@@ -194,10 +200,25 @@ router.post('/login',
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Validar que el role del usuario esté en ROLES permitidos
+    const userRole = user.role as UserRole;
+    if (!ROLES.includes(userRole)) {
+      const duration = Date.now() - startTime;
+      req.log.error({ 
+        identifier: trimmedIdentifier,
+        userId: user.id,
+        invalidRole: user.role,
+        duration,
+        action: 'login_failed',
+        reason: 'invalid_role'
+      }, 'Login failed - invalid user role');
+      return res.status(500).json({ message: 'Invalid user role configuration' });
+    }
+
     const token = await signUserToken({
       id: user.id,
       email: user.email,
-      role: user.role as any,
+      role: userRole,
       fullName: user.fullName
     }, rememberMe ? '30d' : '1d');
 

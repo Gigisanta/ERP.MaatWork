@@ -6,8 +6,7 @@ import React from 'react';
 import { logger } from '../../lib/logger';
 import { fetchWithLogging, postJson, fetchJson } from '../../lib/fetch-client';
 import { config } from '../../lib/config';
-
-type UserRole = 'advisor' | 'manager' | 'admin';
+import type { UserRole } from '@/types';
 
 export interface AuthUser {
   id: string;

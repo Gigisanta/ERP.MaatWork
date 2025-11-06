@@ -36,6 +36,27 @@
       "when": 1762383507566,
       "tag": "0004_real_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762388288695,
+      "tag": "0005_furry_may_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762388882910,
+      "tag": "0006_exotic_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1762389993347,
+      "tag": "0007_pretty_whizzer",
+      "breakpoints": true
     }
   ]
 }

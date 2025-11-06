@@ -6,8 +6,11 @@ import type { TimestampedEntity } from './common';
 
 /**
  * Rol de usuario
+ * AI_DECISION: Eliminar 'client' de UserRole - solo se usa en autenticación para advisor/manager/admin
+ * Justificación: 'client' es un tipo de contacto, no un rol de usuario del sistema
+ * Impacto: Tipos más consistentes entre frontend y backend
  */
-export type UserRole = 'client' | 'advisor' | 'manager' | 'admin';
+export type UserRole = 'advisor' | 'manager' | 'admin';
 
 /**
  * Usuario base - extiende TimestampedEntity
@@ -21,10 +24,10 @@ export interface User extends TimestampedEntity {
 
 /**
  * Variante de User para respuestas de API
- * Excluye 'client' del rol y usa isActive en lugar de active
+ * Usa isActive en lugar de active
  */
 export interface UserApiResponse extends Omit<User, 'role' | 'active' | 'createdAt' | 'updatedAt'> {
-  role: Exclude<UserRole, 'client'>; // API no devuelve client
+  role: UserRole; // advisor, manager, admin
   isActive: boolean; // Usa isActive en lugar de active
 }
 

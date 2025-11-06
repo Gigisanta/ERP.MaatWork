@@ -266,6 +266,53 @@ export function usePortfolioComparison(
   };
 }
 
+// Hook for AUM rows with pagination and filters
+export function useAumRows(params?: {
+  limit?: number;
+  offset?: number;
+  broker?: string;
+  status?: string;
+  fileId?: string;
+  preferredOnly?: boolean;
+}) {
+  const { user } = useAuth();
+  
+  // Build URL with query params
+  const queryParams = new URLSearchParams();
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.broker) queryParams.append('broker', params.broker);
+  if (params?.status) queryParams.append('status', params.status);
+  if (params?.fileId) queryParams.append('fileId', params.fileId);
+  const preferredOnly = params?.preferredOnly ?? true;
+  queryParams.append('preferredOnly', String(preferredOnly));
+  
+  const url = `${API_BASE_URL}/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const swrKey = user ? url : null;
+  
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<{
+    rows: unknown[];
+    pagination: {
+      total: number;
+      limit: number;
+      offset: number;
+      hasMore: boolean;
+    };
+  }>>(
+    swrKey,
+    fetcher,
+    swrConfig
+  );
+  
+  return {
+    rows: (data?.data?.rows || []) as unknown[],
+    pagination: data?.data?.pagination || { total: 0, limit: 50, offset: 0, hasMore: false },
+    error,
+    isLoading,
+    mutate
+  };
+}
+
 // AI_DECISION: Add hook for invalidating contacts cache globally
 // Justificación: After creating/updating/deleting contacts, need to invalidate all related cache keys
 // Impacto: Ensures UI updates immediately without requiring page reload
@@ -291,10 +338,10 @@ export function useInvalidateContactsCache() {
       );
     };
     
-    // Invalidate and force immediate revalidation of all matching keys
-    // The mutate function with matcher will find all matching keys and revalidate them
-    // We wait for the revalidation to complete before proceeding
-    const revalidationPromise = mutate(matcher, undefined, { revalidate: true });
+    // Invalidate and force immediate revalidation of all matching keys using matcher
+    // mutate with matcher will find all matching keys and revalidate them
+    // revalidate: true forces immediate revalidation even if revalidateIfStale is false
+    await mutate(matcher, undefined, { revalidate: true });
     
     // Also directly invalidate the most common keys to ensure they're cleared
     // This is a fallback in case the matcher misses any keys
@@ -304,9 +351,90 @@ export function useInvalidateContactsCache() {
     ];
     
     // Wait for all revalidations to complete
-    await Promise.all([
-      revalidationPromise,
-      ...commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
-    ]);
+    await Promise.all(
+      commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
+    );
+  };
+}
+
+// Hook for capacitaciones list with pagination and filters
+export function useCapacitaciones(params?: {
+  tema?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const { user } = useAuth();
+  
+  // Build URL with query params
+  const queryParams = new URLSearchParams();
+  if (params?.tema) queryParams.append('tema', params.tema);
+  if (params?.search) queryParams.append('search', params.search);
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+  if (params?.offset) queryParams.append('offset', String(params.offset));
+  
+  const url = `${API_BASE_URL}/v1/capacitaciones${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const swrKey = user ? url : null;
+  
+  // El backend retorna: { success: true, data: [...], pagination: {...} }
+  // El api-client retorna la respuesta tal cual: { success: true, data: [...], pagination: {...} }
+  const { data: response, error, isLoading, mutate } = useSWR<
+    ApiResponse<unknown[]> & {
+      pagination?: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+      };
+    }
+  >(
+    swrKey,
+    fetcher,
+    swrConfig
+  );
+  
+  // El backend retorna data (array) y pagination al mismo nivel que success
+  return {
+    capacitaciones: (response?.data as unknown[]) || [],
+    pagination: response?.pagination || {
+      total: 0,
+      limit: 50,
+      offset: 0,
+      hasMore: false
+    },
+    error,
+    isLoading,
+    mutate
+  };
+}
+
+// Hook for invalidating capacitaciones cache globally
+export function useInvalidateCapacitacionesCache() {
+  const { mutate } = useSWRConfig();
+  
+  return async () => {
+    // Matcher function to identify all capacitaciones-related cache keys
+    const matcher = (key: string | readonly unknown[]) => {
+      const keyStr = typeof key === 'string' 
+        ? key 
+        : (Array.isArray(key) && typeof key[0] === 'string' ? key[0] : '');
+      
+      return (
+        keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`) ||
+        keyStr.includes(`${API_BASE_URL}/capacitaciones`)
+      );
+    };
+    
+    // Invalidate and force immediate revalidation of all matching keys
+    await mutate(matcher, undefined, { revalidate: true });
+    
+    // Also directly invalidate the most common keys
+    const commonKeys = [
+      `${API_BASE_URL}/v1/capacitaciones`
+    ];
+    
+    await Promise.all(
+      commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
+    );
   };
 }
