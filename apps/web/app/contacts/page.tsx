@@ -42,10 +42,12 @@ import {
   type Column,
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { useViewport } from '../(shared)/useViewport';
 
 // Types Contact y Tag importados desde @/types
 
 export default function ContactsPage() {
+  const { isMd } = useViewport();
   const { user, loading } = useRequireAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -663,14 +665,64 @@ export default function ContactsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <DataTable
-                data={Array.isArray(filteredContacts) ? filteredContacts : []}
-                columns={columns}
-                keyField="id"
-                emptyMessage="No se encontraron contactos. Intenta ajustar los filtros o crea tu primer contacto."
-                virtualized={true}
-                virtualizedHeight={600}
-              />
+              {isMd ? (
+                <div className="space-y-2">
+                  {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
+                    filteredContacts.map((contact) => (
+                      <div key={contact.id} className="p-3 rounded-md border border-gray-200 bg-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Text weight="medium" className="text-sm">{contact.fullName}</Text>
+                            {contact.email && (
+                              <Text size="sm" color="secondary" className="text-xs mt-0.5">{contact.email}</Text>
+                            )}
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => router.push(`/contacts/${contact.id}`)}>
+                            <Icon name="chevron-right" size={16} />
+                          </Button>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between">
+                          <InlineStageSelect
+                            contact={contact}
+                            pipelineStages={Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []}
+                            isSaving={savingContactId === contact.id}
+                            onStageChange={handleStageChange}
+                            onMutate={mutateContacts}
+                            onError={(error: Error) => setToast({ show: true, title: 'Error al avanzar etapa', description: error.message, variant: 'error' })}
+                          />
+                          <InlineTagsEditor
+                            contact={contact}
+                            allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+                            isSaving={savingContactId === contact.id}
+                            onTagsChange={handleTagsChange}
+                            onManageTagsClick={() => setShowManageTagsModal(true)}
+                          />
+                        </div>
+                        <div className="mt-2">
+                          <InlineTextInput
+                            contact={contact}
+                            field="nextStep"
+                            placeholder="Agregar próximo paso..."
+                            isSaving={savingContactId === contact.id}
+                            onSave={handleTextInputSave}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyState title="Sin resultados" description="No se encontraron contactos. Intenta ajustar los filtros o crea tu primer contacto." />
+                  )}
+                </div>
+              ) : (
+                <DataTable
+                  data={Array.isArray(filteredContacts) ? filteredContacts : []}
+                  columns={columns}
+                  keyField="id"
+                  emptyMessage="No se encontraron contactos. Intenta ajustar los filtros o crea tu primer contacto."
+                  virtualized={true}
+                  virtualizedHeight={600}
+                />
+              )}
             </CardContent>
           </Card>
         ) : (

@@ -1,9 +1,11 @@
 import React from 'react';
 import { cn } from '../utils/cn';
+import { type ResponsiveProp } from '../tokens/breakpoints';
+import { buildResponsiveClasses } from '../utils/responsive';
 
 export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
-  cols?: 1 | 2 | 3 | 4 | 5 | 6 | 12;
-  gap?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  cols?: ResponsiveProp<1 | 2 | 3 | 4 | 5 | 6 | 12>;
+  gap?: ResponsiveProp<'xs' | 'sm' | 'md' | 'lg' | 'xl'>;
   children?: React.ReactNode;
 }
 
@@ -24,22 +26,24 @@ export function Grid({
     <div 
       className={cn(
         'grid',
-        {
-          'grid-cols-1': cols === 1,
-          'grid-cols-2': cols === 2,
-          'grid-cols-3': cols === 3,
-          'grid-cols-4': cols === 4,
-          'grid-cols-5': cols === 5,
-          'grid-cols-6': cols === 6,
-          'grid-cols-12': cols === 12,
-        },
-        {
-          'gap-1': gap === 'xs',
-          'gap-2': gap === 'sm',
-          'gap-4': gap === 'md',
-          'gap-6': gap === 'lg',
-          'gap-8': gap === 'xl',
-        },
+        buildResponsiveClasses(cols, (c) =>
+          c === 1
+            ? 'grid-cols-1'
+            : c === 2
+            ? 'grid-cols-2'
+            : c === 3
+            ? 'grid-cols-3'
+            : c === 4
+            ? 'grid-cols-4'
+            : c === 5
+            ? 'grid-cols-5'
+            : c === 6
+            ? 'grid-cols-6'
+            : 'grid-cols-12'
+        ),
+        buildResponsiveClasses(gap, (g) =>
+          g === 'xs' ? 'gap-1' : g === 'sm' ? 'gap-2' : g === 'md' ? 'gap-4' : g === 'lg' ? 'gap-6' : 'gap-8'
+        ),
         className
       )} 
       {...props}
