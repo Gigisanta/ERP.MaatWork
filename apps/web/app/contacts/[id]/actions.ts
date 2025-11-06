@@ -12,9 +12,9 @@ import { apiCallWithToken } from '@/lib/api-server';
  * 
  * @param contactId - The contact ID to update
  * @param field - The field name to update
- * @param value - The new value for the field
+ * @param value - The new value for the field (string, string[], or other types)
  */
-export async function updateContactField(contactId: string, field: string, value: string) {
+export async function updateContactField(contactId: string, field: string, value: string | string[] | number | null) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
 

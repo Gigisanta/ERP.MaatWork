@@ -47,6 +47,7 @@ const contactDetailQuerySchema = z.object({
 const historyQuerySchema = paginationQuerySchema;
 
 // Body schemas
+const optionalLongText = z.string().max(2000).trim().optional().nullable();
 const createContactSchema = z.object({
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
@@ -66,6 +67,16 @@ const createContactSchema = z.object({
   assignedTeamId: z.string().uuid().optional().nullable(),
   nextStep: z.string().max(500).optional().nullable(),
   notes: z.string().optional().nullable(),
+  queSeDedica: optionalLongText,
+  familia: optionalLongText,
+  expectativas: optionalLongText,
+  objetivos: optionalLongText,
+  requisitosPlanificacion: optionalLongText,
+  prioridades: z.array(z.string().max(500)).optional().default([]),
+  preocupaciones: z.array(z.string().max(500)).optional().default([]),
+  ingresos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
+  gastos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
+  excedente: z.union([z.number(), z.string().regex(/^-?\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
   customFields: z.record(z.any()).optional()
 });
 

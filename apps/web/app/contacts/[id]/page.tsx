@@ -34,6 +34,8 @@ import PortfolioSection from './PortfolioSection';
 import TasksSection from './TasksSection';
 import NotesSection from './NotesSection';
 import PageTitleSetter from './PageTitleSetter';
+import PrioritiesConcernsSection from './PrioritiesConcernsSection';
+import FinancialSummarySection from './FinancialSummarySection';
 
 // Server-side data fetching
 // AI_DECISION: Usar helper apiCallWithToken para Server Components
@@ -157,73 +159,151 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         {/* Contact Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Contacto</CardTitle>
-            </CardHeader>
+            <CardTitle>Ficha del Contacto</CardTitle>
+          </CardHeader>
           <CardContent>
+            {/* Grilla moderna 2 columnas: combina personales y comerciales para mejor uso del espacio */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                <Heading size="sm" className="mb-4">Datos Personales</Heading>
-                <Stack direction="column" gap="md">
-                    <ContactEditableField 
-                      label="Email" 
-                      value={contact.email} 
-                      field="email"
-                      contactId={contact.id}
-                      type="email"
-                    />
-                    <ContactEditableField 
-                      label="Teléfono" 
-                      value={contact.phone} 
-                      field="phone"
-                      contactId={contact.id}
-                      type="tel"
+              {/* Columna izquierda */}
+              <div className="space-y-4">
+                <Heading size="sm" className="mb-1">Datos Personales</Heading>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ContactEditableField 
+                    label="Email" 
+                    value={contact.email} 
+                    field="email"
+                    contactId={contact.id}
+                    type="email"
+                  />
+                  <ContactEditableField 
+                    label="Teléfono" 
+                    value={contact.phone} 
+                    field="phone"
+                    contactId={contact.id}
+                    type="tel"
                   />
                   <ContactEditableField
                     label="País"
                     value={contact.country}
                     field="country"
                     contactId={contact.id}
-                    />
-                    <ContactEditableField 
-                      label="DNI" 
-                      value={contact.dni} 
-                      field="dni"
-                      contactId={contact.id}
-                    />
-                  </Stack>
+                  />
+                  <ContactEditableField 
+                    label="DNI" 
+                    value={contact.dni} 
+                    field="dni"
+                    contactId={contact.id}
+                  />
+                </div>
               </div>
-              <div>
-                <Heading size="sm" className="mb-4">Información Comercial</Heading>
-                <Stack direction="column" gap="md">
-                    <ContactEditableField 
-                      label="Fuente" 
-                      value={contact.source} 
-                      field="source"
-                      contactId={contact.id}
-                      placeholder="Ej: Referido, Web, Evento..."
-                    />
-                    <ContactEditableField 
-                      label="Perfil de Riesgo" 
-                      value={contact.riskProfile} 
-                      field="riskProfile"
-                      contactId={contact.id}
-                      placeholder="Ej: Conservador, Moderado, Agresivo..."
-                    />
+
+              {/* Columna derecha */}
+              <div className="space-y-4">
+                <Heading size="sm" className="mb-1">Información Comercial</Heading>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ContactEditableField 
+                    label="Fuente" 
+                    value={contact.source} 
+                    field="source"
+                    contactId={contact.id}
+                    placeholder="Ej: Referido, Web, Evento..."
+                  />
+                  <ContactEditableField 
+                    label="Perfil de Riesgo" 
+                    value={contact.riskProfile} 
+                    field="riskProfile"
+                    contactId={contact.id}
+                    placeholder="Ej: Conservador, Moderado, Agresivo..."
+                  />
                   {assignedAdvisor && (
-                    <div>
+                    <div className="sm:col-span-2">
                       <Text size="sm" weight="medium" color="secondary">Asesor Asignado</Text>
                       <Text className="mt-1">{assignedAdvisor.fullName}</Text>
                     </div>
                   )}
-                  <div>
+                  <div className="sm:col-span-2">
                     <Text size="sm" weight="medium" color="secondary">Próximo Paso</Text>
                     <Text className="mt-1">{contact.nextStep || 'Sin especificar'}</Text>
                   </div>
-                </Stack>
-                        </div>
-                    </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Información Adicional */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Información</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Disposición en grilla para aprovechar mejor el espacio */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ContactEditableField 
+                label="A qué se dedica" 
+                value={contact.queSeDedica} 
+                field="queSeDedica"
+                contactId={contact.id}
+                type="textarea"
+                maxLength={2000}
+                placeholder="Describe a qué se dedica el contacto..."
+              />
+              <ContactEditableField 
+                label="Familia" 
+                value={contact.familia} 
+                field="familia"
+                contactId={contact.id}
+                type="textarea"
+                maxLength={2000}
+                placeholder="Información sobre la familia del contacto..."
+              />
+              <ContactEditableField 
+                label="Expectativas" 
+                value={contact.expectativas} 
+                field="expectativas"
+                contactId={contact.id}
+                type="textarea"
+                maxLength={2000}
+                placeholder="Expectativas del contacto..."
+              />
+              <ContactEditableField 
+                label="Objetivos" 
+                value={contact.objetivos} 
+                field="objetivos"
+                contactId={contact.id}
+                type="textarea"
+                maxLength={2000}
+                placeholder="Objetivos del contacto..."
+              />
+              <div className="md:col-span-2">
+                <ContactEditableField 
+                  label="¿Qué tendría que tener tu planificación para que avancemos?" 
+                  value={contact.requisitosPlanificacion} 
+                  field="requisitosPlanificacion"
+                  contactId={contact.id}
+                  type="textarea"
+                  maxLength={2000}
+                  placeholder="Requisitos o condiciones para avanzar con la planificación..."
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resumen Financiero */}
+        <FinancialSummarySection
+          contactId={contact.id}
+          ingresos={contact.ingresos}
+          gastos={contact.gastos}
+          excedente={contact.excedente}
+        />
+
+        {/* Prioridades y Preocupaciones */}
+        <PrioritiesConcernsSection
+          contactId={contact.id}
+          prioridades={contact.prioridades || []}
+          preocupaciones={contact.preocupaciones || []}
+        />
 
         {/* Client Islands for Interactive Sections */}
         <BrokerAccountsSection 

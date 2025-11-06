@@ -35,6 +35,11 @@ interface FormData {
   source: string;
   riskProfile: 'low' | 'mid' | 'high' | '';
   notes: string;
+  queSeDedica: string;
+  familia: string;
+  expectativas: string;
+  objetivos: string;
+  requisitosPlanificacion: string;
 }
 
 const initialFormData: FormData = {
@@ -46,7 +51,12 @@ const initialFormData: FormData = {
   pipelineStageId: '',
   source: '',
   riskProfile: '',
-  notes: ''
+  notes: '',
+  queSeDedica: '',
+  familia: '',
+  expectativas: '',
+  objetivos: '',
+  requisitosPlanificacion: ''
 };
 
 export default function NewContactPage() {
@@ -118,7 +128,12 @@ export default function NewContactPage() {
         pipelineStageId: formData.pipelineStageId || null,
         source: formData.source.trim() || null,
         riskProfile: formData.riskProfile || null,
-        notes: formData.notes.trim() || null
+        notes: formData.notes.trim() || null,
+        queSeDedica: formData.queSeDedica.trim() || null,
+        familia: formData.familia.trim() || null,
+        expectativas: formData.expectativas.trim() || null,
+        objetivos: formData.objetivos.trim() || null,
+        requisitosPlanificacion: formData.requisitosPlanificacion.trim() || null
       });
       
       logger.info('Contact creation API response received', {
@@ -372,8 +387,98 @@ export default function NewContactPage() {
                         placeholder="Información adicional sobre el contacto..."
                         disabled={isLoading || submitLoading}
                         rows={4}
+                        maxLength={2000}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                       />
+                    </div>
+                  </div>
+
+                  {/* Sección: Información Personal Adicional */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="mb-4">
+                      <Heading level={4} className="text-lg font-semibold text-gray-900 mb-2">
+                        Información Personal Adicional
+                      </Heading>
+                      <Text size="sm" color="secondary" className="text-gray-600">
+                        Información detallada sobre el contacto
+                      </Text>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          A qué se dedica
+                        </label>
+                        <textarea
+                          value={formData.queSeDedica}
+                          onChange={(e) => handleInputChange('queSeDedica', e.target.value)}
+                          placeholder="Describe a qué se dedica el contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Familia
+                        </label>
+                        <textarea
+                          value={formData.familia}
+                          onChange={(e) => handleInputChange('familia', e.target.value)}
+                          placeholder="Información sobre la familia del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Expectativas
+                        </label>
+                        <textarea
+                          value={formData.expectativas}
+                          onChange={(e) => handleInputChange('expectativas', e.target.value)}
+                          placeholder="Expectativas del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Objetivos
+                        </label>
+                        <textarea
+                          value={formData.objetivos}
+                          onChange={(e) => handleInputChange('objetivos', e.target.value)}
+                          placeholder="Objetivos del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ¿Qué tendría que tener tu planificación para que avancemos?
+                        </label>
+                        <textarea
+                          value={formData.requisitosPlanificacion}
+                          onChange={(e) => handleInputChange('requisitosPlanificacion', e.target.value)}
+                          placeholder="Requisitos o condiciones para avanzar con la planificación..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>

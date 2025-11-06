@@ -37,6 +37,16 @@ export interface Contact extends TimestampedEntity {
   riskProfile?: string | null;
   nextStep?: string | null;
   notes?: string | null;
+  queSeDedica?: string | null;
+  familia?: string | null;
+  expectativas?: string | null;
+  objetivos?: string | null;
+  requisitosPlanificacion?: string | null;
+  prioridades?: string[];
+  preocupaciones?: string[];
+  ingresos?: number | null;
+  gastos?: number | null;
+  excedente?: number | null;
   customFields?: Record<string, ContactFieldValue>;
   contactLastTouchAt?: string | null;
   pipelineStageUpdatedAt?: string | null;
@@ -66,7 +76,17 @@ export type ContactFieldName =
   | 'assignedAdvisorId'
   | 'assignedTeamId'
   | 'nextStep'
-  | 'notes';
+  | 'notes'
+  | 'queSeDedica'
+  | 'familia'
+  | 'expectativas'
+  | 'objetivos'
+  | 'requisitosPlanificacion'
+  | 'prioridades'
+  | 'preocupaciones'
+  | 'ingresos'
+  | 'gastos'
+  | 'excedente';
 
 /**
  * Campo de actualización de contacto
@@ -87,6 +107,16 @@ export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastN
   source?: string | null;
   riskProfile?: string | null;
   notes?: string | null;
+  queSeDedica?: string | null;
+  familia?: string | null;
+  expectativas?: string | null;
+  objetivos?: string | null;
+  requisitosPlanificacion?: string | null;
+  prioridades?: string[];
+  preocupaciones?: string[];
+  ingresos?: number | null;
+  gastos?: number | null;
+  excedente?: number | null;
 }
 
 /**

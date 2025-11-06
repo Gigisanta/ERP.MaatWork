@@ -211,6 +211,16 @@ export const contacts = pgTable(
     assignedTeamId: uuid('assigned_team_id').references(() => teams.id),
     nextStep: text('next_step'), // Próximo paso/acción para el contacto
     notes: text('notes'),
+    queSeDedica: text('que_se_dedica'), // A qué se dedica el contacto
+    familia: text('familia'), // Información sobre la familia
+    expectativas: text('expectativas'), // Expectativas del contacto
+    objetivos: text('objetivos'), // Objetivos del contacto
+    requisitosPlanificacion: text('requisitos_planificacion'), // Qué tendría que tener la planificación para avanzar
+    prioridades: jsonb('prioridades').notNull().default(sql`'[]'::jsonb`), // Lista ordenada de prioridades
+    preocupaciones: jsonb('preocupaciones').notNull().default(sql`'[]'::jsonb`), // Lista ordenada de preocupaciones
+    ingresos: numeric('ingresos', { precision: 18, scale: 2 }), // Ingresos mensuales
+    gastos: numeric('gastos', { precision: 18, scale: 2 }), // Gastos mensuales
+    excedente: numeric('excedente', { precision: 18, scale: 2 }), // Excedente (ingresos - gastos)
     customFields: jsonb('custom_fields').notNull().default(sql`'{}'::jsonb`),
     contactLastTouchAt: timestamp('contact_last_touch_at', { withTimezone: true }),
     pipelineStageUpdatedAt: timestamp('pipeline_stage_updated_at', { withTimezone: true }),
