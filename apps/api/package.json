@@ -15,6 +15,8 @@
     "add-advisors": "tsx src/add-advisors.ts",
     "assign-unassigned-contacts": "tsx src/scripts/assign-unassigned-contacts.ts",
     "verify-contacts-assignment": "tsx src/scripts/verify-contacts-assignment.ts",
+    "verify-aum-import": "tsx src/scripts/verify-aum-import.ts",
+    "verify-all": "tsx src/scripts/verify-all.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "pm2:logrotate:install": "pm2 install pm2-logrotate",
     "pm2:logrotate:config": "pm2 set pm2-logrotate:max_size 10M && pm2 set pm2-logrotate:retain 10 && pm2 set pm2-logrotate:compress true && pm2 set pm2-logrotate:dateFormat YYYY-MM-DD_HH-mm-ss && pm2 set pm2-logrotate:workerInterval 60 && pm2 set pm2-logrotate:rotateInterval 0 0 * * *"
