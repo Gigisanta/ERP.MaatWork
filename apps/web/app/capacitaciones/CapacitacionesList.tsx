@@ -31,12 +31,12 @@ import {
   Alert,
   Spinner,
   Icon,
-  Toast,
   type Column,
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
 import CapacitacionForm from './CapacitacionForm';
 import ImportCSVModal from './ImportCSVModal';
+import { useToast } from '../../lib/hooks/useToast';
 
 export default function CapacitacionesList() {
   const { user } = useAuth();
@@ -48,11 +48,10 @@ export default function CapacitacionesList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editingCapacitacion, setEditingCapacitacion] = useState<Capacitacion | null>(null);
-  const [toast, setToast] = useState<{ show: boolean; title: string; description?: string; variant: 'success' | 'error' }>({
-    show: false,
-    title: '',
-    variant: 'success'
-  });
+  // AI_DECISION: Use centralized toast system
+  // Justificación: Consistent UX, reduces code duplication
+  // Impacto: Better maintainability
+  const { showToast } = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     title: string;
@@ -100,19 +99,9 @@ export default function CapacitacionesList() {
       await createCapacitacion(data);
       await invalidateCache();
       setShowCreateModal(false);
-      setToast({
-        show: true,
-        title: 'Capacitación creada',
-        description: 'La capacitación se ha creado exitosamente.',
-        variant: 'success'
-      });
+      showToast('Capacitación creada', 'La capacitación se ha creado exitosamente.', 'success');
     } catch (err) {
-      setToast({
-        show: true,
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Error al crear la capacitación',
-        variant: 'error'
-      });
+      showToast('Error', err instanceof Error ? err.message : 'Error al crear la capacitación', 'error');
     }
   };
 
@@ -121,19 +110,9 @@ export default function CapacitacionesList() {
       await updateCapacitacion(id, data);
       await invalidateCache();
       setEditingCapacitacion(null);
-      setToast({
-        show: true,
-        title: 'Capacitación actualizada',
-        description: 'La capacitación se ha actualizado exitosamente.',
-        variant: 'success'
-      });
+      showToast('Capacitación actualizada', 'La capacitación se ha actualizado exitosamente.', 'success');
     } catch (err) {
-      setToast({
-        show: true,
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Error al actualizar la capacitación',
-        variant: 'error'
-      });
+      showToast('Error', err instanceof Error ? err.message : 'Error al actualizar la capacitación', 'error');
     }
   };
 
@@ -141,19 +120,9 @@ export default function CapacitacionesList() {
     try {
       await deleteCapacitacion(capacitacion.id);
       await invalidateCache();
-      setToast({
-        show: true,
-        title: 'Capacitación eliminada',
-        description: 'La capacitación se ha eliminado exitosamente.',
-        variant: 'success'
-      });
+      showToast('Capacitación eliminada', 'La capacitación se ha eliminado exitosamente.', 'success');
     } catch (err) {
-      setToast({
-        show: true,
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'Error al eliminar la capacitación',
-        variant: 'error'
-      });
+      showToast('Error', err instanceof Error ? err.message : 'Error al eliminar la capacitación', 'error');
     }
   };
 
@@ -356,12 +325,7 @@ export default function CapacitacionesList() {
           onSuccess={async () => {
             await invalidateCache();
             setShowImportModal(false);
-            setToast({
-              show: true,
-              title: 'Importación exitosa',
-              description: 'Las capacitaciones se han importado correctamente.',
-              variant: 'success'
-            });
+            showToast('Importación exitosa', 'Las capacitaciones se han importado correctamente.', 'success');
           }}
         />
       )}
@@ -385,17 +349,6 @@ export default function CapacitacionesList() {
         />
       )}
 
-      {/* Toast */}
-      {toast.show && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Alert variant={toast.variant === 'error' ? 'error' : 'success'}>
-            <Text weight="medium">{toast.title}</Text>
-            {toast.description && (
-              <Text size="sm" className="mt-1">{toast.description}</Text>
-            )}
-          </Alert>
-        </div>
-      )}
     </>
   );
 }

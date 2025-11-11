@@ -2,45 +2,46 @@
 
 # Script de desarrollo con TMUX para Cactus CRM
 # Ejecuta API, Web, Analytics y DB logs en paneles separados
+# Incluye health checks inteligentes y mejor formato de logs
 
-set -e
+set -euo pipefail
 
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
-
-# Verificar que TMUX esté instalado
-if ! command -v tmux &> /dev/null; then
-    echo -e "${RED}❌ Error: TMUX no está instalado${NC}"
-    echo ""
-    echo "Por favor, instala TMUX:"
-    echo "  macOS:   brew install tmux"
-    echo "  Ubuntu:  sudo apt-get install tmux"
-    echo "  Arch:    sudo pacman -S tmux"
-    exit 1
-fi
 
 # Nombre de la sesión TMUX
 SESSION_NAME="cactus-dev"
 
-echo -e "${GREEN}🚀 Iniciando Cactus CRM en modo desarrollo (TMUX)${NC}"
-echo ""
+# Obtener el directorio del script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Arranque limpio: limpiar puertos y procesos comunes
-if [ -f "$PROJECT_ROOT/scripts/dev-clean.sh" ]; then
-    bash "$PROJECT_ROOT/scripts/dev-clean.sh" || true
-fi
+# Cambiar al directorio raíz del proyecto
+cd "$PROJECT_ROOT"
 
-# Verificar si la sesión ya existe
-if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  Sesión TMUX '$SESSION_NAME' ya existe${NC}"
-    echo ""
-    echo "Eliminando sesión existente..."
-    tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
-    sleep 1
-fi
+# Función para health check con retry
+health_check() {
+    local url=$1
+    local name=$2
+    local max_retries=${3:-15}
+    local retry_delay=${4:-2}
+    
+    local attempt=1
+    while [ $attempt -le $max_retries ]; do
+        if curl -s -f -o /dev/null "$url" 2>/dev/null; then
+            return 0
+        fi
+        sleep $retry_delay
+        attempt=$((attempt + 1))
+    done
+    return 1
+}
 
 # Función para limpiar al salir
 cleanup() {
@@ -63,81 +64,167 @@ cleanup() {
 # Capturar Ctrl+C
 trap cleanup SIGINT SIGTERM
 
-# Obtener el directorio del script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Cambiar al directorio raíz del proyecto
-cd "$PROJECT_ROOT"
-
-# Verificar si PostgreSQL está corriendo (en Docker o local)
-if ! docker ps | grep -q "postgres" 2>/dev/null && ! pg_isready -h localhost -U postgres 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  PostgreSQL no detectado, iniciando con Docker...${NC}"
-    docker compose up -d 2>/dev/null || echo -e "${YELLOW}⚠️  No se pudo iniciar Docker automáticamente${NC}"
+# Verificar que TMUX esté instalado
+if ! command -v tmux &> /dev/null; then
+    echo -e "${RED}❌ Error: TMUX no está instalado${NC}"
+    echo ""
+    echo "Por favor, instala TMUX:"
+    echo "  macOS:   brew install tmux"
+    echo "  Ubuntu:  sudo apt-get install tmux"
+    echo "  Arch:    sudo pacman -S tmux"
+    exit 1
 fi
 
-# Crear nueva sesión TMUX
+echo -e "${BOLD}${CYAN}╔═══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${CYAN}║     CACTUS CRM - Desarrollo con TMUX                    ║${NC}"
+echo -e "${BOLD}${CYAN}╚═══════════════════════════════════════════════════════════╝${NC}"
+echo ""
+
+# Arranque limpio: limpiar puertos y procesos comunes
+if [ -f "$PROJECT_ROOT/scripts/dev-clean.sh" ]; then
+    echo -e "${BLUE}🧹 Limpiando entorno...${NC}"
+    bash "$PROJECT_ROOT/scripts/dev-clean.sh" || true
+    echo ""
+fi
+
+# Verificar si la sesión ya existe
+if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  Sesión TMUX '$SESSION_NAME' ya existe${NC}"
+    echo "Eliminando sesión existente..."
+    tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
+    sleep 1
+fi
+
+# Verificar si PostgreSQL está corriendo (en Docker o local)
+echo -e "${BLUE}🗄️  Verificando PostgreSQL...${NC}"
+if ! docker ps 2>/dev/null | grep -q "postgres" && ! pg_isready -h localhost -U postgres 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  PostgreSQL no detectado, intentando iniciar con Docker...${NC}"
+    if command -v docker &> /dev/null && [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+        docker compose up -d 2>/dev/null || echo -e "${YELLOW}⚠️  No se pudo iniciar Docker automáticamente${NC}"
+        sleep 3
+    fi
+fi
+echo ""
+
+# Crear nueva sesión TMUX con mejor tamaño
 tmux new-session -d -s "$SESSION_NAME" -x 120 -y 40
 
-# Configurar paneles
-# Dividir en 4 paneles verticales
-tmux split-window -h -t "$SESSION_NAME"
-tmux split-window -h -t "$SESSION_NAME"
-tmux split-window -h -t "$SESSION_NAME"
-tmux select-layout -t "$SESSION_NAME" even-horizontal
+# Configurar layout 2x2 (mejor para debugging)
+# Crear layout: dividir horizontalmente, luego verticalmente en cada mitad
+tmux split-window -h -t "$SESSION_NAME:0"
+tmux split-window -v -t "$SESSION_NAME:0.0"
+tmux split-window -v -t "$SESSION_NAME:0.1"
 
-# Panel 1: API
+# Seleccionar layout tiled (2x2 grid)
+tmux select-layout -t "$SESSION_NAME" tiled
+
+# Función para configurar panel con timestamp y colores
+setup_panel() {
+    local pane=$1
+    local title=$2
+    local command=$3
+    local color=$4
+    
+    tmux select-pane -t "$SESSION_NAME:$pane" -T "$title"
+    # Configurar colores del panel
+    tmux set-window-option -t "$SESSION_NAME" pane-border-status top
+    tmux set-window-option -t "$SESSION_NAME" pane-border-format "#[fg=$color]#{pane_index} #{pane_title} #[fg=default]"
+    
+    # Enviar comando con formato mejorado
+    tmux send-keys -t "$SESSION_NAME:$pane" "$command" C-m
+}
+
+# Panel 0.0: API (arriba izquierda)
 echo -e "${GREEN}🔧 Configurando panel API...${NC}"
-tmux select-pane -t "$SESSION_NAME:0.0" -T "API"
-tmux send-keys -t "$SESSION_NAME:0.0" "cd apps/api && pnpm dev" C-m
+setup_panel "0.0" "API" \
+    "cd apps/api && echo -e '\033[0;32m[API] Iniciando en puerto 3001...\033[0m' && pnpm dev" \
+    "green"
 
-# Panel 2: Web
+# Panel 0.1: Web (arriba derecha)
 echo -e "${GREEN}🌐 Configurando panel Web...${NC}"
-tmux select-pane -t "$SESSION_NAME:0.1" -T "Web"
-tmux send-keys -t "$SESSION_NAME:0.1" "cd apps/web && pnpm dev" C-m
+setup_panel "0.1" "Web" \
+    "cd apps/web && echo -e '\033[0;34m[Web] Iniciando en puerto 3000...\033[0m' && pnpm dev" \
+    "blue"
 
-# Panel 3: Analytics
+# Panel 0.2: Analytics (abajo izquierda)
 echo -e "${GREEN}📊 Configurando panel Analytics...${NC}"
-tmux select-pane -t "$SESSION_NAME:0.2" -T "Analytics"
-tmux send-keys -t "$SESSION_NAME:0.2" "cd apps/analytics-service && python main.py" C-m
+setup_panel "0.2" "Analytics" \
+    "cd apps/analytics-service && echo -e '\033[0;36m[Analytics] Iniciando en puerto 3002...\033[0m' && python main.py 2>&1 || echo -e '\033[0;33m[Analytics] No disponible (opcional)\033[0m'" \
+    "cyan"
 
-# Panel 4: DB Logs
+# Panel 0.3: DB Logs (abajo derecha)
 echo -e "${GREEN}🗄️  Configurando panel DB Logs...${NC}"
-tmux select-pane -t "$SESSION_NAME:0.3" -T "DB Logs"
-
-# Verificar si PostgreSQL está en Docker
-if docker ps | grep -q "postgres"; then
-    tmux send-keys -t "$SESSION_NAME:0.3" "docker compose logs -f postgres" C-m
+if docker ps 2>/dev/null | grep -q "postgres"; then
+    setup_panel "0.3" "DB Logs" \
+        "echo -e '\033[0;35m[DB] Monitoreando logs de PostgreSQL...\033[0m' && docker compose logs -f postgres" \
+        "magenta"
 else
-    tmux send-keys -t "$SESSION_NAME:0.3" "echo '⚠️  PostgreSQL no detectado en Docker. Inicia la DB manualmente o usa: docker compose up -d'" C-m
+    setup_panel "0.3" "DB Logs" \
+        "echo -e '\033[0;33m⚠️  PostgreSQL no detectado en Docker.\033[0m' && echo 'Inicia la DB manualmente o usa: docker compose up -d'" \
+        "yellow"
 fi
 
 # Esperar un momento para que los servicios se inicien
-sleep 5
-
-# Verificar servicios
 echo ""
+echo -e "${BLUE}⏳ Esperando que los servicios se inicien...${NC}"
+sleep 8
+
+# Health checks inteligentes
+echo ""
+echo -e "${BLUE}🏥 Verificando salud de los servicios...${NC}"
+echo ""
+
+# Health check API
+echo -e "${BLUE}🔍 Verificando API (http://localhost:3001/health)...${NC}"
+if health_check "http://localhost:3001/health" "API" 15 2; then
+    echo -e "${GREEN}  ✅ API está funcionando${NC}"
+else
+    echo -e "${YELLOW}  ⚠️  API aún no responde (puede estar iniciando)${NC}"
+fi
+echo ""
+
+# Health check Web
+echo -e "${BLUE}🔍 Verificando Web App (http://localhost:3000)...${NC}"
+if health_check "http://localhost:3000" "Web" 20 2; then
+    echo -e "${GREEN}  ✅ Web App está funcionando${NC}"
+else
+    echo -e "${YELLOW}  ⚠️  Web App aún no responde (puede estar iniciando)${NC}"
+fi
+echo ""
+
+# Health check Analytics (opcional)
+echo -e "${BLUE}🔍 Verificando Analytics Service (http://localhost:3002/health)...${NC}"
+if health_check "http://localhost:3002/health" "Analytics" 5 2; then
+    echo -e "${GREEN}  ✅ Analytics Service está funcionando${NC}"
+else
+    echo -e "${YELLOW}  ⚠️  Analytics Service no disponible (opcional)${NC}"
+fi
+echo ""
+
+# Información de la sesión
 echo -e "${GREEN}✅ Sesión TMUX '$SESSION_NAME' creada correctamente${NC}"
 echo ""
-echo -e "${YELLOW}📋 Información:${NC}"
-echo "  • Sesión TMUX: ${GREEN}$SESSION_NAME${NC}"
-echo "  • Web App: http://localhost:3000"
-echo "  • API: http://localhost:3001"
-echo "  • API Health: http://localhost:3001/health"
-echo "  • Analytics: http://localhost:3002"
-echo "  • Analytics Health: http://localhost:3002/health"
+echo -e "${BOLD}${YELLOW}📋 Información:${NC}"
+echo -e "  • Sesión TMUX: ${GREEN}$SESSION_NAME${NC}"
+echo -e "  • Web App: ${CYAN}http://localhost:3000${NC}"
+echo -e "  • API: ${CYAN}http://localhost:3001${NC}"
+echo -e "  • API Health: ${CYAN}http://localhost:3001/health${NC}"
+echo -e "  • Analytics: ${CYAN}http://localhost:3002${NC} (opcional)"
 echo ""
-echo -e "${YELLOW}⌨️  Comandos útiles:${NC}"
-echo "  • Conectar: ${GREEN}tmux attach -t $SESSION_NAME${NC}"
-echo "  • Detach: ${YELLOW}Ctrl+b d${NC}"
-echo "  • Matar sesión: ${RED}pnpm run dev:kill${NC} o ${RED}tmux kill-session -t $SESSION_NAME${NC}"
+echo -e "${BOLD}${YELLOW}⌨️  Comandos útiles:${NC}"
+echo -e "  • Conectar: ${GREEN}tmux attach -t $SESSION_NAME${NC}"
+echo -e "  • Detach: ${YELLOW}Ctrl+b d${NC}"
+echo -e "  • Matar sesión: ${RED}pnpm run dev:kill${NC} o ${RED}tmux kill-session -t $SESSION_NAME${NC}"
 echo ""
-echo -e "${YELLOW}🖥️  Atajos TMUX:${NC}"
-echo "  • ${GREEN}Ctrl+b o${NC} - Cambiar entre paneles"
-echo "  • ${GREEN}Ctrl+b x${NC} - Cerrar panel actual"
-echo "  • ${GREEN}Ctrl+b z${NC} - Maximizar/restaurar panel"
-echo "  • ${GREEN}Ctrl+b d${NC} - Detach de la sesión"
-echo "  • ${GREEN}Ctrl+b [${NC} - Modo scroll (Esc para salir)"
+echo -e "${BOLD}${YELLOW}🖥️  Atajos TMUX:${NC}"
+echo -e "  • ${GREEN}Ctrl+b o${NC} - Cambiar entre paneles"
+echo -e "  • ${GREEN}Ctrl+b ←→↑↓${NC} - Navegar entre paneles"
+echo -e "  • ${GREEN}Ctrl+b x${NC} - Cerrar panel actual"
+echo -e "  • ${GREEN}Ctrl+b z${NC} - Maximizar/restaurar panel"
+echo -e "  • ${GREEN}Ctrl+b d${NC} - Detach de la sesión"
+echo -e "  • ${GREEN}Ctrl+b [${NC} - Modo scroll (q para salir)"
+echo -e "  • ${GREEN}Ctrl+b r${NC} - Recargar configuración tmux"
+echo -e "  • ${GREEN}Ctrl+b f${NC} - Búsqueda mejorada"
 echo ""
 
 # Conectar a la sesión si estamos en terminal interactiva
@@ -149,4 +236,3 @@ else
     echo -e "${YELLOW}💡 Ejecuta: ${GREEN}tmux attach -t $SESSION_NAME${NC} para ver los paneles"
     exit 0
 fi
-

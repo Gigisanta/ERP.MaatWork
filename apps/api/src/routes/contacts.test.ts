@@ -473,3 +473,11 @@ describe('GET /contacts/:id/history', () => {
     expect(mockReq.query.limit).toBe('50');
   });
 });
+
+
+
+
+
+
+
+

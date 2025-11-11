@@ -274,6 +274,8 @@ export function useAumRows(params?: {
   status?: string;
   fileId?: string;
   preferredOnly?: boolean;
+  search?: string;
+  onlyUpdated?: boolean;
 }) {
   const { user } = useAuth();
   
@@ -284,8 +286,11 @@ export function useAumRows(params?: {
   if (params?.broker) queryParams.append('broker', params.broker);
   if (params?.status) queryParams.append('status', params.status);
   if (params?.fileId) queryParams.append('fileId', params.fileId);
-  const preferredOnly = params?.preferredOnly ?? true;
+  const preferredOnly = params?.preferredOnly ?? false;
   queryParams.append('preferredOnly', String(preferredOnly));
+  if (params?.search) queryParams.append('search', params.search);
+  const onlyUpdated = params?.onlyUpdated ?? false;
+  queryParams.append('onlyUpdated', String(onlyUpdated));
   
   const url = `${API_BASE_URL}/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user ? url : null;
@@ -304,9 +309,19 @@ export function useAumRows(params?: {
     swrConfig
   );
   
+  // Extract rows and pagination from response
+  // AI_DECISION: Manejar estructura de respuesta flexible
+  // Justificación: La API puede devolver datos en diferentes formatos (data.rows vs rows)
+  // Impacto: Mayor robustez ante cambios en estructura de respuesta
+  const responseData = data?.data || data;
+  const rows = responseData?.rows || [];
+  const pagination = responseData?.pagination || { total: 0, limit: 50, offset: 0, hasMore: false };
+  const totalRows = responseData?.totalRows || pagination.total || rows.length;
+  
   return {
-    rows: (data?.data?.rows || []) as unknown[],
-    pagination: data?.data?.pagination || { total: 0, limit: 50, offset: 0, hasMore: false },
+    rows: rows as unknown[],
+    totalRows,
+    pagination,
     error,
     isLoading,
     mutate

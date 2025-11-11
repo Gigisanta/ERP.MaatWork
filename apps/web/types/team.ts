@@ -81,3 +81,42 @@ export interface TeamInvitationResponse {
   invitation: TeamInvitation;
   message?: string;
 }
+
+/**
+ * Distribución de riesgo
+ */
+export interface RiskDistributionItem {
+  riskLevel: string;
+  count: number;
+}
+
+/**
+ * Tendencias AUM
+ */
+export interface AumTrendItem {
+  date: string;
+  value: number;
+}
+
+/**
+ * Métricas del equipo
+ */
+export interface TeamMetrics {
+  teamAum: number;
+  memberCount: number;
+  clientCount: number;
+  portfolioCount: number;
+  riskDistribution: RiskDistributionItem[];
+  aumTrend: AumTrendItem[];
+}
+
+/**
+ * Métricas del miembro del equipo
+ */
+export interface TeamMemberMetrics {
+  totalAum: number;
+  clientCount: number;
+  portfolioCount: number;
+  deviationAlerts: number;
+  aumTrend: AumTrendItem[];
+}

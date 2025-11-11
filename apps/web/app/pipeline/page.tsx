@@ -137,7 +137,10 @@ export default function PipelinePage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <Spinner size="lg" />
+        <Stack direction="column" gap="md" align="center">
+          <Spinner size="lg" />
+          <Text color="secondary">Cargando pipeline...</Text>
+        </Stack>
       </div>
     );
   }
@@ -216,10 +219,19 @@ export default function PipelinePage() {
                   <CardContent className="pt-0">
                     <Stack direction="column" gap="sm" className="min-h-[200px]">
                       {!Array.isArray(stage.contacts) || stage.contacts.length === 0 ? (
-                        <div className="flex items-center justify-center h-32 text-center">
-                          <Text size="sm" color="secondary">
-                            Arrastra contactos aquí
-                          </Text>
+                        <div className="flex items-center justify-center h-32 text-center p-4">
+                          <Stack direction="column" gap="xs" align="center">
+                            <Text size="sm" color="secondary">
+                              {stage.currentCount === 0 && stage.wipLimit 
+                                ? `Arrastra contactos aquí (${stage.currentCount}/${stage.wipLimit})`
+                                : "Arrastra contactos aquí"}
+                            </Text>
+                            {stage.wipLimit && stage.currentCount >= stage.wipLimit && (
+                              <Text size="xs" color="error">
+                                Límite WIP alcanzado
+                              </Text>
+                            )}
+                          </Stack>
                         </div>
                       ) : (
                         (stage.contacts as Array<{ id: string; fullName: string; email?: string; nextStep?: string; tags?: Array<{ id: string; name: string; color: string }> }>).map((contact: { id: string; fullName: string; email?: string; nextStep?: string; tags?: Array<{ id: string; name: string; color: string }> }) => (

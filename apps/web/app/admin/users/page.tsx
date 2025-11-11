@@ -1,9 +1,9 @@
 "use client";
 import { useRequireAuth } from '../../auth/useRequireAuth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getUsers, updateUserRole, updateUserStatus, deleteUser as deleteUserApi } from '@/lib/api';
+import { getUsers, updateUserRole, updateUserStatus, deleteUser as deleteUserApi, approveUser, rejectUser } from '@/lib/api';
 import { logger } from '../../../lib/logger';
 import type { UserRole, UserApiResponse } from '@/types';
 import {
@@ -38,6 +38,7 @@ export default function AdminUsersPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -171,26 +172,29 @@ export default function AdminUsersPage() {
   };
 
   // Configuración de columnas del DataTable
-  const columns: Column<UserApiResponse>[] = [
+  const columns: Column<UserApiResponse>[] = useMemo(() => ([
     {
       key: 'fullName',
       header: 'Usuario',
-      render: (user) => (
+      render: (row) => (
         <div>
-          <Text weight="medium">{user.fullName}</Text>
-          <Text size="sm" color="secondary">{user.email}</Text>
+          <div className="flex items-center gap-2">
+            <Text weight="medium">{row.fullName}</Text>
+            {!row.isActive && <Badge variant="warning">Pendiente</Badge>}
+          </div>
+          <Text size="sm" color="secondary">{row.email}</Text>
         </div>
       )
     },
     {
       key: 'role',
       header: 'Rol',
-      render: (user) => (
+      render: (row) => (
         <div className="min-w-[150px]">
           <Select
-            value={user.role}
-            onValueChange={(value) => handleRoleChange(user.id, value)}
-            disabled={actionLoading === user.id || user.id === user.id}
+            value={row.role}
+            onValueChange={(value) => handleRoleChange(row.id, value)}
+            disabled={actionLoading === row.id}
             items={[
               { value: 'advisor', label: 'Asesor' },
               { value: 'manager', label: 'Manager' },
@@ -203,16 +207,16 @@ export default function AdminUsersPage() {
     {
       key: 'isActive',
       header: 'Activo',
-      render: (user) => (
+      render: (row) => (
         <Switch
-          checked={user.isActive}
-          onCheckedChange={(checked) => handleToggleActive(user.id, checked)}
-          disabled={actionLoading === user.id}
+          checked={row.isActive}
+          onCheckedChange={(checked) => handleToggleActive(row.id, checked)}
+          disabled={actionLoading === row.id}
         />
       )
     },
     {
-      key: 'actions',
+      key: 'date',
       header: 'Fecha',
       render: () => (
         <Text size="sm" color="secondary">
@@ -223,31 +227,71 @@ export default function AdminUsersPage() {
     {
       key: 'actions',
       header: 'Acciones',
-      render: (user) => (
+      render: (row) => (
         <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/profile?userId=${user.id}`)}
+            onClick={() => router.push(`/profile?userId=${row.id}`)}
           >
             <Icon name="User" size={16} />
           </Button>
-          {user.id !== user.id && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setUserToDelete(user);
-                setShowDeleteModal(true);
-              }}
-            >
-              <Icon name="trash-2" size={16} />
-            </Button>
+          {!row.isActive && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setActionLoading(row.id);
+                    setError(null);
+                    await approveUser(row.id);
+                    setUsers(prev => prev.map(u => u.id === row.id ? { ...u, isActive: true } : u));
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Error al aprobar usuario');
+                  } finally {
+                    setActionLoading(null);
+                  }
+                }}
+                disabled={actionLoading === row.id}
+              >
+                Aprobar
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setActionLoading(row.id);
+                    setError(null);
+                    await rejectUser(row.id);
+                    setUsers(prev => prev.filter(u => u.id !== row.id));
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Error al rechazar usuario');
+                  } finally {
+                    setActionLoading(null);
+                  }
+                }}
+                disabled={actionLoading === row.id}
+              >
+                Rechazar
+              </Button>
+            </>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setUserToDelete(row);
+              setShowDeleteModal(true);
+            }}
+          >
+            <Icon name="trash-2" size={16} />
+          </Button>
         </div>
       )
     }
-  ];
+  ]), [actionLoading, router]);
 
   if (loading) {
     return (
@@ -287,9 +331,16 @@ export default function AdminUsersPage() {
               Usuarios ({users.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+            <CardContent>
+              <div className="flex items-center justify-between mb-3">
+                <div />
+                <div className="flex items-center gap-2">
+                  <Text size="sm">Solo pendientes</Text>
+                  <Switch checked={showPendingOnly} onCheckedChange={setShowPendingOnly} />
+                </div>
+              </div>
             <DataTable
-              data={users}
+              data={showPendingOnly ? users.filter(u => !u.isActive) : users}
               columns={columns}
               keyField="id"
               emptyMessage="No hay usuarios registrados."

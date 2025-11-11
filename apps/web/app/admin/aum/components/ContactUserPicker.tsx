@@ -57,34 +57,34 @@ function ContactUserPickerComponent({
   }, [fileId, rowId, contactId, userId, onSave]);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 flex-nowrap max-w-full overflow-hidden">
       <Input
         type="text"
         value={contactId}
         onChange={(e) => setContactId(e.target.value)}
         placeholder="Contact ID"
         size="sm"
-        className="text-xs w-40"
+        className="text-xs w-24 flex-shrink-0 min-w-0"
       />
       <Input
         type="text"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
-        placeholder="User ID (advisor)"
+        placeholder="User ID"
         size="sm"
-        className="text-xs w-40"
+        className="text-xs w-24 flex-shrink-0 min-w-0"
       />
       <Button
         onClick={save}
         disabled={saving || success}
         size="sm"
         variant="primary"
-        className={`text-xs ${success ? 'bg-green-600 hover:bg-green-700' : ''}`}
+        className={`text-xs flex-shrink-0 whitespace-nowrap ${success ? 'bg-green-600 hover:bg-green-700' : ''}`}
       >
         {saving ? (
           <>
             <Spinner size="sm" className="mr-1" />
-            Guardando...
+            ...
           </>
         ) : success ? (
           '✓'
@@ -93,7 +93,7 @@ function ContactUserPickerComponent({
         )}
       </Button>
       {error && (
-        <Text size="sm" className="text-error">
+        <Text size="xs" className="text-error truncate flex-shrink-0 min-w-0">
           {error}
         </Text>
       )}

@@ -354,6 +354,43 @@ describe('aum-column-mapper', () => {
         expect(result.advisorRaw).toBeTruthy();
       }
     });
+
+    it('maps idCuenta column correctly', () => {
+      const testCases = [
+        { col: 'idCuenta', value: '15356' },
+        { col: 'id_cuenta', value: '15470' },
+        { col: 'id cuenta', value: '23661' },
+        { col: 'ID CUENTA', value: '30488' },
+        { col: 'idCuenta', value: '30646' }
+      ];
+
+      for (const testCase of testCases) {
+        const record = { 
+          [testCase.col]: testCase.value,
+          'comitente': '76551',
+          'Descripcion': 'Test Name',
+          'Asesor': 'Test Advisor'
+        };
+        const result = mapAumColumns(record);
+        expect(result.idCuenta).toBe(testCase.value);
+      }
+    });
+
+    it('maps idCuenta, comitente, and Descripcion from Balanz CSV format', () => {
+      const record = {
+        'idCuenta': '15356',
+        'comitente': '76551',
+        'Descripcion': 'MARITANO FEDERICO NICOLAS',
+        'Asesor': 'Nicanor Zappia'
+      };
+
+      const result = mapAumColumns(record);
+
+      expect(result.idCuenta).toBe('15356');
+      expect(result.accountNumber).toBe('76551');
+      expect(result.holderName).toBe('MARITANO FEDERICO NICOLAS');
+      expect(result.advisorRaw).toBe('Nicanor Zappia');
+    });
   });
 });
 

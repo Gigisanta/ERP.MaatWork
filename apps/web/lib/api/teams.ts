@@ -10,7 +10,9 @@ import type {
   TeamAdvisor, 
   MembershipRequest, 
   TeamInvitation, 
-  TeamInvitationResponse 
+  TeamInvitationResponse,
+  TeamMetrics,
+  TeamMemberMetrics
 } from '@/types/team';
 
 // ==========================================================
@@ -161,5 +163,22 @@ export async function inviteTeamMember(
  */
 export async function getAllTeamMembers(): Promise<ApiResponse<TeamMember[]>> {
   return apiClient.get<TeamMember[]>('/v1/teams/members');
+}
+
+/**
+ * Obtener métricas del equipo
+ */
+export async function getTeamMetrics(teamId: string): Promise<ApiResponse<TeamMetrics>> {
+  return apiClient.get<TeamMetrics>(`/v1/teams/${teamId}/metrics`);
+}
+
+/**
+ * Obtener métricas del miembro del equipo
+ */
+export async function getTeamMemberMetrics(
+  teamId: string,
+  memberId: string
+): Promise<ApiResponse<TeamMemberMetrics>> {
+  return apiClient.get<TeamMemberMetrics>(`/v1/teams/${teamId}/members/${memberId}/metrics`);
 }
 

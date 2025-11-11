@@ -3,7 +3,7 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import { db, users, teamMembershipRequests } from '@cactus/db';
 import { eq, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { signUserToken } from '../auth/jwt';
+import { signUserToken, verifyUserToken } from '../auth/jwt';
 import { requireAuth } from '../auth/middlewares';
 import { ROLES, type UserRole } from '../auth/types';
 import bcrypt from 'bcrypt';
@@ -363,6 +363,78 @@ router.post('/register',
 router.get('/me', requireAuth, async (req: Request, res: Response) => {
   const user = req.user!;
   return res.json({ user });
+});
+
+// AI_DECISION: Endpoint de refresh token para renovar sesión automáticamente
+// Justificación: Permite renovar tokens expirados sin requerir nuevo login
+// Impacto: Mejora UX, sesiones más largas sin interrupciones
+router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Obtener token de cookie o header
+    let token: string | undefined;
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    } else if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.slice('Bearer '.length);
+    } else if (req.headers.cookie) {
+      const m = /(?:^|; )token=([^;]+)/.exec(req.headers.cookie);
+      if (m && m[1]) token = decodeURIComponent(m[1]);
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    // Verificar token actual (puede estar expirado, pero aún válido para refresh)
+    let user;
+    try {
+      user = await verifyUserToken(token);
+    } catch (err) {
+      // Si el token está completamente inválido, no permitir refresh
+      req.log.warn({ err }, 'Invalid token in refresh request');
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Verificar que el usuario existe y está activo
+    const [dbUser] = await db()
+      .select({ id: users.id, role: users.role, isActive: users.isActive, email: users.email, fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    if (!dbUser) {
+      req.log.warn({ userId: user.id }, 'User from token not found in database');
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (!dbUser.isActive) {
+      req.log.warn({ userId: user.id }, 'User from token is inactive');
+      return res.status(403).json({ message: 'User account is inactive' });
+    }
+
+    // Generar nuevo token con la misma duración que el login original
+    // Usar '1d' por defecto (puede extenderse si se agrega rememberMe al refresh)
+    const newToken = await signUserToken({
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role as UserRole,
+      fullName: dbUser.fullName
+    }, '1d');
+
+    // Establecer nueva cookie
+    res.cookie('token', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 1 día
+    });
+
+    req.log.info({ userId: dbUser.id }, 'Token refreshed successfully');
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, 'Error refreshing token');
+    next(err);
+  }
 });
 
 // AI_DECISION: Endpoint de logout para limpiar cookie httpOnly

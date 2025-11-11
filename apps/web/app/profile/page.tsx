@@ -26,10 +26,10 @@ import {
   DataTable,
   type Column,
   Badge,
-  Switch,
-  Toast
+  Switch
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { useToast } from '../../lib/hooks/useToast';
 
 export default function ProfilePage() {
   const { user, loading } = useRequireAuth();
@@ -48,17 +48,10 @@ export default function ProfilePage() {
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   
-  // Estados para Toast
-  const [toast, setToast] = useState<{
-    show: boolean;
-    title: string;
-    description?: string;
-    variant: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    show: false,
-    title: '',
-    variant: 'info'
-  });
+  // AI_DECISION: Use centralized toast system
+  // Justificación: Consistent UX, reduces code duplication
+  // Impacto: Better maintainability
+  const { showToast } = useToast();
 
   // Estados para ConfirmDialog
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -72,10 +65,6 @@ export default function ProfilePage() {
     title: '',
     onConfirm: () => {}
   });
-
-  const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setToast({ show: true, title, description, variant });
-  };
   
   // Estados de formularios
   const [passwordForm, setPasswordForm] = useState({
@@ -699,13 +688,6 @@ export default function ProfilePage() {
       </Modal>
 
       {/* Toast Notifications */}
-      <Toast
-        title={toast.title}
-        {...(toast.description && { description: toast.description })}
-        variant={toast.variant}
-        open={toast.show}
-        onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
-      />
 
       {/* Confirm Dialog */}
       <ConfirmDialog

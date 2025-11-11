@@ -613,3 +613,11 @@ describe('POST /auth/logout', () => {
     expect(mockReq.log?.info).toBeDefined();
   });
 });
+
+
+
+
+
+
+
+

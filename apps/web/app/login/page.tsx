@@ -19,7 +19,7 @@ import {
 } from '@cactus/ui';
 
 export default function LoginPage() {
-  const { login, user } = useAuth();
+  const { login, user, initialized } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
@@ -36,7 +36,15 @@ export default function LoginPage() {
   // AI_DECISION: Usar useRef para evitar loops infinitos de redirección
   // Justificación: searchParams es mutable y cambia de referencia, causando re-ejecuciones del useEffect.
   // Usar useRef previene múltiples redirecciones y rompe el ciclo de recursión.
+  // AI_DECISION: Esperar a que AuthContext termine de inicializar antes de redirigir
+  // Justificación: Evita redirecciones prematuras cuando el middleware permite el acceso pero
+  // el AuthContext aún no ha terminado de verificar la sesión. Esto previene loops de redirección.
   useEffect(() => {
+    // Esperar a que la autenticación se inicialice antes de tomar decisiones
+    if (!initialized) {
+      return;
+    }
+
     // Resetear flag cuando el componente se monta o cuando no hay sesión
     if (!user) {
       hasRedirectedRef.current = false;
@@ -53,20 +61,29 @@ export default function LoginPage() {
       const redirectTo = searchParams.get('redirect') || '/';
       router.replace(redirectTo);
     }
-  }, [user, router]);
+  }, [user, initialized, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const errors: { identifier?: string; password?: string } = {};
+    
     if (!identifier.trim()) {
-      setError('El email o usuario es requerido');
-      return;
+      errors.identifier = 'El email o usuario es requerido';
     }
 
     if (!password.trim()) {
-      setError('La contraseña es requerida');
+      errors.password = 'La contraseña es requerida';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError('Por favor completa todos los campos requeridos');
       return;
     }
+    
+    setFieldErrors({});
+    setError(null);
 
     try {
       setLoading(true);
@@ -120,11 +137,18 @@ export default function LoginPage() {
                   type="text"
                   label="Email o usuario"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (fieldErrors.identifier) {
+                      setFieldErrors(prev => ({ ...prev, identifier: undefined }));
+                    }
+                  }}
                   placeholder="tu@email.com o tu_usuario"
                   disabled={loading}
                   required
                   autoComplete="username"
+                  autoFocus
+                  error={fieldErrors.identifier}
                 />
 
                 {/* Password Input */}
@@ -133,12 +157,18 @@ export default function LoginPage() {
                   type="password"
                   label="Contraseña"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors(prev => ({ ...prev, password: undefined }));
+                    }
+                  }}
                   placeholder="Tu contraseña"
                   disabled={loading}
                   required
                   showPasswordToggle={true}
                   autoComplete="current-password"
+                  error={fieldErrors.password}
                 />
 
                 {/* Remember me */}

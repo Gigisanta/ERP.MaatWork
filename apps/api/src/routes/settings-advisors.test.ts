@@ -95,3 +95,11 @@ describe('POST /admin/settings/advisors/aliases', () => {
     expect(error.code).toBe('23505');
   });
 });
+
+
+
+
+
+
+
+

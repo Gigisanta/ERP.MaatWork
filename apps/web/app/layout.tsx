@@ -1,10 +1,11 @@
-import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './auth/AuthContext';
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
 import DebugConsole from './components/DebugConsole';
 import { PageTitleProvider } from './components/PageTitleContext';
+import { ConditionalAnalytics } from './components/ConditionalAnalytics';
+import { ToastProvider } from '../lib/hooks/useToast';
 import '@cactus/ui/styles.css';
 import './globals.css';
 
@@ -19,16 +20,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProviderWrapper defaultTheme="light">
           <ErrorBoundary>
             <AuthProvider>
-              <PageTitleProvider>
-                <NavigationNew />
-                <main className="min-h-screen bg-background">
-                  {children}
-                </main>
-              </PageTitleProvider>
+              <ToastProvider>
+                <PageTitleProvider>
+                  <NavigationNew />
+                  <main className="min-h-screen bg-background">
+                    {children}
+                  </main>
+                </PageTitleProvider>
+              </ToastProvider>
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProviderWrapper>
-        <Analytics />
+        <ConditionalAnalytics />
       </body>
     </html>
   );

@@ -1,9 +1,9 @@
 /**
  * API methods para AUM (Assets Under Management)
  * 
- * AI_DECISION: Centralizar métodos de AUM siguiendo patrón de otros dominios
- * Justificación: Elimina fetch directo, mejor error handling y retry automático
- * Impacto: Código más mantenible y consistente con resto de la aplicación
+ * AI_DECISION: Centralizar métodos de AUM siguiendo patrón de otros dominios + validación Zod
+ * Justificación: Elimina fetch directo, mejor error handling, retry automático, runtime validation
+ * Impacto: Código más mantenible, consistente y robusto contra cambios de API
  */
 
 import { apiClient } from '../api-client';
@@ -17,6 +17,12 @@ import type {
   AumRowsResponse,
   AumDuplicatesResponse
 } from '@/types/aum';
+import {
+  aumRowsResponseSchema,
+  aumUploadResponseSchema,
+  aumHistoryResponseSchema,
+  aumMatchRowResponseSchema
+} from './aum-validation';
 
 // ==========================================================
 // API Methods
@@ -32,6 +38,8 @@ export async function getAumRows(params?: {
   status?: string;
   fileId?: string;
   preferredOnly?: boolean;
+  search?: string;
+  onlyUpdated?: boolean;
 }): Promise<ApiResponse<AumRowsResponse>> {
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append('limit', String(params.limit));
@@ -39,11 +47,25 @@ export async function getAumRows(params?: {
   if (params?.broker) queryParams.append('broker', params.broker);
   if (params?.status) queryParams.append('status', params.status);
   if (params?.fileId) queryParams.append('fileId', params.fileId);
-  const preferredOnly = params?.preferredOnly ?? true;
+  const preferredOnly = params?.preferredOnly ?? false;
   queryParams.append('preferredOnly', String(preferredOnly));
+  if (params?.search) queryParams.append('search', params.search);
+  const onlyUpdated = params?.onlyUpdated ?? false;
+  queryParams.append('onlyUpdated', String(onlyUpdated));
 
   const endpoint = `/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  return apiClient.get<AumRowsResponse>(endpoint);
+  const response = await apiClient.get<AumRowsResponse>(endpoint);
+  
+  // AI_DECISION: Validar respuesta en runtime con Zod
+  // Justificación: Previene errores silenciosos por cambios en API, mejora debugging
+  // Impacto: Mayor robustez, mensajes de error claros
+  try {
+    const validated = aumRowsResponseSchema.parse(response.data);
+    return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
+  } catch (error) {
+    console.error('[AUM API] Validation error:', error);
+    throw new Error(`API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -145,6 +167,34 @@ export async function getAumDuplicates(
 export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> {
   // Este endpoint usa POST sin body
   return apiClient.post<void>(`/v1/admin/aum/uploads/${fileId}/commit`);
+}
+
+/**
+ * Limpiar duplicados AUM manteniendo solo la fila más reciente por broker+accountNumber
+ */
+export async function cleanupAumDuplicates(): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+  deletedCount: number;
+}>> {
+  return apiClient.post<{
+    ok: boolean;
+    message: string;
+    deletedCount: number;
+  }>('/v1/admin/aum/cleanup-duplicates');
+}
+
+/**
+ * Resetear completamente el sistema AUM (eliminar todo)
+ */
+export async function resetAumSystem(): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+}>> {
+  return apiClient.post<{
+    ok: boolean;
+    message: string;
+  }>('/v1/admin/aum/reset-all');
 }
 
 /**

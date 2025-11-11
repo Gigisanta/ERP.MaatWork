@@ -67,7 +67,15 @@ El sistema usa **cookies httpOnly exclusivamente** para autenticación:
 2. Frontend recibe datos del usuario en respuesta
 3. Cookie se envía automáticamente en todas las requests subsecuentes
 4. Backend valida cookie en cada request con middleware `requireAuth`
-5. Logout limpia la cookie mediante endpoint `/v1/auth/logout`
+5. Si el token expira (401), el cliente API intenta refresh automáticamente
+6. Si el refresh es exitoso, se retry la request original sin interrumpir al usuario
+7. Logout limpia la cookie mediante endpoint `/v1/auth/logout`
+
+**Refresh Token Automático:**
+- El cliente API (`api-client.ts`) detecta errores 401 automáticamente
+- Intenta renovar el token llamando a `/v1/auth/refresh`
+- Si el refresh es exitoso, reintenta la request original
+- Si el refresh falla, se lanza error de sesión expirada
 
 ## Desarrollo
 

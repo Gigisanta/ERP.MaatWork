@@ -49,8 +49,8 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: process.env.NODE_ENV === 'development'
-              ? "default-src 'self' 'unsafe-eval' 'unsafe-inline' vscode-file: data: blob:; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*;"
-              : `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || ''};`
+              ? "default-src 'self' 'unsafe-eval' 'unsafe-inline' vscode-file: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com; connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:* https://va.vercel-scripts.com https://vitals.vercel-insights.com;"
+              : `default-src 'self'; script-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || ''} https://va.vercel-scripts.com https://vitals.vercel-insights.com;`
           },
           {
             key: 'X-Frame-Options',

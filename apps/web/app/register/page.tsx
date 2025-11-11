@@ -167,6 +167,7 @@ export default function RegisterPage() {
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="tu_usuario (a-z0-9._-, 3-20)"
                   disabled={loading}
+                  autoFocus
                 />
 
                 <Input

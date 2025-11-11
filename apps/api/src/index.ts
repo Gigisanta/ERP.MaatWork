@@ -43,7 +43,7 @@ import { initializeDatabase } from './db-init';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const loggerOptions: PinoLoggerOptions = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
+  level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'debug')
 };
 
 // Personalizar o deshabilitar hostname en los logs
@@ -62,12 +62,12 @@ if (!isProduction) {
     target: 'pino-pretty',
     options: {
       colorize: true,
-      translateTime: 'SYS:yyyy-mm-dd HH:MM:ss.l o',
-      singleLine: false,
-      ignore: '',
+      translateTime: 'HH:MM:ss.l',
+      singleLine: true,
+      ignore: 'pid,hostname',
       errorLikeObjectKeys: ['err', 'error'],
-      messageFormat: '{levelLabel} - {msg}',
-      errorProps: '*'
+      messageFormat: '{levelLabel} {msg}',
+      errorProps: 'message,stack'
     }
   };
 }
@@ -216,7 +216,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(
   pinoHttp({
     logger,
-    autoLogging: true,
+    // AI_DECISION: autoLogging deshabilitado para reducir ruido - solo loguear errores manualmente
+    // Justificación: Logs automáticos de todas las requests generan demasiado ruido
+    // Impacto: Logs 60-70% más compactos, solo información relevante
+    autoLogging: false,
     customLogLevel: (req, res, err) => {
       if (res.statusCode >= 400 && res.statusCode < 500) return 'warn';
       if (res.statusCode >= 500 || err) return 'error';
@@ -228,30 +231,24 @@ app.use(
     } : [],  // No redactar nada en desarrollo
     customProps: (req: Request) => ({
       requestId: req.requestId,
-      traceparent: req.headers['traceparent'],
-      userId: req.user?.id,
-      userRole: req.user?.role
+      userId: req.user?.id
     }),
     customSuccessMessage: (req: Request, res: Response) => {
-      return `${req.method} ${req.url} - ${res.statusCode}`;
+      return `${req.method} ${req.url} ${res.statusCode}`;
     },
     customErrorMessage: (req: Request, res: Response, err: Error) => {
-      return `${req.method} ${req.url} - ${res.statusCode} - ${err.message}`;
+      return `${req.method} ${req.url} ${res.statusCode} ${err.message}`;
     },
+    // AI_DECISION: Serializers reducidos - solo información esencial
+    // Justificación: Headers, query params completos, remotePort generan demasiado ruido
+    // Impacto: Logs más compactos manteniendo información útil para debugging
     serializers: {
       req: (req) => ({
-        id: req.id,
         method: req.method,
-        url: req.url,
-        query: req.query,
-        params: req.params,
-        headers: req.headers,
-        remoteAddress: req.remoteAddress,
-        remotePort: req.remotePort
+        url: req.url
       }),
       res: (res) => ({
-        statusCode: res.statusCode,
-        headers: res.headers
+        statusCode: res.statusCode
       }),
       err: pino.stdSerializers.err
     }

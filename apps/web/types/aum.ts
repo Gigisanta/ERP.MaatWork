@@ -18,6 +18,8 @@ export interface AumTotals {
   ambiguous: number;
   conflicts: number;
   unmatched: number;
+  inserts?: number;
+  updates?: number;
 }
 
 /**
@@ -63,14 +65,24 @@ export interface AumRow extends BaseEntity {
   fileId: string;
   accountNumber: string | null;
   holderName: string | null;
+  idCuenta?: string | null;
   advisorRaw: string | null;
+  advisorNormalized: string | null;
   matchedContactId: string | null;
   matchedUserId: string | null;
   suggestedUserId?: string | null;
   matchStatus: AumMatchStatus;
   isPreferred: boolean;
   conflictDetected: boolean;
+  needsConfirmation?: boolean;
   rowCreatedAt: string;
+  rowUpdatedAt?: string;
+  isUpdated?: boolean;
+  updatedByFile?: {
+    id: string;
+    name: string;
+    createdAt: string;
+  };
   // Columnas financieras extendidas
   aumDollars: number | null;
   bolsaArg: number | null;
@@ -109,6 +121,17 @@ export interface AumUploadSummary {
 }
 
 /**
+ * Confirmación requerida para cambios en AUM
+ */
+export interface AumConfirmation {
+  rowId: string;
+  idCuenta: string | null;
+  oldAccountNumber: string | null;
+  newAccountNumber: string | null;
+  reason: string;
+}
+
+/**
  * Response de upload AUM
  */
 export interface AumUploadResponse {
@@ -116,6 +139,8 @@ export interface AumUploadResponse {
   fileId: string;
   filename: string;
   totals: AumTotals;
+  confirmationsRequired?: number;
+  confirmations?: AumConfirmation[];
 }
 
 /**

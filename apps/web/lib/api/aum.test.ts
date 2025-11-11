@@ -7,13 +7,13 @@ describe('getAumRows', () => {
     vi.restoreAllMocks();
   });
 
-  it('adds preferredOnly=true by default', async () => {
+  it('adds preferredOnly=false by default', async () => {
     const spy = vi.spyOn(apiModule.apiClient, 'get').mockResolvedValue({} as any);
     await getAumRows();
     // The apiClient.get call receives the endpoint as first arg
-    // We assert it contains preferredOnly=true
+    // We assert it contains preferredOnly=false
     const calledWith = (spy as any).mock.calls[0][0] as string;
-    expect(calledWith).toContain('preferredOnly=true');
+    expect(calledWith).toContain('preferredOnly=false');
   });
 
   it('respects preferredOnly=false when passed', async () => {

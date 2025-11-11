@@ -383,3 +383,11 @@ describe('paginationSchemaWithLimit', () => {
     expect(() => schema.parse({ limit: '501', offset: '0' })).toThrow();
   });
 });
+
+
+
+
+
+
+
+

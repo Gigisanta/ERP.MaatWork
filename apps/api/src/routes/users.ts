@@ -18,6 +18,15 @@ const createUserSchema = z.object({
   isActive: z.boolean().default(true)
 });
 
+// Zod Validation Schemas
+const updateStatusSchema = z.object({
+  isActive: z.boolean()
+});
+
+const updateRoleSchema = z.object({
+  role: z.enum(['admin', 'manager', 'advisor'])
+});
+
 router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const all = await db().select().from(users).limit(25);
@@ -115,6 +124,70 @@ router.get('/advisors', requireAuth, async (req: Request, res: Response, next: N
     next(err);
   }
 });
+
+// ==========================================================
+// PATCH /users/:id/status - Actualizar estado activo (admin only)
+// ==========================================================
+router.patch(
+  '/:id/status',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema, body: updateStatusSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params as { id: string };
+      const { isActive } = req.body as { isActive: boolean };
+
+      const [updatedUser] = await db()
+        .update(users)
+        .set({ isActive })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      req.log.info({ userId: id, isActive }, 'user status updated');
+      res.json({ success: true, data: updatedUser });
+    } catch (err) {
+      req.log.error({ err, userId: req.params.id }, 'failed to update user status');
+      next(err);
+    }
+  }
+);
+
+// ==========================================================
+// PATCH /users/:id/role - Actualizar rol (admin only)
+// ==========================================================
+router.patch(
+  '/:id/role',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema, body: updateRoleSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params as { id: string };
+      const { role } = req.body as { role: 'admin' | 'manager' | 'advisor' };
+
+      const [updatedUser] = await db()
+        .update(users)
+        .set({ role })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      req.log.info({ userId: id, role }, 'user role updated');
+      res.json({ success: true, data: updatedUser });
+    } catch (err) {
+      req.log.error({ err, userId: req.params.id }, 'failed to update user role');
+      next(err);
+    }
+  }
+);
 
 // ==========================================================
 // GET /users/me - Obtener información del usuario actual

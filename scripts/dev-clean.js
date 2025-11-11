@@ -22,8 +22,18 @@ if (isWindows) {
         stdio: 'inherit',
         cwd: projectRoot
       });
+      // Si llegamos aquí, el script se ejecutó correctamente
+      // El script PowerShell ahora retorna exit 0 si todo está bien, exit 1 si hay problemas
     } catch (error) {
-      // Ignorar errores de procesos que no existen
+      // Si el script PowerShell retorna exit 1, el proceso falla
+      // Esto es intencional - queremos que el usuario sepa que hay problemas
+      if (error.status === 1) {
+        console.error('\n❌ No se pudieron liberar todos los puertos.');
+        console.error('   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o 3002');
+        console.error('   y vuelve a intentar.\n');
+        process.exit(1);
+      }
+      // Otros errores pueden ser ignorados (procesos que no existen, etc.)
       process.exit(0);
     }
   } else {

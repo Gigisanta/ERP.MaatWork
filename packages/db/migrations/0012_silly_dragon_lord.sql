@@ -1,0 +1,2 @@
+ALTER TABLE "aum_import_rows" ADD COLUMN "needs_confirmation" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_aum_rows_id_cuenta" ON "aum_import_rows" USING btree ("id_cuenta");

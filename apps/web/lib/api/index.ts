@@ -132,7 +132,10 @@ export {
   getManagers,
   updateUserRole,
   updateUserStatus,
-  deleteUser
+  deleteUser,
+  getPendingUsers,
+  approveUser,
+  rejectUser
 } from './users';
 
 // Teams methods
@@ -152,7 +155,9 @@ export {
   getPendingInvitations,
   respondToInvitation,
   inviteTeamMember,
-  getAllTeamMembers
+  getAllTeamMembers,
+  getTeamMetrics,
+  getTeamMemberMetrics
 } from './teams';
 
 // Metrics methods

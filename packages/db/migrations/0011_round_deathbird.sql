@@ -1,0 +1,1 @@
+ALTER TABLE "aum_import_rows" ADD COLUMN "id_cuenta" text;

@@ -177,3 +177,11 @@ describe('GET /portfolios/contacts/:id/portfolio', () => {
     expect(accessScope.role).toBe('advisor');
   });
 });
+
+
+
+
+
+
+
+

@@ -2,6 +2,7 @@
 // REGLA CURSOR: Página principal - mantener AuthContext, no eliminar loading states, preservar feedback visual
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from './auth/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent, Button, Icon, Heading, Text, Stack, Spinner, Alert, Select, type SelectItem } from '@cactus/ui';
 import { getContactsMetrics, getMonthlyGoals } from '@/lib/api/metrics';
@@ -30,6 +31,7 @@ type ChartView = 'goals' | 'businessLines' | 'transitionTimes';
 
 export default function HomePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [metricsData, setMetricsData] = useState<MonthlyMetrics | null>(null);
   const [goalsData, setGoalsData] = useState<MonthlyGoal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -306,8 +308,8 @@ export default function HomePage() {
                 <Text color="secondary">
                   Gestiona tus contactos y carteras de inversión de manera profesional
                 </Text>
-                <Button variant="primary">
-                  <Link href="/login">Iniciar sesión</Link>
+                <Button variant="primary" onClick={() => router.push('/login')}>
+                  Iniciar sesión
                 </Button>
               </Stack>
             </CardContent>

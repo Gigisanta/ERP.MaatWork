@@ -232,9 +232,6 @@ class ApiClient {
    * AI_DECISION: Implementar refresh token automático para 401
    * Justificación: Mejora UX, evita que usuarios sean deslogueados por tokens expirados
    * Impacto: Sesiones más largas sin interrupciones, mejor experiencia
-   * 
-   * Nota: Actualmente no hay endpoint de refresh, pero la lógica está preparada
-   * Cuando se agregue /v1/auth/refresh, esta función lo usará automáticamente
    */
   private async refreshToken(): Promise<boolean> {
     // Si ya hay un refresh en progreso, esperar a que termine
@@ -246,10 +243,7 @@ class ApiClient {
     this.isRefreshing = true;
     this.refreshPromise = (async () => {
       try {
-        // Intentar llamar a endpoint de refresh (si existe)
-        // Por ahora, como no hay endpoint, retornar false
-        // Cuando se agregue /v1/auth/refresh, descomentar:
-        /*
+        // Llamar a endpoint de refresh
         const response = await this.fetchWithTimeout(`${this.config.baseUrl}/v1/auth/refresh`, {
           method: 'POST',
           credentials: 'include'
@@ -259,9 +253,7 @@ class ApiClient {
           // Cookie actualizada automáticamente por el servidor
           return true;
         }
-        */
 
-        // Por ahora, no hay endpoint de refresh, retornar false
         return false;
       } catch (error) {
         // Si falla el refresh, retornar false

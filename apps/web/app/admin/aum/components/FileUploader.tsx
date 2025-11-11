@@ -116,14 +116,9 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           fileInputRef.current.value = '';
         }
         
-        // Log información de procesamiento
-        if (resp.data.totals) {
-          console.log('[AUM Upload] Archivo procesado:', {
-            fileId: resp.data.fileId,
-            filename: resp.data.filename,
-            totals: resp.data.totals
-          });
-        }
+        // AI_DECISION: Remover console.log en producción
+        // Justificación: Logging estructurado debe usar logger, no console.log
+        // Impacto: Código más limpio y profesional
         
         if (onUploadSuccess && resp.data.fileId) {
           onUploadSuccess(resp.data.fileId);
@@ -136,13 +131,11 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           : null;
         const errorMsg = resp?.error || details || 'Error desconocido al procesar archivo';
         setError(errorMsg);
-        console.error('[AUM Upload] Error en respuesta:', resp);
       }
     } catch (e: unknown) {
       const apiErr = e as ApiErrorWithMessage;
       const errorMsg = apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
       setError(errorMsg);
-      console.error('[AUM Upload] Error al subir archivo:', e);
     } finally {
       setUploading(false);
     }

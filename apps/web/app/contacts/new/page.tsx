@@ -23,6 +23,7 @@ import {
   Alert,
   Breadcrumbs,
   BreadcrumbItem,
+  Spinner,
 } from '@cactus/ui';
 
 interface FormData {
@@ -91,15 +92,27 @@ export default function NewContactPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+
   const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof FormData, string>> = {};
+    
     if (!formData.firstName.trim()) {
-      setError('El nombre es requerido');
-      return false;
+      errors.firstName = 'El nombre es requerido';
     }
     if (!formData.lastName.trim()) {
-      setError('El apellido es requerido');
+      errors.lastName = 'El apellido es requerido';
+    }
+    
+    setFieldErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      setError('Por favor corrige los errores en el formulario');
       return false;
     }
+    
+    setFieldErrors({});
+    setError(null);
     return true;
   };
 
@@ -200,10 +213,10 @@ export default function NewContactPage() {
   if (isLoading && !pipelineStages.length) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p>Cargando...</p>
-        </div>
+        <Stack direction="column" gap="md" align="center">
+          <Spinner size="lg" />
+          <Text color="secondary">Cargando formulario...</Text>
+        </Stack>
       </div>
     );
   }
@@ -268,20 +281,33 @@ export default function NewContactPage() {
                       <Input
                         label="Nombre"
                         value={formData.firstName}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        onChange={(e) => {
+                          handleInputChange('firstName', e.target.value);
+                          if (fieldErrors.firstName) {
+                            setFieldErrors(prev => ({ ...prev, firstName: undefined }));
+                          }
+                        }}
                         placeholder="Juan"
                         disabled={isLoading || submitLoading}
                         required
                         className="w-full"
+                        autoFocus
+                        error={fieldErrors.firstName}
                       />
                       <Input
                         label="Apellido"
                         value={formData.lastName}
-                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        onChange={(e) => {
+                          handleInputChange('lastName', e.target.value);
+                          if (fieldErrors.lastName) {
+                            setFieldErrors(prev => ({ ...prev, lastName: undefined }));
+                          }
+                        }}
                         placeholder="Pérez"
                         disabled={isLoading || submitLoading}
                         required
                         className="w-full"
+                        error={fieldErrors.lastName}
                       />
                     </div>
                     

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -42,7 +42,8 @@ export const Select = React.forwardRef<
   required = false,
   ..._props
 }, ref) => {
-  const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const selectId = id || generatedId;
   const helperId = helperText ? `${selectId}-helper` : undefined;
   const errorId = error ? `${selectId}-error` : undefined;
 

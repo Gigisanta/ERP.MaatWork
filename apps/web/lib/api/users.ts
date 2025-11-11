@@ -82,3 +82,24 @@ export async function deleteUser(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/users/${id}`);
 }
 
+/**
+ * Listar usuarios pendientes de aprobación (admin)
+ */
+export async function getPendingUsers(): Promise<ApiResponse<UserApiResponse[]>> {
+  return apiClient.get<UserApiResponse[]>('/v1/users/pending');
+}
+
+/**
+ * Aprobar usuario pendiente (admin)
+ */
+export async function approveUser(id: string): Promise<ApiResponse<UserApiResponse>> {
+  return apiClient.post<UserApiResponse>(`/v1/users/${id}/approve`, {});
+}
+
+/**
+ * Rechazar usuario pendiente (admin)
+ */
+export async function rejectUser(id: string): Promise<ApiResponse<void>> {
+  return apiClient.post<void>(`/v1/users/${id}/reject`, {});
+}
+

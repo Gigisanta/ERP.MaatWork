@@ -61,6 +61,7 @@ export {
   // AUM staging
   aumImportFiles,
   aumImportRows,
+  aumMonthlySnapshots,
   // Settings / mappings
   advisorAliases,
   advisorAccountMapping,
@@ -88,6 +89,7 @@ export {
   dailyMetricsUser,
   monthlyGoals,
   aumSnapshots,
+  activityEvents,
   // Integration
   integrationAccounts,
   integrationJobs,

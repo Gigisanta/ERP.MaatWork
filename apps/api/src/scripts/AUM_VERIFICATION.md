@@ -307,3 +307,6 @@ pnpm -F @cactus/api verify-aum-import --file "mi-archivo.csv"
 - [Documentación de Importación AUM](../../routes/aum.ts)
 - [Mapeo de Columnas AUM](../../utils/aum-column-mapper.ts)
 
+
+
+

@@ -30,7 +30,10 @@
     "predev": "node scripts/dev-clean.js",
     "predev:basic": "node scripts/dev-clean.js",
     "prepare": "husky install",
-    "guard:artifacts": "node scripts/guard-artifacts.js"
+    "guard:artifacts": "node scripts/guard-artifacts.js",
+    "verify:aum": "node scripts/verify-aum-import.js",
+    "verify:aum:csv": "node scripts/verify-aum-csv-only.js",
+    "test:aum:full": "node scripts/test-aum-import-full.js"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
