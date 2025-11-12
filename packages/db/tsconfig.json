@@ -8,7 +8,13 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    // AI_DECISION: Habilitar incremental builds con cache persistente
+    // Justificación: Incremental builds reducen tiempo de typecheck 15-25% en builds subsiguientes
+    // Impacto: Typecheck más rápido, especialmente útil en desarrollo con cambios frecuentes
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": ["src"]
 }

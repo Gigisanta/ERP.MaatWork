@@ -7,7 +7,7 @@ export interface ConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   title: string;
-  description?: string;
+  description?: string | null | undefined;
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: 'danger' | 'default';

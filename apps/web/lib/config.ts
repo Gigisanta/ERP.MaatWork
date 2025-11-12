@@ -18,6 +18,9 @@ export const config = {
   apiUrl: getRequiredEnv('NEXT_PUBLIC_API_URL', 'http://localhost:3001'),
   apiTimeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
   
+  // N8N Configuration
+  n8nUrl: process.env.NEXT_PUBLIC_N8N_URL || 'http://localhost:5678',
+  
   // Environment
   environment: process.env.NODE_ENV || 'development',
   isDevelopment: process.env.NODE_ENV === 'development',

@@ -7,6 +7,7 @@
     "build": "turbo run build",
     "build:clean": "turbo run build:clean && turbo run build",
     "dev": "node scripts/dev.js",
+    "dev:fast": "node scripts/dev.js --skip-validation",
     "dev:basic": "turbo run dev --parallel",
     "dev:clean": "pnpm dev:kill && pnpm -F @cactus/web clean && pnpm dev",
     "dev:kill": "node scripts/dev-kill.js",

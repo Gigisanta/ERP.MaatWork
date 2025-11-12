@@ -141,18 +141,6 @@ export const DataTable = <T extends Record<string, unknown>>({
     onSelectionChange?.(selectedData);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return <EmptyState title={emptyMessage} />;
-  }
-
   const renderRow = useCallback((item: T, index: number, virtualRow?: { index: number; start: number; size: number }) => {
     const rowContent = (
       <tr
@@ -198,6 +186,18 @@ export const DataTable = <T extends Record<string, unknown>>({
     );
     return rowContent;
   }, [keyField, onRowClick, selectedItems, selectable, columns, handleRowClick, handleSelectItem]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return <EmptyState title={emptyMessage} />;
+  }
 
   const isVirtualized = shouldVirtualize;
 

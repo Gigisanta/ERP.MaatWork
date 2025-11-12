@@ -33,6 +33,7 @@ import logsRouter from './routes/logs';
 import brokerAccountsRouter from './routes/broker-accounts';
 import aumRouter from './routes/aum';
 import settingsAdvisorsRouter from './routes/settings-advisors';
+import careerPlanRouter from './routes/career-plan';
 import metricsRouter from './routes/metrics';
 import capacitacionesRouter from './routes/capacitaciones';
 import cors, { type CorsOptions } from 'cors';
@@ -42,8 +43,11 @@ import { initializeDatabase } from './db-init';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// AI_DECISION: Optimizar nivel de logging en desarrollo para mejorar rendimiento
+// Justificación: Logging 'debug' es muy verboso y agrega overhead significativo en desarrollo
+// Impacto: Reduce uso de CPU/memoria, inicio más rápido, menos ruido en consola
 const loggerOptions: PinoLoggerOptions = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'debug')
+  level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'info') // 'info' en lugar de 'debug' para desarrollo
 };
 
 // Personalizar o deshabilitar hostname en los logs
@@ -332,6 +336,7 @@ app.use('/logs', logsRouter);
 app.use('/broker-accounts', brokerAccountsRouter);
 app.use('/admin/aum', aumRouter);
 app.use('/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/career-plan', careerPlanRouter);
 app.use('/metrics', metricsRouter);
 app.use('/capacitaciones', capacitacionesRouter);
 
@@ -354,6 +359,7 @@ app.use('/v1/logs', logsRouter);
 app.use('/v1/broker-accounts', brokerAccountsRouter);
 app.use('/v1/admin/aum', aumRouter);
 app.use('/v1/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/v1/career-plan', careerPlanRouter);
 app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
 

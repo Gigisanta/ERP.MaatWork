@@ -7,6 +7,7 @@ import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
 import type { ApiResponse } from './api-client';
+import type { Row } from '@/types';
 
 // Generic fetcher function using centralized fetchJson (handles cookies, timeout, logging)
 const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
@@ -296,7 +297,7 @@ export function useAumRows(params?: {
   const swrKey = user ? url : null;
   
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<{
-    rows: unknown[];
+    rows: Row[];
     pagination: {
       total: number;
       limit: number;
@@ -313,13 +314,13 @@ export function useAumRows(params?: {
   // AI_DECISION: Manejar estructura de respuesta flexible
   // Justificación: La API puede devolver datos en diferentes formatos (data.rows vs rows)
   // Impacto: Mayor robustez ante cambios en estructura de respuesta
-  const responseData = data?.data || data;
-  const rows = responseData?.rows || [];
-  const pagination = responseData?.pagination || { total: 0, limit: 50, offset: 0, hasMore: false };
-  const totalRows = responseData?.totalRows || pagination.total || rows.length;
+  const responseData = data?.data;
+  const rows = responseData?.rows ?? [];
+  const pagination = responseData?.pagination ?? { total: 0, limit: 50, offset: 0, hasMore: false };
+  const totalRows = pagination.total ?? rows.length;
   
   return {
-    rows: rows as unknown[],
+    rows,
     totalRows,
     pagination,
     error,

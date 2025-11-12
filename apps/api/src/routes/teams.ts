@@ -23,7 +23,8 @@ const router = Router();
 const createTeamSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().nullable(),
-  managerUserId: z.string().uuid().optional().nullable()
+  managerUserId: z.string().uuid().optional().nullable(),
+  calendarUrl: z.string().url().max(500).optional().nullable()
 });
 
 const updateTeamSchema = createTeamSchema.partial();

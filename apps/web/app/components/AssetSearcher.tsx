@@ -13,7 +13,7 @@ import {
   CardContent,
 } from '@cactus/ui';
 import { useAuth } from '../auth/AuthContext';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { InstrumentSearchResult, Currency, AssetType } from '@/types';
 
 interface AssetSearcherProps {
@@ -44,11 +44,13 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
     async (searchQuery: string) => {
       if (searchQuery.length < 2) {
         setSearchResults([]);
+        setError(null);
         return;
       }
       
       if (!user) {
         setError('Debes iniciar sesión para buscar activos');
+        setSearchResults([]);
         return;
       }
       
@@ -60,13 +62,62 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         const response = await searchInstruments(searchQuery);
 
         if (response.success && response.data) {
-          setSearchResults(response.data);
+          // Verificar si hay resultados
+          if (Array.isArray(response.data) && response.data.length > 0) {
+            // Convertir InstrumentSearchResult[] a SearchResult[]
+            const convertedResults: SearchResult[] = response.data.map((item: InstrumentSearchResult) => ({
+              symbol: item.symbol,
+              name: item.name || item.symbol,
+              shortName: item.name,
+              exchange: 'Unknown', // InstrumentSearchResult no tiene exchange
+              currency: item.currency || 'USD',
+              type: item.type || 'EQUITY',
+            }));
+            setSearchResults(convertedResults);
+            setError(null);
+          } else {
+            // Sin resultados pero búsqueda exitosa
+            setSearchResults([]);
+            setError(null);
+            // Guardar respuesta para mostrar hint si está disponible
+            if ((response as any).hint) {
+              setError((response as any).hint);
+            }
+          }
         } else {
-          setSearchResults([]);
+          // Respuesta con error del backend
+          const errorMsg = (response as any).error || 'Error al buscar activos';
+          const details = (response as any).details || '';
+          
+          // Detectar si es error de servicio no disponible (503)
+          if ((response as any).status === 503 || errorMsg.includes('temporarily unavailable')) {
+            setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
+            // Intentar buscar en BD como fallback (ya debería estar hecho en backend)
+            setSearchResults([]);
+          } else {
+            setError(details || errorMsg);
+            setSearchResults([]);
+          }
         }
-      } catch (err) {
-        logger.error('Error searching instruments', { err, query: searchQuery });
-        setError('Error al buscar activos. Intenta nuevamente.');
+      } catch (err: any) {
+        logger.error('Error searching instruments', toLogContext({ err, query: searchQuery }));
+        
+        // Detectar tipo de error específico
+        const errorStatus = err?.status || err?.response?.status;
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const errorDetails = err?.details || err?.response?.data?.details || '';
+        
+        if (errorStatus === 503 || errorMessage.includes('temporarily unavailable') || errorMessage.includes('Service Unavailable')) {
+          setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
+        } else if (errorStatus === 504 || errorMessage.includes('timeout') || errorMessage.includes('Gateway Timeout')) {
+          setError('La búsqueda está tardando demasiado. Intenta con un término más específico o usa el símbolo directo.');
+        } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+          setError('No se pudo conectar con el servicio de búsqueda. Verifica tu conexión o intenta más tarde.');
+        } else if (errorDetails) {
+          setError(errorDetails);
+        } else {
+          setError('Error al buscar activos. Intenta nuevamente o usa el símbolo directo.');
+        }
         setSearchResults([]);
       } finally {
         setLoading(false);
@@ -93,15 +144,11 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   const handleSelectAsset = (asset: SearchResult) => {
     // Mapear resultado de API a formato esperado
     const instrument: InstrumentSearchResult = {
+      id: asset.symbol, // Usar symbol como id temporal
       symbol: asset.symbol,
       name: asset.name || asset.shortName || asset.symbol,
-      shortName: asset.shortName || asset.name || asset.symbol,
-      exchange: asset.exchange || 'Unknown',
       currency: (asset.currency || 'USD') as Currency,
       type: (asset.type || 'EQUITY') as AssetType,
-      ...(asset.sector && { sector: asset.sector }),
-      ...(asset.industry && { industry: asset.industry }),
-      success: true
     };
     
     onAssetSelect(instrument);
@@ -112,49 +159,75 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   const handleDirectSymbol = async () => {
     if (query.trim() && user) {
       const symbol = query.trim().toUpperCase();
+      let validationFailed = false;
+      let errorMessage = '';
       
       // Validar símbolo directamente
       try {
         setLoading(true);
+        setError(null);
         const { validateSymbol } = await import('@/lib/api');
         const response = await validateSymbol(symbol);
         
-        if (response.success && response.data?.valid) {
+        if (response.success && response.data?.isValid) {
           const instrument: InstrumentSearchResult = {
-            symbol: response.data.symbol || symbol,
-            name: response.data.name || symbol,
-            shortName: response.data.name || symbol,
-            exchange: response.data.exchange || 'Unknown',
-            currency: (response.data.currency || 'USD') as Currency,
-            type: (response.data.type || 'EQUITY') as AssetType,
-            success: true
+            symbol: symbol,
+            name: symbol,
+            id: symbol, // Usar symbol como id temporal
+            currency: 'USD' as Currency,
+            type: 'EQUITY' as AssetType,
           };
           
           onAssetSelect(instrument);
           setQuery('');
           setSearchResults([]);
+          setError(null);
+          setLoading(false);
           return;
+        } else if (response.success && response.data && !response.data.isValid) {
+          // Símbolo no válido según el servicio
+          validationFailed = true;
+          errorMessage = `El símbolo "${symbol}" no fue encontrado. Puedes agregarlo de todas formas, pero es posible que no haya datos disponibles.`;
+        } else {
+          validationFailed = true;
+          errorMessage = `No se pudo validar el símbolo "${symbol}". Se agregará sin validar.`;
         }
-      } catch (err) {
-        logger.error('Error validating symbol', { err, symbol });
+      } catch (err: any) {
+        logger.error('Error validating symbol', toLogContext({ err, symbol }));
+        validationFailed = true;
+        
+        // Detectar tipo de error
+        const errorStatus = err?.status || err?.response?.status;
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        
+        if (errorStatus === 503 || errorMsg.includes('temporarily unavailable')) {
+          errorMessage = `El servicio de validación no está disponible. Se agregará "${symbol}" sin validar.`;
+        } else if (errorStatus === 504 || errorMsg.includes('timeout')) {
+          errorMessage = `La validación está tardando demasiado. Se agregará "${symbol}" sin validar.`;
+        } else {
+          errorMessage = `No se pudo validar el símbolo. Se agregará "${symbol}" sin validar.`;
+        }
       } finally {
         setLoading(false);
       }
       
-      // Si la validación falla, usar símbolo directo
-      const instrument: InstrumentSearchResult = {
-        symbol: symbol,
-        name: symbol,
-        shortName: symbol,
-        exchange: 'UNKNOWN',
-        currency: 'USD' as Currency,
-        type: 'EQUITY' as AssetType,
-        success: false
-      };
-      
-      onAssetSelect(instrument);
-      setQuery('');
-      setSearchResults([]);
+      // Si la validación falla o no está disponible, usar símbolo directo después de un breve delay
+      if (validationFailed) {
+        setError(errorMessage);
+        setTimeout(() => {
+          const instrument: InstrumentSearchResult = {
+            id: symbol, // Usar symbol como id temporal
+            symbol: symbol,
+            name: symbol,
+            currency: 'USD' as Currency,
+            type: 'EQUITY' as AssetType,
+          };
+          
+          onAssetSelect(instrument);
+          setQuery('');
+          setSearchResults([]);
+        }, 1500);
+      }
     }
   };
 
@@ -231,12 +304,20 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
           </Card>
         )}
         
-        {!loading && query.length >= 2 && searchResults.length === 0 && (
+        {!loading && !error && query.length >= 2 && searchResults.length === 0 && (
           <Alert variant="warning">
             <Text size="sm">
-              No se encontraron resultados para &quot;{query}&quot;. 
-              Puedes usar el símbolo directo o probar con términos más generales.
+              No se encontraron resultados para &quot;{query}&quot;.
             </Text>
+            <Text size="xs" color="muted" className="mt-1">
+              Puedes usar el símbolo directo (botón +) o probar con términos más generales.
+            </Text>
+          </Alert>
+        )}
+        
+        {error && !loading && query.length >= 2 && (
+          <Alert variant="info">
+            <Text size="sm">{error}</Text>
           </Alert>
         )}
         

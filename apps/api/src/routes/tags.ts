@@ -381,7 +381,9 @@ router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
         name: tags.name,
         color: tags.color,
         icon: tags.icon,
-        businessLine: tags.businessLine
+        businessLine: tags.businessLine,
+        monthlyPremium: contactTags.monthlyPremium,
+        policyNumber: contactTags.policyNumber
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
@@ -490,7 +492,9 @@ router.put('/contacts/:id',
         name: tags.name,
         color: tags.color,
         icon: tags.icon,
-        businessLine: tags.businessLine
+        businessLine: tags.businessLine,
+        monthlyPremium: contactTags.monthlyPremium,
+        policyNumber: contactTags.policyNumber
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
@@ -500,6 +504,289 @@ router.put('/contacts/:id',
     res.json({ success: true, data: updatedTags });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact tags');
+    next(err);
+  }
+});
+
+// ==========================================================
+// GET /contacts/:contactId/tags/:tagId - Obtener datos de relación contacto-etiqueta específica
+// ==========================================================
+
+const contactTagParamsSchema = z.object({
+  contactId: uuidSchema,
+  tagId: uuidSchema
+});
+
+router.get('/contacts/:contactId/tags/:tagId',
+  requireAuth,
+  validate({ params: contactTagParamsSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { contactId, tagId } = req.params;
+
+    // Verify user has access to this contact
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+    const hasAccess = await canAccessContact(userId, userRole, contactId);
+
+    if (!hasAccess) {
+      req.log.warn({ 
+        contactId, 
+        tagId,
+        userId, 
+        userRole 
+      }, 'user attempted to get contact tag for inaccessible contact');
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    // Obtener relación contacto-etiqueta con información completa
+    const [contactTagData] = await db()
+      .select({
+        id: contactTags.id,
+        contactId: contactTags.contactId,
+        tagId: contactTags.tagId,
+        monthlyPremium: contactTags.monthlyPremium,
+        policyNumber: contactTags.policyNumber,
+        createdAt: contactTags.createdAt,
+        tag: {
+          id: tags.id,
+          name: tags.name,
+          color: tags.color,
+          icon: tags.icon,
+          businessLine: tags.businessLine,
+          scope: tags.scope,
+          description: tags.description,
+          createdAt: tags.createdAt,
+          updatedAt: tags.updatedAt
+        }
+      })
+      .from(contactTags)
+      .innerJoin(tags, eq(contactTags.tagId, tags.id))
+      .where(and(
+        eq(contactTags.contactId, contactId),
+        eq(contactTags.tagId, tagId)
+      ))
+      .limit(1);
+
+    if (!contactTagData) {
+      return res.status(404).json({ error: 'Contact tag relationship not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      data: {
+        id: contactTagData.id,
+        contactId: contactTagData.contactId,
+        tagId: contactTagData.tagId,
+        monthlyPremium: contactTagData.monthlyPremium,
+        policyNumber: contactTagData.policyNumber,
+        createdAt: contactTagData.createdAt.toISOString(),
+        tag: {
+          ...contactTagData.tag,
+          createdAt: contactTagData.tag.createdAt.toISOString(),
+          updatedAt: contactTagData.tag.updatedAt.toISOString()
+        }
+      }
+    });
+  } catch (err) {
+    req.log.error({ err, contactId: req.params.contactId, tagId: req.params.tagId }, 'failed to get contact tag');
+    next(err);
+  }
+});
+
+// ==========================================================
+// PUT /contacts/:contactId/tags/:tagId - Actualizar datos de relación contacto-etiqueta
+// ==========================================================
+
+// AI_DECISION: Usar union para manejar null correctamente con positive()
+// Justificación: z.number().positive().nullable() falla porque null no pasa la validación de positive()
+// Impacto: Permite null y números positivos, pero rechaza números negativos o cero
+const updateContactTagSchema = z.object({
+  monthlyPremium: z.union([
+    z.number().int().positive(),
+    z.null()
+  ]).optional(),
+  policyNumber: z.union([
+    z.string().max(100),
+    z.null()
+  ]).optional()
+});
+
+router.put('/contacts/:contactId/tags/:tagId',
+  requireAuth,
+  validate({ 
+    params: contactTagParamsSchema,
+    body: updateContactTagSchema 
+  }),
+  async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { contactId, tagId } = req.params;
+    const { monthlyPremium, policyNumber } = req.body;
+    
+    req.log.info({ contactId, tagId, monthlyPremium, policyNumber }, 'PUT /contacts/:contactId/tags/:tagId - inicio');
+
+    // Verify user has access to this contact
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+    const hasAccess = await canAccessContact(userId, userRole, contactId);
+
+    if (!hasAccess) {
+      req.log.warn({ 
+        contactId, 
+        tagId,
+        userId, 
+        userRole 
+      }, 'user attempted to update contact tag for inaccessible contact');
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    // Verificar que la relación existe
+    const [existingRelation] = await db()
+      .select({
+        id: contactTags.id,
+        tagBusinessLine: tags.businessLine
+      })
+      .from(contactTags)
+      .innerJoin(tags, eq(contactTags.tagId, tags.id))
+      .where(and(
+        eq(contactTags.contactId, contactId),
+        eq(contactTags.tagId, tagId)
+      ))
+      .limit(1);
+
+    if (!existingRelation) {
+      return res.status(404).json({ error: 'Contact tag relationship not found' });
+    }
+
+    // Validar que la etiqueta tiene businessLine 'zurich'
+    if (existingRelation.tagBusinessLine !== 'zurich') {
+      return res.status(400).json({ 
+        error: 'This endpoint is only available for tags with businessLine "zurich"' 
+      });
+    }
+
+    // Actualizar campos
+    // AI_DECISION: Incluir campos explícitamente incluso si son null para permitir limpiar valores
+    // Justificación: Si el usuario quiere limpiar un campo, debe poder enviar null explícitamente
+    // Impacto: Permite limpiar campos estableciéndolos en null
+    const updateData: { monthlyPremium?: number | null; policyNumber?: string | null } = {};
+    
+    // Incluir monthlyPremium si está presente (incluso si es null)
+    if (monthlyPremium !== undefined) {
+      updateData.monthlyPremium = monthlyPremium;
+    }
+    
+    // Incluir policyNumber si está presente (incluso si es null)
+    if (policyNumber !== undefined) {
+      updateData.policyNumber = policyNumber;
+    }
+
+    req.log.info({ contactId, tagId, updateData }, 'preparando actualización de contact tag');
+
+    // Si no hay nada que actualizar, retornar datos actuales sin error
+    if (Object.keys(updateData).length === 0) {
+      req.log.info({ contactId, tagId }, 'no changes to update, returning current data');
+      // Obtener datos actuales y retornarlos
+      const [currentData] = await db()
+        .select({
+          id: contactTags.id,
+          contactId: contactTags.contactId,
+          tagId: contactTags.tagId,
+          monthlyPremium: contactTags.monthlyPremium,
+          policyNumber: contactTags.policyNumber,
+          createdAt: contactTags.createdAt,
+          tag: {
+            id: tags.id,
+            name: tags.name,
+            color: tags.color,
+            icon: tags.icon,
+            businessLine: tags.businessLine,
+            scope: tags.scope,
+            description: tags.description,
+            createdAt: tags.createdAt,
+            updatedAt: tags.updatedAt
+          }
+        })
+        .from(contactTags)
+        .innerJoin(tags, eq(contactTags.tagId, tags.id))
+        .where(eq(contactTags.id, existingRelation.id))
+        .limit(1);
+
+      if (!currentData) {
+        return res.status(404).json({ error: 'Contact tag relationship not found' });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          id: currentData.id,
+          contactId: currentData.contactId,
+          tagId: currentData.tagId,
+          monthlyPremium: currentData.monthlyPremium,
+          policyNumber: currentData.policyNumber,
+          createdAt: currentData.createdAt.toISOString(),
+          tag: {
+            ...currentData.tag,
+            createdAt: currentData.tag.createdAt.toISOString(),
+            updatedAt: currentData.tag.updatedAt.toISOString()
+          }
+        }
+      });
+    }
+
+    // Ejecutar actualización
+    await db()
+      .update(contactTags)
+      .set(updateData)
+      .where(eq(contactTags.id, existingRelation.id));
+    
+    req.log.info({ contactId, tagId, updateData }, 'contact tag actualizado en BD');
+
+    // Obtener datos actualizados
+    const [updatedData] = await db()
+      .select({
+        id: contactTags.id,
+        contactId: contactTags.contactId,
+        tagId: contactTags.tagId,
+        monthlyPremium: contactTags.monthlyPremium,
+        policyNumber: contactTags.policyNumber,
+        createdAt: contactTags.createdAt,
+        tag: {
+          id: tags.id,
+          name: tags.name,
+          color: tags.color,
+          icon: tags.icon,
+          businessLine: tags.businessLine,
+          scope: tags.scope,
+          description: tags.description,
+          createdAt: tags.createdAt,
+          updatedAt: tags.updatedAt
+        }
+      })
+      .from(contactTags)
+      .innerJoin(tags, eq(contactTags.tagId, tags.id))
+      .where(eq(contactTags.id, existingRelation.id))
+      .limit(1);
+
+    req.log.info({ contactId, tagId, updateData }, 'contact tag updated');
+    res.json({ 
+      success: true, 
+      data: {
+        id: updatedData!.id,
+        contactId: updatedData!.contactId,
+        tagId: updatedData!.tagId,
+        monthlyPremium: updatedData!.monthlyPremium,
+        policyNumber: updatedData!.policyNumber,
+        createdAt: updatedData!.createdAt.toISOString(),
+        tag: {
+          ...updatedData!.tag,
+          createdAt: updatedData!.tag.createdAt.toISOString(),
+          updatedAt: updatedData!.tag.updatedAt.toISOString()
+        }
+      }
+    });
+  } catch (err) {
+    req.log.error({ err, contactId: req.params.contactId, tagId: req.params.tagId }, 'failed to update contact tag');
     next(err);
   }
 });

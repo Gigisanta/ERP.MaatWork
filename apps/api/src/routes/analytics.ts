@@ -490,17 +490,47 @@ router.get('/performance/:portfolioId', requireAuth, requireRole(['advisor', 'ma
         throw new Error('Invalid response from Python service');
       }
 
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        req.log.error({ portfolioId }, 'Timeout calling Python service for portfolio performance');
+        req.log.error({ 
+          portfolioId,
+          pythonServiceUrl: PYTHON_SERVICE_URL,
+          timeout: TIMEOUTS.PORTFOLIO_PERFORMANCE,
+          hint: 'Analytics service may be slow or unavailable. Check service status or increase timeout.'
+        }, 'Timeout calling Python service for portfolio performance');
         return res.status(504).json({
           error: 'Service timeout',
           details: 'Portfolio performance calculation timed out'
         });
       }
 
+      // Detectar errores de conexión específicos
+      const isConnectionError = 
+        fetchError.code === 'ECONNREFUSED' ||
+        fetchError.code === 'ETIMEDOUT' ||
+        (fetchError.message && (
+          fetchError.message.includes('ECONNREFUSED') ||
+          fetchError.message.includes('ETIMEDOUT') ||
+          fetchError.message.includes('timeout') ||
+          fetchError.message.includes('fetch failed')
+        ));
+
+      const errorType = isConnectionError
+        ? (fetchError.code === 'ECONNREFUSED' 
+          ? 'connection refused (service not running)' 
+          : 'timeout or connection error')
+        : 'unknown error';
+
       // Fallback: retornar error pero no crashear
-      req.log.warn({ error: fetchError, portfolioId }, 'Error calling Python service, returning empty performance');
+      req.log.warn({ 
+        error: fetchError, 
+        portfolioId,
+        errorType,
+        pythonServiceUrl: PYTHON_SERVICE_URL,
+        hint: isConnectionError 
+          ? 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
+          : 'Check analytics service logs for details'
+      }, `Python analytics service unavailable (${errorType}), returning empty performance`);
       
       return res.json({
         success: true,
@@ -741,17 +771,47 @@ router.post('/compare', requireAuth, requireRole(['advisor', 'manager', 'admin']
         throw new Error('Invalid response from Python service');
       }
 
-    } catch (fetchError) {
+    } catch (fetchError: any) {
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        req.log.error({ portfolioIds, benchmarkIds }, 'Timeout calling Python service for portfolio comparison');
+        req.log.error({ 
+          portfolioIds, 
+          benchmarkIds,
+          pythonServiceUrl: PYTHON_SERVICE_URL,
+          timeout: getPortfolioCompareTimeout(portfolioIds.length, benchmarkIds.length),
+          hint: 'Analytics service may be slow or unavailable. Check service status or increase timeout.'
+        }, 'Timeout calling Python service for portfolio comparison');
         return res.status(504).json({
           error: 'Service timeout',
           details: 'Portfolio comparison calculation timed out'
         });
       }
 
+      // Detectar errores de conexión específicos
+      const isConnectionError = 
+        fetchError.code === 'ECONNREFUSED' ||
+        fetchError.code === 'ETIMEDOUT' ||
+        (fetchError.message && (
+          fetchError.message.includes('ECONNREFUSED') ||
+          fetchError.message.includes('ETIMEDOUT') ||
+          fetchError.message.includes('timeout') ||
+          fetchError.message.includes('fetch failed')
+        ));
+
+      const errorType = isConnectionError
+        ? (fetchError.code === 'ECONNREFUSED' 
+          ? 'connection refused (service not running)' 
+          : 'timeout or connection error')
+        : 'unknown error';
+
       // Fallback: retornar error pero no crashear
-      req.log.warn({ error: fetchError }, 'Error calling Python service, returning empty comparison');
+      req.log.warn({ 
+        error: fetchError,
+        errorType,
+        pythonServiceUrl: PYTHON_SERVICE_URL,
+        hint: isConnectionError 
+          ? 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
+          : 'Check analytics service logs for details'
+      }, `Python analytics service unavailable (${errorType}), returning empty comparison`);
       
       return res.json({
         success: true,

@@ -114,3 +114,35 @@ export async function updatePortfolioAssignmentStatus(
   return apiClient.patch<PortfolioAssignment>(`/v1/portfolios/assignments/${assignmentId}`, { status });
 }
 
+/**
+ * Enviar contactos a webhook (proxy a través del backend)
+ */
+export interface WebhookMetadata {
+  total: number;
+  exportedAt: string;
+  filters: {
+    stage: string | null;
+    tags: string[];
+    search: string | null;
+    advisorId: string | null;
+  };
+}
+
+export interface WebhookResult {
+  success: boolean;
+  message: string;
+  statusCode?: number;
+}
+
+export async function sendContactsToWebhook(
+  contacts: Contact[],
+  webhookUrl: string,
+  metadata?: Partial<WebhookMetadata>
+): Promise<ApiResponse<WebhookResult>> {
+  return apiClient.post<WebhookResult>('/v1/contacts/webhook', {
+    webhookUrl,
+    contacts,
+    metadata
+  });
+}
+

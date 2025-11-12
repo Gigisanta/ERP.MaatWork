@@ -2,7 +2,7 @@
 import React, { useState, useTransition } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Text, Button, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 interface FinancialSummarySectionProps {
   contactId: string;
@@ -44,7 +44,7 @@ export default function FinancialSummarySection({
         await updateContactField(contactId, field, value);
         router.refresh();
       } catch (err) {
-        logger.error('Error updating financial field', { err, contactId, field, value });
+        logger.error('Error updating financial field', toLogContext({ err, contactId, field, value }));
       }
     });
   };

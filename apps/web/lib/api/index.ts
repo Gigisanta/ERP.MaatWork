@@ -128,6 +128,7 @@ export {
   getUsers,
   getUserById,
   getCurrentUser,
+  updateUserProfile,
   changePassword,
   getManagers,
   updateUserRole,

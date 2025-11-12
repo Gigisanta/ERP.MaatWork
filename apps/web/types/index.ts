@@ -85,7 +85,9 @@ export type {
   TeamAdvisor,
   MembershipRequest,
   TeamInvitation,
-  TeamInvitationResponse
+  TeamInvitationResponse,
+  TeamMetrics,
+  TeamMemberMetrics
 } from './team';
 
 // Contact types
@@ -109,7 +111,10 @@ export type {
 export type {
   Tag,
   CreateTagRequest,
-  UpdateTagRequest
+  UpdateTagRequest,
+  ContactTag,
+  ContactTagWithDetails,
+  UpdateContactTagRequest
 } from './tag';
 
 // Broker Account types

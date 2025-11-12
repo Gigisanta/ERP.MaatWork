@@ -1,8 +1,7 @@
 "use client";
 import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
   CardHeader,
@@ -16,41 +15,21 @@ import {
   Alert,
   Toast,
   Badge,
-  DataTable,
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalContent,
+  ModalFooter,
+  Input,
+  Select,
   Breadcrumbs,
   BreadcrumbItem,
-  type Column,
 } from '@cactus/ui';
-import ConfirmDialog from '../components/ConfirmDialog';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { getPortfolioLines, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
+import { getPortfolioById, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
 import { logger } from '../../../lib/logger';
-import type { AddPortfolioLineRequest } from '@/types';
-
-interface PortfolioTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  riskLevel?: string;
-  createdAt: string;
-}
-
-interface TemplateLine {
-  id: string;
-  targetType: string;
-  assetClass?: string | null;
-  instrumentId?: string | null;
-  targetWeight: number;
-  instrumentName?: string;
-  instrumentSymbol?: string;
-  assetClassName?: string;
-}
-
-interface TemplateData {
-  lines: TemplateLine[];
-  totalWeight: number;
-  isValid: boolean;
-}
+import type { AddPortfolioLineRequest, PortfolioWithLines, PortfolioLine } from '@/types';
 
 interface CreateLineData {
   targetType: string;
@@ -62,15 +41,20 @@ interface CreateLineData {
 export default function PortfolioDetailPage() {
   const { user, loading } = useRequireAuth();
   const params = useParams();
+  const router = useRouter();
   const templateId = params.id as string;
   
-  const [template, setTemplate] = useState<PortfolioTemplate | null>(null);
-  const [templateData, setTemplateData] = useState<TemplateData | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioWithLines | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateLineModal, setShowCreateLineModal] = useState(false);
-  const [createLineData, setCreateLineData] = useState<CreateLineData>({
-    targetType: 'asset_class',
+  const [createLineData, setCreateLineData] = useState<{
+    targetType: 'instrument' | 'assetClass';
+    assetClass?: string;
+    instrumentId?: string;
+    targetWeight: string;
+  }>({
+    targetType: 'assetClass',
     targetWeight: '0'
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -109,49 +93,84 @@ export default function PortfolioDetailPage() {
     });
   };
 
-  // AI_DECISION: Usar cliente API centralizado en lugar de fetch directo
-  // Justificación: Retry automático, refresh token, timeout configurable, error handling consistente
-  // Impacto: Mejor resiliencia y mantenibilidad
-  const fetchTemplate = async () => {
-    if (!token || !templateId) return;
+  // AI_DECISION: Usar getPortfolioById para obtener template completo con líneas
+  // Justificación: Endpoint único que retorna toda la información necesaria
+  // Impacto: Menos requests, mejor performance, datos consistentes
+  const fetchPortfolio = async () => {
+    if (!templateId) return;
     
     try {
       setDataLoading(true);
+      setError(null);
       
-      const response = await getPortfolioLines(templateId);
+      const response = await getPortfolioById(templateId);
       
       if (response.success && response.data) {
-        const lines = response.data.lines;
-        const totalWeight = lines.reduce((sum, line) => sum + line.targetWeight, 0);
-        const isValid = Math.abs(totalWeight - 1.0) < 0.01;
-        setTemplateData({ lines, totalWeight, isValid });
+        setPortfolio(response.data);
       } else {
-        throw new Error('Failed to fetch portfolio template');
+        const errorMessage = response.error || 'Error al cargar la cartera';
+        if (errorMessage.includes('404') || errorMessage.includes('no encontrada')) {
+          setError('Cartera no encontrada');
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      logger.error('Error fetching portfolio', { err, templateId });
+      if (err instanceof Error) {
+        if (err.message.includes('fetch') || err.message.includes('network')) {
+          setError('Error de conexión. Por favor verifica tu conexión a internet.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('Error desconocido al cargar la cartera');
+      }
     } finally {
       setDataLoading(false);
     }
   };
 
   const handleCreateLine = async () => {
-    if (!token || !templateId) return;
+    if (!templateId) return;
 
     try {
       setIsCreating(true);
       
-      const weight = parseFloat(createLineData.targetWeight);
-      if (isNaN(weight) || weight <= 0 || weight > 1) {
-        throw new Error('El peso debe estar entre 0 y 1');
+      // Validar peso
+      const weightPercent = parseFloat(createLineData.targetWeight);
+      if (isNaN(weightPercent) || weightPercent <= 0 || weightPercent > 100) {
+        showToast('Peso inválido', 'El peso debe estar entre 0 y 100%', 'warning');
+        return;
+      }
+
+      // Convertir de porcentaje a decimal
+      const weight = weightPercent / 100;
+
+      // Validar que no exceda 100% total
+      const currentTotal = portfolio?.totalWeight ? portfolio.totalWeight * 100 : 0;
+      if (currentTotal + weightPercent > 100) {
+        showToast('Peso excedido', `El peso total excedería 100%. Actual: ${currentTotal.toFixed(2)}%`, 'warning');
+        return;
+      }
+
+      // Validar campos requeridos según tipo
+      if (createLineData.targetType === 'assetClass' && !createLineData.assetClass) {
+        showToast('Campo requerido', 'Debes seleccionar una clase de activo', 'warning');
+        return;
+      }
+
+      if (createLineData.targetType === 'instrument' && !createLineData.instrumentId) {
+        showToast('Campo requerido', 'Debes seleccionar un instrumento', 'warning');
+        return;
       }
 
       const payload: AddPortfolioLineRequest = {
-        targetType: createLineData.targetType as 'instrument' | 'assetClass',
+        targetType: createLineData.targetType,
         targetWeight: weight
       };
 
-      if (createLineData.targetType === 'asset_class' && createLineData.assetClass) {
+      if (createLineData.targetType === 'assetClass' && createLineData.assetClass) {
         payload.assetClass = createLineData.assetClass;
       } else if (createLineData.targetType === 'instrument' && createLineData.instrumentId) {
         payload.instrumentId = createLineData.instrumentId;
@@ -159,71 +178,71 @@ export default function PortfolioDetailPage() {
 
       const response = await addPortfolioLine(templateId, payload);
       
-      if (!response.success || !response.data) {
-        throw new Error('Failed to create template line');
+      if (!response.success) {
+        const errorMessage = response.error || 'Error al crear la línea';
+        throw new Error(errorMessage);
       }
       
-      // Actualizar la lista de líneas
-      await fetchTemplate();
+      // Recargar portfolio completo
+      await fetchPortfolio();
       
       // Reset form y cerrar modal
-      setCreateLineData({ targetType: 'asset_class', targetWeight: '0' });
+      setCreateLineData({ targetType: 'assetClass', targetWeight: '0' });
       setShowCreateLineModal(false);
+      showToast('Línea agregada', 'La línea se agregó exitosamente', 'success');
       
     } catch (err) {
-      const payload: AddPortfolioLineRequest = {
-        targetType: createLineData.targetType as 'instrument' | 'assetClass',
-        targetWeight: parseFloat(createLineData.targetWeight)
-      };
-      if (createLineData.targetType === 'asset_class' && createLineData.assetClass) {
-        payload.assetClass = createLineData.assetClass;
-      } else if (createLineData.targetType === 'instrument' && createLineData.instrumentId) {
-        payload.instrumentId = createLineData.instrumentId;
-      }
-      logger.error('Error creating template line', { err, templateId, payload });
-      showToast('Error al crear línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      logger.error('Error creating template line', { err, templateId, data: createLineData });
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      showToast('Error al crear línea', errorMessage, 'error');
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleDeleteLine = (lineId: string) => {
-    if (!token || !templateId) return;
+    if (!templateId) return;
     
     setConfirmDialog({
       open: true,
       title: 'Eliminar línea',
-      description: '¿Estás seguro de eliminar esta línea?',
+      description: '¿Estás seguro de eliminar esta línea? Esta acción no se puede deshacer.',
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await deletePortfolioLine(templateId, lineId);
+          const response = await deletePortfolioLine(templateId, lineId);
 
-          // Actualizar la lista de líneas
-          await fetchTemplate();
+          if (!response.success) {
+            const errorMessage = response.error || 'Error al eliminar la línea';
+            throw new Error(errorMessage);
+          }
+
+          // Recargar portfolio completo
+          await fetchPortfolio();
           
           showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
         } catch (err) {
           logger.error('Error deleting template line', { err, lineId, templateId });
-          showToast('Error al eliminar línea', err instanceof Error ? err.message : 'Error desconocido', 'error');
+          const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+          showToast('Error al eliminar línea', errorMessage, 'error');
         }
       }
     });
   };
 
   useEffect(() => {
-    if (token) {
-      fetchTemplate();
+    if (templateId && !loading && user) {
+      fetchPortfolio();
     }
-  }, [token, templateId]);
+  }, [templateId, loading, user]);
 
-  if (loading) {
+  if (loading || dataLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p>Cargando...</p>
-        </div>
+      <div className="flex justify-center items-center min-h-[calc(100vh-64px)] p-8">
+        <Stack direction="column" gap="md" align="center">
+          <Spinner size="lg" />
+          <Text color="secondary">Cargando cartera...</Text>
+        </Stack>
       </div>
     );
   }
@@ -231,310 +250,272 @@ export default function PortfolioDetailPage() {
   // Solo admin y managers pueden gestionar carteras
   if (user?.role !== 'admin' && user?.role !== 'manager') {
     return (
-      <main style={{ padding: 16 }}>
-        <p>No tienes permisos para gestionar carteras modelo.</p>
-        <Link href="/" style={{ color: '#3b82f6' }}>← Volver al inicio</Link>
-      </main>
+      <div className="p-8">
+        <Alert variant="error" title="Acceso denegado">
+          No tienes permisos para gestionar carteras modelo.
+        </Alert>
+        <Button onClick={() => router.push('/portfolios')} variant="outline" className="mt-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver a Carteras
+        </Button>
+      </div>
+    );
+  }
+
+  if (error && !portfolio) {
+    return (
+      <div className="p-8">
+        <Alert variant="error" title="Error">
+          {error}
+        </Alert>
+        <Button onClick={() => router.push('/portfolios')} variant="outline" className="mt-4">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Volver a Carteras
+        </Button>
+      </div>
     );
   }
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { href: '/portfolios', label: 'Carteras' },
-    { href: `/portfolios/${templateId}`, label: template?.name || 'Cartera Modelo' }
+    { href: `/portfolios/${templateId}`, label: portfolio?.name || 'Cartera Modelo' }
   ];
 
+  const getRiskLevelVariant = (riskLevel?: string | null) => {
+    switch (riskLevel) {
+      case 'conservative':
+        return 'success';
+      case 'moderate':
+        return 'warning';
+      case 'aggressive':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getRiskLevelLabel = (riskLevel?: string | null) => {
+    switch (riskLevel) {
+      case 'conservative':
+        return 'Conservador';
+      case 'moderate':
+        return 'Moderado';
+      case 'aggressive':
+        return 'Agresivo';
+      default:
+        return riskLevel || 'N/A';
+    }
+  };
+
   return (
-    <main style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
+    <div className="p-6 max-w-7xl mx-auto">
       <Breadcrumbs items={breadcrumbItems} />
-      <div style={{ marginBottom: 24, marginTop: 16 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>
-          {template?.name || 'Cartera Modelo'}
-        </h1>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <Link href="/portfolios" style={{ color: '#3b82f6' }}>← Volver a Carteras</Link>
-          <span style={{ color: '#6b7280' }}>|</span>
-          <button
-            onClick={() => setShowCreateLineModal(true)}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: 6,
-              fontSize: 14,
-              fontWeight: 500,
-              cursor: 'pointer'
-            }}
-          >
-            + Agregar Componente
-          </button>
+      
+      <div className="mt-6 mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <Heading level={1} className="mb-2">
+              {portfolio?.name || 'Cartera Modelo'}
+            </Heading>
+            {portfolio?.description && (
+              <Text color="secondary" className="mb-2">
+                {portfolio.description}
+              </Text>
+            )}
+            {portfolio?.riskLevel && (
+              <Badge variant={getRiskLevelVariant(portfolio.riskLevel)}>
+                {getRiskLevelLabel(portfolio.riskLevel)}
+              </Badge>
+            )}
+          </div>
+          <Stack direction="row" gap="sm">
+            <Button onClick={() => router.push('/portfolios')} variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+            <Button onClick={() => setShowCreateLineModal(true)} variant="primary">
+              <Plus className="w-4 h-4 mr-2" />
+              Agregar Componente
+            </Button>
+          </Stack>
         </div>
       </div>
 
       {/* Modal para agregar línea */}
-      {showCreateLineModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: 24,
-            borderRadius: 12,
-            width: '100%',
-            maxWidth: 500,
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-          }}>
-            <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
-              Agregar Componente a la Cartera
-            </h3>
-            
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
-                Tipo de Componente
-              </label>
-              <select
-                value={createLineData.targetType}
-                onChange={(e) => setCreateLineData(prev => ({ ...prev, targetType: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 6,
-                  border: '1px solid #d1d5db',
-                  backgroundColor: '#ffffff',
-                  color: '#111827',
-                  fontSize: 14
-                }}
-              >
-                <option value="asset_class">Clase de Activo</option>
-                <option value="instrument">Instrumento Específico</option>
-              </select>
-            </div>
+      <Modal open={showCreateLineModal} onOpenChange={setShowCreateLineModal}>
+        <ModalHeader>
+          <ModalTitle>Agregar Componente a la Cartera</ModalTitle>
+        </ModalHeader>
+        <ModalContent>
+          <Stack direction="column" gap="lg">
+            <Select
+              label="Tipo de Componente"
+              value={createLineData.targetType}
+              onValueChange={(value) => setCreateLineData(prev => ({ ...prev, targetType: value as 'instrument' | 'assetClass' }))}
+              items={[
+                { value: 'assetClass', label: 'Clase de Activo' },
+                { value: 'instrument', label: 'Instrumento Específico' }
+              ]}
+            />
 
-            {createLineData.targetType === 'asset_class' && (
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
-                  Clase de Activo
-                </label>
-                <select
-                  value={createLineData.assetClass || ''}
-                  onChange={(e) => setCreateLineData(prev => ({ ...prev, assetClass: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 6,
-                    border: '1px solid #d1d5db',
-                    backgroundColor: '#ffffff',
-                    color: '#111827',
-                    fontSize: 14
-                  }}
-                >
-                  <option value="">Seleccionar clase...</option>
-                  <option value="equity">Acciones</option>
-                  <option value="fixed_income">Renta Fija</option>
-                  <option value="commodities">Commodities</option>
-                  <option value="cash">Efectivo</option>
-                  <option value="alternatives">Alternativas</option>
-                </select>
-              </div>
+            {createLineData.targetType === 'assetClass' && (
+              <Select
+                label="Clase de Activo"
+                value={createLineData.assetClass || ''}
+                onValueChange={(value) => setCreateLineData(prev => ({ ...prev, assetClass: value }))}
+                items={[
+                  { value: 'equity', label: 'Acciones' },
+                  { value: 'fixed_income', label: 'Renta Fija' },
+                  { value: 'commodities', label: 'Commodities' },
+                  { value: 'cash', label: 'Efectivo' },
+                  { value: 'alternatives', label: 'Alternativas' }
+                ]}
+              />
             )}
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>
-                Peso Objetivo (%)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={createLineData.targetWeight}
-                onChange={(e) => setCreateLineData(prev => ({ ...prev, targetWeight: e.target.value }))}
-                placeholder="Ej: 25.5"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 6,
-                  border: '1px solid #d1d5db',
-                  backgroundColor: '#ffffff',
-                  color: '#111827',
-                  fontSize: 14
-                }}
+            {createLineData.targetType === 'instrument' && (
+              <Input
+                label="ID del Instrumento"
+                value={createLineData.instrumentId || ''}
+                onChange={(e) => setCreateLineData(prev => ({ ...prev, instrumentId: e.target.value }))}
+                placeholder="Ingresa el ID del instrumento"
               />
-              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                Peso actual: {((templateData?.totalWeight || 0) * 100).toFixed(2)}%
-              </div>
-            </div>
+            )}
 
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowCreateLineModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  fontSize: 14,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCreateLine}
-                disabled={isCreating}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: isCreating ? '#9ca3af' : '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  fontSize: 14,
-                  cursor: isCreating ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {isCreating ? 'Agregando...' : 'Agregar'}
-              </button>
-            </div>
-          </div>
-        </div>
+            <Input
+              label="Peso Objetivo (%)"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={createLineData.targetWeight}
+              onChange={(e) => setCreateLineData(prev => ({ ...prev, targetWeight: e.target.value }))}
+              placeholder="Ej: 25.5"
+            />
+            <Text size="sm" color="secondary">
+              Peso actual: {portfolio ? (portfolio.totalWeight * 100).toFixed(2) : '0.00'}%
+            </Text>
+          </Stack>
+        </ModalContent>
+        <ModalFooter>
+          <Stack direction="row" gap="sm">
+            <Button onClick={() => setShowCreateLineModal(false)} variant="outline">
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateLine} disabled={isCreating} variant="primary">
+              {isCreating ? 'Agregando...' : 'Agregar'}
+            </Button>
+          </Stack>
+        </ModalFooter>
+      </Modal>
+
+      {error && portfolio && (
+        <Alert variant="warning" title="Advertencia" className="mb-4">
+          {error}
+        </Alert>
       )}
 
-      {loading && <p>Cargando composición de la cartera...</p>}
-      {error && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
-
-      {!loading && !error && templateData && (
+      {portfolio && (
         <>
           {/* Resumen de la cartera */}
-          <div style={{
-            marginBottom: 24,
-            padding: 16,
-            backgroundColor: '#f8fafc',
-            borderRadius: 8,
-            border: '1px solid #e2e8f0'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-                  Composición de la Cartera
-                </h3>
-                <p style={{ fontSize: 14, color: '#6b7280' }}>
-                  {templateData.lines.length} componentes
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{
-                  fontSize: 24,
-                  fontWeight: 'bold',
-                  color: templateData.isValid ? '#10b981' : '#ef4444'
-                }}>
-                  {((templateData.totalWeight) * 100).toFixed(2)}%
+          <Card className="mb-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Composición de la Cartera</CardTitle>
+                  <Text color="secondary" size="sm" className="mt-1">
+                    {portfolio.lines?.length || 0} componentes
+                  </Text>
                 </div>
-                <div style={{
-                  fontSize: 12,
-                  color: templateData.isValid ? '#10b981' : '#ef4444',
-                  fontWeight: 500
-                }}>
-                  {templateData.isValid ? 'Composición válida' : 'Peso no suma 100%'}
+                <div className="text-right">
+                  <Text 
+                    size="xl" 
+                    weight="bold" 
+                    color={portfolio.isValid ? 'primary' : 'secondary'}
+                    className={portfolio.isValid ? '' : 'text-error'}
+                  >
+                    {(portfolio.totalWeight * 100).toFixed(2)}%
+                  </Text>
+                  <Text 
+                    size="xs" 
+                    color={portfolio.isValid ? 'primary' : 'secondary'}
+                    weight="medium"
+                    className={portfolio.isValid ? '' : 'text-error'}
+                  >
+                    {portfolio.isValid ? 'Composición válida' : 'Peso no suma 100%'}
+                  </Text>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Tabla de componentes */}
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse',
-              backgroundColor: 'white',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              borderRadius: 8
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
-                  <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Tipo</th>
-                  <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Componente</th>
-                  <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Peso</th>
-                  <th style={{ padding: 12, textAlign: 'center', fontWeight: 600 }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {templateData.lines.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#6b7280' }}>
-                      No hay componentes en esta cartera
-                    </td>
-                  </tr>
-                ) : (
-                  templateData.lines.map((line) => (
-                    <tr key={line.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <td style={{ padding: 12 }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          fontSize: 12,
-                          fontWeight: 500,
-                          backgroundColor: line.targetType === 'asset_class' ? '#dbeafe' : '#dcfce7',
-                          color: line.targetType === 'asset_class' ? '#1e40af' : '#166534'
-                        }}>
-                          {line.targetType === 'asset_class' ? 'Clase' : 'Instrumento'}
-                        </span>
-                      </td>
-                      <td style={{ padding: 12 }}>
-                        <div>
-                          <div style={{ fontWeight: 500, marginBottom: 2 }}>
-                            {line.targetType === 'asset_class' ? line.assetClassName : line.instrumentName}
-                          </div>
-                          {line.targetType === 'instrument' && line.instrumentSymbol && (
-                            <div style={{ fontSize: 12, color: '#6b7280' }}>
-                              {line.instrumentSymbol}
+            </CardHeader>
+            <CardContent>
+              {portfolio.lines && portfolio.lines.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-border">
+                        <th className="p-3 text-left font-semibold">Tipo</th>
+                        <th className="p-3 text-left font-semibold">Componente</th>
+                        <th className="p-3 text-right font-semibold">Peso</th>
+                        <th className="p-3 text-center font-semibold">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {portfolio.lines.map((line: PortfolioLine) => (
+                        <tr key={line.id} className="border-b border-border">
+                          <td className="p-3">
+                            <Badge 
+                              variant={line.targetType === 'assetClass' ? 'default' : 'success'}
+                            >
+                              {line.targetType === 'assetClass' ? 'Clase' : 'Instrumento'}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <div>
+                              <Text weight="medium">
+                                {line.targetType === 'assetClass' ? line.assetClassName : line.instrumentName}
+                              </Text>
+                              {line.targetType === 'instrument' && line.instrumentSymbol && (
+                                <Text size="sm" color="secondary">
+                                  {line.instrumentSymbol}
+                                </Text>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'right' }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: 6,
-                          fontSize: 14,
-                          fontWeight: 600,
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151'
-                        }}>
-                          {(Number(line.targetWeight) * 100).toFixed(2)}%
-                        </span>
-                      </td>
-                      <td style={{ padding: 12, textAlign: 'center' }}>
-                        <button
-                          onClick={() => handleDeleteLine(line.id)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: 4,
-                            fontSize: 12,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Eliminar
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </td>
+                          <td className="p-3 text-right">
+                            <Badge variant="default">
+                              {(Number(line.targetWeight) * 100).toFixed(2)}%
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-center">
+                            <Button
+                              onClick={() => handleDeleteLine(line.id)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-error-500 hover:text-error-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Text color="secondary">No hay componentes en esta cartera</Text>
+                  <Button 
+                    onClick={() => setShowCreateLineModal(true)} 
+                    variant="primary" 
+                    className="mt-4"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar Primer Componente
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
 
@@ -558,6 +539,6 @@ export default function PortfolioDetailPage() {
         confirmLabel="Confirmar"
         cancelLabel="Cancelar"
       />
-    </main>
+    </div>
   );
 }

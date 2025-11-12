@@ -165,9 +165,9 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
   return (
     <Card className={className}>
       <CardHeader>
-        <Stack direction="row" gap="md" alignItems="center" justifyContent="spaceBetween">
+        <Stack direction="row" gap="md" align="center" justify="between">
           <CardTitle>{symbol} - Price Chart</CardTitle>
-          <Stack direction="row" gap="sm" alignItems="center">
+          <Stack direction="row" gap="sm" align="center">
             <Select
               value={timeframe}
               onValueChange={(value) => setTimeframe(value as Timeframe)}

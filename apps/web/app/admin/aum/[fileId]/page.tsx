@@ -127,7 +127,7 @@ export default function AumPreviewPage() {
                 <td className="px-4 py-2 text-sm text-gray-700">{r.holderName}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">{r.advisorRaw}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">{r.matchedContactId || '-'}</td>
-                <td className="px-4 py-2 text-sm text-gray-700">{r.raw?.Titular || r.holderName || '-'}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{String(r.raw?.Titular ?? r.holderName ?? '-')}</td>
                 <td className="px-4 py-2 text-sm text-gray-700">{r.matchedUserId || '-'}</td>
                 <td className="px-4 py-2 text-sm">
                   <Badge 

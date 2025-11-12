@@ -29,6 +29,7 @@ pkill -f "analytics-service.*python" >/dev/null 2>&1 || true
 kill_port 3000
 kill_port 3001
 kill_port 3002
+kill_port 5678
 
 echo "✅ Entorno limpio"
 

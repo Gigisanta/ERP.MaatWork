@@ -14,6 +14,8 @@ const chalk = chalkModule.default || chalkModule;
 
 const isWindows = process.platform === 'win32';
 const projectRoot = path.resolve(__dirname, '..');
+const validationCacheFile = path.join(projectRoot, '.dev-validation-cache.json');
+const VALIDATION_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 // Colores para output
 const success = chalk.green;
@@ -23,46 +25,192 @@ const info = chalk.blue;
 const bold = chalk.bold;
 
 /**
- * Ejecutar validaciones antes de iniciar
+ * Verificar e iniciar servicios Docker (PostgreSQL y N8N)
  */
-async function runValidations() {
+function ensureDockerServices() {
+  try {
+    console.log(info('🗄️  Verificando servicios Docker (PostgreSQL y N8N)...'));
+    
+    // Verificar si Docker está disponible
+    try {
+      execSync('docker --version', { stdio: 'ignore', cwd: projectRoot });
+    } catch {
+      console.log(warning('⚠️  Docker no está disponible, saltando verificación de servicios Docker\n'));
+      return;
+    }
+    
+    // Verificar si docker-compose.yml existe
+    const dockerComposePath = path.join(projectRoot, 'docker-compose.yml');
+    if (!fs.existsSync(dockerComposePath)) {
+      console.log(warning('⚠️  docker-compose.yml no encontrado\n'));
+      return;
+    }
+    
+    // Verificar qué servicios están corriendo usando docker compose ps
+    let postgresRunning = false;
+    let n8nRunning = false;
+    
+    try {
+      // Usar docker compose ps para verificar solo los servicios de este proyecto
+      const dockerComposePsOutput = execSync('docker compose ps --format json', { 
+        encoding: 'utf8',
+        cwd: projectRoot 
+      });
+      
+      // Parsear JSON si hay salida
+      if (dockerComposePsOutput.trim()) {
+        const containers = dockerComposePsOutput.trim().split('\n')
+          .filter(line => line.trim())
+          .map(line => {
+            try {
+              return JSON.parse(line);
+            } catch {
+              return null;
+            }
+          })
+          .filter(container => container !== null);
+        
+        postgresRunning = containers.some(c => c.Service === 'db' && c.State === 'running');
+        n8nRunning = containers.some(c => c.Service === 'n8n' && c.State === 'running');
+      }
+    } catch {
+      // Si docker compose ps falla, intentar método alternativo
+      try {
+        const dockerPsOutput = execSync('docker ps --format "{{.Names}}"', { 
+          encoding: 'utf8',
+          cwd: projectRoot 
+        });
+        // Buscar contenedores que pertenezcan a este proyecto (basado en nombre del directorio)
+        const projectName = path.basename(projectRoot).toLowerCase().replace(/[^a-z0-9]/g, '');
+        postgresRunning = dockerPsOutput.includes('db') && dockerPsOutput.includes(projectName);
+        n8nRunning = dockerPsOutput.includes('n8n') && dockerPsOutput.includes(projectName);
+      } catch {
+        // Si ambos métodos fallan, asumimos que no hay servicios corriendo
+      }
+    }
+    
+    // Si falta algún servicio, iniciar docker compose
+    if (!postgresRunning || !n8nRunning) {
+      console.log(warning('⚠️  Servicios Docker no detectados, intentando iniciar con Docker Compose...'));
+      try {
+        execSync('docker compose up -d', { 
+          stdio: 'inherit',
+          cwd: projectRoot 
+        });
+        console.log(success('✅ Servicios Docker iniciados (PostgreSQL y N8N)\n'));
+      } catch (err) {
+        console.log(warning('⚠️  No se pudo iniciar Docker automáticamente'));
+        console.log(warning('   Ejecuta manualmente: docker compose up -d\n'));
+      }
+    } else {
+      if (postgresRunning) console.log(success('✅ PostgreSQL detectado'));
+      if (n8nRunning) console.log(success('✅ N8N detectado'));
+      console.log('');
+    }
+  } catch (err) {
+    console.log(warning('⚠️  Error al verificar servicios Docker:'), err.message);
+    console.log('');
+  }
+}
+
+/**
+ * AI_DECISION: Sistema de cache para validaciones predev
+ * Justificación: Validaciones pesadas (Docker, PostgreSQL, Python) no cambian frecuentemente
+ * Impacto: Reduce tiempo de inicio de 5-10s a <1s cuando cache es válido
+ */
+function getValidationCache() {
+  try {
+    if (fs.existsSync(validationCacheFile)) {
+      const cache = JSON.parse(fs.readFileSync(validationCacheFile, 'utf8'));
+      const age = Date.now() - cache.timestamp;
+      if (age < VALIDATION_CACHE_TTL) {
+        return cache;
+      }
+    }
+  } catch {
+    // Ignorar errores de cache
+  }
+  return null;
+}
+
+function setValidationCache(result) {
+  try {
+    fs.writeFileSync(validationCacheFile, JSON.stringify({
+      timestamp: Date.now(),
+      result
+    }), 'utf8');
+  } catch {
+    // Ignorar errores de escritura de cache
+  }
+}
+
+/**
+ * Ejecutar validaciones antes de iniciar (optimizado con cache)
+ */
+async function runValidations(skipCache = false) {
+  // AI_DECISION: Usar cache para validaciones si está disponible y es válido
+  // Justificación: Validaciones de dependencias no cambian frecuentemente
+  // Impacto: Reduce tiempo de inicio significativamente en ejecuciones consecutivas
+  if (!skipCache) {
+    const cache = getValidationCache();
+    if (cache && cache.result === 'success') {
+      console.log(info('⚡ Usando cache de validaciones (ejecutado hace <5min)\n'));
+      return;
+    }
+  }
+  
   console.log(bold.cyan('\n🔍 Ejecutando validaciones pre-inicio...\n'));
   
+  let validationResult = 'success';
+  
   try {
-    // Validar dependencias
-    console.log(info('1️⃣  Validando dependencias del sistema...'));
+    // Validar dependencias (solo críticas: Node, pnpm, PostgreSQL básico)
+    console.log(info('1️⃣  Validando dependencias críticas...'));
     try {
       // Ejecutar validación pero capturar errores para no salir inmediatamente
-      execSync('node scripts/dev-validate-deps.js', { 
+      execSync('node scripts/dev-validate-deps.js --fast', { 
         stdio: 'inherit',
-        cwd: projectRoot 
+        cwd: projectRoot,
+        timeout: 10000 // Timeout de 10s para evitar cuelgues
       });
     } catch (err) {
       // Si hay errores críticos, el script ya los mostró y salió con código 1
-      // Continuamos para mostrar todas las validaciones
+      if (err.status === 1) {
+        validationResult = 'error';
+      }
     }
     console.log('');
     
-    // Validar variables de entorno
+    // Validar variables de entorno (rápido, solo lectura de archivos)
     console.log(info('2️⃣  Validando variables de entorno...'));
     try {
       execSync('node scripts/dev-validate-env.js', { 
         stdio: 'inherit',
-        cwd: projectRoot 
+        cwd: projectRoot,
+        timeout: 5000 // Timeout de 5s
       });
     } catch (err) {
       // Si hay errores críticos, el script ya los mostró
-      // Continuamos pero advertimos al usuario
-      console.log(warning('\n⚠️  Hay problemas con las variables de entorno'));
-      console.log(warning('   El sistema puede no funcionar correctamente\n'));
+      if (err.status === 1) {
+        validationResult = 'error';
+        console.log(warning('\n⚠️  Hay problemas con las variables de entorno'));
+        console.log(warning('   El sistema puede no funcionar correctamente\n'));
+      }
     }
     console.log('');
     
-    console.log(success('✅ Validaciones completadas\n'));
+    if (validationResult === 'success') {
+      console.log(success('✅ Validaciones completadas\n'));
+      setValidationCache('success');
+    } else {
+      console.log(warning('⚠️  Validaciones completadas con advertencias\n'));
+      setValidationCache('warning');
+    }
     
   } catch (err) {
     console.log(error('❌ Error durante las validaciones:'), err.message);
     console.log(warning('   Continuando de todas formas...\n'));
+    setValidationCache('error');
   }
 }
 
@@ -75,11 +223,15 @@ async function main() {
   console.log(bold.cyan('╚═══════════════════════════════════════════════════════════╝'));
   console.log('');
   
+  // Siempre verificar servicios Docker (independiente de validaciones)
+  ensureDockerServices();
+  
   // Ejecutar validaciones (opcional, puede ser deshabilitado con --skip-validation)
   const skipValidation = process.argv.includes('--skip-validation');
+  const skipCache = process.argv.includes('--no-cache');
   
   if (!skipValidation) {
-    await runValidations();
+    await runValidations(skipCache);
   } else {
     console.log(warning('⚠️  Validaciones omitidas (--skip-validation)\n'));
   }

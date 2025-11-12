@@ -18,6 +18,7 @@ export type UserRole = 'advisor' | 'manager' | 'admin';
 export interface User extends TimestampedEntity {
   email: string;
   fullName: string;
+  phone?: string | null;
   role: UserRole;
   active: boolean;
 }

@@ -46,6 +46,11 @@ export const env = {
   CORS_ORIGINS: process.env.CORS_ORIGINS || '',
   CSP_ENABLED: process.env.CSP_ENABLED === 'true',
   JWT_SECRET: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d'
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  // N8N Webhook Configuration
+  N8N_ENABLED: process.env.N8N_ENABLED !== 'false',
+  N8N_WEBHOOK_BATCH_SIZE: parseInt(process.env.N8N_WEBHOOK_BATCH_SIZE || '100', 10),
+  N8N_WEBHOOK_RATE_LIMIT: parseInt(process.env.N8N_WEBHOOK_RATE_LIMIT || '10', 10),
+  N8N_WEBHOOK_TIMEOUT: parseInt(process.env.N8N_WEBHOOK_TIMEOUT || '30000', 10)
 };
 

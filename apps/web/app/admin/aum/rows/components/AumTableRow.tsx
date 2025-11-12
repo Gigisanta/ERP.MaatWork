@@ -137,7 +137,7 @@ export const AumTableRow = memo(AumTableRowComponent, (prev, next) => {
     return prev.row.rowUpdatedAt === next.row.rowUpdatedAt;
   }
   
-  // Fallback: comparar por createdAt si no hay rowUpdatedAt
-  return prev.row.createdAt === next.row.createdAt;
+  // Fallback: comparar por rowCreatedAt si no hay rowUpdatedAt
+  return prev.row.rowCreatedAt === next.row.rowCreatedAt;
 });
 

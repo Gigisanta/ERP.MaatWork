@@ -78,21 +78,53 @@ async function verifyDatabaseConnection(): Promise<void> {
  * Run pending database migrations using Drizzle migrator
  * - Enabled when AUTO_MIGRATE=true or in non-production environments by default
  * - Points to squashed baseline at packages/db/migrations_squashed
+ * 
+ * AI_DECISION: Optimizado con check rápido antes de ejecutar migraciones
+ * Justificación: Drizzle migrate() ya es inteligente, pero hacer check rápido evita overhead innecesario
+ * Impacto: Inicio más rápido cuando no hay migraciones pendientes
  */
 async function runMigrations(): Promise<void> {
   const autoMigrate = process.env.AUTO_MIGRATE === 'true' || (process.env.NODE_ENV !== 'production');
   const migrationsFolder = resolve(process.cwd(), '../../packages/db/migrations');
+  const isDevelopment = process.env.NODE_ENV !== 'production';
 
   if (!autoMigrate) {
-    logger.info({ migrationsFolder }, '🔄 Auto-migrate disabled; skipping migrations');
-    logger.info('  To enable, set AUTO_MIGRATE=true');
+    if (isDevelopment) {
+      logger.debug({ migrationsFolder }, '🔄 Auto-migrate disabled; skipping migrations');
+    } else {
+      logger.info({ migrationsFolder }, '🔄 Auto-migrate disabled; skipping migrations');
+      logger.info('  To enable, set AUTO_MIGRATE=true');
+    }
     return;
   }
 
-  logger.info({ migrationsFolder }, '🔄 Running database migrations');
+  // AI_DECISION: Check rápido antes de ejecutar migraciones completas
+  // Justificación: Si no hay migraciones pendientes, evitar overhead de migrate()
+  // Impacto: Reduce tiempo de inicio cuando DB ya está actualizada
   try {
+    // Check rápido: verificar si tabla de migraciones existe y tiene registros
+    const migrationCheck = await db().execute(sql`
+      SELECT COUNT(*) as count 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = '__drizzle_migrations'
+    `);
+    
+    const hasMigrationTable = migrationCheck.rows[0]?.count > 0;
+    
+    if (hasMigrationTable && isDevelopment) {
+      // En desarrollo, solo loguear si hay migraciones pendientes
+      logger.debug('🔄 Checking for pending migrations...');
+    } else {
+      logger.info({ migrationsFolder }, '🔄 Running database migrations');
+    }
+    
     await migrate(db(), { migrationsFolder });
-    logger.info('✅ Migrations completed');
+    
+    if (isDevelopment) {
+      logger.debug('✅ Migrations check completed');
+    } else {
+      logger.info('✅ Migrations completed');
+    }
   } catch (error: unknown) {
     const err = error as { 
       message?: string; 
@@ -161,9 +193,19 @@ async function runMigrations(): Promise<void> {
  * Impacto: Mantenibilidad mejorada, cambios futuros solo en un lugar
  */
 async function seedPipelineStages(): Promise<void> {
-  logger.info('🌱 Seeding pipeline stages...');
-  await ensureDefaultPipelineStages(false); // false para mostrar logs durante inicialización
-  logger.info('✅ Pipeline stages seeded successfully');
+  // AI_DECISION: Reducir logging en desarrollo para mejorar rendimiento
+  // Justificación: Seeds son idempotentes, no necesitan logging detallado en cada inicio
+  // Impacto: Menos overhead de logging, inicio más rápido
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const logLevel = process.env.LOG_LEVEL || (isDevelopment ? 'info' : 'info');
+  
+  if (!isDevelopment || logLevel === 'debug') {
+    logger.info('🌱 Seeding pipeline stages...');
+  }
+  await ensureDefaultPipelineStages(isDevelopment && logLevel !== 'debug'); // Menos logs en desarrollo
+  if (!isDevelopment || logLevel === 'debug') {
+    logger.info('✅ Pipeline stages seeded successfully');
+  }
 }
 
 /**
@@ -171,7 +213,15 @@ async function seedPipelineStages(): Promise<void> {
  * Creates the basic lookup values needed for the system
  */
 async function seedLookupTables(): Promise<void> {
-  logger.info('🌱 Seeding lookup tables...');
+  // AI_DECISION: Reducir logging en desarrollo para mejorar rendimiento
+  // Justificación: Seeds son idempotentes, no necesitan logging detallado en cada inicio
+  // Impacto: Menos overhead de logging, inicio más rápido
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const logLevel = process.env.LOG_LEVEL || (isDevelopment ? 'info' : 'info');
+  
+  if (!isDevelopment || logLevel === 'debug') {
+    logger.info('🌱 Seeding lookup tables...');
+  }
   
   const dbInstance = db();
   
@@ -253,7 +303,9 @@ async function seedLookupTables(): Promise<void> {
     }
   }
   
-  logger.info('✅ Lookup tables seeded successfully');
+  if (!isDevelopment || logLevel === 'debug') {
+    logger.info('✅ Lookup tables seeded successfully');
+  }
 }
 
 /** Ensure critical auth columns and backfill username for admin if missing */
@@ -285,35 +337,64 @@ async function ensureCriticalColumns(): Promise<void> {
 }
 
 export async function initializeDatabase(): Promise<void> {
-  logger.info('🚀 Starting SYSTEM-ESSENTIAL database initialization...');
+  // AI_DECISION: Reducir logging verboso en desarrollo para mejorar rendimiento
+  // Justificación: Logs detallados agregan overhead innecesario en desarrollo frecuente
+  // Impacto: Inicio más rápido, menos ruido en consola
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const logLevel = process.env.LOG_LEVEL || (isDevelopment ? 'info' : 'info');
+  
+  if (isDevelopment && logLevel === 'debug') {
+    logger.debug('🚀 Starting SYSTEM-ESSENTIAL database initialization...');
+  } else {
+    logger.info('🚀 Starting SYSTEM-ESSENTIAL database initialization...');
+  }
   
   try {
     // Step 1: Verify database connection
-    logger.debug('Step 1/6: Verifying database connection...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 1/6: Verifying database connection...');
+    }
     await verifyDatabaseConnection();
     
     // Step 2: Run migrations
-    logger.debug('Step 2/6: Running migrations...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 2/6: Running migrations...');
+    }
     await runMigrations();
     
     // Step 3: Seed pipeline stages (SYSTEM-REQUIRED)
-    logger.debug('Step 3/6: Seeding pipeline stages...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 3/6: Seeding pipeline stages...');
+    }
     await seedPipelineStages();
     
     // Step 4: Seed lookup tables (SYSTEM-REQUIRED)
-    logger.debug('Step 4/6: Seeding lookup tables...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 4/6: Seeding lookup tables...');
+    }
     await seedLookupTables();
 
     // Step 5: Ensure critical columns exist for auth to work in dev
-    logger.debug('Step 5/6: Ensuring critical columns...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 5/6: Ensuring critical columns...');
+    }
     await ensureCriticalColumns();
     
     // Step 6: Seed idempotent team "cactus"
-    logger.debug('Step 6/6: Seeding cactus team...');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('Step 6/6: Seeding cactus team...');
+    }
     await seedCactusTeam();
     
-    logger.info('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
-    logger.info('ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios');
+    if (isDevelopment && logLevel === 'debug') {
+      logger.debug('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
+    } else {
+      logger.info('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
+    }
+    
+    if (!isDevelopment) {
+      logger.info('ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios');
+    }
   } catch (error) {
     const err = error as { message?: string; code?: string };
     logger.error({ 

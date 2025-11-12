@@ -43,3 +43,30 @@ export interface CreateTagRequest extends Pick<Tag, 'name' | 'color'> {
  * Request para actualizar tag - usando Partial de campos editables
  */
 export interface UpdateTagRequest extends Partial<Pick<Tag, 'name' | 'color' | 'icon' | 'businessLine'>> {}
+
+/**
+ * Relación contacto-etiqueta con datos adicionales específicos de líneas de negocio
+ */
+export interface ContactTag {
+  id: string;
+  contactId: string;
+  tagId: string;
+  monthlyPremium?: number | null;
+  policyNumber?: string | null;
+  createdAt: string;
+}
+
+/**
+ * Relación contacto-etiqueta con información completa de la etiqueta
+ */
+export interface ContactTagWithDetails extends ContactTag {
+  tag: Tag; // Información completa de la etiqueta
+}
+
+/**
+ * Request para actualizar datos de relación contacto-etiqueta
+ */
+export interface UpdateContactTagRequest {
+  monthlyPremium?: number | null;
+  policyNumber?: string | null;
+}

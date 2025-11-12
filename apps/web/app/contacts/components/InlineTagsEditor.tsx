@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Contact, Tag } from '@/types';
 import {
   Badge,
@@ -29,6 +30,7 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(({
   onTagsChange,
   onManageTagsClick,
 }) => {
+  const router = useRouter();
   const [localTagIds, setLocalTagIds] = useState<string[]>(
     contact.tags?.map(tag => tag.id) || []
   );
@@ -66,17 +68,32 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(({
     }
   }, [contact.id, contact.tags, localTagIds, onTagsChange]);
 
+  const handleTagClick = useCallback((tag: Tag) => {
+    // Solo hacer clickeable si la etiqueta tiene businessLine 'zurich'
+    if (tag.businessLine === 'zurich') {
+      router.push(`/contacts/${contact.id}/tags/${tag.id}`);
+    }
+  }, [contact.id, router]);
+
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-1.5 flex-wrap">
       {/* Mostrar badges de etiquetas */}
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-0.5">
         {allTags
           .filter((tag: Tag) => localTagIds.includes(tag.id))
-          .map((tag: Tag) => (
-            <Badge key={tag.id} style={{ backgroundColor: tag.color, color: 'white' }}>
-              {tag.name}
-            </Badge>
-          ))}
+          .map((tag: Tag) => {
+            const isZurichTag = tag.businessLine === 'zurich';
+            return (
+              <Badge 
+                key={tag.id} 
+                style={{ backgroundColor: tag.color, color: 'white' }} 
+                className={`text-xs px-1.5 py-0.5 ${isZurichTag ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                onClick={isZurichTag ? () => handleTagClick(tag) : undefined}
+              >
+                {tag.name}
+              </Badge>
+            );
+          })}
       </div>
       
       {/* Mostrar spinner si está guardando */}
@@ -88,8 +105,8 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(({
       {!isSaving && (
         <DropdownMenu
           trigger={
-            <button className="text-gray-400 hover:text-primary transition-colors">
-              <Icon name="plus" size={16} />
+            <button className="text-gray-400 hover:text-primary transition-colors p-0.5">
+              <Icon name="plus" size={14} />
             </button>
           }
         >
@@ -97,19 +114,19 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(({
             <DropdownMenuItem key={tag.id} onClick={() => handleTagToggle(tag.id)}>
               <div className="flex items-center w-full">
                 <div 
-                  className="w-3 h-3 rounded-full mr-2" 
+                  className="w-2.5 h-2.5 rounded-full mr-2" 
                   style={{ backgroundColor: tag.color }}
                 />
-                <Text>{tag.name}</Text>
+                <Text size="sm">{tag.name}</Text>
                 {localTagIds.includes(tag.id) && (
-                  <Icon name="check" size={16} className="ml-auto" />
+                  <Icon name="check" size={14} className="ml-auto" />
                 )}
               </div>
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onManageTagsClick}>
-            <Icon name="edit" size={16} className="mr-2" />
+            <Icon name="edit" size={14} className="mr-2" />
             Gestionar etiquetas
           </DropdownMenuItem>
         </DropdownMenu>

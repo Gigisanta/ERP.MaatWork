@@ -5,7 +5,6 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'outlined' | 'elevated' | 'interactive';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   children: React.ReactNode;
-  className?: string;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -44,7 +43,6 @@ Card.displayName = 'Card';
 
 export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
 export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
@@ -65,7 +63,6 @@ CardHeader.displayName = 'CardHeader';
 
 export interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
 export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
@@ -86,7 +83,6 @@ CardTitle.displayName = 'CardTitle';
 
 export interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
 export const CardDescription = React.forwardRef<HTMLParagraphElement, CardDescriptionProps>(
@@ -107,7 +103,6 @@ CardDescription.displayName = 'CardDescription';
 
 export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
 export const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
@@ -128,7 +123,6 @@ CardContent.displayName = 'CardContent';
 
 export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
 export const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(

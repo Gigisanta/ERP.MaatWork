@@ -1,8 +1,10 @@
-import { render as rtlRender, screen as rtlScreen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, render as rtlRender, screen as rtlScreen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Header as HeaderComponent, type HeaderProps } from './Header';
+import { Header, Header as HeaderComponent, type HeaderProps, type NavItem, type User } from './Header';
 
-describe('Header - Settings item', () => {
+describe('Header - Profile item', () => {
   function renderHeader(extraProps: Partial<HeaderProps> = {}) {
     return rtlRender(
       <HeaderComponent
@@ -13,23 +15,17 @@ describe('Header - Settings item', () => {
     );
   }
 
-  it('renders Settings as link to /profile', async () => {
+  it('renders Profile as link to /profile', async () => {
     renderHeader();
 
     // Open the dropdown by clicking the trigger button
     const trigger = rtlScreen.getByRole('button', { name: /user menu for john doe/i });
     trigger.click();
 
-    const settingsLink = await rtlScreen.findByRole('menuitem', { name: /settings/i });
-    expect(settingsLink).toHaveAttribute('href', '/profile');
+    const profileLink = await rtlScreen.findByRole('menuitem', { name: /profile/i });
+    expect(profileLink).toHaveAttribute('href', '/profile');
   });
 });
-
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Header } from './Header';
-import type { NavItem, User } from './Header';
 
 const mockNavItems: NavItem[] = [
   { label: 'Home', href: '/', icon: 'Home' },
@@ -142,7 +138,7 @@ describe('Header Component', () => {
       expect(button).toHaveAttribute('aria-expanded', 'false');
     });
 
-    // Note: DropdownMenu items (Profile, Settings, Log out) are rendered in a portal
+    // Note: DropdownMenu items (Profile, Log out) are rendered in a portal
     // and are not accessible in jsdom tests. These should be tested in E2E tests.
     it('should render user menu trigger with proper structure', () => {
       render(<Header user={mockUser} />);

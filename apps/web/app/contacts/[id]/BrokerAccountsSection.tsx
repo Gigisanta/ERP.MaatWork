@@ -24,7 +24,7 @@ import {
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useBrokerAccounts } from '../../../lib/api-hooks';
 import { createBrokerAccount, deleteBrokerAccount } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 import type { BrokerAccount } from '@/types';
 
 // AI_DECISION: Extracted to client island for CRUD operations isolation
@@ -85,7 +85,7 @@ export default function BrokerAccountsSection({
       setShowCreateModal(false);
       setNewAccount({ broker: '', accountNumber: '', holderName: '', status: 'active' });
     } catch (err) {
-      logger.error('Error creating broker account', { err, contactId, account: newAccount });
+      logger.error('Error creating broker account', toLogContext({ err, contactId, account: newAccount }));
     } finally {
       setSaving(false);
     }
@@ -102,7 +102,7 @@ export default function BrokerAccountsSection({
           await deleteBrokerAccount(accountId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error deleting broker account', { err, accountId });
+          logger.error('Error deleting broker account', toLogContext({ err, accountId }));
         }
       }
     });

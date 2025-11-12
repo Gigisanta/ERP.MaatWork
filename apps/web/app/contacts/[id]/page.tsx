@@ -132,23 +132,23 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
   ];
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-3 md:p-4">
       <PageTitleSetter contactName={contact.fullName} />
-      <Stack direction="column" gap="lg">
+      <Stack direction="column" gap="md">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbs} />
         
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {currentStage && (
-                <Badge style={{ backgroundColor: currentStage.color, color: 'white' }}>
+                <Badge style={{ backgroundColor: currentStage.color, color: 'white' }} className="text-xs">
                   {currentStage.name}
                 </Badge>
               )}
               {contact.tags && contact.tags.map((tag: { id: string; name: string; color?: string }) => (
-                <Badge key={tag.id} variant="default">
+                <Badge key={tag.id} variant="default" className="text-xs">
                   {tag.name}
                 </Badge>
               ))}
@@ -157,17 +157,17 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         </div>
 
         {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ficha del Contacto</CardTitle>
+        <Card padding="sm">
+          <CardHeader className="mb-2">
+            <CardTitle className="text-base">Ficha del Contacto</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Grilla moderna 2 columnas: combina personales y comerciales para mejor uso del espacio */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               {/* Columna izquierda */}
-              <div className="space-y-4">
-                <Heading size="sm" className="mb-1">Datos Personales</Heading>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Heading size="sm" className="mb-1 text-sm">Datos Personales</Heading>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <ContactEditableField 
                     label="Email" 
                     value={contact.email} 
@@ -198,9 +198,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
               </div>
 
               {/* Columna derecha */}
-              <div className="space-y-4">
-                <Heading size="sm" className="mb-1">Información Comercial</Heading>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <Heading size="sm" className="mb-1 text-sm">Información Comercial</Heading>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <ContactEditableField 
                     label="Fuente" 
                     value={contact.source} 
@@ -217,13 +217,13 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                   />
                   {assignedAdvisor && (
                     <div className="sm:col-span-2">
-                      <Text size="sm" weight="medium" color="secondary">Asesor Asignado</Text>
-                      <Text className="mt-1">{assignedAdvisor.fullName}</Text>
+                      <Text size="xs" weight="medium" color="secondary">Asesor Asignado</Text>
+                      <Text size="sm" className="mt-0.5">{assignedAdvisor.fullName}</Text>
                     </div>
                   )}
                   <div className="sm:col-span-2">
-                    <Text size="sm" weight="medium" color="secondary">Próximo Paso</Text>
-                    <Text className="mt-1">{contact.nextStep || 'Sin especificar'}</Text>
+                    <Text size="xs" weight="medium" color="secondary">Próximo Paso</Text>
+                    <Text size="sm" className="mt-0.5">{contact.nextStep || 'Sin especificar'}</Text>
                   </div>
                 </div>
               </div>
@@ -232,13 +232,13 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         </Card>
 
         {/* Información Adicional */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Información</CardTitle>
+        <Card padding="sm">
+          <CardHeader className="mb-2">
+            <CardTitle className="text-base">Información</CardTitle>
           </CardHeader>
           <CardContent>
             {/* Disposición en grilla para aprovechar mejor el espacio */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               <ContactEditableField 
                 label="A qué se dedica" 
                 value={contact.queSeDedica} 

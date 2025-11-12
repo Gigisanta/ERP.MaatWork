@@ -55,7 +55,8 @@ export default function TeamMemberPage() {
           id: foundTeam.id,
           name: foundTeam.name,
           managerUserId: foundTeam.managerUserId,
-          createdAt: foundTeam.createdAt
+          createdAt: foundTeam.createdAt,
+          updatedAt: foundTeam.updatedAt
         });
       }
 
@@ -160,7 +161,7 @@ export default function TeamMemberPage() {
         {/* Metrics Cards */}
         {metrics && (
           <>
-            <Grid cols={1} md={2} lg={4} gap="md">
+            <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
               <Card>
                 <CardContent className="p-4">
                   <Text size="sm" color="secondary" className="mb-1">AUM Total</Text>
@@ -187,7 +188,7 @@ export default function TeamMemberPage() {
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <Text size="sm" color="secondary" className="mb-1">Desvíos >10%</Text>
+                  <Text size="sm" color="secondary" className="mb-1">Desvíos &gt;10%</Text>
                   <Text weight="bold" className="text-xl">
                     {metrics.deviationAlerts}
                   </Text>

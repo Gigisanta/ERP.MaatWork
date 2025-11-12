@@ -12,7 +12,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { label: 'Inicio', href: '/', icon: 'Home' as const },
         { label: 'Contactos', href: '/contacts', icon: 'Users' as const },
-        { label: 'Métricas', href: '/contacts/metrics', icon: 'BarChart2' as const },
+        { label: 'Métricas', href: '/contacts/metrics', icon: 'BarChart3' as const },
       ],
     },
   ];

@@ -223,17 +223,17 @@ export default function NewContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ minHeight: '100vh' }}>
-      <div className="max-w-4xl mx-auto p-6 min-h-screen">
+      <div className="max-w-4xl mx-auto p-4 md:p-5 min-h-screen">
         {/* Breadcrumbs */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
         
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-5">
           <div className="flex justify-between items-start">
             <div>
-              <Text size="lg" color="secondary" className="text-gray-600">
+              <Text size="md" color="secondary" className="text-gray-600">
                 Agrega un nuevo contacto al sistema CRM
               </Text>
             </div>
@@ -241,28 +241,29 @@ export default function NewContactPage() {
               variant="secondary" 
               onClick={() => router.push('/contacts')}
               className="shrink-0"
+              size="sm"
             >
-              ← Volver a Contactos
+              ← Volver
             </Button>
           </div>
         </div>
 
         {/* Formulario Principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
           {/* Columna Principal - Información del Contacto */}
           <div className="lg:col-span-2">
-            <Card className="shadow-sm">
-              <CardHeader className="pb-6">
-                <CardTitle className="text-xl font-semibold text-gray-900">
+            <Card className="shadow-sm" padding="sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-gray-900">
                   Información Personal
                 </CardTitle>
-                <Text size="sm" color="secondary" className="text-gray-600">
+                <Text size="xs" color="secondary" className="text-gray-600">
                   Datos básicos del contacto
                 </Text>
               </CardHeader>
               
               <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4">
                   {/* Alertas */}
                   {error && (
                     <Alert variant="error" className="mb-6">
@@ -276,8 +277,8 @@ export default function NewContactPage() {
                   )}
                   
                   {/* Sección: Datos Personales */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Input
                         label="Nombre"
                         value={formData.firstName}
@@ -321,7 +322,7 @@ export default function NewContactPage() {
                       className="w-full"
                     />
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Input
                         label="Teléfono"
                         value={formData.phone}
@@ -342,17 +343,17 @@ export default function NewContactPage() {
                   </div>
 
                   {/* Separador Visual */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="mb-4">
-                      <Heading level={4} className="text-lg font-semibold text-gray-900 mb-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="mb-3">
+                      <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
                         Información Comercial
                       </Heading>
-                      <Text size="sm" color="secondary" className="text-gray-600">
+                      <Text size="xs" color="secondary" className="text-gray-600">
                         Datos para el seguimiento comercial
                       </Text>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Select
                         label="Etapa del Pipeline"
                         value={formData.pipelineStageId}
@@ -393,12 +394,12 @@ export default function NewContactPage() {
                   </div>
 
                   {/* Sección: Notas */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="mb-4">
-                      <Heading level={4} className="text-lg font-semibold text-gray-900 mb-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="mb-3">
+                      <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
                         Notas Adicionales
                       </Heading>
-                      <Text size="sm" color="secondary" className="text-gray-600">
+                      <Text size="xs" color="secondary" className="text-gray-600">
                         Información adicional sobre el contacto
                       </Text>
                     </div>
@@ -420,17 +421,17 @@ export default function NewContactPage() {
                   </div>
 
                   {/* Sección: Información Personal Adicional */}
-                  <div className="border-t border-gray-200 pt-6">
-                    <div className="mb-4">
-                      <Heading level={4} className="text-lg font-semibold text-gray-900 mb-2">
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="mb-3">
+                      <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
                         Información Personal Adicional
                       </Heading>
-                      <Text size="sm" color="secondary" className="text-gray-600">
+                      <Text size="xs" color="secondary" className="text-gray-600">
                         Información detallada sobre el contacto
                       </Text>
                     </div>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           A qué se dedica
@@ -510,21 +511,21 @@ export default function NewContactPage() {
                 </CardContent>
                 
                 {/* Botones de Acción */}
-                <CardFooter className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                  <div className="flex justify-end gap-3 w-full">
+                <CardFooter className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                  <div className="flex justify-end gap-2 w-full">
                     <Button 
                       type="button" 
                       variant="secondary" 
                       onClick={() => router.push('/contacts')}
                       disabled={submitLoading}
-                      className="px-6"
+                      size="sm"
                     >
                       Cancelar
                     </Button>
                     <Button 
                       type="submit" 
                       disabled={isLoading || submitLoading}
-                      className="px-8"
+                      size="sm"
                     >
                       {submitLoading ? 'Creando...' : 'Crear Contacto'}
                     </Button>
@@ -536,21 +537,21 @@ export default function NewContactPage() {
 
           {/* Columna Lateral - Información de Ayuda */}
           <div className="lg:col-span-1">
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Card de Ayuda */}
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-3">
+              <Card className="bg-blue-50 border-blue-200" padding="sm">
+                <CardContent className="p-3">
+                  <div className="flex items-start space-x-2">
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 text-sm">💡</span>
+                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 text-xs">💡</span>
                       </div>
                     </div>
                     <div>
-                      <Heading level={5} className="text-sm font-semibold text-blue-900 mb-1">
+                      <Heading level={5} className="text-xs font-semibold text-blue-900 mb-0.5">
                         Consejos
                       </Heading>
-                      <Text size="sm" className="text-blue-800">
+                      <Text size="xs" className="text-blue-800">
                         Solo los campos Nombre y Apellido son obligatorios. Los demás campos son opcionales pero recomendados.
                       </Text>
                     </div>
@@ -560,27 +561,27 @@ export default function NewContactPage() {
 
               {/* Card de Información del Pipeline */}
               {pipelineStages.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold text-gray-900">
+                <Card padding="sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-semibold text-gray-900">
                       Etapas del Pipeline
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {pipelineStages.slice(0, 3).map((stage) => (
-                        <div key={stage.id} className="flex items-center space-x-2">
+                        <div key={stage.id} className="flex items-center space-x-1.5">
                           <div 
-                            className="w-3 h-3 rounded-full" 
+                            className="w-2.5 h-2.5 rounded-full" 
                             style={{ backgroundColor: stage.color }}
                           />
-                          <Text size="sm" className="text-gray-600">
+                          <Text size="xs" className="text-gray-600">
                             {stage.name}
                           </Text>
                         </div>
                       ))}
                       {pipelineStages.length > 3 && (
-                        <Text size="sm" className="text-gray-500">
+                        <Text size="xs" className="text-gray-500">
                           +{pipelineStages.length - 3} más...
                         </Text>
                       )}

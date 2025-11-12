@@ -92,7 +92,7 @@ export default function AumAdvisorSettingsPage() {
             value={newUserId}
             onValueChange={setNewUserId}
             placeholder="Seleccionar asesor"
-            options={advisorsOptions}
+            items={advisorsOptions}
             className="w-64"
           />
           <Button onClick={onAdd} disabled={saving || !newAlias || !newUserId}>Agregar</Button>
@@ -124,7 +124,7 @@ export default function AumAdvisorSettingsPage() {
                     <td className="px-4 py-2 text-sm text-gray-700">{a.aliasNormalized}</td>
                     <td className="px-4 py-2 text-sm text-gray-700">{user ? (user.fullName || user.email) : a.userId}</td>
                     <td className="px-4 py-2 text-right">
-                      <Button variant="danger" size="sm" onClick={() => onDelete(a.id)} disabled={saving}>Eliminar</Button>
+                      <Button variant="primary" size="sm" onClick={() => onDelete(a.id)} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white">Eliminar</Button>
                     </td>
                   </tr>
                 );

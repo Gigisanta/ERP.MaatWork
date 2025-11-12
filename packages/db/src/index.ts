@@ -65,6 +65,7 @@ export {
   // Settings / mappings
   advisorAliases,
   advisorAccountMapping,
+  careerPlanLevels,
   // Broker domain
   brokerAccounts,
   brokerBalances,

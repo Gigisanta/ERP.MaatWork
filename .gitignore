@@ -61,3 +61,6 @@ apps/api/uploads/
 apps/api/apps/
 *.tmp
 *.temp
+
+# Development cache files
+.dev-validation-cache.json

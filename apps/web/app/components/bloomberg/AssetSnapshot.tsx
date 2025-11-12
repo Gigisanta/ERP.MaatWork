@@ -79,7 +79,7 @@ export default function AssetSnapshot({ symbol, className }: AssetSnapshotProps)
     <Card className={className}>
       <CardHeader>
         <CardTitle>
-          <Stack direction="row" gap="sm" alignItems="center">
+          <Stack direction="row" gap="sm" align="center">
             <Heading level={3}>{snapshot.symbol}</Heading>
             <Badge variant={isPositive ? 'success' : 'error'}>
               {snapshot.source}
@@ -90,11 +90,11 @@ export default function AssetSnapshot({ symbol, className }: AssetSnapshotProps)
       <CardContent>
         <Stack direction="column" gap="md">
           {/* Price and Change */}
-          <Stack direction="row" gap="lg" alignItems="baseline">
+          <Stack direction="row" gap="lg" align="end">
             <Heading level={2}>
               {snapshot.price.toFixed(2)} {snapshot.currency}
             </Heading>
-            <Stack direction="row" gap="xs" alignItems="center" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
+            <Stack direction="row" gap="xs" align="center" style={{ color: isPositive ? '#10b981' : '#ef4444' }}>
               <ChangeIcon className="w-4 h-4" />
               <Text size="lg" weight="bold">
                 {isPositive ? '+' : ''}{snapshot.change.toFixed(2)} ({isPositive ? '+' : ''}{snapshot.changePercent.toFixed(2)}%)
@@ -106,52 +106,52 @@ export default function AssetSnapshot({ symbol, className }: AssetSnapshotProps)
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <Text size="sm" color="secondary">52W High</Text>
-              <Text size="md" weight="semibold">{snapshot.high52w.toFixed(2)}</Text>
+              <Text size="base" weight="semibold">{snapshot.high52w.toFixed(2)}</Text>
             </div>
             <div>
               <Text size="sm" color="secondary">52W Low</Text>
-              <Text size="md" weight="semibold">{snapshot.low52w.toFixed(2)}</Text>
+              <Text size="base" weight="semibold">{snapshot.low52w.toFixed(2)}</Text>
             </div>
             <div>
               <Text size="sm" color="secondary">Volume</Text>
-              <Text size="md" weight="semibold">
+              <Text size="base" weight="semibold">
                 {snapshot.volume.toLocaleString()}
               </Text>
             </div>
             <div>
               <Text size="sm" color="secondary">P/E</Text>
-              <Text size="md" weight="semibold">
+              <Text size="base" weight="semibold">
                 {snapshot.pe ? snapshot.pe.toFixed(2) : 'N/A'}
               </Text>
             </div>
             {snapshot.evEbitda && (
               <div>
                 <Text size="sm" color="secondary">EV/EBITDA</Text>
-                <Text size="md" weight="semibold">{snapshot.evEbitda.toFixed(2)}</Text>
+                <Text size="base" weight="semibold">{snapshot.evEbitda.toFixed(2)}</Text>
               </div>
             )}
             {snapshot.margin && (
               <div>
                 <Text size="sm" color="secondary">Margin</Text>
-                <Text size="md" weight="semibold">{snapshot.margin.toFixed(2)}%</Text>
+                <Text size="base" weight="semibold">{snapshot.margin.toFixed(2)}%</Text>
               </div>
             )}
             {snapshot.roe && (
               <div>
                 <Text size="sm" color="secondary">ROE</Text>
-                <Text size="md" weight="semibold">{snapshot.roe.toFixed(2)}%</Text>
+                <Text size="base" weight="semibold">{snapshot.roe.toFixed(2)}%</Text>
               </div>
             )}
             {snapshot.debtEbitda && (
               <div>
                 <Text size="sm" color="secondary">Debt/EBITDA</Text>
-                <Text size="md" weight="semibold">{snapshot.debtEbitda.toFixed(2)}</Text>
+                <Text size="base" weight="semibold">{snapshot.debtEbitda.toFixed(2)}</Text>
               </div>
             )}
           </div>
 
           {/* Source and timestamp */}
-          <Text size="xs" color="tertiary">
+          <Text size="xs" color="muted">
             Source: {snapshot.source} | As of: {new Date(snapshot.asof).toLocaleString()}
           </Text>
         </Stack>

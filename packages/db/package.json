@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/lodash": "^4.17.20",
     "@types/pg": "^8.10.2",
     "tsx": "^4.16.2",
     "typescript": "^5.9.3"

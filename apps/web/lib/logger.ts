@@ -12,6 +12,48 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  */
 export type LogContextValue = string | number | boolean | null | undefined | LogContextValue[] | { [key: string]: LogContextValue };
 
+/**
+ * Convierte un valor desconocido a LogContextValue de forma segura
+ * Útil para convertir errores y otros valores unknown a formato de log
+ */
+export function toLogContextValue(value: unknown): LogContextValue {
+  if (value === null || value === undefined) {
+    return value;
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (value instanceof Error) {
+    return {
+      message: value.message,
+      name: value.name,
+      ...(value.stack && { stack: value.stack }),
+    };
+  }
+  if (Array.isArray(value)) {
+    return value.map(toLogContextValue);
+  }
+  if (typeof value === 'object') {
+    const result: Record<string, LogContextValue> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = toLogContextValue(val);
+    }
+    return result;
+  }
+  return String(value);
+}
+
+/**
+ * Convierte un Record con valores unknown a Record<string, LogContextValue>
+ */
+export function toLogContext(record: Record<string, unknown>): Record<string, LogContextValue> {
+  const result: Record<string, LogContextValue> = {};
+  for (const [key, value] of Object.entries(record)) {
+    result[key] = toLogContextValue(value);
+  }
+  return result;
+}
+
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;

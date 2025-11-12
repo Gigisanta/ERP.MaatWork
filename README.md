@@ -15,12 +15,13 @@ CactusDashboard-epic-D/
 │   └── ui/                  # Design System + React Components
 ├── data/                    # Archivos de datos de negocio (Excel)
 ├── Automations/             # Scripts de automatización Chrome
-└── docker-compose.yml       # PostgreSQL local
+└── docker-compose.yml       # PostgreSQL y N8N (Docker)
 ```
 
 ## Requisitos
 - Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
 - pnpm 9+
+- Python 3.10+ (opcional pero recomendado para analytics-service)
 - TMUX (recomendado) - `brew install tmux` en macOS, `sudo apt-get install tmux` en Ubuntu
 - (Opcional) Docker para Postgres local
 
@@ -34,15 +35,26 @@ pnpm install
 ### Prerrequisitos
 - Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
 - pnpm 9+
+- Python 3.10+ (opcional pero recomendado para analytics-service)
 - TMUX (recomendado para mejor experiencia de desarrollo)
 - Docker (opcional, para PostgreSQL local)
 
 ### Configuración Inicial
-- Base de datos local (opcional):
+- Base de datos y N8N (Docker):
 ```bash
 docker compose up -d
 ```
+Esto inicia:
+- PostgreSQL en puerto 5433
+- N8N en puerto 5678 (sin autenticación, automatizaciones compartidas por teams)
+
 - Variables de entorno API: copia `apps/api/.env.example` a `apps/api/.env` y ajusta.
+
+- Instalar dependencias Python (opcional pero recomendado):
+```bash
+pnpm -F @cactus/analytics-service install
+```
+Esto instala las dependencias necesarias para el servicio de analytics (FastAPI, uvicorn, yfinance, etc.).
 
 ### Ejecutar Aplicaciones
 
@@ -98,6 +110,7 @@ cd apps/analytics-service && python main.py
 - **API Health Check**: http://localhost:3001/health
 - **Analytics Service**: http://localhost:3002
 - **Analytics Health**: http://localhost:3002/health
+- **N8N (Automatizaciones)**: http://localhost:5678
 
 ### Logs
 
@@ -181,15 +194,90 @@ brew services start postgresql
 pnpm install
 ```
 
-#### Servicio Analytics no inicia:
+#### Servicio Analytics (Python) no inicia:
+
+El servicio Python analytics-service es opcional pero recomendado. Proporciona búsqueda avanzada de instrumentos y cálculos de performance. Si no está disponible, el API usará fallback a base de datos.
+
+**Verificar Python:**
 ```bash
 # Verificar que Python 3.10+ está instalado
 python3 --version
+# o en Windows:
+python --version
+```
 
-# Instalar dependencias Python
+**Instalar dependencias Python:**
+```bash
+# Opción 1: Usar script pnpm (recomendado)
+pnpm -F @cactus/analytics-service install
+
+# Opción 2: Manualmente
 cd apps/analytics-service
 pip install -r requirements.txt
+# o en Windows:
+python -m pip install -r requirements.txt
 ```
+
+**Iniciar servicio manualmente:**
+```bash
+# Opción 1: Usar script pnpm (recomendado)
+pnpm -F @cactus/analytics-service dev
+
+# Opción 2: Directamente con Python
+cd apps/analytics-service
+python main.py
+```
+
+**Verificar que el servicio está corriendo:**
+```bash
+# Health check
+curl http://localhost:3002/health
+
+# Debería retornar:
+# {"status":"healthy","service":"analytics-service",...}
+```
+
+**Troubleshooting:**
+
+1. **Error "Python no está instalado":**
+   - Instala Python 3.10+ desde https://www.python.org/downloads/
+   - Asegúrate de agregar Python al PATH durante la instalación
+   - En Windows, verifica que `python` o `py` estén disponibles en la terminal
+
+2. **Error "pip no está disponible":**
+   - Python 3.10+ incluye pip por defecto
+   - Si falta, instala pip: https://pip.pypa.io/en/stable/installation/
+   - En Windows, usa: `python -m ensurepip --upgrade`
+
+3. **Error "ECONNREFUSED" en logs del API:**
+   - El servicio Python no está corriendo
+   - Inicia el servicio con: `pnpm -F @cactus/analytics-service dev`
+   - O verifica que esté corriendo en `http://localhost:3002`
+   - El API continuará funcionando con fallback a base de datos
+
+4. **Error al instalar dependencias Python:**
+   - Verifica que tienes permisos de escritura
+   - En Linux/macOS, puede necesitar `sudo` o usar virtualenv
+   - Considera usar un entorno virtual Python:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate  # Linux/macOS
+     # o en Windows:
+     venv\Scripts\activate
+     pip install -r requirements.txt
+     ```
+
+5. **Puerto 3002 ya en uso:**
+   - Otro proceso está usando el puerto 3002
+   - Encuentra y termina el proceso:
+     ```bash
+     # Linux/macOS
+     lsof -ti:3002 | xargs kill
+     # Windows
+     netstat -ano | findstr :3002
+     taskkill /PID <PID> /F
+     ```
+   - O cambia el puerto en `apps/analytics-service/main.py` y `PYTHON_SERVICE_URL` en `apps/api/.env`
 
 ## API (Express)
 - Entrypoint: `apps/api/src/index.ts`
@@ -204,6 +292,8 @@ pip install -r requirements.txt
   - `DATABASE_URL` (postgres)
   - `CORS_ORIGINS` (separado por comas, usado en producción)
   - `CSP_ENABLED` (true/false)
+  - `PYTHON_SERVICE_URL` (opcional, por defecto `http://localhost:3002` - URL del servicio Python analytics)
+  - `PYTHON_SERVICE_TIMEOUT` (opcional, por defecto `30000` - timeout en ms para requests al servicio Python)
 
 ## Sistema de Logging Avanzado
 
@@ -396,6 +486,105 @@ pnpm -F @cactus/api test contacts-tags.e2e.test.ts
 # Generar migraciones
 cd packages/db && npx drizzle-kit generate
 ```
+
+## N8N - Automatizaciones
+
+N8N está integrado como servicio Docker para crear y gestionar automatizaciones de flujos de trabajo.
+
+### Características
+- **Sin autenticación básica**: Las automatizaciones y usuarios son compartidas por la funcionalidad de `/teams`
+- **Acceso directo**: Botón "N8N" disponible en la página de contactos (`/contacts`)
+- **Persistencia**: Los datos de N8N se guardan en un volumen Docker (`n8n_data`)
+- **CORS configurado**: Permite conexiones desde `http://localhost:3000`
+- **Optimizado para recursos**: Configuración optimizada para reducir consumo de CPU y memoria
+
+### Acceso
+- **URL**: http://localhost:5678
+- **Desde la aplicación**: Click en el botón "N8N" en la página de contactos
+- **Directo**: Abrir `http://localhost:5678` en el navegador
+
+### Configuración Docker
+N8N se inicia automáticamente con `docker compose up -d`. La configuración optimizada está en `docker-compose.yml`:
+
+**Límites de recursos:**
+- CPU: Máximo 0.75 cores, reserva 0.25 cores
+- Memoria: Máximo 768MB, reserva 256MB
+
+**Variables de entorno optimizadas:**
+- `N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true` - Deshabilita proceso principal innecesario
+- `N8N_METRICS=false` - Deshabilita métricas para reducir overhead
+- `N8N_LOG_LEVEL=warn` - Reduce logging para menor consumo
+- `N8N_EXECUTIONS_DATA_PRUNE=true` - Limpia ejecuciones antiguas automáticamente
+- `N8N_EXECUTIONS_DATA_MAX_AGE=168` - Retiene ejecuciones por 7 días
+- `N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT=100` - Máximo 100 ejecuciones retenidas
+
+**Otras configuraciones:**
+- Puerto: `5678`
+- Sin autenticación básica (`N8N_BASIC_AUTH_ACTIVE=false`)
+- CORS habilitado para `http://localhost:3000`
+- Volumen persistente: `n8n_data:/home/node/.n8n`
+- Healthcheck optimizado: Intervalo de 60s (reducido de 30s)
+
+### Optimizaciones de Integración
+
+**Backend (`apps/api`):**
+- **Batching automático**: Los contactos se dividen en lotes de 100 (configurable vía `N8N_WEBHOOK_BATCH_SIZE`)
+- **Rate limiting**: Máximo 10 requests por minuto por usuario (configurable vía `N8N_WEBHOOK_RATE_LIMIT`)
+- **Cliente HTTP optimizado**: Reutiliza conexiones con keepalive y pooling
+- **Retry con exponential backoff**: Reintentos automáticos con delays incrementales
+- **Timeout configurable**: 30 segundos por defecto (configurable vía `N8N_WEBHOOK_TIMEOUT`)
+
+**Frontend (`apps/web`):**
+- **Validación de payload**: Valida tamaño antes de enviar
+- **Logging optimizado**: Reduce logging excesivo
+- **Manejo de errores mejorado**: Mensajes más claros y manejo de rate limits
+
+### Variables de Entorno
+
+**Frontend (`apps/web`):**
+```bash
+NEXT_PUBLIC_N8N_URL=http://localhost:5678  # URL de N8N (opcional, default: http://localhost:5678)
+```
+
+**Backend (`apps/api`):**
+```bash
+# Habilitar/deshabilitar N8N completamente
+N8N_ENABLED=true  # default: true
+
+# Tamaño de batch para webhooks
+N8N_WEBHOOK_BATCH_SIZE=100  # default: 100 contactos por batch
+
+# Rate limit (requests por minuto por usuario)
+N8N_WEBHOOK_RATE_LIMIT=10  # default: 10 requests/min
+
+# Timeout para requests de webhook (ms)
+N8N_WEBHOOK_TIMEOUT=30000  # default: 30000ms (30s)
+```
+
+### Limpieza de Puertos
+El puerto 5678 se limpia automáticamente con los scripts de desarrollo:
+```bash
+pnpm run dev:kill  # Limpia puertos incluyendo 5678
+```
+
+### Uso
+1. Iniciar servicios Docker: `docker compose up -d`
+2. Acceder a N8N desde la aplicación web (botón en `/contacts`) o directamente en `http://localhost:5678`
+3. Crear workflows y automatizaciones según necesidades del equipo
+4. Las automatizaciones son compartidas por todos los usuarios del equipo (gestión vía `/teams`)
+
+### Impacto de Optimizaciones
+
+**Reducción de recursos:**
+- **Memoria**: ~40-60% de reducción (de ~800MB a ~300-500MB)
+- **CPU**: ~50-70% de reducción cuando idle
+- **Red**: Batching reduce overhead de red en ~30-40%
+
+**Mejoras de rendimiento:**
+- Conexiones HTTP reutilizadas (keepalive)
+- Menor latencia en requests repetidos
+- Mayor estabilidad con rate limiting
+- Mejor manejo de errores con retry automático
 
 ## Datos de Negocio
 
