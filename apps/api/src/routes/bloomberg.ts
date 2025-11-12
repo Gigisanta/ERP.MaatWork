@@ -13,8 +13,8 @@ import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
 import { z } from 'zod';
-import { cache, REDIS_TTL } from '../middleware/cache';
-import { buildCacheKey } from '../config/redis';
+import { cache } from '../middleware/cache';
+import { buildCacheKey, REDIS_TTL } from '../config/redis';
 import { uuidSchema } from '../utils/common-schemas';
 
 const router = Router();
@@ -171,9 +171,9 @@ router.get(
       'asset',
       'ohlcv',
       req.params.symbol,
-      req.query.timeframe || '1d',
-      req.query.from || 'all',
-      req.query.to || 'all'
+      typeof req.query.timeframe === 'string' ? req.query.timeframe : '1d',
+      typeof req.query.from === 'string' ? req.query.from : 'all',
+      typeof req.query.to === 'string' ? req.query.to : 'all'
     )
   }),
   async (req, res) => {
@@ -221,17 +221,28 @@ router.get(
         .limit(10000); // Limit to prevent huge responses
       
       // Format response
-      const formatted = data.map(row => ({
-        date: isIntraday 
-          ? (row as typeof pricesIntraday.$inferSelect).timestamp.toISOString()
-          : (row as typeof pricesDaily.$inferSelect).date,
-        open: parseFloat((row as any).open),
-        high: parseFloat((row as any).high),
-        low: parseFloat((row as any).low),
-        close: parseFloat((row as any).close),
-        adjClose: (row as any).adjClose ? parseFloat((row as any).adjClose) : undefined,
-        volume: (row as any).volume ? parseFloat((row as any).volume) : 0
-      })).reverse(); // Return in chronological order
+      type PriceRow = typeof pricesIntraday.$inferSelect | typeof pricesDaily.$inferSelect;
+      const formatted = data.map((row: PriceRow) => {
+        const priceRow = row as {
+          open: string | number;
+          high: string | number;
+          low: string | number;
+          close: string | number;
+          adjClose?: string | number | null;
+          volume?: string | number | null;
+        };
+        return {
+          date: isIntraday 
+            ? (row as typeof pricesIntraday.$inferSelect).timestamp.toISOString()
+            : (row as typeof pricesDaily.$inferSelect).date,
+          open: parseFloat(String(priceRow.open)),
+          high: parseFloat(String(priceRow.high)),
+          low: parseFloat(String(priceRow.low)),
+          close: parseFloat(String(priceRow.close)),
+          adjClose: priceRow.adjClose ? parseFloat(String(priceRow.adjClose)) : undefined,
+          volume: priceRow.volume ? parseFloat(String(priceRow.volume)) : 0
+        };
+      }).reverse(); // Return in chronological order
       
       res.json({
         success: true,

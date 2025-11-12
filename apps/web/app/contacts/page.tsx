@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import { deleteContact, createTag, updateTag, deleteTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
-import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag } from '@/types';
+import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag, ApiResponse } from '@/types';
 import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
@@ -47,8 +47,7 @@ import { useViewport } from '../(shared)/useViewport';
 import { useDebouncedValue } from '../admin/aum/rows/hooks/useDebouncedState';
 import { useToast } from '../../lib/hooks/useToast';
 import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
-import { sendContactsToWebhook } from '../../lib/utils/webhook-export';
-import { config } from '../../lib/config';
+import { logger } from '../../lib/logger';
 
 // Types Contact y Tag importados desde @/types
 
@@ -104,12 +103,6 @@ export default function ContactsPage() {
   const [editedTagBusinessLine, setEditedTagBusinessLine] = useState<'inversiones' | 'zurich' | 'patrimonial' | null>(null);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
 
-  // Estados para importar a webhook de N8N
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState<string>('');
-  const [tempWebhookUrl, setTempWebhookUrl] = useState<string>('http://localhost:5678/webhook-test/4d625bd8-4792-475f-9dd8-3c7e9c62f305');
-  const [isImporting, setIsImporting] = useState(false);
-
   // Estados para edición inline
   const [savingContactId, setSavingContactId] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<{ contactId: string; field: string } | null>(null);
@@ -135,7 +128,7 @@ export default function ContactsPage() {
   // Justificación: Improves productivity for power users
   // Impacto: Faster navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
-  useSearchShortcut(searchInputRef, true);
+  useSearchShortcut(searchInputRef as React.RefObject<HTMLInputElement>, true);
 
   // AI_DECISION: Add Escape shortcut to close modals
   // Justificación: Standard UX pattern, improves usability
@@ -144,8 +137,7 @@ export default function ContactsPage() {
     if (showDeleteModal) setShowDeleteModal(false);
     if (showCreateTagModal) setShowCreateTagModal(false);
     if (showManageTagsModal) setShowManageTagsModal(false);
-    if (showImportModal) setShowImportModal(false);
-  }, showDeleteModal || showCreateTagModal || showManageTagsModal || showImportModal);
+  }, showDeleteModal || showCreateTagModal || showManageTagsModal);
 
   // Combine all loading states
   const localLoading = contactsLoading || stagesLoading || advisorsLoading || tagsLoading;
@@ -188,7 +180,7 @@ export default function ContactsPage() {
     }
   }, [contactToDelete, mutateContacts]);
 
-  const handleCreateTag = async () => {
+  const handleCreateTag = useCallback(async () => {
     if (!newTagName.trim()) return;
     
     try {
@@ -210,9 +202,9 @@ export default function ContactsPage() {
     } catch (err) {
       showToast('Error al crear etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
-  };
+  }, [newTagName, newTagColor, newTagBusinessLine, mutateTags, mutateContacts, showToast]);
 
-  const handleEditTag = async () => {
+  const handleEditTag = useCallback(async () => {
     if (!tagToEdit || !editedTagName.trim()) return;
     
     try {
@@ -231,7 +223,7 @@ export default function ContactsPage() {
     } catch (err) {
       showToast('Error al editar etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
-  };
+  }, [tagToEdit, editedTagName, editedTagColor, editedTagBusinessLine, mutateTags, mutateContacts, showToast]);
 
   // Estado para guardado automático
   const [isAutoSavingTag, setIsAutoSavingTag] = useState(false);
@@ -272,7 +264,11 @@ export default function ContactsPage() {
           });
         } catch (err) {
           // Silently fail on auto-save, user can manually save if needed
-          console.error('Error al guardar automáticamente la etiqueta', err);
+          logger.error('Error al guardar automáticamente la etiqueta', {
+            error: err instanceof Error ? err.message : String(err),
+            tagId: tagToEdit.id,
+            tagName: editedTagName
+          });
         } finally {
           setIsAutoSavingTag(false);
         }
@@ -282,7 +278,7 @@ export default function ContactsPage() {
     return () => clearTimeout(timeoutId);
   }, [editedTagName, editedTagColor, editedTagBusinessLine, tagToEdit, mutateTags, mutateContacts]);
 
-  const handleDeleteTag = (tagId: string) => {
+  const handleDeleteTag = useCallback((tagId: string) => {
     setConfirmDialog({
       open: true,
       title: 'Eliminar etiqueta',
@@ -301,25 +297,25 @@ export default function ContactsPage() {
         }
       }
     });
-  };
+  }, [mutateTags, mutateContacts, showToast]);
 
-  const openEditTag = (tag: Tag) => {
+  const openEditTag = useCallback((tag: Tag) => {
     setTagToEdit(tag);
     setEditedTagName(tag.name);
     setEditedTagColor(tag.color);
     setEditedTagBusinessLine(tag.businessLine ?? null);
     setShowManageTagsModal(true);
-  };
+  }, []);
 
-  const handleTagToggle = (tagId: string) => {
+  const handleTagToggle = useCallback((tagId: string) => {
     setSelectedTags(prev => 
       prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedStage('all');
     setSelectedTags([]);
@@ -329,13 +325,13 @@ export default function ContactsPage() {
       newSearchParams.delete('advisorId');
       router.push(`/contacts?${newSearchParams.toString()}`);
     }
-  };
+  }, [advisorIdFilter, searchParams, router]);
 
-  const clearAdvisorFilter = () => {
+  const clearAdvisorFilter = useCallback(() => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.delete('advisorId');
     router.push(`/contacts?${newSearchParams.toString()}`);
-  };
+  }, [searchParams, router]);
 
 
   // AI_DECISION: Memoize handlers with useCallback to prevent re-renders
@@ -348,9 +344,9 @@ export default function ContactsPage() {
     setSavingContactId(contactId);
     
     // Optimistic update: update local cache immediately
-    const optimisticUpdate = (currentData: unknown) => {
-      if (!currentData || !Array.isArray((currentData as { data?: unknown[] }).data)) return currentData;
-      const contacts = (currentData as { data: Contact[] }).data;
+    const optimisticUpdate = (currentData: ApiResponse<unknown[]> | undefined): ApiResponse<unknown[]> | undefined => {
+      if (!currentData || !Array.isArray(currentData.data)) return currentData;
+      const contacts = currentData.data as Contact[];
       return {
         ...currentData,
         data: contacts.map((contact: Contact) => 
@@ -383,9 +379,9 @@ export default function ContactsPage() {
     setSavingContactId(contactId);
     
     // Optimistic update: update local cache immediately
-    const optimisticUpdate = (currentData: unknown) => {
-      if (!currentData || !Array.isArray((currentData as { data?: unknown[] }).data)) return currentData;
-      const contacts = (currentData as { data: Contact[] }).data;
+    const optimisticUpdate = (currentData: ApiResponse<unknown[]> | undefined): ApiResponse<unknown[]> | undefined => {
+      if (!currentData || !Array.isArray(currentData.data)) return currentData;
+      const contacts = currentData.data as Contact[];
       return {
         ...currentData,
         data: contacts.map((contact: Contact) => {
@@ -396,7 +392,7 @@ export default function ContactsPage() {
             ...add.map(tagId => {
               const tag = Array.isArray(allTags) ? (allTags as Tag[]).find(t => t.id === tagId) : null;
               return tag ? { id: tag.id, name: tag.name, color: tag.color } : null;
-            }).filter(Boolean)
+            }).filter((tag): tag is { id: string; name: string; color: string } => tag !== null)
           ];
           return { ...contact, tags: newTags };
         })
@@ -452,28 +448,13 @@ export default function ContactsPage() {
     });
   }, [contacts, debouncedSearchTerm, selectedStage, selectedTags]) as Contact[];
 
-  // Cargar URL del webhook desde localStorage al montar
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedUrl = localStorage.getItem('n8n_webhook_url');
-      if (savedUrl) {
-        setWebhookUrl(savedUrl);
-      }
-    }
-  }, []);
-
-  // Handler para abrir N8N
-  const handleOpenN8N = useCallback(() => {
-    window.open(config.n8nUrl, '_blank', 'noopener,noreferrer');
-  }, []);
-
   // Handler para exportar contactos a CSV
   const handleExportCSV = useCallback(() => {
     try {
-      // Debug: Verificar datos disponibles
-      console.log('Export CSV - filteredContacts:', filteredContacts);
-      console.log('Export CSV - contacts original:', contacts);
-      console.log('Export CSV - filteredContacts length:', Array.isArray(filteredContacts) ? filteredContacts.length : 'not array');
+      logger.debug('Iniciando exportación CSV', {
+        filteredContactsCount: Array.isArray(filteredContacts) ? filteredContacts.length : 0,
+        contactsCount: Array.isArray(contacts) ? contacts.length : 0
+      });
       
       if (!Array.isArray(filteredContacts) || filteredContacts.length === 0) {
         showToast('No hay contactos para exportar', 'No hay contactos filtrados disponibles', 'warning');
@@ -488,14 +469,18 @@ export default function ContactsPage() {
       });
       
       if (validContacts.length === 0) {
-        console.error('No hay contactos válidos después del filtro');
+        logger.error('No hay contactos válidos después del filtro', {
+          filteredContactsCount: filteredContacts.length
+        });
         showToast('Error al exportar', 'Los contactos no tienen el formato esperado', 'error');
         return;
       }
       
-      console.log('Export CSV - validContacts length:', validContacts.length);
       const csvContent = exportContactsToCSV(validContacts, stages);
-      console.log('Export CSV - csvContent length:', csvContent.length);
+      logger.info('CSV generado exitosamente', {
+        validContactsCount: validContacts.length,
+        csvContentLength: csvContent.length
+      });
       
       // Generar nombre de archivo con fecha y hora
       const now = new Date();
@@ -506,98 +491,13 @@ export default function ContactsPage() {
       downloadCSV(csvContent, filename);
       showToast('Exportación exitosa', `Se exportaron ${validContacts.length} contactos`, 'success');
     } catch (err) {
-      console.error('Error al exportar CSV:', err);
+      logger.error('Error al exportar CSV', {
+        error: err instanceof Error ? err.message : String(err),
+        filteredContactsCount: Array.isArray(filteredContacts) ? filteredContacts.length : 0
+      });
       showToast('Error al exportar', err instanceof Error ? err.message : 'Error desconocido al generar CSV', 'error');
     }
   }, [filteredContacts, contacts, pipelineStages, showToast]);
-
-  // Handler para importar contactos al webhook
-  const handleImportToWebhook = useCallback(async (urlToUse?: string) => {
-    try {
-      // Validar que haya contactos filtrados
-      if (!Array.isArray(filteredContacts) || filteredContacts.length === 0) {
-        showToast('No hay contactos para importar', 'No hay contactos filtrados disponibles', 'warning');
-        return;
-      }
-
-      // Determinar URL a usar
-      const url = urlToUse || webhookUrl;
-      
-      if (!url) {
-        // Si no hay URL, abrir modal
-        setShowImportModal(true);
-        return;
-      }
-
-      setIsImporting(true);
-      const contactsCount = filteredContacts.length;
-      showToast('Enviando contactos...', `Enviando ${contactsCount} contactos al webhook${contactsCount > 100 ? ' (se dividirán en batches automáticamente)' : ''}`, 'info');
-
-      // Preparar metadata de filtros
-      const stages = Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : [];
-      const currentStage = selectedStage !== 'all' ? selectedStage : null;
-      const tagNames = selectedTags
-        .map(tagId => {
-          const tag = Array.isArray(allTags) ? (allTags as Tag[]).find((t: Tag) => t.id === tagId) : null;
-          return tag?.name;
-        })
-        .filter(Boolean) as string[];
-
-      const metadata = {
-        filters: {
-          stage: currentStage,
-          tags: tagNames,
-          search: debouncedSearchTerm || null,
-          advisorId: advisorIdFilter || null
-        }
-      };
-
-      // Enviar al webhook
-      const result = await sendContactsToWebhook(filteredContacts, url, metadata);
-
-      if (result.success) {
-        showToast('Importación exitosa', result.message, 'success');
-      } else {
-        showToast('Error al importar', result.message, 'error');
-      }
-    } catch (err) {
-      // Solo loguear errores críticos
-      if (err instanceof Error && !err.message.includes('abort')) {
-        console.error('[Import Webhook] Error crítico', err);
-      }
-      showToast('Error al importar', err instanceof Error ? err.message : 'Error desconocido al enviar al webhook', 'error');
-    } finally {
-      setIsImporting(false);
-    }
-  }, [filteredContacts, webhookUrl, selectedStage, selectedTags, debouncedSearchTerm, advisorIdFilter, pipelineStages, allTags, showToast]);
-
-  // Handler para guardar URL y enviar al webhook
-  const handleSaveAndImport = useCallback(async () => {
-    // Validar URL
-    if (!tempWebhookUrl.trim()) {
-      showToast('URL requerida', 'Por favor ingresa la URL del webhook de N8N', 'error');
-      return;
-    }
-
-    try {
-      new URL(tempWebhookUrl); // Validar formato de URL
-    } catch {
-      showToast('URL inválida', 'La URL del webhook no es válida', 'error');
-      return;
-    }
-
-    // Guardar URL en localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('n8n_webhook_url', tempWebhookUrl);
-      setWebhookUrl(tempWebhookUrl);
-    }
-
-    // Cerrar modal
-    setShowImportModal(false);
-
-    // Enviar al webhook
-    await handleImportToWebhook(tempWebhookUrl);
-  }, [tempWebhookUrl, handleImportToWebhook, showToast]);
 
   // AI_DECISION: Memoize columns array to prevent re-creation on every render
   // Justificación: Column definitions with render functions are recreated on every render
@@ -777,15 +677,15 @@ export default function ContactsPage() {
                   </button>
                 </div>
 
-                {/* Botón N8N */}
+                {/* Botón Automatizaciones */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleOpenN8N}
-                  title="Abrir N8N - Automatizaciones"
+                  onClick={() => router.push('/automations')}
+                  title="Abrir Automatizaciones"
                 >
                   <Icon name="Settings" size={16} className="mr-1.5" />
-                  N8N
+                  Automatizaciones
                 </Button>
 
                 {/* Botón Métricas */}
@@ -875,17 +775,6 @@ export default function ContactsPage() {
                   Contactos ({Array.isArray(filteredContacts) ? filteredContacts.length : 0})
                 </CardTitle>
                 <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleImportToWebhook()}
-                    title="Importar contactos a N8N"
-                    disabled={!Array.isArray(filteredContacts) || filteredContacts.length === 0 || isImporting}
-                    className="h-7 px-2 text-xs"
-                  >
-                    <Icon name="Settings" size={14} className="mr-1" />
-                    <span className="hidden sm:inline">{isImporting ? 'Importando...' : 'Importar'}</span>
-                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1284,38 +1173,6 @@ export default function ContactsPage() {
                   </ModalFooter>
                 </>
               )}
-            </Stack>
-          </ModalContent>
-        </Modal>
-
-        {/* Modal de configuración de webhook para importar */}
-        <Modal open={showImportModal} onOpenChange={setShowImportModal}>
-          <ModalHeader>
-            <ModalTitle>Configurar Webhook de N8N</ModalTitle>
-            <ModalDescription>
-              Ingresa la URL del webhook de N8N para importar contactos. Esta configuración se guardará para futuros usos.
-            </ModalDescription>
-          </ModalHeader>
-          <ModalContent>
-            <Stack direction="column" gap="sm">
-              <Input
-                label="URL del Webhook"
-                value={tempWebhookUrl}
-                onChange={(e) => setTempWebhookUrl(e.target.value)}
-                placeholder="http://localhost:5678/webhook-test/..."
-                type="url"
-              />
-              <Text size="xs" color="secondary">
-                La URL se guardará en tu navegador para futuros usos. Puedes cambiarla más tarde limpiando el almacenamiento local.
-              </Text>
-              <ModalFooter>
-                <Button variant="secondary" onClick={() => setShowImportModal(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSaveAndImport} disabled={!tempWebhookUrl.trim()}>
-                  Guardar e Importar
-                </Button>
-              </ModalFooter>
             </Stack>
           </ModalContent>
         </Modal>

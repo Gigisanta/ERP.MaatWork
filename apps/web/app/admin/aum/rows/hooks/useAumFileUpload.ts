@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { AUM_ROWS_CONFIG } from '../lib/aumRowsConstants';
+import { logger } from '@/lib/logger';
 
 export interface UseAumFileUploadOptions {
   onSuccess?: (fileId: string) => void;
@@ -47,9 +48,11 @@ export function useAumFileUpload(options: UseAumFileUploadOptions = {}) {
    */
   const startRetry = useCallback((fileId: string, revalidate: () => void) => {
     const attemptRevalidation = () => {
-      // AI_DECISION: Log de retry para debugging (puede removerse en producción)
-      // Justificación: Útil para debugging de uploads fallidos
-      // Impacto: Mejor debugging sin afectar producción
+      logger.debug('AUM file processing retry attempt', {
+        fileId,
+        attempt: retryCountRef.current + 1,
+        maxRetries
+      });
       
       // Attempt revalidation
       revalidate();
@@ -60,12 +63,20 @@ export function useAumFileUpload(options: UseAumFileUploadOptions = {}) {
       if (retryCountRef.current < maxRetries) {
         // Calculate next delay with exponential backoff
         const delay = baseDelay * Math.pow(2, retryCountRef.current);
-        // Log de delay para debugging
+        logger.debug('AUM file processing retry scheduled', {
+          fileId,
+          attempt: retryCountRef.current,
+          delayMs: delay
+        });
 
         retryTimeoutRef.current = setTimeout(attemptRevalidation, delay);
       } else {
         // Max retries reached
-        // Max retries alcanzado
+        logger.error('AUM file processing timeout', {
+          fileId,
+          maxRetries,
+          totalAttempts: retryCountRef.current
+        });
         setIsWaitingForProcessing(false);
         const error = new Error('Upload processing timed out. Please refresh the page.');
         setUploadError(error.message);
@@ -74,7 +85,11 @@ export function useAumFileUpload(options: UseAumFileUploadOptions = {}) {
     };
 
     // Start first retry with base delay
-    // Iniciando proceso de retry
+    logger.info('AUM file processing started, waiting for completion', {
+      fileId,
+      baseDelayMs: baseDelay,
+      maxRetries
+    });
     retryTimeoutRef.current = setTimeout(attemptRevalidation, baseDelay);
   }, [maxRetries, baseDelay, onError]);
 
@@ -82,7 +97,7 @@ export function useAumFileUpload(options: UseAumFileUploadOptions = {}) {
    * Handle successful upload
    */
   const handleUploadSuccess = useCallback((fileId: string, revalidate: () => void) => {
-    // Upload exitoso, esperando procesamiento
+    logger.info('AUM file upload successful, waiting for processing', { fileId });
     setIsWaitingForProcessing(true);
     setUploadError(null);
     retryCountRef.current = 0;
@@ -104,9 +119,11 @@ export function useAumFileUpload(options: UseAumFileUploadOptions = {}) {
    * Handle upload error
    */
   const handleUploadError = useCallback((error: Error) => {
-    // AI_DECISION: Error logging en hook (puede mejorarse con logger estructurado)
-    // Justificación: Error crítico necesita logging para debugging
-    // Impacto: Mejor debugging de errores de upload
+    logger.error('AUM file upload error', {
+      error: error.message,
+      stack: error.stack,
+      attempt: retryCountRef.current
+    });
     setIsWaitingForProcessing(false);
     setUploadError(error.message);
     onError?.(error);

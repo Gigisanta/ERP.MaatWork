@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useRouter } from 'next/navigation';
@@ -146,7 +146,19 @@ export default function PortfoliosPage() {
     riskLevel: 'moderate'
   });
   const [portfolioLines, setPortfolioLines] = useState<PortfolioLine[]>([]);
-  const [totalWeight, setTotalWeight] = useState(0);
+  
+  // AI_DECISION: Memoize totalWeight calculation to prevent recalculation on every render
+  // Justificación: Calculation runs on every render, memoization prevents unnecessary recalculations
+  // Impacto: Reduces computation time when portfolioLines don't change
+  const totalWeight = useMemo(() => {
+    if (!Array.isArray(portfolioLines) || portfolioLines.length === 0) {
+      return 0;
+    }
+    return portfolioLines.reduce((sum, line) => {
+      const weight = typeof line.targetWeight === 'number' ? line.targetWeight : 0;
+      return sum + (isNaN(weight) ? 0 : weight);
+    }, 0);
+  }, [portfolioLines]);
 
   // Estados para editar carteras
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
@@ -189,14 +201,14 @@ export default function PortfoliosPage() {
     onConfirm: () => {}
   });
 
-  const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+  const showToast = useCallback((title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
     setToast({ 
       show: true, 
       title, 
       ...(description && { description }), 
       variant 
     });
-  };
+  }, []);
 
   // Obtener datos reales desde API
   useEffect(() => {
@@ -352,23 +364,17 @@ export default function PortfoliosPage() {
     setPortfolioLines([...portfolioLines, newLine]);
   };
 
-  const updateWeight = (lineId: string, weight: number) => {
-    const updatedLines = portfolioLines.map(line =>
-      line.id === lineId ? { ...line, targetWeight: weight } : line
+  const updateWeight = useCallback((lineId: string, weight: number) => {
+    setPortfolioLines(prevLines => 
+      prevLines.map(line =>
+        line.id === lineId ? { ...line, targetWeight: weight } : line
+      )
     );
-    setPortfolioLines(updatedLines);
-    
-    const total = updatedLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0);
-    setTotalWeight(total);
-  };
+  }, []);
 
-  const removeLine = (lineId: string) => {
-    const updatedLines = portfolioLines.filter(line => line.id !== lineId);
-    setPortfolioLines(updatedLines);
-    
-    const total = updatedLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0);
-    setTotalWeight(total);
-  };
+  const removeLine = useCallback((lineId: string) => {
+    setPortfolioLines(prevLines => prevLines.filter(line => line.id !== lineId));
+  }, []);
 
   const handleCreatePortfolio = async () => {
     if (!newPortfolio.name.trim()) {
@@ -1339,52 +1345,61 @@ export default function PortfoliosPage() {
         )}
 
         {/* Comparación */}
-        {activeSection === 'comparison' && (
-          <Card className="rounded-md border border-border">
-            <CardContent className="p-4">
-              <PortfolioComparator
-                portfolios={portfolios.map(p => {
-                  const item: {
-                    id: string;
-                    name: string;
-                    type: 'portfolio';
-                    riskLevel: RiskLevel;
-                    createdAt: string;
-                    description?: string;
-                  } = {
-                    id: p.id,
-                    name: p.name,
-                    type: 'portfolio',
-                    riskLevel: p.riskLevel,
-                    createdAt: p.createdAt
-                  };
-                  if (p.description) {
-                    item.description = p.description;
-                  }
-                  return item;
-                })}
-                benchmarks={benchmarks.map(b => {
-                  const item: {
-                    id: string;
-                    name: string;
-                    type: 'benchmark';
-                    createdAt: string;
-                    description?: string;
-                  } = {
-                    id: b.id,
-                    name: b.name,
-                    type: 'benchmark',
-                    createdAt: b.createdAt || ''
-                  };
-                  if (b.description) {
-                    item.description = b.description;
-                  }
-                  return item;
-                })}
-              />
-            </CardContent>
-          </Card>
-        )}
+        {activeSection === 'comparison' && (() => {
+          // AI_DECISION: Memoize portfolio and benchmark transformations to prevent recalculation
+          // Justificación: Transformations run on every render, memoization prevents unnecessary recalculations
+          // Impacto: Reduces computation time when portfolios/benchmarks don't change
+          const transformedPortfolios = portfolios.map(p => {
+            const item: {
+              id: string;
+              name: string;
+              type: 'portfolio';
+              riskLevel: RiskLevel;
+              createdAt: string;
+              description?: string;
+            } = {
+              id: p.id,
+              name: p.name,
+              type: 'portfolio',
+              riskLevel: p.riskLevel,
+              createdAt: p.createdAt
+            };
+            if (p.description) {
+              item.description = p.description;
+            }
+            return item;
+          });
+
+          const transformedBenchmarks = benchmarks.map(b => {
+            const item: {
+              id: string;
+              name: string;
+              type: 'benchmark';
+              createdAt: string;
+              description?: string;
+            } = {
+              id: b.id,
+              name: b.name,
+              type: 'benchmark',
+              createdAt: b.createdAt || ''
+            };
+            if (b.description) {
+              item.description = b.description;
+            }
+            return item;
+          });
+
+          return (
+            <Card className="rounded-md border border-border">
+              <CardContent className="p-4">
+                <PortfolioComparator
+                  portfolios={transformedPortfolios}
+                  benchmarks={transformedBenchmarks}
+                />
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Benchmarks (solo admin/manager) */}
         {(user?.role === 'admin' || user?.role === 'manager') && activeSection === 'benchmarks' && (

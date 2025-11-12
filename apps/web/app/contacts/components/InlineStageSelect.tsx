@@ -11,6 +11,8 @@ import {
   Button,
 } from '@cactus/ui';
 import { moveContactToStage, getNextPipelineStage } from '@/lib/api/pipeline';
+import { logger } from '@/lib/logger';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
 
 interface InlineStageSelectProps {
   contact: Contact;
@@ -33,17 +35,77 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
   onError,
 }) => {
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    targetStageId: string | null;
+  }>({ open: false, targetStageId: null });
+  
   const currentStage = pipelineStages.find((s: PipelineStage) => s.id === contact.pipelineStageId);
   const stageColor = currentStage?.color || '#6B7280';
   const nextStage = getNextPipelineStage(pipelineStages, contact.pipelineStageId ?? null);
 
-  const handleStageChange = useCallback((newStageId: string) => {
+  const performStageChange = useCallback(async (newStageId: string | null) => {
     const value = newStageId === 'none' ? null : newStageId;
     onStageChange(contact.id, value);
   }, [contact.id, onStageChange]);
 
+  const handleStageChange = useCallback((newStageId: string) => {
+    // Verificar si la etapa destino es "Cliente"
+    const targetStage = pipelineStages.find((s: PipelineStage) => s.id === newStageId);
+    
+    if (targetStage && targetStage.name === 'Cliente') {
+      // Mostrar confirmación antes de cambiar a Cliente
+      setConfirmDialog({ open: true, targetStageId: newStageId });
+    } else {
+      // Cambio normal sin confirmación
+      performStageChange(newStageId);
+    }
+  }, [pipelineStages, performStageChange]);
+
+  const handleConfirmStageChange = useCallback(async () => {
+    if (!confirmDialog.targetStageId) return;
+    
+    const targetStageId = confirmDialog.targetStageId;
+    setConfirmDialog({ open: false, targetStageId: null });
+    
+    try {
+      const response = await moveContactToStage(contact.id, targetStageId);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Error al cambiar etapa');
+      }
+      
+      // Invalidar cache si está disponible
+      if (onMutate) {
+        const result = onMutate();
+        if (result instanceof Promise) {
+          await result;
+        }
+      }
+      
+      // Actualizar estado local
+      performStageChange(targetStageId);
+    } catch (error) {
+      logger.error('Error changing stage to Cliente', {
+        error: error instanceof Error ? error.message : String(error),
+        contactId: contact.id,
+        targetStageId
+      });
+      if (onError && error instanceof Error) {
+        onError(error);
+      }
+    }
+  }, [confirmDialog.targetStageId, contact.id, onMutate, onError, performStageChange]);
+
   const handleAdvance = useCallback(async () => {
     if (!nextStage) return;
+    
+    // Verificar si la siguiente etapa es "Cliente"
+    if (nextStage.name === 'Cliente') {
+      // Mostrar confirmación antes de avanzar a Cliente
+      setConfirmDialog({ open: true, targetStageId: nextStage.id });
+      return;
+    }
     
     setIsAdvancing(true);
     try {
@@ -65,7 +127,12 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
       // También llamar a onStageChange para actualizar el estado local
       onStageChange(contact.id, nextStage.id);
     } catch (error) {
-      console.error('Error advancing stage:', error);
+      logger.error('Error advancing stage', {
+        error: error instanceof Error ? error.message : String(error),
+        contactId: contact.id,
+        currentStageId: contact.pipelineStageId,
+        nextStageId: nextStage?.id
+      });
       // Notificar error al componente padre si está disponible
       if (onError && error instanceof Error) {
         onError(error);
@@ -152,6 +219,18 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
           <Icon name="ChevronRight" size={14} />
         </button>
       )}
+      
+      {/* Diálogo de confirmación para etapa Cliente */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ open, targetStageId: confirmDialog.targetStageId })}
+        onConfirm={handleConfirmStageChange}
+        title="Confirmar cambio a Cliente"
+        description={`¿Estás seguro de que deseas mover a "${contact.firstName} ${contact.lastName}" a la etapa Cliente? Se enviará un webhook de bienvenida automáticamente.`}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        variant="default"
+      />
     </div>
   );
 });

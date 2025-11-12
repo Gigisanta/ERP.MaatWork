@@ -1,11 +1,16 @@
-// REGLA CURSOR: Métricas de pipeline - cálculos eficientes con agregaciones SQL
+/**
+ * Metrics Contacts Routes
+ * 
+ * Handles pipeline contact metrics calculations
+ */
+
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, contacts, pipelineStages, pipelineStageHistory, contactTags, tags, monthlyGoals } from '@cactus/db';
-import { eq, and, isNull, sql, gte, lte, inArray, desc, asc, isNotNull, or } from 'drizzle-orm';
-import { requireAuth } from '../auth/middlewares';
-import { getUserAccessScope, buildContactAccessFilter } from '../auth/authorization';
+import { db, contacts, pipelineStages, pipelineStageHistory, contactTags, tags } from '@cactus/db';
+import { eq, and, isNull, sql, gte, lte, inArray, desc, asc, isNotNull } from 'drizzle-orm';
+import { requireAuth } from '../../auth/middlewares';
+import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { z } from 'zod';
-import { validate } from '../utils/validation';
+import { validate } from '../../utils/validation';
 
 const router = Router();
 
@@ -18,18 +23,116 @@ const metricsQuerySchema = z.object({
   year: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(2000)).optional()
 });
 
-const saveGoalsSchema = z.object({
-  month: z.number().int().min(1).max(12),
-  year: z.number().int().min(2000),
-  newProspectsGoal: z.number().int().min(0),
-  firstMeetingsGoal: z.number().int().min(0),
-  secondMeetingsGoal: z.number().int().min(0),
-  newClientsGoal: z.number().int().min(0)
-});
+// ==========================================================
+// Helper Functions
+// ==========================================================
+
+/**
+ * Helper function para obtener primera vez que contactos entran a una etapa
+ * AI_DECISION: Helper function para obtener primera vez que contactos entran a una etapa
+ * Justificación: Reduce código duplicado, mejora performance usando agregaciones SQL, hace el código más mantenible
+ * Impacto: Reemplaza 4 implementaciones repetitivas con una función optimizada
+ */
+async function getFirstTimeStageEntries(
+  stageId: string,
+  monthStart: Date,
+  monthEnd: Date,
+  accessFilter: ReturnType<typeof buildContactAccessFilter>
+): Promise<Map<string, Date>> {
+  // AI_DECISION: Filtrar por rango de fechas para contar solo contactos que entraron por primera vez en el mes
+  // Justificación: Si un contacto entra a una etapa en Enero, luego va a otra etapa, y vuelve en Marzo,
+  // no debemos contarlo en Marzo porque ya había estado en esa etapa antes
+  // Impacto: Métricas correctas que no cuentan contactos que retroceden de etapa
+  
+  // Primero, obtener todos los contactos que entraron a esta etapa en el rango de fechas
+  const entriesInRange = await db()
+    .select({
+      contactId: pipelineStageHistory.contactId,
+      changedAt: pipelineStageHistory.changedAt
+    })
+    .from(pipelineStageHistory)
+    .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
+    .where(and(
+      eq(pipelineStageHistory.toStage, stageId),
+      gte(pipelineStageHistory.changedAt, monthStart),
+      lte(pipelineStageHistory.changedAt, monthEnd),
+      isNull(contacts.deletedAt),
+      accessFilter.whereClause
+    ));
+
+  // Verificar para cada contacto si hay entradas anteriores a monthStart
+  // Solo contar contactos donde la primera entrada a la etapa esté en el rango del mes
+  const firstEntryByContact = new Map<string, Date>();
+  const contactIdsToCheck = new Set(entriesInRange.map((e: { contactId: string; changedAt: Date }) => e.contactId));
+
+  // Para cada contacto, verificar si tiene entradas anteriores a monthStart
+  if (contactIdsToCheck.size > 0) {
+    const contactsWithEarlierEntries = await db()
+      .selectDistinct({ contactId: pipelineStageHistory.contactId })
+      .from(pipelineStageHistory)
+      .where(and(
+        eq(pipelineStageHistory.toStage, stageId),
+        inArray(pipelineStageHistory.contactId, Array.from(contactIdsToCheck)),
+        sql`${pipelineStageHistory.changedAt} < ${monthStart}`
+      ));
+
+    const contactsWithEarlierEntriesSet = new Set(
+      contactsWithEarlierEntries.map((e: { contactId: string }) => e.contactId)
+    );
+
+    // Solo incluir contactos que NO tienen entradas anteriores (primera vez en el mes)
+    for (const entry of entriesInRange) {
+      if (!contactsWithEarlierEntriesSet.has(entry.contactId)) {
+        const contactId = entry.contactId;
+        const changedAt = entry.changedAt instanceof Date 
+          ? entry.changedAt 
+          : new Date(entry.changedAt);
+        
+        // Si ya existe, tomar el MIN (más temprano en el mes)
+        const existing = firstEntryByContact.get(contactId);
+        if (!existing || changedAt < existing) {
+          firstEntryByContact.set(contactId, changedAt);
+        }
+      }
+    }
+  }
+
+  // También considerar contactos creados directamente en esta etapa (sin historial)
+  const contactsCreatedInStage = await db()
+    .select({
+      id: contacts.id,
+      createdAt: contacts.createdAt
+    })
+    .from(contacts)
+    .where(and(
+      eq(contacts.pipelineStageId, stageId),
+      gte(contacts.createdAt, monthStart),
+      lte(contacts.createdAt, monthEnd),
+      isNull(contacts.deletedAt),
+      accessFilter.whereClause
+    ));
+
+  // Agregar contactos creados directamente si no tienen historial
+  const contactsWithHistory = new Set(firstEntryByContact.keys());
+  for (const contact of contactsCreatedInStage) {
+    if (!contactsWithHistory.has(contact.id)) {
+      const createdAt = contact.createdAt instanceof Date 
+        ? contact.createdAt 
+        : new Date(contact.createdAt);
+      firstEntryByContact.set(contact.id, createdAt);
+    }
+  }
+
+  return firstEntryByContact;
+}
 
 // ==========================================================
-// GET /metrics/contacts - Obtener métricas del pipeline
+// Routes
 // ==========================================================
+
+/**
+ * GET /metrics/contacts - Obtener métricas del pipeline
+ */
 router.get('/contacts',
   requireAuth,
   validate({ query: metricsQuerySchema }),
@@ -100,102 +203,6 @@ router.get('/contacts',
     // Calcular rango de fechas para el mes
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
-
-    // AI_DECISION: Helper function para obtener primera vez que contactos entran a una etapa
-    // Justificación: Reduce código duplicado, mejora performance usando agregaciones SQL, hace el código más mantenible
-    // Impacto: Reemplaza 4 implementaciones repetitivas con una función optimizada
-    const getFirstTimeStageEntries = async (
-      stageId: string,
-      monthStart: Date,
-      monthEnd: Date,
-      accessFilter: ReturnType<typeof buildContactAccessFilter>
-    ): Promise<Map<string, Date>> => {
-      // AI_DECISION: Filtrar por rango de fechas para contar solo contactos que entraron por primera vez en el mes
-      // Justificación: Si un contacto entra a una etapa en Enero, luego va a otra etapa, y vuelve en Marzo,
-      // no debemos contarlo en Marzo porque ya había estado en esa etapa antes
-      // Impacto: Métricas correctas que no cuentan contactos que retroceden de etapa
-      
-      // Primero, obtener todos los contactos que entraron a esta etapa en el rango de fechas
-      const entriesInRange = await db()
-        .select({
-          contactId: pipelineStageHistory.contactId,
-          changedAt: pipelineStageHistory.changedAt
-        })
-        .from(pipelineStageHistory)
-        .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-        .where(and(
-          eq(pipelineStageHistory.toStage, stageId),
-          gte(pipelineStageHistory.changedAt, monthStart),
-          lte(pipelineStageHistory.changedAt, monthEnd),
-          isNull(contacts.deletedAt),
-          accessFilter.whereClause
-        ));
-
-      // Verificar para cada contacto si hay entradas anteriores a monthStart
-      // Solo contar contactos donde la primera entrada a la etapa esté en el rango del mes
-      const firstEntryByContact = new Map<string, Date>();
-      const contactIdsToCheck = new Set(entriesInRange.map((e: { contactId: string; changedAt: Date }) => e.contactId));
-
-      // Para cada contacto, verificar si tiene entradas anteriores a monthStart
-      if (contactIdsToCheck.size > 0) {
-        const contactsWithEarlierEntries = await db()
-          .selectDistinct({ contactId: pipelineStageHistory.contactId })
-          .from(pipelineStageHistory)
-          .where(and(
-            eq(pipelineStageHistory.toStage, stageId),
-            inArray(pipelineStageHistory.contactId, Array.from(contactIdsToCheck)),
-            sql`${pipelineStageHistory.changedAt} < ${monthStart}`
-          ));
-
-        const contactsWithEarlierEntriesSet = new Set(
-          contactsWithEarlierEntries.map((e: { contactId: string }) => e.contactId)
-        );
-
-        // Solo incluir contactos que NO tienen entradas anteriores (primera vez en el mes)
-        for (const entry of entriesInRange) {
-          if (!contactsWithEarlierEntriesSet.has(entry.contactId)) {
-            const contactId = entry.contactId;
-            const changedAt = entry.changedAt instanceof Date 
-              ? entry.changedAt 
-              : new Date(entry.changedAt);
-            
-            // Si ya existe, tomar el MIN (más temprano en el mes)
-            const existing = firstEntryByContact.get(contactId);
-            if (!existing || changedAt < existing) {
-              firstEntryByContact.set(contactId, changedAt);
-            }
-          }
-        }
-      }
-
-      // También considerar contactos creados directamente en esta etapa (sin historial)
-      const contactsCreatedInStage = await db()
-        .select({
-          id: contacts.id,
-          createdAt: contacts.createdAt
-        })
-        .from(contacts)
-        .where(and(
-          eq(contacts.pipelineStageId, stageId),
-          gte(contacts.createdAt, monthStart),
-          lte(contacts.createdAt, monthEnd),
-          isNull(contacts.deletedAt),
-          accessFilter.whereClause
-        ));
-
-      // Agregar contactos creados directamente si no tienen historial
-      const contactsWithHistory = new Set(firstEntryByContact.keys());
-      for (const contact of contactsCreatedInStage) {
-        if (!contactsWithHistory.has(contact.id)) {
-          const createdAt = contact.createdAt instanceof Date 
-            ? contact.createdAt 
-            : new Date(contact.createdAt);
-          firstEntryByContact.set(contact.id, createdAt);
-        }
-      }
-
-      return firstEntryByContact;
-    };
 
     // Helper para calcular métricas de un mes
     const calculateMonthlyMetrics = async (month: number, year: number) => {
@@ -659,99 +666,6 @@ router.get('/contacts',
     });
   } catch (err) {
     req.log.error({ err }, 'failed to get contacts metrics');
-    next(err);
-  }
-});
-
-// ==========================================================
-// GET /metrics/goals - Obtener objetivos mensuales
-// ==========================================================
-router.get('/goals',
-  requireAuth,
-  validate({ query: metricsQuerySchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { month, year } = req.query;
-    
-    const now = new Date();
-    const targetMonth = month ? Number(month) : now.getMonth() + 1;
-    const targetYear = year ? Number(year) : now.getFullYear();
-
-    const [goal] = await db()
-      .select()
-      .from(monthlyGoals)
-      .where(and(
-        eq(monthlyGoals.month, targetMonth),
-        eq(monthlyGoals.year, targetYear)
-      ))
-      .limit(1);
-
-    res.json({
-      success: true,
-      data: goal || null
-    });
-  } catch (err) {
-    req.log.error({ err }, 'failed to get monthly goals');
-    next(err);
-  }
-});
-
-// ==========================================================
-// POST /metrics/goals - Guardar/actualizar objetivos mensuales
-// ==========================================================
-router.post('/goals',
-  requireAuth,
-  validate({ body: saveGoalsSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const validated = req.body;
-
-    // Intentar actualizar objetivo existente
-    const [existing] = await db()
-      .select()
-      .from(monthlyGoals)
-      .where(and(
-        eq(monthlyGoals.month, validated.month),
-        eq(monthlyGoals.year, validated.year)
-      ))
-      .limit(1);
-
-    let result;
-    if (existing) {
-      // Actualizar
-      [result] = await db()
-        .update(monthlyGoals)
-        .set({
-          newProspectsGoal: validated.newProspectsGoal,
-          firstMeetingsGoal: validated.firstMeetingsGoal,
-          secondMeetingsGoal: validated.secondMeetingsGoal,
-          newClientsGoal: validated.newClientsGoal,
-          updatedAt: new Date()
-        })
-        .where(eq(monthlyGoals.id, existing.id))
-        .returning();
-    } else {
-      // Crear nuevo
-      [result] = await db()
-        .insert(monthlyGoals)
-        .values({
-          month: validated.month,
-          year: validated.year,
-          newProspectsGoal: validated.newProspectsGoal,
-          firstMeetingsGoal: validated.firstMeetingsGoal,
-          secondMeetingsGoal: validated.secondMeetingsGoal,
-          newClientsGoal: validated.newClientsGoal
-        })
-        .returning();
-    }
-
-    req.log.info({ month: validated.month, year: validated.year }, 'monthly goals saved');
-    res.json({
-      success: true,
-      data: result
-    });
-  } catch (err) {
-    req.log.error({ err }, 'failed to save monthly goals');
     next(err);
   }
 });

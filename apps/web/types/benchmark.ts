@@ -2,22 +2,12 @@
  * Tipos relacionados con benchmarks
  */
 
-import type { TimestampedEntity, UpdateRequest } from './common';
+import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase } from './common';
 
 /**
  * Tipo de benchmark
  */
 export type BenchmarkType = 'individual' | 'composite';
-
-/**
- * Componente base compartido entre Benchmark y Portfolio
- */
-export interface ComponentBase {
-  instrumentId?: string | null;
-  instrumentSymbol: string;
-  instrumentName?: string;
-  targetWeight: number;
-}
 
 /**
  * Benchmark base - extiende TimestampedEntity
@@ -53,21 +43,19 @@ export interface BenchmarkComponentForm extends ComponentBase {
 }
 
 /**
- * Request para crear benchmark - usando Pick para campos requeridos
+ * Request para crear benchmark - usando utility type CreateRequest
  */
-export interface CreateBenchmarkRequest extends Pick<Benchmark, 'name' | 'type'> {
-  description?: string;
+export interface CreateBenchmarkRequest extends CreateRequest<Benchmark> {
+  name: string;
+  type: BenchmarkType;
+  description?: string | null;
   code?: string;
 }
 
 /**
  * Request para actualizar benchmark - usando utility type UpdateRequest
  */
-export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {
-  name?: string;
-  description?: string | null;
-  code?: string;
-}
+export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {}
 
 /**
  * Request para agregar componente de benchmark

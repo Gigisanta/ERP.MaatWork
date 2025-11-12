@@ -44,7 +44,8 @@ export function cache(options: CacheOptions) {
       if (cached) {
         logger.debug({ cacheKey }, 'Cache hit');
         res.setHeader('X-Cache', 'HIT');
-        return res.json(JSON.parse(cached));
+        res.json(JSON.parse(cached));
+        return;
       }
 
       // Cache miss - override res.json to cache response

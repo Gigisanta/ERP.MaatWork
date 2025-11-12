@@ -2,7 +2,7 @@
  * Tipos relacionados con tags/etiquetas
  */
 
-import type { TimestampedEntityOptional } from './common';
+import type { TimestampedEntityOptional, CreateRequest, UpdateRequest } from './common';
 import type { BusinessLine } from './metrics';
 
 /**
@@ -22,7 +22,7 @@ export interface Tag extends TimestampedEntityOptional {
 }
 
 /**
- * Request para crear tag - usando Pick para campos requeridos
+ * Request para crear tag - usando utility type CreateRequest
  * 
  * AI_DECISION: Usar entityType en frontend, transformar a scope en cliente API
  * Justificación: Mantener consistencia con otros tipos del frontend que usan entityType
@@ -33,16 +33,18 @@ export interface Tag extends TimestampedEntityOptional {
  * - 'task' → 'meeting'
  * - 'note' → 'note'
  */
-export interface CreateTagRequest extends Pick<Tag, 'name' | 'color'> {
+export interface CreateTagRequest extends Omit<CreateRequest<Tag>, 'entityType' | 'scope'> {
+  name: string;
+  color: string;
   entityType: 'contact' | 'task' | 'note';
   scope?: string; // Opcional: si se proporciona, se usa directamente (override del mapeo)
   businessLine?: BusinessLine | null; // Línea de negocio opcional
 }
 
 /**
- * Request para actualizar tag - usando Partial de campos editables
+ * Request para actualizar tag - usando utility type UpdateRequest
  */
-export interface UpdateTagRequest extends Partial<Pick<Tag, 'name' | 'color' | 'icon' | 'businessLine'>> {}
+export interface UpdateTagRequest extends UpdateRequest<Tag> {}
 
 /**
  * Relación contacto-etiqueta con datos adicionales específicos de líneas de negocio

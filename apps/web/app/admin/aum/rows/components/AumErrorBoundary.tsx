@@ -9,8 +9,10 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, Text } from '@cactus/ui';
 import { parseErrorMessage } from '../lib/aumRowsUtils';
+import { logger } from '@/lib/logger';
 
 interface AumErrorBoundaryProps {
   children: ReactNode;
@@ -21,7 +23,33 @@ interface AumErrorBoundaryProps {
 interface AumErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: any;
+  errorInfo: unknown;
+}
+
+/**
+ * Componente funcional interno para botones de navegación en Error Boundary
+ * Necesario porque componentes de clase no pueden usar hooks directamente
+ */
+function ErrorBoundaryActions({ onReset }: { onReset: () => void }) {
+  const router = useRouter();
+
+  const handleGoToHub = () => {
+    router.push('/admin/aum');
+  };
+
+  return (
+    <div className="flex gap-3 justify-center">
+      <Button onClick={onReset}>
+        🔄 Reintentar
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleGoToHub}
+      >
+        ← Volver al hub
+      </Button>
+    </div>
+  );
 }
 
 export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorBoundaryState> {
@@ -41,11 +69,18 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('[AUM Error Boundary] Error capturado:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: unknown) {
+    logger.error('AUM Error Boundary capturó un error', {
+      error: error.message,
+      errorStack: error.stack,
+      errorInfo: errorInfo instanceof Error ? errorInfo.message : String(errorInfo),
+      componentStack: typeof errorInfo === 'object' && errorInfo !== null && 'componentStack' in errorInfo
+        ? String(errorInfo.componentStack)
+        : undefined
+    });
     this.setState({
       error,
-      errorInfo
+      errorInfo: errorInfo as unknown
     });
   }
 
@@ -59,8 +94,12 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
     if (this.props.onReset) {
       this.props.onReset();
     } else {
-      // Default: reload page
-      window.location.reload();
+      // Default: reload page using router.refresh() via component
+      // Note: For full page reload, we still need window.location.reload()
+      // but router.refresh() is preferred for Next.js app router
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     }
   };
 
@@ -101,17 +140,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
                 </details>
               )}
 
-              <div className="flex gap-3 justify-center">
-                <Button onClick={this.handleReset}>
-                  🔄 Reintentar
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => (window.location.href = '/admin/aum')}
-                >
-                  ← Volver al hub
-                </Button>
-              </div>
+              <ErrorBoundaryActions onReset={this.handleReset} />
             </div>
           </div>
         </div>
@@ -126,7 +155,12 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
  * Hook-based error boundary fallback for SWR errors
  */
 export function AumErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
   const errorMessage = parseErrorMessage(error);
+
+  const handleReload = () => {
+    router.refresh();
+  };
 
   return (
     <div className="bg-white border border-red-200 rounded-lg shadow-sm p-6">
@@ -146,7 +180,7 @@ export function AumErrorFallback({ error, reset }: { error: Error; reset: () => 
             <Button
               size="sm"
               variant="outline"
-              onClick={() => window.location.reload()}
+              onClick={handleReload}
             >
               Recargar página
             </Button>

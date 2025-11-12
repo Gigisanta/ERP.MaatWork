@@ -50,7 +50,7 @@ export async function matchContactByAccountNumber(
     const result = await dbi
       .select({ contactId: brokerAccounts.contactId })
       .from(brokerAccounts)
-      .where(eq(brokerAccounts.broker, broker as any))
+      .where(eq(brokerAccounts.broker, broker))
       .where(eq(brokerAccounts.accountNumber, accountNumber))
       .limit(1);
 

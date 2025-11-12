@@ -2,8 +2,7 @@
  * Tipos relacionados con portfolios/carteras
  */
 
-import type { TimestampedEntity, UpdateRequest } from './common';
-import type { RiskLevel } from './common';
+import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase, RiskLevel } from './common';
 
 /**
  * Portfolio base - extiende TimestampedEntity
@@ -32,20 +31,18 @@ export interface PortfolioLine {
 }
 
 /**
- * Request para crear portfolio - usando Pick para campos requeridos
+ * Request para crear portfolio - usando utility type CreateRequest
  */
-export interface CreatePortfolioRequest extends Pick<Portfolio, 'name' | 'riskLevel'> {
-  description?: string;
+export interface CreatePortfolioRequest extends CreateRequest<Portfolio> {
+  name: string;
+  riskLevel: RiskLevel;
+  description?: string | null;
 }
 
 /**
  * Request para actualizar portfolio - usando utility type UpdateRequest
  */
-export interface UpdatePortfolioRequest extends UpdateRequest<Portfolio> {
-  name?: string;
-  description?: string | null;
-  riskLevel?: RiskLevel;
-}
+export interface UpdatePortfolioRequest extends UpdateRequest<Portfolio> {}
 
 /**
  * Request para agregar línea de portfolio
@@ -68,13 +65,11 @@ export interface PortfolioWithLines extends Portfolio {
 
 /**
  * Tipos para composición de portfolio (UI)
- * Comparte estructura base con BenchmarkComponent
+ * Extiende ComponentBase para compartir estructura con BenchmarkComponent
  */
-export interface PortfolioComponent {
-  instrumentId?: string;
-  instrumentSymbol: string;
-  instrumentName?: string;
-  targetWeight: number; // Percentage (25 = 25%)
+export interface PortfolioComponent extends ComponentBase {
+  // targetWeight ya está definido en ComponentBase
+  // Percentage (25 = 25%)
 }
 
 /**

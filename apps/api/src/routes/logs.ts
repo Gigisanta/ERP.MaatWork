@@ -1,5 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -51,15 +52,39 @@ router.post('/client', async (req: Request, res: Response, next: NextFunction) =
     if (Array.isArray(req.body)) {
       // Batch de logs
       const validated = BatchLogSchema.parse({ logs: req.body });
-      logsToProcess = validated.logs;
+      logsToProcess = validated.logs.map(log => ({
+        id: crypto.randomUUID(),
+        message: log.message,
+        context: log.context || {},
+        level: log.level,
+        userId: log.userId || null,
+        userRole: log.userRole || null,
+        createdAt: new Date(log.timestamp)
+      }));
     } else if (req.body.logs && Array.isArray(req.body.logs)) {
       // Batch con wrapper
       const validated = BatchLogSchema.parse(req.body);
-      logsToProcess = validated.logs;
+      logsToProcess = validated.logs.map(log => ({
+        id: crypto.randomUUID(),
+        message: log.message,
+        context: log.context || {},
+        level: log.level,
+        userId: log.userId || null,
+        userRole: log.userRole || null,
+        createdAt: new Date(log.timestamp)
+      }));
     } else {
       // Log individual
       const validated = ClientLogSchema.parse(req.body);
-      logsToProcess = [validated];
+      logsToProcess = [{
+        id: crypto.randomUUID(),
+        message: validated.message,
+        context: validated.context || {},
+        level: validated.level,
+        userId: validated.userId || null,
+        userRole: validated.userRole || null,
+        createdAt: new Date(validated.timestamp)
+      }];
     }
 
     // Procesar cada log

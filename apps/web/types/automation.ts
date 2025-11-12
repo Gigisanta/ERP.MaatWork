@@ -1,0 +1,59 @@
+/**
+ * Tipos relacionados con automatizaciones
+ */
+
+import type { TimestampedEntity, CreateRequest, UpdateRequest } from './common';
+
+/**
+ * Configuración de trigger para automatizaciones
+ */
+export interface TriggerConfig {
+  stageName?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Configuración adicional de automatización
+ */
+export interface AutomationConfigData {
+  [key: string]: unknown;
+}
+
+/**
+ * Configuración de automatización - extiende TimestampedEntity
+ */
+export interface AutomationConfig extends TimestampedEntity {
+  name: string; // Identificador único (ej: "mail_bienvenida")
+  displayName: string; // Nombre para mostrar (ej: "Mail de bienvenida")
+  triggerType: string; // Tipo de trigger (ej: "pipeline_stage_change")
+  triggerConfig: TriggerConfig; // Configuración del trigger (ej: { stageName: "Cliente" })
+  webhookUrl?: string | null; // URL del webhook de N8N
+  enabled: boolean; // Si está habilitada
+  config: AutomationConfigData; // Configuración adicional (payload personalizado, etc.)
+}
+
+/**
+ * Request para crear configuración de automatización
+ */
+export interface CreateAutomationConfigRequest extends CreateRequest<AutomationConfig> {
+  name: string;
+  displayName: string;
+  triggerType: string;
+  triggerConfig: TriggerConfig;
+  webhookUrl?: string | null;
+  enabled?: boolean;
+  config?: AutomationConfigData;
+}
+
+/**
+ * Request para actualizar configuración de automatización
+ */
+export interface UpdateAutomationConfigRequest extends UpdateRequest<AutomationConfig> {
+  displayName?: string;
+  triggerType?: string;
+  triggerConfig?: TriggerConfig;
+  webhookUrl?: string | null;
+  enabled?: boolean;
+  config?: AutomationConfigData;
+}
+

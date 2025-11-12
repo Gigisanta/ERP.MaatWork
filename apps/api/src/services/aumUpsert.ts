@@ -62,6 +62,22 @@ export interface AumRowInsert {
   cv7000: number | null;
 }
 
+/**
+ * Tipo para filas devueltas por queries SQL directas en aumUpsert
+ */
+interface AumRowDbResult {
+  id: string;
+  file_id: string;
+  account_number: string | null;
+  holder_name: string | null;
+  id_cuenta: string | null;
+  matched_contact_id: string | null;
+  matched_user_id: string | null;
+  advisor_raw: string | null;
+  match_status: 'matched' | 'ambiguous' | 'unmatched';
+  is_preferred: boolean | null;
+}
+
 export interface UpsertStats {
   inserted: number;
   updated: number;
@@ -125,7 +141,7 @@ async function findExistingRow(
       `);
 
       if (result.rows && result.rows.length > 0) {
-        const dbRow = result.rows[0] as any;
+        const dbRow = result.rows[0] as AumRowDbResult;
         return {
           id: dbRow.id,
           fileId: dbRow.file_id,
@@ -160,7 +176,7 @@ async function findExistingRow(
       `);
 
       if (result.rows && result.rows.length > 0) {
-        const dbRow = result.rows[0] as any;
+        const dbRow = result.rows[0] as AumRowDbResult;
         return {
           id: dbRow.id,
           fileId: dbRow.file_id,
@@ -199,7 +215,7 @@ async function findExistingRow(
       `);
 
       if (result.rows && result.rows.length > 0) {
-        const dbRow = result.rows[0] as any;
+        const dbRow = result.rows[0] as AumRowDbResult;
         return {
           id: dbRow.id,
           fileId: dbRow.file_id,
@@ -242,7 +258,7 @@ async function findExistingRow(
       `);
 
       if (result.rows && result.rows.length > 0) {
-        const dbRow = result.rows[0] as any;
+        const dbRow = result.rows[0] as AumRowDbResult;
         return {
           id: dbRow.id,
           fileId: dbRow.file_id,

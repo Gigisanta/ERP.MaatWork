@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 export interface UseUrlSyncOptions {
   onFileIdChange?: (fileId: string | null) => void;
@@ -23,6 +23,7 @@ export interface UseUrlSyncOptions {
 export function useUrlSync(options: UseUrlSyncOptions = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { onFileIdChange } = options;
 
   // Read fileId from URL
@@ -48,16 +49,16 @@ export function useUrlSync(options: UseUrlSyncOptions = {}) {
 
     // Navigate to new URL
     const newUrl = currentParams.toString()
-      ? `?${currentParams.toString()}`
-      : window.location.pathname;
+      ? `${pathname}?${currentParams.toString()}`
+      : pathname;
 
     router.push(newUrl);
-  }, [router, searchParams]);
+  }, [router, searchParams, pathname]);
 
   // Clear all URL params
   const clearUrl = useCallback(() => {
-    router.push(window.location.pathname);
-  }, [router]);
+    router.push(pathname);
+  }, [router, pathname]);
 
   return {
     fileIdFromUrl,

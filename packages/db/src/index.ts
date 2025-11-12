@@ -97,7 +97,9 @@ export {
   integrationRuns,
   integrationFiles,
   // Capacitaciones
-  capacitaciones
+  capacitaciones,
+  // Automatizaciones
+  automationConfigs
 } from './schema';
 
 /**

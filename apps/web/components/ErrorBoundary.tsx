@@ -222,8 +222,9 @@ export function useErrorHandler() {
         stack: error.stack
       },
       errorInfo,
-      url: typeof window !== 'undefined' ? window.location.href : undefined,
-      pathname
+      pathname,
+      // Include full URL for logging context when available
+      url: typeof window !== 'undefined' ? window.location.href : undefined
     });
   };
 }

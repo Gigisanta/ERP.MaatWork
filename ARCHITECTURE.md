@@ -160,6 +160,161 @@ POST   /analytics/compare                 # Comparar portfolios
 - yfinance con backoff exponencial y cache en memoria (TTL)
 - Endpoints consumidos por API (`/search`, `/prices/*`)
 
+## Estructura Estándar de Carpetas
+
+### Backend (API) - `apps/api/src/`
+
+```
+apps/api/src/
+├── routes/              # Rutas API organizadas por dominio
+│   ├── [domain]/        # Módulos grandes divididos en subdirectorios
+│   │   ├── crud.ts      # Operaciones CRUD principales
+│   │   ├── [feature].ts # Features específicas
+│   │   └── index.ts     # Punto de entrada consolidado
+│   └── [domain].ts      # Rutas pequeñas en un solo archivo
+├── services/            # Lógica de negocio reutilizable
+├── utils/               # Utilidades compartidas
+├── config/              # Configuración centralizada
+├── types/               # Tipos TypeScript específicos del backend
+├── auth/                # Autenticación y autorización
+└── index.ts             # Entry point de la aplicación
+```
+
+**Ejemplo - Rutas API:**
+```typescript
+// apps/api/src/routes/contacts/crud.ts
+import { Router, type Request, type Response } from 'express';
+import { requireAuth } from '../../auth/middlewares';
+import { validate } from '../../utils/validation';
+
+const router = Router();
+
+// ==========================================================
+// Zod Validation Schemas
+// ==========================================================
+
+const createContactSchema = z.object({ /* ... */ });
+
+// ==========================================================
+// Routes
+// ==========================================================
+
+router.post('/', requireAuth, validate({ body: createContactSchema }), async (req, res) => {
+  // Handler implementation
+});
+
+export default router;
+```
+
+### Frontend (Web) - `apps/web/app/`
+
+```
+apps/web/app/
+├── [route]/             # Rutas dinámicas de Next.js
+│   ├── page.tsx         # Server Component principal
+│   ├── loading.tsx      # Loading state
+│   ├── error.tsx        # Error boundary
+│   └── components/      # Componentes específicos de la ruta
+├── components/           # Componentes compartidos globales
+├── (auth)/              # Route groups para autenticación
+└── layout.tsx           # Layout raíz
+```
+
+**Ejemplo - Página Next.js:**
+```typescript
+// apps/web/app/contacts/[id]/page.tsx
+import { notFound } from 'next/navigation';
+import { apiServer } from '@/lib/api-server';
+
+export default async function ContactDetailPage({ params }: { params: { id: string } }) {
+  const contact = await apiServer.get(`/contacts/${params.id}`);
+  if (!contact) notFound();
+  
+  return <ContactDetail contact={contact} />;
+}
+```
+
+### Componentes UI - `packages/ui/src/`
+
+```
+packages/ui/src/
+├── components/           # Componentes React organizados por categoría
+│   ├── forms/           # Input, Select, Checkbox, Switch, etc.
+│   ├── feedback/        # Alert, Modal, Toast, Card, etc.
+│   └── nav/             # Header, Sidebar, Nav, Pagination, etc.
+├── primitives/          # Box, Text, Stack, Grid, etc. (building blocks)
+├── hooks/               # useTheme, etc.
+├── styles/              # CSS global y variables
+├── tokens/              # Design tokens (colores, spacing, etc.)
+├── utils/               # Utilidades (cn, etc.)
+└── index.ts             # Barrel export (exports específicos)
+```
+
+**Ejemplo - Componente UI:**
+```typescript
+// packages/ui/src/components/forms/Button.tsx
+import { type ButtonHTMLAttributes, forwardRef } from 'react';
+import { cn } from '../../utils/cn';
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(/* ... */)}
+        {...props}
+      />
+    );
+  }
+);
+
+Button.displayName = 'Button';
+```
+
+### Tipos - `apps/web/types/` y `apps/api/src/types/`
+
+```
+types/
+├── index.ts          # Barrel export
+├── common.ts         # Tipos base y utility types compartidos
+├── [domain].ts       # Un archivo por dominio (contact.ts, portfolio.ts, etc.)
+```
+
+**Ejemplo - Tipos:**
+```typescript
+// apps/web/types/common.ts
+export interface BaseEntity {
+  id: string;
+}
+
+export interface TimestampedEntity extends BaseEntity {
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+```
+
+### Hooks - `apps/web/lib/hooks/`
+
+```
+lib/hooks/
+├── usePortfolioAssets.ts
+├── useKeyboardShortcuts.ts
+└── [feature].ts
+```
+
+**Reglas:**
+- ✅ Un hook por archivo
+- ✅ Prefijo `use` obligatorio
+- ✅ Tests co-ubicados (`useHook.test.ts`)
+
 ## UI (@cactus/ui)
 
 **Estructura:**

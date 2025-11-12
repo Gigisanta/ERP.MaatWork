@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { getUserCareerProgress } from '@/lib/api/career-plan';
 import type { UserCareerProgress } from '@/types/career-plan';
@@ -17,6 +18,7 @@ const fetcher = async (): Promise<UserCareerProgress> => {
 };
 
 export default function CareerProgressBar() {
+  const router = useRouter();
   const { data, error } = useSWR<UserCareerProgress>(
     'career-plan-user-progress',
     fetcher,
@@ -48,8 +50,17 @@ export default function CareerProgressBar() {
   // Calcular porcentaje visual (cap at 100% para la barra, pero mostrar el real)
   const visualProgressPercentage = Math.min(progress.progressPercentage, 100);
 
+  const handleClick = () => {
+    router.push('/plandecarrera');
+  };
+
   return (
-    <>
+    <button
+      onClick={handleClick}
+      className="flex items-center hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+      aria-label="Ver plan de carrera"
+      type="button"
+    >
       {/* Nivel actual */}
       <span className="text-xs font-medium whitespace-nowrap ml-2">
         {levelName}
@@ -69,7 +80,7 @@ export default function CareerProgressBar() {
       <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
         % Comisión: {formatLevelPercentage(commissionPercentage).replace('%', '')} • {formatProgressPercentage(progress.progressPercentage)} / {formatAnnualGoal(goalUsd)}
       </span>
-    </>
+    </button>
   );
 }
 

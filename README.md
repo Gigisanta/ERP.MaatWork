@@ -8,15 +8,37 @@ Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) 
 CactusDashboard-epic-D/
 ├── apps/
 │   ├── api/                 # API Express + TypeScript
+│   │   └── src/
+│   │       ├── routes/      # Rutas API organizadas por dominio
+│   │       ├── services/   # Lógica de negocio
+│   │       ├── utils/      # Utilidades compartidas
+│   │       ├── config/      # Configuración centralizada
+│   │       └── types/       # Tipos TypeScript
 │   ├── web/                 # Frontend Next.js
+│   │   └── app/
+│   │       ├── [routes]/    # Rutas de Next.js App Router
+│   │       ├── components/  # Componentes compartidos
+│   │       └── lib/         # Utilidades y hooks
 │   └── analytics-service/   # Servicio Python de análisis
 ├── packages/
 │   ├── db/                  # Drizzle ORM + PostgreSQL
+│   │   └── src/
+│   │       ├── schema.ts    # Definiciones de tablas
+│   │       └── migrations/  # Migraciones de base de datos
 │   └── ui/                  # Design System + React Components
+│       └── src/
+│           ├── components/  # Componentes React
+│           ├── primitives/  # Building blocks
+│           └── styles/      # CSS y tokens
 ├── data/                    # Archivos de datos de negocio (Excel)
 ├── Automations/             # Scripts de automatización Chrome
 └── docker-compose.yml       # PostgreSQL y N8N (Docker)
 ```
+
+**Documentación adicional:**
+- 📖 [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitectura detallada y decisiones técnicas
+- 📋 [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Resumen de refactorizaciones y mejoras
+- ✅ [TODOS_AUDIT.md](./TODOS_AUDIT.md) - Auditoría de TODOs pendientes
 
 ## Requisitos
 - Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
@@ -29,6 +51,43 @@ CactusDashboard-epic-D/
 ```bash
 pnpm install
 ```
+
+## Comandos Importantes
+
+### Desarrollo
+```bash
+pnpm dev              # Inicia todos los servicios (API + Web + Analytics)
+pnpm dev:basic        # Inicia servicios sin TMUX
+```
+
+### Typecheck y Lint
+```bash
+pnpm typecheck        # Verificar tipos en todos los workspaces
+pnpm lint             # Ejecutar lint en todos los workspaces
+```
+
+### Build
+```bash
+pnpm build            # Build completo de todos los workspaces
+pnpm -F @cactus/ui build    # Build solo del paquete UI
+pnpm -F @cactus/db build    # Build solo del paquete DB
+```
+
+### Tests
+```bash
+pnpm test             # Ejecutar tests en todos los workspaces
+pnpm test:coverage    # Tests con cobertura
+pnpm test:e2e         # Tests end-to-end con Playwright
+```
+
+### Base de Datos
+```bash
+pnpm -F @cactus/db generate    # Generar migración desde schema
+pnpm -F @cactus/db migrate     # Aplicar migraciones
+pnpm -F @cactus/db seed:all    # Seed completo de la base de datos
+```
+
+**⚠️ Importante:** Nunca usar `drizzle-kit push` en producción (es destructivo)
 
 ## Desarrollo
 
@@ -506,24 +565,33 @@ N8N está integrado como servicio Docker para crear y gestionar automatizaciones
 ### Configuración Docker
 N8N se inicia automáticamente con `docker compose up -d`. La configuración optimizada está en `docker-compose.yml`:
 
+**Versión:**
+- Imagen: `n8nio/n8n:latest` (siempre actualizada a la última versión estable)
+- Para actualizar: `docker compose pull n8n && docker compose up -d n8n`
+- Para producción, considerar usar un tag específico (ej: `n8nio/n8n:1.x.x`)
+
 **Límites de recursos:**
 - CPU: Máximo 0.75 cores, reserva 0.25 cores
 - Memoria: Máximo 768MB, reserva 256MB
 
-**Variables de entorno optimizadas:**
+**Variables de entorno optimizadas (reducción de recursos):**
 - `N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true` - Deshabilita proceso principal innecesario
 - `N8N_METRICS=false` - Deshabilita métricas para reducir overhead
 - `N8N_LOG_LEVEL=warn` - Reduce logging para menor consumo
 - `N8N_EXECUTIONS_DATA_PRUNE=true` - Limpia ejecuciones antiguas automáticamente
 - `N8N_EXECUTIONS_DATA_MAX_AGE=168` - Retiene ejecuciones por 7 días
 - `N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT=100` - Máximo 100 ejecuciones retenidas
+- `N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN=true` - Evita overhead en shutdown
+- `N8N_PUSH_BACKEND=websocket` - Usa WebSocket en lugar de polling (más eficiente)
+- `N8N_DIAGNOSTICS_ENABLED=false` - Deshabilita diagnósticos innecesarios
+- `N8N_WORKFLOW_CALLBACK_POLLING=false` - Deshabilita polling innecesario
 
 **Otras configuraciones:**
 - Puerto: `5678`
 - Sin autenticación básica (`N8N_BASIC_AUTH_ACTIVE=false`)
 - CORS habilitado para `http://localhost:3000`
 - Volumen persistente: `n8n_data:/home/node/.n8n`
-- Healthcheck optimizado: Intervalo de 60s (reducido de 30s)
+- Healthcheck optimizado: Intervalo de 60s, timeout 10s, 3 reintentos
 
 ### Optimizaciones de Integración
 
@@ -567,6 +635,33 @@ El puerto 5678 se limpia automáticamente con los scripts de desarrollo:
 pnpm run dev:kill  # Limpia puertos incluyendo 5678
 ```
 
+### Actualización de N8N
+
+Para actualizar n8n a la última versión:
+
+```bash
+# Descargar la última imagen
+docker compose pull n8n
+
+# Reiniciar el contenedor con la nueva versión
+docker compose down n8n
+docker compose up -d n8n
+
+# Verificar que está corriendo
+docker compose ps n8n
+```
+
+**Nota:** Los datos y workflows se preservan automáticamente gracias al volumen persistente `n8n_data`.
+
+**Verificar que n8n funciona después de la actualización:**
+```bash
+# Verificar health check de n8n
+node scripts/dev-health-check.js --n8n
+
+# O verificar manualmente
+curl http://localhost:5678/healthz
+```
+
 ### Uso
 1. Iniciar servicios Docker: `docker compose up -d`
 2. Acceder a N8N desde la aplicación web (botón en `/contacts`) o directamente en `http://localhost:5678`
@@ -579,12 +674,16 @@ pnpm run dev:kill  # Limpia puertos incluyendo 5678
 - **Memoria**: ~40-60% de reducción (de ~800MB a ~300-500MB)
 - **CPU**: ~50-70% de reducción cuando idle
 - **Red**: Batching reduce overhead de red en ~30-40%
+- **Shutdown**: Reducción de overhead con `N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN`
+- **Comunicación**: WebSocket más eficiente que polling con `N8N_PUSH_BACKEND=websocket`
 
 **Mejoras de rendimiento:**
 - Conexiones HTTP reutilizadas (keepalive)
 - Menor latencia en requests repetidos
 - Mayor estabilidad con rate limiting
 - Mejor manejo de errores con retry automático
+- Comunicación en tiempo real más eficiente con WebSocket
+- Menor overhead de diagnósticos y polling innecesario
 
 ## Datos de Negocio
 

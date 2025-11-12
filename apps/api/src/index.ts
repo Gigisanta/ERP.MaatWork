@@ -36,6 +36,7 @@ import settingsAdvisorsRouter from './routes/settings-advisors';
 import careerPlanRouter from './routes/career-plan';
 import metricsRouter from './routes/metrics';
 import capacitacionesRouter from './routes/capacitaciones';
+import automationsRouter from './routes/automations';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -339,6 +340,7 @@ app.use('/admin/settings/advisors', settingsAdvisorsRouter);
 app.use('/career-plan', careerPlanRouter);
 app.use('/metrics', metricsRouter);
 app.use('/capacitaciones', capacitacionesRouter);
+app.use('/automations', automationsRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -362,6 +364,7 @@ app.use('/v1/admin/settings/advisors', settingsAdvisorsRouter);
 app.use('/v1/career-plan', careerPlanRouter);
 app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
+app.use('/v1/automations', automationsRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

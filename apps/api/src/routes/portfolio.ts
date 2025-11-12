@@ -17,6 +17,7 @@ import { UserRole } from '../auth/types';
 import { validate } from '../utils/validation';
 import { z } from 'zod';
 import { uuidSchema } from '../utils/common-schemas';
+import { createDrizzleLogger } from '../utils/db-logger';
 
 const router = Router();
 
@@ -109,22 +110,30 @@ router.get('/templates', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado' });
     }
 
-    const templates = await db()
-      .select({
-        id: portfolioTemplates.id,
-        name: portfolioTemplates.name,
-        description: portfolioTemplates.description,
-        riskLevel: portfolioTemplates.riskLevel,
-        createdAt: portfolioTemplates.createdAt,
-        clientCount: sql<number>`(
-          SELECT COUNT(*) 
-          FROM ${clientPortfolioAssignments} 
-          WHERE ${clientPortfolioAssignments.templateId} = ${portfolioTemplates.id}
-          AND ${clientPortfolioAssignments.status} = 'active'
-        )`
-      })
-      .from(portfolioTemplates)
-      .orderBy(desc(portfolioTemplates.createdAt));
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio templates query can be slow with many templates and client counts
+    // Impacto: Better visibility into query performance, easier to identify slow queries
+    const dbLogger = createDrizzleLogger(req.log);
+
+    const templates = await dbLogger.select(
+      'get_portfolio_templates',
+      () => db()
+        .select({
+          id: portfolioTemplates.id,
+          name: portfolioTemplates.name,
+          description: portfolioTemplates.description,
+          riskLevel: portfolioTemplates.riskLevel,
+          createdAt: portfolioTemplates.createdAt,
+          clientCount: sql<number>`(
+            SELECT COUNT(*) 
+            FROM ${clientPortfolioAssignments} 
+            WHERE ${clientPortfolioAssignments.templateId} = ${portfolioTemplates.id}
+            AND ${clientPortfolioAssignments.status} = 'active'
+          )`
+        })
+        .from(portfolioTemplates)
+        .orderBy(desc(portfolioTemplates.createdAt))
+    );
 
     res.json({
       success: true,
@@ -206,40 +215,56 @@ router.get('/templates/:id',
       return res.status(403).json({ error: 'Acceso denegado' });
     }
 
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio template queries can be slow with many lines, logging helps identify bottlenecks
+    // Impacto: Better visibility into query performance, easier to identify slow queries
+    const dbLogger = createDrizzleLogger(req.log);
+
     // Obtener template
-    const [template] = await db()
-      .select({
-        id: portfolioTemplates.id,
-        name: portfolioTemplates.name,
-        description: portfolioTemplates.description,
-        riskLevel: portfolioTemplates.riskLevel,
-        createdAt: portfolioTemplates.createdAt
-      })
-      .from(portfolioTemplates)
-      .where(eq(portfolioTemplates.id, templateId))
-      .limit(1);
+    // AI_DECISION: Use safe operation name for logging (limit length, sanitize)
+    // Justificación: TemplateId could be very long or contain special chars, limit operation name length
+    // Impacto: Prevents log pollution and potential issues with very long operation names
+    const operationName = `get_portfolio_template_${templateId.length >= 8 ? templateId.substring(0, 8) : templateId}`;
+    const [template] = await dbLogger.select(
+      operationName,
+      () => db()
+        .select({
+          id: portfolioTemplates.id,
+          name: portfolioTemplates.name,
+          description: portfolioTemplates.description,
+          riskLevel: portfolioTemplates.riskLevel,
+          createdAt: portfolioTemplates.createdAt
+        })
+        .from(portfolioTemplates)
+        .where(eq(portfolioTemplates.id, templateId))
+        .limit(1)
+    );
 
     if (!template) {
       return res.status(404).json({ error: 'Plantilla no encontrada' });
     }
 
     // Obtener líneas del template
-    const lines = await db()
-      .select({
-        id: portfolioTemplateLines.id,
-        targetType: portfolioTemplateLines.targetType,
-        assetClass: portfolioTemplateLines.assetClass,
-        instrumentId: portfolioTemplateLines.instrumentId,
-        targetWeight: portfolioTemplateLines.targetWeight,
-        instrumentName: instruments.name,
-        instrumentSymbol: instruments.symbol,
-        assetClassName: lookupAssetClass.label
-      })
-      .from(portfolioTemplateLines)
-      .leftJoin(instruments, eq(portfolioTemplateLines.instrumentId, instruments.id))
-      .leftJoin(lookupAssetClass, eq(portfolioTemplateLines.assetClass, lookupAssetClass.id))
-      .where(eq(portfolioTemplateLines.templateId, templateId))
-      .orderBy(asc(portfolioTemplateLines.targetType), asc(portfolioTemplateLines.targetWeight));
+    const linesOperationName = `get_portfolio_template_lines_${templateId.length >= 8 ? templateId.substring(0, 8) : templateId}`;
+    const lines = await dbLogger.select(
+      linesOperationName,
+      () => db()
+        .select({
+          id: portfolioTemplateLines.id,
+          targetType: portfolioTemplateLines.targetType,
+          assetClass: portfolioTemplateLines.assetClass,
+          instrumentId: portfolioTemplateLines.instrumentId,
+          targetWeight: portfolioTemplateLines.targetWeight,
+          instrumentName: instruments.name,
+          instrumentSymbol: instruments.symbol,
+          assetClassName: lookupAssetClass.label
+        })
+        .from(portfolioTemplateLines)
+        .leftJoin(instruments, eq(portfolioTemplateLines.instrumentId, instruments.id))
+        .leftJoin(lookupAssetClass, eq(portfolioTemplateLines.assetClass, lookupAssetClass.id))
+        .where(eq(portfolioTemplateLines.templateId, templateId))
+        .orderBy(asc(portfolioTemplateLines.targetType), asc(portfolioTemplateLines.targetWeight))
+    );
 
     // Calcular suma de pesos
     type LineWithWeight = {
@@ -601,41 +626,55 @@ router.get('/assignments', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'contactId is required' });
     }
 
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio assignment queries can be slow, logging helps identify bottlenecks
+    // Impacto: Better visibility into query performance
+    const dbLogger = createDrizzleLogger(req.log);
+
     // Verificar acceso al contacto
     const accessScope = await getUserAccessScope(userId, role);
-    const canAccess = await db()
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(and(
-        eq(contacts.id, contactId as string),
-        role === 'admin' ? sql`1=1` :
-        role === 'manager' ? 
-          sql`${contacts.assignedAdvisorId} = ANY(${accessScope.accessibleAdvisorIds})` :
-          eq(contacts.assignedAdvisorId, userId)
-      ))
-      .limit(1);
+    const contactIdStr = contactId as string;
+    const accessOperationName = `check_contact_access_${contactIdStr.length >= 8 ? contactIdStr.substring(0, 8) : contactIdStr}`;
+    const canAccess = await dbLogger.select(
+      accessOperationName,
+      () => db()
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(
+          eq(contacts.id, contactIdStr),
+          role === 'admin' ? sql`1=1` :
+          role === 'manager' ? 
+            sql`${contacts.assignedAdvisorId} = ANY(${accessScope.accessibleAdvisorIds})` :
+            eq(contacts.assignedAdvisorId, userId)
+        ))
+        .limit(1)
+    );
 
     if (canAccess.length === 0) {
       return res.status(403).json({ error: 'No tienes acceso a este contacto' });
     }
 
     // Obtener asignaciones con información de la plantilla
-    const assignments = await db()
-      .select({
-        id: clientPortfolioAssignments.id,
-        contactId: clientPortfolioAssignments.contactId,
-        templateId: clientPortfolioAssignments.templateId,
-        templateName: portfolioTemplates.name,
-        status: clientPortfolioAssignments.status,
-        startDate: clientPortfolioAssignments.startDate,
-        endDate: clientPortfolioAssignments.endDate,
-        notes: clientPortfolioAssignments.notes,
-        createdAt: clientPortfolioAssignments.createdAt
-      })
-      .from(clientPortfolioAssignments)
-      .leftJoin(portfolioTemplates, eq(clientPortfolioAssignments.templateId, portfolioTemplates.id))
-      .where(eq(clientPortfolioAssignments.contactId, contactId as string))
-      .orderBy(desc(clientPortfolioAssignments.createdAt));
+    const assignmentsOperationName = `get_portfolio_assignments_${contactIdStr.length >= 8 ? contactIdStr.substring(0, 8) : contactIdStr}`;
+    const assignments = await dbLogger.select(
+      assignmentsOperationName,
+      () => db()
+        .select({
+          id: clientPortfolioAssignments.id,
+          contactId: clientPortfolioAssignments.contactId,
+          templateId: clientPortfolioAssignments.templateId,
+          templateName: portfolioTemplates.name,
+          status: clientPortfolioAssignments.status,
+          startDate: clientPortfolioAssignments.startDate,
+          endDate: clientPortfolioAssignments.endDate,
+          notes: clientPortfolioAssignments.notes,
+          createdAt: clientPortfolioAssignments.createdAt
+        })
+        .from(clientPortfolioAssignments)
+        .leftJoin(portfolioTemplates, eq(clientPortfolioAssignments.templateId, portfolioTemplates.id))
+        .where(eq(clientPortfolioAssignments.contactId, contactIdStr))
+        .orderBy(desc(clientPortfolioAssignments.createdAt))
+    );
 
     res.json({
       success: true,

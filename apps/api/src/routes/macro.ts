@@ -13,8 +13,8 @@ import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
 import { z } from 'zod';
-import { cache, REDIS_TTL } from '../middleware/cache';
-import { buildCacheKey } from '../config/redis';
+import { cache } from '../middleware/cache';
+import { buildCacheKey, REDIS_TTL } from '../config/redis';
 
 const router = Router();
 
@@ -111,8 +111,8 @@ router.get(
       'macro',
       'series',
       req.params.seriesId,
-      req.query.from || 'all',
-      req.query.to || 'all'
+      typeof req.query.from === 'string' ? req.query.from : 'all',
+      typeof req.query.to === 'string' ? req.query.to : 'all'
     )
   }),
   async (req, res) => {

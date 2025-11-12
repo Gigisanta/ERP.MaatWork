@@ -53,6 +53,11 @@ async function getContactTagData(contactId: string, tagId: string, token: string
       contactTag: contactTagResponse.data
     };
   } catch (error) {
+    // AI_DECISION: Usar console.error en Server Components
+    // Justificación: Server Components no tienen acceso a logger del cliente. console.error
+    //                es la forma estándar de logging en Node.js y Next.js Server Components.
+    //                Los errores se capturan y manejan apropiadamente sin afectar la UI.
+    // Impacto: Logging apropiado en contexto de servidor sin dependencias del cliente
     console.error('Error fetching contact tag data', { err: error, contactId, tagId });
     return null;
   }

@@ -11,6 +11,7 @@ import {
   idParamSchema,
   paginationQuerySchema
 } from '../utils/common-schemas';
+import { VALIDATION_LIMITS, PAGINATION_LIMITS, ERROR_LIMITS } from '../config/api-limits';
 
 const router = Router();
 const TAGS_RULES_ENABLED = process.env.TAGS_RULES_ENABLED === 'true';
@@ -26,9 +27,9 @@ const listTagsQuerySchema = z.object({
   limit: z.string()
     .regex(/^\d+$/, 'Limit must be a number')
     .transform(Number)
-    .pipe(z.number().int().min(1).max(100))
+    .pipe(z.number().int().min(1).max(PAGINATION_LIMITS.QUICK_SEARCH_LIMIT))
     .optional()
-    .default('10')
+    .default(String(PAGINATION_LIMITS.QUICK_SEARCH_LIMIT))
 });
 
 const listRulesQuerySchema = z.object({
@@ -44,10 +45,10 @@ const segmentContactsQuerySchema = paginationQuerySchema;
 // Body schemas
 const createTagSchema = z.object({
   scope: z.enum(['contact', 'meeting', 'note']),
-  name: z.string().min(1).max(100),
+  name: z.string().min(VALIDATION_LIMITS.MIN_NAME_LENGTH).max(VALIDATION_LIMITS.MAX_NAME_LENGTH),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#6B7280'),
   icon: z.string().max(50).optional().nullable(),
-  description: z.string().max(500).optional().nullable(),
+  description: z.string().max(VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH).optional().nullable(),
   businessLine: z.enum(['inversiones', 'zurich', 'patrimonial']).optional().nullable()
 });
 
@@ -55,15 +56,15 @@ const updateTagSchema = createTagSchema.partial().omit({ scope: true });
 
 const createTagRuleSchema = z.object({
   tagId: z.string().uuid(),
-  name: z.string().min(1).max(200),
-  conditions: z.record(z.any()), // Estructura flexible para reglas
+  name: z.string().min(VALIDATION_LIMITS.MIN_NAME_LENGTH).max(VALIDATION_LIMITS.MAX_NAME_LENGTH),
+  conditions: z.record(z.unknown()), // Estructura flexible para reglas
   isActive: z.boolean().default(true)
 });
 
 const createSegmentSchema = z.object({
-  name: z.string().min(1).max(200),
-  description: z.string().max(1000).optional().nullable(),
-  filters: z.record(z.any()), // Estructura flexible para filtros
+  name: z.string().min(VALIDATION_LIMITS.MIN_NAME_LENGTH).max(VALIDATION_LIMITS.MAX_NAME_LENGTH),
+  description: z.string().max(VALIDATION_LIMITS.MAX_DESCRIPTION_LENGTH).optional().nullable(),
+  filters: z.record(z.unknown()), // Estructura flexible para filtros
   isDynamic: z.boolean().default(true),
   refreshSchedule: z.string().optional().nullable() // cron expression
 });
@@ -76,7 +77,7 @@ router.get('/',
   validate({ query: listTagsQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { scope, q, limit = '10' } = req.query;
+    const { scope, q, limit = String(PAGINATION_LIMITS.QUICK_SEARCH_LIMIT) } = req.query;
 
     const conditions = [];
     if (scope) {
@@ -607,7 +608,7 @@ const updateContactTagSchema = z.object({
     z.null()
   ]).optional(),
   policyNumber: z.union([
-    z.string().max(100),
+    z.string().max(VALIDATION_LIMITS.MAX_NAME_LENGTH),
     z.null()
   ]).optional()
 });
@@ -876,7 +877,7 @@ router.post('/rules/:id/evaluate', requireAuth, requireRole(['manager', 'admin']
       data: { 
         ruleId: id,
         matched: matchedContactIds.length,
-        preview: matchedContactIds.slice(0, 10)
+        preview: matchedContactIds.slice(0, PAGINATION_LIMITS.QUICK_SEARCH_LIMIT)
       } 
     });
   } catch (err) {
@@ -1016,7 +1017,7 @@ router.get('/segments/:id/contacts',
   async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { limit = '50', offset = '0' } = req.query;
+    const { limit = String(PAGINATION_LIMITS.DEFAULT_PAGE_SIZE), offset = '0' } = req.query;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 

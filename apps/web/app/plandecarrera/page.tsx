@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
-import { useRouter } from 'next/navigation';
 import {
   getCareerPlanLevels,
   createCareerPlanLevel,
@@ -43,10 +42,10 @@ import { useToast } from '../../lib/hooks/useToast';
 import { formatAnnualGoal, formatLevelPercentage } from '@/lib/utils/career-plan';
 import { usePageTitle } from '../components/PageTitleContext';
 import { logger } from '../../lib/logger';
+import { isAdmin } from '@/lib/auth-helpers';
 
 export default function PlanDeCarreraPage() {
   const { user, loading } = useRequireAuth();
-  const router = useRouter();
   const { showToast } = useToast();
   
   usePageTitle('Plan de Carrera');
@@ -81,21 +80,15 @@ export default function PlanDeCarreraPage() {
     onConfirm: () => {}
   });
 
-  // Verificar que solo admin puede acceder
-  useEffect(() => {
-    if (!loading && user?.role !== 'admin') {
-      router.push('/');
-      showToast('Acceso denegado', 'Solo los administradores pueden configurar el plan de carrera', 'error');
-    }
-  }, [user, loading, router, showToast]);
+  const canEdit = isAdmin(user);
 
-  // Cargar niveles
+  // Cargar niveles para todos los usuarios (solo visualización)
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (!loading && user) {
       void loadLevels();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role]);
+  }, [user, loading]);
 
   const loadLevels = async () => {
     try {
@@ -116,6 +109,10 @@ export default function PlanDeCarreraPage() {
   };
 
   const handleOpenCreate = () => {
+    if (!canEdit) {
+      showToast('Acceso denegado', 'Solo los administradores pueden crear niveles', 'error');
+      return;
+    }
     setEditingLevel(null);
     setFormData({
       category: '',
@@ -131,6 +128,10 @@ export default function PlanDeCarreraPage() {
   };
 
   const handleOpenEdit = (level: CareerPlanLevel) => {
+    if (!canEdit) {
+      showToast('Acceso denegado', 'Solo los administradores pueden editar niveles', 'error');
+      return;
+    }
     setEditingLevel(level);
     setFormData({
       category: level.category,
@@ -146,6 +147,10 @@ export default function PlanDeCarreraPage() {
   };
 
   const handleDelete = (level: CareerPlanLevel) => {
+    if (!canEdit) {
+      showToast('Acceso denegado', 'Solo los administradores pueden eliminar niveles', 'error');
+      return;
+    }
     setConfirmDialog({
       open: true,
       title: 'Eliminar nivel',
@@ -190,6 +195,11 @@ export default function PlanDeCarreraPage() {
   };
 
   const handleSubmit = async () => {
+    if (!canEdit) {
+      showToast('Acceso denegado', 'Solo los administradores pueden modificar niveles', 'error');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -222,79 +232,87 @@ export default function PlanDeCarreraPage() {
     }
   };
 
-  const columns: Column<CareerPlanLevel>[] = useMemo(() => [
-    {
-      key: 'levelNumber',
-      header: 'N°',
-      sortable: true,
-      width: '60px'
-    },
-    {
-      key: 'category',
-      header: 'Categoría',
-      sortable: true
-    },
-    {
-      key: 'level',
-      header: 'Nivel',
-      sortable: true
-    },
-    {
-      key: 'index',
-      header: 'Índice',
-      sortable: true,
-      render: (level) => <Text size="sm">{level.index}</Text>
-    },
-    {
-      key: 'percentage',
-      header: 'Porcentaje',
-      sortable: true,
-      render: (level) => <Text size="sm">{formatLevelPercentage(level.percentage)}</Text>
-    },
-    {
-      key: 'annualGoalUsd',
-      header: 'Objetivo Anual (USD)',
-      sortable: true,
-      render: (level) => <Text size="sm">{formatAnnualGoal(level.annualGoalUsd)}</Text>
-    },
-    {
-      key: 'isActive',
-      header: 'Estado',
-      render: (level) => (
-        <Badge variant={level.isActive ? 'success' : 'error'}>
-          {level.isActive ? 'Activo' : 'Inactivo'}
-        </Badge>
-      )
-    },
-    {
-      key: 'actions',
-      header: 'Acciones',
-      width: '120px',
-      align: 'right',
-      render: (level) => (
-        <div className="flex gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleOpenEdit(level)}
-            className="px-2"
-          >
-            <Icon name="edit" size={14} />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleDelete(level)}
-            className="px-2 text-error hover:bg-error/10 hover:border-error"
-          >
-            <Icon name="trash" size={14} />
-          </Button>
-        </div>
-      )
-    }
-  ], [levels]);
+  const columns: Column<CareerPlanLevel>[] = useMemo(() => {
+    const baseColumns: Column<CareerPlanLevel>[] = [
+      {
+        key: 'levelNumber',
+        header: 'N°',
+        sortable: true,
+        width: '60px'
+      },
+      {
+        key: 'category',
+        header: 'Categoría',
+        sortable: true
+      },
+      {
+        key: 'level',
+        header: 'Nivel',
+        sortable: true
+      },
+      {
+        key: 'index',
+        header: 'Índice',
+        sortable: true,
+        render: (level) => <Text size="sm">{level.index}</Text>
+      },
+      {
+        key: 'percentage',
+        header: 'Porcentaje',
+        sortable: true,
+        render: (level) => <Text size="sm">{formatLevelPercentage(level.percentage)}</Text>
+      },
+      {
+        key: 'annualGoalUsd',
+        header: 'Objetivo Anual (USD)',
+        sortable: true,
+        render: (level) => <Text size="sm">{formatAnnualGoal(level.annualGoalUsd)}</Text>
+      },
+      {
+        key: 'isActive',
+        header: 'Estado',
+        render: (level) => (
+          <Badge variant={level.isActive ? 'success' : 'error'}>
+            {level.isActive ? 'Activo' : 'Inactivo'}
+          </Badge>
+        )
+      }
+    ];
 
-  if (loading || user?.role !== 'admin') {
+    // Solo agregar columna de acciones si el usuario es admin
+    if (canEdit) {
+      baseColumns.push({
+        key: 'actions',
+        header: 'Acciones',
+        width: '120px',
+        align: 'right',
+        render: (level) => (
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenEdit(level)}
+              className="px-2"
+            >
+              <Icon name="edit" size={14} />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDelete(level)}
+              className="px-2 text-error hover:bg-error/10 hover:border-error"
+            >
+              <Icon name="trash" size={14} />
+            </Button>
+          </div>
+        )
+      });
+    }
+
+    return baseColumns;
+  }, [levels, canEdit]);
+
+  if (loading) {
     return (
       <div className="container mx-auto p-4">
         <div className="flex items-center justify-center h-64">
@@ -311,13 +329,17 @@ export default function PlanDeCarreraPage() {
           <div>
             <Heading level={2}>Plan de Carrera Comercial</Heading>
             <Text size="sm" color="secondary">
-              Configura los niveles del plan de carrera por objetivos
+              {canEdit 
+                ? 'Configura los niveles del plan de carrera por objetivos'
+                : 'Visualiza los niveles del plan de carrera por objetivos'}
             </Text>
           </div>
-          <Button onClick={handleOpenCreate}>
-            <Icon name="plus" size={16} className="mr-2" />
-            Agregar Nivel
-          </Button>
+          {canEdit && (
+            <Button onClick={handleOpenCreate}>
+              <Icon name="plus" size={16} className="mr-2" />
+              Agregar Nivel
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -338,9 +360,11 @@ export default function PlanDeCarreraPage() {
             ) : levels.length === 0 ? (
               <div className="text-center py-8">
                 <Text color="secondary">No hay niveles configurados</Text>
-                <Button onClick={handleOpenCreate} className="mt-4">
-                  Crear Primer Nivel
-                </Button>
+                {canEdit && (
+                  <Button onClick={handleOpenCreate} className="mt-4">
+                    Crear Primer Nivel
+                  </Button>
+                )}
               </div>
             ) : (
               <DataTable<CareerPlanLevel>

@@ -132,3 +132,18 @@ export interface LoadingState {
   isLoading: boolean;
   error?: string | null;
 }
+
+// ==========================================================
+// Tipos Compartidos entre Dominios
+// ==========================================================
+
+/**
+ * Componente base compartido entre Benchmark y Portfolio
+ * Define la estructura común de componentes de instrumentos
+ */
+export interface ComponentBase {
+  instrumentId?: string | null;
+  instrumentSymbol: string;
+  instrumentName?: string | null;
+  targetWeight: number;
+}

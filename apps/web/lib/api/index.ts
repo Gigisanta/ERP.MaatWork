@@ -178,6 +178,16 @@ export {
   importCapacitacionesCSV
 } from './capacitaciones';
 
+// Automations methods
+export {
+  getAutomationConfigs,
+  getAutomationConfigById,
+  getAutomationConfigByName,
+  createAutomationConfig,
+  updateAutomationConfig,
+  deleteAutomationConfig
+} from './automations';
+
 // Export types from teams
 export type {
   CreateTeamRequest,

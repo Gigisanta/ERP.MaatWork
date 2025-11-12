@@ -16,7 +16,8 @@ export type {
   Currency,
   TimePeriod,
   ToastVariant,
-  LoadingState
+  LoadingState,
+  ComponentBase
 } from './common';
 
 // Auth types
@@ -178,4 +179,13 @@ export type {
   ListCapacitacionesParams,
   CapacitacionesListResponse
 } from './capacitaciones';
+
+// Automation types
+export type {
+  AutomationConfig,
+  TriggerConfig,
+  AutomationConfigData,
+  CreateAutomationConfigRequest,
+  UpdateAutomationConfigRequest
+} from './automation';
 

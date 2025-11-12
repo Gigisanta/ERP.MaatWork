@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
 import { vi } from 'vitest';
 import FileUploader from './FileUploader';
 

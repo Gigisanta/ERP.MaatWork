@@ -90,7 +90,11 @@ async function getContactData(id: string, token: string) {
       notes
     };
   } catch (error) {
-    // En server components, usar console.error es aceptable
+    // AI_DECISION: Usar console.error en Server Components
+    // Justificación: Server Components no tienen acceso a logger del cliente. console.error
+    //                es la forma estándar de logging en Node.js y Next.js Server Components.
+    //                Los errores se capturan y manejan apropiadamente sin afectar la UI.
+    // Impacto: Logging apropiado en contexto de servidor sin dependencias del cliente
     console.error('Error fetching contact data', { err: error, contactId: id });
     return null;
   }

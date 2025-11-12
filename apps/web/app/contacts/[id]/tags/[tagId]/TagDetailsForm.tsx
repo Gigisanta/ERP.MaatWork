@@ -14,6 +14,7 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';
+import { logger } from '@/lib/logger';
 
 // Schema de validación Zod
 // AI_DECISION: Usar union para manejar null correctamente con positive()
@@ -113,7 +114,7 @@ export default function TagDetailsForm({
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('handleSubmit llamado', { formData, errors });
+    logger.debug('handleSubmit llamado', { contactId, tagId, hasErrors: Object.keys(errors).length > 0 });
     
     // Limpiar errores previos
     setErrors({});
@@ -122,7 +123,11 @@ export default function TagDetailsForm({
     const validationResult = contactTagFormSchema.safeParse(formData);
     
     if (!validationResult.success) {
-      console.error('Validación Zod falló:', validationResult.error);
+      logger.warn('Validación Zod falló', {
+        contactId,
+        tagId,
+        errors: validationResult.error.errors
+      });
       const zodErrors: typeof errors = {};
       validationResult.error.errors.forEach((error) => {
         if (error.path[0] === 'monthlyPremium') {
@@ -149,12 +154,11 @@ export default function TagDetailsForm({
         payload.policyNumber = formData.policyNumber;
       }
       
-      // Log para debugging
-      console.log('Enviando datos:', { contactId, tagId, payload });
+      logger.debug('Enviando datos de contact tag', { contactId, tagId, payload });
       
       const response = await updateContactTag(contactId, tagId, payload);
       
-      console.log('Respuesta recibida:', response);
+      logger.info('Contact tag actualizado exitosamente', { contactId, tagId });
       
       if (response.success && response.data) {
         showToast('Datos guardados', 'La información de la póliza se ha actualizado correctamente', 'success');
@@ -165,11 +169,20 @@ export default function TagDetailsForm({
         });
       } else {
         const errorMsg = response.error || 'Error al guardar los datos';
-        console.error('Error en respuesta:', errorMsg, response);
+        logger.error('Error en respuesta de updateContactTag', {
+          contactId,
+          tagId,
+          error: errorMsg,
+          response
+        });
         throw new Error(errorMsg);
       }
     } catch (err) {
-      console.error('Error al guardar contact tag:', err);
+      logger.error('Error al guardar contact tag', {
+        error: err instanceof Error ? err.message : String(err),
+        contactId,
+        tagId
+      });
       let errorMessage = 'Error desconocido al guardar';
       
       if (err instanceof Error) {

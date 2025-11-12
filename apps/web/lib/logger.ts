@@ -137,40 +137,23 @@ class ClientLogger {
     }
 
     this.isSendingLog = true;
-    let timeoutId: NodeJS.Timeout | undefined;
     try {
-      // Importar config dinámicamente para evitar ciclos de dependencia
-      const { config } = await import('./config');
+      // Importar apiClient dinámicamente para evitar ciclos de dependencia
+      const { apiClient } = await import('./api-client');
       
-      // Crear AbortController para timeout (compatible con navegadores antiguos)
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(`${config.apiUrl}/logs/client`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entry),
-        signal: controller.signal
+      // Usar apiClient.post() con timeout configurado y sin retries para logs
+      // AI_DECISION: Usar apiClient en lugar de fetch directo
+      // Justificación: Aprovecha retry logic, manejo de errores y timeout del cliente centralizado
+      // Impacto: Mejor manejo de errores y consistencia con resto de la aplicación
+      await apiClient.post('/v1/logs/client', entry, {
+        timeout: this.LOG_TIMEOUT_MS,
+        retries: 0, // No retry para logs para evitar spam
+        requireAuth: false // Los logs pueden enviarse sin autenticación
       });
       
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
       // Si fue exitoso, resetear contador de errores
-      if (response.ok) {
-        this.backendErrorCount = 0;
-      } else {
-        this.backendErrorCount++;
-      }
+      this.backendErrorCount = 0;
     } catch (error) {
-      // Asegurar que el timeout se limpie incluso si hay error
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
       this.backendErrorCount++;
       // NO loguear este error para evitar recursión
       // Solo usar console.error directamente sin pasar por el logger

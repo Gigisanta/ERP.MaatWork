@@ -2,7 +2,7 @@
  * Tipos para el módulo de plan de carrera comercial
  */
 
-import type { TimestampedEntity } from './common';
+import type { TimestampedEntity, CreateRequest, UpdateRequest } from './common';
 
 /**
  * Nivel del plan de carrera comercial
@@ -18,9 +18,10 @@ export interface CareerPlanLevel extends TimestampedEntity {
 }
 
 /**
- * Request para crear un nivel del plan de carrera
+ * Request para crear un nivel del plan de carrera - usando utility type CreateRequest
+ * Nota: index y percentage aceptan string | number para flexibilidad en el formulario
  */
-export interface CareerPlanLevelCreateRequest {
+export interface CareerPlanLevelCreateRequest extends Omit<CreateRequest<CareerPlanLevel>, 'isActive' | 'index' | 'percentage'> {
   category: string;
   level: string;
   levelNumber: number;
@@ -31,17 +32,9 @@ export interface CareerPlanLevelCreateRequest {
 }
 
 /**
- * Request para actualizar un nivel del plan de carrera
+ * Request para actualizar un nivel del plan de carrera - usando utility type UpdateRequest
  */
-export interface CareerPlanLevelUpdateRequest {
-  category?: string;
-  level?: string;
-  levelNumber?: number;
-  index?: string | number;
-  percentage?: string | number;
-  annualGoalUsd?: number;
-  isActive?: boolean;
-}
+export interface CareerPlanLevelUpdateRequest extends UpdateRequest<CareerPlanLevel> {}
 
 /**
  * Progreso del usuario en el plan de carrera

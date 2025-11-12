@@ -1,18 +1,22 @@
-// REGLA CURSOR: Endpoint principal de contactos - mantener RBAC y data isolation, no alterar sin documentar breaking changes
+/**
+ * Contacts CRUD Routes
+ * 
+ * Handles main CRUD operations for contacts
+ */
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, contacts, contactFieldHistory, contactTags, tags, tasks, attachments, pipelineStages, pipelineStageHistory, users } from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray, type InferSelectModel } from 'drizzle-orm';
-import { requireAuth, requireRole } from '../auth/middlewares';
-import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../auth/authorization';
-import { createDrizzleLogger } from '../utils/db-logger';
-import { transactionWithLogging } from '../utils/db-transactions';
+import { requireAuth, requireRole } from '../../auth/middlewares';
+import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../../auth/authorization';
+import { createDrizzleLogger } from '../../utils/db-logger';
+import { transactionWithLogging } from '../../utils/db-transactions';
 import { z } from 'zod';
-import { validate } from '../utils/validation';
+import { validate } from '../../utils/validation';
 import { 
   uuidSchema, 
   idParamSchema,
   paginationQuerySchema 
-} from '../utils/common-schemas';
+} from '../../utils/common-schemas';
 import { 
   type Contact, 
   type ContactTag,
@@ -20,19 +24,9 @@ import {
   type ContactWithTags, 
   type TimelineItem,
   type ContactUpdateFields
-} from '../types/contacts';
-import { getProspectoStageId } from '../utils/pipeline-stages';
-import { createUserRateLimiter } from '../utils/rate-limiter';
-import { getHttpClient } from '../utils/http-client';
-import { env } from '../config/env';
-
+} from '../../types/contacts';
+import { getProspectoStageId } from '../../utils/pipeline-stages';
 const router = Router();
-
-// Rate limiter para webhooks (por usuario)
-const webhookRateLimiter = createUserRateLimiter({
-  capacity: env.N8N_WEBHOOK_RATE_LIMIT,
-  refillPerSec: env.N8N_WEBHOOK_RATE_LIMIT / 60 // Refill rate: capacidad por minuto
-});
 
 // ==========================================================
 // Schemas de validación
@@ -52,8 +46,6 @@ const listContactsQuerySchema = paginationQuerySchema.and(
 const contactDetailQuerySchema = z.object({
   includeTimeline: z.enum(['true', 'false']).optional().default('true')
 });
-
-const historyQuerySchema = paginationQuerySchema;
 
 // Body schemas
 const optionalLongText = z.string().max(2000).trim().optional().nullable();
@@ -86,7 +78,7 @@ const createContactSchema = z.object({
   ingresos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
   gastos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
   excedente: z.union([z.number(), z.string().regex(/^-?\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
-  customFields: z.record(z.any()).optional()
+  customFields: z.record(z.unknown()).optional()
 });
 
 const updateContactSchema = createContactSchema.partial();
@@ -94,71 +86,10 @@ const updateContactSchema = createContactSchema.partial();
 const patchContactSchema = z.object({
   fields: z.array(z.object({
     field: z.string(),
-    value: z.any()
+    value: z.unknown()
   }))
 });
 
-// Webhook export schema - más permisivo para aceptar contactos existentes
-// AI_DECISION: Schema permisivo para webhook export
-// Justificación: Los contactos existentes pueden tener datos inválidos (emails mal formateados, etc.)
-// No debemos rechazar el envío completo por validaciones estrictas, el webhook puede manejar los datos
-// Impacto: Permite exportar todos los contactos sin fallar por validaciones estrictas
-// Usa .passthrough() para aceptar cualquier campo adicional que pueda venir del frontend
-const webhookContactSchema = z.object({
-  id: z.string().uuid(),
-  firstName: z.string(),
-  lastName: z.string(),
-  fullName: z.string().optional(), // Puede no estar presente en algunos casos
-  email: z.union([z.string(), z.null()]).optional(), // Permite cualquier string o null, sin validar formato
-  phone: z.union([z.string(), z.null()]).optional(),
-  country: z.union([z.string(), z.null()]).optional(),
-  dni: z.union([z.string(), z.null()]).optional(),
-  pipelineStageId: z.union([z.string().uuid(), z.null()]).optional(),
-  source: z.union([z.string(), z.null()]).optional(),
-  riskProfile: z.union([z.enum(['low', 'mid', 'high']), z.null()]).optional(),
-  assignedAdvisorId: z.union([z.string().uuid(), z.null()]).optional(),
-  assignedTeamId: z.union([z.string().uuid(), z.null()]).optional(),
-  nextStep: z.union([z.string(), z.null()]).optional(),
-  notes: z.union([z.string(), z.null()]).optional(),
-  queSeDedica: z.union([z.string(), z.null()]).optional(),
-  familia: z.union([z.string(), z.null()]).optional(),
-  expectativas: z.union([z.string(), z.null()]).optional(),
-  objetivos: z.union([z.string(), z.null()]).optional(),
-  requisitosPlanificacion: z.union([z.string(), z.null()]).optional(),
-  prioridades: z.union([z.array(z.string()), z.null()]).optional(),
-  preocupaciones: z.union([z.array(z.string()), z.null()]).optional(),
-  ingresos: z.union([z.number(), z.string(), z.null()]).optional(),
-  gastos: z.union([z.number(), z.string(), z.null()]).optional(),
-  excedente: z.union([z.number(), z.string(), z.null()]).optional(),
-  customFields: z.union([z.record(z.any()), z.null()]).optional(),
-  contactLastTouchAt: z.union([z.string(), z.null()]).optional(),
-  pipelineStageUpdatedAt: z.union([z.string(), z.null()]).optional(),
-  createdAt: z.union([z.string(), z.date()]).optional(),
-  updatedAt: z.union([z.string(), z.date()]).optional(),
-  version: z.union([z.number(), z.null()]).optional(),
-  deletedAt: z.union([z.string(), z.date(), z.null()]).optional(),
-  tags: z.array(z.any()).optional() // Tags pueden venir del frontend
-}).passthrough(); // Permite campos adicionales que puedan venir del frontend (phoneSecondary, whatsapp, address, city, dateOfBirth, etc.)
-
-const webhookExportSchema = z.object({
-  webhookUrl: z.string().url().refine(url => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  }, 'URL must use http:// or https://'),
-  contacts: z.array(webhookContactSchema).min(1, 'At least one contact is required'),
-  metadata: z.object({
-    filters: z.object({
-      stage: z.string().nullable().optional(),
-      tags: z.array(z.string()).optional(),
-      search: z.string().nullable().optional(),
-      advisorId: z.string().nullable().optional()
-    }).optional()
-  }).optional()
-});
 
 // ==========================================================
 // GET /contacts - Listar contactos con filtros
@@ -1311,67 +1242,6 @@ router.patch('/:id',
 });
 
 // ==========================================================
-// PATCH /contacts/:id/next-step - Actualizar próximo paso
-// ==========================================================
-
-const nextStepSchema = z.object({
-  nextStep: z.string().max(500).optional().nullable()
-});
-
-router.patch('/:id/next-step', 
-  requireAuth,
-  validate({ 
-    params: idParamSchema,
-    body: nextStepSchema 
-  }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const { nextStep } = req.body;
-
-    // Verificar que el contacto existe
-    const [existing] = await db()
-      .select()
-      .from(contacts)
-      .where(and(eq(contacts.id, id), isNull(contacts.deletedAt)))
-      .limit(1);
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Contact not found' });
-    }
-
-    // Actualizar solo el próximo paso
-    const [updated] = await db()
-      .update(contacts)
-      .set({ 
-        nextStep,
-        updatedAt: new Date()
-      })
-      .where(eq(contacts.id, id))
-      .returning();
-
-    // Registrar en historial si el valor cambió
-    if (existing.nextStep !== nextStep) {
-      await db()
-        .insert(contactFieldHistory)
-        .values({
-          contactId: id,
-          fieldName: 'nextStep',
-          oldValue: existing.nextStep || '',
-          newValue: nextStep || '',
-          changedByUserId: req.user!.id
-        });
-    }
-
-    req.log.info({ contactId: id, nextStep }, 'contact next step updated');
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    req.log.error({ err, contactId: req.params.id }, 'failed to update contact next step');
-    next(err);
-  }
-});
-
-// ==========================================================
 // DELETE /contacts/:id - Soft delete de contacto
 // ==========================================================
 router.delete('/:id', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
@@ -1396,332 +1266,6 @@ router.delete('/:id', requireAuth, requireRole(['manager', 'admin']), async (req
   }
 });
 
-// ==========================================================
-// GET /contacts/:id/history - Obtener historial de cambios
-// ==========================================================
-router.get('/:id/history', 
-  requireAuth,
-  validate({ 
-    params: idParamSchema,
-    query: historyQuerySchema 
-  }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const { limit = '50', offset = '0' } = req.query;
-
-    const history = await db()
-      .select()
-      .from(contactFieldHistory)
-      .where(eq(contactFieldHistory.contactId, id))
-      .orderBy(desc(contactFieldHistory.changedAt))
-      .limit(parseInt(limit as string))
-      .offset(parseInt(offset as string));
-
-    res.json({
-      data: history,
-      meta: {
-        limit: parseInt(limit as string),
-        offset: parseInt(offset as string)
-      }
-    });
-  } catch (err) {
-    req.log.error({ err, contactId: req.params.id }, 'failed to get contact history');
-    next(err);
-  }
-});
-
-// ==========================================================
-// POST /contacts/webhook - Enviar contactos a webhook (proxy optimizado)
-// ==========================================================
-
-/**
- * Dividir array en lotes (batches)
- */
-function chunkArray<T>(array: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += chunkSize) {
-    chunks.push(array.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
-
-/**
- * Retry con exponential backoff
- */
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  baseDelay: number = 1000,
-  logger?: { warn: (obj: unknown, msg: string) => void }
-): Promise<T> {
-  let lastError: Error | unknown;
-  
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      
-      if (attempt === maxRetries) {
-        throw error;
-      }
-      
-      const delay = baseDelay * Math.pow(2, attempt);
-      logger?.warn({ attempt: attempt + 1, maxRetries, delay, error }, 'Retrying webhook request');
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw lastError;
-}
-
-router.post('/webhook',
-  requireAuth,
-  webhookRateLimiter.middleware(),
-  validate({ body: webhookExportSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-    const startTime = Date.now();
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
-
-    // Verificar si N8N está habilitado
-    if (!env.N8N_ENABLED) {
-      return res.status(503).json({
-        success: false,
-        error: 'N8N webhook service is disabled'
-      });
-    }
-
-    try {
-      const { webhookUrl, contacts, metadata } = req.body;
-
-      // Validar tamaño de payload (máximo ~5MB)
-      const payloadSize = JSON.stringify(contacts).length;
-      const maxPayloadSize = 5 * 1024 * 1024; // 5MB
-      
-      if (payloadSize > maxPayloadSize) {
-        req.log.warn({
-          payloadSize,
-          maxPayloadSize,
-          contactsCount: contacts.length
-        }, 'Payload too large, will use batching');
-      }
-
-      // Dividir en batches si es necesario
-      const batchSize = env.N8N_WEBHOOK_BATCH_SIZE;
-      const batches = contacts.length > batchSize 
-        ? chunkArray(contacts, batchSize)
-        : [contacts];
-
-      req.log.info({
-        userId,
-        userRole,
-        action: 'webhook_export',
-        webhookUrl,
-        contactsCount: contacts.length,
-        batchesCount: batches.length,
-        batchSize
-      }, 'Iniciando envío de contactos a webhook');
-
-      // Obtener cliente HTTP optimizado
-      const httpClient = getHttpClient(req.log);
-
-      // Enviar batches en paralelo (limitado por rate limit)
-      const batchResults = await Promise.allSettled(
-        batches.map(async (batch, batchIndex) => {
-          const batchStartTime = Date.now();
-          
-          // Preparar payload para batch
-          const payload = {
-            contacts: batch,
-            metadata: {
-              total: contacts.length,
-              batchIndex: batchIndex + 1,
-              totalBatches: batches.length,
-              exportedAt: new Date().toISOString(),
-              filters: metadata?.filters ?? {
-                stage: null,
-                tags: [],
-                search: null,
-                advisorId: null
-              }
-            }
-          };
-
-          // Validar tamaño de payload del batch
-          const batchPayloadSize = JSON.stringify(payload).length;
-          if (batchPayloadSize > maxPayloadSize) {
-            throw new Error(`Batch payload too large: ${batchPayloadSize} bytes`);
-          }
-
-          // Crear AbortController para timeout
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => {
-            controller.abort();
-          }, env.N8N_WEBHOOK_TIMEOUT);
-
-          try {
-            // Enviar con retry y exponential backoff
-            const response = await retryWithBackoff(
-              async () => {
-                const result = await httpClient.post(webhookUrl, payload, {
-                  signal: controller.signal
-                });
-                return result;
-              },
-              3, // max retries
-              1000, // base delay 1s
-              req.log
-            );
-
-            clearTimeout(timeoutId);
-            const batchDuration = Date.now() - batchStartTime;
-
-            if (response.status >= 200 && response.status < 300) {
-              req.log.debug({
-                webhookUrl,
-                batchIndex: batchIndex + 1,
-                batchSize: batch.length,
-                status: response.status,
-                duration: batchDuration
-              }, 'Webhook batch sent successfully');
-
-              return {
-                success: true,
-                batchIndex: batchIndex + 1,
-                batchSize: batch.length,
-                status: response.status
-              };
-            }
-
-            // Manejar errores HTTP
-            let parsedError: { code?: number; message?: string; hint?: string } | null = null;
-            try {
-              parsedError = JSON.parse(response.body);
-            } catch {
-              // Si no es JSON, usar el texto tal cual
-            }
-
-            let errorMessage = `Error al enviar batch: ${response.status} ${response.statusText}`;
-            
-            if (response.status === 404) {
-              if (parsedError?.message?.includes('not registered')) {
-                errorMessage = `El webhook de N8N no está activo. ${parsedError.hint || 'Asegúrate de que el workflow esté activo y el webhook esté configurado correctamente.'}`;
-              } else if (parsedError?.message?.includes('not registered for POST')) {
-                errorMessage = `El webhook de N8N está configurado para GET, pero necesitas POST. Verifica la configuración del webhook en N8N.`;
-              } else {
-                errorMessage = `El webhook de N8N no fue encontrado (404). Verifica que la URL sea correcta y que el workflow esté activo.`;
-              }
-            } else if (parsedError?.message) {
-              errorMessage = `${parsedError.message}${parsedError.hint ? ` ${parsedError.hint}` : ''}`;
-            }
-
-            throw new Error(errorMessage);
-          } catch (error: any) {
-            clearTimeout(timeoutId);
-            const batchDuration = Date.now() - batchStartTime;
-
-            if (error.message === 'Request aborted' || error.name === 'AbortError') {
-              req.log.error({
-                webhookUrl,
-                batchIndex: batchIndex + 1,
-                duration: batchDuration,
-                timeout: env.N8N_WEBHOOK_TIMEOUT
-              }, 'Webhook batch timeout');
-              throw new Error(`Timeout: El webhook no respondió en ${env.N8N_WEBHOOK_TIMEOUT}ms`);
-            }
-
-            // Detectar errores de conexión
-            const isConnectionError =
-              error.message?.includes('ECONNREFUSED') ||
-              error.message?.includes('ETIMEDOUT') ||
-              error.message?.includes('Request timeout') ||
-              error.message?.includes('connect');
-
-            if (isConnectionError) {
-              req.log.error({
-                webhookUrl,
-                batchIndex: batchIndex + 1,
-                error: error.message,
-                duration: batchDuration
-              }, 'Webhook batch connection error');
-              throw new Error(`Error de conexión: ${error.message}. Verifica que el webhook esté corriendo y que la URL sea correcta.`);
-            }
-
-            req.log.error({
-              webhookUrl,
-              batchIndex: batchIndex + 1,
-              error: error.message,
-              duration: batchDuration
-            }, 'Webhook batch request error');
-
-            throw error;
-          }
-        })
-      );
-
-      const duration = Date.now() - startTime;
-
-      // Analizar resultados
-      const successful = batchResults.filter(r => r.status === 'fulfilled').length;
-      const failed = batchResults.filter(r => r.status === 'rejected').length;
-      const errors = batchResults
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .map(r => r.reason?.message || 'Unknown error');
-
-      if (failed > 0) {
-        req.log.error({
-          webhookUrl,
-          contactsCount: contacts.length,
-          batchesCount: batches.length,
-          successful,
-          failed,
-          errors,
-          duration
-        }, 'Webhook export partially failed');
-
-        return res.status(207).json({
-          success: false,
-          error: `Se enviaron ${successful} de ${batches.length} batches exitosamente`,
-          details: {
-            successful,
-            failed,
-            total: batches.length,
-            errors: errors.slice(0, 3) // Limitar a 3 errores para no saturar respuesta
-          }
-        });
-      }
-
-      req.log.info({
-        webhookUrl,
-        contactsCount: contacts.length,
-        batchesCount: batches.length,
-        duration
-      }, 'Webhook export successful');
-
-      return res.json({
-        success: true,
-        data: {
-          success: true,
-          message: `Se enviaron ${contacts.length} contactos exitosamente al webhook${batches.length > 1 ? ` en ${batches.length} batches` : ''}`,
-          batchesCount: batches.length,
-          contactsCount: contacts.length
-        }
-      });
-    } catch (err) {
-      const duration = Date.now() - startTime;
-      req.log.error({
-        err,
-        userId,
-        userRole,
-        duration,
-        action: 'webhook_export'
-      }, 'Error en webhook export');
-      next(err);
-    }
-  }
-);
 
 export default router;
 
