@@ -36,9 +36,9 @@ CactusDashboard-epic-D/
 ```
 
 **Documentación adicional:**
-- 📖 [ARCHITECTURE.md](./ARCHITECTURE.md) - Arquitectura detallada y decisiones técnicas
-- 📋 [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Resumen de refactorizaciones y mejoras
-- ✅ [TODOS_AUDIT.md](./TODOS_AUDIT.md) - Auditoría de TODOs pendientes
+- 📖 [ARCHITECTURE.md](./docs/ARCHITECTURE.md) - Arquitectura detallada y decisiones técnicas
+- 📋 [REFACTORING_SUMMARY.md](./docs/REFACTORING_SUMMARY.md) - Resumen de refactorizaciones y mejoras
+- ✅ [TODOS_AUDIT.md](./docs/TODOS_AUDIT.md) - Auditoría de TODOs pendientes
 
 ## Requisitos
 - Node.js >=22.0.0 <25.0.0 (soporta hasta v24.x.x)
