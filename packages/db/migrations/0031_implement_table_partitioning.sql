@@ -1,0 +1,110 @@
+-- ==========================================================
+-- Implementación de Particionamiento de Tablas
+-- ==========================================================
+-- 
+-- Implementa particionamiento por rango de fecha para tablas grandes
+-- que crecen con el tiempo y se consultan frecuentemente por rangos de fecha.
+-- 
+-- IMPORTANTE: Esta migración requiere:
+-- 1. Ejecutar scripts/evaluate-table-partitioning.ts primero para evaluar candidatos
+-- 2. Hacer backup de la base de datos antes de ejecutar
+-- 3. Verificar que las funciones de particionamiento existan (migración 0029)
+-- 
+-- Estrategia: Particionamiento mensual por rango de fecha
+-- Beneficio esperado: 60-80% reducción en tiempo de queries históricas
+-- ==========================================================
+
+-- ==========================================================
+-- NOTA: Esta migración está preparada pero NO se ejecuta automáticamente
+-- 
+-- Para aplicar particionamiento:
+-- 1. Ejecutar scripts/evaluate-table-partitioning.ts para evaluar candidatos
+-- 2. Ejecutar scripts/partition-tables.ts para aplicar particionamiento de forma segura
+-- 
+-- El script partition-tables.ts manejará:
+-- - Creación de tablas particionadas
+-- - Migración de datos existentes
+-- - Creación de particiones iniciales
+-- - Verificación de integridad
+-- ==========================================================
+
+-- Esta migración solo documenta la estructura esperada
+-- La implementación real se hace mediante scripts/partition-tables.ts
+
+-- Ejemplo de estructura para broker_transactions (NO EJECUTAR DIRECTAMENTE):
+-- 
+-- -- 1. Crear nueva tabla particionada
+-- CREATE TABLE broker_transactions_partitioned (
+--   LIKE broker_transactions INCLUDING ALL
+-- ) PARTITION BY RANGE (trade_date);
+-- 
+-- -- 2. Crear particiones iniciales
+-- SELECT create_monthly_partition('broker_transactions_partitioned', '2024-01-01'::date);
+-- SELECT create_monthly_partition('broker_transactions_partitioned', '2024-02-01'::date);
+-- -- ... más particiones según necesidad
+-- 
+-- -- 3. Migrar datos existentes (hacer en batches)
+-- INSERT INTO broker_transactions_partitioned SELECT * FROM broker_transactions;
+-- 
+-- -- 4. Renombrar tablas (requiere downtime)
+-- ALTER TABLE broker_transactions RENAME TO broker_transactions_old;
+-- ALTER TABLE broker_transactions_partitioned RENAME TO broker_transactions;
+-- 
+-- -- 5. Recrear índices en tabla particionada
+-- -- (Los índices se crean automáticamente en cada partición)
+-- 
+-- -- 6. Eliminar tabla antigua (después de verificar)
+-- -- DROP TABLE broker_transactions_old;
+
+-- ==========================================================
+-- Tablas Candidatas a Particionamiento
+-- ==========================================================
+-- 
+-- Las siguientes tablas son candidatas para particionamiento mensual:
+-- 
+-- 1. broker_transactions (por trade_date)
+--    - Criterio: > 1M filas o > 10GB o > 2 años de datos
+--    - Estrategia: Mensual
+-- 
+-- 2. broker_positions (por as_of_date)
+--    - Criterio: > 1M filas o > 10GB o > 2 años de datos
+--    - Estrategia: Mensual
+-- 
+-- 3. activity_events (por occurred_at)
+--    - Criterio: > 1M filas o > 10GB o > 2 años de datos
+--    - Estrategia: Mensual
+-- 
+-- 4. aum_snapshots (por date)
+--    - Criterio: > 1M filas o > 10GB o > 2 años de datos
+--    - Estrategia: Mensual
+-- 
+-- 5. audit_logs (por created_at)
+--    - Criterio: > 1M filas o > 10GB o > 2 años de datos
+--    - Estrategia: Mensual
+-- 
+-- ==========================================================
+-- Instrucciones de Uso
+-- ==========================================================
+-- 
+-- Para aplicar particionamiento a una tabla:
+-- 
+-- 1. Evaluar necesidad:
+--    pnpm tsx scripts/evaluate-table-partitioning.ts
+-- 
+-- 2. Aplicar particionamiento:
+--    pnpm tsx scripts/partition-tables.ts --table broker_transactions --strategy monthly
+-- 
+-- 3. Verificar integridad:
+--    -- Comparar conteos de filas
+--    SELECT COUNT(*) FROM broker_transactions;
+--    SELECT COUNT(*) FROM broker_transactions_partitioned;
+-- 
+-- 4. Monitorear performance:
+--    -- Verificar uso de particiones
+--    SELECT * FROM list_table_partitions('broker_transactions');
+-- 
+-- ==========================================================
+
+-- Esta migración no ejecuta cambios, solo documenta el proceso
+-- Los cambios reales se aplican mediante scripts/partition-tables.ts
+

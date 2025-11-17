@@ -1,71 +1,122 @@
 /**
- * Tests for ConfirmDialog Component
+ * Tests para ConfirmDialog component
  * 
- * Covers:
- * - Rendering with different variants
- * - Callback execution
- * - Modal open/close behavior
+ * AI_DECISION: Tests para componente de confirmación reutilizable
+ * Justificación: Validar comportamiento de modal de confirmación
+ * Impacto: Prevenir errores en confirmaciones críticas
  */
 
-import { describe, it, expect } from 'vitest';
-import { vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ConfirmDialog from './ConfirmDialog';
 
 describe('ConfirmDialog', () => {
-  const defaultProps = {
-    open: true,
-    onOpenChange: vi.fn(),
-    onConfirm: vi.fn(),
-    title: 'Test Title',
-    description: 'Test Description',
-  };
+  it('debería renderizar cuando está abierto', () => {
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        title="Confirmar acción"
+      />
+    );
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+    expect(screen.getByText(/Confirmar acción/i)).toBeInTheDocument();
   });
 
-  it('should render when open is true', () => {
-    render(<ConfirmDialog {...defaultProps} />);
-    expect(screen.getByText('Test Title')).toBeInTheDocument();
-    expect(screen.getByText('Test Description')).toBeInTheDocument();
+  it('NO debería renderizar cuando está cerrado', () => {
+    render(
+      <ConfirmDialog
+        open={false}
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        title="Confirmar acción"
+      />
+    );
+
+    expect(screen.queryByText(/Confirmar acción/i)).not.toBeInTheDocument();
   });
 
-  it('should not render when open is false', () => {
-    render(<ConfirmDialog {...defaultProps} open={false} />);
-    expect(screen.queryByText('Test Title')).not.toBeInTheDocument();
+  it('debería mostrar descripción cuando se proporciona', () => {
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        title="Confirmar acción"
+        description="¿Estás seguro?"
+      />
+    );
+
+    expect(screen.getByText(/¿Estás seguro?/i)).toBeInTheDocument();
   });
 
-  it('should call onConfirm when confirm button is clicked', () => {
-    const onConfirm = vi.fn();
-    render(<ConfirmDialog {...defaultProps} onConfirm={onConfirm} />);
-    
-    const confirmButton = screen.getByRole('button', { name: /confirmar/i });
+  it('debería llamar onConfirm al hacer click en confirmar', () => {
+    const mockOnConfirm = vi.fn();
+    const mockOnOpenChange = vi.fn();
+
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={mockOnOpenChange}
+        onConfirm={mockOnConfirm}
+        title="Confirmar acción"
+      />
+    );
+
+    const confirmButton = screen.getByText(/Confirmar/i);
     fireEvent.click(confirmButton);
-    
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    expect(mockOnConfirm).toHaveBeenCalledTimes(1);
+    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('should call onOpenChange when cancel button is clicked', () => {
-    const onOpenChange = vi.fn();
-    render(<ConfirmDialog {...defaultProps} onOpenChange={onOpenChange} />);
-    
-    const cancelButton = screen.getByRole('button', { name: /cancelar/i });
+  it('debería cerrar al hacer click en cancelar', () => {
+    const mockOnOpenChange = vi.fn();
+
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={mockOnOpenChange}
+        onConfirm={vi.fn()}
+        title="Confirmar acción"
+      />
+    );
+
+    const cancelButton = screen.getByText(/Cancelar/i);
     fireEvent.click(cancelButton);
-    
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    expect(mockOnOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('should render with custom confirm label', () => {
-    render(<ConfirmDialog {...defaultProps} confirmLabel="Delete" />);
-    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  it('debería usar labels personalizados', () => {
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        title="Confirmar acción"
+        confirmLabel="Aceptar"
+        cancelLabel="Rechazar"
+      />
+    );
+
+    expect(screen.getByText(/Aceptar/i)).toBeInTheDocument();
+    expect(screen.getByText(/Rechazar/i)).toBeInTheDocument();
   });
 
-  it('should render with danger variant', () => {
-    render(<ConfirmDialog {...defaultProps} variant="danger" />);
-    const confirmButton = screen.getByRole('button', { name: /confirmar/i });
-    // Verify danger styling (implementation dependent)
-    expect(confirmButton).toBeInTheDocument();
+  it('debería aplicar variant danger', () => {
+    render(
+      <ConfirmDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        onConfirm={vi.fn()}
+        title="Eliminar"
+        variant="danger"
+      />
+    );
+
+    const confirmButton = screen.getByText(/Confirmar/i);
+    expect(confirmButton).toHaveClass('bg-red-600');
   });
 });
-

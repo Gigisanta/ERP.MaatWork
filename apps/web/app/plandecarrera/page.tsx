@@ -41,7 +41,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../../lib/hooks/useToast';
 import { formatAnnualGoal, formatLevelPercentage } from '@/lib/utils/career-plan';
 import { usePageTitle } from '../components/PageTitleContext';
-import { logger } from '../../lib/logger';
+import { logger, toLogContext } from '../../lib/logger';
 import { isAdmin } from '@/lib/auth-helpers';
 
 export default function PlanDeCarreraPage() {
@@ -101,7 +101,7 @@ export default function PlanDeCarreraPage() {
         setError('Error al cargar los niveles del plan de carrera');
       }
     } catch (err) {
-      logger.error('Error loading career plan levels', { err });
+      logger.error('Error loading career plan levels', toLogContext({ err }));
       setError('Error al cargar los niveles del plan de carrera');
     } finally {
       setDataLoading(false);
@@ -211,10 +211,10 @@ export default function PlanDeCarreraPage() {
           category: formData.category,
           level: formData.level,
           levelNumber: formData.levelNumber,
-          index: formData.index,
-          percentage: formData.percentage,
+          index: typeof formData.index === 'string' ? formData.index : formData.index.toString(),
+          percentage: typeof formData.percentage === 'string' ? formData.percentage : formData.percentage.toString(),
           annualGoalUsd: formData.annualGoalUsd,
-          isActive: formData.isActive
+          ...(formData.isActive !== undefined && { isActive: formData.isActive })
         };
         await updateCareerPlanLevel(editingLevel.id, updateData);
         showToast('Nivel actualizado', undefined, 'success');
@@ -302,7 +302,7 @@ export default function PlanDeCarreraPage() {
               onClick={() => handleDelete(level)}
               className="px-2 text-error hover:bg-error/10 hover:border-error"
             >
-              <Icon name="trash" size={14} />
+              <Icon name="trash-2" size={14} />
             </Button>
           </div>
         )
@@ -367,9 +367,9 @@ export default function PlanDeCarreraPage() {
                 )}
               </div>
             ) : (
-              <DataTable<CareerPlanLevel>
-                data={levels}
-                columns={columns}
+              <DataTable
+                data={levels as unknown as Record<string, unknown>[]}
+                columns={columns as unknown as Column<Record<string, unknown>>[]}
                 keyField="id"
               />
             )}

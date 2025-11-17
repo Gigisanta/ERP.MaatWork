@@ -11,7 +11,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <main 
       className={`min-h-screen bg-background transition-all duration-300 ease-in-out ${
-        collapsed ? 'lg:ml-14' : 'lg:ml-64'
+        collapsed ? 'lg:ml-14' : 'lg:ml-48'
       } lg:pt-4`}
     >
       {children}

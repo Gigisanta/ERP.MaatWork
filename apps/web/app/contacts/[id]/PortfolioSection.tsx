@@ -1,15 +1,13 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   Button,
-  Heading,
   Text,
   Stack,
-  Badge,
   Modal,
   ModalHeader,
   ModalTitle,
@@ -20,9 +18,10 @@ import {
   Alert,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import PortfolioAssignmentItem from './components/PortfolioAssignmentItem';
 import { usePortfolioAssignments } from '../../../lib/api-hooks';
 import { assignPortfolioToContact, removePortfolioAssignment, updatePortfolioAssignmentStatus } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 
 import type { PortfolioAssignment } from '@/types';
 
@@ -83,13 +82,16 @@ export default function PortfolioSection({
       setShowAssignModal(false);
       setNewAssignment({ templateId: '', templateName: '', notes: '' });
     } catch (err) {
-      logger.error('Error assigning portfolio', { err, contactId, assignment: newAssignment });
+      logger.error('Error assigning portfolio', toLogContext({ err, contactId, assignment: newAssignment }));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleUnassignPortfolio = (assignmentId: string) => {
+  // AI_DECISION: Use useCallback to stabilize handlers for memoized component
+  // Justificación: PortfolioAssignmentItem is memoized, needs stable callback references
+  // Impacto: Prevents unnecessary re-renders of PortfolioAssignmentItem components
+  const handleUnassignPortfolio = useCallback((assignmentId: string) => {
     setConfirmDialog({
       open: true,
       title: 'Desasignar portfolio',
@@ -100,40 +102,22 @@ export default function PortfolioSection({
           await removePortfolioAssignment(assignmentId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error unassigning portfolio', { err, assignmentId });
+          logger.error('Error unassigning portfolio', toLogContext({ err, assignmentId }));
         }
       }
     });
-  };
+  }, [mutate]);
 
-  const handleUpdateStatus = async (assignmentId: string, newStatus: 'active' | 'paused' | 'ended') => {
+  const handleUpdateStatus = useCallback(async (assignmentId: string, newStatus: 'active' | 'paused' | 'ended') => {
     try {
       await updatePortfolioAssignmentStatus(assignmentId, newStatus);
       await mutate(); // Refresh data
     } catch (err) {
-      logger.error('Error updating portfolio assignment status', { err, assignmentId, newStatus });
+      logger.error('Error updating portfolio assignment status', toLogContext({ err, assignmentId, newStatus }));
     }
-  };
+  }, [mutate]);
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'active': return 'success';
-      case 'paused': return 'warning';
-      case 'ended': return 'default';
-      default: return 'default';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active': return 'Activo';
-      case 'paused': return 'Pausado';
-      case 'ended': return 'Finalizado';
-      default: return status;
-    }
-  };
-
-  const assignments = portfolioAssignments.length > 0 ? portfolioAssignments : initialPortfolioAssignments;
+  const assignments = Array.isArray(portfolioAssignments) && portfolioAssignments.length > 0 ? portfolioAssignments : initialPortfolioAssignments;
 
   return (
     <Card>
@@ -166,60 +150,12 @@ export default function PortfolioSection({
         ) : (
           <Stack direction="column" gap="md">
             {assignments.map((assignment: PortfolioAssignment) => (
-              <div key={assignment.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Heading size="sm">{assignment.templateName}</Heading>
-                      <Badge variant={getStatusBadgeVariant(assignment.status)}>
-                        {getStatusLabel(assignment.status)}
-                      </Badge>
-                    </div>
-                    {assignment.startDate && (
-                      <Text size="sm" color="secondary">
-                        Inicio: {new Date(assignment.startDate).toLocaleDateString()}
-                      </Text>
-                    )}
-                    {assignment.endDate && (
-                      <Text size="sm" color="secondary">
-                        Fin: {new Date(assignment.endDate).toLocaleDateString()}
-                      </Text>
-                    )}
-                    {assignment.notes && (
-                      <Text size="sm" color="secondary" className="mt-1">
-                        Notas: {assignment.notes}
-                      </Text>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {assignment.status === 'active' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUpdateStatus(assignment.id, 'paused')}
-                      >
-                        Pausar
-                      </Button>
-                    )}
-                    {assignment.status === 'paused' && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleUpdateStatus(assignment.id, 'active')}
-                      >
-                        Reanudar
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUnassignPortfolio(assignment.id)}
-                    >
-                      Desasignar
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <PortfolioAssignmentItem
+                key={assignment.id}
+                assignment={assignment}
+                onUpdateStatus={handleUpdateStatus}
+                onUnassign={handleUnassignPortfolio}
+              />
             ))}
           </Stack>
         )}

@@ -136,6 +136,12 @@ router.post('/move',
 
     req.log.info({ contactId, fromStage: contact.pipelineStageId, toStage: toStageId }, 'contact moved in pipeline');
     
+    // AI_DECISION: Invalidate pipeline metrics cache when stage changes occur
+    // Justificación: Pipeline metrics need to reflect latest stage movements
+    // Impacto: Ensures cache consistency, prevents stale data
+    const { pipelineMetricsCacheUtil } = await import('../../utils/cache');
+    pipelineMetricsCacheUtil.invalidateOnStageChange();
+    
     // Buscar automatización configurada para este cambio de etapa
     const [automationConfig] = await db()
       .select()

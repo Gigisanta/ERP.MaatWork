@@ -1,0 +1,1 @@
+Investiga que tan optimizado esta el frontend, backend, database, limpieza de codigo, calidad, utilizacion de recursos, investiga hasta llenar absolutamente todo tu contexto, da un puntaje en base y como aumentar el puntaje

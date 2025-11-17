@@ -167,9 +167,9 @@ export default function FinancialSummarySection({
           </div>
           <div
             className={`cursor-pointer hover:bg-gray-50 px-3 py-2 rounded transition-colors ${
-              initialExcedente !== null && initialExcedente < 0 
+              initialExcedente !== null && initialExcedente !== undefined && initialExcedente < 0 
                 ? 'bg-red-50 border border-red-200' 
-                : initialExcedente !== null && initialExcedente > 0 
+                : initialExcedente !== null && initialExcedente !== undefined && initialExcedente > 0 
                 ? 'bg-green-50 border border-green-200' 
                 : ''
             }`}
@@ -178,9 +178,9 @@ export default function FinancialSummarySection({
             <Text size="sm" weight="medium" color="secondary">Excedente</Text>
             <Text 
               className={`mt-1 text-lg font-semibold ${
-                initialExcedente !== null && initialExcedente < 0 
+                initialExcedente !== null && initialExcedente !== undefined && initialExcedente < 0 
                   ? 'text-red-700' 
-                  : initialExcedente !== null && initialExcedente > 0 
+                  : initialExcedente !== null && initialExcedente !== undefined && initialExcedente > 0 
                   ? 'text-green-700' 
                   : 'text-gray-600'
               }`}

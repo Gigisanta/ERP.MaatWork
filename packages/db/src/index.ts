@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import * as schema from './schema';
 
+// Obtener __dirname equivalente para módulos ES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // Cargar .env desde el directorio del paquete db si no está disponible
 if (!process.env.DATABASE_URL) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
   // En desarrollo, buscar .env en src/../.env
   // En producción compilado, buscar .env en dist/../.env
   const envPath = join(__dirname, '..', '.env');
@@ -53,11 +55,13 @@ export {
   notificationTemplates,
   userChannelPreferences,
   messageLog,
-  // Instruments & prices
-  instruments,
-  instrumentAliases,
-  priceSnapshots,
-  metricDefinitions,
+    // Instruments & prices
+    instruments,
+    instrumentAliases,
+    priceSnapshots,
+    pricesDaily,
+    pricesIntraday,
+    metricDefinitions,
   // AUM staging
   aumImportFiles,
   aumImportRows,
@@ -147,3 +151,6 @@ export function db(): NodePgDatabase<typeof schema> {
   }
   return _db;
 }
+
+// Re-export read replica functions
+export { readReplicaDb, hasReadReplica } from './read-replica';

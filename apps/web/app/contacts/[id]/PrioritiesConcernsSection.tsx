@@ -2,7 +2,7 @@
 import React, { useState, useTransition } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Text, Button, Input, Modal, ModalHeader, ModalContent, ModalTitle, ModalFooter } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import SortableList from './SortableList';
 
 interface PrioritiesConcernsSectionProps {
@@ -36,7 +36,7 @@ export default function PrioritiesConcernsSection({
         await updateContactField(contactId, field, value);
         router.refresh();
       } catch (err) {
-        logger.error('Error updating priorities/concerns', { err, contactId, field, value });
+        logger.error('Error updating priorities/concerns', toLogContext({ err, contactId, field, value }));
       }
     });
   };

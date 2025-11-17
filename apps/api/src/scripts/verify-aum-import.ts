@@ -21,8 +21,7 @@
 
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { config } from 'dotenv';
 import { db } from '@cactus/db';
 import { sql, eq, desc } from 'drizzle-orm';
@@ -30,8 +29,6 @@ import { aumImportFiles, aumImportRows } from '@cactus/db/schema';
 import { mapAumColumns } from '../utils/aum-column-mapper';
 
 // Cargar .env
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..', '..', '..');
 config({ path: join(projectRoot, 'apps', 'api', '.env') });
 

@@ -76,6 +76,7 @@ interface AumRowDbResult {
   advisor_raw: string | null;
   match_status: 'matched' | 'ambiguous' | 'unmatched';
   is_preferred: boolean | null;
+  is_normalized: boolean | null;
 }
 
 export interface UpsertStats {
@@ -102,6 +103,7 @@ interface ExistingRow {
   advisorRaw: string | null;
   matchStatus: string;
   isPreferred: boolean;
+  isNormalized: boolean;
 }
 
 // ==========================================================
@@ -130,13 +132,14 @@ async function findExistingRow(
     try {
       const result = await dbi.execute(sql`
         SELECT r.id, r.file_id, r.account_number, r.holder_name, r.id_cuenta,
-               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, r.is_preferred
+               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, 
+               r.is_preferred, r.is_normalized
         FROM aum_import_rows r
         INNER JOIN aum_import_files f ON r.file_id = f.id
         WHERE r.id_cuenta = ${row.idCuenta.trim()}
           AND f.broker = ${broker}
           AND r.file_id != ${row.fileId}
-        ORDER BY f.created_at DESC, r.created_at DESC
+        ORDER BY r.is_normalized DESC, f.created_at DESC, r.created_at DESC
         LIMIT 1
       `);
 
@@ -152,7 +155,8 @@ async function findExistingRow(
           matchedUserId: dbRow.matched_user_id,
           advisorRaw: dbRow.advisor_raw,
           matchStatus: dbRow.match_status,
-          isPreferred: dbRow.is_preferred ?? true
+          isPreferred: dbRow.is_preferred ?? true,
+          isNormalized: dbRow.is_normalized ?? false
         };
       }
     } catch (error) {
@@ -165,13 +169,14 @@ async function findExistingRow(
     try {
       const result = await dbi.execute(sql`
         SELECT r.id, r.file_id, r.account_number, r.holder_name, r.id_cuenta,
-               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, r.is_preferred
+               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, 
+               r.is_preferred, r.is_normalized
         FROM aum_import_rows r
         INNER JOIN aum_import_files f ON r.file_id = f.id
         WHERE r.id_cuenta = ${row.accountNumber}
           AND f.broker = ${broker}
           AND r.file_id != ${row.fileId}
-        ORDER BY f.created_at DESC, r.created_at DESC
+        ORDER BY r.is_normalized DESC, f.created_at DESC, r.created_at DESC
         LIMIT 1
       `);
 
@@ -187,7 +192,8 @@ async function findExistingRow(
           matchedUserId: dbRow.matched_user_id,
           advisorRaw: dbRow.advisor_raw,
           matchStatus: dbRow.match_status,
-          isPreferred: dbRow.is_preferred ?? true
+          isPreferred: dbRow.is_preferred ?? true,
+          isNormalized: dbRow.is_normalized ?? false
         };
       }
     } catch (error) {
@@ -204,13 +210,14 @@ async function findExistingRow(
       const normalizedAccountNumber = normalizeAccountNumber(row.accountNumber);
       const result = await dbi.execute(sql`
         SELECT r.id, r.file_id, r.account_number, r.holder_name, r.id_cuenta,
-               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, r.is_preferred
+               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, 
+               r.is_preferred, r.is_normalized
         FROM aum_import_rows r
         INNER JOIN aum_import_files f ON r.file_id = f.id
         WHERE r.account_number = ${normalizedAccountNumber}
           AND f.broker = ${broker}
           AND r.file_id != ${row.fileId}
-        ORDER BY f.created_at DESC, r.created_at DESC
+        ORDER BY r.is_normalized DESC, f.created_at DESC, r.created_at DESC
         LIMIT 1
       `);
 
@@ -226,7 +233,8 @@ async function findExistingRow(
           matchedUserId: dbRow.matched_user_id,
           advisorRaw: dbRow.advisor_raw,
           matchStatus: dbRow.match_status,
-          isPreferred: dbRow.is_preferred ?? true
+          isPreferred: dbRow.is_preferred ?? true,
+          isNormalized: dbRow.is_normalized ?? false
         };
       }
     } catch (error) {
@@ -245,7 +253,8 @@ async function findExistingRow(
       // Esto cubre el caso donde CSV1 solo tenía holderName y CSV2 también solo tiene holderName
       const result = await dbi.execute(sql`
         SELECT r.id, r.file_id, r.account_number, r.holder_name, r.id_cuenta,
-               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, r.is_preferred
+               r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, 
+               r.is_preferred, r.is_normalized
         FROM aum_import_rows r
         INNER JOIN aum_import_files f ON r.file_id = f.id
         WHERE LOWER(TRIM(r.holder_name)) = LOWER(TRIM(${row.holderName}))
@@ -253,7 +262,7 @@ async function findExistingRow(
           AND (r.id_cuenta IS NULL OR r.id_cuenta = '')
           AND f.broker = ${broker}
           AND r.file_id != ${row.fileId}
-        ORDER BY f.created_at DESC, r.created_at DESC
+        ORDER BY r.is_normalized DESC, f.created_at DESC, r.created_at DESC
         LIMIT 1
       `);
 
@@ -269,7 +278,8 @@ async function findExistingRow(
           matchedUserId: dbRow.matched_user_id,
           advisorRaw: dbRow.advisor_raw,
           matchStatus: dbRow.match_status,
-          isPreferred: dbRow.is_preferred ?? true
+          isPreferred: dbRow.is_preferred ?? true,
+          isNormalized: dbRow.is_normalized ?? false
         };
       }
     } catch (error) {
@@ -281,7 +291,16 @@ async function findExistingRow(
 }
 
 /**
- * Update existing row
+ * Actualiza una fila AUM existente preservando datos importantes.
+ * 
+ * @param existingRow - Fila existente en la base de datos
+ * @param newRow - Nueva fila con datos actualizados
+ * @param broker - Broker de la fila (para queries)
+ * @returns true si la actualización fue exitosa, false en caso contrario
+ * 
+ * AI_DECISION: Preservar datos de filas normalizadas durante actualizaciones
+ * Justificación: Las filas normalizadas fueron completadas manualmente y deben preservarse
+ * Impacto: Mantiene la integridad de asignaciones manuales de asesores
  */
 async function updateExistingRow(
   existingRow: ExistingRow,
@@ -290,17 +309,42 @@ async function updateExistingRow(
 ): Promise<boolean> {
   const dbi = db();
 
-  // Preserve existing matches and advisorRaw if new row doesn't have them
+  // Preservar matches existentes si el nuevo row no los tiene
   const preservedMatchedContactId = existingRow.matchedContactId || newRow.matchedContactId;
-  const preservedMatchedUserId = existingRow.matchedUserId || newRow.matchedUserId;
-
+  
+  // AI_DECISION: Preservar asesor y matchedUserId si la fila existente está normalizada
+  // Justificación: Las filas normalizadas fueron completadas manualmente y deben preservarse
+  // Impacto: Las asignaciones manuales de asesores se mantienen en futuras importaciones
+  // 
+  // Reglas de preservación:
+  // 1. Si la fila existente está normalizada → preservar su asesor siempre
+  // 2. Si la fila existente NO está normalizada → usar el asesor del nuevo row si existe
+  // 3. Si ninguno tiene asesor → mantener null
+  
   const hasAdvisorRawInNew = newRow.advisorRaw !== null &&
     newRow.advisorRaw !== undefined &&
+    typeof newRow.advisorRaw === 'string' &&
     newRow.advisorRaw.trim().length > 0;
 
-  const preservedAdvisorRaw = hasAdvisorRawInNew
-    ? newRow.advisorRaw
-    : (existingRow.advisorRaw || null);
+  const hasAdvisorRawInExisting = existingRow.advisorRaw !== null &&
+    existingRow.advisorRaw !== undefined &&
+    typeof existingRow.advisorRaw === 'string' &&
+    existingRow.advisorRaw.trim().length > 0;
+
+  // Preservar asesor según reglas de prioridad
+  const preservedAdvisorRaw = existingRow.isNormalized && hasAdvisorRawInExisting
+    ? existingRow.advisorRaw
+    : (hasAdvisorRawInNew
+      ? newRow.advisorRaw
+      : (hasAdvisorRawInExisting ? existingRow.advisorRaw : null));
+
+  // Preservar matchedUserId según reglas de prioridad
+  const preservedMatchedUserId = existingRow.isNormalized && existingRow.matchedUserId
+    ? existingRow.matchedUserId
+    : (existingRow.matchedUserId || newRow.matchedUserId || null);
+  
+  // Preservar isNormalized si la fila existente lo tiene (una vez normalizada, siempre normalizada)
+  const preservedIsNormalized = existingRow.isNormalized;
 
   // AI_DECISION: Preservar isPreferred de la fila existente si el nuevo row tiene conflictos
   // Justificación: Si una fila ya era preferred y el nuevo row tiene conflictos, no debería perder el flag preferred
@@ -323,6 +367,7 @@ async function updateExistingRow(
         matchStatus: preservedMatchedContactId ? 'matched' : 'unmatched',
         isPreferred: preservedIsPreferred,
         conflictDetected: newRow.conflictDetected,
+        isNormalized: preservedIsNormalized,
         aumDollars: newRow.aumDollars,
         bolsaArg: newRow.bolsaArg,
         fondosArg: newRow.fondosArg,

@@ -30,6 +30,7 @@
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",
     "seed:benchmarks": "tsx src/seed-benchmarks.ts",
     "seed:full": "tsx src/seed-full.ts",
+    "partition:broker-transactions": "tsx scripts/partition-broker-transactions.ts",
     "db:init": "tsx src/seed-all.ts",
     "db:reset": "node reset-db.js",
     "db:reset-migrations": "node reset-migrations.js",
@@ -41,12 +42,15 @@
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.24.0",
     "drizzle-orm": "^0.33.0",
+    "node-cache": "^5.1.2",
+    "node-cron": "^4.2.1",
     "pg": "^8.12.0",
     "redis": "^5.9.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/lodash": "^4.17.20",
+    "@types/node-cache": "^4.2.5",
     "@types/pg": "^8.10.2",
     "tsx": "^4.16.2",
     "typescript": "^5.9.3"

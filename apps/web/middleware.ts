@@ -4,6 +4,7 @@ import { jwtVerify } from 'jose';
 
 // Rutas que requieren autenticación
 const protectedRoutes = [
+  '/home',
   '/contacts',
   '/portfolios',
   '/pipeline', 
@@ -11,7 +12,8 @@ const protectedRoutes = [
   '/profile',
   '/admin',
   '/analytics',
-  '/benchmarks'
+  '/benchmarks',
+  '/capacitaciones'
 ];
 
 // Rutas públicas que no requieren autenticación
@@ -32,10 +34,32 @@ export async function middleware(request: NextRequest) {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
         const secret = new TextEncoder().encode(JWT_SECRET);
         await jwtVerify(token, secret);
-        const redirect = request.nextUrl.searchParams.get('redirect') || '/';
+        const redirect = request.nextUrl.searchParams.get('redirect') || '/home';
         return NextResponse.redirect(new URL(redirect, request.url));
       } catch {
         // si el token es inválido/expirado, seguimos al login normal
+      }
+    }
+  }
+
+  // AI_DECISION: Redirigir usuarios autenticados desde `/` a `/home`
+  // Justificación: Mejora UX evitando que usuarios autenticados vean el cartel de login innecesariamente
+  // Impacto: Redirección automática en middleware (antes de renderizar) es más eficiente que en cliente
+  if (pathname === '/') {
+    const token = request.cookies.get('token')?.value;
+    if (token) {
+      try {
+        const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
+        const secret = new TextEncoder().encode(JWT_SECRET);
+        const { payload } = await jwtVerify(token, secret);
+        // Verificar que el token no haya expirado
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp >= now) {
+          // Token válido y no expirado, redirigir a /home
+          return NextResponse.redirect(new URL('/home', request.url));
+        }
+      } catch {
+        // si el token es inválido/expirado, continuar al flujo normal (mostrar página pública)
       }
     }
   }

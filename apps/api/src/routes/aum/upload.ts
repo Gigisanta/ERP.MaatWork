@@ -27,7 +27,7 @@ import {
   upsertAumMonthlySnapshots,
   type AumMonthlySnapshotInsert
 } from '../../services/aumUpsert';
-import { inheritAdvisorFromExisting, shouldFlagConflict, type ExistingAumAccountSnapshot } from '../../services/aumConflictResolution';
+import { inheritAdvisorFromExisting, inheritMatchedUserIdFromExisting, shouldFlagConflict, type ExistingAumAccountSnapshot } from '../../services/aumConflictResolution';
 import { detectAumFileMetadata } from '../../utils/aum-file-detection';
 import {
   aumFileIdParamsSchema,
@@ -309,12 +309,13 @@ router.post('/uploads',
       const existingHolderNames = new Map<string, ExistingAumAccountSnapshot[]>();
 
       try {
-        // Obtener filas con accountNumber para matching por cuenta
-        // AI_DECISION: Incluir también idCuenta en el mapa para matching cuando CSV2 tiene accountNumber pero CSV1 solo tenía idCuenta
-        // Justificación: Mejora la preservación de asesores cuando CSV2 agrega accountNumber a filas que antes solo tenían idCuenta
-        // Impacto: Asegura que se encuentren todas las filas relacionadas para preservar el asesor correctamente
+        // Obtener filas existentes para matching por cuenta (accountNumber o idCuenta)
+        // AI_DECISION: Incluir isNormalized y matchedUserId para preservar asignaciones manuales
+        // Justificación: Las filas normalizadas deben tener prioridad en la herencia de asesores
+        // Impacto: Preserva asignaciones manuales de asesores en futuras importaciones
         const existingResult = await dbi.execute(sql`
-          SELECT r.account_number, r.id_cuenta, r.holder_name, r.advisor_raw, r.file_id, r.created_at
+          SELECT r.account_number, r.id_cuenta, r.holder_name, r.advisor_raw, 
+                 r.matched_user_id, r.is_normalized, r.file_id, r.created_at
           FROM aum_import_rows r
           INNER JOIN aum_import_files f ON r.file_id = f.id
           WHERE (r.account_number IS NOT NULL OR r.id_cuenta IS NOT NULL)
@@ -325,9 +326,19 @@ router.post('/uploads',
           id_cuenta: string | null;
           holder_name: string | null;
           advisor_raw: string | null;
+          matched_user_id: string | null;
+          is_normalized: boolean;
           file_id: string;
           created_at: Date;
         }) => {
+          const snapshot: ExistingAumAccountSnapshot = {
+            holderName: row.holder_name ?? null,
+            advisorRaw: row.advisor_raw ?? null,
+            matchedUserId: row.matched_user_id ?? null,
+            isNormalized: row.is_normalized ?? false,
+            createdAt: row.created_at
+          };
+
           // Agregar por accountNumber si existe
           if (row.account_number && typeof row.account_number === 'string') {
             const normalizedAccount = normalizeAccountNumber(row.account_number);
@@ -335,14 +346,7 @@ router.post('/uploads',
               if (!existingAccounts.has(normalizedAccount)) {
                 existingAccounts.set(normalizedAccount, []);
               }
-              const accountData = existingAccounts.get(normalizedAccount);
-              if (accountData) {
-                accountData.push({
-                  holderName: row.holder_name ?? null,
-                  advisorRaw: row.advisor_raw ?? null,
-                  createdAt: row.created_at
-                });
-              }
+              existingAccounts.get(normalizedAccount)!.push(snapshot);
             }
           }
           // También agregar por idCuenta si existe (para matching cuando CSV2 tiene accountNumber pero CSV1 solo tenía idCuenta)
@@ -351,17 +355,13 @@ router.post('/uploads',
             if (!existingAccounts.has(normalizedIdCuenta)) {
               existingAccounts.set(normalizedIdCuenta, []);
             }
-            existingAccounts.get(normalizedIdCuenta)!.push({
-              holderName: row.holder_name ?? null,
-              advisorRaw: row.advisor_raw ?? null,
-              createdAt: row.created_at
-            });
+            existingAccounts.get(normalizedIdCuenta)!.push(snapshot);
           }
         });
 
         // Obtener filas con solo holderName (sin accountNumber ni idCuenta) para matching por nombre
         const existingHolderResult = await dbi.execute(sql`
-          SELECT r.holder_name, r.advisor_raw, r.file_id, r.created_at
+          SELECT r.holder_name, r.advisor_raw, r.matched_user_id, r.is_normalized, r.file_id, r.created_at
           FROM aum_import_rows r
           INNER JOIN aum_import_files f ON r.file_id = f.id
           WHERE r.holder_name IS NOT NULL
@@ -369,7 +369,14 @@ router.post('/uploads',
             AND (r.id_cuenta IS NULL OR r.id_cuenta = '')
             AND f.broker = ${broker as string}
         `);
-        (existingHolderResult.rows || []).forEach((row: any) => {
+        (existingHolderResult.rows || []).forEach((row: {
+          holder_name: string | null;
+          advisor_raw: string | null;
+          matched_user_id: string | null;
+          is_normalized: boolean;
+          file_id: string;
+          created_at: Date;
+        }) => {
           const normalizedName = row.holder_name?.toLowerCase().trim();
           if (normalizedName) {
             if (!existingHolderNames.has(normalizedName)) {
@@ -378,6 +385,8 @@ router.post('/uploads',
             existingHolderNames.get(normalizedName)!.push({
               holderName: row.holder_name ?? null,
               advisorRaw: row.advisor_raw ?? null,
+              matchedUserId: row.matched_user_id ?? null,
+              isNormalized: row.is_normalized ?? false,
               createdAt: row.created_at
             });
           }
@@ -461,6 +470,14 @@ router.post('/uploads',
         const resolvedAdvisor = inheritAdvisorFromExisting(originalAdvisorRaw, existingRowsForInheritance);
         r.advisorRaw = resolvedAdvisor;
 
+        // Heredar matchedUserId si no hay asesor en el CSV actual
+        if (!matchedUserId && !originalAdvisorRaw) {
+          const inheritedUserId = inheritMatchedUserIdFromExisting(existingRowsForInheritance);
+          if (inheritedUserId) {
+            matchedUserId = inheritedUserId;
+          }
+        }
+
         // Match contact by account number
         if (!matchedContactId && !conflictDetected && normalizedAccountNumber) {
           const contactMatch = await matchContactByAccountNumber(broker as string, normalizedAccountNumber);
@@ -524,6 +541,8 @@ router.post('/uploads',
           existingAccounts.get(normalizedAccountNumber)!.push({
             holderName: r.holderName ?? null,
             advisorRaw: r.advisorRaw ?? null,
+            matchedUserId: matchedUserId ?? null,
+            isNormalized: !!matchedUserId || !!r.advisorRaw,
             createdAt: new Date()
           });
         }

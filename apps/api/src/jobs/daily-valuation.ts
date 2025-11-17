@@ -12,7 +12,7 @@ import {
   portfolioTemplateLines,
   contacts
 } from '@cactus/db/schema';
-import { eq, and, sql, desc, gte, lte, type InferSelectModel } from 'drizzle-orm';
+import { eq, and, sql, desc, gte, lte, sum, type InferSelectModel } from 'drizzle-orm';
 import axios from 'axios';
 import pino from 'pino';
 import { PositionWithMarketValue } from '../types/daily-valuation';
@@ -109,6 +109,12 @@ export class DailyValuationJob {
       // 5. Calcular desvíos de carteras
       logger.info('📏 Calculando desvíos de carteras...');
       await this.calculatePortfolioDeviations(today);
+
+      // 6. Refrescar materialized views después de cálculos
+      logger.info('🔄 Refrescando materialized views...');
+      const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
+      const refreshJob = new RefreshMaterializedViewsJob();
+      await refreshJob.refreshAll();
 
       logger.info('✅ Job de valuación diaria completado exitosamente');
 
@@ -305,36 +311,27 @@ export class DailyValuationJob {
    */
   private async calculateAUMByContact(date: string): Promise<void> {
     try {
-      // Obtener posiciones actuales por contacto
-      const positions = await db()
+      // AI_DECISION: Usar agregación SQL (SUM + GROUP BY) en lugar de agrupar en memoria.
+      // Esto reduce transferencia de datos desde DB y mejora performance al calcular AUM directamente en SQL.
+      const aumByContact = await db()
         .select({
           contactId: brokerAccounts.contactId,
-          instrumentId: brokerPositions.instrumentId,
-          quantity: brokerPositions.quantity,
-          marketValue: brokerPositions.marketValue,
-          symbol: instruments.symbol
+          aumTotal: sum(brokerPositions.marketValue)
         })
         .from(brokerPositions)
         .innerJoin(brokerAccounts, eq(brokerPositions.brokerAccountId, brokerAccounts.id))
         .innerJoin(instruments, eq(brokerPositions.instrumentId, instruments.id))
-        .where(eq(brokerPositions.asOfDate, date));
-
-      // Agrupar por contacto y calcular AUM total
-      const aumByContact: { [contactId: string]: number } = {};
-
-      for (const position of positions) {
-        if (!aumByContact[position.contactId]) {
-          aumByContact[position.contactId] = 0;
-        }
-        aumByContact[position.contactId] += Number(position.marketValue || 0);
-      }
+        .where(eq(brokerPositions.asOfDate, date))
+        .groupBy(brokerAccounts.contactId);
 
       // Guardar snapshots de AUM
-      const aumSnapshotsToInsert = Object.entries(aumByContact).map(([contactId, aumTotal]) => ({
-        contactId,
-        date,
-        aumTotal
-      }));
+      const aumSnapshotsToInsert = aumByContact
+        .filter((row: { contactId: string; aumTotal: string | null }) => row.aumTotal !== null)
+        .map((row: { contactId: string; aumTotal: string | null }) => ({
+          contactId: row.contactId,
+          date,
+          aumTotal: row.aumTotal as string // sum() retorna string para numeric
+        }));
 
       if (aumSnapshotsToInsert.length > 0) {
         await db()
@@ -348,6 +345,11 @@ export class DailyValuationJob {
           });
 
         logger.info({ count: aumSnapshotsToInsert.length }, '📊 AUM calculado para contactos');
+        
+        // Refresh materialized view after AUM calculation
+        const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
+        const refreshJob = new RefreshMaterializedViewsJob();
+        await refreshJob.refreshContactAumSummary();
       }
 
     } catch (error) {
@@ -380,6 +382,11 @@ export class DailyValuationJob {
       for (const contact of contactsWithPortfolios) {
         await this.calculateContactPortfolioDeviation(contact.contactId, contact.templateId, contact.assignmentId, date);
       }
+
+      // Refresh materialized view after portfolio deviation calculation
+      const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
+      const refreshJob = new RefreshMaterializedViewsJob();
+      await refreshJob.refreshPortfolioDeviationSummary();
 
     } catch (error) {
       logger.error({ err: error }, 'Error calculando desvíos de carteras');

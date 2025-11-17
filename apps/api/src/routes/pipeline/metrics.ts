@@ -12,6 +12,7 @@ import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authori
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
 import { dateSchema } from '../../utils/common-schemas';
+import { pipelineMetricsCacheUtil, normalizeCacheKey } from '../../utils/cache';
 
 const router = Router();
 
@@ -57,6 +58,33 @@ router.get('/metrics',
     const userRole = req.user!.role;
     const accessScope = await getUserAccessScope(userId, userRole);
     const accessFilter = buildContactAccessFilter(accessScope);
+
+    // AI_DECISION: Cache pipeline metrics using materialized views
+    // Justificación: Pipeline metrics queries are expensive and frequently accessed. Cache reduces DB load significantly
+    // Impacto: Faster pipeline metrics loading, reduced DB queries, better scalability
+    const fromDateStr = typeof fromDate === 'string' ? fromDate : 'all';
+    const toDateStr = typeof toDate === 'string' ? toDate : 'all';
+    const assignedAdvisorIdStr = typeof assignedAdvisorId === 'string' ? assignedAdvisorId : 'all';
+    const assignedTeamIdStr = typeof assignedTeamId === 'string' ? assignedTeamId : 'all';
+    const cacheKey = normalizeCacheKey(
+      'pipeline',
+      'metrics',
+      fromDateStr,
+      toDateStr,
+      assignedAdvisorIdStr,
+      assignedTeamIdStr,
+      userId
+    );
+    const cachedData = pipelineMetricsCacheUtil.get(cacheKey);
+    
+    if (cachedData) {
+      req.log.debug({ cacheKey }, 'Pipeline metrics served from cache');
+      return res.json({
+        success: true,
+        data: cachedData,
+        cached: true
+      });
+    }
 
     // Obtener todas las etapas
     const stages = await db()
@@ -172,14 +200,20 @@ router.get('/metrics',
         : 0;
     }
 
+    const responseData = {
+      stageMetrics,
+      overallConversionRate: parseFloat(overallConversionRate.toFixed(2)),
+      periodFrom: fromDate || null,
+      periodTo: toDate || null
+    };
+
+    // Cache the result for 10 minutes
+    pipelineMetricsCacheUtil.set(cacheKey, responseData, 600);
+    
     res.json({
       success: true,
-      data: {
-        stageMetrics,
-        overallConversionRate: parseFloat(overallConversionRate.toFixed(2)),
-        periodFrom: fromDate || null,
-        periodTo: toDate || null
-      }
+      data: responseData,
+      cached: false
     });
   } catch (err) {
     req.log.error({ err }, 'failed to get pipeline metrics');

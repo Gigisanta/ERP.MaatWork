@@ -49,6 +49,28 @@ export async function getTeamById(id: string): Promise<ApiResponse<Team>> {
 }
 
 /**
+ * Obtener equipo con miembros y métricas combinados
+ */
+export interface TeamDetailResponse {
+  team: Team;
+  metrics: TeamMetrics;
+}
+
+export async function getTeamDetail(id: string): Promise<ApiResponse<TeamDetailResponse>> {
+  return apiClient.get<TeamDetailResponse>(`/v1/teams/${id}/detail`);
+}
+
+/**
+ * Obtener miembro individual de un equipo
+ */
+export async function getTeamMemberById(
+  teamId: string,
+  memberId: string
+): Promise<ApiResponse<TeamMember>> {
+  return apiClient.get<TeamMember>(`/v1/teams/${teamId}/members/${memberId}`);
+}
+
+/**
  * Crear equipo
  */
 export async function createTeam(data: CreateTeamRequest): Promise<ApiResponse<Team>> {

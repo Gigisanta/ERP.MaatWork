@@ -24,25 +24,25 @@ describe('Toast Component', () => {
   describe('Variants', () => {
     it('should render info variant (default)', () => {
       const { container } = render(<Toast title="Info" variant="info" open={true} />);
-      const toast = container.querySelector('.border-accent-base');
+      const toast = container.querySelector('.border-info');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render success variant', () => {
       const { container } = render(<Toast title="Success" variant="success" open={true} />);
-      const toast = container.querySelector('.border-success-base');
+      const toast = container.querySelector('.border-success');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render warning variant', () => {
       const { container } = render(<Toast title="Warning" variant="warning" open={true} />);
-      const toast = container.querySelector('.border-warning-base');
+      const toast = container.querySelector('.border-warning');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render error variant', () => {
       const { container } = render(<Toast title="Error" variant="error" open={true} />);
-      const toast = container.querySelector('.border-error-base');
+      const toast = container.querySelector('.border-error');
       expect(toast).toBeInTheDocument();
     });
   });

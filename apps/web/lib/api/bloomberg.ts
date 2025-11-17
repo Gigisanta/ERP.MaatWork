@@ -7,7 +7,7 @@
  */
 
 import { apiClient } from '../api-client';
-import type { ApiResponse } from './index';
+import type { ApiResponse } from '../api-client';
 
 // ==========================================================
 // Types

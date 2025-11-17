@@ -37,9 +37,16 @@ const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [initialized, setInitialized] = React.useState(false);
+  const hasCheckedSession = React.useRef(false);
 
   React.useEffect(() => {
-    logger.info('Verificando sesión con cookie');
+    // Guard: prevenir múltiples ejecuciones (React StrictMode en desarrollo)
+    if (hasCheckedSession.current) {
+      return;
+    }
+    hasCheckedSession.current = true;
+
+    logger.debug('Verificando sesión con cookie');
     
     // Verificar sesión directamente con /auth/me usando cookies
     fetchWithLogging(`${config.apiUrl}/v1/auth/me`, {

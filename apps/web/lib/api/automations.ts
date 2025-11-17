@@ -61,3 +61,8 @@ export async function deleteAutomationConfig(id: string): Promise<ApiResponse<vo
   return apiClient.delete<void>(`/v1/automations/${id}`);
 }
 
+
+
+
+
+

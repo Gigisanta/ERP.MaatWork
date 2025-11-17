@@ -269,7 +269,9 @@ describe('aum-column-mapper', () => {
 
       expect(result.accountNumber).toBe('12345');
       expect(result.holderName).toBe('Juan Perez');
-      expect(result.advisorRaw).toBe('42');
+      // AI_DECISION: advisorRaw rechaza valores numéricos como error de mapeo
+      // El código detecta que 42 es numérico y lo asigna como null
+      expect(result.advisorRaw).toBeNull();
     });
 
     it('handles Date objects from Excel', () => {

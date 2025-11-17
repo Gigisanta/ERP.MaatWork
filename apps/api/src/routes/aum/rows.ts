@@ -18,10 +18,73 @@ import {
   aumAccountNumberParamsSchema,
   aumFileIdParamsSchema,
   aumMatchRowBodySchema,
-  aumMonthlyHistoryQuerySchema
+  aumMonthlyHistoryQuerySchema,
+  aumUpdateAdvisorBodySchema,
+  aumRowIdParamsSchema
 } from '../../utils/aum-validation';
 
 const router = Router();
+
+// Simple in-memory cache for COUNT queries when no filters are active
+// Cache key: JSON stringified filter params, TTL: 30 seconds
+interface CountCacheEntry {
+  total: number;
+  timestamp: number;
+}
+const countCache = new Map<string, CountCacheEntry>();
+const COUNT_CACHE_TTL_MS = 30000; // 30 seconds
+
+function getCacheKey(filters: {
+  broker?: string;
+  status?: string;
+  fileId?: string;
+  preferredOnly: boolean;
+  search?: string;
+  onlyUpdated: boolean;
+  reportMonth?: number;
+  reportYear?: number;
+}): string {
+  return JSON.stringify({
+    broker: filters.broker || null,
+    status: filters.status || null,
+    fileId: filters.fileId || null,
+    preferredOnly: filters.preferredOnly,
+    search: filters.search || null,
+    onlyUpdated: filters.onlyUpdated,
+    reportMonth: filters.reportMonth || null,
+    reportYear: filters.reportYear || null
+  });
+}
+
+function getCachedCount(cacheKey: string): number | null {
+  const entry = countCache.get(cacheKey);
+  if (!entry) return null;
+  
+  const age = Date.now() - entry.timestamp;
+  if (age > COUNT_CACHE_TTL_MS) {
+    countCache.delete(cacheKey);
+    return null;
+  }
+  
+  return entry.total;
+}
+
+function setCachedCount(cacheKey: string, total: number): void {
+  countCache.set(cacheKey, {
+    total,
+    timestamp: Date.now()
+  });
+  
+  // Clean up old entries periodically (keep cache size reasonable)
+  if (countCache.size > 100) {
+    const now = Date.now();
+    for (const [key, entry] of countCache.entries()) {
+      if (now - entry.timestamp > COUNT_CACHE_TTL_MS) {
+        countCache.delete(key);
+      }
+    }
+  }
+}
 
 // Helper function to parse numeric values
 // AI_DECISION: Asegurar que valores cero se parsean como 0, no null
@@ -139,40 +202,79 @@ router.get('/rows/all',
       // Count total rows (only when needed)
       let total = 0;
       const needsCount = offset === 0 || limit + offset < 1000;
+      
       if (needsCount) {
-        const countJoins = sql`
-          LEFT JOIN contacts c ON r.matched_contact_id = c.id
-          LEFT JOIN users u ON r.matched_user_id = u.id
-          LEFT JOIN advisor_aliases aa ON r.matched_user_id IS NULL 
-            AND r.advisor_raw IS NOT NULL 
-            AND LOWER(TRIM(r.advisor_raw)) = aa.alias_normalized
-        `;
-        const countPromise = dbi.execute(sql`
-          SELECT COUNT(*) as total
-          FROM aum_import_rows r
-          INNER JOIN aum_import_files f ON r.file_id = f.id
-          ${countJoins}
-          ${whereClause}
-        `);
-        const countTimeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('Query timeout: COUNT query exceeded 30s'));
-          }, QUERY_TIMEOUT_MS);
-        });
-        const countResult = await Promise.race([countPromise, countTimeoutPromise]);
-        type CountResult = {
-          total: string | number;
-        };
-        total = Number((countResult.rows?.[0] as CountResult | undefined)?.total || 0);
-
-        req.log?.info?.({
-          fileId,
+        // Try to get from cache first
+        const cacheKey = getCacheKey({
+          ...(broker !== undefined && { broker }),
+          ...(status !== undefined && { status }),
+          ...(fileId !== undefined && { fileId }),
           preferredOnly,
-          total,
-          conditionsCount: conditions.length
-        }, 'AUM rows GET: Conteo obtenido del COUNT query');
+          ...(search !== undefined && { search }),
+          onlyUpdated,
+          ...(reportMonth !== undefined && { reportMonth }),
+          ...(reportYear !== undefined && { reportYear })
+        });
+        
+        const cachedTotal = getCachedCount(cacheKey);
+        if (cachedTotal !== null) {
+          total = cachedTotal;
+          req.log?.info?.({
+            fileId,
+            preferredOnly,
+            total,
+            cached: true,
+            conditionsCount: conditions.length
+          }, 'AUM rows GET: Conteo obtenido del cache');
+        } else {
+          // Optimize COUNT query: only include JOINs if search is active
+          // When no search, we don't need JOINs for COUNT
+          const needsSearchJoin = !!search;
+          
+          const countJoins = needsSearchJoin ? sql`
+            LEFT JOIN contacts c ON r.matched_contact_id = c.id
+            LEFT JOIN users u ON r.matched_user_id = u.id
+            LEFT JOIN advisor_aliases aa ON r.matched_user_id IS NULL 
+              AND r.advisor_raw IS NOT NULL 
+              AND LOWER(TRIM(r.advisor_raw)) = aa.alias_normalized
+          ` : sql``;
+          
+          const countPromise = dbi.execute(sql`
+            SELECT COUNT(*) as total
+            FROM aum_import_rows r
+            INNER JOIN aum_import_files f ON r.file_id = f.id
+            ${countJoins}
+            ${whereClause}
+          `);
+          const countTimeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => {
+              reject(new Error('Query timeout: COUNT query exceeded 30s'));
+            }, QUERY_TIMEOUT_MS);
+          });
+          const countResult = await Promise.race([countPromise, countTimeoutPromise]);
+          type CountResult = {
+            total: string | number;
+          };
+          total = Number((countResult.rows?.[0] as CountResult | undefined)?.total || 0);
+          
+          // Cache the result (only cache if no search to avoid stale results)
+          if (!search) {
+            setCachedCount(cacheKey, total);
+          }
+
+          req.log?.info?.({
+            fileId,
+            preferredOnly,
+            total,
+            cached: false,
+            conditionsCount: conditions.length,
+            needsSearchJoin
+          }, 'AUM rows GET: Conteo obtenido del COUNT query');
+        }
       } else {
-        total = limit + offset + 1; // Conservative estimate
+        // For large offsets, use conservative estimate
+        // Estimate: assume at least as many rows as we're requesting
+        total = limit + offset + 100; // Add buffer for hasMore calculation
       }
 
       // Get paginated rows with joined data
@@ -189,6 +291,7 @@ router.get('/rows/all',
         is_preferred: boolean;
         conflict_detected: boolean;
         needs_confirmation: boolean;
+        is_normalized: boolean | null;
         row_created_at: Date;
         row_updated_at: Date;
         current_file_id: string;
@@ -231,6 +334,7 @@ router.get('/rows/all',
           r.is_preferred,
           r.conflict_detected,
           r.needs_confirmation,
+          r.is_normalized,
           r.created_at as row_created_at,
           r.updated_at as row_updated_at,
           r.file_id as current_file_id,
@@ -294,6 +398,7 @@ router.get('/rows/all',
         isPreferred: r.is_preferred,
         conflictDetected: r.conflict_detected,
         needsConfirmation: r.needs_confirmation,
+        isNormalized: r.is_normalized ?? false,
         rowCreatedAt: r.row_created_at,
         rowUpdatedAt: r.row_updated_at,
         isUpdated: r.row_updated_at && r.row_created_at
@@ -536,6 +641,108 @@ router.post('/uploads/:fileId/match',
     } catch (error) {
       req.log?.error?.({ err: error, fileId: req.params.fileId }, 'failed to match row');
       return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+);
+
+/**
+ * PATCH /admin/aum/rows/:rowId
+ * Update advisor for a specific AUM row and mark as normalized
+ * 
+ * AI_DECISION: Endpoint dedicado para actualización de asesor con validaciones robustas
+ * Justificación: Separar lógica de actualización de asesor permite mejor validación y logging
+ * Impacto: Mejor integridad de datos y trazabilidad de cambios manuales
+ */
+router.patch('/rows/:rowId',
+  requireAuth,
+  validate({ params: aumRowIdParamsSchema, body: aumUpdateAdvisorBodySchema }),
+  async (req: Request, res: Response) => {
+    try {
+      const { rowId } = req.params;
+      const { advisorRaw, matchedUserId } = req.body;
+      const userId = req.user?.id as string;
+      const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
+
+      // Validar autenticación
+      if (!userId || !userRole) {
+        return res.status(401).json({ error: 'No autorizado' });
+      }
+
+      const dbi = db();
+
+      // Verificar que la fila existe
+      const [row] = await dbi.select({
+        id: aumImportRows.id,
+        matchedContactId: aumImportRows.matchedContactId
+      })
+        .from(aumImportRows)
+        .where(eq(aumImportRows.id, rowId))
+        .limit(1);
+      
+      if (!row) {
+        return res.status(404).json({ error: 'Fila no encontrada' });
+      }
+
+      // Verificar que el usuario existe y tiene rol de asesor
+      // AI_DECISION: Validar que el usuario existe y es advisor antes de actualizar
+      // Justificación: Previene asignaciones inválidas y mejora la integridad de datos
+      // Impacto: Mejor validación y mensajes de error más claros
+      const [user] = await dbi.select({
+        id: users.id,
+        role: users.role,
+        isActive: users.isActive
+      })
+        .from(users)
+        .where(eq(users.id, matchedUserId))
+        .limit(1);
+      
+      if (!user) {
+        return res.status(400).json({ error: 'Usuario no encontrado' });
+      }
+
+      if (user.role !== 'advisor') {
+        return res.status(400).json({ error: 'El usuario debe tener rol de asesor' });
+      }
+
+      if (!user.isActive) {
+        return res.status(400).json({ error: 'El asesor no está activo' });
+      }
+
+      // Actualizar fila con asesor y marcar como normalizada
+      // AI_DECISION: Marcar automáticamente como normalizada cuando se asigna manualmente
+      // Justificación: Las asignaciones manuales deben preservarse en futuras importaciones
+      // Impacto: Preserva asignaciones manuales de asesores
+      await dbi.update(aumImportRows)
+        .set({
+          advisorRaw: advisorRaw.trim(),
+          matchedUserId,
+          isNormalized: true,
+          matchStatus: row.matchedContactId ? 'matched' : 'unmatched',
+          updatedAt: new Date()
+        })
+        .where(eq(aumImportRows.id, rowId));
+
+      req.log?.info?.({
+        rowId,
+        advisorRaw: advisorRaw.trim(),
+        matchedUserId,
+        updatedBy: userId,
+        previousAdvisorRaw: row.matchedContactId ? 'tenía contacto' : 'sin contacto'
+      }, 'AUM row advisor updated and marked as normalized');
+
+      return res.json({ ok: true });
+    } catch (error) {
+      req.log?.error?.({ 
+        err: error, 
+        rowId: req.params.rowId,
+        userId: req.user?.id 
+      }, 'failed to update row advisor');
+      
+      return res.status(500).json({ 
+        error: error instanceof Error 
+          ? error.message 
+          : 'Error interno del servidor' 
+      });
     }
   }
 );

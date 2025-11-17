@@ -108,7 +108,7 @@ export default function BrokerAccountsSection({
     });
   };
 
-  const accounts = brokerAccounts.length > 0 ? brokerAccounts : initialBrokerAccounts;
+  const accounts = Array.isArray(brokerAccounts) && brokerAccounts.length > 0 ? brokerAccounts : initialBrokerAccounts;
 
   return (
     <Card>
@@ -146,25 +146,13 @@ export default function BrokerAccountsSection({
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Heading size="sm">{account.broker}</Heading>
-                      <Badge 
-                        variant={account.status === 'active' ? 'success' : 'default'}
-                      >
-                        {account.status === 'active' ? 'Activa' : 'Cerrada'}
+                      <Badge variant="default">
+                        Activa
                       </Badge>
                     </div>
                     <Text size="sm" color="secondary">
                       Número: {account.accountNumber}
                     </Text>
-                    {account.holderName && (
-                      <Text size="sm" color="secondary">
-                        Titular: {account.holderName}
-                      </Text>
-                    )}
-                    {account.lastSyncedAt && (
-                      <Text size="xs" color="muted">
-                        Última sincronización: {new Date(account.lastSyncedAt).toLocaleDateString()}
-                      </Text>
-                    )}
                   </div>
                   <Button
                     variant="outline"

@@ -23,6 +23,7 @@ export interface AumVirtualTableProps {
   error: unknown | null;
   onOpenAdvisorModal: (row: Row) => void;
   onShowDuplicates: (accountNumber: string) => void;
+  onAdvisorUpdated?: () => void;
 }
 
 export function AumVirtualTable({
@@ -30,16 +31,25 @@ export function AumVirtualTable({
   isLoading,
   error,
   onOpenAdvisorModal,
-  onShowDuplicates
+  onShowDuplicates,
+  onAdvisorUpdated
 }: AumVirtualTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   // Setup virtualizer
+  // AI_DECISION: Agregar keyExtractor para asegurar keys únicas y estables
+  // Justificación: Previene bugs de renderizado cuando las filas cambian o se reordenan
+  // Impacto: Mejor estabilidad en la virtualización, menos bugs visuales
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => AUM_ROWS_CONFIG.VIRTUALIZER.ESTIMATE_SIZE,
-    overscan: AUM_ROWS_CONFIG.VIRTUALIZER.OVERSCAN
+    overscan: AUM_ROWS_CONFIG.VIRTUALIZER.OVERSCAN,
+    // Key extractor para asegurar keys únicas basadas en el ID de la fila
+    getItemKey: (index) => {
+      const row = rows[index];
+      return row?.id ?? `row-${index}`;
+    }
   });
 
   // Error state
@@ -77,8 +87,8 @@ export function AumVirtualTable({
     );
   }
 
-  // Empty state
-  if (rows.length === 0) {
+  // Empty state - solo mostrar cuando NO está cargando
+  if (!isLoading && rows.length === 0) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <AumTableHeader />
@@ -123,12 +133,20 @@ export function AumVirtualTable({
             <tbody>
               {virtualizer.getVirtualItems().map((virtualRow) => {
                 const row = rows[virtualRow.index];
+                // Guard: asegurar que la fila existe antes de renderizar
+                if (!row) {
+                  console.warn('[AumVirtualTable] Row missing at index', virtualRow.index, 'total rows:', rows.length);
+                  return null;
+                }
+                // Usar key compuesta para evitar problemas con filas duplicadas
+                const rowKey = `${row.id}-${virtualRow.index}`;
                 return (
                   <AumTableRow
-                    key={row.id}
+                    key={rowKey}
                     row={row}
                     onOpenAdvisorModal={onOpenAdvisorModal}
                     onShowDuplicates={onShowDuplicates}
+                    {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
                   />
                 );
               })}

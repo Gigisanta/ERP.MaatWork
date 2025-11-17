@@ -22,7 +22,7 @@ import {
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useNotes } from '../../../lib/api-hooks';
 import { createNote, deleteNote } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 
 import type { Note } from '@/types';
 
@@ -83,7 +83,7 @@ export default function NotesSection({
       setShowCreateModal(false);
       setNewNote({ content: '', noteType: 'general', source: 'manual' });
     } catch (err) {
-      logger.error('Error creating note', { err, contactId, note: newNote });
+      logger.error('Error creating note', toLogContext({ err, contactId, note: newNote }));
     } finally {
       setSaving(false);
     }
@@ -100,7 +100,7 @@ export default function NotesSection({
           await deleteNote(noteId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error deleting note', { err, noteId });
+          logger.error('Error deleting note', toLogContext({ err, noteId }));
         }
       }
     });
@@ -144,7 +144,7 @@ export default function NotesSection({
     }
   };
 
-  const notesList = notes.length > 0 ? notes : initialNotes;
+  const notesList = Array.isArray(notes) && notes.length > 0 ? notes : initialNotes;
 
   return (
     <Card>

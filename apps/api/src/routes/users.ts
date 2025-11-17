@@ -1,7 +1,7 @@
 // REGLA CURSOR: Endpoint de usuarios - mantener RBAC estricto (requireRole middleware), validación Zod
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users, teamMembershipRequests } from '@cactus/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import { z } from 'zod';
 const router = Router();
 
 import { validate } from '../utils/validation';
-import { idParamSchema } from '../utils/common-schemas';
+import { idParamSchema, paginationQuerySchema } from '../utils/common-schemas';
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -32,10 +32,49 @@ const updateProfileSchema = z.object({
   fullName: z.string().min(1).max(255).optional()
 });
 
-router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', 
+  requireAuth, 
+  requireRole(['manager', 'admin']),
+  validate({ query: paginationQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const all = await db().select().from(users).limit(25);
-    res.json({ success: true, data: all });
+    const limit = (req.query.limit as unknown as number) ?? 50;
+    const offset = (req.query.offset as unknown as number) ?? 0;
+
+    // Get total count for pagination metadata
+    const [countResult] = await db()
+      .select({ count: sql<number>`count(*)` })
+      .from(users);
+    const total = Number(countResult?.count || 0);
+
+    // Get paginated users with only necessary fields (exclude passwordHash)
+    const all = await db()
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        phone: users.phone,
+        role: users.role,
+        isActive: users.isActive,
+        lastLogin: users.lastLogin,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      })
+      .from(users)
+      .orderBy(users.createdAt)
+      .limit(limit)
+      .offset(offset);
+
+    res.json({ 
+      success: true, 
+      data: all,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + all.length < total
+      }
+    });
   } catch (err) {
     req.log.error({ err }, 'failed to list users');
     next(err);

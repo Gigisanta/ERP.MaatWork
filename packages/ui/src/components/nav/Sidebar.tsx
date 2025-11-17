@@ -87,7 +87,8 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         className={cn(
           'relative flex flex-col h-full bg-surface border-r border-border',
           'transition-all duration-300 ease-in-out',
-          collapsed ? 'w-14' : 'w-64',
+          'overflow-x-hidden',
+          collapsed ? 'w-14' : 'w-48',
           className
         )}
         data-open={isOpen === undefined ? undefined : isOpen}
@@ -109,14 +110,14 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-1.5 space-y-4" role="navigation">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-1 space-y-2.5" role="navigation">
           {sections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-1">
               {section.title && !collapsed && (
                 <Text 
                   size="xs" 
                   weight="semibold" 
-                  className="text-text-muted uppercase tracking-wider px-2 mb-1"
+                  className="text-text-muted uppercase tracking-wider px-2 mb-0.5"
                 >
                   {section.title}
                 </Text>
@@ -137,13 +138,13 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         </nav>
 
         {/* Expand/Collapse button - Bottom, integrated */}
-        <div className="border-t border-border pt-1.5 pb-1.5 px-1.5">
+        <div className="border-t border-border pt-1 pb-1 px-1">
           <button
             onClick={handleToggle}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
               'w-full flex items-center justify-center',
-              'h-10 rounded-xl',
+              'h-9 rounded-lg',
               'text-text-muted hover:text-text',
               'hover:bg-surface-hover',
               'transition-all duration-200',
@@ -151,9 +152,9 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               collapsed ? 'px-0' : 'px-2'
             )}
           >
-            <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={16} />
+            <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={14} />
             {!collapsed && (
-              <span className="ml-2 text-xs font-medium">Colapsar</span>
+              <span className="ml-1.5 text-xs font-medium">Colapsar</span>
             )}
           </button>
         </div>
@@ -191,9 +192,10 @@ const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
           'rounded-xl',
           'transition-all duration-200',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+          'min-w-0 max-w-full',
           collapsed 
-            ? 'justify-center w-10 h-10'
-            : 'gap-2.5 px-2.5 py-2 w-full',
+            ? 'justify-center w-10 h-9'
+            : 'gap-1.5 px-2 py-1.5 w-full',
           isActive
             ? 'bg-primary text-text-inverse shadow-md scale-105'
             : 'text-text-secondary hover:text-text hover:bg-surface-hover hover:scale-105'
@@ -203,14 +205,14 @@ const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
         {item.icon && (
           <Icon 
             name={item.icon} 
-            size={collapsed ? 20 : 18}
+            size={collapsed ? 20 : 16}
             className="flex-shrink-0" 
           />
         )}
         
         {!collapsed && (
           <>
-            <span className="truncate flex-1">{item.label}</span>
+            <span className="truncate flex-1 text-base">{item.label}</span>
             {item.badge && (
               <span className={cn(
                 'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px]',

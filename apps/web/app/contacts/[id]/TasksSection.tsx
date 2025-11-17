@@ -24,7 +24,7 @@ import {
 import ConfirmDialog from '../../components/ConfirmDialog';
 import { useTasks } from '../../../lib/api-hooks';
 import { createTask, deleteTask } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 import type { Task } from '@/types';
 
 // AI_DECISION: Extracted to client island for task management isolation
@@ -86,7 +86,7 @@ export default function TasksSection({
       setShowCreateModal(false);
       setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     } catch (err) {
-      logger.error('Error creating task', { err, contactId, task: newTask });
+      logger.error('Error creating task', toLogContext({ err, contactId, task: newTask }));
     } finally {
       setSaving(false);
     }
@@ -103,7 +103,7 @@ export default function TasksSection({
           await deleteTask(taskId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error deleting task', { err, taskId });
+          logger.error('Error deleting task', toLogContext({ err, taskId }));
         }
       }
     });
@@ -116,7 +116,7 @@ export default function TasksSection({
 
       await mutate(); // Refresh data
     } catch (err) {
-      logger.error('Error updating task status', { err, taskId, newStatus });
+      logger.error('Error updating task status', toLogContext({ err, taskId, newStatus }));
     }
   };
 
@@ -156,7 +156,7 @@ export default function TasksSection({
     }
   };
 
-  const taskList = tasks.length > 0 ? tasks : initialTasks;
+  const taskList = Array.isArray(tasks) && tasks.length > 0 ? tasks : initialTasks;
 
   return (
     <Card>

@@ -41,7 +41,7 @@ function ErrorDisplay({
   };
 
   const handleGoHome = () => {
-    router.push('/');
+    router.push('/home');
   };
 
   return (

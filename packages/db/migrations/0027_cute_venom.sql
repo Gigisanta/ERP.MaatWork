@@ -1,0 +1,7 @@
+CREATE INDEX IF NOT EXISTS "idx_activity_user_type_occurred" ON "activity_events" USING btree ("user_id","type","occurred_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_bpos_account_instrument_date" ON "broker_positions" USING btree ("broker_account_id","instrument_id","as_of_date");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_btx_account_type_trade_desc" ON "broker_transactions" USING btree ("broker_account_id","type","trade_date");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_contacts_active_by_advisor" ON "contacts" USING btree ("assigned_advisor_id","updated_at") WHERE "contacts"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_notes_contact_deleted_created" ON "notes" USING btree ("contact_id","deleted_at","created_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_notifications_unread_recent" ON "notifications" USING btree ("user_id","created_at") WHERE "notifications"."read_at" IS NULL AND "notifications"."created_at" > NOW() - INTERVAL '30 days';--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_tasks_overdue" ON "tasks" USING btree ("assigned_to_user_id","due_date") WHERE "tasks"."status" IN ('open', 'in_progress') AND "tasks"."due_date" < CURRENT_DATE AND "tasks"."deleted_at" IS NULL;

@@ -19,7 +19,12 @@ export const aumTotalsSchema = z.object({
   conflicts: z.number(),
   unmatched: z.number(),
   inserts: z.number().optional(),
-  updates: z.number().optional()
+  updates: z.number().optional(),
+  monthlySnapshots: z.object({
+    inserted: z.number(),
+    updated: z.number(),
+    errors: z.number()
+  }).nullable().optional()
 });
 
 // File
@@ -100,13 +105,16 @@ export const aumUploadResponseSchema = z.object({
   fileId: z.string().uuid(),
   filename: z.string(),
   totals: aumTotalsSchema,
-  confirmationsRequired: z.number(),
+  fileType: z.enum(['master', 'monthly']).optional(),
+  reportMonth: z.number().optional(),
+  reportYear: z.number().optional(),
+  confirmationsRequired: z.number().optional(),
   confirmations: z.array(z.object({
     rowId: z.string().uuid(),
     idCuenta: z.string().nullable(),
     newAccountNumber: z.string().nullable(),
     reason: z.string()
-  })),
+  })).optional(),
   warnings: z.array(z.string()).optional()
 });
 

@@ -8,13 +8,18 @@
  * Impacto: Mejor UX para ver datos de mercado de activos en carteras
  */
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Grid, Button, Text, Stack, Spinner, Alert } from '@cactus/ui';
 import { ExternalLink } from 'lucide-react';
 import { usePortfolioAssets } from '@/lib/hooks/usePortfolioAssets';
-import AssetSnapshot from './AssetSnapshot';
 import type { Portfolio } from '@/types';
+// AI_DECISION: Importar AssetSnapshot estáticamente en lugar de dinámicamente
+// Justificación: Los dynamic imports anidados causan problemas de resolución de webpack con @cactus/ui.
+// Cuando PortfolioAssetsSnapshot ya se carga dinámicamente, no necesitamos cargar AssetSnapshot también
+// dinámicamente. Esto evita la cadena problemática de resolución de módulos.
+// Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en webpack
+import AssetSnapshot from './AssetSnapshot';
 
 interface PortfolioAssetsSnapshotProps {
   portfolios: Portfolio[];

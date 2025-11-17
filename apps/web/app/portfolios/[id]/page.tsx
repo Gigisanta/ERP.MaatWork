@@ -1,6 +1,6 @@
 "use client";
 import { useRequireAuth } from '../../auth/useRequireAuth';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
@@ -26,10 +26,11 @@ import {
   BreadcrumbItem,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import PortfolioLineRow from './components/PortfolioLineRow';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { getPortfolioById, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
-import { logger } from '../../../lib/logger';
-import type { AddPortfolioLineRequest, PortfolioWithLines, PortfolioLine } from '@/types';
+import { logger, toLogContext } from '../../../lib/logger';
+import type { AddPortfolioLineRequest, PortfolioWithLines } from '@/types';
 
 interface CreateLineData {
   targetType: string;
@@ -116,7 +117,7 @@ export default function PortfolioDetailPage() {
         }
       }
     } catch (err) {
-      logger.error('Error fetching portfolio', { err, templateId });
+      logger.error('Error fetching portfolio', toLogContext({ err, templateId }));
       if (err instanceof Error) {
         if (err.message.includes('fetch') || err.message.includes('network')) {
           setError('Error de conexión. Por favor verifica tu conexión a internet.');
@@ -192,7 +193,7 @@ export default function PortfolioDetailPage() {
       showToast('Línea agregada', 'La línea se agregó exitosamente', 'success');
       
     } catch (err) {
-      logger.error('Error creating template line', { err, templateId, data: createLineData });
+      logger.error('Error creating template line', toLogContext({ err, templateId, data: createLineData }));
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       showToast('Error al crear línea', errorMessage, 'error');
     } finally {
@@ -200,7 +201,10 @@ export default function PortfolioDetailPage() {
     }
   };
 
-  const handleDeleteLine = (lineId: string) => {
+  // AI_DECISION: Use useCallback to stabilize handleDeleteLine function for memoized component
+  // Justificación: PortfolioLineRow is memoized, needs stable callback reference
+  // Impacto: Prevents unnecessary re-renders of PortfolioLineRow components
+  const handleDeleteLine = useCallback((lineId: string) => {
     if (!templateId) return;
     
     setConfirmDialog({
@@ -222,13 +226,13 @@ export default function PortfolioDetailPage() {
           
           showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
         } catch (err) {
-          logger.error('Error deleting template line', { err, lineId, templateId });
+          logger.error('Error deleting template line', toLogContext({ err, lineId, templateId }));
           const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
           showToast('Error al eliminar línea', errorMessage, 'error');
         }
       }
     });
-  };
+  }, [templateId]);
 
   useEffect(() => {
     if (templateId && !loading && user) {
@@ -460,43 +464,12 @@ export default function PortfolioDetailPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {portfolio.lines.map((line: PortfolioLine) => (
-                        <tr key={line.id} className="border-b border-border">
-                          <td className="p-3">
-                            <Badge 
-                              variant={line.targetType === 'assetClass' ? 'default' : 'success'}
-                            >
-                              {line.targetType === 'assetClass' ? 'Clase' : 'Instrumento'}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <div>
-                              <Text weight="medium">
-                                {line.targetType === 'assetClass' ? line.assetClassName : line.instrumentName}
-                              </Text>
-                              {line.targetType === 'instrument' && line.instrumentSymbol && (
-                                <Text size="sm" color="secondary">
-                                  {line.instrumentSymbol}
-                                </Text>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-3 text-right">
-                            <Badge variant="default">
-                              {(Number(line.targetWeight) * 100).toFixed(2)}%
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-center">
-                            <Button
-                              onClick={() => handleDeleteLine(line.id)}
-                              variant="ghost"
-                              size="sm"
-                              className="text-error-500 hover:text-error-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
+                      {portfolio.lines.map((line) => (
+                        <PortfolioLineRow
+                          key={line.id}
+                          line={line}
+                          onDelete={handleDeleteLine}
+                        />
                       ))}
                     </tbody>
                   </table>

@@ -1,0 +1,1 @@
+genera un plan para aumentar la puntuacion en base a la investigacion anterior (sin estimacion de dias), informacion util para completar las tareas y tareas ordenadas por prioridadd y optimizadas para efectividad, genera el to-do optimizado

@@ -148,6 +148,90 @@
       "when": 1762987596860,
       "tag": "0020_famous_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1763049581434,
+      "tag": "0021_demonic_nightcrawler",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1763050000000,
+      "tag": "0022_optimize_capacitaciones_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1763139851679,
+      "tag": "0023_dark_infant_terrible",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1763200000000,
+      "tag": "0024_add_gin_trigram_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1763140944482,
+      "tag": "0025_melodic_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1763141080266,
+      "tag": "0026_rich_taskmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1763141339777,
+      "tag": "0027_cute_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1763142178641,
+      "tag": "0028_materialized_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1763143000000,
+      "tag": "0029_table_partitioning_utilities",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1763144000000,
+      "tag": "0030_add_log_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1763145000000,
+      "tag": "0031_implement_table_partitioning",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1763146000000,
+      "tag": "0032_enable_pg_stat_statements",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,152 @@ const info = chalk.blue;
 const bold = chalk.bold;
 
 /**
+ * Limpiar archivos PID stale de Turbo
+ * Elimina archivos PID huérfanos que pueden causar warnings al iniciar Turbo
+ * @returns {boolean} true si se encontraron y limpiaron PID stale, false en caso contrario
+ */
+function cleanTurboStalePids() {
+  try {
+    const os = require('os');
+    const tmpDir = os.tmpdir();
+    const turbodDir = path.join(tmpDir, 'turbod');
+    
+    if (!fs.existsSync(turbodDir)) {
+      return false; // No hay directorio turbod, nada que limpiar
+    }
+    
+    // Buscar archivos PID stale en subdirectorios de turbod
+    const entries = fs.readdirSync(turbodDir, { withFileTypes: true });
+    let cleanedCount = 0;
+    let foundStalePids = false;
+    
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const pidFile = path.join(turbodDir, entry.name, 'turbod.pid');
+        const sockFile = path.join(turbodDir, entry.name, 'turbod.sock');
+        const dirPath = path.join(turbodDir, entry.name);
+        
+        if (fs.existsSync(pidFile)) {
+          try {
+            // Verificar si el proceso aún existe
+            const pidContent = fs.readFileSync(pidFile, 'utf8').trim();
+            const pid = parseInt(pidContent, 10);
+            
+            if (pid && !isProcessRunning(pid)) {
+              foundStalePids = true;
+              // Proceso no existe, eliminar archivos y directorio
+              try {
+                if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
+                if (fs.existsSync(sockFile)) fs.unlinkSync(sockFile);
+                // Eliminar directorio completo si está vacío o solo contiene archivos stale
+                try {
+                  const dirContents = fs.readdirSync(dirPath);
+                  // Si solo quedan archivos de log, eliminar todo
+                  if (dirContents.length === 0 || dirContents.every(f => f.endsWith('.log'))) {
+                    fs.rmSync(dirPath, { recursive: true, force: true });
+                  }
+                } catch {
+                  // Ignorar si no se puede eliminar
+                }
+              } catch {
+                // Ignorar errores de eliminación
+              }
+              cleanedCount++;
+            }
+          } catch {
+            // Si no podemos leer el PID o verificar, eliminar de todas formas si el archivo es muy antiguo
+            try {
+              const stats = fs.statSync(pidFile);
+              const age = Date.now() - stats.mtimeMs;
+              // Si el archivo tiene más de 1 hora, considerarlo stale
+              if (age > 60 * 60 * 1000) {
+                foundStalePids = true;
+                if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
+                if (fs.existsSync(sockFile)) fs.unlinkSync(sockFile);
+                cleanedCount++;
+              }
+            } catch {
+              // Ignorar errores
+            }
+          }
+        }
+      }
+    }
+    
+    if (cleanedCount > 0) {
+      // Solo mostrar si realmente limpiamos algo (modo silencioso)
+      // El mensaje será manejado por Turbo si hay warnings
+    }
+    
+    return foundStalePids;
+  } catch {
+    // Ignorar errores silenciosamente - no es crítico
+    return false;
+  }
+}
+
+/**
+ * Limpiar cache local de Turbo cuando está corrupto
+ * Solo se ejecuta si se solicita explícitamente o se detectan problemas
+ */
+function cleanTurboCache() {
+  try {
+    const turboCacheDir = path.join(projectRoot, '.turbo');
+    if (fs.existsSync(turboCacheDir)) {
+      // Solo limpiar cache si hay problemas detectados
+      // Por ahora, solo limpiar si se solicita explícitamente
+      // Se puede mejorar para detectar corrupción automáticamente
+    }
+  } catch {
+    // Ignorar errores
+  }
+}
+
+/**
+ * Reiniciar daemon de Turbo cuando está bloqueado
+ * Detiene el daemon, limpia PID stale, y lo reinicia
+ */
+function restartTurboDaemon() {
+  try {
+    // Detener daemon si está corriendo
+    try {
+      execSync('pnpm turbo daemon stop', { stdio: 'ignore', cwd: projectRoot });
+    } catch {
+      // Ignorar si no está corriendo
+    }
+    // Limpiar PID stale después de detener
+    cleanTurboStalePids();
+    // Iniciar daemon nuevamente
+    execSync('pnpm turbo daemon start', { stdio: 'ignore', cwd: projectRoot });
+  } catch {
+    // Ignorar errores - Turbo iniciará el daemon automáticamente si es necesario
+  }
+}
+
+/**
+ * Verificar si un proceso está corriendo (cross-platform)
+ */
+function isProcessRunning(pid) {
+  try {
+    if (isWindows) {
+      // Windows: usar tasklist y verificar que el PID esté en la salida
+      const output = execSync(`tasklist /FI "PID eq ${pid}"`, { 
+        encoding: 'utf8',
+        stdio: 'pipe' 
+      });
+      // tasklist retorna el PID en la salida si el proceso existe
+      return output.includes(String(pid));
+    } else {
+      // Unix/Linux/macOS: usar kill -0
+      process.kill(pid, 0);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Verificar e iniciar servicios Docker (PostgreSQL y N8N)
  */
 function ensureDockerServices() {
@@ -223,6 +369,15 @@ async function main() {
   console.log(bold.cyan('╚═══════════════════════════════════════════════════════════╝'));
   console.log('');
   
+  // Limpiar archivos PID stale de Turbo antes de iniciar
+  const hadStalePids = cleanTurboStalePids();
+  
+  // Reiniciar daemon de Turbo si se encontraron PID stale
+  // Esto asegura que el cache funcione correctamente
+  if (hadStalePids) {
+    restartTurboDaemon();
+  }
+  
   // Siempre verificar servicios Docker (independiente de validaciones)
   ensureDockerServices();
   
@@ -238,12 +393,7 @@ async function main() {
   
   if (isWindows) {
     // Windows: Usar turbo run dev (sin tmux)
-    console.log(bold('🚀 Iniciando servicios (Windows)...\n'));
-    console.log(info('💡 En Windows, los servicios se ejecutarán en paralelo con Turbo.'));
-    console.log(info('💡 Para ver logs individuales, abre terminales separadas:'));
-    console.log(info('   • Terminal 1: cd apps/api && pnpm dev'));
-    console.log(info('   • Terminal 2: cd apps/web && pnpm dev'));
-    console.log('');
+    console.log(bold('🚀 Iniciando servicios...\n'));
     
     try {
       // Ejecutar turbo run dev --parallel
@@ -274,7 +424,7 @@ async function main() {
     
     if (hasTmux && fs.existsSync(bashScript)) {
       // Usar tmux script
-      console.log(bold('🚀 Iniciando servicios con TMUX...\n'));
+      console.log(bold('🚀 Iniciando servicios...\n'));
       try {
         execSync(`bash "${bashScript}"`, {
           stdio: 'inherit',

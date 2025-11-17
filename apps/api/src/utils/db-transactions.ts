@@ -97,7 +97,7 @@ export async function transactionWithLogging<T>(
             }, timeout);
           });
 
-          const transactionPromise = db().transaction(async (tx) => {
+          const transactionPromise = db().transaction(async (tx: any) => {
             return await transactionFn(tx);
           });
 

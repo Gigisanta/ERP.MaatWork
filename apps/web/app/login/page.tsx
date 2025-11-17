@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -15,10 +15,11 @@ import {
   Heading,
   Text,
   Stack,
-  Icon
+  Icon,
+  Spinner
 } from '@cactus/ui';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { login, user, initialized } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -227,7 +228,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <Link 
-                  href="/" 
+                  href="/home" 
                   className="text-xs text-slate-500 hover:text-slate-700"
                 >
                   ← Volver al inicio
@@ -238,5 +239,17 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }

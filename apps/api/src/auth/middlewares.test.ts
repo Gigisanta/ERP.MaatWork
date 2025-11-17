@@ -11,13 +11,22 @@ import type { Request, Response, NextFunction } from 'express';
 import { requireAuth, requireRole } from './middlewares';
 import { verifyUserToken } from './jwt';
 import type { AuthUser } from './types';
+import { db } from '@cactus/db';
 
 // Mock JWT module
 vi.mock('./jwt', () => ({
   verifyUserToken: vi.fn()
 }));
 
+// Mock database
+vi.mock('@cactus/db', () => ({
+  db: vi.fn(),
+  users: {},
+  eq: vi.fn()
+}));
+
 const mockVerifyUserToken = vi.mocked(verifyUserToken);
+const mockDb = vi.mocked(db);
 
 describe('requireAuth', () => {
   let mockReq: Partial<Request>;
@@ -38,6 +47,15 @@ describe('requireAuth', () => {
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
+    
+    // Setup default DB mock
+    const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+    const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+    const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+    const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+    mockDb.mockReturnValue({
+      select: mockDbSelect
+    } as any);
   });
 
   describe('Bearer token authentication', () => {
@@ -52,6 +70,15 @@ describe('requireAuth', () => {
         authorization: 'Bearer valid-token-123'
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock DB query: db().select().from(users).where().limit(1)
+      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+      const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+      const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+      mockDb.mockReturnValue({
+        select: mockDbSelect
+      } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
@@ -73,6 +100,15 @@ describe('requireAuth', () => {
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
+      // Mock DB query
+      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+      const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+      const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+      mockDb.mockReturnValue({
+        select: mockDbSelect
+      } as any);
+
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockVerifyUserToken).toHaveBeenCalledWith('token-with-spaces-and-special-chars-123');
@@ -92,6 +128,15 @@ describe('requireAuth', () => {
         token: 'cookie-token-123'
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock DB query
+      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'manager', isActive: true }]);
+      const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+      const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+      const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+      mockDb.mockReturnValue({
+        select: mockDbSelect
+      } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
@@ -115,6 +160,15 @@ describe('requireAuth', () => {
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
+      // Mock DB query
+      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'admin', isActive: true }]);
+      const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+      const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+      const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+      mockDb.mockReturnValue({
+        select: mockDbSelect
+      } as any);
+
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
       // Debería usar Bearer token (se procesa primero)
@@ -135,6 +189,15 @@ describe('requireAuth', () => {
       };
       mockReq.cookies = {}; // Simular que cookie-parser no funcionó
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock DB query
+      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
+      const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
+      const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
+      mockDb.mockReturnValue({
+        select: mockDbSelect
+      } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
@@ -239,6 +302,151 @@ describe('requireAuth', () => {
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
+    });
+  });
+
+  describe('Database validation', () => {
+    it('debería validar usuario en base de datos', async () => {
+      const mockUser: AuthUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'advisor'
+      };
+
+      mockReq.headers = {
+        authorization: 'Bearer valid-token'
+      };
+      mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock database query
+      const mockSelect = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: 'user-123',
+              role: 'advisor',
+              isActive: true
+            }])
+          })
+        })
+      });
+
+      const mockDb = vi.mocked(db);
+      mockDb.mockReturnValue({
+        select: mockSelect
+      } as any);
+
+      await requireAuth(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockReq.user).toEqual(mockUser);
+    });
+
+    it('debería retornar 401 cuando usuario no existe en DB', async () => {
+      const mockUser: AuthUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'advisor'
+      };
+
+      mockReq.headers = {
+        authorization: 'Bearer valid-token'
+      };
+      mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock database query returning empty
+      const mockSelect = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([])
+          })
+        })
+      });
+
+      const mockDb = vi.mocked(db);
+      mockDb.mockReturnValue({
+        select: mockSelect
+      } as any);
+
+      await requireAuth(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockNext).not.toHaveBeenCalled();
+      expect(mockReq.log?.warn).toHaveBeenCalled();
+    });
+
+    it('debería retornar 403 cuando usuario está inactivo', async () => {
+      const mockUser: AuthUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'advisor'
+      };
+
+      mockReq.headers = {
+        authorization: 'Bearer valid-token'
+      };
+      mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock database query with inactive user
+      const mockSelect = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: 'user-123',
+              role: 'advisor',
+              isActive: false
+            }])
+          })
+        })
+      });
+
+      const mockDb = vi.mocked(db);
+      mockDb.mockReturnValue({
+        select: mockSelect
+      } as any);
+
+      await requireAuth(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(403);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'User account is inactive' });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('debería actualizar role cuando hay mismatch entre token y DB', async () => {
+      const mockUser: AuthUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'advisor' // Role en token
+      };
+
+      mockReq.headers = {
+        authorization: 'Bearer valid-token'
+      };
+      mockVerifyUserToken.mockResolvedValueOnce(mockUser);
+
+      // Mock database query with different role
+      const mockSelect = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: 'user-123',
+              role: 'manager', // Role en DB (más reciente)
+              isActive: true
+            }])
+          })
+        })
+      });
+
+      const mockDb = vi.mocked(db);
+      mockDb.mockReturnValue({
+        select: mockSelect
+      } as any);
+
+      await requireAuth(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockReq.user?.role).toBe('manager'); // Debería usar role de DB
+      expect(mockReq.log?.warn).toHaveBeenCalled();
     });
   });
 });
@@ -409,6 +617,7 @@ describe('requireRole', () => {
     });
   });
 });
+
 
 
 

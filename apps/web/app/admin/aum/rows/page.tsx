@@ -26,6 +26,7 @@ import { useDebouncedValue } from './hooks/useDebouncedState';
 import { useUrlSync } from './hooks/useUrlSync';
 import { AUM_ROWS_CONFIG } from './lib/aumRowsConstants';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export default function AumRowsPage() {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export default function AumRowsPage() {
   const { state, actions } = useAumRowsState();
   
   // Sync URL with state (URL → State) for fileId
-  useUrlSync({
+  const { updateUrl } = useUrlSync({
     onFileIdChange: (fileId) => {
       if (fileId !== state.uploadedFileId) {
         actions.setUploadedFileId(fileId);
@@ -97,10 +98,30 @@ export default function AumRowsPage() {
   }, [actions, mutate]);
 
   const handleUploadSuccess = useCallback((fileId: string) => {
+    logger.info('handleUploadSuccess called', { fileId });
+    console.log('[AUM Rows] handleUploadSuccess called', { fileId });
+    
+    // Establecer fileId y resetear paginación para mostrar las nuevas filas
     actions.setUploadedFileId(fileId);
+    actions.setPagination({ offset: 0 });
     actions.setLoading('waitingUpload', false);
-    mutate();
-  }, [actions, mutate]);
+    
+    // Sincronizar fileId con URL para que el filtro funcione correctamente
+    updateUrl({ fileId });
+    console.log('[AUM Rows] URL updated with fileId', { fileId });
+    
+    logger.info('State and URL updated, calling mutate', { 
+      fileId,
+      currentStateFileId: state.uploadedFileId 
+    });
+    console.log('[AUM Rows] State updated, calling mutate', { 
+      fileId,
+      currentStateFileId: state.uploadedFileId 
+    });
+    
+    // Mutate con revalidate para forzar refresh de datos
+    mutate(undefined, { revalidate: true });
+  }, [actions, mutate, updateUrl, state.uploadedFileId]);
 
   // Pagination handlers
   const handlePrevPage = useCallback(() => {
@@ -143,6 +164,27 @@ export default function AumRowsPage() {
               />
             </div>
 
+            {/* Estadísticas resumidas */}
+            {!isLoading && rows && rows.length > 0 && (
+              <div className="flex gap-4 mb-4 flex-wrap">
+                <div className="px-3 py-2 bg-blue-50 rounded-md" role="status" aria-label={`Total de filas: ${totalRows.toLocaleString()}`}>
+                  <span className="text-sm font-medium text-blue-900">
+                    Total: {totalRows.toLocaleString()}
+                  </span>
+                </div>
+                <div className="px-3 py-2 bg-yellow-50 rounded-md" role="status" aria-label={`Filas sin asesor: ${rows.filter(r => !r.matchedUserId).length}`}>
+                  <span className="text-sm font-medium text-yellow-900">
+                    Sin asesor: {rows.filter(r => !r.matchedUserId).length}
+                  </span>
+                </div>
+                <div className="px-3 py-2 bg-green-50 rounded-md" role="status" aria-label={`Filas normalizadas: ${rows.filter(r => r.isNormalized).length}`}>
+                  <span className="text-sm font-medium text-green-900">
+                    Normalizadas: {rows.filter(r => r.isNormalized).length}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Filtros y Uploader */}
             <div className="flex items-center justify-between gap-4">
               <AumFiltersBar
@@ -167,12 +209,18 @@ export default function AumRowsPage() {
 
         {/* Tabla Principal */}
         <div className="px-6 py-6">
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mb-2 p-2 bg-gray-100 rounded text-xs">
+              <strong>Debug:</strong> rows={rows?.length ?? 0}, totalRows={totalRows}, isLoading={String(isLoading)}, hasError={!!error}
+            </div>
+          )}
           <AumVirtualTable
             rows={rows || []}
             isLoading={isLoading}
             error={error}
             onOpenAdvisorModal={(row) => actions.openAdvisorModal(row)}
             onShowDuplicates={(accountNumber) => actions.openDuplicateModal(accountNumber)}
+            onAdvisorUpdated={() => mutate()}
           />
 
           {/* Paginación */}

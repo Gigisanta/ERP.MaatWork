@@ -6,14 +6,11 @@
 
 import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { config } from 'dotenv';
 import { mapAumColumns, normalizeColumnName } from '../utils/aum-column-mapper';
 
 // Cargar .env
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..', '..', '..');
 config({ path: join(projectRoot, 'apps', 'api', '.env') });
 
@@ -28,9 +25,9 @@ interface CsvRow {
 }
 
 function hasOnlyDescripcion(row: CsvRow): boolean {
-  const hasIdCuenta = row.idCuenta && row.idCuenta.trim().length > 0;
-  const hasComitente = row.comitente && row.comitente.trim().length > 0;
-  const hasDescripcion = row.Descripcion && row.Descripcion.trim().length > 0;
+  const hasIdCuenta = !!(row.idCuenta && row.idCuenta.trim().length > 0);
+  const hasComitente = !!(row.comitente && row.comitente.trim().length > 0);
+  const hasDescripcion = !!(row.Descripcion && row.Descripcion.trim().length > 0);
   return !hasIdCuenta && !hasComitente && hasDescripcion;
 }
 
@@ -248,6 +245,10 @@ diagnose().catch(error => {
   console.error('Error:', error);
   process.exit(1);
 });
+
+
+
+
 
 
 

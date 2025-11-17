@@ -7,11 +7,29 @@ import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
 import type { ApiResponse } from './api-client';
-import type { Row } from '@/types';
+import type { Row, UserApiResponse } from '@/types';
 
 // Generic fetcher function using centralized fetchJson (handles cookies, timeout, logging)
+// AI_DECISION: Normalizar respuestas del backend que usan { ok: boolean } a formato ApiResponse
+// Justificación: El backend retorna { ok: true, ... } pero el frontend espera { success: true, data: ... }
+// Impacto: Consistencia en el manejo de respuestas entre diferentes endpoints
 const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
-  return fetchJson<ApiResponse<T>>(url);
+  const response = await fetchJson<unknown>(url);
+  
+  // Normalizar respuestas que usan { ok: boolean } a formato ApiResponse
+  if (response && typeof response === 'object' && !('success' in response) && 'ok' in response) {
+    const ok = Boolean((response as any).ok);
+    // Extraer solo los datos útiles, excluyendo 'ok' y 'error'
+    const { ok: _ok, error: _error, ...dataWithoutOk } = response as Record<string, unknown>;
+    return {
+      success: ok,
+      data: dataWithoutOk as T,
+      ...(ok === false && (response as any).error && { error: (response as any).error })
+    };
+  }
+  
+  // Si ya tiene formato ApiResponse, retornar tal cual
+  return response as ApiResponse<T>;
 };
 
 // AI_DECISION: Optimize SWR configuration for aggressive caching
@@ -89,6 +107,50 @@ export function useAdvisors() {
   
   return {
     advisors: (data?.data as unknown[]) || [],
+    error,
+    isLoading,
+    mutate
+  };
+}
+
+// Hook for users list with pagination
+export function useUsers(params?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const { user } = useAuth();
+  
+  // Build URL with query params
+  const queryParams = new URLSearchParams();
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+  if (params?.offset) queryParams.append('offset', String(params.offset));
+  
+  const url = `${API_BASE_URL}/v1/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const swrKey = user?.role === 'admin' || user?.role === 'manager' ? url : null;
+  
+  interface UsersResponse extends ApiResponse<UserApiResponse[]> {
+    pagination?: {
+      total: number;
+      limit: number;
+      offset: number;
+      hasMore: boolean;
+    };
+  }
+  
+  const { data, error, isLoading, mutate } = useSWR<UsersResponse>(
+    swrKey,
+    fetcher,
+    swrConfigLonger
+  );
+  
+  // Extract users and pagination from response
+  const users = (data?.data as UserApiResponse[] | undefined) || [];
+  const pagination = data?.pagination;
+  
+  return {
+    users,
+    pagination,
+    total: pagination?.total ?? users.length,
     error,
     isLoading,
     mutate
@@ -208,13 +270,18 @@ export function useNotes(contactId: string) {
 }
 
 // Hook for pipeline board
-export function usePipelineBoard() {
+export function usePipelineBoard(
+  fallbackData?: ApiResponse<unknown[]>
+) {
   const { user } = useAuth();
   
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/v1/pipeline/board` : null,
     fetcher,
-    swrConfigLonger
+    {
+      ...swrConfigLonger,
+      ...(fallbackData && { fallbackData })
+    }
   );
   
   return {
@@ -311,13 +378,65 @@ export function useAumRows(params?: {
   );
   
   // Extract rows and pagination from response
-  // AI_DECISION: Manejar estructura de respuesta flexible
+  // AI_DECISION: Manejar estructura de respuesta flexible con fallbacks
   // Justificación: La API puede devolver datos en diferentes formatos (data.rows vs rows)
   // Impacto: Mayor robustez ante cambios en estructura de respuesta
   const responseData = data?.data;
-  const rows = responseData?.rows ?? [];
-  const pagination = responseData?.pagination ?? { total: 0, limit: 50, offset: 0, hasMore: false };
+  
+  // Debug logging para entender la estructura de respuesta
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[useAumRows] Response structure:', {
+      hasData: !!data,
+      hasDataData: !!data?.data,
+      dataKeys: data ? Object.keys(data) : [],
+      dataDataKeys: data?.data ? Object.keys(data.data) : [],
+      responseData,
+      rowsCount: responseData?.rows?.length ?? 0,
+      directRowsCount: (data?.data as any)?.rows?.length ?? 0
+    });
+  }
+  
+  // Extraer rows con múltiples fallbacks para mayor robustez
+  // 1. Intentar desde data.data.rows (estructura normalizada)
+  // 2. Intentar desde data.data directamente si tiene rows
+  // 3. Intentar desde data.rows (por si acaso no se normalizó)
+  let rows: Row[] = [];
+  let pagination = { total: 0, limit: 50, offset: 0, hasMore: false };
+  
+  if (responseData && typeof responseData === 'object') {
+    // Caso normal: responseData tiene rows y pagination
+    if ('rows' in responseData && Array.isArray(responseData.rows)) {
+      rows = responseData.rows as Row[];
+    }
+    if ('pagination' in responseData && typeof responseData.pagination === 'object') {
+      pagination = {
+        total: (responseData.pagination as any).total ?? 0,
+        limit: (responseData.pagination as any).limit ?? 50,
+        offset: (responseData.pagination as any).offset ?? 0,
+        hasMore: (responseData.pagination as any).hasMore ?? false
+      };
+    }
+  }
+  
+  // Fallback: si no encontramos rows en responseData, intentar directamente desde data
+  if (rows.length === 0 && data && typeof data === 'object') {
+    if ('rows' in data && Array.isArray((data as any).rows)) {
+      rows = (data as any).rows as Row[];
+      console.warn('[useAumRows] Using fallback: extracted rows directly from data');
+    }
+  }
+  
   const totalRows = pagination.total ?? rows.length;
+  
+  // Log final para debugging
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[useAumRows] Extracted data:', {
+      rowsCount: rows.length,
+      totalRows,
+      pagination,
+      hasRows: rows.length > 0
+    });
+  }
   
   return {
     rows,
@@ -374,12 +493,22 @@ export function useInvalidateContactsCache() {
 }
 
 // Hook for capacitaciones list with pagination and filters
-export function useCapacitaciones(params?: {
-  tema?: string;
-  search?: string;
-  limit?: number;
-  offset?: number;
-}) {
+export function useCapacitaciones(
+  params?: {
+    tema?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  },
+  fallbackData?: ApiResponse<unknown[]> & {
+    pagination?: {
+      total: number;
+      limit: number;
+      offset: number;
+      hasMore: boolean;
+    };
+  }
+) {
   const { user } = useAuth();
   
   // Build URL with query params
@@ -406,7 +535,10 @@ export function useCapacitaciones(params?: {
   >(
     swrKey,
     fetcher,
-    swrConfig
+    {
+      ...swrConfig,
+      ...(fallbackData && { fallbackData })
+    }
   );
   
   // El backend retorna data (array) y pagination al mismo nivel que success

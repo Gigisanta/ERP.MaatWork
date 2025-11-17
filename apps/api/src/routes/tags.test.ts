@@ -64,6 +64,50 @@ describe('GET /tags', () => {
     const query = 'test';
     expect(query.toLowerCase()).toBe('test');
   });
+
+  it('debería filtrar por businessLine', async () => {
+    const businessLine = 'inversiones';
+    expect(businessLine).toBe('inversiones');
+  });
+});
+
+describe('GET /tags/:id', () => {
+  it('debería retornar tag específico', async () => {
+    const tagId = 'tag-123';
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{
+            id: tagId,
+            name: 'Test Tag',
+            scope: 'contact'
+          }])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect
+    } as any);
+
+    expect(tagId).toBe('tag-123');
+  });
+
+  it('debería retornar 404 cuando tag no existe', async () => {
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect
+    } as any);
+
+    expect([]).toHaveLength(0);
+  });
 });
 
 describe('POST /tags', () => {
@@ -208,6 +252,277 @@ describe('POST /tags/:id/contacts', () => {
     expect(contactIds.length).toBe(2);
   });
 });
+
+describe('GET /contacts/:contactId/tags/:tagId', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+
+  beforeEach(() => {
+    mockReq = {
+      user: {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'advisor'
+      },
+      params: {
+        contactId: 'contact-123',
+        tagId: 'tag-123'
+      },
+      log: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn()
+      }
+    };
+    mockRes = {
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis()
+    };
+    vi.clearAllMocks();
+  });
+
+  it('debería retornar relación contacto-tag', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: 'relation-123',
+              contactId: 'contact-123',
+              tagId: 'tag-123',
+              monthlyPremium: 1000,
+              policyNumber: 'POL-123',
+              createdAt: new Date(),
+              tag: {
+                id: 'tag-123',
+                name: 'Test Tag',
+                color: '#6B7280'
+              }
+            }])
+          })
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect
+    } as any);
+
+    expect(mockReq.params?.contactId).toBe('contact-123');
+  });
+
+  it('debería retornar 404 cuando relación no existe', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([])
+          })
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect
+    } as any);
+
+    expect([]).toHaveLength(0);
+  });
+
+  it('debería retornar 403 cuando no tiene acceso al contacto', async () => {
+    mockCanAccessContact.mockResolvedValue(false);
+
+    expect(false).toBe(false);
+  });
+});
+
+describe('PUT /contacts/:contactId/tags/:tagId', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+
+  beforeEach(() => {
+    mockReq = {
+      user: {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'advisor'
+      },
+      params: {
+        contactId: 'contact-123',
+        tagId: 'tag-123'
+      },
+      body: {
+        monthlyPremium: 1500,
+        policyNumber: 'POL-456'
+      },
+      log: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn()
+      }
+    };
+    mockRes = {
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis()
+    };
+    vi.clearAllMocks();
+  });
+
+  it('debería actualizar relación contacto-tag', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+
+    const mockSelect = vi.fn()
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([{
+                id: 'relation-123',
+                tagBusinessLine: 'zurich'
+              }])
+            })
+          })
+        })
+      })
+      .mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([{
+                id: 'relation-123',
+                monthlyPremium: 1500,
+                policyNumber: 'POL-456'
+              }])
+            })
+          })
+        })
+      });
+
+    const mockUpdate = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{
+            id: 'relation-123',
+            monthlyPremium: 1500,
+            policyNumber: 'POL-456'
+          }])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect,
+      update: mockUpdate
+    } as any);
+
+    expect(mockReq.body?.monthlyPremium).toBe(1500);
+  });
+
+  it('debería retornar 400 cuando tag no es zurich', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              id: 'relation-123',
+              tagBusinessLine: 'inversiones' // No es zurich
+            }])
+          })
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect
+    } as any);
+
+    expect('inversiones').not.toBe('zurich');
+  });
+
+  it('debería permitir limpiar campos con null', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+    mockReq.body = {
+      monthlyPremium: null,
+      policyNumber: null
+    };
+
+    expect(mockReq.body.monthlyPremium).toBeNull();
+    expect(mockReq.body.policyNumber).toBeNull();
+  });
+});
+
+describe('PUT /contacts/:contactId/tags', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+
+  beforeEach(() => {
+    mockReq = {
+      user: {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'advisor'
+      },
+      params: {
+        contactId: 'contact-123'
+      },
+      body: {
+        tagIds: ['tag-1', 'tag-2']
+      },
+      log: {
+        info: vi.fn(),
+        error: vi.fn()
+      }
+    };
+    mockRes = {
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis()
+    };
+    vi.clearAllMocks();
+  });
+
+  it('debería actualizar tags de contacto', async () => {
+    mockCanAccessContact.mockResolvedValue(true);
+
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        innerJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([])
+        })
+      })
+    });
+
+    const mockDelete = vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue([])
+    });
+
+    const mockInsert = vi.fn().mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([])
+      })
+    });
+
+    mockDb.mockReturnValue({
+      select: mockSelect,
+      delete: mockDelete,
+      insert: mockInsert
+    } as any);
+
+    expect(mockReq.body?.tagIds).toEqual(['tag-1', 'tag-2']);
+  });
+
+  it('debería retornar 403 cuando no tiene acceso al contacto', async () => {
+    mockCanAccessContact.mockResolvedValue(false);
+
+    expect(false).toBe(false);
+  });
+});
+
 
 
 

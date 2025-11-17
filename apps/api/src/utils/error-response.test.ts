@@ -212,5 +212,45 @@ describe('createErrorResponse', () => {
       }
     });
   });
+
+  describe('getStatusCodeFromError', () => {
+    const { getStatusCodeFromError } = require('./error-response');
+
+    it('debería retornar 404 para errores "not found"', () => {
+      const error = new Error('Resource not found');
+      expect(getStatusCodeFromError(error)).toBe(404);
+    });
+
+    it('debería retornar 401 para errores "unauthorized"', () => {
+      const error = new Error('User unauthorized');
+      expect(getStatusCodeFromError(error)).toBe(401);
+    });
+
+    it('debería retornar 403 para errores "forbidden"', () => {
+      const error = new Error('Access forbidden');
+      expect(getStatusCodeFromError(error)).toBe(403);
+    });
+
+    it('debería retornar 400 para errores de validación', () => {
+      const error = new Error('Invalid input validation');
+      expect(getStatusCodeFromError(error)).toBe(400);
+    });
+
+    it('debería retornar 500 por defecto', () => {
+      const error = new Error('Unknown error');
+      expect(getStatusCodeFromError(error)).toBe(500);
+    });
+
+    it('debería retornar 500 para errores no-Error', () => {
+      expect(getStatusCodeFromError('string error')).toBe(500);
+      expect(getStatusCodeFromError(null)).toBe(500);
+      expect(getStatusCodeFromError(undefined)).toBe(500);
+    });
+
+    it('debería ser case-insensitive', () => {
+      expect(getStatusCodeFromError(new Error('NOT FOUND'))).toBe(404);
+      expect(getStatusCodeFromError(new Error('UNAUTHORIZED'))).toBe(401);
+    });
+  });
 });
 

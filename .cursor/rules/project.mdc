@@ -6,15 +6,19 @@ alwaysApply: true
 ## Arquitectura General
 
 **Monorepo:** `pnpm workspaces` + `turborepo`
+
 - **Apps:** `apps/api` (Node.js + Express), `apps/web` (Next.js App Router), `apps/analytics-service` (Python)
 - **Packages:** `packages/db` (Drizzle ORM), `packages/ui` (React Components)
 - **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
 
 **Rutas clave:**
+
 - API: `apps/api/src/routes/*`, entrypoint `apps/api/src/index.ts`
 - Web: `apps/web/app/*` (Server/Client components)
 - DB: `packages/db/src/schema.ts`, migraciones con `drizzle-kit`
 - UI: `packages/ui/src/components/*`
+
+**Documentación:** Ver [docs/README.md](../../docs/README.md) para índice completo
 
 ---
 
@@ -23,7 +27,8 @@ alwaysApply: true
 ### @cactus/ui (React Components)
 
 **Estructura:**
-```
+
+```text
 packages/ui/src/
 ├── components/          # Componentes React organizados por categoría
 │   ├── forms/          # Input, Select, Checkbox, Switch, etc.
@@ -38,12 +43,14 @@ packages/ui/src/
 ```
 
 **Reglas:**
+
 - ✅ **Exports específicos** (NO `export *`) para tree-shaking
 - ✅ **Tipos exportados explícitamente** (`type ComponentProps`)
 - ✅ **Tests co-ubicados** con componentes (`Component.test.tsx`)
 - ✅ **Build genera `dist/`** con `.js` y `.d.ts` (tipos en dist/)
 
 **Comandos:**
+
 ```bash
 pnpm -F @cactus/ui build        # Compilar TypeScript + copiar CSS
 pnpm -F @cactus/ui test         # Vitest (Testing Library)
@@ -53,7 +60,8 @@ pnpm -F @cactus/ui typecheck    # Verificar tipos
 ### @cactus/db (Drizzle ORM)
 
 **Estructura:**
-```
+
+```text
 packages/db/src/
 ├── schema.ts            # Definiciones de tablas Drizzle
 ├── index.ts             # Exporta db() y schema
@@ -62,12 +70,14 @@ packages/db/src/
 ```
 
 **Reglas:**
+
 - ✅ **Exportar schema** como `@cactus/db/schema` para tipos
 - ✅ **Singleton db()** - NO crear pools manuales
 - ✅ **Migraciones** siempre con `generate` + `migrate` (NO `push`)
 - ✅ **Build genera `dist/`** con tipos TypeScript
 
 **Comandos:**
+
 ```bash
 pnpm -F @cactus/db build         # Compilar TypeScript
 pnpm -F @cactus/db generate      # Generar migración
@@ -75,15 +85,21 @@ pnpm -F @cactus/db migrate       # Aplicar migración
 pnpm -F @cactus/db seed:all      # Seed completo
 ```
 
+**⚠️ CRÍTICO:** NUNCA usar `drizzle-kit push` - es destructivo y elimina datos.
+
+**Documentación:** Ver [docs/DATABASE.md](../../docs/DATABASE.md) para guía completa
+
 ### Manejo de Tipos en Paquetes
 
 **Principios:**
+
 1. **Tipos exportados desde `dist/`** - Definir `"types"` en `package.json`
 2. **Exports específicos** - NO usar `export *` (rompe tree-shaking)
 3. **Tipos explícitos** - Exportar `type ComponentProps` junto al componente
 4. **Build antes de typecheck** - Si modificas tipos, build primero
 
 **Ejemplo (@cactus/ui):**
+
 ```typescript
 // ✅ BIEN - Export específico con tipo
 export { Button, type ButtonProps } from './components/nav/Button';
@@ -93,6 +109,7 @@ export * from './components';
 ```
 
 **Flujo de trabajo:**
+
 ```bash
 # 1. Modificar tipos en @cactus/ui
 # 2. Build del paquete
@@ -105,13 +122,15 @@ pnpm -F @cactus/web typecheck
 ### Testing en Paquetes
 
 **@cactus/ui:**
+
 - ✅ **Vitest** + **Testing Library** para componentes
 - ✅ **Tests co-ubicados** (`Component.test.tsx` junto a `Component.tsx`)
-- ✅ **Coverage target:** ≥70% (líneas, funciones, branches)
+- ✅ **Coverage target:** 100% (lines, functions, branches, statements)
 
 **Ubicación:** `packages/ui/src/**/*.test.tsx`
 
 **Ejemplo:**
+
 ```typescript
 // Button.test.tsx (mismo directorio que Button.tsx)
 import { render, screen } from '@testing-library/react';
@@ -126,8 +145,11 @@ describe('Button', () => {
 ```
 
 **@cactus/db:**
+
 - ✅ **No tests unit** - Validación vía migraciones y seeds
 - ✅ **Seeds como tests** - Verifican integridad de schema
+
+**Documentación:** Ver [docs/TESTING.md](../../docs/TESTING.md) para guía completa
 
 ---
 
@@ -137,12 +159,12 @@ describe('Button', () => {
 
 1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
 2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
-3. **Ejecutar typecheck ANTES:** `pnpm -F @cactus/web typecheck` y `pnpm -F @cactus/api typecheck`
+3. **Ejecutar typecheck ANTES:** `pnpm typecheck` (todos los workspaces)
 4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
 
 ---
 
-## Reglas Críticas TypeScript (exactOptionalPropertyTypes: true)
+## Reglas Críticas TypeScript
 
 **Configuración:** `tsconfig.base.json` tiene `exactOptionalPropertyTypes: true` y `strict: true`
 
@@ -210,7 +232,7 @@ export interface BenchmarkComponentForm { ... }  // ERROR
 pnpm -F @cactus/ui build
 pnpm -F @cactus/db build
 # Luego:
-pnpm -F @cactus/web typecheck
+pnpm typecheck
 ```
 
 ---
@@ -220,7 +242,8 @@ pnpm -F @cactus/web typecheck
 **NUNCA usar `any`** - Crear tipos explícitos siempre.
 
 **Estructura:**
-```
+
+```text
 types/
 ├── index.ts          # Barrel export
 ├── common.ts         # Tipos base y utility types compartidos
@@ -250,7 +273,6 @@ export interface TimestampedEntity extends BaseEntity {
 export interface Contact extends TimestampedEntity {
   firstName: string;
   lastName: string;
-  // ... otros campos
 }
 
 // ❌ MAL - Duplicar campos comunes
@@ -259,11 +281,11 @@ export interface Contact {
   createdAt: string;
   updatedAt: string;
   firstName: string;
-  // ...
 }
 ```
 
 **Tipos base disponibles:**
+
 - `BaseEntity`: Solo `id: string`
 - `TimestampedEntity`: `BaseEntity` + `createdAt` + `updatedAt`
 - `TimestampedEntityOptional`: `BaseEntity` + timestamps opcionales
@@ -287,19 +309,15 @@ export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'create
 // ✅ BIEN - Usar utility types
 export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> {
   email?: string | null;
-  // ...
 }
 
-export interface UpdateTaskRequest extends UpdateRequest<Task> {
-  // Campos opcionales ya incluidos por UpdateRequest
-}
+export interface UpdateTaskRequest extends UpdateRequest<Task> {}
 
 // ❌ MAL - Duplicar estructura de Request
 export interface CreateContactRequest {
   firstName: string;
   lastName: string;
   email?: string;
-  // ...
 }
 ```
 
@@ -314,23 +332,12 @@ export interface Portfolio extends TimestampedEntity {
   riskLevel: RiskLevel;
 }
 
-export interface Benchmark extends TimestampedEntity {
-  name: string;
-  type: BenchmarkType;
-}
-
-export interface Task extends TimestampedEntity {
-  contactId: string;
-  title: string;
-}
-
 // ❌ MAL - Duplicar campos base
 export interface Portfolio {
   id: string;
   createdAt: string;
   updatedAt: string;
   name: string;
-  // ...
 }
 ```
 
@@ -344,8 +351,6 @@ export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastN
   email?: string | null;
 }
 
-export interface Advisor extends Pick<User, 'id' | 'email' | 'fullName'> {}
-
 // ✅ BIEN - Omit para excluir campos
 export interface UserApiResponse extends Omit<User, 'role' | 'active' | 'createdAt' | 'updatedAt'> {
   role: Exclude<UserRole, 'client'>;
@@ -354,13 +359,6 @@ export interface UserApiResponse extends Omit<User, 'role' | 'active' | 'created
 
 // ✅ BIEN - Partial para hacer campos opcionales
 export interface UpdateTagRequest extends Partial<Pick<Tag, 'name' | 'color' | 'icon'>> {}
-
-// ❌ MAL - Duplicar tipos sin usar utility types
-export interface CreateContactRequest {
-  firstName: string;
-  lastName: string;
-  // ... repetir campos de Contact
-}
 ```
 
 #### 5. Intersection Types para Combinar
@@ -371,11 +369,6 @@ export interface CreateContactRequest {
 // ✅ BIEN - Intersection types
 export type ContactWithTags = Contact & {
   tags: ContactTag[];
-};
-
-export type TimelineItem = Task & {
-  type: 'task';
-  timestamp: Date;
 };
 
 // ❌ MAL - Duplicar estructura
@@ -396,12 +389,10 @@ export interface ContactWithTags {
 export type AumMatchStatus = 'matched' | 'ambiguous' | 'unmatched';
 export type TeamMemberRole = 'member' | 'lead';
 export type PortfolioAssignmentStatus = 'active' | 'paused' | 'ended';
-export type BenchmarkType = 'individual' | 'composite';
 
 // ✅ BIEN - Usar en interfaces
 export interface AumRow {
   matchStatus: AumMatchStatus;
-  // ...
 }
 
 // ❌ MAL - Usar string genérico
@@ -428,28 +419,6 @@ export interface BenchmarkComponent extends ComponentBase {
   id: string;
   benchmarkId: string;
   instrumentId: string; // Required en componente
-  active?: boolean;
-}
-
-export interface PortfolioComponent extends ComponentBase {
-  // Reutiliza estructura base
-}
-
-// ❌ MAL - Duplicar estructura similar
-export interface BenchmarkComponent {
-  instrumentId?: string;
-  instrumentSymbol: string;
-  instrumentName?: string;
-  targetWeight: number;
-  // ... campos específicos
-}
-
-export interface PortfolioComponent {
-  instrumentId?: string;
-  instrumentSymbol: string;
-  instrumentName?: string;
-  targetWeight: number;
-  // ... duplicación
 }
 ```
 
@@ -466,13 +435,6 @@ export interface UserApiResponse extends Omit<User, 'role' | 'active'> {
 
 // ✅ BIEN - Combinar con utility types
 export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
-
-// ❌ MAL - Definir manualmente variantes
-export interface UserApiResponse {
-  id: string;
-  email: string;
-  role: 'advisor' | 'manager' | 'admin'; // Repetir unión manualmente
-}
 ```
 
 #### 9. Organización de Tipos por Dominio
@@ -490,11 +452,6 @@ export type UpdateRequest<T> = /* ... */;
 import type { TimestampedEntity } from './common';
 export interface Contact extends TimestampedEntity { /* ... */ }
 export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> { /* ... */ }
-
-// types/portfolio.ts - Tipos específicos del dominio
-import type { TimestampedEntity, UpdateRequest } from './common';
-export interface Portfolio extends TimestampedEntity { /* ... */ }
-export interface UpdatePortfolioRequest extends UpdateRequest<Portfolio> { /* ... */ }
 ```
 
 #### 10. Inferencia de Tipos desde Drizzle
@@ -524,6 +481,7 @@ export interface Contact {
 ### Checklist de Buenas Prácticas de Tipos
 
 **Al crear nuevos tipos:**
+
 - [ ] ¿Extiende un tipo base (`BaseEntity`, `TimestampedEntity`) si tiene campos comunes?
 - [ ] ¿Usa `Pick`, `Omit`, `Partial` para crear variantes en lugar de duplicar?
 - [ ] ¿Usa utility types (`CreateRequest`, `UpdateRequest`) para patrones comunes?
@@ -534,6 +492,7 @@ export interface Contact {
 - [ ] ¿Evita duplicar campos comunes (`id`, `createdAt`, `updatedAt`)?
 
 **Beneficios:**
+
 - ✅ Eliminación de duplicación de código
 - ✅ Mejor mantenibilidad (cambios en tipos base se propagan)
 - ✅ Tipos más seguros y expresivos
@@ -546,6 +505,8 @@ export interface Contact {
 **NUNCA usar `fetch` directamente** - Usar cliente centralizado (`lib/api/[domain].ts`).
 
 **Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos.
+
+**Ubicación:** `apps/web/lib/api/[domain].ts`
 
 ---
 
@@ -582,6 +543,7 @@ router.post('/',
 ```
 
 **Reglas:**
+
 - ✅ Usar middleware `validate()` en la definición del endpoint
 - ❌ NO usar `.parse()` manual en el handler
 - ❌ NO manejar `ZodError` manualmente
@@ -593,14 +555,18 @@ router.post('/',
 **Server Component:** Data fetching, static rendering, SEO-critical content
 **Client Component:** Interactivity, hooks, browser APIs
 
-**Pattern: Client Islands**
+### Pattern: Client Islands
+
 - Extract interactive sections into small components (< 100 lines)
 - Pass server data as props
 - Use SWR for client-side mutations
 - Prefix with `"use client"` directive
 
+### Estructura de Client Islands
+
 **Estructura:**
-```
+
+```text
 app/route/
   page.tsx           # Server Component
   SomeSection.tsx    # Client Island
@@ -612,6 +578,7 @@ app/route/
 ## Testing
 
 **Framework Stack:**
+
 - ✅ **Vitest** para unit tests (NO Jest)
 - ✅ **Playwright** para E2E tests
 - ✅ **Testing Library** para componentes React
@@ -619,17 +586,22 @@ app/route/
 **Ubicación por Workspace:**
 
 **Apps (api/web):**
+
 - Unit: `src/**/*.test.ts` (mismo directorio que el archivo)
 - E2E: `tests/e2e/[feature].spec.ts` (raíz del monorepo)
 
 **Packages:**
+
 - **@cactus/ui:** `src/**/*.test.tsx` (co-ubicados con componentes)
 - **@cactus/db:** Sin tests unit (validación vía migraciones y seeds)
 
 **Coverage Targets:**
-- Backend (api): ≥70% (lines, functions, branches, statements)
-- Frontend (web): ≥60% (lines, functions, branches, statements)
-- UI Package: ≥70% (lines, functions, branches, statements)
+
+- Backend (api): 100% (lines, functions, branches, statements)
+- Frontend (web): 100% (lines, functions, branches, statements)
+- UI Package: 100% (lines, functions, branches, statements)
+
+**Documentación:** Ver [docs/TESTING.md](../../docs/TESTING.md) para guía completa
 
 ---
 
@@ -638,14 +610,18 @@ app/route/
 **NUNCA usar `drizzle-kit push`** - es destructivo y elimina datos.
 
 **Flujo correcto:**
+
 1. Modificar schema: `packages/db/src/schema.ts`
 2. Generar migración: `pnpm -F @cactus/db generate`
 3. Aplicar migración: `pnpm -F @cactus/db migrate`
 
 **Seeds disponibles:**
+
 - `pnpm -F @cactus/db seed:all` - Seed sistema completo
 - `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
 - `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos
+
+**Documentación:** Ver [docs/DATABASE_GUIDE.md](../../docs/DATABASE_GUIDE.md) para optimización, configuración y mejores prácticas
 
 ---
 
@@ -670,6 +646,7 @@ app/route/
 ## Checklist Pre-Modificación
 
 **Antes de cambiar código:**
+
 - [ ] Ejecutar `pnpm typecheck` para verificar estado actual
 - [ ] Construir paquetes compartidos si hay cambios en tipos (`pnpm -F @cactus/ui build`)
 - [ ] Verificar tipos de componentes UI antes de usar
@@ -682,6 +659,7 @@ app/route/
 - [ ] Documentado con comentarios inline para decisiones no obvias
 
 **Para nuevos endpoints:**
+
 - [ ] Schemas Zod definidos bajo `// Zod Validation Schemas`
 - [ ] Middleware `validate()` aplicado en la definición del endpoint
 - [ ] Tipos Request/Response definidos
@@ -692,13 +670,15 @@ app/route/
 ## Comandos Útiles
 
 **Desarrollo:**
+
 ```bash
-pnpm dev                   # Dev mode (web + api)
+pnpm dev                   # Dev mode (web + api + analytics)
 pnpm -F @cactus/api dev    # Solo API
 pnpm -F @cactus/web dev    # Solo frontend
 ```
 
 **Typecheck (SIEMPRE antes de commit):**
+
 ```bash
 pnpm typecheck             # Todos los workspaces
 pnpm -F @cactus/web typecheck
@@ -706,6 +686,7 @@ pnpm -F @cactus/api typecheck
 ```
 
 **Build:**
+
 ```bash
 pnpm -F @cactus/ui build   # Construir paquete UI
 pnpm -F @cactus/db build   # Construir paquete DB
@@ -713,15 +694,26 @@ pnpm build                 # Build completo
 ```
 
 **Tests:**
+
 ```bash
 pnpm test                  # Unit tests
 pnpm test:coverage         # Con coverage
 pnpm test:e2e              # E2E tests
 ```
 
+**Base de Datos:**
+
+```bash
+pnpm -F @cactus/db generate    # Generar migración
+pnpm -F @cactus/db migrate     # Aplicar migración
+pnpm -F @cactus/db seed:all     # Seed completo
+```
+
 ---
 
 ## Referencias Rápidas
+
+**Rutas de código:**
 
 - **Tipos:** `apps/web/types/[domain].ts`
 - **Cliente API:** `apps/web/lib/api/[domain].ts`
@@ -729,6 +721,16 @@ pnpm test:e2e              # E2E tests
 - **Utils:** `apps/api/src/utils/[feature].ts`
 - **Config:** `apps/api/src/config/[feature].ts`
 - **UI Components:** `packages/ui/src/components/*` (verificar tipos antes de usar)
+- **Schema DB:** `packages/db/src/schema.ts`
+
+**Documentación:**
+
+- [Índice de Documentación](../../docs/README.md)
+- [Arquitectura](../../docs/ARCHITECTURE.md)
+- [Guía de Base de Datos](../../docs/DATABASE.md)
+- [Guía de Desarrollo](../../docs/DEVELOPMENT.md)
+- [Guía de Testing](../../docs/TESTING.md)
+- [Guía de Operaciones](../../docs/OPERATIONS.md)
 
 **Score objetivo:** 8.5+/10 en todas las categorías de calidad
 
@@ -737,6 +739,7 @@ pnpm test:e2e              # E2E tests
 ## Documentación de Decisiones
 
 **Para decisiones no obvias, usar formato:**
+
 ```typescript
 // AI_DECISION: [Motivo del cambio]
 // Justificación: [Por qué es mejor esta implementación]

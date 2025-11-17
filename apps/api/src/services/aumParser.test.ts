@@ -27,9 +27,10 @@ describe('aumParser', () => {
         
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toHaveLength(1);
+          expect(result.data).toBeDefined();
+          expect(result.data).toHaveLength(1);
           
-          const row = result.value[0];
+          const row = result.data![0];
           expect(row.accountNumber).toBe('12345');
           expect(row.holderName).toBe('Juan Perez');
           expect(row.idCuenta).toBe('ABC123');
@@ -52,7 +53,8 @@ describe('aumParser', () => {
         
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.message).toContain('no contiene');
+          expect(result.error).toBeDefined();
+          expect(result.error).toContain('no contiene');
         }
       } finally {
         unlinkSync(tmpFile);
@@ -70,7 +72,8 @@ describe('aumParser', () => {
         
         expect(result.success).toBe(true);
         if (result.success) {
-          const row = result.value[0];
+          expect(result.data).toBeDefined();
+          const row = result.data![0];
           expect(row.accountNumber).toBe('12345');
           expect(row.holderName).toBe('Maria Lopez');
           expect(row.aumDollars).toBeNull(); // Missing column
@@ -88,7 +91,8 @@ describe('aumParser', () => {
       
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.message).toContain('no soportado');
+        expect(result.error).toBeDefined();
+        expect(result.error).toContain('no soportado');
       }
     });
 

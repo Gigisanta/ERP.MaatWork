@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "idx_tasks_contact_deleted_created" ON "tasks" USING btree ("contact_id","deleted_at","created_at");

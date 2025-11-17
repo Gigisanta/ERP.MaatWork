@@ -14,9 +14,17 @@ export default defineConfig({
         resources: 'usable',
       },
     },
+    // Parallelization configuration
+    threads: true,
+    maxConcurrency: 5,
+    minThreads: 1,
+    maxThreads: 4,
+    testTimeout: 10000, // 10 seconds default timeout
+    hookTimeout: 10000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.stories.{ts,tsx}',
@@ -25,10 +33,10 @@ export default defineConfig({
         'src/**/index.ts',
       ],
       thresholds: {
-        branches: 80,
-        functions: 80,
-        lines: 80,
-        statements: 80,
+        branches: 85,
+        functions: 85,
+        lines: 85,
+        statements: 85,
       },
     },
     exclude: [

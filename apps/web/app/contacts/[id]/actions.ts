@@ -1,7 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
-import { apiCallWithToken } from '@/lib/api-server';
+import { apiCall } from '@/lib/api-server';
 
 // AI_DECISION: Extract Server Action to separate file for client component access
 // Justificación: Server Actions cannot be passed as props, must be imported dynamically
@@ -15,16 +14,9 @@ import { apiCallWithToken } from '@/lib/api-server';
  * @param value - The new value for the field (string, string[], or other types)
  */
 export async function updateContactField(contactId: string, field: string, value: string | string[] | number | null) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
-
-  if (!token) {
-    throw new Error('Authentication required for update.');
-  }
-
-  return apiCallWithToken(`/contacts/${contactId}`, {
+  // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
+  return apiCall(`/v1/contacts/${contactId}`, {
     method: 'PATCH',
-    token,
     body: { fields: [{ field, value }] }
   });
 }

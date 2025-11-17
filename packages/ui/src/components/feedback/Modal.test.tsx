@@ -236,7 +236,7 @@ describe('Modal Component', () => {
         </Modal>
       );
       const description = screen.getByText('Description');
-      expect(description).toHaveClass('text-sm', 'text-foreground-secondary');
+      expect(description).toHaveClass('text-sm', 'text-text-secondary');
     });
   });
 

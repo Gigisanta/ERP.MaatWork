@@ -35,12 +35,18 @@ import aumRouter from './routes/aum';
 import settingsAdvisorsRouter from './routes/settings-advisors';
 import careerPlanRouter from './routes/career-plan';
 import metricsRouter from './routes/metrics';
+import adminMetricsRouter from './routes/admin-metrics';
+import adminMaintenanceRouter from './routes/admin-maintenance';
+import adminQueryMetricsRouter from './routes/admin-query-metrics';
 import capacitacionesRouter from './routes/capacitaciones';
 import automationsRouter from './routes/automations';
+import healthRouter from './routes/health';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { initializeDatabase } from './db-init';
+import bloombergRouter from './routes/bloomberg';
+import { getScheduler } from './jobs/scheduler';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -260,13 +266,68 @@ app.use(
   })
 );
 
-app.get('/health', (req, res) => {
-  req.log.info({ route: '/health' }, 'healthcheck');
-  res.json({ ok: true });
+// AI_DECISION: Add Prometheus metrics middleware for automatic request tracking
+// Justificación: Automatically tracks HTTP request duration, count, and errors for observability
+// Impacto: Better monitoring, automatic metrics collection without manual instrumentation
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  const startTime = Date.now();
+  const route = req.route?.path || req.path || 'unknown';
+  
+  // Track response finish
+  res.on('finish', async () => {
+    const duration = (Date.now() - startTime) / 1000; // Convert to seconds
+    const status = res.statusCode.toString();
+    const method = req.method;
+    
+    try {
+      const { httpRequestDuration, httpRequestsTotal, httpErrorsTotal } = await import('./utils/metrics');
+      
+      // Record request duration
+      httpRequestDuration.observe({ method, route, status }, duration);
+      
+      // Increment request counter
+      httpRequestsTotal.inc({ method, route, status });
+      
+      // Track errors (4xx and 5xx)
+      if (res.statusCode >= 400) {
+        httpErrorsTotal.inc({ method, route, status });
+      }
+    } catch (error) {
+      // Silently fail metrics collection to not break request flow
+      req.log?.debug({ err: error }, 'Failed to record metrics');
+    }
+  });
+  
+  next();
 });
 
-// Basic metrics endpoint (no sensitive info)
-app.get('/metrics', (req, res) => {
+// Health check routes (public and admin)
+app.use('/health', healthRouter);
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (req, res) => {
+  try {
+    const { getMetrics, memoryUsage } = await import('./utils/metrics');
+    
+    // Update memory metrics
+    const memUsage = process.memoryUsage();
+    memoryUsage.set({ type: 'rss' }, memUsage.rss);
+    memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
+    memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
+    memoryUsage.set({ type: 'external' }, (memUsage as any).external || 0);
+    
+    // Return Prometheus format
+    const metrics = await getMetrics();
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(metrics);
+  } catch (error) {
+    req.log?.error({ err: error }, 'Error generating metrics');
+    res.status(500).send('# Error generating metrics\n');
+  }
+});
+
+// Legacy JSON metrics endpoint (for backwards compatibility)
+app.get('/metrics/json', (req, res) => {
   const memory = process.memoryUsage();
   res.json({
     ok: true,
@@ -337,10 +398,16 @@ app.use('/logs', logsRouter);
 app.use('/broker-accounts', brokerAccountsRouter);
 app.use('/admin/aum', aumRouter);
 app.use('/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/admin/metrics', adminMetricsRouter);
+app.use('/admin/maintenance', adminMaintenanceRouter);
+app.use('/admin', adminQueryMetricsRouter);
 app.use('/career-plan', careerPlanRouter);
 app.use('/metrics', metricsRouter);
 app.use('/capacitaciones', capacitacionesRouter);
 app.use('/automations', automationsRouter);
+app.use('/bloomberg', bloombergRouter);
+app.use('/v1/bloomberg', bloombergRouter);
+app.use('/v1/health', healthRouter);
 
 // Optional versioned API prefix (/v1) for future breaking changes
 app.use('/v1/auth', authRouter);
@@ -361,6 +428,9 @@ app.use('/v1/logs', logsRouter);
 app.use('/v1/broker-accounts', brokerAccountsRouter);
 app.use('/v1/admin/aum', aumRouter);
 app.use('/v1/admin/settings/advisors', settingsAdvisorsRouter);
+app.use('/v1/admin/metrics', adminMetricsRouter);
+app.use('/v1/admin/maintenance', adminMaintenanceRouter);
+app.use('/v1/admin', adminQueryMetricsRouter);
 app.use('/v1/career-plan', careerPlanRouter);
 app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
@@ -416,13 +486,20 @@ async function startServer() {
     await initializeDatabase();
     logger.info('✅ Database initialization completed');
     
+    // Iniciar scheduler de jobs automáticos
+    const scheduler = getScheduler();
+    scheduler.start();
+    
     const server = app.listen(port, () => {
       logger.info({ port }, 'API listening');
-      // Schedulers removidos
     });
 
     const shutdown = (signal: string) => {
       logger.info({ signal }, 'Received shutdown signal');
+      
+      // Detener scheduler antes de cerrar el servidor
+      scheduler.stop();
+      
       server.close(() => {
         logger.info('HTTP server closed');
         process.exit(0);

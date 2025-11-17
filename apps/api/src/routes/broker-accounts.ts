@@ -1,10 +1,11 @@
 // REGLA CURSOR: Broker Accounts CRUD - mantener RBAC, data isolation, validación Zod, logging estructurado
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, brokerAccounts } from '@cactus/db';
-import { eq, and, isNull } from 'drizzle-orm';
+import { db, brokerAccounts, contacts } from '@cactus/db';
+import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
-import { canAccessContact } from '../auth/authorization';
+import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
 
 const router = Router();
 
@@ -74,25 +75,38 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
+    // AI_DECISION: Combinar validación de acceso con obtención de cuenta usando JOIN.
+    // En lugar de obtener cuenta + canAccessContact (2 queries), hacemos una query con JOIN
+    // que incluye el filtro de acceso. Esto reduce de 2 queries a 1.
+    const accessScope = await getUserAccessScope(userId, userRole);
+    const accessFilter = buildContactAccessFilter(accessScope);
+
     const [account] = await db()
-      .select()
+      .select({
+        id: brokerAccounts.id,
+        contactId: brokerAccounts.contactId,
+        brokerName: brokerAccounts.brokerName,
+        accountNumber: brokerAccounts.accountNumber,
+        accountType: brokerAccounts.accountType,
+        currency: brokerAccounts.currency,
+        createdAt: brokerAccounts.createdAt,
+        updatedAt: brokerAccounts.updatedAt,
+        deletedAt: brokerAccounts.deletedAt
+      })
       .from(brokerAccounts)
+      .innerJoin(contacts, eq(brokerAccounts.contactId, contacts.id))
       .where(
         and(
           eq(brokerAccounts.id, id),
-          isNull(brokerAccounts.deletedAt)
+          isNull(brokerAccounts.deletedAt),
+          isNull(contacts.deletedAt),
+          accessFilter.whereClause
         )
       )
       .limit(1);
 
     if (!account) {
       return res.status(404).json({ error: 'Broker account not found' });
-    }
-
-    // Verificar que el usuario tenga acceso al contacto asociado
-    const hasAccess = await canAccessContact(userId, userRole, account.contactId);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Access denied to this broker account' });
     }
 
     req.log.info({ accountId: id }, 'broker account fetched');
@@ -228,6 +242,90 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
     next(err);
   }
 });
+
+// ==========================================================
+// GET /broker-accounts/batch - Obtener cuentas de múltiples contactos (batch)
+// ==========================================================
+const batchBrokerAccountsQuerySchema = z.object({
+  contactIds: z.string().min(1),
+  status: z.enum(['active', 'closed']).optional()
+});
+
+router.get('/batch',
+  requireAuth,
+  validate({ query: batchBrokerAccountsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { validateBatchIds } = await import('../utils/batch-validation');
+      
+      const validation = validateBatchIds(req.query.contactIds as string, {
+        maxCount: 50, // Límite específico para broker accounts batch
+        fieldName: 'contactIds'
+      });
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          error: 'Invalid contact IDs',
+          details: validation.errors
+        });
+      }
+
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      const status = req.query.status as 'active' | 'closed' | undefined;
+
+      // Get user access scope for data isolation
+      const accessScope = await getUserAccessScope(userId, userRole);
+      const accessFilter = buildContactAccessFilter(accessScope);
+
+      // AI_DECISION: Use JOIN with access filter instead of loop to avoid N+1
+      // Justificación: Elimina N queries de canAccessContact, usando JOIN con filtro de acceso
+      // Impacto: Reducción de latencia de N queries a 1 query optimizada
+      const conditions = [
+        inArray(brokerAccounts.contactId, validation.ids),
+        isNull(brokerAccounts.deletedAt)
+      ];
+
+      if (status) {
+        conditions.push(eq(brokerAccounts.status, status));
+      }
+
+      const accounts = await db()
+        .select({
+          id: brokerAccounts.id,
+          broker: brokerAccounts.broker,
+          accountNumber: brokerAccounts.accountNumber,
+          holderName: brokerAccounts.holderName,
+          contactId: brokerAccounts.contactId,
+          status: brokerAccounts.status,
+          lastSyncedAt: brokerAccounts.lastSyncedAt,
+          deletedAt: brokerAccounts.deletedAt,
+          createdAt: brokerAccounts.createdAt
+        })
+        .from(brokerAccounts)
+        .innerJoin(contacts, eq(brokerAccounts.contactId, contacts.id))
+        .where(and(
+          ...conditions,
+          accessFilter.whereClause
+        ))
+        .orderBy(brokerAccounts.createdAt);
+
+      req.log.info({ 
+        requestedContactIds: validation.ids.length,
+        returnedCount: accounts.length,
+        status 
+      }, 'broker accounts batch fetched');
+
+      res.json({
+        success: true,
+        data: accounts
+      });
+    } catch (err) {
+      req.log.error({ err }, 'failed to fetch broker accounts batch');
+      next(err);
+    }
+  }
+);
 
 export default router;
 

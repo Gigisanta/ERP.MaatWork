@@ -16,12 +16,14 @@ describe('Header - Profile item', () => {
   }
 
   it('renders Profile as link to /profile', async () => {
+    const user = userEvent.setup();
     renderHeader();
 
     // Open the dropdown by clicking the trigger button
     const trigger = rtlScreen.getByRole('button', { name: /user menu for john doe/i });
-    trigger.click();
+    await user.click(trigger);
 
+    // Wait for the dropdown menu to appear (Radix UI renders in a portal)
     const profileLink = await rtlScreen.findByRole('menuitem', { name: /profile/i });
     expect(profileLink).toHaveAttribute('href', '/profile');
   });
@@ -59,7 +61,9 @@ describe('Header Component', () => {
 
     it('should render user section when user provided', () => {
       render(<Header user={mockUser} />);
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      // Header solo muestra la inicial, no el nombre completo
+      expect(screen.getByLabelText(/user menu for john doe/i)).toBeInTheDocument();
+      expect(screen.getByText('J')).toBeInTheDocument();
     });
 
     it('should render user initial when no avatar', () => {
@@ -142,7 +146,8 @@ describe('Header Component', () => {
     // and are not accessible in jsdom tests. These should be tested in E2E tests.
     it('should render user menu trigger with proper structure', () => {
       render(<Header user={mockUser} />);
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      // Header solo muestra la inicial, no el nombre completo
+      expect(screen.getByLabelText(/user menu for john doe/i)).toBeInTheDocument();
       expect(screen.getByText('J')).toBeInTheDocument(); // Initial
     });
 
@@ -255,8 +260,12 @@ describe('Header Component', () => {
   describe('Responsive Behavior', () => {
     it('should hide user name on mobile', () => {
       render(<Header user={mockUser} />);
-      const userName = screen.getByText('John Doe').closest('div');
-      expect(userName).toHaveClass('hidden', 'lg:block');
+      // Header solo muestra la inicial, no el nombre completo
+      // El botón del usuario siempre está visible, pero el nombre completo no se muestra
+      const userButton = screen.getByLabelText(/user menu for john doe/i);
+      expect(userButton).toBeInTheDocument();
+      // Verificar que la inicial está visible
+      expect(screen.getByText('J')).toBeInTheDocument();
     });
 
     it('should show mobile menu button only on small screens', () => {
@@ -280,7 +289,9 @@ describe('Header Component', () => {
     it('should handle long user names', () => {
       const longNameUser = { ...mockUser, name: 'Very Long Name That Might Overflow' };
       render(<Header user={longNameUser} />);
-      expect(screen.getByText('Very Long Name That Might Overflow')).toBeInTheDocument();
+      // Header solo muestra la inicial, no el nombre completo
+      expect(screen.getByLabelText(/user menu for very long name that might overflow/i)).toBeInTheDocument();
+      expect(screen.getByText('V')).toBeInTheDocument(); // Initial
     });
 
     it('should handle many nav items', () => {
@@ -296,7 +307,9 @@ describe('Header Component', () => {
     it('should handle special characters in user name', () => {
       const specialUser = { ...mockUser, name: 'Ñoño O\'Brien' };
       render(<Header user={specialUser} />);
-      expect(screen.getByText('Ñoño O\'Brien')).toBeInTheDocument();
+      // Header solo muestra la inicial, no el nombre completo
+      expect(screen.getByLabelText(/user menu for ñoño o'brien/i)).toBeInTheDocument();
+      expect(screen.getByText('Ñ')).toBeInTheDocument(); // Initial
     });
   });
 

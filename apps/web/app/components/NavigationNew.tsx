@@ -13,6 +13,19 @@ interface NavigationNewProps {
   sidebarOpen?: boolean;
 }
 
+// AI_DECISION: Optimize prefetching for less frequently visited routes
+// Justificación: Disabling prefetch for admin and secondary routes reduces unnecessary network requests and improves performance
+// Impacto: Reduces bandwidth usage, faster initial page load, better performance for main routes
+const routesWithoutPrefetch = [
+  '/admin',
+  '/capacitaciones',
+  '/automations',
+  '/plandecarrera',
+  '/profile',
+  '/contacts/metrics/history',
+  '/contacts/[id]/tags',
+];
+
 // Custom Link component that handles both internal and external links
 const CustomLink = React.forwardRef<HTMLAnchorElement, { 
   href: string; 
@@ -44,6 +57,11 @@ const CustomLink = React.forwardRef<HTMLAnchorElement, {
     );
   }
   
+  // Disable prefetch for admin and less frequently visited routes
+  const shouldPrefetch = !routesWithoutPrefetch.some(route => 
+    href.startsWith(route) || route.includes('[') && href.match(route.replace(/\[.*?\]/g, '[^/]+'))
+  );
+  
   // For internal links, wrap Link in a span to handle ref properly
   // Next.js Link doesn't always forward ref correctly in all versions
   return (
@@ -52,6 +70,7 @@ const CustomLink = React.forwardRef<HTMLAnchorElement, {
       className={className}
       aria-current={ariaCurrent}
       title={title}
+      prefetch={shouldPrefetch}
     >
       {children}
     </Link>
@@ -117,19 +136,19 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     {
       title: 'Principal',
       items: [
-        { label: 'Inicio', href: '/', icon: 'Home' as const },
-        { label: 'Contactos', href: '/contacts', icon: 'Users' as const },
+        { label: 'Inicio', href: '/home', icon: 'Home' as const },
+        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
         { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Users' as const },
+        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
       ],
     },
     {
       title: 'Herramientas',
       items: [
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'Book' as const },
-        { label: 'Finviz', href: 'https://finviz.com', icon: 'ExternalLink' as const },
-        { label: 'Productores Balanz', href: 'https://productores.balanz.com?forward=/home', icon: 'ExternalLink' as const },
-        { label: 'Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F', icon: 'ExternalLink' as const },
+        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: 'Finviz', href: 'https://finviz.com', icon: 'TrendingUp' as const },
+        { label: 'Productores Balanz', href: 'https://productores.balanz.com?forward=/home', icon: 'Briefcase' as const },
+        { label: 'Zurich Point', href: 'https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F', icon: 'Shield' as const },
       ],
     },
   ];
@@ -165,7 +184,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           logo={null}
           collapsed={sidebarCollapsed}
           onCollapse={setSidebarCollapsed}
-          defaultCollapsed={true}
+          defaultCollapsed={false}
           currentPath={pathname || ''}
           LinkComponent={CustomLink}
           className="h-full"

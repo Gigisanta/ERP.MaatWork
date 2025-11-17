@@ -32,7 +32,13 @@ export function buildResponsiveClasses<T>(
   toClass: (val: T) => string
 ): string[] {
   if (value === undefined) return [];
+  if (value === null) return [];
+  if (Array.isArray(value)) return [];
   if (!isResponsiveObject<T>(value)) {
+    // Si es un objeto pero no tiene keys de breakpoint válidas, retornar vacío
+    if (typeof value === 'object') {
+      return [];
+    }
     return [toClass(value as T)];
   }
   const classes: string[] = [];
