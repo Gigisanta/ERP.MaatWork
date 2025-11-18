@@ -30,3 +30,4 @@ CREATE INDEX IF NOT EXISTS "idx_capacitaciones_created_at_desc" ON "capacitacion
 
 
 
+
