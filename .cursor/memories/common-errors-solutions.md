@@ -263,3 +263,4 @@ cat tsconfig.base.json
 2025-01-16 - Memoria inicial con errores comunes del proyecto
 
 
+

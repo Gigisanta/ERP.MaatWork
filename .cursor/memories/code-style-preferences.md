@@ -326,3 +326,4 @@ if (user.role === 'admin' ? true : false) {
 2025-01-16 - Memoria inicial con preferencias de código y estilo
 
 
+

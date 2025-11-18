@@ -320,3 +320,4 @@ pnpm typecheck
 2025-01-16 - Memoria inicial con flujos de trabajo comunes
 
 
+

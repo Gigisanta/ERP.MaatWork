@@ -176,3 +176,4 @@ Ver `.cursor/memories/MAINTENANCE.md` para:
 2025-01-16 - Índice inicial de memorias
 
 
+
