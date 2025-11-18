@@ -92,3 +92,4 @@ node apps/web/scripts/performance-check.js
 - Los archivos HTML son interactivos y permiten explorar la estructura del bundle
 
 
+

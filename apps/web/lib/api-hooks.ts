@@ -7,7 +7,7 @@ import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
 import type { ApiResponse } from './api-client';
-import type { Row, UserApiResponse } from '@/types';
+import type { AumRow, UserApiResponse } from '@/types';
 
 // Generic fetcher function using centralized fetchJson (handles cookies, timeout, logging)
 // AI_DECISION: Normalizar respuestas del backend que usan { ok: boolean } a formato ApiResponse
@@ -15,7 +15,7 @@ import type { Row, UserApiResponse } from '@/types';
 // Impacto: Consistencia en el manejo de respuestas entre diferentes endpoints
 const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
   const response = await fetchJson<unknown>(url);
-  
+
   // Normalizar respuestas que usan { ok: boolean } a formato ApiResponse
   if (response && typeof response === 'object' && !('success' in response) && 'ok' in response) {
     const ok = Boolean((response as any).ok);
@@ -24,10 +24,10 @@ const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
     return {
       success: ok,
       data: dataWithoutOk as T,
-      ...(ok === false && (response as any).error && { error: (response as any).error })
+      ...(ok === false && (response as any).error && { error: (response as any).error }),
     };
   }
-  
+
   // Si ya tiene formato ApiResponse, retornar tal cual
   return response as ApiResponse<T>;
 };
@@ -52,82 +52,79 @@ const swrConfigLonger = {
 // Hook for contacts list
 export function useContacts(assignedAdvisorId?: string | null) {
   const { user } = useAuth();
-  
+
   // Build URL with query params if assignedAdvisorId is provided
   // Use /v1/contacts to match the actual API endpoint
-  const url = assignedAdvisorId 
+  const url = assignedAdvisorId
     ? `${API_BASE_URL}/v1/contacts?assignedAdvisorId=${assignedAdvisorId}`
     : `${API_BASE_URL}/v1/contacts`;
-  
+
   // Use the full URL as the SWR key to ensure proper cache separation for different advisorIds
   // This ensures each advisorId gets its own cached result
   const swrKey = user ? url : null;
-  
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     swrKey,
     fetcher,
     swrConfig
   );
-  
+
   return {
     contacts: (data?.data as unknown[]) || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for pipeline stages
 export function usePipelineStages() {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/pipeline/stages` : null,
     fetcher,
     swrConfigLonger
   );
-  
+
   return {
     stages: (data?.data as unknown[]) || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for advisors
 export function useAdvisors() {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/users/advisors` : null,
     fetcher,
     swrConfigLonger
   );
-  
+
   return {
     advisors: (data?.data as unknown[]) || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for users list with pagination
-export function useUsers(params?: {
-  limit?: number;
-  offset?: number;
-}) {
+export function useUsers(params?: { limit?: number; offset?: number }) {
   const { user } = useAuth();
-  
+
   // Build URL with query params
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append('limit', String(params.limit));
   if (params?.offset) queryParams.append('offset', String(params.offset));
-  
+
   const url = `${API_BASE_URL}/v1/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user?.role === 'admin' || user?.role === 'manager' ? url : null;
-  
+
   interface UsersResponse extends ApiResponse<UserApiResponse[]> {
     pagination?: {
       total: number;
@@ -136,42 +133,42 @@ export function useUsers(params?: {
       hasMore: boolean;
     };
   }
-  
+
   const { data, error, isLoading, mutate } = useSWR<UsersResponse>(
     swrKey,
     fetcher,
     swrConfigLonger
   );
-  
+
   // Extract users and pagination from response
   const users = (data?.data as UserApiResponse[] | undefined) || [];
   const pagination = data?.pagination;
-  
+
   return {
     users,
     pagination,
     total: pagination?.total ?? users.length,
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for tags
 export function useTags(scope: string = 'contact') {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/v1/tags?scope=${scope}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     tags: (data?.data as unknown[]) || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
@@ -182,113 +179,111 @@ export function useTags(scope: string = 'contact') {
 // Hook for contact detail
 export function useContactDetail(id: string) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     user && id ? `${API_BASE_URL}/v1/contacts/${id}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     contact: data?.data || null,
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for broker accounts
 export function useBrokerAccounts(contactId: string) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     user && contactId ? `${API_BASE_URL}/broker-accounts?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     brokerAccounts: data?.data || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for portfolio assignments
 export function usePortfolioAssignments(contactId: string) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     user && contactId ? `${API_BASE_URL}/v1/portfolios/assignments?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     portfolioAssignments: data?.data || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for tasks
 export function useTasks(contactId: string) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     user && contactId ? `${API_BASE_URL}/tasks?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     tasks: data?.data || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for notes
 export function useNotes(contactId: string) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR(
     user && contactId ? `${API_BASE_URL}/notes?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
-  
+
   return {
     notes: data?.data || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for pipeline board
-export function usePipelineBoard(
-  fallbackData?: ApiResponse<unknown[]>
-) {
+export function usePipelineBoard(fallbackData?: ApiResponse<unknown[]>) {
   const { user } = useAuth();
-  
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/v1/pipeline/board` : null,
     fetcher,
     {
       ...swrConfigLonger,
-      ...(fallbackData && { fallbackData })
+      ...(fallbackData && { fallbackData }),
     }
   );
-  
+
   return {
     stages: (data?.data as unknown[]) || [],
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
@@ -299,9 +294,11 @@ export function usePortfolioComparison(
   period: string = '1Y'
 ) {
   const { user } = useAuth();
-  
+
   // Create a fetcher for POST requests
-  const postFetcher = async ([url, body]: [string, unknown]): Promise<ApiResponse<{ results: unknown[] }>> => {
+  const postFetcher = async ([url, body]: [string, unknown]): Promise<
+    ApiResponse<{ results: unknown[] }>
+  > => {
     const { fetchJson } = await import('./fetch-client');
     return fetchJson<ApiResponse<{ results: unknown[] }>>(url, {
       method: 'POST',
@@ -311,12 +308,13 @@ export function usePortfolioComparison(
       body: JSON.stringify(body),
     });
   };
-  
+
   // Generate a stable key based on inputs
-  const key = user && (portfolioIds.length > 0 || benchmarkIds.length > 0)
-    ? [`${API_BASE_URL}/v1/analytics/compare`, { portfolioIds, benchmarkIds, period }] as const
-    : null;
-  
+  const key =
+    user && (portfolioIds.length > 0 || benchmarkIds.length > 0)
+      ? ([`${API_BASE_URL}/v1/analytics/compare`, { portfolioIds, benchmarkIds, period }] as const)
+      : null;
+
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<{ results: unknown[] }>>(
     key,
     postFetcher,
@@ -325,12 +323,12 @@ export function usePortfolioComparison(
       revalidateIfStale: true, // Revalidate for comparison data
     }
   );
-  
+
   return {
     comparisonData: data?.data || null,
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
@@ -346,7 +344,7 @@ export function useAumRows(params?: {
   onlyUpdated?: boolean;
 }) {
   const { user } = useAuth();
-  
+
   // Build URL with query params
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append('limit', String(params.limit));
@@ -359,92 +357,109 @@ export function useAumRows(params?: {
   if (params?.search) queryParams.append('search', params.search);
   const onlyUpdated = params?.onlyUpdated ?? false;
   queryParams.append('onlyUpdated', String(onlyUpdated));
-  
+
   const url = `${API_BASE_URL}/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user ? url : null;
-  
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<{
-    rows: Row[];
-    pagination: {
-      total: number;
-      limit: number;
-      offset: number;
-      hasMore: boolean;
-    };
-  }>>(
-    swrKey,
-    fetcher,
-    swrConfig
-  );
-  
+
+  const { data, error, isLoading, mutate } = useSWR<
+    ApiResponse<{
+      rows: AumRow[];
+      pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+      };
+    }>
+  >(swrKey, fetcher, swrConfig);
+
   // Extract rows and pagination from response
   // AI_DECISION: Manejar estructura de respuesta flexible con fallbacks
   // Justificación: La API puede devolver datos en diferentes formatos (data.rows vs rows)
   // Impacto: Mayor robustez ante cambios en estructura de respuesta
   const responseData = data?.data;
-  
+
   // Debug logging para entender la estructura de respuesta
   if (process.env.NODE_ENV !== 'production') {
+    const firstRow = responseData?.rows?.[0];
     console.log('[useAumRows] Response structure:', {
       hasData: !!data,
       hasDataData: !!data?.data,
       dataKeys: data ? Object.keys(data) : [],
       dataDataKeys: data?.data ? Object.keys(data.data) : [],
-      responseData,
       rowsCount: responseData?.rows?.length ?? 0,
-      directRowsCount: (data?.data as any)?.rows?.length ?? 0
+      firstRowSample: firstRow
+        ? {
+            id: firstRow.id,
+            accountNumber: firstRow.accountNumber,
+            idCuenta: firstRow.idCuenta,
+            holderName: firstRow.holderName,
+            advisorRaw: firstRow.advisorRaw,
+            aumDollars: firstRow.aumDollars,
+            bolsaArg: firstRow.bolsaArg,
+          }
+        : null,
     });
   }
-  
+
   // Extraer rows con múltiples fallbacks para mayor robustez
   // 1. Intentar desde data.data.rows (estructura normalizada)
   // 2. Intentar desde data.data directamente si tiene rows
   // 3. Intentar desde data.rows (por si acaso no se normalizó)
-  let rows: Row[] = [];
+  let rows: AumRow[] = [];
   let pagination = { total: 0, limit: 50, offset: 0, hasMore: false };
-  
+
   if (responseData && typeof responseData === 'object') {
     // Caso normal: responseData tiene rows y pagination
     if ('rows' in responseData && Array.isArray(responseData.rows)) {
-      rows = responseData.rows as Row[];
+      rows = responseData.rows as AumRow[];
     }
     if ('pagination' in responseData && typeof responseData.pagination === 'object') {
       pagination = {
         total: (responseData.pagination as any).total ?? 0,
         limit: (responseData.pagination as any).limit ?? 50,
         offset: (responseData.pagination as any).offset ?? 0,
-        hasMore: (responseData.pagination as any).hasMore ?? false
+        hasMore: (responseData.pagination as any).hasMore ?? false,
       };
     }
   }
-  
+
   // Fallback: si no encontramos rows en responseData, intentar directamente desde data
   if (rows.length === 0 && data && typeof data === 'object') {
     if ('rows' in data && Array.isArray((data as any).rows)) {
-      rows = (data as any).rows as Row[];
+      rows = (data as any).rows as AumRow[];
       console.warn('[useAumRows] Using fallback: extracted rows directly from data');
     }
   }
-  
+
   const totalRows = pagination.total ?? rows.length;
-  
+
   // Log final para debugging
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && rows.length > 0) {
+    const sampleRow = rows[0];
     console.log('[useAumRows] Extracted data:', {
       rowsCount: rows.length,
       totalRows,
       pagination,
-      hasRows: rows.length > 0
+      sampleRowFields: {
+        accountNumber: sampleRow.accountNumber,
+        idCuenta: sampleRow.idCuenta,
+        holderName: sampleRow.holderName,
+        advisorRaw: sampleRow.advisorRaw,
+        advisorRawType: typeof sampleRow.advisorRaw,
+        aumDollars: sampleRow.aumDollars,
+        aumDollarsType: typeof sampleRow.aumDollars,
+      },
     });
   }
-  
+
   return {
     rows,
     totalRows,
     pagination,
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
@@ -453,7 +468,7 @@ export function useAumRows(params?: {
 // Impacto: Ensures UI updates immediately without requiring page reload
 export function useInvalidateContactsCache() {
   const { mutate } = useSWRConfig();
-  
+
   // Return async function to invalidate all contacts-related cache keys
   // This includes:
   // - /v1/contacts (all contacts list)
@@ -462,33 +477,31 @@ export function useInvalidateContactsCache() {
   return async () => {
     // Matcher function to identify all contacts-related cache keys
     const matcher = (key: string | readonly unknown[]) => {
-      const keyStr = typeof key === 'string' 
-        ? key 
-        : (Array.isArray(key) && typeof key[0] === 'string' ? key[0] : '');
-      
+      const keyStr =
+        typeof key === 'string'
+          ? key
+          : Array.isArray(key) && typeof key[0] === 'string'
+            ? key[0]
+            : '';
+
       return (
         keyStr.includes(`${API_BASE_URL}/v1/contacts`) ||
         keyStr.includes(`${API_BASE_URL}/v1/pipeline/board`) ||
         keyStr.includes(`${API_BASE_URL}/contacts`)
       );
     };
-    
+
     // Invalidate and force immediate revalidation of all matching keys using matcher
     // mutate with matcher will find all matching keys and revalidate them
     // revalidate: true forces immediate revalidation even if revalidateIfStale is false
     await mutate(matcher, undefined, { revalidate: true });
-    
+
     // Also directly invalidate the most common keys to ensure they're cleared
     // This is a fallback in case the matcher misses any keys
-    const commonKeys = [
-      `${API_BASE_URL}/v1/contacts`,
-      `${API_BASE_URL}/v1/pipeline/board`
-    ];
-    
+    const commonKeys = [`${API_BASE_URL}/v1/contacts`, `${API_BASE_URL}/v1/pipeline/board`];
+
     // Wait for all revalidations to complete
-    await Promise.all(
-      commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
-    );
+    await Promise.all(commonKeys.map((key) => mutate(key, undefined, { revalidate: true })));
   };
 }
 
@@ -510,20 +523,25 @@ export function useCapacitaciones(
   }
 ) {
   const { user } = useAuth();
-  
+
   // Build URL with query params
   const queryParams = new URLSearchParams();
   if (params?.tema) queryParams.append('tema', params.tema);
   if (params?.search) queryParams.append('search', params.search);
   if (params?.limit) queryParams.append('limit', String(params.limit));
   if (params?.offset) queryParams.append('offset', String(params.offset));
-  
+
   const url = `${API_BASE_URL}/v1/capacitaciones${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user ? url : null;
-  
+
   // El backend retorna: { success: true, data: [...], pagination: {...} }
   // El api-client retorna la respuesta tal cual: { success: true, data: [...], pagination: {...} }
-  const { data: response, error, isLoading, mutate } = useSWR<
+  const {
+    data: response,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<
     ApiResponse<unknown[]> & {
       pagination?: {
         total: number;
@@ -532,15 +550,11 @@ export function useCapacitaciones(
         hasMore: boolean;
       };
     }
-  >(
-    swrKey,
-    fetcher,
-    {
-      ...swrConfig,
-      ...(fallbackData && { fallbackData })
-    }
-  );
-  
+  >(swrKey, fetcher, {
+    ...swrConfig,
+    ...(fallbackData && { fallbackData }),
+  });
+
   // El backend retorna data (array) y pagination al mismo nivel que success
   return {
     capacitaciones: (response?.data as unknown[]) || [],
@@ -548,41 +562,40 @@ export function useCapacitaciones(
       total: 0,
       limit: 50,
       offset: 0,
-      hasMore: false
+      hasMore: false,
     },
     error,
     isLoading,
-    mutate
+    mutate,
   };
 }
 
 // Hook for invalidating capacitaciones cache globally
 export function useInvalidateCapacitacionesCache() {
   const { mutate } = useSWRConfig();
-  
+
   return async () => {
     // Matcher function to identify all capacitaciones-related cache keys
     const matcher = (key: string | readonly unknown[]) => {
-      const keyStr = typeof key === 'string' 
-        ? key 
-        : (Array.isArray(key) && typeof key[0] === 'string' ? key[0] : '');
-      
+      const keyStr =
+        typeof key === 'string'
+          ? key
+          : Array.isArray(key) && typeof key[0] === 'string'
+            ? key[0]
+            : '';
+
       return (
         keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`) ||
         keyStr.includes(`${API_BASE_URL}/capacitaciones`)
       );
     };
-    
+
     // Invalidate and force immediate revalidation of all matching keys
     await mutate(matcher, undefined, { revalidate: true });
-    
+
     // Also directly invalidate the most common keys
-    const commonKeys = [
-      `${API_BASE_URL}/v1/capacitaciones`
-    ];
-    
-    await Promise.all(
-      commonKeys.map(key => mutate(key, undefined, { revalidate: true }))
-    );
+    const commonKeys = [`${API_BASE_URL}/v1/capacitaciones`];
+
+    await Promise.all(commonKeys.map((key) => mutate(key, undefined, { revalidate: true })));
   };
 }

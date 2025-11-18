@@ -1,6 +1,6 @@
 /**
  * Tests para teams routes
- * 
+ *
  * AI_DECISION: Tests unitarios para gestión de equipos
  * Justificación: Validación crítica de membresía y permisos
  * Impacto: Prevenir errores en gestión de equipos
@@ -21,16 +21,16 @@ vi.mock('@cactus/db', () => ({
   users: {},
   teamMembershipRequests: {},
   eq: vi.fn(),
-  and: vi.fn()
+  and: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../auth/authorization', () => ({
   getUserTeams: vi.fn(),
-  getTeamMembers: vi.fn()
+  getTeamMembers: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -41,7 +41,7 @@ describe('GET /teams', () => {
   it('debería listar equipos del usuario', async () => {
     const userTeams = [
       { id: 'team-1', name: 'Team 1', role: 'manager' as const },
-      { id: 'team-2', name: 'Team 2', role: 'member' as const }
+      { id: 'team-2', name: 'Team 2', role: 'member' as const },
     ];
 
     mockGetUserTeams.mockResolvedValue(userTeams);
@@ -49,13 +49,13 @@ describe('GET /teams', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'team-1', name: 'Team 1' }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'team-1', name: 'Team 1' }]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(userTeams.length).toBe(2);
@@ -67,20 +67,22 @@ describe('POST /teams', () => {
     const newTeam = {
       name: 'New Team',
       description: 'Description',
-      managerUserId: 'manager-123'
+      managerUserId: 'manager-123',
     };
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'team-123',
-          ...newTeam
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'team-123',
+            ...newTeam,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(newTeam.name).toBe('New Team');
@@ -98,20 +100,20 @@ describe('POST /teams/:id/members', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'user-123' }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'user-123' }]),
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        onConflictDoNothing: vi.fn().mockResolvedValue([])
-      })
+        onConflictDoNothing: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(true).toBe(true);
@@ -124,50 +126,35 @@ describe('POST /teams/membership-requests/:id/approve', () => {
       id: 'request-123',
       userId: 'user-123',
       managerId: 'manager-123',
-      status: 'pending' as const
+      status: 'pending' as const,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([request])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([request]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        onConflictDoNothing: vi.fn().mockResolvedValue([])
-      })
+        onConflictDoNothing: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
       update: mockUpdate,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(request.status).toBe('pending');
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

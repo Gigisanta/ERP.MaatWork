@@ -1,6 +1,6 @@
 /**
  * Tests para useEntityWithComponents hook
- * 
+ *
  * AI_DECISION: Tests para hook genérico de gestión de entidades con componentes
  * Justificación: Validar fetching batch, manejo de errores y operaciones CRUD
  * Impacto: Prevenir errores en gestión de portfolios y benchmarks
@@ -36,7 +36,7 @@ describe('useEntityWithComponents', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useRequireAuth } = require('../../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
@@ -346,7 +346,3 @@ describe('useEntityWithComponents', () => {
     expect(result.current.entities).toEqual([]);
   });
 });
-
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Tests para RegisterPage
- * 
+ *
  * AI_DECISION: Tests para página de registro de usuarios
  * Justificación: Validar formulario de registro y validaciones
  * Impacto: Prevenir errores en creación de cuentas
@@ -46,7 +46,7 @@ describe('RegisterPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useAuth } = require('../auth/AuthContext');
     useAuth.mockReturnValue({
       register: mockRegister,
@@ -63,7 +63,7 @@ describe('RegisterPage', () => {
 
   it('debería renderizar formulario de registro', () => {
     render(<RegisterPage />);
-    
+
     expect(screen.getByText(/CACTUS CRM/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Nombre de usuario/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Nombre completo/i)).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('RegisterPage', () => {
 
   it('debería validar campos requeridos', async () => {
     render(<RegisterPage />);
-    
+
     const submitButton = screen.getByRole('button', { name: /Crear Cuenta/i });
     fireEvent.click(submitButton);
 
@@ -84,7 +84,7 @@ describe('RegisterPage', () => {
 
   it('debería validar formato de contraseña', async () => {
     render(<RegisterPage />);
-    
+
     const emailInput = screen.getByLabelText(/Email/i);
     const fullNameInput = screen.getByLabelText(/Nombre completo/i);
     const passwordInput = screen.getByLabelText(/Contraseña/i);
@@ -102,7 +102,7 @@ describe('RegisterPage', () => {
 
   it('debería validar formato de username', async () => {
     render(<RegisterPage />);
-    
+
     const usernameInput = screen.getByLabelText(/Nombre de usuario/i);
     const emailInput = screen.getByLabelText(/Email/i);
     const fullNameInput = screen.getByLabelText(/Nombre completo/i);
@@ -123,9 +123,7 @@ describe('RegisterPage', () => {
   it('debería requerir manager cuando rol es advisor', async () => {
     mockGetManagers.mockResolvedValue({
       success: true,
-      data: [
-        { id: 'manager-1', email: 'manager@example.com', fullName: 'Manager 1' },
-      ],
+      data: [{ id: 'manager-1', email: 'manager@example.com', fullName: 'Manager 1' }],
     });
 
     render(<RegisterPage />);
@@ -154,7 +152,7 @@ describe('RegisterPage', () => {
     mockRegister.mockResolvedValue(undefined);
 
     render(<RegisterPage />);
-    
+
     const emailInput = screen.getByLabelText(/Email/i);
     const fullNameInput = screen.getByLabelText(/Nombre completo/i);
     const passwordInput = screen.getByLabelText(/Contraseña/i);
@@ -179,7 +177,7 @@ describe('RegisterPage', () => {
     mockRegister.mockResolvedValue(undefined);
 
     render(<RegisterPage />);
-    
+
     const emailInput = screen.getByLabelText(/Email/i);
     const fullNameInput = screen.getByLabelText(/Nombre completo/i);
     const passwordInput = screen.getByLabelText(/Contraseña/i);
@@ -199,7 +197,7 @@ describe('RegisterPage', () => {
     mockRegister.mockRejectedValue(new Error('Registration failed'));
 
     render(<RegisterPage />);
-    
+
     const emailInput = screen.getByLabelText(/Email/i);
     const fullNameInput = screen.getByLabelText(/Nombre completo/i);
     const passwordInput = screen.getByLabelText(/Contraseña/i);
@@ -218,9 +216,7 @@ describe('RegisterPage', () => {
   it('debería cargar managers cuando rol es advisor', async () => {
     mockGetManagers.mockResolvedValue({
       success: true,
-      data: [
-        { id: 'manager-1', email: 'manager@example.com', fullName: 'Manager 1' },
-      ],
+      data: [{ id: 'manager-1', email: 'manager@example.com', fullName: 'Manager 1' }],
     });
 
     render(<RegisterPage />);
@@ -234,7 +230,3 @@ describe('RegisterPage', () => {
     });
   });
 });
-
-
-
-

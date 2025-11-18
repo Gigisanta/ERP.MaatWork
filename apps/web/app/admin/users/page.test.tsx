@@ -1,6 +1,6 @@
 /**
  * Tests para AdminUsersPage
- * 
+ *
  * AI_DECISION: Tests para página de administración de usuarios
  * Justificación: Validar gestión de usuarios, roles y estados
  * Impacto: Prevenir errores en administración crítica
@@ -52,7 +52,7 @@ describe('AdminUsersPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useRequireAuth } = require('../../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'admin@example.com', role: 'admin' },
@@ -76,7 +76,7 @@ describe('AdminUsersPage', () => {
     });
 
     render(<AdminUsersPage />);
-    
+
     expect(screen.getByText(/cargando/i)).toBeInTheDocument();
   });
 
@@ -87,7 +87,7 @@ describe('AdminUsersPage', () => {
     });
 
     render(<AdminUsersPage />);
-    
+
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
@@ -139,8 +139,20 @@ describe('AdminUsersPage', () => {
     mockGetUsers.mockResolvedValue({
       success: true,
       data: [
-        { id: 'user-1', email: 'user1@example.com', fullName: 'User 1', role: 'advisor', isActive: true },
-        { id: 'user-2', email: 'user2@example.com', fullName: 'User 2', role: 'manager', isActive: true },
+        {
+          id: 'user-1',
+          email: 'user1@example.com',
+          fullName: 'User 1',
+          role: 'advisor',
+          isActive: true,
+        },
+        {
+          id: 'user-2',
+          email: 'user2@example.com',
+          fullName: 'User 2',
+          role: 'manager',
+          isActive: true,
+        },
       ],
     });
 
@@ -151,7 +163,3 @@ describe('AdminUsersPage', () => {
     });
   });
 });
-
-
-
-

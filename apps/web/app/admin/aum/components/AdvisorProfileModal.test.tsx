@@ -1,14 +1,22 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import type { ReactNode } from 'react';
-import type { Row } from '@/types';
+import type { AumRow } from '@/types';
 
 const mockGetUserById = vi.fn();
 
 vi.mock('@cactus/ui', () => ({
   __esModule: true,
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
-  Button: ({ children, onClick, type = 'button' }: { children: ReactNode; onClick?: () => void; type?: 'button' | 'submit' | 'reset' }) => (
+  Button: ({
+    children,
+    onClick,
+    type = 'button',
+  }: {
+    children: ReactNode;
+    onClick?: () => void;
+    type?: 'button' | 'submit' | 'reset';
+  }) => (
     <button type={type} onClick={onClick}>
       {children}
     </button>
@@ -19,7 +27,7 @@ vi.mock('@cactus/ui', () => ({
   ModalFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ModalHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>,
   ModalTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
-  Spinner: () => <div data-testid="spinner" />, 
+  Spinner: () => <div data-testid="spinner" />,
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
@@ -27,7 +35,7 @@ vi.mock('@/lib/api/users', () => ({
   getUserById: (...args: unknown[]) => mockGetUserById(...args),
 }));
 
-const baseRow: Row = {
+const baseRow: AumRow = {
   id: 'row-1',
   fileId: 'file-1',
   accountNumber: '123',
@@ -69,7 +77,7 @@ const baseRow: Row = {
   raw: {},
 };
 
-const createRow = (overrides: Partial<Row> = {}): Row => ({
+const createRow = (overrides: Partial<AumRow> = {}): AumRow => ({
   ...baseRow,
   ...overrides,
 });
@@ -93,13 +101,7 @@ describe('AdvisorProfileModal', () => {
 
     const { default: AdvisorProfileModal } = await import('./AdvisorProfileModal');
 
-    render(
-      <AdvisorProfileModal
-        row={createRow()}
-        open
-        onClose={() => {}}
-      />
-    );
+    render(<AdvisorProfileModal row={createRow()} open onClose={() => {}} />);
 
     expect(screen.getByText('Alias normalizado')).toBeInTheDocument();
     expect(screen.getByText('giolivo santarelli')).toBeInTheDocument();
@@ -115,13 +117,7 @@ describe('AdvisorProfileModal', () => {
 
     const { default: AdvisorProfileModal } = await import('./AdvisorProfileModal');
 
-    render(
-      <AdvisorProfileModal
-        row={createRow()}
-        open
-        onClose={onClose}
-      />
-    );
+    render(<AdvisorProfileModal row={createRow()} open onClose={onClose} />);
 
     await waitFor(() => expect(mockGetUserById).toHaveBeenCalled());
 
@@ -130,5 +126,3 @@ describe('AdvisorProfileModal', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
-
-

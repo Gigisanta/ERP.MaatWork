@@ -1,13 +1,13 @@
 /**
  * useAumRowsState Hook
- * 
+ *
  * AI_DECISION: Consolidar 10+ estados en un reducer pattern con acciones claras
  * Justificación: Reducer pattern simplifica manejo de estado complejo y mejora testability
  * Impacto: Código más mantenible, predecible y fácil de testear
  */
 
 import { useReducer, useCallback } from 'react';
-import type { Row } from '@/types';
+import type { AumRow } from '@/types';
 
 // ==========================================================
 // Types
@@ -46,7 +46,7 @@ export interface AumRowsState {
     };
     advisor: {
       open: boolean;
-      row: Row | null;
+      row: AumRow | null;
     };
   };
 
@@ -71,7 +71,7 @@ type AumRowsAction =
   | { type: 'SET_ONLY_UPDATED'; payload: boolean }
   | { type: 'OPEN_DUPLICATE_MODAL'; payload: string }
   | { type: 'CLOSE_DUPLICATE_MODAL' }
-  | { type: 'OPEN_ADVISOR_MODAL'; payload: Row }
+  | { type: 'OPEN_ADVISOR_MODAL'; payload: AumRow }
   | { type: 'CLOSE_ADVISOR_MODAL' }
   | { type: 'SET_LOADING'; payload: { key: keyof AumRowsState['loading']; value: boolean } }
   | { type: 'RESET_FILTERS' }
@@ -84,33 +84,33 @@ type AumRowsAction =
 const initialState: AumRowsState = {
   pagination: {
     limit: 50,
-    offset: 0
+    offset: 0,
   },
   filters: {
     broker: 'all',
-    status: 'all'
+    status: 'all',
   },
   search: {
     term: '',
-    debounced: ''
+    debounced: '',
   },
   uploadedFileId: null,
   onlyUpdated: false,
   modals: {
     duplicate: {
       open: false,
-      accountNumber: null
+      accountNumber: null,
     },
     advisor: {
       open: false,
-      row: null
-    }
+      row: null,
+    },
   },
   loading: {
     cleaning: false,
     resetting: false,
-    waitingUpload: false
-  }
+    waitingUpload: false,
+  },
 };
 
 // ==========================================================
@@ -124,8 +124,8 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         ...state,
         pagination: {
           ...state.pagination,
-          ...action.payload
-        }
+          ...action.payload,
+        },
       };
 
     case 'SET_FILTERS':
@@ -133,13 +133,13 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         ...state,
         filters: {
           ...state.filters,
-          ...action.payload
+          ...action.payload,
         },
         // Reset pagination when filters change
         pagination: {
           ...state.pagination,
-          offset: 0
-        }
+          offset: 0,
+        },
       };
 
     case 'SET_SEARCH_TERM':
@@ -147,8 +147,8 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         ...state,
         search: {
           ...state.search,
-          term: action.payload
-        }
+          term: action.payload,
+        },
       };
 
     case 'SET_DEBOUNCED_SEARCH':
@@ -156,25 +156,25 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         ...state,
         search: {
           ...state.search,
-          debounced: action.payload
+          debounced: action.payload,
         },
         // Reset pagination when search changes
         pagination: {
           ...state.pagination,
-          offset: 0
-        }
+          offset: 0,
+        },
       };
 
     case 'SET_UPLOADED_FILE_ID':
       return {
         ...state,
-        uploadedFileId: action.payload
+        uploadedFileId: action.payload,
       };
 
     case 'SET_ONLY_UPDATED':
       return {
         ...state,
-        onlyUpdated: action.payload
+        onlyUpdated: action.payload,
       };
 
     case 'OPEN_DUPLICATE_MODAL':
@@ -184,9 +184,9 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
           ...state.modals,
           duplicate: {
             open: true,
-            accountNumber: action.payload
-          }
-        }
+            accountNumber: action.payload,
+          },
+        },
       };
 
     case 'CLOSE_DUPLICATE_MODAL':
@@ -196,9 +196,9 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
           ...state.modals,
           duplicate: {
             open: false,
-            accountNumber: null
-          }
-        }
+            accountNumber: null,
+          },
+        },
       };
 
     case 'OPEN_ADVISOR_MODAL':
@@ -208,9 +208,9 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
           ...state.modals,
           advisor: {
             open: true,
-            row: action.payload
-          }
-        }
+            row: action.payload,
+          },
+        },
       };
 
     case 'CLOSE_ADVISOR_MODAL':
@@ -220,9 +220,9 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
           ...state.modals,
           advisor: {
             open: false,
-            row: null
-          }
-        }
+            row: null,
+          },
+        },
       };
 
     case 'SET_LOADING':
@@ -230,8 +230,8 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         ...state,
         loading: {
           ...state.loading,
-          [action.payload.key]: action.payload.value
-        }
+          [action.payload.key]: action.payload.value,
+        },
       };
 
     case 'RESET_FILTERS':
@@ -241,13 +241,13 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
         search: initialState.search,
         onlyUpdated: initialState.onlyUpdated,
         uploadedFileId: null,
-        pagination: initialState.pagination
+        pagination: initialState.pagination,
       };
 
     case 'RESET_PAGINATION':
       return {
         ...state,
-        pagination: initialState.pagination
+        pagination: initialState.pagination,
       };
 
     default:
@@ -262,7 +262,7 @@ function aumRowsReducer(state: AumRowsState, action: AumRowsAction): AumRowsStat
 export function useAumRowsState(initialFileId?: string | null) {
   const [state, dispatch] = useReducer(aumRowsReducer, {
     ...initialState,
-    uploadedFileId: initialFileId || null
+    uploadedFileId: initialFileId || null,
   });
 
   // Action creators with useCallback for stable references
@@ -298,7 +298,7 @@ export function useAumRowsState(initialFileId?: string | null) {
     dispatch({ type: 'CLOSE_DUPLICATE_MODAL' });
   }, []);
 
-  const openAdvisorModal = useCallback((row: Row) => {
+  const openAdvisorModal = useCallback((row: AumRow) => {
     dispatch({ type: 'OPEN_ADVISOR_MODAL', payload: row });
   }, []);
 
@@ -333,8 +333,7 @@ export function useAumRowsState(initialFileId?: string | null) {
       closeAdvisorModal,
       setLoading,
       resetFilters,
-      resetPagination
-    }
+      resetPagination,
+    },
   };
 }
-

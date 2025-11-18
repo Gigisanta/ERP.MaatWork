@@ -1,6 +1,6 @@
 /**
  * Tests para AutomationsPage
- * 
+ *
  * AI_DECISION: Tests para página de automatizaciones
  * Justificación: Validar renderizado y apertura de N8N
  * Impacto: Prevenir errores en acceso a automatizaciones
@@ -38,7 +38,7 @@ describe('AutomationsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.open = vi.fn();
-    
+
     const { useRequireAuth } = require('../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       loading: false,
@@ -52,7 +52,7 @@ describe('AutomationsPage', () => {
 
   it('debería renderizar página de automatizaciones', () => {
     render(<AutomationsPage />);
-    
+
     expect(screen.getByText(/Automatizaciones/i)).toBeInTheDocument();
     expect(screen.getByText(/WelcomeEmailCard Component/i)).toBeInTheDocument();
   });
@@ -63,24 +63,24 @@ describe('AutomationsPage', () => {
     });
 
     render(<AutomationsPage />);
-    
+
     expect(screen.getByText(/Verificando autenticación/i)).toBeInTheDocument();
   });
 
   it('debería llamar usePageTitle con título correcto', () => {
     const { usePageTitle } = require('../components/PageTitleContext');
-    
+
     render(<AutomationsPage />);
-    
+
     expect(usePageTitle).toHaveBeenCalledWith('Automatizaciones');
   });
 
   it('debería abrir N8N en nueva ventana al hacer click', () => {
     render(<AutomationsPage />);
-    
+
     const n8nButton = screen.getByText(/N8N/i);
     n8nButton.click();
-    
+
     expect(window.open).toHaveBeenCalledWith(
       'https://n8n.example.com',
       '_blank',
@@ -90,17 +90,13 @@ describe('AutomationsPage', () => {
 
   it('debería mostrar botón N8N', () => {
     render(<AutomationsPage />);
-    
+
     expect(screen.getByText(/N8N/i)).toBeInTheDocument();
   });
 
   it('debería mostrar sección de automatizaciones base', () => {
     render(<AutomationsPage />);
-    
+
     expect(screen.getByText(/Automatizaciones base/i)).toBeInTheDocument();
   });
 });
-
-
-
-

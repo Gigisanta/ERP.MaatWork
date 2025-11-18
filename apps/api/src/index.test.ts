@@ -1,6 +1,6 @@
 /**
  * Tests para index.ts (entry point de la API)
- * 
+ *
  * AI_DECISION: Tests para inicialización, health endpoints y error handlers
  * Justificación: Validar que el servidor se inicializa correctamente y maneja errores
  * Impacto: Prevenir problemas en startup y manejo de errores globales
@@ -76,7 +76,7 @@ describe('API Entry Point', () => {
       const mockReq = {
         log: { info: vi.fn() },
       } as Partial<Request>;
-      
+
       const mockRes = {
         json: vi.fn(),
       } as Partial<Response>;
@@ -90,10 +90,7 @@ describe('API Entry Point', () => {
       healthHandler(mockReq as Request, mockRes as Response);
 
       expect(mockRes.json).toHaveBeenCalledWith({ ok: true });
-      expect(mockReq.log?.info).toHaveBeenCalledWith(
-        { route: '/health' },
-        'healthcheck'
-      );
+      expect(mockReq.log?.info).toHaveBeenCalledWith({ route: '/health' }, 'healthcheck');
     });
 
     it('debería tener endpoint /metrics que retorna métricas del sistema', () => {
@@ -232,35 +229,33 @@ describe('API Entry Point', () => {
         params: {},
         user: { id: 'user-1', role: 'advisor' },
       } as Partial<Request>;
-      
+
       const mockRes = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn(),
       } as Partial<Response>;
-      
+
       const mockNext = vi.fn();
 
       // Simular error handler global
-      const errorHandler = (
-        err: Error,
-        req: Request,
-        res: Response,
-        next: NextFunction
-      ) => {
+      const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
         const isProduction = process.env.NODE_ENV === 'production';
-        
-        req.log.error({
-          err,
-          requestId: req.requestId,
-          url: req.url,
-          method: req.method,
-          body: req.body,
-          query: req.query,
-          params: req.params,
-          userId: req.user?.id,
-          userRole: req.user?.role,
-        }, 'Unhandled error in request');
-        
+
+        req.log.error(
+          {
+            err,
+            requestId: req.requestId,
+            url: req.url,
+            method: req.method,
+            body: req.body,
+            query: req.query,
+            params: req.params,
+            userId: req.user?.id,
+            userRole: req.user?.role,
+          },
+          'Unhandled error in request'
+        );
+
         res.status(500).json({
           error: 'Internal server error',
           requestId: req.requestId,
@@ -285,7 +280,7 @@ describe('API Entry Point', () => {
 
     it('debería ocultar detalles de error en producción', () => {
       process.env.NODE_ENV = 'production';
-      
+
       const mockReq = {
         log: { error: vi.fn() },
         requestId: 'req-123',
@@ -295,22 +290,17 @@ describe('API Entry Point', () => {
         query: {},
         params: {},
       } as Partial<Request>;
-      
+
       const mockRes = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn(),
       } as Partial<Response>;
-      
+
       const mockNext = vi.fn();
 
-      const errorHandler = (
-        err: Error,
-        req: Request,
-        res: Response,
-        next: NextFunction
-      ) => {
+      const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
         const isProduction = process.env.NODE_ENV === 'production';
-        
+
         res.status(500).json({
           error: 'Internal server error',
           requestId: req.requestId,
@@ -332,7 +322,7 @@ describe('API Entry Point', () => {
         method: 'GET',
         path: '/nonexistent',
       } as Partial<Request>;
-      
+
       const mockRes = {
         status: vi.fn().mockReturnThis(),
         json: vi.fn(),
@@ -400,7 +390,3 @@ describe('API Entry Point', () => {
     });
   });
 });
-
-
-
-

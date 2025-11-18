@@ -10,7 +10,7 @@ import type {
   UpdateCapacitacionRequest,
   ImportCapacitacionesResponse,
   ListCapacitacionesParams,
-  CapacitacionesListResponse
+  CapacitacionesListResponse,
 } from '@/types/capacitaciones';
 
 // ==========================================================
@@ -69,7 +69,7 @@ export async function deleteCapacitacion(id: string): Promise<ApiResponse<void>>
 
 /**
  * Importar capacitaciones desde CSV
- * 
+ *
  * Similar a uploadAumFile, maneja FormData para subida de archivos
  */
 export async function importCapacitacionesCSV(
@@ -103,7 +103,7 @@ export async function importCapacitacionesCSV(
       // Exponential backoff: 1s, 2s, 4s
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
     }
@@ -112,19 +112,3 @@ export async function importCapacitacionesCSV(
   // All retries exhausted
   throw lastError;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Tests para analytics routes
- * 
+ *
  * AI_DECISION: Tests unitarios para dashboards y métricas
  * Justificación: Validación crítica de cálculos de KPIs
  * Impacto: Prevenir errores en visualización de datos
@@ -23,12 +23,12 @@ vi.mock('@cactus/db', () => ({
   count: vi.fn(),
   sum: vi.fn(),
   desc: vi.fn(),
-  gte: vi.fn()
+  gte: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -39,13 +39,13 @@ describe('GET /analytics/dashboard', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
-      })
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(userRole).toBe('advisor');
@@ -56,14 +56,14 @@ describe('GET /analytics/dashboard', () => {
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue([])
-          })
-        })
-      })
+            orderBy: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -73,18 +73,3 @@ describe('GET /analytics/dashboard', () => {
     expect(requireRole).toBeDefined();
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

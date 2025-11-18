@@ -1,6 +1,6 @@
 /**
  * Tests para logs routes
- * 
+ *
  * AI_DECISION: Tests unitarios para recepción de logs del cliente
  * Justificación: Validación crítica de sanitización y logging
  * Impacto: Prevenir exposición de datos sensibles
@@ -15,7 +15,7 @@ describe('POST /logs/client', () => {
       timestamp: new Date().toISOString(),
       level: 'info' as const,
       message: 'Test log',
-      context: {}
+      context: {},
     };
 
     expect(logEntry.level).toBe('info');
@@ -24,7 +24,7 @@ describe('POST /logs/client', () => {
   it('debería recibir batch de logs', async () => {
     const logs = [
       { timestamp: new Date().toISOString(), level: 'info' as const, message: 'Log 1' },
-      { timestamp: new Date().toISOString(), level: 'warn' as const, message: 'Log 2' }
+      { timestamp: new Date().toISOString(), level: 'warn' as const, message: 'Log 2' },
     ];
 
     expect(logs.length).toBe(2);
@@ -34,7 +34,7 @@ describe('POST /logs/client', () => {
     const sensitiveContext = {
       password: 'secret123',
       token: 'abc123',
-      email: 'user@example.com'
+      email: 'user@example.com',
     };
 
     // Test sanitization logic
@@ -45,7 +45,7 @@ describe('POST /logs/client', () => {
     const validLog = {
       timestamp: new Date().toISOString(),
       level: 'error' as const,
-      message: 'Error message'
+      message: 'Error message',
     };
 
     expect(validLog.level).toBe('error');
@@ -55,7 +55,7 @@ describe('POST /logs/client', () => {
     const largeBatch = Array.from({ length: 101 }, (_, i) => ({
       timestamp: new Date().toISOString(),
       level: 'info' as const,
-      message: `Log ${i}`
+      message: `Log ${i}`,
     }));
 
     expect(largeBatch.length).toBeGreaterThan(100);
@@ -67,18 +67,3 @@ describe('GET /logs/health', () => {
     expect(true).toBe(true);
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

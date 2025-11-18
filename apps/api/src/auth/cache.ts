@@ -1,6 +1,6 @@
 /**
  * In-memory cache for access scope with TTL
- * 
+ *
  * AI_DECISION: Simple in-memory cache for development, consider Redis for production
  * Justificación: getUserAccessScope se llama frecuentemente pero cambia raramente (solo cuando cambia team membership)
  * Impacto: Reduce queries redundantes a DB, mejora performance de endpoints que verifican acceso
@@ -24,17 +24,17 @@ const TTL_MS = 5 * 60 * 1000;
 export function getCachedAccessScope(userId: string, role: string): AccessScope | null {
   const key = `${userId}:${role}`;
   const entry = cache.get(key);
-  
+
   if (!entry) {
     return null;
   }
-  
+
   if (Date.now() > entry.expiresAt) {
     // Expired, remove from cache
     cache.delete(key);
     return null;
   }
-  
+
   return entry.scope;
 }
 
@@ -45,7 +45,7 @@ export function setCachedAccessScope(userId: string, role: string, scope: Access
   const key = `${userId}:${role}`;
   cache.set(key, {
     scope,
-    expiresAt: Date.now() + TTL_MS
+    expiresAt: Date.now() + TTL_MS,
   });
 }
 
@@ -82,8 +82,6 @@ export function clearAccessScopeCache(): void {
 export function getCacheStats(): { size: number; keys: string[] } {
   return {
     size: cache.size,
-    keys: Array.from(cache.keys())
+    keys: Array.from(cache.keys()),
   };
 }
-
-

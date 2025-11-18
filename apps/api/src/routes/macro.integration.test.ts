@@ -1,6 +1,6 @@
 /**
  * Tests de integración para macro routes usando supertest
- * 
+ *
  * AI_DECISION: Tests de integración para endpoints de datos macroeconómicos
  * Justificación: Validar endpoints reales con Express y middleware completo
  * Impacto: Prevenir errores en acceso a datos macro en producción
@@ -51,8 +51,22 @@ describe('Macro Routes Integration', () => {
   describe('GET /macro/series', () => {
     it('debería retornar lista de series macro', async () => {
       const mockSeries = [
-        { id: 'series-1', seriesId: 'GDP_US', name: 'US GDP', provider: 'FRED', country: 'US', active: true },
-        { id: 'series-2', seriesId: 'INFLATION_US', name: 'US Inflation', provider: 'FRED', country: 'US', active: true },
+        {
+          id: 'series-1',
+          seriesId: 'GDP_US',
+          name: 'US GDP',
+          provider: 'FRED',
+          country: 'US',
+          active: true,
+        },
+        {
+          id: 'series-2',
+          seriesId: 'INFLATION_US',
+          name: 'US Inflation',
+          provider: 'FRED',
+          country: 'US',
+          active: true,
+        },
       ];
 
       const mockSelect = vi.fn().mockReturnValue({
@@ -68,7 +82,11 @@ describe('Macro Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/series')
@@ -98,7 +116,11 @@ describe('Macro Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/series?provider=FRED')
@@ -126,7 +148,11 @@ describe('Macro Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/series?country=US')
@@ -139,19 +165,18 @@ describe('Macro Routes Integration', () => {
     it('debería retornar 401 sin autenticación', async () => {
       const app = createTestApp();
 
-      await request(app)
-        .get('/macro/series')
-        .expect(401);
+      await request(app).get('/macro/series').expect(401);
     });
 
     it('debería retornar 403 para rol no autorizado', async () => {
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'client' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'client',
+      });
 
-      await request(app)
-        .get('/macro/series')
-        .set('Cookie', `token=${token}`)
-        .expect(403);
+      await request(app).get('/macro/series').set('Cookie', `token=${token}`).expect(403);
     });
 
     it('debería manejar errores de base de datos', async () => {
@@ -168,7 +193,11 @@ describe('Macro Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/series')
@@ -218,7 +247,11 @@ describe('Macro Routes Integration', () => {
       });
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/GDP_US')
@@ -242,7 +275,11 @@ describe('Macro Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/NONEXISTENT')
@@ -254,7 +291,9 @@ describe('Macro Routes Integration', () => {
 
     it('debería filtrar puntos por rango de fechas', async () => {
       const mockSeries = [{ id: 'series-uuid', seriesId: 'GDP_US' }];
-      const mockPoints = [{ id: 'point-1', seriesId: 'GDP_US', date: '2024-06-01', value: '25000' }];
+      const mockPoints = [
+        { id: 'point-1', seriesId: 'GDP_US', date: '2024-06-01', value: '25000' },
+      ];
 
       let callCount = 0;
       mockDb.mockImplementation(() => {
@@ -284,7 +323,11 @@ describe('Macro Routes Integration', () => {
       });
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/GDP_US?from=2024-01-01&to=2024-12-31')
@@ -296,7 +339,11 @@ describe('Macro Routes Integration', () => {
 
     it('debería validar formato de fecha', async () => {
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/macro/GDP_US?from=invalid-date')
@@ -307,7 +354,3 @@ describe('Macro Routes Integration', () => {
     });
   });
 });
-
-
-
-

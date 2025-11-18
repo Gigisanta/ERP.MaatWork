@@ -20,12 +20,12 @@ vi.mock('@cactus/db', () => ({
   contacts: {},
   users: {},
   eq: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
@@ -36,64 +36,64 @@ vi.mock('../../auth/authorization', () => ({
     accessibleAdvisorIds: [],
     canSeeUnassigned: true,
     canAssignToOthers: true,
-    canReassign: true
-  })
+    canReassign: true,
+  }),
 }));
 
 vi.mock('../../utils/validation', () => ({
-  validate: vi.fn(() => (req, res, next) => next())
+  validate: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../services/aumParser', () => ({
-  parseAumFile: vi.fn()
+  parseAumFile: vi.fn(),
 }));
 
 vi.mock('../../services/aumMatcher', () => ({
   matchContactByAccountNumber: vi.fn(),
   matchContactByHolderName: vi.fn(),
-  matchAdvisor: vi.fn()
+  matchAdvisor: vi.fn(),
 }));
 
 vi.mock('../../services/aumUpsert', () => ({
   upsertAumRows: vi.fn(),
   applyAdvisorAccountMapping: vi.fn(),
-  upsertAumMonthlySnapshots: vi.fn()
+  upsertAumMonthlySnapshots: vi.fn(),
 }));
 
 vi.mock('../../services/aumConflictResolution', () => ({
   inheritAdvisorFromExisting: vi.fn(),
-  shouldFlagConflict: vi.fn()
+  shouldFlagConflict: vi.fn(),
 }));
 
 vi.mock('../../utils/aum-file-detection', () => ({
-  detectAumFileMetadata: vi.fn()
+  detectAumFileMetadata: vi.fn(),
 }));
 
 vi.mock('../../utils/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
-  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase())
+  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
 
 vi.mock('../../config/aum-limits', () => ({
   AUM_LIMITS: {
     MAX_FILE_SIZE: 25 * 1024 * 1024,
-    PREVIEW_LIMIT: 500
-  }
+    PREVIEW_LIMIT: 500,
+  },
 }));
 
 vi.mock('multer', () => ({
   default: vi.fn(() => ({
-    single: vi.fn(() => (req, res, next) => next())
+    single: vi.fn(() => (req, res, next) => next()),
   })),
-  diskStorage: vi.fn(() => ({}))
+  diskStorage: vi.fn(() => ({})),
 }));
 
 vi.mock('node:fs', () => ({
   promises: {
     mkdir: vi.fn().mockResolvedValue(undefined),
     unlink: vi.fn().mockResolvedValue(undefined),
-    access: vi.fn().mockResolvedValue(undefined)
-  }
+    access: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { db } from '@cactus/db';
@@ -120,7 +120,7 @@ describe('AUM Upload Routes', () => {
     adminToken = await signUserToken({
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     });
   });
 
@@ -130,7 +130,7 @@ describe('AUM Upload Routes', () => {
         path: '/tmp/test.csv',
         originalname: 'test.csv',
         size: 1000,
-        mimetype: 'text/csv'
+        mimetype: 'text/csv',
       };
 
       mockParseAumFile.mockResolvedValue({
@@ -140,9 +140,9 @@ describe('AUM Upload Routes', () => {
             accountNumber: '12345',
             holderName: 'Juan Perez',
             advisorRaw: 'advisor@example.com',
-            aumDollars: 1000
-          } as any
-        ]
+            aumDollars: 1000,
+          } as any,
+        ],
       });
 
       mockUpsertAumRows.mockResolvedValue({
@@ -151,27 +151,29 @@ describe('AUM Upload Routes', () => {
           inserted: 1,
           updated: 0,
           errors: 0,
-          updatedOnlyHolderName: 0
-        }
+          updatedOnlyHolderName: 0,
+        },
       });
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'file-123',
-            broker: 'balanz',
-            originalFilename: 'test.csv',
-            status: 'parsed'
-          }])
-        })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'file-123',
+              broker: 'balanz',
+              originalFilename: 'test.csv',
+              status: 'parsed',
+            },
+          ]),
+        }),
       });
 
       let callCount = 0;
@@ -194,20 +196,20 @@ describe('AUM Upload Routes', () => {
         ok: true,
         file: expect.objectContaining({
           id: 'file-123',
-          broker: 'balanz'
+          broker: 'balanz',
         }),
         stats: expect.objectContaining({
           inserted: 1,
           updated: 0,
-          errors: 0
-        })
+          errors: 0,
+        }),
       });
     });
 
     it('debería retornar error cuando parse falla', async () => {
       mockParseAumFile.mockResolvedValue({
         success: false,
-        error: 'Parse error'
+        error: 'Parse error',
       });
 
       const app = createTestApp();
@@ -219,7 +221,7 @@ describe('AUM Upload Routes', () => {
 
       expect(res.body).toEqual({
         error: 'Error al procesar el archivo',
-        details: 'Parse error'
+        details: 'Parse error',
       });
     });
   });
@@ -229,13 +231,15 @@ describe('AUM Upload Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockExecute = vi.fn().mockResolvedValue({
@@ -243,9 +247,9 @@ describe('AUM Upload Routes', () => {
           {
             id: 'row-1',
             account_number: '12345',
-            holder_name: 'Juan Perez'
-          }
-        ]
+            holder_name: 'Juan Perez',
+          },
+        ],
       });
 
       let callCount = 0;
@@ -265,14 +269,14 @@ describe('AUM Upload Routes', () => {
 
       expect(res.body).toEqual({
         file: expect.objectContaining({
-          id: 'file-123'
+          id: 'file-123',
         }),
         rows: expect.arrayContaining([
           expect.objectContaining({
             id: 'row-1',
-            accountNumber: '12345'
-          })
-        ])
+            accountNumber: '12345',
+          }),
+        ]),
       });
     });
   });
@@ -282,18 +286,20 @@ describe('AUM Upload Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv',
-              status: 'parsed'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+              },
+            ]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -306,7 +312,7 @@ describe('AUM Upload Routes', () => {
         id: 'file-123',
         broker: 'balanz',
         originalFilename: 'test.csv',
-        status: 'parsed'
+        status: 'parsed',
       });
     });
   });
@@ -323,17 +329,17 @@ describe('AUM Upload Routes', () => {
                     id: 'file-123',
                     broker: 'balanz',
                     originalFilename: 'test.csv',
-                    status: 'parsed'
-                  }
-                ])
-              })
-            })
-          })
-        })
+                    status: 'parsed',
+                  },
+                ]),
+              }),
+            }),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -346,19 +352,11 @@ describe('AUM Upload Routes', () => {
         data: expect.arrayContaining([
           expect.objectContaining({
             id: 'file-123',
-            broker: 'balanz'
-          })
+            broker: 'balanz',
+          }),
         ]),
-        total: expect.any(Number)
+        total: expect.any(Number),
       });
     });
   });
 });
-
-
-
-
-
-
-
-

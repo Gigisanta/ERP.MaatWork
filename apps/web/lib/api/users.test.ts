@@ -7,8 +7,8 @@ vi.mock('../api-client', () => {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      patch: vi.fn(async (_p: string, _b?: unknown) => ({ success: true }))
-    }
+      patch: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
+    },
   };
 });
 
@@ -44,17 +44,3 @@ describe('users api client endpoints', () => {
     expect(apiClient.patch).toHaveBeenCalledWith('/v1/users/u4/role', { role: 'manager' });
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -4,10 +4,10 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { 
-  AutomationConfig, 
-  CreateAutomationConfigRequest, 
-  UpdateAutomationConfigRequest 
+import type {
+  AutomationConfig,
+  CreateAutomationConfigRequest,
+  UpdateAutomationConfigRequest,
 } from '@/types/automation';
 
 // ==========================================================
@@ -31,7 +31,9 @@ export async function getAutomationConfigById(id: string): Promise<ApiResponse<A
 /**
  * Obtener configuración de automatización por nombre
  */
-export async function getAutomationConfigByName(name: string): Promise<ApiResponse<AutomationConfig>> {
+export async function getAutomationConfigByName(
+  name: string
+): Promise<ApiResponse<AutomationConfig>> {
   return apiClient.get<AutomationConfig>(`/v1/automations/by-name/${name}`);
 }
 
@@ -60,9 +62,3 @@ export async function updateAutomationConfig(
 export async function deleteAutomationConfig(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/automations/${id}`);
 }
-
-
-
-
-
-

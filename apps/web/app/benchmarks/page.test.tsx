@@ -1,6 +1,6 @@
 /**
  * Tests para BenchmarksPage
- * 
+ *
  * AI_DECISION: Tests para página de gestión de benchmarks
  * Justificación: Validar acceso restringido y renderizado de benchmarks
  * Impacto: Prevenir acceso no autorizado y errores en visualización
@@ -34,7 +34,7 @@ describe('BenchmarksPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useRequireAuth } = require('../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
@@ -176,7 +176,3 @@ describe('BenchmarksPage', () => {
     });
   });
 });
-
-
-
-

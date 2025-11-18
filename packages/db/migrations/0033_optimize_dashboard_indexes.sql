@@ -87,3 +87,4 @@ COMMENT ON INDEX idx_pipeline_stage_history_from_stage_changed IS
 'Índice compuesto para optimizar queries de pipeline metrics que agrupan por from_stage y filtran por fecha';
 
 
+

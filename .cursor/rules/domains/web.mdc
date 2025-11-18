@@ -1,0 +1,115 @@
+---
+description: "Reglas específicas para frontend Next.js (Server Components, Client Islands, SWR)"
+alwaysApply: false
+---
+
+# Frontend Web - Next.js App Router
+
+## Server Component Architecture
+
+**Server Component:** Data fetching, static rendering, SEO-critical content
+**Client Component:** Interactivity, hooks, browser APIs
+
+### Pattern: Client Islands
+
+- Extract interactive sections into small components (< 100 lines)
+- Pass server data as props
+- Use SWR for client-side mutations
+- Prefix with `"use client"` directive
+
+### Estructura de Client Islands
+
+**Estructura:**
+
+```text
+app/route/
+  page.tsx           # Server Component
+  SomeSection.tsx    # Client Island
+  api-hooks.ts       # SWR hooks
+```
+
+**Ejemplo:**
+
+```typescript
+// page.tsx (Server Component)
+import { SomeSection } from './SomeSection';
+
+export default async function Page() {
+  const data = await fetchData(); // Server-side fetch
+  
+  return (
+    <div>
+      <h1>Server Content</h1>
+      <SomeSection initialData={data} />
+    </div>
+  );
+}
+
+// SomeSection.tsx (Client Island)
+"use client";
+
+import { useSWR } from 'swr';
+
+export function SomeSection({ initialData }) {
+  const { data } = useSWR('/api/data', { fallbackData: initialData });
+  // Interactive logic here
+}
+```
+
+## SWR Configuration
+
+**Usar configuración optimizada para caching agresivo:**
+
+```typescript
+// apps/web/lib/api-hooks.ts
+const swrConfig = {
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false,
+  revalidateIfStale: false,
+  dedupingInterval: 10000,
+  focusThrottleInterval: 60000,
+  shouldRetryOnError: false,
+};
+```
+
+**Configuración para datos que cambian menos frecuentemente:**
+
+```typescript
+const swrConfigLonger = {
+  ...swrConfig,
+  dedupingInterval: 30000,
+};
+```
+
+## Cliente API
+
+**NUNCA usar `fetch` directamente** - Usar cliente centralizado (`lib/api/[domain].ts`).
+
+**Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos.
+
+**Ubicación:** `apps/web/lib/api/[domain].ts`
+
+## Manejo de Errores
+
+**Usar `ApiError` para errores de API:**
+
+```typescript
+import { ApiError } from '@/lib/api-error';
+
+try {
+  await apiClient.post('/v1/endpoint', data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    // Manejar error de API
+    console.error(`API Error ${error.status}: ${error.message}`);
+  }
+}
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ `window.location` en Next.js (usar `useRouter`)
+2. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
+3. ❌ `fetch` manual sin cliente centralizado
+4. ❌ Server Components con hooks de React
+5. ❌ Client Components haciendo data fetching que podría ser server-side

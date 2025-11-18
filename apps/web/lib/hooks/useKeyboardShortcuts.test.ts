@@ -18,15 +18,15 @@ describe('useKeyboardShortcuts', () => {
         {
           key: 'k',
           ctrlKey: true,
-          handler
-        }
+          handler,
+        },
       ])
     );
 
     // Simular keydown event
     const event = new KeyboardEvent('keydown', {
       key: 'k',
-      ctrlKey: true
+      ctrlKey: true,
     });
     window.dispatchEvent(event);
 
@@ -43,8 +43,8 @@ describe('useKeyboardShortcuts', () => {
           {
             key: 'k',
             ctrlKey: true,
-            handler
-          }
+            handler,
+          },
         ],
         false
       )
@@ -52,7 +52,7 @@ describe('useKeyboardShortcuts', () => {
 
     const event = new KeyboardEvent('keydown', {
       key: 'k',
-      ctrlKey: true
+      ctrlKey: true,
     });
     window.dispatchEvent(event);
 
@@ -65,15 +65,15 @@ describe('useKeyboardShortcuts', () => {
       useKeyboardShortcuts([
         {
           key: 'k',
-          handler
-        }
+          handler,
+        },
       ])
     );
 
     unmount();
 
     const event = new KeyboardEvent('keydown', {
-      key: 'k'
+      key: 'k',
     });
     window.dispatchEvent(event);
 
@@ -93,7 +93,7 @@ describe('useSearchShortcut', () => {
 
     const event = new KeyboardEvent('keydown', {
       key: 'k',
-      ctrlKey: true
+      ctrlKey: true,
     });
     window.dispatchEvent(event);
 
@@ -109,18 +109,10 @@ describe('useEscapeShortcut', () => {
     renderHook(() => useEscapeShortcut(onClose));
 
     const event = new KeyboardEvent('keydown', {
-      key: 'Escape'
+      key: 'Escape',
     });
     window.dispatchEvent(event);
 
     expect(onClose).toHaveBeenCalled();
   });
 });
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Tests para AnalyticsPage
- * 
+ *
  * AI_DECISION: Tests para página de analytics dashboard
  * Justificación: Validar renderizado y manejo de datos según rol de usuario
  * Impacto: Prevenir errores en visualización de KPIs críticos
@@ -54,7 +54,7 @@ describe('AnalyticsPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup default mocks
     const { useRequireAuth } = require('../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
@@ -253,7 +253,3 @@ describe('AnalyticsPage', () => {
     });
   });
 });
-
-
-
-

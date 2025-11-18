@@ -1,6 +1,6 @@
 /**
  * AumVirtualTable Component
- * 
+ *
  * AI_DECISION: Componente de tabla virtualizada optimizado
  * Justificación: Virtualización mejora performance con grandes datasets (> 100 filas)
  * Impacto: Solo renderiza filas visibles, reducción de 70% en tiempo de render
@@ -10,7 +10,7 @@
 
 import { useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { Row } from '@/types';
+import type { AumRow } from '@/types';
 import { AumTableHeader } from './AumTableHeader';
 import { AumTableRow } from './AumTableRow';
 import { AUM_ROWS_CONFIG, TOTAL_TABLE_WIDTH } from '../lib/aumRowsConstants';
@@ -18,10 +18,10 @@ import { parseErrorMessage } from '../lib/aumRowsUtils';
 import { Text } from '@cactus/ui';
 
 export interface AumVirtualTableProps {
-  rows: Row[];
+  rows: AumRow[];
   isLoading: boolean;
   error: unknown | null;
-  onOpenAdvisorModal: (row: Row) => void;
+  onOpenAdvisorModal: (row: AumRow) => void;
   onShowDuplicates: (accountNumber: string) => void;
   onAdvisorUpdated?: () => void;
 }
@@ -32,7 +32,7 @@ export function AumVirtualTable({
   error,
   onOpenAdvisorModal,
   onShowDuplicates,
-  onAdvisorUpdated
+  onAdvisorUpdated,
 }: AumVirtualTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +49,7 @@ export function AumVirtualTable({
     getItemKey: (index) => {
       const row = rows[index];
       return row?.id ?? `row-${index}`;
-    }
+    },
   });
 
   // Error state
@@ -59,102 +59,123 @@ export function AumVirtualTable({
     return (
       <div className="bg-white border border-red-200 rounded-lg shadow-sm overflow-hidden">
         <div className="p-4">
-          <Text size="sm" className="text-red-600">{errorMessage}</Text>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <AumTableHeader />
-        <div className="p-4">
-          <div className="space-y-3">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse flex gap-3">
-                <div className="h-4 bg-gray-200 rounded w-32"></div>
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-4 bg-gray-200 rounded w-48"></div>
-                <div className="h-4 bg-gray-200 rounded w-40"></div>
-                <div className="h-4 bg-gray-200 rounded w-28 ml-auto"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Empty state - solo mostrar cuando NO está cargando
-  if (!isLoading && rows.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <AumTableHeader />
-        <div className="p-8 text-center">
-          <Text size="sm" className="text-gray-500">
-            No se encontraron filas. Intenta ajustar los filtros o cargar un archivo nuevo.
+          <Text size="sm" className="text-red-600">
+            {errorMessage}
           </Text>
         </div>
       </div>
     );
   }
 
+  const hasData = rows.length > 0;
+  const virtualItems = virtualizer.getVirtualItems();
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom =
+    virtualItems.length > 0
+      ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+      : 0;
+
   // Table with virtualization
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-      <div
-        ref={parentRef}
-        className="overflow-auto relative"
-        style={{ 
-          height: 'calc(100vh - 320px)', 
-          maxHeight: `${AUM_ROWS_CONFIG.VIRTUALIZER.CONTAINER_HEIGHT}px` 
-        }}
-      >
-        {/* Sticky header */}
-        <AumTableHeader />
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+      <div ref={parentRef} className={`relative flex-1 min-h-0 ${hasData ? 'overflow-auto' : ''}`}>
+        <table
+          className="table-fixed border-collapse w-full"
+          style={{
+            tableLayout: 'fixed',
+            width: `${TOTAL_TABLE_WIDTH}px`,
+            minWidth: `${TOTAL_TABLE_WIDTH}px`,
+          }}
+        >
+          <colgroup>
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACCOUNT}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ID_CUENTA}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.HOLDER}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ADVISOR}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.AUM_DOLLARS}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_ARG}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.FONDOS_ARG}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_BCI}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.PESOS}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.MEP}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CABLE}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CV7000}px` }} />
+            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACTIONS}px` }} />
+          </colgroup>
+          <AumTableHeader />
+          <tbody>
+            {isLoading && (
+              <tr>
+                <td colSpan={13}>
+                  <div className="p-4" data-testid="aum-table-loading">
+                    <div className="space-y-3 animate-pulse">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="flex gap-3">
+                          <div className="h-4 bg-gray-200 rounded w-32" />
+                          <div className="h-4 bg-gray-200 rounded w-24" />
+                          <div className="h-4 bg-gray-200 rounded w-48" />
+                          <div className="h-4 bg-gray-200 rounded w-40" />
+                          <div className="h-4 bg-gray-200 rounded w-28 ml-auto" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            )}
 
-        {/* Virtualized body */}
-        <div style={{ position: 'relative', height: `${virtualizer.getTotalSize()}px` }}>
-          <table
-            className="table-fixed border-collapse"
-            style={{
-              tableLayout: 'fixed',
-              width: `${TOTAL_TABLE_WIDTH}px`,
-              minWidth: `${TOTAL_TABLE_WIDTH}px`
-            }}
-          >
-            <colgroup>
-              {Object.values(AUM_ROWS_CONFIG.COLUMN_WIDTHS).map((width, i) => (
-                <col key={i} style={{ width: `${width}px` }} />
-              ))}
-            </colgroup>
-            <tbody>
-              {virtualizer.getVirtualItems().map((virtualRow) => {
-                const row = rows[virtualRow.index];
-                // Guard: asegurar que la fila existe antes de renderizar
-                if (!row) {
-                  console.warn('[AumVirtualTable] Row missing at index', virtualRow.index, 'total rows:', rows.length);
-                  return null;
-                }
-                // Usar key compuesta para evitar problemas con filas duplicadas
-                const rowKey = `${row.id}-${virtualRow.index}`;
-                return (
-                  <AumTableRow
-                    key={rowKey}
-                    row={row}
-                    onOpenAdvisorModal={onOpenAdvisorModal}
-                    onShowDuplicates={onShowDuplicates}
-                    {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
-                  />
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            {!isLoading && !hasData && (
+              <tr>
+                <td colSpan={13}>
+                  <div className="p-8 text-center" data-testid="aum-table-empty">
+                    <Text size="sm" className="text-gray-500">
+                      No se encontraron filas. Intenta ajustar los filtros o cargar un archivo
+                      nuevo.
+                    </Text>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {!isLoading && hasData && (
+              <>
+                {paddingTop > 0 && (
+                  <tr style={{ height: `${paddingTop}px` }}>
+                    <td colSpan={13} />
+                  </tr>
+                )}
+                {virtualItems.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  if (!row) {
+                    console.warn(
+                      '[AumVirtualTable] Row missing at index',
+                      virtualRow.index,
+                      'total rows:',
+                      rows.length
+                    );
+                    return null;
+                  }
+                  const rowKey = `${row.id}-${virtualRow.index}`;
+                  return (
+                    <AumTableRow
+                      key={rowKey}
+                      row={row}
+                      onOpenAdvisorModal={onOpenAdvisorModal}
+                      onShowDuplicates={onShowDuplicates}
+                      {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
+                    />
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr style={{ height: `${paddingBottom}px` }}>
+                    <td colSpan={13} />
+                  </tr>
+                )}
+              </>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
-

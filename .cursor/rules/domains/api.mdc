@@ -1,0 +1,158 @@
+---
+description: "Reglas específicas para backend API (Express, Zod, Drizzle, logging)"
+alwaysApply: false
+---
+
+# Backend API - Express + Zod + Drizzle
+
+## Estructura de Rutas
+
+**Ubicación:** `apps/api/src/routes/*.ts`
+
+**Patrón estándar:**
+
+```typescript
+import { Router } from 'express';
+import { requireAuth, requireRole } from '../auth/middlewares';
+import { validate } from '../utils/validation';
+import { z } from 'zod';
+
+const router = Router();
+
+// ==========================================================
+// Zod Validation Schemas
+// ==========================================================
+
+const createSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().optional()
+});
+
+// ==========================================================
+// Routes
+// ==========================================================
+
+router.post('/',
+  requireAuth,
+  validate({ body: createSchema }),  // ✅ Middleware validate()
+  async (req, res) => {
+    // req.body ya está validado y tipado
+  }
+);
+```
+
+## Validaciones con Zod
+
+**Validar en backend SIEMPRE** con schemas y middleware `validate()`.
+
+**Reglas:**
+
+- ✅ Usar middleware `validate()` en la definición del endpoint
+- ❌ NO usar `.parse()` manual en el handler
+- ❌ NO manejar `ZodError` manualmente
+
+**Ubicación:** Definir schemas en `apps/api/src/routes/*.ts` bajo `// Zod Validation Schemas`
+
+**Schemas comunes disponibles:**
+
+```typescript
+import { uuidSchema, paginationQuerySchema } from '../utils/common-schemas';
+```
+
+## Middleware Patterns
+
+### Autenticación
+
+```typescript
+// Requerir autenticación
+router.get('/protected', requireAuth, async (req, res) => {
+  // req.user está disponible
+});
+
+// Requerir rol específico
+router.delete('/admin-only', 
+  requireAuth, 
+  requireRole('admin'),
+  async (req, res) => {
+    // Solo admins pueden acceder
+  }
+);
+```
+
+### Logging
+
+```typescript
+// Usar req.log (pino) - NO console.log
+router.post('/endpoint', async (req, res) => {
+  req.log.info({ action: 'create_item' }, 'Creating item');
+  
+  try {
+    // ...
+    req.log.info({ itemId: result.id }, 'Item created successfully');
+  } catch (error) {
+    req.log.error({ err: error }, 'Failed to create item');
+    throw error;
+  }
+});
+```
+
+## Cliente API Centralizado (Frontend)
+
+**NUNCA usar `fetch` directamente** - Usar cliente centralizado (`lib/api/[domain].ts`).
+
+**Features requeridos:** Retry (5xx), refresh token (401), timeout, headers automáticos.
+
+**Ubicación:** `apps/web/lib/api/[domain].ts`
+
+## Manejo de Errores
+
+**Usar `createErrorResponse()` para respuestas consistentes:**
+
+```typescript
+import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
+
+router.post('/endpoint', async (req, res) => {
+  try {
+    // ...
+  } catch (error) {
+    const statusCode = getStatusCodeFromError(error);
+    const response = createErrorResponse({
+      error,
+      requestId: req.requestId,
+      userMessage: 'Failed to process request'
+    });
+    return res.status(statusCode).json(response);
+  }
+});
+```
+
+## Transacciones de Base de Datos
+
+**Usar `transactionWithLogging()` para operaciones multi-query:**
+
+```typescript
+import { transactionWithLogging } from '../utils/db-transactions';
+
+await transactionWithLogging(
+  req.log,
+  'commit-aum-file',
+  async (tx) => {
+    await tx.insert(brokerAccounts).values({...});
+    await tx.update(contacts).set({...});
+    return { success: true };
+  },
+  {
+    maxRetries: 3,
+    timeout: 30000
+  }
+);
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ `fetch` manual sin cliente centralizado
+2. ❌ Sin validación de inputs (usar Zod)
+3. ❌ `console.log` en producción (usar `req.log`)
+4. ❌ Queries N+1 en loops (usar batch queries)
+5. ❌ Timeouts hardcodeados (usar config centralizada)
+6. ❌ Manejar `ZodError` manualmente (usar middleware `validate()`)

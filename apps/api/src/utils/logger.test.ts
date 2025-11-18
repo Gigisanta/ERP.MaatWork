@@ -1,6 +1,6 @@
 /**
  * Tests para logger
- * 
+ *
  * AI_DECISION: Tests unitarios para logger estructurado
  * Justificación: Validación crítica de logging
  * Impacto: Prevenir errores en logging
@@ -14,8 +14,8 @@ vi.mock('pino', () => ({
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-    debug: vi.fn()
-  }))
+    debug: vi.fn(),
+  })),
 }));
 
 describe('logger', () => {
@@ -58,11 +58,3 @@ describe('logger', () => {
     process.env.NODE_ENV = originalEnv;
   });
 });
-
-
-
-
-
-
-
-

@@ -1,0 +1,89 @@
+---
+description: "Reglas específicas para base de datos (Drizzle ORM, migraciones, seeds)"
+alwaysApply: false
+---
+
+# Database - Drizzle ORM
+
+## Estructura
+
+```text
+packages/db/src/
+├── schema.ts            # Definiciones de tablas Drizzle
+├── index.ts             # Exporta db() y schema
+├── seed-*.ts            # Seeds para diferentes contextos
+└── tools/                # Scripts de utilidad
+```
+
+## Reglas Críticas
+
+### Migraciones
+
+**⚠️ CRÍTICO:** NUNCA usar `drizzle-kit push` - es destructivo y elimina datos.
+
+**Flujo correcto:**
+
+1. Modificar schema: `packages/db/src/schema.ts`
+2. Generar migración: `pnpm -F @cactus/db generate`
+3. Aplicar migración: `pnpm -F @cactus/db migrate`
+
+**Comandos:**
+
+```bash
+pnpm -F @cactus/db build         # Compilar TypeScript
+pnpm -F @cactus/db generate      # Generar migración
+pnpm -F @cactus/db migrate       # Aplicar migración
+pnpm -F @cactus/db seed:all      # Seed completo
+```
+
+### Singleton db()
+
+**✅ BIEN - Usar singleton db():**
+
+```typescript
+import { db } from '@cactus/db';
+
+const result = await db().select().from(users);
+```
+
+**❌ MAL - Crear pools manuales:**
+
+```typescript
+// NO hacer esto
+const pool = new Pool({ ... });
+```
+
+### Exportar Schema
+
+**Exportar schema** como `@cactus/db/schema` para tipos:
+
+```typescript
+import { contacts } from '@cactus/db/schema';
+import { type InferSelectModel } from 'drizzle-orm';
+
+export type Contact = InferSelectModel<typeof contacts>;
+```
+
+## Seeds Disponibles
+
+- `pnpm -F @cactus/db seed:all` - Seed sistema completo
+- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
+- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos
+
+## Testing
+
+- ✅ **No tests unit** - Validación vía migraciones y seeds
+- ✅ **Seeds como tests** - Verifican integridad de schema
+
+**Documentación:** Ver [docs/DATABASE.md](../../docs/DATABASE.md) para guía completa
+
+## Build
+
+**Build genera `dist/`** con tipos TypeScript
+
+## Anti-Patterns a Evitar
+
+1. ❌ `drizzle-kit push` (destructivo, elimina datos)
+2. ❌ Crear pools manuales (usar singleton db())
+3. ❌ Duplicar definiciones de tipos (usar InferSelectModel)
+4. ❌ Modificar migraciones ya aplicadas

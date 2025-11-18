@@ -1,0 +1,130 @@
+---
+description: "Patrones de logging estructurado (pino, req.log, niveles, contexto)"
+alwaysApply: false
+---
+
+# Logging Estructurado
+
+## Uso de req.log (Backend API)
+
+**SIEMPRE usar `req.log` (pino) - NO `console.log`:**
+
+```typescript
+router.post('/endpoint', async (req, res) => {
+  req.log.info({ action: 'create_item' }, 'Creating item');
+  
+  try {
+    // ...
+    req.log.info({ itemId: result.id }, 'Item created successfully');
+  } catch (error) {
+    req.log.error({ err: error, itemId: req.body.id }, 'Failed to create item');
+    throw error;
+  }
+});
+```
+
+## Niveles de Log
+
+**Usar niveles apropiados:**
+
+- `debug` - Información detallada para debugging
+- `info` - Eventos normales de la aplicación
+- `warn` - Advertencias (errores recuperables, comportamiento inesperado)
+- `error` - Errores que requieren atención
+
+**Ejemplo:**
+
+```typescript
+req.log.debug({ query: sql }, 'Executing query');
+req.log.info({ userId: user.id, action: 'login' }, 'User logged in');
+req.log.warn({ userId: user.id, reason: 'inactive' }, 'Login attempt for inactive user');
+req.log.error({ err: error }, 'Failed to process request');
+```
+
+## Contexto Estructurado
+
+**Incluir contexto relevante en logs:**
+
+```typescript
+// ✅ BIEN - Contexto estructurado
+req.log.info({
+  userId: user.id,
+  action: 'update_contact',
+  contactId: contact.id,
+  changes: { field: 'email', oldValue: oldEmail, newValue: newEmail }
+}, 'Contact updated');
+
+// ❌ MAL - Sin contexto estructurado
+req.log.info('Contact updated'); // No hay información útil
+```
+
+**Campos comunes de contexto:**
+
+- `userId` - ID del usuario que realiza la acción
+- `requestId` - ID de la request (automático en req.log)
+- `action` - Nombre de la acción
+- `err` - Error object (para error logs)
+
+## Configuración de Pino
+
+**Configuración en `apps/api/src/index.ts`:**
+
+```typescript
+app.use(
+  pinoHttp({
+    logger,
+    autoLogging: false, // Solo loguear manualmente
+    customLogLevel: (req, res, err) => {
+      if (res.statusCode >= 400 && res.statusCode < 500) return 'warn';
+      if (res.statusCode >= 500 || err) return 'error';
+      return 'info';
+    },
+    customProps: (req: Request) => ({
+      requestId: req.requestId,
+      userId: req.user?.id
+    }),
+  })
+);
+```
+
+## Logging en Frontend
+
+**Usar logger estructurado del frontend:**
+
+```typescript
+import { logger } from '@/lib/logger';
+
+logger.info('User action', { action: 'click_button', buttonId: 'submit' });
+logger.error('API error', { error, endpoint: '/api/data' });
+```
+
+**Características:**
+
+- ✅ Envía logs al backend para correlación
+- ✅ Formato JSON estructurado
+- ✅ Prevención de recursión (no loguea errores del logger)
+
+## Prevención de Recursión
+
+**NO loguear errores del logger:**
+
+```typescript
+// En logger.ts
+private async sendToBackend(entry: LogEntry): Promise<void> {
+  try {
+    await apiClient.post('/v1/logs/client', entry);
+  } catch (error) {
+    // NO loguear este error para evitar recursión
+    // Solo usar console.error directamente
+    console.error('[Logger] Failed to send log to backend:', error);
+  }
+}
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ `console.log` en producción (usar logger estructurado)
+2. ❌ Logs sin contexto estructurado
+3. ❌ Loguear información sensible (passwords, tokens)
+4. ❌ Loguear errores del logger (causa recursión)
+5. ❌ Logs excesivos (solo información relevante)

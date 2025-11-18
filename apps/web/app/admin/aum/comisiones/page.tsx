@@ -8,7 +8,9 @@ export default function AumComisionesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">AUM - Comisiones</h2>
-          <p className="text-sm text-gray-600">Gestiona y normaliza datos de comisiones por operaciones</p>
+          <p className="text-sm text-gray-600">
+            Gestiona y normaliza datos de comisiones por operaciones
+          </p>
         </div>
         <Link href="/admin/aum">
           <Button variant="outline" size="sm">
@@ -29,19 +31,3 @@ export default function AumComisionesPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Tests de integración para yields routes usando supertest
- * 
+ *
  * AI_DECISION: Tests de integración para endpoints de yield curves
  * Justificación: Validar endpoints reales con Express y middleware completo
  * Impacto: Prevenir errores en acceso a datos de yield curves en producción
@@ -49,8 +49,22 @@ describe('Yields Routes Integration', () => {
   describe('GET /yields', () => {
     it('debería retornar yields sin filtros', async () => {
       const mockYields = [
-        { id: 'yield-1', country: 'US', date: '2024-01-01', tenor: '2y', value: '4.5', provider: 'FRED' },
-        { id: 'yield-2', country: 'US', date: '2024-01-01', tenor: '10y', value: '4.8', provider: 'FRED' },
+        {
+          id: 'yield-1',
+          country: 'US',
+          date: '2024-01-01',
+          tenor: '2y',
+          value: '4.5',
+          provider: 'FRED',
+        },
+        {
+          id: 'yield-2',
+          country: 'US',
+          date: '2024-01-01',
+          tenor: '10y',
+          value: '4.8',
+          provider: 'FRED',
+        },
       ];
 
       const mockSelect = vi.fn().mockReturnValue({
@@ -66,12 +80,13 @@ describe('Yields Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
-      const res = await request(app)
-        .get('/yields')
-        .set('Cookie', `token=${token}`)
-        .expect(200);
+      const res = await request(app).get('/yields').set('Cookie', `token=${token}`).expect(200);
 
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveLength(2);
@@ -79,7 +94,14 @@ describe('Yields Routes Integration', () => {
 
     it('debería filtrar por country', async () => {
       const mockYields = [
-        { id: 'yield-1', country: 'US', date: '2024-01-01', tenor: '2y', value: '4.5', provider: 'FRED' },
+        {
+          id: 'yield-1',
+          country: 'US',
+          date: '2024-01-01',
+          tenor: '2y',
+          value: '4.5',
+          provider: 'FRED',
+        },
       ];
 
       const mockSelect = vi.fn().mockReturnValue({
@@ -95,7 +117,11 @@ describe('Yields Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/yields?country=US')
@@ -137,7 +163,11 @@ describe('Yields Routes Integration', () => {
       });
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/yields?country=US&date=2024-01-01')
@@ -151,24 +181,27 @@ describe('Yields Routes Integration', () => {
     it('debería retornar 401 sin autenticación', async () => {
       const app = createTestApp();
 
-      await request(app)
-        .get('/yields')
-        .expect(401);
+      await request(app).get('/yields').expect(401);
     });
 
     it('debería retornar 403 para rol no autorizado', async () => {
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'client' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'client',
+      });
 
-      await request(app)
-        .get('/yields')
-        .set('Cookie', `token=${token}`)
-        .expect(403);
+      await request(app).get('/yields').set('Cookie', `token=${token}`).expect(403);
     });
 
     it('debería validar formato de fecha', async () => {
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/yields?date=invalid-date')
@@ -213,7 +246,11 @@ describe('Yields Routes Integration', () => {
       });
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/yields/spreads?country=US')
@@ -238,7 +275,11 @@ describe('Yields Routes Integration', () => {
       } as any);
 
       const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .get('/yields/spreads?country=US')
@@ -249,7 +290,3 @@ describe('Yields Routes Integration', () => {
     });
   });
 });
-
-
-
-

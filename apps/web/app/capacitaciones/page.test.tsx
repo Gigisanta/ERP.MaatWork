@@ -1,6 +1,6 @@
 /**
  * Tests para CapacitacionesPage
- * 
+ *
  * AI_DECISION: Tests para página de capacitaciones
  * Justificación: Validar renderizado y loading states
  * Impacto: Prevenir errores en visualización de capacitaciones
@@ -30,7 +30,7 @@ describe('CapacitacionesPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useRequireAuth } = require('../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       loading: false,
@@ -40,7 +40,7 @@ describe('CapacitacionesPage', () => {
 
   it('debería renderizar página de capacitaciones', () => {
     render(<CapacitacionesPage />);
-    
+
     expect(screen.getByText(/CapacitacionesList Component/i)).toBeInTheDocument();
   });
 
@@ -50,19 +50,15 @@ describe('CapacitacionesPage', () => {
     });
 
     render(<CapacitacionesPage />);
-    
+
     expect(screen.getByText(/cargando/i)).toBeInTheDocument();
   });
 
   it('debería llamar usePageTitle con título correcto', () => {
     const { usePageTitle } = require('../components/PageTitleContext');
-    
+
     render(<CapacitacionesPage />);
-    
+
     expect(usePageTitle).toHaveBeenCalledWith('Capacitaciones');
   });
 });
-
-
-
-

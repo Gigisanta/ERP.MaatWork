@@ -1,0 +1,127 @@
+---
+alwaysApply: true
+description: "Reglas base de arquitectura general del monorepo - siempre aplicadas"
+---
+
+# Proyecto: CACTUS CRM (Monorepo pnpm + Turborepo)
+
+## Arquitectura General
+
+**Monorepo:** `pnpm workspaces` + `turborepo`
+
+- **Apps:** `apps/api` (Node.js + Express), `apps/web` (Next.js App Router), `apps/analytics-service` (Python)
+- **Packages:** `packages/db` (Drizzle ORM), `packages/ui` (React Components)
+- **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
+
+**Rutas clave:**
+
+- API: `apps/api/src/routes/*`, entrypoint `apps/api/src/index.ts`
+- Web: `apps/web/app/*` (Server/Client components)
+- DB: `packages/db/src/schema.ts`, migraciones con `drizzle-kit`
+- UI: `packages/ui/src/components/*`
+
+**Documentación:** Ver [docs/README.md](../../docs/README.md) para índice completo
+
+---
+
+## Principios Fundamentales
+
+### Antes de Modificar Código
+
+1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
+2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
+3. **Ejecutar typecheck ANTES:** `pnpm typecheck` (todos los workspaces)
+4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
+
+---
+
+## Comandos Útiles
+
+**Desarrollo:**
+
+```bash
+pnpm dev                   # Dev mode (web + api + analytics)
+pnpm -F @cactus/api dev    # Solo API
+pnpm -F @cactus/web dev    # Solo frontend
+```
+
+**Typecheck (SIEMPRE antes de commit):**
+
+```bash
+pnpm typecheck             # Todos los workspaces
+pnpm -F @cactus/web typecheck
+pnpm -F @cactus/api typecheck
+```
+
+**Build:**
+
+```bash
+pnpm -F @cactus/ui build   # Construir paquete UI
+pnpm -F @cactus/db build   # Construir paquete DB
+pnpm build                 # Build completo
+```
+
+**Tests:**
+
+```bash
+pnpm test                  # Unit tests
+pnpm test:coverage         # Con coverage
+pnpm test:e2e              # E2E tests
+```
+
+**Base de Datos:**
+
+```bash
+pnpm -F @cactus/db generate    # Generar migración
+pnpm -F @cactus/db migrate     # Aplicar migración
+pnpm -F @cactus/db seed:all     # Seed completo
+```
+
+---
+
+## Referencias Rápidas
+
+**Rutas de código:**
+
+- **Tipos:** `apps/web/types/[domain].ts`
+- **Cliente API:** `apps/web/lib/api/[domain].ts`
+- **Validaciones:** `apps/api/src/routes/*.ts` (sección `// Zod Validation Schemas`)
+- **Utils:** `apps/api/src/utils/[feature].ts`
+- **Config:** `apps/api/src/config/[feature].ts`
+- **UI Components:** `packages/ui/src/components/*` (verificar tipos antes de usar)
+- **Schema DB:** `packages/db/src/schema.ts`
+
+**Documentación:**
+
+- [Índice de Documentación](../../docs/README.md)
+- [Arquitectura](../../docs/ARCHITECTURE.md)
+- [Guía de Base de Datos](../../docs/DATABASE.md)
+- [Guía de Desarrollo](../../docs/DEVELOPMENT.md)
+- [Guía de Testing](../../docs/TESTING.md)
+- [Guía de Operaciones](../../docs/OPERATIONS.md)
+
+**Score objetivo:** 8.5+/10 en todas las categorías de calidad
+
+---
+
+## Documentación de Decisiones
+
+**Para decisiones no obvias, usar formato:**
+
+```typescript
+// AI_DECISION: [Motivo del cambio]
+// Justificación: [Por qué es mejor esta implementación]
+// Impacto: [Qué áreas del código afecta]
+```
+
+---
+
+## Sistema de Reglas Modular
+
+Este proyecto usa un sistema de reglas modular organizado por dominio y patrón:
+
+- **Reglas base:** `00-core.mdc` (siempre aplica), `01-typescript.mdc`, `02-testing.mdc`
+- **Reglas por dominio:** `domains/api.mdc`, `domains/web.mdc`, `domains/ui-package.mdc`, `domains/database.mdc`, `domains/python.mdc`
+- **Reglas por patrón:** `patterns/error-handling.mdc`, `patterns/logging.mdc`, `patterns/security.mdc`, `patterns/api-design.mdc`, `patterns/performance.mdc`
+
+Ver [README.md](./README.md) para índice completo y guía de uso.

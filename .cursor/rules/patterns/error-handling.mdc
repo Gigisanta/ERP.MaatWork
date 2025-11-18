@@ -1,0 +1,117 @@
+---
+description: "Patrones de manejo de errores consistentes (createErrorResponse, ApiError, códigos HTTP)"
+alwaysApply: false
+---
+
+# Manejo de Errores
+
+## Uso de createErrorResponse() (Backend)
+
+**Usar `createErrorResponse()` para respuestas consistentes:**
+
+```typescript
+import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
+
+router.post('/endpoint', async (req, res) => {
+  try {
+    // ...
+  } catch (error) {
+    const statusCode = getStatusCodeFromError(error);
+    const response = createErrorResponse({
+      error,
+      requestId: req.requestId,
+      userMessage: 'Failed to process request',
+      context: { /* contexto adicional */ }
+    });
+    return res.status(statusCode).json(response);
+  }
+});
+```
+
+**Características:**
+
+- ✅ No expone detalles internos en producción
+- ✅ Incluye `requestId` para trazabilidad
+- ✅ Mensaje de usuario amigable
+- ✅ Stack trace y detalles solo en desarrollo
+
+## Uso de ApiError (Frontend)
+
+**Usar `ApiError` para errores de API:**
+
+```typescript
+import { ApiError } from '@/lib/api-error';
+
+try {
+  await apiClient.post('/v1/endpoint', data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    // Manejar error de API
+    console.error(`API Error ${error.status}: ${error.message}`);
+    if (error.details) {
+      // Manejar detalles de validación
+    }
+  }
+}
+```
+
+## Códigos HTTP Consistentes
+
+**Usar `getStatusCodeFromError()` para determinar código:**
+
+```typescript
+// Códigos estándar:
+// 400 - Bad Request (validación, datos inválidos)
+// 401 - Unauthorized (sin autenticación)
+// 403 - Forbidden (sin permisos)
+// 404 - Not Found (recurso no existe)
+// 500 - Internal Server Error (error del servidor)
+```
+
+**Patrones de mensajes de error:**
+
+- `"not found"` → 404
+- `"unauthorized"` → 401
+- `"forbidden"` → 403
+- `"validation"` o `"invalid"` → 400
+- Otros → 500
+
+## Manejo de Errores Transitorios
+
+**En transacciones de base de datos, manejar errores transitorios:**
+
+```typescript
+import { transactionWithLogging } from '../utils/db-transactions';
+
+// transactionWithLogging maneja automáticamente:
+// - Errores transitorios (deadlock, serialization_failure)
+// - Retry con exponential backoff
+// - Timeout de transacción
+```
+
+**Códigos de error transitorios de PostgreSQL:**
+
+- `40P01` - deadlock_detected
+- `40001` - serialization_failure
+- `55P03` - lock_not_available
+- `57014` - query_canceled (timeout)
+
+## Error Boundaries (Frontend)
+
+**Usar ErrorBoundary para capturar errores de React:**
+
+```typescript
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+<ErrorBoundary fallback={<ErrorFallback />}>
+  <ComponentThatMightError />
+</ErrorBoundary>
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ Exponer stack traces en producción
+2. ❌ Mensajes de error genéricos sin contexto
+3. ❌ No incluir `requestId` en respuestas de error
+4. ❌ Manejar errores transitorios como permanentes
+5. ❌ No usar try/catch en operaciones async

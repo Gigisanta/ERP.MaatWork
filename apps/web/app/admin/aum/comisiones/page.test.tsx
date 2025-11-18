@@ -1,6 +1,6 @@
 /**
  * Tests para AumComisionesPage
- * 
+ *
  * AI_DECISION: Tests para página de comisiones AUM
  * Justificación: Validar renderizado de página placeholder
  * Impacto: Prevenir errores en visualización
@@ -20,14 +20,14 @@ vi.mock('next/link', () => ({
 describe('AumComisionesPage', () => {
   it('debería renderizar página de comisiones AUM', () => {
     render(<AumComisionesPage />);
-    
+
     expect(screen.getByText(/AUM - Comisiones/i)).toBeInTheDocument();
     expect(screen.getByText(/Esta sección está en desarrollo/i)).toBeInTheDocument();
   });
 
   it('debería mostrar link de vuelta al hub', () => {
     render(<AumComisionesPage />);
-    
+
     const backLink = screen.getByText(/Volver al hub/i);
     expect(backLink).toBeInTheDocument();
     expect(backLink.closest('a')).toHaveAttribute('href', '/admin/aum');
@@ -35,11 +35,7 @@ describe('AumComisionesPage', () => {
 
   it('debería mostrar descripción de la página', () => {
     render(<AumComisionesPage />);
-    
+
     expect(screen.getByText(/Gestiona y normaliza datos de comisiones/i)).toBeInTheDocument();
   });
 });
-
-
-
-

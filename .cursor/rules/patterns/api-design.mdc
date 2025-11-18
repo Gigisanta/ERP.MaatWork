@@ -1,0 +1,145 @@
+---
+description: "Patrones de diseño de API (RESTful, paginación, versionado, Request IDs)"
+alwaysApply: false
+---
+
+# Diseño de API
+
+## Estructura RESTful
+
+**Usar convenciones REST estándar:**
+
+```typescript
+// GET /v1/contacts - Listar recursos
+router.get('/contacts', ...);
+
+// GET /v1/contacts/:id - Obtener recurso específico
+router.get('/contacts/:id', ...);
+
+// POST /v1/contacts - Crear recurso
+router.post('/contacts', ...);
+
+// PUT /v1/contacts/:id - Actualizar recurso completo
+router.put('/contacts/:id', ...);
+
+// PATCH /v1/contacts/:id - Actualizar recurso parcial
+router.patch('/contacts/:id', ...);
+
+// DELETE /v1/contacts/:id - Eliminar recurso
+router.delete('/contacts/:id', ...);
+```
+
+## Versionado de API
+
+**Usar prefijo `/v1/` para todas las rutas:**
+
+```typescript
+// apps/api/src/index.ts
+app.use('/v1/contacts', contactsRouter);
+app.use('/v1/users', usersRouter);
+```
+
+## Paginación Consistente
+
+**Usar `paginationQuerySchema` para paginación:**
+
+```typescript
+import { paginationQuerySchema } from '../utils/common-schemas';
+
+const listSchema = paginationQuerySchema.and(
+  z.object({
+    // Otros filtros opcionales
+  })
+);
+
+router.get('/',
+  validate({ query: listSchema }),
+  async (req, res) => {
+    const { page = 1, limit = 100 } = req.query;
+    // ...
+  }
+);
+```
+
+**Parámetros estándar:**
+
+- `page` - Número de página (default: 1)
+- `limit` - Elementos por página (default: 100, max: 1000)
+
+**Respuesta estándar:**
+
+```typescript
+{
+  data: [...],
+  pagination: {
+    page: 1,
+    limit: 100,
+    total: 500,
+    totalPages: 5
+  }
+}
+```
+
+## Request IDs
+
+**Request IDs se agregan automáticamente en middleware:**
+
+```typescript
+// Middleware agrega requestId a req.requestId
+// Se incluye en:
+// - Headers de respuesta (X-Request-ID)
+// - Logs estructurados
+// - Respuestas de error
+```
+
+## Códigos de Estado HTTP
+
+**Usar códigos estándar:**
+
+- `200` - OK (GET, PUT, PATCH exitosos)
+- `201` - Created (POST exitoso)
+- `204` - No Content (DELETE exitoso)
+- `400` - Bad Request (validación fallida)
+- `401` - Unauthorized (sin autenticación)
+- `403` - Forbidden (sin permisos)
+- `404` - Not Found (recurso no existe)
+- `500` - Internal Server Error (error del servidor)
+
+## Estructura de Respuestas
+
+**Respuestas exitosas:**
+
+```typescript
+// GET /v1/contacts/:id
+res.json({
+  id: '...',
+  firstName: '...',
+  // ...
+});
+
+// POST /v1/contacts
+res.status(201).json({
+  id: '...',
+  firstName: '...',
+  // ...
+});
+```
+
+**Respuestas de error:**
+
+```typescript
+// Usar createErrorResponse()
+res.status(400).json({
+  error: 'Validation error',
+  requestId: req.requestId,
+  details: [...]
+});
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ Rutas sin versionado (`/contacts` en lugar de `/v1/contacts`)
+2. ❌ Paginación inconsistente
+3. ❌ Códigos de estado incorrectos
+4. ❌ Respuestas sin Request ID
+5. ❌ Estructura de respuesta inconsistente

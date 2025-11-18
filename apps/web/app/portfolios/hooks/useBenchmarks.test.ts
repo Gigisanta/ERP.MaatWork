@@ -1,6 +1,6 @@
 /**
  * Tests para useBenchmarks hook
- * 
+ *
  * AI_DECISION: Tests para hook de gestión de benchmarks
  * Justificación: Validar fetching, creación, actualización y eliminación de benchmarks
  * Impacto: Prevenir errores en gestión de benchmarks
@@ -36,7 +36,7 @@ describe('useBenchmarks', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useEntityWithComponents } = require('./useEntityWithComponents');
     useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
 
@@ -50,9 +50,7 @@ describe('useBenchmarks', () => {
 
   it('debería retornar benchmarks y funciones de gestión', () => {
     mockUseEntityWithComponents.mockReturnValue({
-      entities: [
-        { id: 'bench-1', code: 'MERVAL', name: 'Merval Index' },
-      ],
+      entities: [{ id: 'bench-1', code: 'MERVAL', name: 'Merval Index' }],
       isLoading: false,
       error: null,
       refetch: vi.fn(),
@@ -136,7 +134,13 @@ describe('useBenchmarks', () => {
   });
 
   it('debería pasar configuración correcta a useEntityWithComponents', () => {
-    const { getBenchmarks, getBenchmarkComponentsBatch, createBenchmark, updateBenchmark, deleteBenchmark } = require('@/lib/api');
+    const {
+      getBenchmarks,
+      getBenchmarkComponentsBatch,
+      createBenchmark,
+      updateBenchmark,
+      deleteBenchmark,
+    } = require('@/lib/api');
 
     mockUseEntityWithComponents.mockReturnValue({
       entities: [],
@@ -194,7 +198,3 @@ describe('useBenchmarks', () => {
     expect(result.current.error).toBe('Failed to fetch');
   });
 });
-
-
-
-

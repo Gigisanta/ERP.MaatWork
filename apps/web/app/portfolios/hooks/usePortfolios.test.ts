@@ -1,6 +1,6 @@
 /**
  * Tests para usePortfolios hook
- * 
+ *
  * AI_DECISION: Tests para hook de gestión de portfolios
  * Justificación: Validar fetching, creación, actualización y eliminación de portfolios
  * Impacto: Prevenir errores en gestión de carteras
@@ -20,16 +20,14 @@ describe('usePortfolios', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     const { useEntityWithComponents } = require('./useEntityWithComponents');
     useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
   });
 
   it('debería retornar portfolios y funciones de gestión', () => {
     mockUseEntityWithComponents.mockReturnValue({
-      entities: [
-        { id: 'port-1', name: 'Portfolio 1', riskLevel: 'moderate' },
-      ],
+      entities: [{ id: 'port-1', name: 'Portfolio 1', riskLevel: 'moderate' }],
       isLoading: false,
       error: null,
       refetch: vi.fn(),
@@ -49,7 +47,13 @@ describe('usePortfolios', () => {
   });
 
   it('debería pasar configuración correcta a useEntityWithComponents', () => {
-    const { getPortfolios, getPortfolioLinesBatch, createPortfolio, updatePortfolio, deletePortfolio } = require('@/lib/api');
+    const {
+      getPortfolios,
+      getPortfolioLinesBatch,
+      createPortfolio,
+      updatePortfolio,
+      deletePortfolio,
+    } = require('@/lib/api');
 
     mockUseEntityWithComponents.mockReturnValue({
       entities: [],
@@ -129,7 +133,3 @@ describe('usePortfolios', () => {
     expect(result.current.portfolios.length).toBe(2);
   });
 });
-
-
-
-

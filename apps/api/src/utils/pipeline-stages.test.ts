@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline stages utilities
- * 
+ *
  * AI_DECISION: Tests unitarios para garantizar etapas por defecto del pipeline
  * Justificación: Etapas requeridas para funcionamiento del CRM
  * Impacto: Asegurar que siempre existan las 7 etapas requeridas
@@ -22,9 +22,9 @@ vi.mock('@cactus/db', () => ({
     color: 'pipelineStages.color',
     wipLimit: 'pipelineStages.wipLimit',
     isActive: 'pipelineStages.isActive',
-    updatedAt: 'pipelineStages.updatedAt'
+    updatedAt: 'pipelineStages.updatedAt',
   },
-  eq: vi.fn((col, val) => ({ type: 'eq', col, val }))
+  eq: vi.fn((col, val) => ({ type: 'eq', col, val })),
 }));
 
 const mockDb = vi.mocked(db);
@@ -46,7 +46,7 @@ describe('DEFAULT_PIPELINE_STAGES', () => {
   });
 
   it('debería tener nombres correctos', () => {
-    const stageNames = DEFAULT_PIPELINE_STAGES.map(s => s.name);
+    const stageNames = DEFAULT_PIPELINE_STAGES.map((s) => s.name);
     expect(stageNames).toContain('Prospecto');
     expect(stageNames).toContain('Contactado');
     expect(stageNames).toContain('Primera reunion');
@@ -57,7 +57,7 @@ describe('DEFAULT_PIPELINE_STAGES', () => {
   });
 
   it('debería tener todos los campos requeridos', () => {
-    DEFAULT_PIPELINE_STAGES.forEach(stage => {
+    DEFAULT_PIPELINE_STAGES.forEach((stage) => {
       expect(stage).toHaveProperty('name');
       expect(stage).toHaveProperty('description');
       expect(stage).toHaveProperty('order');
@@ -82,18 +82,18 @@ describe('ensureDefaultPipelineStages', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No stages exist
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No stages exist
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue([])
+        values: vi.fn().mockResolvedValue([]),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       await ensureDefaultPipelineStages();
@@ -106,9 +106,9 @@ describe('ensureDefaultPipelineStages', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No stages exist
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No stages exist
+          }),
+        }),
       });
 
       let insertCallCount = 0;
@@ -116,12 +116,12 @@ describe('ensureDefaultPipelineStages', () => {
         values: vi.fn().mockImplementation(() => {
           insertCallCount++;
           return Promise.resolve([]);
-        })
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       await ensureDefaultPipelineStages();
@@ -139,26 +139,26 @@ describe('ensureDefaultPipelineStages', () => {
         description: 'Old description',
         order: 1,
         color: '#000000',
-        wipLimit: null
+        wipLimit: null,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([existingStage]) // Stage exists
-          })
-        })
+            limit: vi.fn().mockResolvedValue([existingStage]), // Stage exists
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       await ensureDefaultPipelineStages();
@@ -174,15 +174,15 @@ describe('ensureDefaultPipelineStages', () => {
         description: 'Old description',
         order: 1,
         color: '#000000',
-        wipLimit: null
+        wipLimit: null,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([existingStage])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([existingStage]),
+          }),
+        }),
       });
 
       let setValues: any = null;
@@ -190,14 +190,14 @@ describe('ensureDefaultPipelineStages', () => {
         set: vi.fn().mockImplementation((values) => {
           setValues = values;
           return {
-            where: vi.fn().mockResolvedValue([])
+            where: vi.fn().mockResolvedValue([]),
           };
-        })
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       await ensureDefaultPipelineStages();
@@ -220,26 +220,26 @@ describe('ensureDefaultPipelineStages', () => {
         description: 'Description',
         order: 1,
         color: '#3b82f6',
-        wipLimit: null
+        wipLimit: null,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([existingStage])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([existingStage]),
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       // Ejecutar múltiples veces
@@ -257,13 +257,13 @@ describe('ensureDefaultPipelineStages', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockRejectedValue(new Error('DB error'))
-          })
-        })
+            limit: vi.fn().mockRejectedValue(new Error('DB error')),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // No debería lanzar error
@@ -278,27 +278,27 @@ describe('ensureDefaultPipelineStages', () => {
           return {
             from: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
-                limit: vi.fn().mockRejectedValue(new Error('Error on first stage'))
-              })
-            })
+                limit: vi.fn().mockRejectedValue(new Error('Error on first stage')),
+              }),
+            }),
           };
         }
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([])
-            })
-          })
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          }),
         };
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue([])
+        values: vi.fn().mockResolvedValue([]),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       await ensureDefaultPipelineStages();
@@ -313,18 +313,18 @@ describe('ensureDefaultPipelineStages', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue([])
+        values: vi.fn().mockResolvedValue([]),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       // Ejecutar con silent=true
@@ -335,18 +335,3 @@ describe('ensureDefaultPipelineStages', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

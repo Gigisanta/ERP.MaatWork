@@ -1,6 +1,6 @@
 /**
  * AumTableRow Component
- * 
+ *
  * AI_DECISION: Componente memoizado para filas virtualizadas
  * Justificación: Memo previene re-renders innecesarios, crítico para performance con virtualización
  * Impacto: Reducción de 80% en re-renders durante scroll
@@ -10,7 +10,7 @@
 
 import { memo, useState } from 'react';
 import { Button, Badge } from '@cactus/ui';
-import type { Row, Advisor } from '@/types';
+import type { AumRow, Advisor } from '@/types';
 import { formatNumber } from '../lib/aumRowsUtils';
 import { AUM_ROWS_CONFIG } from '../lib/aumRowsConstants';
 import { AdvisorSelector } from './AdvisorSelector';
@@ -22,9 +22,9 @@ import { useToast } from '@/lib/hooks/useToast';
  */
 export interface AumTableRowProps {
   /** Fila AUM a mostrar */
-  row: Row;
+  row: AumRow;
   /** Callback para abrir modal de perfil de asesor */
-  onOpenAdvisorModal: (row: Row) => void;
+  onOpenAdvisorModal: (row: AumRow) => void;
   /** Callback para mostrar filas duplicadas */
   onShowDuplicates: (accountNumber: string) => void;
   /** Callback opcional cuando se actualiza el asesor */
@@ -35,7 +35,7 @@ function AumTableRowComponent({
   row,
   onOpenAdvisorModal,
   onShowDuplicates,
-  onAdvisorUpdated
+  onAdvisorUpdated,
 }: AumTableRowProps) {
   const { COLUMN_WIDTHS } = AUM_ROWS_CONFIG;
   const [isEditingAdvisor, setIsEditingAdvisor] = useState(false);
@@ -63,9 +63,10 @@ function AumTableRowComponent({
       onAdvisorUpdated?.();
     } catch (error) {
       // Manejo robusto de errores con mensajes claros
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Error al actualizar asesor. Por favor, intente nuevamente.';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Error al actualizar asesor. Por favor, intente nuevamente.';
       showToast(errorMessage, undefined, 'error');
     } finally {
       setIsSaving(false);
@@ -78,28 +79,40 @@ function AumTableRowComponent({
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50">
       {/* Comitente */}
-      <td className="px-3 py-2 text-sm text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.ACCOUNT}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.ACCOUNT}px` }}
+      >
         <div className="truncate" title={row.accountNumber || ''}>
           {row.accountNumber || '--'}
         </div>
       </td>
 
       {/* ID Cuenta */}
-      <td className="px-3 py-2 text-sm text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.ID_CUENTA}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.ID_CUENTA}px` }}
+      >
         <div className="truncate" title={row.idCuenta || ''}>
           {row.idCuenta || '--'}
         </div>
       </td>
 
       {/* Holder Name */}
-      <td className="px-3 py-2 text-sm text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.HOLDER}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.HOLDER}px` }}
+      >
         <div className="truncate" title={row.holderName || ''}>
           {row.holderName || '--'}
         </div>
       </td>
 
       {/* Asesor */}
-      <td className="px-3 py-2 text-sm text-gray-900 overflow-hidden group relative" style={{ width: `${COLUMN_WIDTHS.ADVISOR}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-gray-900 overflow-hidden group relative"
+        style={{ width: `${COLUMN_WIDTHS.ADVISOR}px` }}
+      >
         {isEditingAdvisor ? (
           <div className="flex items-center gap-2">
             <AdvisorSelector
@@ -124,9 +137,9 @@ function AumTableRowComponent({
               {row.advisorRaw || '--'}
             </div>
             {row.isNormalized && (
-              <Badge 
-                variant="success" 
-                size="sm" 
+              <Badge
+                variant="success"
+                size="sm"
                 title="Fila normalizada manualmente - Esta asignación se preservará en futuras importaciones"
                 aria-label="Fila normalizada"
               >
@@ -149,47 +162,74 @@ function AumTableRowComponent({
       </td>
 
       {/* AUM USD */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.AUM_DOLLARS}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.AUM_DOLLARS}px` }}
+      >
         {formatNumber(row.aumDollars)}
       </td>
 
       {/* Bolsa Arg */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.BOLSA_ARG}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.BOLSA_ARG}px` }}
+      >
         {formatNumber(row.bolsaArg)}
       </td>
 
       {/* Fondos Arg */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.FONDOS_ARG}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.FONDOS_ARG}px` }}
+      >
         {formatNumber(row.fondosArg)}
       </td>
 
       {/* Bolsa BCI */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.BOLSA_BCI}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.BOLSA_BCI}px` }}
+      >
         {formatNumber(row.bolsaBci)}
       </td>
 
       {/* Pesos */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.PESOS}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.PESOS}px` }}
+      >
         {formatNumber(row.pesos)}
       </td>
 
       {/* MEP */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.MEP}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.MEP}px` }}
+      >
         {formatNumber(row.mep)}
       </td>
 
       {/* Cable */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.CABLE}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.CABLE}px` }}
+      >
         {formatNumber(row.cable)}
       </td>
 
       {/* CV7000 */}
-      <td className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden" style={{ width: `${COLUMN_WIDTHS.CV7000}px` }}>
+      <td
+        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.CV7000}px` }}
+      >
         {formatNumber(row.cv7000)}
       </td>
 
       {/* Acciones */}
-      <td className="px-3 py-2 text-sm overflow-hidden" style={{ width: `${COLUMN_WIDTHS.ACTIONS}px` }}>
+      <td
+        className="px-3 py-2 text-sm overflow-hidden"
+        style={{ width: `${COLUMN_WIDTHS.ACTIONS}px` }}
+      >
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -227,18 +267,17 @@ function AumTableRowComponent({
 export const AumTableRow = memo(AumTableRowComponent, (prev, next) => {
   // Comparar por ID y rowUpdatedAt si existe
   if (prev.row.id !== next.row.id) return false;
-  
+
   // Comparar campos críticos que afectan la visualización
   if (prev.row.matchedUserId !== next.row.matchedUserId) return false;
   if (prev.row.advisorRaw !== next.row.advisorRaw) return false;
   if (prev.row.isNormalized !== next.row.isNormalized) return false;
-  
+
   // Si tiene rowUpdatedAt, comparar por ese campo (más preciso)
   if (prev.row.rowUpdatedAt && next.row.rowUpdatedAt) {
     return prev.row.rowUpdatedAt === next.row.rowUpdatedAt;
   }
-  
+
   // Fallback: comparar por rowCreatedAt si no hay rowUpdatedAt
   return prev.row.rowCreatedAt === next.row.rowCreatedAt;
 });
-

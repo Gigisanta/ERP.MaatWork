@@ -1,6 +1,6 @@
 /**
  * Tests para notifications routes
- * 
+ *
  * AI_DECISION: Tests unitarios para sistema de notificaciones
  * Justificación: Validación crítica de notificaciones y preferencias
  * Impacto: Prevenir errores en gestión de notificaciones
@@ -24,12 +24,12 @@ vi.mock('@cactus/db', () => ({
   lte: vi.fn(),
   or: vi.fn(),
   count: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -41,15 +41,15 @@ describe('GET /notifications', () => {
         where: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
             offset: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue([])
-            })
-          })
-        })
-      })
+              orderBy: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -70,12 +70,12 @@ describe('GET /notifications/unread/count', () => {
   it('debería retornar contador de no leídas', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ count: 5 }])
-      })
+        where: vi.fn().mockResolvedValue([{ count: 5 }]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -87,16 +87,18 @@ describe('POST /notifications/:id/read', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'notification-123',
-            readAt: new Date()
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'notification-123',
+              readAt: new Date(),
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(true).toBe(true);
@@ -108,30 +110,15 @@ describe('POST /notifications/read-all', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{}, {}])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([{}, {}]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(true).toBe(true);
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
