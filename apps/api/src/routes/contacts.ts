@@ -781,6 +781,7 @@ router.post('/',
     }, 'Creación de contacto exitosa');
 
     res.status(201).json({ 
+      success: true,
       data: result,
       warning: advisorWarning 
     });
@@ -916,6 +917,7 @@ router.put('/:id',
 
     req.log.info({ contactId: id, changedFields }, 'contact updated');
     res.json({ 
+      success: true,
       data: updated,
       warning: advisorWarning 
     });
@@ -1039,6 +1041,7 @@ router.patch('/:id',
 
     req.log.info({ contactId: id, fields: fields.map((f: { field: string; value: unknown }) => f.field) }, 'contact patched');
     res.json({ 
+      success: true,
       data: updated,
       warning: advisorWarning 
     });
@@ -1102,7 +1105,7 @@ router.patch('/:id/next-step',
     }
 
     req.log.info({ contactId: id, nextStep }, 'contact next step updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact next step');
     next(err);
@@ -1127,7 +1130,7 @@ router.delete('/:id', requireAuth, requireRole(['manager', 'admin']), async (req
     }
 
     req.log.info({ contactId: id }, 'contact deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to delete contact');
     next(err);
