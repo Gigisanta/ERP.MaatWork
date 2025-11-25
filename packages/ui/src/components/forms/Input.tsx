@@ -6,7 +6,7 @@ import { cn } from '../../utils/cn';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
-  error?: string;
+  error?: string | null | undefined;
   placeholder?: string;
   leftIcon?: IconName;
   rightIcon?: IconName;
@@ -24,8 +24,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
   showPasswordToggle = false,
   type,
   ...props 
-}: InputProps) {
+}: InputProps, ref: React.ForwardedRef<HTMLInputElement>) {
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Normalize error: convert undefined to null for exactOptionalPropertyTypes compatibility
+  const errorValue = error ?? null;
   
   // Only use password toggle if type is password and showPasswordToggle is true
   const isPassword = type === 'password';
@@ -65,7 +68,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
             iconPadding[size],
             rightIcon && !leftIcon && 'pr-10',
             isPassword && showPasswordToggle && 'pr-10',
-            error ? 'border-error focus:border-error focus:ring-error' : 'border-gray-300',
+            errorValue ? 'border-error focus:border-error focus:ring-error' : 'border-gray-300',
             props.disabled && 'opacity-50 cursor-not-allowed bg-gray-50',
             className
           )}
@@ -87,8 +90,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
           </button>
         )}
       </div>
-      {error && (
-        <p className="mt-1 text-sm text-error">{error}</p>
+      {errorValue && (
+        <p className="mt-1 text-sm text-error">{errorValue}</p>
       )}
     </div>
   );

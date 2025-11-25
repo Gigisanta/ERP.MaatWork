@@ -60,11 +60,11 @@ export default function AumRowsPage() {
   const { rows, totalRows, isLoading, error, mutate } = useAumRows({
     limit: state.pagination.limit,
     offset: state.pagination.offset,
-    broker: state.filters.broker !== 'all' ? state.filters.broker : undefined,
-    status: state.filters.status !== 'all' ? state.filters.status : undefined,
-    fileId: state.uploadedFileId || undefined,
+    ...(state.filters.broker !== 'all' && { broker: state.filters.broker }),
+    ...(state.filters.status !== 'all' && { status: state.filters.status }),
+    ...(state.uploadedFileId && { fileId: state.uploadedFileId }),
     preferredOnly: !state.uploadedFileId, // Show all when filtering by file
-    search: debouncedSearchTerm || undefined,
+    ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
     onlyUpdated: state.onlyUpdated
   });
 
@@ -195,8 +195,8 @@ export default function AumRowsPage() {
         {state.modals.advisor.open && state.modals.advisor.row && (
           <AdvisorProfileModal
             row={state.modals.advisor.row}
-            onClose={() => actions.closeAdvisorModal()}
-            onResolved={() => {
+            open={state.modals.advisor.open}
+            onClose={() => {
               actions.closeAdvisorModal();
               mutate();
             }}

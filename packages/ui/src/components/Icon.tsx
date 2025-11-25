@@ -4,6 +4,7 @@ export type IconName =
   | 'Home'
   | 'Users'
   | 'BarChart3'
+  | 'BarChart2'
   | 'Settings'
   | 'LogOut'
   | 'Menu'
@@ -31,7 +32,10 @@ export type IconName =
   | 'check'
   | 'search'
   | 'list'
-  | 'grid';
+  | 'grid'
+  | 'download'
+  | 'Book'
+  | 'ExternalLink';
 
 interface IconProps {
   name: IconName;
@@ -45,6 +49,7 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     'Home': '🏠',
     'Users': '👥',
     'BarChart3': '📊',
+    'BarChart2': '📈',
     'Settings': '⚙️',
     'LogOut': '🚪',
     'Menu': '☰',
@@ -73,6 +78,9 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     'search': '🔍',
     'list': '☰',
     'grid': '▦',
+    'download': '📥',
+    'Book': '📚',
+    'ExternalLink': '🔗',
   };
 
   const iconChar = iconMap[name] || '?';

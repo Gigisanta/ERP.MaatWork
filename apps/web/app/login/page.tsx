@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ identifier?: string; password?: string }>({});
   const hasRedirectedRef = useRef(false);
 
   // AI_DECISION: Redirigir automáticamente si ya hay sesión
@@ -140,7 +141,11 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setIdentifier(e.target.value);
                     if (fieldErrors.identifier) {
-                      setFieldErrors(prev => ({ ...prev, identifier: undefined }));
+                      setFieldErrors(prev => {
+                        const next = { ...prev };
+                        delete next.identifier;
+                        return next;
+                      });
                     }
                   }}
                   placeholder="tu@email.com o tu_usuario"
@@ -148,7 +153,7 @@ export default function LoginPage() {
                   required
                   autoComplete="username"
                   autoFocus
-                  error={fieldErrors.identifier}
+                  error={fieldErrors.identifier ?? null}
                 />
 
                 {/* Password Input */}
@@ -160,7 +165,11 @@ export default function LoginPage() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (fieldErrors.password) {
-                      setFieldErrors(prev => ({ ...prev, password: undefined }));
+                      setFieldErrors(prev => {
+                        const next = { ...prev };
+                        delete next.password;
+                        return next;
+                      });
                     }
                   }}
                   placeholder="Tu contraseña"
@@ -168,7 +177,7 @@ export default function LoginPage() {
                   required
                   showPasswordToggle={true}
                   autoComplete="current-password"
-                  error={fieldErrors.password}
+                  error={fieldErrors.password ?? null}
                 />
 
                 {/* Remember me */}

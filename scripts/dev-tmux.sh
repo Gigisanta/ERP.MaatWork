@@ -95,13 +95,46 @@ if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     sleep 1
 fi
 
-# Verificar si PostgreSQL está corriendo (en Docker o local)
-echo -e "${BLUE}🗄️  Verificando PostgreSQL...${NC}"
-if ! docker ps 2>/dev/null | grep -q "postgres" && ! pg_isready -h localhost -U postgres 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  PostgreSQL no detectado, intentando iniciar con Docker...${NC}"
+# Verificar si PostgreSQL y N8N están corriendo (en Docker o local)
+echo -e "${BLUE}🗄️  Verificando servicios Docker (PostgreSQL y N8N)...${NC}"
+PG_LOCAL_READY=$(pg_isready -h localhost -U postgres 2>/dev/null && echo "true" || echo "false")
+
+# Verificar servicios usando docker compose ps (solo servicios de este proyecto)
+POSTGRES_RUNNING="false"
+N8N_RUNNING="false"
+
+if command -v docker &> /dev/null && [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
+    # Usar docker compose ps para verificar solo los servicios de este proyecto
+    # Parsear JSON línea por línea para encontrar servicios corriendo
+    while IFS= read -r line; do
+        if echo "$line" | grep -q '"Service":"db"'; then
+            if echo "$line" | grep -q '"State":"running"'; then
+                POSTGRES_RUNNING="true"
+            fi
+        fi
+        if echo "$line" | grep -q '"Service":"n8n"'; then
+            if echo "$line" | grep -q '"State":"running"'; then
+                N8N_RUNNING="true"
+            fi
+        fi
+    done < <(docker compose ps --format json 2>/dev/null || true)
+fi
+
+if [ "$POSTGRES_RUNNING" = "false" ] && [ "$PG_LOCAL_READY" != "true" ] || [ "$N8N_RUNNING" = "false" ]; then
+    echo -e "${YELLOW}⚠️  Servicios Docker no detectados, intentando iniciar con Docker Compose...${NC}"
     if command -v docker &> /dev/null && [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
         docker compose up -d 2>/dev/null || echo -e "${YELLOW}⚠️  No se pudo iniciar Docker automáticamente${NC}"
         sleep 3
+        echo -e "${GREEN}✅ Servicios Docker iniciados (PostgreSQL y N8N)${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Docker no disponible o docker-compose.yml no encontrado${NC}"
+    fi
+else
+    if [ "$POSTGRES_RUNNING" = "true" ] || [ "$PG_LOCAL_READY" = "true" ]; then
+        echo -e "${GREEN}✅ PostgreSQL detectado${NC}"
+    fi
+    if [ "$N8N_RUNNING" = "true" ]; then
+        echo -e "${GREEN}✅ N8N detectado${NC}"
     fi
 fi
 echo ""

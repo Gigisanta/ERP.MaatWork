@@ -120,7 +120,12 @@ export default function TeamDetailsPage() {
   };
 
   const showToast = (title: string, description?: string, variant: 'success' | 'error' = 'success') => {
-    setToast({ show: true, title, description, variant });
+    setToast({ 
+      show: true, 
+      title, 
+      ...(description && { description }),
+      variant 
+    });
     setTimeout(() => setToast({ show: false, title: '', variant: 'success' }), 5000);
   };
 
@@ -269,15 +274,15 @@ export default function TeamDetailsPage() {
           </div>
           <Stack direction="row" gap="sm">
             <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
-              <Icon name="Edit" size={16} className="mr-2" />
+              <Icon name="edit" size={16} className="mr-2" />
               Editar
             </Button>
             <Button variant="secondary" onClick={() => setDeleteConfirmOpen(true)}>
-              <Icon name="Trash2" size={16} className="mr-2" />
+              <Icon name="trash-2" size={16} className="mr-2" />
               Eliminar
             </Button>
             <Button onClick={openLinkModal}>
-              <Icon name="UserPlus" size={16} className="mr-2" />
+              <Icon name="plus" size={16} className="mr-2" />
               Vincular asesores
             </Button>
           </Stack>
@@ -291,7 +296,7 @@ export default function TeamDetailsPage() {
 
         {/* Metrics Section */}
         {teamMetrics && (
-          <Grid cols={1} md={2} lg={4} gap="md">
+          <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
             <Card>
               <CardContent className="p-4">
                 <Text size="sm" color="secondary" className="mb-1">AUM Total</Text>
@@ -405,7 +410,7 @@ export default function TeamDetailsPage() {
                           })}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Icon name="Trash2" size={16} />
+                          <Icon name="trash-2" size={16} />
                         </Button>
                       )}
                     </Stack>
@@ -513,7 +518,7 @@ export default function TeamDetailsPage() {
         {toast.show && (
           <Toast
             title={toast.title}
-            description={toast.description}
+            {...(toast.description && { description: toast.description })}
             variant={toast.variant}
             open={toast.show}
             onOpenChange={(open) => setToast({ ...toast, show: open })}

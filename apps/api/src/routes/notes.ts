@@ -1,12 +1,12 @@
 // REGLA CURSOR: Notes CRUD - mantener RBAC, data isolation, validación Zod, logging estructurado
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, notes } from '@cactus/db';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../utils/validation';
-import { uuidSchema, idParamSchema } from '../utils/common-schemas';
+import { uuidSchema, idParamSchema, paginationQuerySchema } from '../utils/common-schemas';
 
 const router = Router();
 
@@ -32,10 +32,26 @@ const updateNoteSchema = z.object({
 router.get(
   '/',
   requireAuth,
-  validate({ query: z.object({ contactId: uuidSchema }) }),
+  validate({ 
+    query: paginationQuerySchema.and(
+      z.object({ contactId: uuidSchema })
+    )
+  }),
   async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { contactId } = req.query as { contactId: string };
+    const { 
+      contactId,
+      limit = '50',
+      offset = '0'
+    } = req.query as { contactId: string; limit?: string; offset?: string };
+    
+    // AI_DECISION: Validate contactId before processing
+    // Justificación: Prevent errors from invalid or missing contactId
+    // Impacto: More robust error handling, clearer error messages
+    if (!contactId || typeof contactId !== 'string') {
+      return res.status(400).json({ error: 'contactId is required and must be a valid UUID' });
+    }
+    
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -44,6 +60,12 @@ router.get(
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this contact' });
     }
+
+    // AI_DECISION: Validate and sanitize pagination parameters
+    // Justificación: Prevent invalid values that could cause errors or performance issues
+    // Impacto: More robust error handling, prevents SQL injection-like issues
+    const limitNum = Math.max(1, Math.min(100, parseInt(limit as string, 10) || 50));
+    const offsetNum = Math.max(0, parseInt(offset as string, 10) || 0);
 
     const notesList = await db()
       .select()
@@ -54,10 +76,37 @@ router.get(
           isNull(notes.deletedAt)
         )
       )
-      .orderBy(notes.createdAt);
+      .orderBy(desc(notes.createdAt))
+      .limit(limitNum)
+      .offset(offsetNum);
 
-    req.log.info({ contactId, count: notesList.length }, 'notes fetched');
-    res.json({ success: true, data: notesList });
+    // Get total count for pagination metadata
+    // AI_DECISION: Handle count query safely to prevent errors if query fails
+    // Justificación: Count query could fail or return empty array, need safe handling
+    // Impacto: Prevents runtime errors, more robust error handling
+    const countResult = await db()
+      .select({ count: sql<number>`count(*)` })
+      .from(notes)
+      .where(
+        and(
+          eq(notes.contactId, contactId),
+          isNull(notes.deletedAt)
+        )
+      );
+    
+    const totalCount = countResult[0]?.count ? Number(countResult[0].count) : 0;
+
+    req.log.info({ contactId, count: notesList.length, total: totalCount }, 'notes fetched');
+    res.json({ 
+      success: true, 
+      data: notesList,
+      pagination: {
+        total: Number(totalCount),
+        limit: limitNum,
+        offset: offsetNum,
+        hasMore: offsetNum + limitNum < Number(totalCount)
+      }
+    });
   } catch (err) {
     req.log.error({ err }, 'failed to fetch notes');
     next(err);

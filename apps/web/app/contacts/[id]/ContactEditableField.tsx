@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { Text, Spinner, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 // AI_DECISION: Client wrapper for Server Action to avoid prop passing
 // Justificación: Server Actions cannot be passed as props to Client Components
@@ -66,7 +66,7 @@ export default function ContactEditableField({
         // Revalidate the page data to show updated values
         router.refresh();
       } catch (err) {
-        logger.error('Error updating contact field', { err, contactId, field, value });
+        logger.error('Error updating contact field', toLogContext({ err, contactId, field, value }));
         setLocalValue(value || '');
       }
     });
@@ -99,13 +99,13 @@ export default function ContactEditableField({
           <div className="flex items-center justify-between">
             {maxLength && (
               <Text size="xs" color="muted">
-                {localValue.length} / {maxLength} caracteres
+                {localValue.length} / {maxLength}
               </Text>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {isPending && <Spinner size="sm" />}
               <Text size="xs" color="muted">
-                Ctrl+Enter para guardar, Esc para cancelar
+                Ctrl+Enter guardar, Esc cancelar
               </Text>
             </div>
           </div>
@@ -136,16 +136,16 @@ export default function ContactEditableField({
 
   return (
     <div
-      className="cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
+      className="cursor-pointer hover:bg-gray-50 px-1.5 py-0.5 rounded"
       onClick={() => setIsEditing(true)}
     >
-      <Text size="sm" weight="medium" color="secondary">{label}</Text>
+      <Text size="xs" weight="medium" color="secondary">{label}</Text>
       {type === 'textarea' ? (
-        <Text className="mt-1 whitespace-pre-wrap">
+        <Text size="sm" className="mt-0.5 whitespace-pre-wrap">
           {value || <span className="text-gray-400">{emptyText}</span>}
         </Text>
       ) : (
-        <Text className="mt-1">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
+        <Text size="sm" className="mt-0.5">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
       )}
     </div>
   );

@@ -2,7 +2,7 @@
  * Tipos relacionados con instrumentos financieros
  */
 
-import type { BaseEntity, TimestampedEntity } from './common';
+import type { BaseEntity, TimestampedEntity, CreateRequest } from './common';
 import type { AssetType, Currency } from './common';
 
 /**
@@ -34,9 +34,13 @@ export interface InstrumentValidation {
 }
 
 /**
- * Request para crear instrumento - usando Pick para campos requeridos
+ * Request para crear instrumento - usando utility type CreateRequest
  */
-export interface CreateInstrumentRequest extends Pick<Instrument, 'symbol' | 'name' | 'type' | 'currency'> {
+export interface CreateInstrumentRequest extends Omit<CreateRequest<Instrument>, 'isActive'> {
+  symbol: string;
+  name: string;
+  type: AssetType;
+  currency: Currency;
   exchange?: string | null;
   sector?: string | null;
   country?: string | null;

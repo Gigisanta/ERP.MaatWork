@@ -338,58 +338,73 @@ export default function PortfolioComparator({
             <CardTitle>Métricas Comparativas</CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable
-              data={comparisonData}
+            <DataTable<ComparisonItem & Record<string, unknown>>
+              data={comparisonData as (ComparisonItem & Record<string, unknown>)[]}
               columns={[
                 {
                   key: 'name',
                   header: 'Nombre',
-                  render: (item) => <Text weight="medium">{item.name}</Text>,
+                  render: (item: ComparisonItem & Record<string, unknown>) => <Text weight="medium">{(item as ComparisonItem).name}</Text>,
                 },
                 {
                   key: 'type',
                   header: 'Tipo',
-                  render: (item) => (
-                    <Badge variant={item.type === 'portfolio' ? 'brand' : 'success'}>
-                      {item.type === 'portfolio' ? 'Cartera' : 'Benchmark'}
-                    </Badge>
-                  ),
+                  render: (item: ComparisonItem & Record<string, unknown>) => {
+                    const typedItem = item as ComparisonItem;
+                    return (
+                      <Badge variant={typedItem.type === 'portfolio' ? 'brand' : 'success'}>
+                        {typedItem.type === 'portfolio' ? 'Cartera' : 'Benchmark'}
+                      </Badge>
+                    );
+                  },
                 },
                 {
                   key: 'performance',
                   header: 'Retorno Total',
-                  render: (item) => (
-                    <Badge variant={item.performance >= 0 ? 'success' : 'error'}>
-                      {item.performance >= 0 ? '+' : ''}{item.performance.toFixed(2)}%
-                    </Badge>
-                  ),
+                  render: (item: ComparisonItem & Record<string, unknown>) => {
+                    const typedItem = item as ComparisonItem;
+                    return (
+                      <Badge variant={typedItem.performance >= 0 ? 'success' : 'error'}>
+                        {typedItem.performance >= 0 ? '+' : ''}{typedItem.performance.toFixed(2)}%
+                      </Badge>
+                    );
+                  },
                 },
                 {
                   key: 'volatility',
                   header: 'Volatilidad',
-                  render: (item) => (
-                    <Badge variant={item.volatility < 10 ? 'success' : item.volatility < 15 ? 'warning' : 'error'}>
-                      {item.volatility.toFixed(1)}%
-                    </Badge>
-                  ),
+                  render: (item: ComparisonItem & Record<string, unknown>) => {
+                    const typedItem = item as ComparisonItem;
+                    return (
+                      <Badge variant={typedItem.volatility < 10 ? 'success' : typedItem.volatility < 15 ? 'warning' : 'error'}>
+                        {typedItem.volatility.toFixed(1)}%
+                      </Badge>
+                    );
+                  },
                 },
                 {
                   key: 'sharpe',
                   header: 'Sharpe',
-                  render: (item) => (
-                    <Badge variant={item.sharpe && item.sharpe > 1 ? 'success' : item.sharpe && item.sharpe > 0.5 ? 'warning' : 'error'}>
-                      {item.sharpe?.toFixed(2) || 'N/A'}
-                    </Badge>
-                  ),
+                  render: (item: ComparisonItem & Record<string, unknown>) => {
+                    const typedItem = item as ComparisonItem;
+                    return (
+                      <Badge variant={typedItem.sharpe && typedItem.sharpe > 1 ? 'success' : typedItem.sharpe && typedItem.sharpe > 0.5 ? 'warning' : 'error'}>
+                        {typedItem.sharpe?.toFixed(2) || 'N/A'}
+                      </Badge>
+                    );
+                  },
                 },
                 {
                   key: 'maxDrawdown',
                   header: 'Max Drawdown',
-                  render: (item) => (
-                    <Badge variant={item.maxDrawdown && item.maxDrawdown > -10 ? 'success' : item.maxDrawdown && item.maxDrawdown > -20 ? 'warning' : 'error'}>
-                      {item.maxDrawdown?.toFixed(2) || 'N/A'}%
-                    </Badge>
-                  ),
+                  render: (item: ComparisonItem & Record<string, unknown>) => {
+                    const typedItem = item as ComparisonItem;
+                    return (
+                      <Badge variant={typedItem.maxDrawdown && typedItem.maxDrawdown > -10 ? 'success' : typedItem.maxDrawdown && typedItem.maxDrawdown > -20 ? 'warning' : 'error'}>
+                        {typedItem.maxDrawdown?.toFixed(2) || 'N/A'}%
+                      </Badge>
+                    );
+                  },
                 },
               ]}
               keyField="id"

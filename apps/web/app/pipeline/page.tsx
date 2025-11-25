@@ -9,6 +9,7 @@ import { logger } from '../../lib/logger';
 import { usePageTitle } from '../components/PageTitleContext';
 import type { ApiResponse } from '../../lib/api-client';
 import type { PipelineStageWithContacts } from '@/types';
+import ConfirmDialog from '../components/ConfirmDialog';
 import {
   Card,
   CardHeader,
@@ -42,6 +43,12 @@ export default function PipelinePage() {
   const [draggingOverStageId, setDraggingOverStageId] = useState<string | null>(null);
   const [movingContactId, setMovingContactId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    contactId: string | null;
+    contactName: string | null;
+    targetStageId: string | null;
+  }>({ open: false, contactId: null, contactName: null, targetStageId: null });
 
   const handleDragStart = (e: React.DragEvent, contactId: string) => {
     e.dataTransfer.setData('text/plain', contactId);
@@ -58,13 +65,7 @@ export default function PipelinePage() {
     setDraggingOverStageId(null);
   };
 
-  const handleDrop = useCallback(async (e: React.DragEvent, targetStageId: string) => {
-    e.preventDefault();
-    setDraggingOverStageId(null);
-    
-    const contactId = e.dataTransfer.getData('text/plain');
-    if (!contactId) return;
-
+  const performMove = useCallback(async (contactId: string, targetStageId: string) => {
     if (!Array.isArray(stages)) {
       setMovingContactId(null);
       return;
@@ -76,14 +77,6 @@ export default function PipelinePage() {
     );
     
     if (!sourceStage || sourceStage.id === targetStageId) {
-      setMovingContactId(null);
-      return;
-    }
-
-    // Verificar límite WIP
-    const targetStage = (stages as PipelineStage[]).find((stage: PipelineStage) => stage.id === targetStageId);
-    if (targetStage?.wipLimit && targetStage.currentCount >= targetStage.wipLimit) {
-      setMoveError(`No se puede mover el contacto. El límite WIP de "${targetStage.name}" ha sido alcanzado (${targetStage.wipLimit}).`);
       setMovingContactId(null);
       return;
     }
@@ -124,6 +117,70 @@ export default function PipelinePage() {
       setMovingContactId(null);
     }
   }, [stages, mutateBoard]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    setDraggingOverStageId(null);
+    
+    const contactId = e.dataTransfer.getData('text/plain');
+    if (!contactId) return;
+
+    if (!Array.isArray(stages)) {
+      setMovingContactId(null);
+      return;
+    }
+
+    // Encontrar el contacto y su etapa actual
+    const sourceStage = (stages as PipelineStage[]).find((stage: PipelineStage) => 
+      Array.isArray(stage.contacts) && stage.contacts.some((contact: { id: string }) => contact.id === contactId)
+    );
+    
+    if (!sourceStage || sourceStage.id === targetStageId) {
+      setMovingContactId(null);
+      return;
+    }
+
+    // Verificar límite WIP
+    const targetStage = (stages as PipelineStage[]).find((stage: PipelineStage) => stage.id === targetStageId);
+    if (targetStage?.wipLimit && targetStage.currentCount >= targetStage.wipLimit) {
+      setMoveError(`No se puede mover el contacto. El límite WIP de "${targetStage.name}" ha sido alcanzado (${targetStage.wipLimit}).`);
+      setMovingContactId(null);
+      return;
+    }
+
+    // Verificar si la etapa destino es "Cliente"
+    if (targetStage && targetStage.name === 'Cliente') {
+      // Encontrar el contacto para obtener su nombre
+      const contact = Array.isArray(sourceStage.contacts) 
+        ? sourceStage.contacts.find((c: { id: string; fullName?: string }) => c.id === contactId)
+        : null;
+      
+      const contactName = contact && 'fullName' in contact && contact.fullName 
+        ? contact.fullName 
+        : 'este contacto';
+      
+      // Mostrar confirmación antes de mover a Cliente
+      setConfirmDialog({
+        open: true,
+        contactId,
+        contactName,
+        targetStageId
+      });
+      return;
+    }
+
+    // Movimiento normal sin confirmación
+    await performMove(contactId, targetStageId);
+  }, [stages, performMove]);
+
+  const handleConfirmMove = useCallback(async () => {
+    if (!confirmDialog.contactId || !confirmDialog.targetStageId) return;
+    
+    const { contactId, targetStageId } = confirmDialog;
+    setConfirmDialog({ open: false, contactId: null, contactName: null, targetStageId: null });
+    
+    await performMove(contactId, targetStageId);
+  }, [confirmDialog, performMove]);
 
   const getWipLimitStatus = (stage: PipelineStage) => {
     if (!stage.wipLimit) return null;
@@ -326,6 +383,25 @@ export default function PipelinePage() {
           </Card>
         )}
       </Stack>
+      
+      {/* Diálogo de confirmación para etapa Cliente */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ 
+          open, 
+          contactId: confirmDialog.contactId, 
+          contactName: confirmDialog.contactName,
+          targetStageId: confirmDialog.targetStageId 
+        })}
+        onConfirm={handleConfirmMove}
+        title="Confirmar cambio a Cliente"
+        description={confirmDialog.contactName 
+          ? `¿Estás seguro de que deseas mover a "${confirmDialog.contactName}" a la etapa Cliente? Se enviará un webhook de bienvenida automáticamente.`
+          : '¿Estás seguro de que deseas mover este contacto a la etapa Cliente? Se enviará un webhook de bienvenida automáticamente.'}
+        confirmLabel="Confirmar"
+        cancelLabel="Cancelar"
+        variant="default"
+      />
     </div>
   );
 }

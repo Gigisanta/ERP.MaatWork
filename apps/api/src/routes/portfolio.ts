@@ -17,6 +17,7 @@ import { UserRole } from '../auth/types';
 import { validate } from '../utils/validation';
 import { z } from 'zod';
 import { uuidSchema } from '../utils/common-schemas';
+import { createDrizzleLogger } from '../utils/db-logger';
 
 const router = Router();
 
@@ -24,7 +25,50 @@ const router = Router();
 // Zod Validation Schemas
 // ==========================================================
 
+const riskLevelSchema = z.enum(['conservative', 'moderate', 'aggressive']);
+
 const portfolioAssignmentStatusSchema = z.enum(['active', 'paused', 'ended']);
+
+const createPortfolioSchema = z.object({
+  name: z.string().min(1, 'Nombre es requerido').max(255, 'Nombre demasiado largo'),
+  description: z.string().max(1000, 'Descripción demasiado larga').optional().nullable(),
+  riskLevel: riskLevelSchema
+});
+
+const updatePortfolioSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().max(1000).optional().nullable(),
+  riskLevel: riskLevelSchema.optional()
+});
+
+const addPortfolioLineSchema = z.object({
+  targetType: z.enum(['instrument', 'assetClass']),
+  instrumentId: uuidSchema.optional(),
+  assetClass: z.string().optional(),
+  targetWeight: z.number().min(0, 'El peso debe ser mayor o igual a 0').max(1, 'El peso debe ser menor o igual a 1')
+}).refine(
+  (data) => {
+    if (data.targetType === 'instrument' && !data.instrumentId) {
+      return false;
+    }
+    if (data.targetType === 'assetClass' && !data.assetClass) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'instrumentId es requerido para tipo instrument, assetClass es requerido para tipo assetClass'
+  }
+);
+
+const templateIdParamSchema = z.object({
+  id: uuidSchema
+});
+
+const lineIdParamSchema = z.object({
+  id: uuidSchema,
+  lineId: uuidSchema
+});
 
 const createAssignmentSchema = z.object({
   contactId: uuidSchema,
@@ -66,22 +110,30 @@ router.get('/templates', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado' });
     }
 
-    const templates = await db()
-      .select({
-        id: portfolioTemplates.id,
-        name: portfolioTemplates.name,
-        description: portfolioTemplates.description,
-        riskLevel: portfolioTemplates.riskLevel,
-        createdAt: portfolioTemplates.createdAt,
-        clientCount: sql<number>`(
-          SELECT COUNT(*) 
-          FROM ${clientPortfolioAssignments} 
-          WHERE ${clientPortfolioAssignments.templateId} = ${portfolioTemplates.id}
-          AND ${clientPortfolioAssignments.status} = 'active'
-        )`
-      })
-      .from(portfolioTemplates)
-      .orderBy(desc(portfolioTemplates.createdAt));
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio templates query can be slow with many templates and client counts
+    // Impacto: Better visibility into query performance, easier to identify slow queries
+    const dbLogger = createDrizzleLogger(req.log);
+
+    const templates = await dbLogger.select(
+      'get_portfolio_templates',
+      () => db()
+        .select({
+          id: portfolioTemplates.id,
+          name: portfolioTemplates.name,
+          description: portfolioTemplates.description,
+          riskLevel: portfolioTemplates.riskLevel,
+          createdAt: portfolioTemplates.createdAt,
+          clientCount: sql<number>`(
+            SELECT COUNT(*) 
+            FROM ${clientPortfolioAssignments} 
+            WHERE ${clientPortfolioAssignments.templateId} = ${portfolioTemplates.id}
+            AND ${clientPortfolioAssignments.status} = 'active'
+          )`
+        })
+        .from(portfolioTemplates)
+        .orderBy(desc(portfolioTemplates.createdAt))
+    );
 
     res.json({
       success: true,
@@ -97,7 +149,13 @@ router.get('/templates', requireAuth, async (req, res) => {
  * POST /portfolios/templates
  * Crear nueva plantilla de cartera
  */
-router.post('/templates', requireAuth, requireRole(['admin', 'manager']), async (req, res) => {
+router.post('/templates',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({
+    body: createPortfolioSchema
+  }),
+  async (req, res) => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role as UserRole;
@@ -112,10 +170,6 @@ router.post('/templates', requireAuth, requireRole(['admin', 'manager']), async 
     }
 
     const { name, description, riskLevel } = req.body;
-
-    if (!name || !riskLevel) {
-      return res.status(400).json({ error: 'Nombre y nivel de riesgo son requeridos' });
-    }
 
     const [template] = await db()
       .insert(portfolioTemplates)
@@ -138,10 +192,114 @@ router.post('/templates', requireAuth, requireRole(['admin', 'manager']), async 
 });
 
 /**
+ * GET /portfolios/templates/:id
+ * Obtener plantilla de cartera por ID con líneas
+ */
+router.get('/templates/:id',
+  requireAuth,
+  validate({
+    params: templateIdParamSchema
+  }),
+  async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const role = req.user?.role as UserRole;
+    const templateId = req.params.id;
+    
+    if (!userId || !role) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
+
+    // Solo admin y managers pueden ver plantillas
+    if (role !== 'admin' && role !== 'manager') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio template queries can be slow with many lines, logging helps identify bottlenecks
+    // Impacto: Better visibility into query performance, easier to identify slow queries
+    const dbLogger = createDrizzleLogger(req.log);
+
+    // Obtener template
+    // AI_DECISION: Use safe operation name for logging (limit length, sanitize)
+    // Justificación: TemplateId could be very long or contain special chars, limit operation name length
+    // Impacto: Prevents log pollution and potential issues with very long operation names
+    const operationName = `get_portfolio_template_${templateId.length >= 8 ? templateId.substring(0, 8) : templateId}`;
+    const [template] = await dbLogger.select(
+      operationName,
+      () => db()
+        .select({
+          id: portfolioTemplates.id,
+          name: portfolioTemplates.name,
+          description: portfolioTemplates.description,
+          riskLevel: portfolioTemplates.riskLevel,
+          createdAt: portfolioTemplates.createdAt
+        })
+        .from(portfolioTemplates)
+        .where(eq(portfolioTemplates.id, templateId))
+        .limit(1)
+    );
+
+    if (!template) {
+      return res.status(404).json({ error: 'Plantilla no encontrada' });
+    }
+
+    // Obtener líneas del template
+    const linesOperationName = `get_portfolio_template_lines_${templateId.length >= 8 ? templateId.substring(0, 8) : templateId}`;
+    const lines = await dbLogger.select(
+      linesOperationName,
+      () => db()
+        .select({
+          id: portfolioTemplateLines.id,
+          targetType: portfolioTemplateLines.targetType,
+          assetClass: portfolioTemplateLines.assetClass,
+          instrumentId: portfolioTemplateLines.instrumentId,
+          targetWeight: portfolioTemplateLines.targetWeight,
+          instrumentName: instruments.name,
+          instrumentSymbol: instruments.symbol,
+          assetClassName: lookupAssetClass.label
+        })
+        .from(portfolioTemplateLines)
+        .leftJoin(instruments, eq(portfolioTemplateLines.instrumentId, instruments.id))
+        .leftJoin(lookupAssetClass, eq(portfolioTemplateLines.assetClass, lookupAssetClass.id))
+        .where(eq(portfolioTemplateLines.templateId, templateId))
+        .orderBy(asc(portfolioTemplateLines.targetType), asc(portfolioTemplateLines.targetWeight))
+    );
+
+    // Calcular suma de pesos
+    type LineWithWeight = {
+      targetWeight: string | number;
+    };
+    const totalWeight = lines.reduce((sum: number, line: LineWithWeight) => sum + Number(line.targetWeight), 0);
+    const isValid = Math.abs(totalWeight - 1.0) < 0.0001;
+
+    res.json({
+      success: true,
+      data: {
+        ...template,
+        lines,
+        totalWeight,
+        isValid
+      }
+    });
+  } catch (error) {
+    req.log.error({ err: error }, 'Error fetching portfolio template by ID');
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+/**
  * PUT /portfolios/templates/:id
  * Actualizar plantilla de cartera
  */
-router.put('/templates/:id', requireAuth, requireRole(['admin', 'manager']), async (req, res) => {
+router.put('/templates/:id',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({
+    params: templateIdParamSchema,
+    body: updatePortfolioSchema
+  }),
+  async (req, res) => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role as UserRole;
@@ -241,13 +399,15 @@ router.get('/templates/lines/batch', requireAuth, async (req, res) => {
     });
 
     type PortfolioLineWithMetadata = {
-      portfolioId: string;
       lineId: string;
-      instrumentId: string;
+      templateId: string;
+      targetType: string;
+      assetClass: string | null;
+      instrumentId: string | null;
       targetWeight: string | number;
-      instrumentSymbol: string;
-      instrumentName: string;
-      active: boolean;
+      instrumentSymbol: string | null;
+      instrumentName: string | null;
+      assetClassName: string | null;
     };
     
     allLines.forEach((line: PortfolioLineWithMetadata) => {
@@ -279,7 +439,12 @@ router.get('/templates/lines/batch', requireAuth, async (req, res) => {
  * GET /portfolios/templates/:id/lines
  * Obtener composición de una plantilla
  */
-router.get('/templates/:id/lines', requireAuth, async (req, res) => {
+router.get('/templates/:id/lines',
+  requireAuth,
+  validate({
+    params: templateIdParamSchema
+  }),
+  async (req, res) => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role as UserRole;
@@ -335,7 +500,14 @@ router.get('/templates/:id/lines', requireAuth, async (req, res) => {
  * POST /portfolios/templates/:id/lines
  * Agregar línea a plantilla
  */
-router.post('/templates/:id/lines', requireAuth, requireRole(['admin', 'manager']), async (req, res) => {
+router.post('/templates/:id/lines',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({
+    params: templateIdParamSchema,
+    body: addPortfolioLineSchema
+  }),
+  async (req, res) => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role as UserRole;
@@ -351,24 +523,7 @@ router.post('/templates/:id/lines', requireAuth, requireRole(['admin', 'manager'
     }
 
     const { targetType, assetClass, instrumentId, targetWeight } = req.body;
-
-    if (!targetType || !targetWeight) {
-      return res.status(400).json({ error: 'Tipo de objetivo y peso son requeridos' });
-    }
-
-    if (targetType === 'asset_class' && !assetClass) {
-      return res.status(400).json({ error: 'Clase de activo requerida para tipo asset_class' });
-    }
-
-    if (targetType === 'instrument' && !instrumentId) {
-      return res.status(400).json({ error: 'Instrumento requerido para tipo instrument' });
-    }
-
-    // Validar que el peso esté entre 0 y 1
     const weight = Number(targetWeight);
-    if (weight < 0 || weight > 1) {
-      return res.status(400).json({ error: 'El peso debe estar entre 0 y 1' });
-    }
 
     // Verificar que la suma de pesos no exceda 1.0
     const existingLines = await db()
@@ -411,7 +566,13 @@ router.post('/templates/:id/lines', requireAuth, requireRole(['admin', 'manager'
  * DELETE /portfolios/templates/:id/lines/:lineId
  * Eliminar línea de plantilla
  */
-router.delete('/templates/:id/lines/:lineId', requireAuth, requireRole(['admin', 'manager']), async (req, res) => {
+router.delete('/templates/:id/lines/:lineId',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({
+    params: lineIdParamSchema
+  }),
+  async (req, res) => {
   try {
     const userId = req.user?.id;
     const role = req.user?.role as UserRole;
@@ -465,41 +626,55 @@ router.get('/assignments', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'contactId is required' });
     }
 
+    // AI_DECISION: Add query logging for performance monitoring
+    // Justificación: Portfolio assignment queries can be slow, logging helps identify bottlenecks
+    // Impacto: Better visibility into query performance
+    const dbLogger = createDrizzleLogger(req.log);
+
     // Verificar acceso al contacto
     const accessScope = await getUserAccessScope(userId, role);
-    const canAccess = await db()
-      .select({ id: contacts.id })
-      .from(contacts)
-      .where(and(
-        eq(contacts.id, contactId as string),
-        role === 'admin' ? sql`1=1` :
-        role === 'manager' ? 
-          sql`${contacts.assignedAdvisorId} = ANY(${accessScope.accessibleAdvisorIds})` :
-          eq(contacts.assignedAdvisorId, userId)
-      ))
-      .limit(1);
+    const contactIdStr = contactId as string;
+    const accessOperationName = `check_contact_access_${contactIdStr.length >= 8 ? contactIdStr.substring(0, 8) : contactIdStr}`;
+    const canAccess = await dbLogger.select(
+      accessOperationName,
+      () => db()
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(
+          eq(contacts.id, contactIdStr),
+          role === 'admin' ? sql`1=1` :
+          role === 'manager' ? 
+            sql`${contacts.assignedAdvisorId} = ANY(${accessScope.accessibleAdvisorIds})` :
+            eq(contacts.assignedAdvisorId, userId)
+        ))
+        .limit(1)
+    );
 
     if (canAccess.length === 0) {
       return res.status(403).json({ error: 'No tienes acceso a este contacto' });
     }
 
     // Obtener asignaciones con información de la plantilla
-    const assignments = await db()
-      .select({
-        id: clientPortfolioAssignments.id,
-        contactId: clientPortfolioAssignments.contactId,
-        templateId: clientPortfolioAssignments.templateId,
-        templateName: portfolioTemplates.name,
-        status: clientPortfolioAssignments.status,
-        startDate: clientPortfolioAssignments.startDate,
-        endDate: clientPortfolioAssignments.endDate,
-        notes: clientPortfolioAssignments.notes,
-        createdAt: clientPortfolioAssignments.createdAt
-      })
-      .from(clientPortfolioAssignments)
-      .leftJoin(portfolioTemplates, eq(clientPortfolioAssignments.templateId, portfolioTemplates.id))
-      .where(eq(clientPortfolioAssignments.contactId, contactId as string))
-      .orderBy(desc(clientPortfolioAssignments.createdAt));
+    const assignmentsOperationName = `get_portfolio_assignments_${contactIdStr.length >= 8 ? contactIdStr.substring(0, 8) : contactIdStr}`;
+    const assignments = await dbLogger.select(
+      assignmentsOperationName,
+      () => db()
+        .select({
+          id: clientPortfolioAssignments.id,
+          contactId: clientPortfolioAssignments.contactId,
+          templateId: clientPortfolioAssignments.templateId,
+          templateName: portfolioTemplates.name,
+          status: clientPortfolioAssignments.status,
+          startDate: clientPortfolioAssignments.startDate,
+          endDate: clientPortfolioAssignments.endDate,
+          notes: clientPortfolioAssignments.notes,
+          createdAt: clientPortfolioAssignments.createdAt
+        })
+        .from(clientPortfolioAssignments)
+        .leftJoin(portfolioTemplates, eq(clientPortfolioAssignments.templateId, portfolioTemplates.id))
+        .where(eq(clientPortfolioAssignments.contactId, contactIdStr))
+        .orderBy(desc(clientPortfolioAssignments.createdAt))
+    );
 
     res.json({
       success: true,

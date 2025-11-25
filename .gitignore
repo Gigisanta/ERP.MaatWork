@@ -61,3 +61,16 @@ apps/api/uploads/
 apps/api/apps/
 *.tmp
 *.temp
+
+# Development cache files
+.dev-validation-cache.json
+
+# Temporary reports and logs
+*-report.json
+*-test-report.json
+dev-logs.txt
+*.csv
+*.xlsx
+!data/**/*.csv
+!data/**/*.xlsx
+!apps/api/test-fixtures/**/*.csv

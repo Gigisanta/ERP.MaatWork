@@ -320,18 +320,30 @@ router.post('/uploads',
           WHERE (r.account_number IS NOT NULL OR r.id_cuenta IS NOT NULL)
             AND f.broker = ${broker as string}
         `);
-        (existingResult.rows || []).forEach((row: any) => {
+        (existingResult.rows || []).forEach((row: {
+          account_number: string | null;
+          id_cuenta: string | null;
+          holder_name: string | null;
+          advisor_raw: string | null;
+          file_id: string;
+          created_at: Date;
+        }) => {
           // Agregar por accountNumber si existe
-          if (row.account_number) {
+          if (row.account_number && typeof row.account_number === 'string') {
             const normalizedAccount = normalizeAccountNumber(row.account_number);
-            if (!existingAccounts.has(normalizedAccount)) {
-              existingAccounts.set(normalizedAccount, []);
+            if (normalizedAccount) {
+              if (!existingAccounts.has(normalizedAccount)) {
+                existingAccounts.set(normalizedAccount, []);
+              }
+              const accountData = existingAccounts.get(normalizedAccount);
+              if (accountData) {
+                accountData.push({
+                  holderName: row.holder_name ?? null,
+                  advisorRaw: row.advisor_raw ?? null,
+                  createdAt: row.created_at
+                });
+              }
             }
-            existingAccounts.get(normalizedAccount)!.push({
-              holderName: row.holder_name ?? null,
-              advisorRaw: row.advisor_raw ?? null,
-              createdAt: row.created_at
-            });
           }
           // También agregar por idCuenta si existe (para matching cuando CSV2 tiene accountNumber pero CSV1 solo tenía idCuenta)
           if (row.id_cuenta && row.id_cuenta.trim().length > 0) {

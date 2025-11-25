@@ -281,13 +281,25 @@ if ($processesKilled -gt 0) {
 Write-Host ""
 Write-Host "Verificando y liberando puertos..." -ForegroundColor Cyan
 
-$portsToClean = @(3000, 3001, 3002)
-$allPortsFree = $true
+# AI_DECISION: Separar puertos críticos de opcionales.
+# Justificación: El puerto 5678 es usado por N8N (Docker) que debe permanecer ejecutándose independientemente.
+# Impacto: Permite que el desarrollo continúe aunque N8N esté corriendo, solo falla si los puertos críticos están ocupados.
+$criticalPorts = @(3000, 3001, 3002)  # Puertos críticos para desarrollo (Web, API, Analytics)
+$optionalPorts = @(5678)  # Puertos opcionales (N8N Docker service)
 
-foreach ($port in $portsToClean) {
+# Limpiar todos los puertos (críticos y opcionales)
+$allPortsToClean = $criticalPorts + $optionalPorts
+$criticalPortsFree = $true
+$optionalPortsFree = $true
+
+foreach ($port in $allPortsToClean) {
     $portFree = Kill-Port -Port $port
     if (-not $portFree) {
-        $allPortsFree = $false
+        if ($criticalPorts -contains $port) {
+            $criticalPortsFree = $false
+        } else {
+            $optionalPortsFree = $false
+        }
     }
 }
 
@@ -297,25 +309,41 @@ Start-Sleep -Milliseconds 1000
 # Verificación final de puertos
 Write-Host ""
 Write-Host "Verificación final de puertos..." -ForegroundColor Cyan
-$finalCheckPassed = $true
 
-foreach ($port in $portsToClean) {
+# Verificar puertos críticos
+$criticalCheckPassed = $true
+foreach ($port in $criticalPorts) {
     $isFree = Test-PortFree -Port $port
     if ($isFree) {
         Write-Host "  ✅ Puerto $port está libre" -ForegroundColor Green
     } else {
         Write-Host "  ❌ Puerto $port aún está en uso" -ForegroundColor Red
-        $finalCheckPassed = $false
+        $criticalCheckPassed = $false
     }
 }
 
-if ($finalCheckPassed) {
+# Verificar puertos opcionales (solo advertencias, no bloquean)
+foreach ($port in $optionalPorts) {
+    $isFree = Test-PortFree -Port $port
+    if ($isFree) {
+        Write-Host "  ✅ Puerto $port está libre" -ForegroundColor Green
+    } else {
+        Write-Host "  ⚠️  Puerto $port aún está en uso (opcional - N8N Docker)" -ForegroundColor Yellow
+    }
+}
+
+# Solo fallar si los puertos críticos están ocupados
+if ($criticalCheckPassed) {
     Write-Host ""
-    Write-Host "✅ Entorno limpio - Todos los puertos están libres" -ForegroundColor Green
+    Write-Host "✅ Entorno limpio - Puertos críticos están libres" -ForegroundColor Green
+    if (-not $optionalPortsFree) {
+        Write-Host "   Nota: Algunos puertos opcionales están en uso pero no bloquean el desarrollo" -ForegroundColor DarkGray
+    }
     exit 0
 } else {
     Write-Host ""
-    Write-Host "⚠️  Algunos puertos aún están en uso" -ForegroundColor Yellow
-    Write-Host "   Puedes intentar cerrar manualmente los procesos o reiniciar el script" -ForegroundColor DarkYellow
+    Write-Host "❌ Algunos puertos críticos aún están en uso" -ForegroundColor Red
+    Write-Host "   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o 3002" -ForegroundColor Yellow
+    Write-Host "   y vuelve a intentar." -ForegroundColor Yellow
     exit 1
 }

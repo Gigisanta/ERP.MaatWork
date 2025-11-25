@@ -4,6 +4,12 @@
  * AI_DECISION: Usar cookies httpOnly en lugar de Bearer token para consistencia
  * Justificación: Alinea Server Components con el patrón principal de autenticación
  * Impacto: Consistencia en toda la aplicación, más seguro
+ * 
+ * AI_DECISION: Mantener fetch directo en lugar de apiClient
+ * Justificación: Server Components de Next.js necesitan acceso a cookies() de Next.js
+ *                 que solo está disponible en el contexto del servidor. apiClient está
+ *                 diseñado para Client Components y no puede acceder a cookies() de Next.js.
+ * Impacto: Mantiene funcionalidad correcta de Server Components con autenticación vía cookies
  */
 
 import type { ApiResponse } from './api-client';
@@ -16,6 +22,9 @@ import { cookies } from 'next/headers';
  * AI_DECISION: Priorizar cookies sobre token explícito
  * Justificación: Consistencia con patrón principal de autenticación
  * Impacto: Server Components usan el mismo método de auth que Client Components
+ * 
+ * NOTA: Este archivo usa fetch directo porque necesita acceso a cookies() de Next.js
+ *       que solo está disponible en Server Components. apiClient no puede usarse aquí.
  */
 export async function apiCall<T>(
   endpoint: string,

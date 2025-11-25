@@ -205,6 +205,35 @@ async function checkAnalytics(options = {}) {
 }
 
 /**
+ * Health check para N8N
+ */
+async function checkN8N(options = {}) {
+  const url = options.url || 'http://localhost:5678/healthz';
+  const name = options.name || 'N8N';
+  
+  console.log(info(`🔍 Verificando ${name}...`));
+  
+  const result = await healthCheck(url, {
+    maxRetries: options.maxRetries || 10,
+    retryDelay: options.retryDelay || 2000,
+    timeout: options.timeout || 5000,
+    name,
+    expectedStatus: 200
+  });
+  
+  if (result.success) {
+    console.log(success(`  ✅ ${name} está funcionando (intento ${result.attempt}/${result.attempt})`));
+    return true;
+  } else {
+    console.log(warning(`  ⚠️  ${name} no responde (opcional, puede no estar iniciado)`));
+    if (result.error) {
+      console.log(warning(`     Error: ${result.error.message}`));
+    }
+    return false;
+  }
+}
+
+/**
  * Health check para todos los servicios
  */
 async function checkAllServices(options = {}) {
@@ -212,13 +241,15 @@ async function checkAllServices(options = {}) {
     checkApi: shouldCheckApi = true,
     checkWeb: shouldCheckWeb = true,
     checkAnalytics: shouldCheckAnalytics = false,
+    checkN8N: shouldCheckN8N = false,
     ...healthCheckOptions
   } = options;
   
   const results = {
     api: false,
     web: false,
-    analytics: false
+    analytics: false,
+    n8n: false
   };
   
   if (shouldCheckApi) {
@@ -236,6 +267,11 @@ async function checkAllServices(options = {}) {
     console.log('');
   }
   
+  if (shouldCheckN8N) {
+    results.n8n = await checkN8N({ ...healthCheckOptions, name: 'N8N' });
+    console.log('');
+  }
+  
   return results;
 }
 
@@ -248,6 +284,7 @@ async function main() {
     checkApi: !args.includes('--no-api'),
     checkWeb: !args.includes('--no-web'),
     checkAnalytics: args.includes('--analytics'),
+    checkN8N: args.includes('--n8n'),
     maxRetries: parseInt(args.find(arg => arg.startsWith('--retries='))?.split('=')[1] || '15', 10),
     retryDelay: parseInt(args.find(arg => arg.startsWith('--delay='))?.split('=')[1] || '2000', 10)
   };
@@ -265,6 +302,9 @@ async function main() {
   }
   if (options.checkAnalytics) {
     console.log(results.analytics ? success('  ✅ Analytics: OK') : warning('  ⚠️  Analytics: No disponible'));
+  }
+  if (options.checkN8N) {
+    console.log(results.n8n ? success('  ✅ N8N: OK') : warning('  ⚠️  N8N: No disponible'));
   }
   console.log('');
   
@@ -291,7 +331,8 @@ module.exports = {
   healthCheck, 
   checkApi, 
   checkWeb, 
-  checkAnalytics, 
+  checkAnalytics,
+  checkN8N,
   checkAllServices 
 };
 

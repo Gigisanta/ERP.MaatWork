@@ -128,6 +128,7 @@ export {
   getUsers,
   getUserById,
   getCurrentUser,
+  updateUserProfile,
   changePassword,
   getManagers,
   updateUserRole,
@@ -176,6 +177,16 @@ export {
   deleteCapacitacion,
   importCapacitacionesCSV
 } from './capacitaciones';
+
+// Automations methods
+export {
+  getAutomationConfigs,
+  getAutomationConfigById,
+  getAutomationConfigByName,
+  createAutomationConfig,
+  updateAutomationConfig,
+  deleteAutomationConfig
+} from './automations';
 
 // Export types from teams
 export type {

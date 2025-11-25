@@ -16,6 +16,7 @@ export type TeamMemberRole = 'member' | 'lead';
 export interface Team extends TimestampedEntity {
   name: string;
   managerUserId: string;
+  calendarUrl?: string | null;
   members?: TeamMember[];
   role?: string; // Role del usuario actual en el equipo
 }

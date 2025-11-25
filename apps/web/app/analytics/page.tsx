@@ -7,10 +7,13 @@ import { usePageTitle } from '../components/PageTitleContext';
 import { getDashboardKPIs } from '@/lib/api';
 import { logger } from '../../lib/logger';
 import type { DashboardData } from '@/types';
-// AI_DECISION: Keep Recharts import as-is for now to avoid runtime issues
-// Justificación: Dynamic import of named exports from Recharts causes module resolution issues
-// Impacto: Analytics page uses Recharts, bundle size impact is acceptable for this specific page
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+// AI_DECISION: Lazy load chart component to reduce initial bundle size
+// Justificación: Recharts is heavy (~200KB), loading it async reduces initial bundle significantly
+// Impacto: Faster initial page load, smaller initial JavaScript bundle (~200KB reduction)
+const AumTrendChart = dynamic(() => import('./components/AumTrendChart'), {
+  ssr: false,
+  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando gráfico...</div>
+});
 
 export default function AnalyticsPage() {
   const { user, loading } = useRequireAuth();
@@ -253,32 +256,11 @@ export default function AnalyticsPage() {
                 Tendencia AUM - Últimos 30 días
               </h3>
               <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dashboardData.aumTrend}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="date" 
-                      tickFormatter={formatDate}
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      tickFormatter={(value) => formatCurrency(value)}
-                      fontSize={12}
-                    />
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(value), 'AUM']}
-                      labelFormatter={(label) => `Fecha: ${formatDate(label)}`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="var(--color-chart-1)" 
-                      strokeWidth={2}
-                      dot={{ fill: 'var(--color-chart-1)', strokeWidth: 2, r: 4 }}
-                      activeDot={{ r: 6, stroke: 'var(--color-chart-1)', strokeWidth: 2 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <AumTrendChart 
+                  data={dashboardData.aumTrend} 
+                  formatCurrency={formatCurrency}
+                  formatDate={formatDate}
+                />
               </div>
             </div>
           )}

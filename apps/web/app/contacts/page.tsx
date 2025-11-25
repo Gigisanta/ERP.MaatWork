@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import { deleteContact, createTag, updateTag, deleteTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
-import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag } from '@/types';
+import type { ContactFieldValue, PipelineStage, Advisor, Contact, Tag, ApiResponse } from '@/types';
 import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
@@ -46,6 +46,8 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useViewport } from '../(shared)/useViewport';
 import { useDebouncedValue } from '../admin/aum/rows/hooks/useDebouncedState';
 import { useToast } from '../../lib/hooks/useToast';
+import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
+import { logger } from '../../lib/logger';
 
 // Types Contact y Tag importados desde @/types
 
@@ -126,7 +128,7 @@ export default function ContactsPage() {
   // Justificación: Improves productivity for power users
   // Impacto: Faster navigation
   const searchInputRef = useRef<HTMLInputElement>(null);
-  useSearchShortcut(searchInputRef, true);
+  useSearchShortcut(searchInputRef as React.RefObject<HTMLInputElement>, true);
 
   // AI_DECISION: Add Escape shortcut to close modals
   // Justificación: Standard UX pattern, improves usability
@@ -178,7 +180,7 @@ export default function ContactsPage() {
     }
   }, [contactToDelete, mutateContacts]);
 
-  const handleCreateTag = async () => {
+  const handleCreateTag = useCallback(async () => {
     if (!newTagName.trim()) return;
     
     try {
@@ -200,9 +202,9 @@ export default function ContactsPage() {
     } catch (err) {
       showToast('Error al crear etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
-  };
+  }, [newTagName, newTagColor, newTagBusinessLine, mutateTags, mutateContacts, showToast]);
 
-  const handleEditTag = async () => {
+  const handleEditTag = useCallback(async () => {
     if (!tagToEdit || !editedTagName.trim()) return;
     
     try {
@@ -221,9 +223,62 @@ export default function ContactsPage() {
     } catch (err) {
       showToast('Error al editar etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
-  };
+  }, [tagToEdit, editedTagName, editedTagColor, editedTagBusinessLine, mutateTags, mutateContacts, showToast]);
 
-  const handleDeleteTag = (tagId: string) => {
+  // Estado para guardado automático
+  const [isAutoSavingTag, setIsAutoSavingTag] = useState(false);
+
+  // Guardado automático al cambiar campos de edición de tag
+  useEffect(() => {
+    if (!tagToEdit) return;
+    
+    // Validar que el nombre no esté vacío antes de guardar
+    if (!editedTagName.trim()) return;
+    
+    // Debounce para evitar demasiadas llamadas (2 segundos)
+    const timeoutId = setTimeout(async () => {
+      // Solo guardar si hay cambios
+      const hasChanges = 
+        editedTagName.trim() !== tagToEdit.name ||
+        editedTagColor !== tagToEdit.color ||
+        editedTagBusinessLine !== (tagToEdit.businessLine ?? null);
+      
+      if (hasChanges) {
+        setIsAutoSavingTag(true);
+        try {
+          await updateTag(tagToEdit.id, {
+            name: editedTagName.trim(),
+            color: editedTagColor,
+            businessLine: editedTagBusinessLine
+          });
+          // Invalidate tags cache to refetch updated data
+          mutateTags();
+          // Also refresh contacts to show updated tag
+          mutateContacts();
+          // Actualizar tagToEdit para reflejar los cambios guardados
+          setTagToEdit({
+            ...tagToEdit,
+            name: editedTagName.trim(),
+            color: editedTagColor,
+            businessLine: editedTagBusinessLine
+          });
+        } catch (err) {
+          // Silently fail on auto-save, user can manually save if needed
+          logger.error('Error al guardar automáticamente la etiqueta', {
+            error: err instanceof Error ? err.message : String(err),
+            tagId: tagToEdit.id,
+            tagName: editedTagName
+          });
+        } finally {
+          setIsAutoSavingTag(false);
+        }
+      }
+    }, 2000); // 2 segundos de debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [editedTagName, editedTagColor, editedTagBusinessLine, tagToEdit, mutateTags, mutateContacts]);
+
+  const handleDeleteTag = useCallback((tagId: string) => {
     setConfirmDialog({
       open: true,
       title: 'Eliminar etiqueta',
@@ -242,25 +297,25 @@ export default function ContactsPage() {
         }
       }
     });
-  };
+  }, [mutateTags, mutateContacts, showToast]);
 
-  const openEditTag = (tag: Tag) => {
+  const openEditTag = useCallback((tag: Tag) => {
     setTagToEdit(tag);
     setEditedTagName(tag.name);
     setEditedTagColor(tag.color);
     setEditedTagBusinessLine(tag.businessLine ?? null);
     setShowManageTagsModal(true);
-  };
+  }, []);
 
-  const handleTagToggle = (tagId: string) => {
+  const handleTagToggle = useCallback((tagId: string) => {
     setSelectedTags(prev => 
       prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedStage('all');
     setSelectedTags([]);
@@ -270,13 +325,13 @@ export default function ContactsPage() {
       newSearchParams.delete('advisorId');
       router.push(`/contacts?${newSearchParams.toString()}`);
     }
-  };
+  }, [advisorIdFilter, searchParams, router]);
 
-  const clearAdvisorFilter = () => {
+  const clearAdvisorFilter = useCallback(() => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.delete('advisorId');
     router.push(`/contacts?${newSearchParams.toString()}`);
-  };
+  }, [searchParams, router]);
 
 
   // AI_DECISION: Memoize handlers with useCallback to prevent re-renders
@@ -289,9 +344,9 @@ export default function ContactsPage() {
     setSavingContactId(contactId);
     
     // Optimistic update: update local cache immediately
-    const optimisticUpdate = (currentData: unknown) => {
-      if (!currentData || !Array.isArray((currentData as { data?: unknown[] }).data)) return currentData;
-      const contacts = (currentData as { data: Contact[] }).data;
+    const optimisticUpdate = (currentData: ApiResponse<unknown[]> | undefined): ApiResponse<unknown[]> | undefined => {
+      if (!currentData || !Array.isArray(currentData.data)) return currentData;
+      const contacts = currentData.data as Contact[];
       return {
         ...currentData,
         data: contacts.map((contact: Contact) => 
@@ -324,9 +379,9 @@ export default function ContactsPage() {
     setSavingContactId(contactId);
     
     // Optimistic update: update local cache immediately
-    const optimisticUpdate = (currentData: unknown) => {
-      if (!currentData || !Array.isArray((currentData as { data?: unknown[] }).data)) return currentData;
-      const contacts = (currentData as { data: Contact[] }).data;
+    const optimisticUpdate = (currentData: ApiResponse<unknown[]> | undefined): ApiResponse<unknown[]> | undefined => {
+      if (!currentData || !Array.isArray(currentData.data)) return currentData;
+      const contacts = currentData.data as Contact[];
       return {
         ...currentData,
         data: contacts.map((contact: Contact) => {
@@ -337,7 +392,7 @@ export default function ContactsPage() {
             ...add.map(tagId => {
               const tag = Array.isArray(allTags) ? (allTags as Tag[]).find(t => t.id === tagId) : null;
               return tag ? { id: tag.id, name: tag.name, color: tag.color } : null;
-            }).filter(Boolean)
+            }).filter((tag): tag is { id: string; name: string; color: string } => tag !== null)
           ];
           return { ...contact, tags: newTags };
         })
@@ -392,6 +447,57 @@ export default function ContactsPage() {
       return matchesSearch && matchesStage && matchesTags;
     });
   }, [contacts, debouncedSearchTerm, selectedStage, selectedTags]) as Contact[];
+
+  // Handler para exportar contactos a CSV
+  const handleExportCSV = useCallback(() => {
+    try {
+      logger.debug('Iniciando exportación CSV', {
+        filteredContactsCount: Array.isArray(filteredContacts) ? filteredContacts.length : 0,
+        contactsCount: Array.isArray(contacts) ? contacts.length : 0
+      });
+      
+      if (!Array.isArray(filteredContacts) || filteredContacts.length === 0) {
+        showToast('No hay contactos para exportar', 'No hay contactos filtrados disponibles', 'warning');
+        return;
+      }
+
+      const stages = Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : [];
+      
+      // Verificar que los contactos tengan la estructura correcta
+      const validContacts = filteredContacts.filter((contact): contact is Contact => {
+        return contact && typeof contact === 'object' && 'fullName' in contact;
+      });
+      
+      if (validContacts.length === 0) {
+        logger.error('No hay contactos válidos después del filtro', {
+          filteredContactsCount: filteredContacts.length
+        });
+        showToast('Error al exportar', 'Los contactos no tienen el formato esperado', 'error');
+        return;
+      }
+      
+      const csvContent = exportContactsToCSV(validContacts, stages);
+      logger.info('CSV generado exitosamente', {
+        validContactsCount: validContacts.length,
+        csvContentLength: csvContent.length
+      });
+      
+      // Generar nombre de archivo con fecha y hora
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+      const filename = `contactos_${dateStr}_${timeStr}`;
+      
+      downloadCSV(csvContent, filename);
+      showToast('Exportación exitosa', `Se exportaron ${validContacts.length} contactos`, 'success');
+    } catch (err) {
+      logger.error('Error al exportar CSV', {
+        error: err instanceof Error ? err.message : String(err),
+        filteredContactsCount: Array.isArray(filteredContacts) ? filteredContacts.length : 0
+      });
+      showToast('Error al exportar', err instanceof Error ? err.message : 'Error desconocido al generar CSV', 'error');
+    }
+  }, [filteredContacts, contacts, pipelineStages, showToast]);
 
   // AI_DECISION: Memoize columns array to prevent re-creation on every render
   // Justificación: Column definitions with render functions are recreated on every render
@@ -502,20 +608,20 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6">
-      <Stack direction="column" gap="lg">
+    <div className="p-3 md:p-4">
+      <Stack direction="column" gap="md">
         {combinedError && (
           <Alert variant="error" title="Error">
             {combinedError instanceof Error ? combinedError.message : 'Error al cargar datos'}
           </Alert>
         )}
 
-        {/* Filtros */}
-        <Card className="rounded-md border border-neutral-200">
-          <CardContent className="p-4">
-            <div className="flex flex-col gap-3">
+        {/* Filtros - Barra compacta sticky */}
+        <div className="sticky top-0 z-10 bg-white border border-neutral-200 rounded-md shadow-sm">
+          <div className="p-2 md:p-3">
+            <div className="flex flex-col gap-2">
               {/* Primera fila: Controles en línea horizontal */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {/* Input de búsqueda compacto con icono */}
                 <div className="relative w-[200px] shrink-0">
                   <Input
@@ -544,7 +650,7 @@ export default function ContactsPage() {
                 <div className="shrink-0 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50 p-0.5">
                   <button
                     onClick={() => setViewMode('table')}
-                    className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all rounded ${
+                    className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-all rounded ${
                       viewMode === 'table'
                         ? 'bg-white text-blue-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
@@ -552,13 +658,13 @@ export default function ContactsPage() {
                     aria-pressed={viewMode === 'table'}
                     aria-label="Vista de tabla"
                   >
-                    <Icon name="list" size={16} />
-                    <span>Tabla</span>
+                    <Icon name="list" size={14} />
+                    <span className="hidden sm:inline">Tabla</span>
                   </button>
                   <div className="w-px h-4 bg-gray-300 mx-0.5" aria-hidden="true" />
                   <button
                     onClick={() => setViewMode('kanban')}
-                    className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-all rounded ${
+                    className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-all rounded ${
                       viewMode === 'kanban'
                         ? 'bg-white text-blue-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
@@ -566,10 +672,21 @@ export default function ContactsPage() {
                     aria-pressed={viewMode === 'kanban'}
                     aria-label="Vista kanban"
                   >
-                    <Icon name="grid" size={16} />
-                    <span>Kanban</span>
+                    <Icon name="grid" size={14} />
+                    <span className="hidden sm:inline">Kanban</span>
                   </button>
                 </div>
+
+                {/* Botón Automatizaciones */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/automations')}
+                  title="Abrir Automatizaciones"
+                >
+                  <Icon name="Settings" size={16} className="mr-1.5" />
+                  Automatizaciones
+                </Button>
 
                 {/* Botón Métricas */}
                 <Button
@@ -593,13 +710,13 @@ export default function ContactsPage() {
 
               {/* Segunda fila: Chips de filtros activos */}
               {(selectedStage !== 'all' || selectedTags.length > 0 || searchTerm || advisorIdFilter) && (
-                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-gray-200">
+                <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-gray-200">
                   {advisorIdFilter && filteredAdvisor && (
-                    <Badge className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800">
+                    <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs">
                       Asesor: {filteredAdvisor?.fullName || filteredAdvisor?.email || 'Desconocido'}
                       <button 
                         onClick={clearAdvisorFilter}
-                        className="ml-1 hover:opacity-70"
+                        className="ml-0.5 hover:opacity-70"
                         aria-label="Remover filtro de asesor"
                       >
                         ×
@@ -607,11 +724,11 @@ export default function ContactsPage() {
                     </Badge>
                   )}
                     {selectedStage !== 'all' && (
-                    <Badge className="flex items-center gap-1 px-2 py-1">
+                    <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs">
                       Etapa: {Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]).find((s: PipelineStage) => s.id === selectedStage)?.name : ''}
                       <button 
                         onClick={() => setSelectedStage('all')}
-                        className="ml-1 hover:opacity-70"
+                        className="ml-0.5 hover:opacity-70"
                       >
                         ×
                       </button>
@@ -622,13 +739,13 @@ export default function ContactsPage() {
                     return tag ? (
                       <Badge 
                         key={tagId} 
-                        className="flex items-center gap-1 px-2 py-1"
+                        className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs"
                         style={{ backgroundColor: tag.color, color: 'white' }}
                       >
                         {tag.name}
                         <button 
                           onClick={() => handleTagToggle(tagId)}
-                          className="ml-1 hover:opacity-70"
+                          className="ml-0.5 hover:opacity-70"
                         >
                           ×
                         </button>
@@ -639,42 +756,57 @@ export default function ContactsPage() {
                     variant="ghost" 
                     size="sm" 
                     onClick={clearAllFilters}
-                    className="text-xs"
+                    className="text-xs h-6 px-2"
                   >
                     Limpiar filtros
                   </Button>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Vista tabla o kanban */}
         {viewMode === 'table' ? (
-          <Card className="rounded-md border border-neutral-200">
-            <CardHeader className="p-4">
-              <CardTitle className="text-base">
-                Contactos ({Array.isArray(filteredContacts) ? filteredContacts.length : 0})
-              </CardTitle>
+          <Card className="rounded-md border border-neutral-200" padding="sm">
+            <CardHeader className="p-2 md:p-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm md:text-base">
+                  Contactos ({Array.isArray(filteredContacts) ? filteredContacts.length : 0})
+                </CardTitle>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    title="Descargar contactos como CSV"
+                    disabled={!Array.isArray(filteredContacts) || filteredContacts.length === 0}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Icon name="download" size={14} className="mr-1" />
+                    <span className="hidden sm:inline">Descargar CSV</span>
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-2 md:p-3 pt-0">
               {isMd ? (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {Array.isArray(filteredContacts) && filteredContacts.length > 0 ? (
                     filteredContacts.map((contact) => (
-                      <div key={contact.id} className="p-3 rounded-md border border-gray-200 bg-white">
+                      <div key={contact.id} className="p-2 rounded-md border border-gray-200 bg-white">
                         <div className="flex items-center justify-between">
                           <div>
                             <Text weight="medium" className="text-sm">{contact.fullName}</Text>
                             {contact.email && (
-                              <Text size="sm" color="secondary" className="text-xs mt-0.5">{contact.email}</Text>
+                              <Text size="xs" color="secondary" className="mt-0.5">{contact.email}</Text>
                             )}
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => router.push(`/contacts/${contact.id}`)}>
-                            <Icon name="chevron-right" size={16} />
+                          <Button variant="ghost" size="sm" onClick={() => router.push(`/contacts/${contact.id}`)} className="h-6 w-6 p-0">
+                            <Icon name="ChevronRight" size={14} />
                           </Button>
                         </div>
-                        <div className="mt-2 flex items-center justify-between">
+                        <div className="mt-1.5 flex items-center justify-between gap-2">
                           <InlineStageSelect
                             contact={contact}
                             pipelineStages={Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []}
@@ -691,7 +823,7 @@ export default function ContactsPage() {
                             onManageTagsClick={() => setShowManageTagsModal(true)}
                           />
                         </div>
-                        <div className="mt-2">
+                        <div className="mt-1.5">
                           <InlineTextInput
                             contact={contact}
                             field="nextStep"
@@ -727,9 +859,9 @@ export default function ContactsPage() {
                   )}
                 </div>
               ) : (
-                <DataTable
-                  data={Array.isArray(filteredContacts) ? filteredContacts : []}
-                  columns={columns}
+                <DataTable<Contact & Record<string, unknown>>
+                  data={(Array.isArray(filteredContacts) ? filteredContacts : []) as (Contact & Record<string, unknown>)[]}
+                  columns={columns as Column<Contact & Record<string, unknown>>[]}
                   keyField="id"
                   emptyMessage={
                     searchTerm || selectedStage !== 'all' || selectedTags.length > 0 || advisorIdFilter
@@ -743,62 +875,62 @@ export default function ContactsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
             {Array.isArray(pipelineStages) && (pipelineStages as PipelineStage[]).map((stage: PipelineStage) => {
               const stageContacts = Array.isArray(filteredContacts) ? filteredContacts.filter((c: Contact) => c.pipelineStageId === stage.id) : [];
               return (
-                <Card key={stage.id} className="rounded-md border border-neutral-200">
-                  <CardHeader className="p-4 border-b border-neutral-200">
+                <Card key={stage.id} className="rounded-md border border-neutral-200" padding="sm">
+                  <CardHeader className="p-2 md:p-3 border-b border-neutral-200">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <div 
-                          className="w-3 h-3 rounded-full"
+                          className="w-2.5 h-2.5 rounded-full"
                           style={{ backgroundColor: stage.color }}
                         />
-                        <CardTitle className="text-sm font-semibold" style={{ color: stage.color }}>
+                        <CardTitle className="text-xs md:text-sm font-semibold" style={{ color: stage.color }}>
                           {stage.name}
                         </CardTitle>
                       </div>
-                      <Badge className="text-xs">
+                      <Badge className="text-xs h-5 px-1.5">
                         {stageContacts.length}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
+                  <CardContent className="p-2 md:p-3">
+                    <div className="space-y-1.5">
                       {stageContacts.length === 0 ? (
-                        <Text color="secondary" className="text-center py-4 text-sm">
+                        <Text color="secondary" className="text-center py-3 text-xs">
                           Sin contactos
                         </Text>
                       ) : (
                         stageContacts.map((contact: Contact) => (
                           <div 
                             key={contact.id} 
-                            className="p-3 bg-gray-50 rounded-md border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-shadow cursor-pointer"
+                            className="p-2 bg-gray-50 rounded-md border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-shadow cursor-pointer"
                             onClick={() => router.push(`/contacts/${contact.id}`)}
                           >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <Text weight="medium" className="text-sm">{contact.fullName}</Text>
+                            <div className="flex items-start justify-between gap-1.5">
+                              <div className="flex-1 min-w-0">
+                                <Text weight="medium" className="text-xs md:text-sm truncate">{contact.fullName}</Text>
                                 {contact.email && (
-                                  <Text size="sm" color="secondary" className="text-xs mt-0.5">
+                                  <Text size="xs" color="secondary" className="mt-0.5 truncate">
                                     {contact.email}
                                   </Text>
                                 )}
                               </div>
                               {contact.tags && contact.tags.length > 0 && (
-                                <div className="flex gap-1 ml-2">
+                                <div className="flex gap-0.5 ml-1 shrink-0">
                                   {contact.tags.slice(0, 2).map(tag => (
                                     <Badge 
                                       key={tag.id} 
-                                      className="text-[10px] px-1.5 py-0"
+                                      className="text-[9px] px-1 py-0"
                                       style={{ backgroundColor: tag.color || '#6B7280', color: 'white' }}
                                     >
                                       {tag.name}
                                     </Badge>
                                   ))}
                                   {contact.tags.length > 2 && (
-                                    <Badge className="text-[10px] px-1.5 py-0 bg-gray-300 text-gray-700">
+                                    <Badge className="text-[9px] px-1 py-0 bg-gray-300 text-gray-700">
                                       +{contact.tags.length - 2}
                                     </Badge>
                                   )}
@@ -845,7 +977,7 @@ export default function ContactsPage() {
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
-            <Stack direction="column" gap="md">
+            <Stack direction="column" gap="sm">
               <Input
                 label="Nombre de la etiqueta"
                 value={newTagName}
@@ -853,12 +985,12 @@ export default function ContactsPage() {
                 placeholder="Ej: Cliente VIP, Prospecto caliente..."
               />
               <div>
-                <Text size="sm" weight="medium" className="mb-2">Color</Text>
-                <div className="flex gap-2">
+                <Text size="sm" weight="medium" className="mb-1.5">Color</Text>
+                <div className="flex gap-1.5">
                   {['#6B7280', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'].map(color => (
                     <button
                       key={color}
-                      className={`w-8 h-8 rounded-full border-2 ${
+                      className={`w-7 h-7 rounded-full border-2 ${
                         newTagColor === color ? 'border-primary' : 'border-border'
                       }`}
                       style={{ backgroundColor: color }}
@@ -888,7 +1020,7 @@ export default function ContactsPage() {
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
-            <Stack direction="column" gap="md">
+            <Stack direction="column" gap="sm">
               {isCreatingTag ? (
                 // Vista de creación
                 <>
@@ -899,14 +1031,14 @@ export default function ContactsPage() {
                     placeholder="Ej: Cliente VIP, Prospecto caliente..."
                   />
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
                       Color
                     </label>
                     <input
                       type="color"
                       value={newTagColor}
                       onChange={(e) => setNewTagColor(e.target.value)}
-                      className="w-full h-12 rounded-md cursor-pointer"
+                      className="w-full h-10 rounded-md cursor-pointer"
                     />
                   </div>
                   <Select
@@ -932,6 +1064,12 @@ export default function ContactsPage() {
               ) : tagToEdit ? (
                 // Vista de edición
                 <>
+                  {isAutoSavingTag && (
+                    <div className="flex items-center gap-2 text-sm text-text-secondary mb-2">
+                      <Spinner size="sm" />
+                      <Text size="sm" color="secondary">Guardando automáticamente...</Text>
+                    </div>
+                  )}
                   <Input
                     label="Nombre de la etiqueta"
                     value={editedTagName}
@@ -939,14 +1077,14 @@ export default function ContactsPage() {
                     placeholder="Nombre de la etiqueta"
                   />
                   <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                    <label className="block text-sm font-medium text-text-secondary mb-1.5">
                       Color
                     </label>
                     <input
                       type="color"
                       value={editedTagColor}
                       onChange={(e) => setEditedTagColor(e.target.value)}
-                      className="w-full h-12 rounded-md cursor-pointer"
+                      className="w-full h-10 rounded-md cursor-pointer"
                     />
                   </div>
                   <Select
@@ -964,8 +1102,15 @@ export default function ContactsPage() {
                     <Button variant="secondary" onClick={() => setTagToEdit(null)}>
                       Cancelar
                     </Button>
-                    <Button onClick={handleEditTag}>
-                      Guardar cambios
+                    <Button onClick={handleEditTag} disabled={isAutoSavingTag}>
+                      {isAutoSavingTag ? (
+                        <>
+                          <Spinner size="sm" className="mr-2" />
+                          Guardando...
+                        </>
+                      ) : (
+                        'Guardar cambios'
+                      )}
                     </Button>
                   </ModalFooter>
                 </>
@@ -974,36 +1119,37 @@ export default function ContactsPage() {
                 <>
                   <div className="max-h-96 overflow-y-auto">
                     {!Array.isArray(allTags) || allTags.length === 0 ? (
-                      <Text color="secondary" className="text-center py-4">
+                      <Text color="secondary" className="text-center py-3">
                         No hay etiquetas creadas
                       </Text>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         {Array.isArray(allTags) ? (allTags as Tag[]).map((tag: Tag) => (
-                          <div key={tag.id} className="flex items-center justify-between p-3 border border-border rounded-md hover:bg-surface-hover">
-                            <div className="flex items-center gap-3">
+                          <div key={tag.id} className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-surface-hover">
+                            <div className="flex items-center gap-2">
                               <div 
-                                className="w-4 h-4 rounded-full" 
+                                className="w-3 h-3 rounded-full" 
                                 style={{ backgroundColor: tag.color || '#6B7280' }}
                               />
-                              <Text weight="medium">{tag.name}</Text>
+                              <Text weight="medium" size="sm">{tag.name}</Text>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openEditTag(tag)}
+                                className="h-7 px-2"
                               >
-                                <Icon name="edit" size={16} className="mr-1" />
+                                <Icon name="edit" size={14} className="mr-1" />
                                 Editar
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteTag(tag.id)}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-600 hover:text-red-700 h-7 px-2"
                               >
-                                <Icon name="trash-2" size={16} className="mr-1" />
+                                <Icon name="trash-2" size={14} className="mr-1" />
                                 Eliminar
                               </Button>
                             </div>
@@ -1030,17 +1176,6 @@ export default function ContactsPage() {
             </Stack>
           </ModalContent>
         </Modal>
-
-        {/* Toast de notificaciones */}
-        {toast.show && (
-          <Toast
-            title={toast.title}
-            {...(toast.description ? { description: toast.description } : {})}
-            variant={toast.variant}
-            open={toast.show}
-            onOpenChange={(open) => setToast(prev => ({ ...prev, show: open }))}
-          />
-        )}
 
         {/* Confirm Dialog */}
         <ConfirmDialog

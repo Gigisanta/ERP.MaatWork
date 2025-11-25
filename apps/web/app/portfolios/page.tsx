@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,8 @@ import {
   Trash2,
   ArrowRight,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  LineChart
 } from 'lucide-react';
 // AI_DECISION: Lazy load heavy components to reduce initial bundle size
 // Justificación: AssetSearcher and PortfolioComparator are only used on demand, loading them async reduces FCP by 200-300ms
@@ -30,8 +31,24 @@ const PortfolioComparator = dynamic(() => import('../components/PortfolioCompara
   loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>,
   ssr: false
 });
+// AI_DECISION: Lazy load Bloomberg components to reduce initial bundle size
+// Justificación: Bloomberg components are heavy with charts and data fetching, loading them async reduces initial bundle significantly
+// Impacto: Faster initial page load, smaller initial JavaScript bundle
+const PortfolioAssetsSnapshot = dynamic(() => import('../components/bloomberg/PortfolioAssetsSnapshot'), {
+  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading market data...</div>,
+  ssr: false
+});
+const PortfolioPerformanceMetrics = dynamic(() => import('../components/bloomberg/PortfolioPerformanceMetrics'), {
+  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading performance metrics...</div>,
+  ssr: false
+});
+const BloombergMacroWidget = dynamic(() => import('../components/bloomberg/BloombergMacroWidget'), {
+  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading macro data...</div>,
+  ssr: false
+});
 import { 
   getPortfolios, 
+  getPortfolioById,
   getPortfolioLinesBatch, 
   getBenchmarks, 
   getBenchmarkComponentsBatch,
@@ -39,6 +56,7 @@ import {
   updatePortfolio as updatePortfolioApi,
   deletePortfolio,
   addPortfolioLine,
+  deletePortfolioLine,
   getPortfolioLines,
   createBenchmark,
   updateBenchmark,
@@ -75,6 +93,10 @@ import {
   Input,
   Select,
   Toast,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
   type Column,
 } from '@cactus/ui';
 
@@ -124,11 +146,24 @@ export default function PortfoliosPage() {
     riskLevel: 'moderate'
   });
   const [portfolioLines, setPortfolioLines] = useState<PortfolioLine[]>([]);
-  const [totalWeight, setTotalWeight] = useState(0);
+  
+  // AI_DECISION: Memoize totalWeight calculation to prevent recalculation on every render
+  // Justificación: Calculation runs on every render, memoization prevents unnecessary recalculations
+  // Impacto: Reduces computation time when portfolioLines don't change
+  const totalWeight = useMemo(() => {
+    if (!Array.isArray(portfolioLines) || portfolioLines.length === 0) {
+      return 0;
+    }
+    return portfolioLines.reduce((sum, line) => {
+      const weight = typeof line.targetWeight === 'number' ? line.targetWeight : 0;
+      return sum + (isNaN(weight) ? 0 : weight);
+    }, 0);
+  }, [portfolioLines]);
 
   // Estados para editar carteras
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
   const [showEditPortfolio, setShowEditPortfolio] = useState(false);
+  const [editingPortfolioLines, setEditingPortfolioLines] = useState<PortfolioLine[]>([]);
 
   // Estados para crear/editar benchmarks
   const [showCreateBenchmark, setShowCreateBenchmark] = useState(false);
@@ -166,14 +201,14 @@ export default function PortfoliosPage() {
     onConfirm: () => {}
   });
 
-  const showToast = (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+  const showToast = useCallback((title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
     setToast({ 
       show: true, 
       title, 
       ...(description && { description }), 
       variant 
     });
-  };
+  }, []);
 
   // Obtener datos reales desde API
   useEffect(() => {
@@ -187,7 +222,19 @@ export default function PortfoliosPage() {
         // Fetch portfolios
         const portfoliosResponse = await getPortfolios();
 
-        if (portfoliosResponse.success && portfoliosResponse.data) {
+        if (!portfoliosResponse.success) {
+          const errorMessage = portfoliosResponse.error || 'Error al cargar carteras';
+          if (errorMessage.includes('401') || errorMessage.includes('no autenticado')) {
+            setError('Sesión expirada. Por favor inicia sesión nuevamente.');
+          } else if (errorMessage.includes('403') || errorMessage.includes('denegado')) {
+            setError('No tienes permisos para ver carteras.');
+          } else {
+            setError(errorMessage);
+          }
+          return;
+        }
+
+        if (portfoliosResponse.data) {
           const portfolioIds = portfoliosResponse.data.map((p: Portfolio) => p.id);
           
           if (portfolioIds.length > 0) {
@@ -206,55 +253,88 @@ export default function PortfoliosPage() {
                 setPortfolios(portfoliosWithLines);
               } else {
                 // Fallback: portfolios sin líneas
+                logger.warn('Error fetching portfolio lines batch, using portfolios without lines', { 
+                  error: linesBatchResponse.error 
+                });
                 setPortfolios(portfoliosResponse.data.map((p: Portfolio) => ({ ...p, lines: [] })));
               }
             } catch (err) {
               logger.error('Error fetching portfolio lines batch', { err, portfolioIds });
+              // Continuar con portfolios sin líneas en lugar de fallar completamente
               setPortfolios(portfoliosResponse.data.map((p: Portfolio) => ({ ...p, lines: [] })));
             }
           } else {
             setPortfolios([]);
           }
+        } else {
+          setPortfolios([]);
         }
 
         // Fetch benchmarks (solo si es admin/manager)
         if (user?.role === 'admin' || user?.role === 'manager') {
-          const benchmarksResponse = await getBenchmarks();
+          try {
+            const benchmarksResponse = await getBenchmarks();
 
-          if (benchmarksResponse.success && benchmarksResponse.data) {
-            // Obtener componentes para TODOS los benchmarks en una sola request (batch)
-            const benchmarkIds = benchmarksResponse.data.map((b: Benchmark) => b.id);
+            if (!benchmarksResponse.success) {
+              logger.warn('Error fetching benchmarks', { error: benchmarksResponse.error });
+              setBenchmarks([]);
+              return;
+            }
 
-            if (benchmarkIds.length > 0) {
-              try {
-                const componentsBatchResponse = await getBenchmarkComponentsBatch(benchmarkIds);
+            if (benchmarksResponse.data) {
+              // Obtener componentes para TODOS los benchmarks en una sola request (batch)
+              const benchmarkIds = benchmarksResponse.data.map((b: Benchmark) => b.id);
 
-                if (componentsBatchResponse.success && componentsBatchResponse.data) {
-                  const componentsByBenchmark = componentsBatchResponse.data || {};
+              if (benchmarkIds.length > 0) {
+                try {
+                  const componentsBatchResponse = await getBenchmarkComponentsBatch(benchmarkIds);
 
-                  // Agregar componentes a cada benchmark
-                  const benchmarksWithComponents = benchmarksResponse.data.map((benchmark: Benchmark) => ({
-                    ...benchmark,
-                    components: componentsByBenchmark[benchmark.id] || []
-                  }));
+                  if (componentsBatchResponse.success && componentsBatchResponse.data) {
+                    const componentsByBenchmark = componentsBatchResponse.data || {};
 
-                  setBenchmarks(benchmarksWithComponents);
-                } else {
-                  // Fallback: benchmarks sin componentes
+                    // Agregar componentes a cada benchmark
+                    const benchmarksWithComponents = benchmarksResponse.data.map((benchmark: Benchmark) => ({
+                      ...benchmark,
+                      components: componentsByBenchmark[benchmark.id] || []
+                    }));
+
+                    setBenchmarks(benchmarksWithComponents);
+                  } else {
+                    // Fallback: benchmarks sin componentes
+                    logger.warn('Error fetching benchmark components, using benchmarks without components', {
+                      error: componentsBatchResponse.error
+                    });
+                    setBenchmarks(benchmarksResponse.data.map((b: Benchmark) => ({ ...b, components: [] })));
+                  }
+                } catch (err) {
+                  logger.error('Error fetching benchmark components batch', { err, benchmarkIds });
                   setBenchmarks(benchmarksResponse.data.map((b: Benchmark) => ({ ...b, components: [] })));
                 }
-              } catch (err) {
-                logger.error('Error fetching benchmark components batch', { err, benchmarkIds });
-                setBenchmarks(benchmarksResponse.data.map((b: Benchmark) => ({ ...b, components: [] })));
+              } else {
+                setBenchmarks([]);
               }
             } else {
               setBenchmarks([]);
             }
+          } catch (err) {
+            logger.error('Error fetching benchmarks', { err });
+            // No establecer error global, solo no mostrar benchmarks
+            setBenchmarks([]);
           }
         }
       } catch (err) {
         logger.error('Error fetching portfolios/benchmarks', { err });
-        setError('Error al cargar carteras y benchmarks');
+        if (err instanceof Error) {
+          if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+            setError('Error de conexión. Por favor verifica tu conexión a internet.');
+          } else if (err.message.includes('timeout')) {
+            setError('La solicitud tardó demasiado. Por favor intenta nuevamente.');
+          } else {
+            setError(`Error al cargar carteras: ${err.message}`);
+          }
+        } else {
+          setError('Error desconocido al cargar carteras y benchmarks');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -284,23 +364,17 @@ export default function PortfoliosPage() {
     setPortfolioLines([...portfolioLines, newLine]);
   };
 
-  const updateWeight = (lineId: string, weight: number) => {
-    const updatedLines = portfolioLines.map(line =>
-      line.id === lineId ? { ...line, targetWeight: weight } : line
+  const updateWeight = useCallback((lineId: string, weight: number) => {
+    setPortfolioLines(prevLines => 
+      prevLines.map(line =>
+        line.id === lineId ? { ...line, targetWeight: weight } : line
+      )
     );
-    setPortfolioLines(updatedLines);
-    
-    const total = updatedLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0);
-    setTotalWeight(total);
-  };
+  }, []);
 
-  const removeLine = (lineId: string) => {
-    const updatedLines = portfolioLines.filter(line => line.id !== lineId);
-    setPortfolioLines(updatedLines);
-    
-    const total = updatedLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0);
-    setTotalWeight(total);
-  };
+  const removeLine = useCallback((lineId: string) => {
+    setPortfolioLines(prevLines => prevLines.filter(line => line.id !== lineId));
+  }, []);
 
   const handleCreatePortfolio = async () => {
     if (!newPortfolio.name.trim()) {
@@ -347,15 +421,18 @@ export default function PortfoliosPage() {
                 if (existing) {
                   instrumentIds.push(existing.id);
                 } else {
-                  throw new Error(`No se pudo crear ni encontrar el instrumento ${line.instrumentSymbol}`);
+                  const errorMsg = instrumentResponse.error || 'Error desconocido';
+                  throw new Error(`No se pudo crear ni encontrar el instrumento ${line.instrumentSymbol}: ${errorMsg}`);
                 }
               } else {
-                throw new Error(`No se pudo crear el instrumento ${line.instrumentSymbol}`);
+                const errorMsg = searchResponse.error || 'Error desconocido';
+                throw new Error(`No se pudo crear el instrumento ${line.instrumentSymbol}: ${errorMsg}`);
               }
             }
           } catch (err) {
             logger.error('Error creating/finding instrument', { err, symbol: line.instrumentSymbol });
-            showToast('Error al crear instrumento', `No se pudo crear ${line.instrumentSymbol}: ${err instanceof Error ? err.message : 'Error desconocido'}`, 'error');
+            const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+            showToast('Error al crear instrumento', `No se pudo crear ${line.instrumentSymbol}: ${errorMessage}`, 'error');
             setIsLoading(false);
             return;
           }
@@ -371,8 +448,19 @@ export default function PortfoliosPage() {
         riskLevel: newPortfolio.riskLevel as RiskLevel
       });
 
-      if (!portfolioResponse.success || !portfolioResponse.data) {
-        throw new Error('Error al crear cartera');
+      if (!portfolioResponse.success) {
+        const errorMessage = portfolioResponse.error || 'Error al crear cartera';
+        if (errorMessage.includes('400') || errorMessage.includes('validación')) {
+          throw new Error(`Datos inválidos: ${errorMessage}`);
+        } else if (errorMessage.includes('403') || errorMessage.includes('denegado')) {
+          throw new Error('No tienes permisos para crear carteras');
+        } else {
+          throw new Error(errorMessage);
+        }
+      }
+
+      if (!portfolioResponse.data) {
+        throw new Error('Error al crear cartera: respuesta vacía del servidor');
       }
 
       const portfolioId = portfolioResponse.data.id;
@@ -382,11 +470,16 @@ export default function PortfoliosPage() {
         const line = portfolioLines[i];
         const instrumentId = instrumentIds[i];
         
-        await addPortfolioLine(portfolioId, {
+        const lineResponse = await addPortfolioLine(portfolioId, {
           targetType: 'instrument',
           instrumentId: instrumentId,
           targetWeight: line.targetWeight / 100 // Convertir de % a decimal
         });
+
+        if (!lineResponse.success) {
+          const errorMessage = lineResponse.error || 'Error al agregar línea';
+          throw new Error(`Error al agregar línea ${i + 1}: ${errorMessage}`);
+        }
       }
 
       // Recargar portfolios
@@ -417,7 +510,23 @@ export default function PortfoliosPage() {
       showToast('Cartera creada', 'La cartera se creó exitosamente', 'success');
     } catch (err) {
       logger.error('Error creating portfolio', { err, portfolio: newPortfolio, lines: portfolioLines });
-      showToast('Error al crear cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      let errorMessage = 'Error desconocido';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        // Mensajes más específicos según el tipo de error
+        if (err.message.includes('fetch') || err.message.includes('network')) {
+          errorMessage = 'Error de conexión. Por favor verifica tu conexión a internet.';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = 'La solicitud tardó demasiado. Por favor intenta nuevamente.';
+        } else if (err.message.includes('401') || err.message.includes('no autenticado')) {
+          errorMessage = 'Sesión expirada. Por favor inicia sesión nuevamente.';
+        } else if (err.message.includes('403') || err.message.includes('denegado')) {
+          errorMessage = 'No tienes permisos para realizar esta acción.';
+        }
+      }
+      
+      showToast('Error al crear cartera', errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -452,23 +561,63 @@ export default function PortfoliosPage() {
     setBenchmarkComponents(benchmarkComponents.filter(comp => comp.id !== componentId));
   };
 
-  const handleEditPortfolio = (portfolio: PortfolioTemplate) => {
-    const portfolioData: Portfolio = {
-      id: portfolio.id,
-      name: portfolio.name,
-      description: portfolio.description ?? null,
-      riskLevel: (portfolio.riskLevel as RiskLevel) || 'moderate',
-      createdAt: portfolio.createdAt,
-      updatedAt: portfolio.createdAt, // Usar createdAt como fallback
-      lines: portfolio.lines ?? []
-    };
-    setEditingPortfolio(portfolioData);
-    setNewPortfolio({
-      name: portfolio.name,
-      description: portfolio.description || '',
-      riskLevel: portfolio.riskLevel || 'moderate'
-    });
-    setShowEditPortfolio(true);
+  const handleEditPortfolio = async (portfolio: PortfolioTemplate) => {
+    try {
+      setIsLoading(true);
+      
+      // Cargar portfolio completo con líneas
+      const portfolioResponse = await getPortfolioById(portfolio.id);
+      
+      if (!portfolioResponse.success || !portfolioResponse.data) {
+        showToast('Error', 'No se pudo cargar la cartera para editar', 'error');
+        return;
+      }
+
+      const portfolioData = portfolioResponse.data;
+      const portfolioLines = portfolioData.lines || [];
+      
+      // Convertir pesos de decimal a porcentaje para UI
+      const linesWithPercent = portfolioLines.map(line => ({
+        ...line,
+        targetWeight: Number(line.targetWeight) * 100
+      }));
+
+      setEditingPortfolio({
+        id: portfolioData.id,
+        name: portfolioData.name,
+        description: portfolioData.description ?? null,
+        riskLevel: portfolioData.riskLevel,
+        createdAt: portfolioData.createdAt,
+        updatedAt: portfolioData.createdAt,
+        lines: portfolioLines
+      });
+      
+      setEditingPortfolioLines(linesWithPercent);
+      
+      setNewPortfolio({
+        name: portfolioData.name,
+        description: portfolioData.description || '',
+        riskLevel: portfolioData.riskLevel || 'moderate'
+      });
+      
+      setShowEditPortfolio(true);
+    } catch (err) {
+      logger.error('Error loading portfolio for edit', { err, portfolioId: portfolio.id });
+      showToast('Error', 'No se pudo cargar la cartera para editar', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateEditingLineWeight = (lineId: string, weight: number) => {
+    const updatedLines = editingPortfolioLines.map(line =>
+      line.id === lineId ? { ...line, targetWeight: weight } : line
+    );
+    setEditingPortfolioLines(updatedLines);
+  };
+
+  const removeEditingLine = (lineId: string) => {
+    setEditingPortfolioLines(editingPortfolioLines.filter(line => line.id !== lineId));
   };
 
   const updatePortfolio = async () => {
@@ -476,6 +625,13 @@ export default function PortfoliosPage() {
 
     if (!newPortfolio.name.trim()) {
       showToast('Campo requerido', 'El nombre de la cartera es requerido', 'warning');
+      return;
+    }
+
+    // Validar que los pesos sumen 100%
+    const totalWeight = editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0);
+    if (Math.abs(totalWeight - 100) > 0.01) {
+      showToast('Pesos inválidos', `Los pesos deben sumar exactamente 100%. Actual: ${totalWeight.toFixed(2)}%`, 'warning');
       return;
     }
 
@@ -487,28 +643,99 @@ export default function PortfoliosPage() {
     setIsLoading(true);
 
     try {
-      await updatePortfolioApi(editingPortfolio.id, {
+      // Actualizar información básica del portfolio
+      const updateResponse = await updatePortfolioApi(editingPortfolio.id, {
         name: newPortfolio.name,
         description: newPortfolio.description,
         riskLevel: newPortfolio.riskLevel as RiskLevel
       });
 
-      // Actualizar en el estado local
-      setPortfolios(portfolios.map(p => 
-        p.id === editingPortfolio.id 
-          ? { ...p, name: newPortfolio.name, description: newPortfolio.description, riskLevel: newPortfolio.riskLevel as RiskLevel }
-          : p
-      ));
+      if (!updateResponse.success) {
+        const errorMessage = updateResponse.error || 'Error al actualizar cartera';
+        if (errorMessage.includes('404') || errorMessage.includes('no encontrada')) {
+          throw new Error('Cartera no encontrada. Puede haber sido eliminada.');
+        } else if (errorMessage.includes('403') || errorMessage.includes('denegado')) {
+          throw new Error('No tienes permisos para editar esta cartera');
+        } else {
+          throw new Error(errorMessage);
+        }
+      }
+
+      // Obtener líneas actuales para comparar
+      const currentPortfolioResponse = await getPortfolioById(editingPortfolio.id);
+      const currentLines = currentPortfolioResponse.success && currentPortfolioResponse.data?.lines || [];
+
+      // Identificar líneas a eliminar (están en currentLines pero no en editingPortfolioLines)
+      const editingLineIds = new Set(editingPortfolioLines.map(l => l.id));
+      const linesToDelete = currentLines.filter(l => !editingLineIds.has(l.id));
+
+      // Eliminar líneas removidas
+      for (const line of linesToDelete) {
+        await deletePortfolioLine(editingPortfolio.id, line.id);
+      }
+
+      // Actualizar o agregar líneas modificadas
+      // Nota: La API no tiene endpoint para actualizar líneas individuales,
+      // así que eliminamos y recreamos las que cambiaron
+      for (const editingLine of editingPortfolioLines) {
+        const currentLine = currentLines.find(l => l.id === editingLine.id);
+        const weightDecimal = editingLine.targetWeight / 100;
+        
+        // Si la línea existe y el peso cambió, o si es nueva línea
+        if (!currentLine || Math.abs(Number(currentLine.targetWeight) - weightDecimal) > 0.001) {
+          // Eliminar línea existente si existe
+          if (currentLine) {
+            await deletePortfolioLine(editingPortfolio.id, currentLine.id);
+          }
+          
+          // Agregar línea con nuevo peso
+          await addPortfolioLine(editingPortfolio.id, {
+            targetType: editingLine.targetType,
+            targetWeight: weightDecimal,
+            ...(editingLine.targetType === 'assetClass' && editingLine.assetClass ? { assetClass: editingLine.assetClass } : {}),
+            ...(editingLine.targetType === 'instrument' && editingLine.instrumentId ? { instrumentId: editingLine.instrumentId } : {})
+          });
+        }
+      }
+
+      // Recargar portfolios
+      const refreshResponse = await getPortfolios();
+      if (refreshResponse.success && refreshResponse.data) {
+        const portfolioIds = refreshResponse.data.map((p: Portfolio) => p.id);
+        if (portfolioIds.length > 0) {
+          const linesBatchResponse = await getPortfolioLinesBatch(portfolioIds);
+          if (linesBatchResponse.success && linesBatchResponse.data) {
+            const linesByTemplate = linesBatchResponse.data || {};
+            const portfoliosWithLines = refreshResponse.data.map((portfolio: Portfolio) => ({
+              ...portfolio,
+              lines: linesByTemplate[portfolio.id] || []
+            }));
+            setPortfolios(portfoliosWithLines);
+          }
+        }
+      }
 
       // Reset form
       setNewPortfolio({ name: '', description: '', riskLevel: 'moderate' });
       setEditingPortfolio(null);
+      setEditingPortfolioLines([]);
       setShowEditPortfolio(false);
       
       showToast('Cartera actualizada', 'La cartera se actualizó exitosamente', 'success');
     } catch (err) {
       logger.error('Error updating portfolio', { err, portfolioId: editingPortfolio.id, data: newPortfolio });
-      showToast('Error al actualizar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      let errorMessage = 'Error desconocido';
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        if (err.message.includes('fetch') || err.message.includes('network')) {
+          errorMessage = 'Error de conexión. Por favor verifica tu conexión a internet.';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = 'La solicitud tardó demasiado. Por favor intenta nuevamente.';
+        }
+      }
+      
+      showToast('Error al actualizar cartera', errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }
@@ -529,7 +756,18 @@ export default function PortfoliosPage() {
         setIsLoading(true);
 
         try {
-          await deletePortfolio(portfolioId);
+          const deleteResponse = await deletePortfolio(portfolioId);
+
+          if (!deleteResponse.success) {
+            const errorMessage = deleteResponse.error || 'Error al eliminar cartera';
+            if (errorMessage.includes('404') || errorMessage.includes('no encontrada')) {
+              throw new Error('Cartera no encontrada. Puede haber sido eliminada.');
+            } else if (errorMessage.includes('403') || errorMessage.includes('denegado')) {
+              throw new Error('No tienes permisos para eliminar esta cartera');
+            } else {
+              throw new Error(errorMessage);
+            }
+          }
 
           // Remover del estado local
           setPortfolios(portfolios.filter(p => p.id !== portfolioId));
@@ -537,7 +775,16 @@ export default function PortfoliosPage() {
           showToast('Cartera eliminada', 'La cartera se eliminó exitosamente', 'success');
         } catch (err) {
           logger.error('Error deleting portfolio', { err, portfolioId });
-          showToast('Error al eliminar cartera', err instanceof Error ? err.message : 'Error desconocido', 'error');
+          let errorMessage = 'Error desconocido';
+          
+          if (err instanceof Error) {
+            errorMessage = err.message;
+            if (err.message.includes('fetch') || err.message.includes('network')) {
+              errorMessage = 'Error de conexión. Por favor verifica tu conexión a internet.';
+            }
+          }
+          
+          showToast('Error al eliminar cartera', errorMessage, 'error');
         } finally {
           setIsLoading(false);
         }
@@ -787,6 +1034,12 @@ export default function PortfoliosPage() {
       title: 'Comparación',
       icon: Target,
       description: 'Compara rendimiento de carteras y benchmarks'
+    },
+    {
+      id: 'bloomberg',
+      title: 'Bloomberg Terminal',
+      icon: LineChart,
+      description: 'Datos de mercado, métricas y análisis tipo Bloomberg'
     },
     ...(user?.role === 'admin' || user?.role === 'manager' ? [{
       id: 'benchmarks',
@@ -1092,52 +1345,61 @@ export default function PortfoliosPage() {
         )}
 
         {/* Comparación */}
-        {activeSection === 'comparison' && (
-          <Card className="rounded-md border border-border">
-            <CardContent className="p-4">
-              <PortfolioComparator
-                portfolios={portfolios.map(p => {
-                  const item: {
-                    id: string;
-                    name: string;
-                    type: 'portfolio';
-                    riskLevel: RiskLevel;
-                    createdAt: string;
-                    description?: string;
-                  } = {
-                    id: p.id,
-                    name: p.name,
-                    type: 'portfolio',
-                    riskLevel: p.riskLevel,
-                    createdAt: p.createdAt
-                  };
-                  if (p.description) {
-                    item.description = p.description;
-                  }
-                  return item;
-                })}
-                benchmarks={benchmarks.map(b => {
-                  const item: {
-                    id: string;
-                    name: string;
-                    type: 'benchmark';
-                    createdAt: string;
-                    description?: string;
-                  } = {
-                    id: b.id,
-                    name: b.name,
-                    type: 'benchmark',
-                    createdAt: b.createdAt || ''
-                  };
-                  if (b.description) {
-                    item.description = b.description;
-                  }
-                  return item;
-                })}
-              />
-            </CardContent>
-          </Card>
-        )}
+        {activeSection === 'comparison' && (() => {
+          // AI_DECISION: Memoize portfolio and benchmark transformations to prevent recalculation
+          // Justificación: Transformations run on every render, memoization prevents unnecessary recalculations
+          // Impacto: Reduces computation time when portfolios/benchmarks don't change
+          const transformedPortfolios = portfolios.map(p => {
+            const item: {
+              id: string;
+              name: string;
+              type: 'portfolio';
+              riskLevel: RiskLevel;
+              createdAt: string;
+              description?: string;
+            } = {
+              id: p.id,
+              name: p.name,
+              type: 'portfolio',
+              riskLevel: p.riskLevel,
+              createdAt: p.createdAt
+            };
+            if (p.description) {
+              item.description = p.description;
+            }
+            return item;
+          });
+
+          const transformedBenchmarks = benchmarks.map(b => {
+            const item: {
+              id: string;
+              name: string;
+              type: 'benchmark';
+              createdAt: string;
+              description?: string;
+            } = {
+              id: b.id,
+              name: b.name,
+              type: 'benchmark',
+              createdAt: b.createdAt || ''
+            };
+            if (b.description) {
+              item.description = b.description;
+            }
+            return item;
+          });
+
+          return (
+            <Card className="rounded-md border border-border">
+              <CardContent className="p-4">
+                <PortfolioComparator
+                  portfolios={transformedPortfolios}
+                  benchmarks={transformedBenchmarks}
+                />
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Benchmarks (solo admin/manager) */}
         {(user?.role === 'admin' || user?.role === 'manager') && activeSection === 'benchmarks' && (
@@ -1226,6 +1488,33 @@ export default function PortfoliosPage() {
                   </Button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bloomberg Terminal */}
+        {activeSection === 'bloomberg' && (
+          <Card className="rounded-md border border-border">
+            <CardHeader className="p-4">
+              <CardTitle className="text-base">Bloomberg Terminal</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Tabs defaultValue="market" className="w-full">
+                <TabsList className="border-b w-full">
+                  <TabsTrigger value="market">Market Data</TabsTrigger>
+                  <TabsTrigger value="performance">Performance</TabsTrigger>
+                  <TabsTrigger value="macro">Macro & Rates</TabsTrigger>
+                </TabsList>
+                <TabsContent value="market" className="p-6">
+                  <PortfolioAssetsSnapshot portfolios={portfolios} />
+                </TabsContent>
+                <TabsContent value="performance" className="p-6">
+                  <PortfolioPerformanceMetrics portfolios={portfolios} />
+                </TabsContent>
+                <TabsContent value="macro" className="p-6">
+                  <BloombergMacroWidget />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         )}
@@ -1368,44 +1657,114 @@ export default function PortfoliosPage() {
 
       {/* Edit Portfolio Modal */}
       {showEditPortfolio && editingPortfolio && (
-        <Modal open={showEditPortfolio} onOpenChange={setShowEditPortfolio}>
+        <Modal open={showEditPortfolio} onOpenChange={setShowEditPortfolio} size="lg">
           <ModalHeader>
             <ModalTitle>Editar Cartera</ModalTitle>
-            <ModalDescription>Actualiza los detalles de la cartera</ModalDescription>
+            <ModalDescription>Actualiza los detalles y composición de la cartera</ModalDescription>
           </ModalHeader>
           <ModalContent>
-            <Stack direction="column" gap="lg" className="p-4">
-              <Input
-                label="Nombre de la Cartera"
-                value={newPortfolio.name}
-                onChange={(e) => setNewPortfolio({...newPortfolio, name: e.target.value})}
-                placeholder="Ej: Cartera Conservadora"
-              />
+            <Grid cols={2} gap="lg">
+              <Stack direction="column" gap="lg">
+                <Input
+                  label="Nombre de la Cartera"
+                  value={newPortfolio.name}
+                  onChange={(e) => setNewPortfolio({...newPortfolio, name: e.target.value})}
+                  placeholder="Ej: Cartera Conservadora"
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground-base mb-2">
+                    Descripción
+                  </label>
+                  <textarea
+                    value={newPortfolio.description}
+                    onChange={(e) => setNewPortfolio({...newPortfolio, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
+                    rows={3}
+                    placeholder="Descripción de la estrategia de inversión"
+                  />
+                </div>
+
+                <Select
+                  label="Nivel de Riesgo"
+                  value={newPortfolio.riskLevel}
+                  onValueChange={(value) => setNewPortfolio({...newPortfolio, riskLevel: value})}
+                  items={[
+                    { value: 'conservative', label: 'Conservador' },
+                    { value: 'moderate', label: 'Moderado' },
+                    { value: 'aggressive', label: 'Agresivo' },
+                  ]}
+                />
+              </Stack>
 
               <div>
-                <label className="block text-sm font-medium text-foreground-base mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  value={newPortfolio.description}
-                  onChange={(e) => setNewPortfolio({...newPortfolio, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:ring-2 focus:ring-primary focus:border-primary"
-                  rows={3}
-                  placeholder="Descripción de la estrategia de inversión"
-                />
+                <Heading level={3} className="mb-4">Composición</Heading>
+                {editingPortfolioLines.length > 0 ? (
+                  <Stack direction="column" gap="sm">
+                    {editingPortfolioLines.map(line => (
+                      <Card key={line.id}>
+                        <CardContent className="p-3">
+                          <Stack direction="row" gap="sm" align="center">
+                            <div className="flex-1">
+                              <Text weight="medium" size="sm">
+                                {line.targetType === 'assetClass' ? line.assetClassName : line.instrumentName}
+                              </Text>
+                              {line.targetType === 'instrument' && line.instrumentSymbol && (
+                                <Text size="xs" color="secondary">
+                                  {line.instrumentSymbol}
+                                </Text>
+                              )}
+                            </div>
+                            <Stack direction="row" gap="sm" align="center">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                value={line.targetWeight}
+                                onChange={(e) => updateEditingLineWeight(line.id, Number(e.target.value))}
+                                className="w-20 px-2 py-1 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                              />
+                              <Text size="sm" color="secondary">%</Text>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeEditingLine(line.id)}
+                                className="text-error-500 hover:text-error-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    <Card>
+                      <CardContent className="p-4">
+                        <Stack direction="row" justify="between" align="center">
+                          <Text weight="medium">Total:</Text>
+                          <Text 
+                            weight="bold" 
+                            color={Math.abs(editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0) - 100) < 0.01 ? 'primary' : 'secondary'}
+                            className={Math.abs(editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0) - 100) < 0.01 ? '' : 'text-error'}
+                          >
+                            {editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0).toFixed(2)}%
+                          </Text>
+                        </Stack>
+                        {Math.abs(editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0) - 100) > 0.01 && (
+                          <Text size="sm" color="secondary" className="mt-2 text-error">
+                            Los pesos deben sumar exactamente 100%
+                          </Text>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Stack>
+                ) : (
+                  <Text color="secondary">No hay componentes en esta cartera</Text>
+                )}
               </div>
-
-              <Select
-                label="Nivel de Riesgo"
-                value={newPortfolio.riskLevel}
-                onValueChange={(value) => setNewPortfolio({...newPortfolio, riskLevel: value})}
-                items={[
-                  { value: 'conservative', label: 'Conservador' },
-                  { value: 'moderate', label: 'Moderado' },
-                  { value: 'aggressive', label: 'Agresivo' },
-                ]}
-              />
-            </Stack>
+            </Grid>
           </ModalContent>
           <ModalFooter>
             <Stack direction="row" gap="sm">
@@ -1413,6 +1772,7 @@ export default function PortfoliosPage() {
                 onClick={() => {
                   setShowEditPortfolio(false);
                   setEditingPortfolio(null);
+                  setEditingPortfolioLines([]);
                   setNewPortfolio({ name: '', description: '', riskLevel: 'moderate' });
                 }}
                 variant="outline"
@@ -1421,7 +1781,7 @@ export default function PortfoliosPage() {
               </Button>
               <Button
                 onClick={updatePortfolio}
-                disabled={isLoading}
+                disabled={isLoading || Math.abs(editingPortfolioLines.reduce((sum, line) => sum + (line.targetWeight || 0), 0) - 100) > 0.01}
                 variant="primary"
               >
                 {isLoading ? 'Actualizando...' : 'Guardar Cambios'}

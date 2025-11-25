@@ -27,6 +27,11 @@ const updateRoleSchema = z.object({
   role: z.enum(['admin', 'manager', 'advisor'])
 });
 
+const updateProfileSchema = z.object({
+  phone: z.string().min(1, 'El número de teléfono es obligatorio').max(50, 'El número de teléfono no puede exceder 50 caracteres'),
+  fullName: z.string().min(1).max(255).optional()
+});
+
 router.get('/', requireAuth, requireRole(['manager', 'admin']), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const all = await db().select().from(users).limit(25);
@@ -201,6 +206,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
         id: users.id,
         email: users.email,
         fullName: users.fullName,
+        phone: users.phone,
         role: users.role,
         isActive: users.isActive,
         createdAt: users.createdAt,
@@ -220,6 +226,55 @@ router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFun
     next(err);
   }
 });
+
+// ==========================================================
+// PATCH /users/me - Actualizar perfil del usuario actual
+// ==========================================================
+router.patch(
+  '/me',
+  requireAuth,
+  validate({ body: updateProfileSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+      const { phone, fullName } = req.body as { phone: string; fullName?: string };
+
+      const updateData: { phone: string; fullName?: string; updatedAt: Date } = {
+        phone,
+        updatedAt: new Date()
+      };
+
+      if (fullName !== undefined) {
+        updateData.fullName = fullName;
+      }
+
+      const [updatedUser] = await db()
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning({
+          id: users.id,
+          email: users.email,
+          fullName: users.fullName,
+          phone: users.phone,
+          role: users.role,
+          isActive: users.isActive,
+          createdAt: users.createdAt,
+          lastLogin: users.lastLogin
+        });
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      req.log.info({ userId, phone }, 'user profile updated');
+      res.json({ success: true, data: updatedUser });
+    } catch (err) {
+      req.log.error({ err }, 'failed to update user profile');
+      next(err);
+    }
+  }
+);
 
 // ==========================================================
 // POST /users/change-password - Cambiar contraseña del usuario actual

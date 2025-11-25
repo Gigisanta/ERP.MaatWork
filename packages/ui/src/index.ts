@@ -52,7 +52,7 @@ export { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuConten
 export { default as EmptyState, type EmptyStateProps } from './components/feedback/EmptyState';
 export { Modal, ModalHeader, ModalFooter, ModalTitle, ModalDescription, ModalContent, type ModalProps } from './components/feedback/Modal';
 export { Spinner, LoadingOverlay, type SpinnerProps, type LoadingOverlayProps } from './components/feedback/Spinner';
-export { Toast, ToastAction, ToastClose, type ToastProps } from './components/feedback/Toast';
+export { Toast, ToastAction, ToastClose, type ToastProps, type ToastVariant } from './components/feedback/Toast';
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip';
 export { Drawer, type DrawerProps } from './components/feedback/Drawer';
 

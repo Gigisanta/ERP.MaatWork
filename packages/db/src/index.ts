@@ -65,6 +65,7 @@ export {
   // Settings / mappings
   advisorAliases,
   advisorAccountMapping,
+  careerPlanLevels,
   // Broker domain
   brokerAccounts,
   brokerBalances,
@@ -96,7 +97,9 @@ export {
   integrationRuns,
   integrationFiles,
   // Capacitaciones
-  capacitaciones
+  capacitaciones,
+  // Automatizaciones
+  automationConfigs
 } from './schema';
 
 /**

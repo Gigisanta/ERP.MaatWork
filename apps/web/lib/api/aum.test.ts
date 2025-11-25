@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import * as apiModule from './api-client';
+import * as apiModule from '../api-client';
 import { getAumRows } from './aum';
 
 describe('getAumRows', () => {

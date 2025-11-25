@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
         throw new Error('Failed to fetch users');
       }
     } catch (err) {
-      logger.error('Error fetching users', { err });
+      logger.error('Error fetching users', { err: err instanceof Error ? err.message : String(err) });
       setError(err instanceof Error ? err.message : 'Error al cargar usuarios');
     } finally {
       setDataLoading(false);
@@ -107,7 +107,7 @@ export default function AdminUsersPage() {
         user.id === userId ? { ...user, role: newRole as UserRole } : user
       ));
     } catch (err) {
-      logger.error('Error updating user role', { err, userId, newRole });
+      logger.error('Error updating user role', { err: err instanceof Error ? err.message : String(err), userId, newRole });
       setError(err instanceof Error ? err.message : 'Error al actualizar rol');
     } finally {
       setActionLoading(null);
@@ -127,7 +127,7 @@ export default function AdminUsersPage() {
         user.id === userId ? { ...user, isActive } : user
       ));
     } catch (err) {
-      logger.error('Error updating user status', { err, userId, isActive });
+      logger.error('Error updating user status', { err: err instanceof Error ? err.message : String(err), userId, isActive });
       setError(err instanceof Error ? err.message : 'Error al actualizar estado');
     } finally {
       setActionLoading(null);
@@ -339,9 +339,9 @@ export default function AdminUsersPage() {
                   <Switch checked={showPendingOnly} onCheckedChange={setShowPendingOnly} />
                 </div>
               </div>
-            <DataTable
-              data={showPendingOnly ? users.filter(u => !u.isActive) : users}
-              columns={columns}
+            <DataTable<UserApiResponse & Record<string, unknown>>
+              data={(showPendingOnly ? users.filter(u => !u.isActive) : users) as (UserApiResponse & Record<string, unknown>)[]}
+              columns={columns as Column<UserApiResponse & Record<string, unknown>>[]}
               keyField="id"
               emptyMessage="No hay usuarios registrados."
             />

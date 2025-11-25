@@ -16,7 +16,8 @@ export type {
   Currency,
   TimePeriod,
   ToastVariant,
-  LoadingState
+  LoadingState,
+  ComponentBase
 } from './common';
 
 // Auth types
@@ -85,7 +86,9 @@ export type {
   TeamAdvisor,
   MembershipRequest,
   TeamInvitation,
-  TeamInvitationResponse
+  TeamInvitationResponse,
+  TeamMetrics,
+  TeamMemberMetrics
 } from './team';
 
 // Contact types
@@ -109,7 +112,10 @@ export type {
 export type {
   Tag,
   CreateTagRequest,
-  UpdateTagRequest
+  UpdateTagRequest,
+  ContactTag,
+  ContactTagWithDetails,
+  UpdateContactTagRequest
 } from './tag';
 
 // Broker Account types
@@ -173,4 +179,13 @@ export type {
   ListCapacitacionesParams,
   CapacitacionesListResponse
 } from './capacitaciones';
+
+// Automation types
+export type {
+  AutomationConfig,
+  TriggerConfig,
+  AutomationConfigData,
+  CreateAutomationConfigRequest,
+  UpdateAutomationConfigRequest
+} from './automation';
 

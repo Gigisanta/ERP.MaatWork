@@ -8,11 +8,13 @@ import {
   portfolioTemplates,
   portfolioMonitoringSnapshot
 } from '@cactus/db/schema';
-import { eq, and, notInArray, sum, count, desc, gte, sql } from 'drizzle-orm';
+import { eq, and, notInArray, sum, count, desc, gte, sql, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, getTeamMembers, getUserTeams } from '../auth/authorization';
 import { z } from 'zod';
 import { type PendingInvite } from '../types/teams';
+
+type Team = InferSelectModel<typeof teams>;
 
 const router = Router();
 
@@ -23,7 +25,8 @@ const router = Router();
 const createTeamSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().nullable(),
-  managerUserId: z.string().uuid().optional().nullable()
+  managerUserId: z.string().uuid().optional().nullable(),
+  calendarUrl: z.string().url().max(500).optional().nullable()
 });
 
 const updateTeamSchema = createTeamSchema.partial();
@@ -483,20 +486,18 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
         .from(teamMembership)
         .where(and(eq(teamMembership.userId, request.managerId), eq(teamMembership.role, 'lead')))
         .limit(1);
-      type Team = InferSelectModel<typeof teams>;
       if (lead.length > 0) {
-        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1) as Team[];
+        const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1);
         if (t) managerTeam = t;
       }
     }
 
     if (!managerTeam) {
       // Crear equipo automáticamente para el manager y asignarlo como lead
-      type NewTeam = InferSelectModel<typeof teams>;
       const [newTeam] = await dbi
         .insert(teams)
         .values({ name: `team-${request.managerId.slice(0, 8)}`, managerUserId: request.managerId })
-        .returning() as NewTeam[];
+        .returning();
       await dbi
         .insert(teamMembership)
         .values({ teamId: newTeam.id, userId: request.managerId, role: 'lead' })
@@ -968,7 +969,10 @@ router.get('/invitations/pending', requireAuth, async (req: Request, res: Respon
       })
       .from(teamMembershipRequests)
       .innerJoin(users, eq(teamMembershipRequests.managerId, users.id))
-      .where(and(eq(teamMembershipRequests.userId, userId), (teamMembershipRequests.status as any).in?.(['pending','invited']) ?? eq(teamMembershipRequests.status, 'invited')));
+      .where(and(
+        eq(teamMembershipRequests.userId, userId),
+        inArray(teamMembershipRequests.status, ['pending', 'invited'])
+      ));
 
     return res.json({ success: true, data: rows });
   } catch (err) {
@@ -1122,7 +1126,7 @@ router.post('/membership-requests/approve-all', requireAuth, async (req: Request
         .limit(1);
       if (lead.length > 0) {
         const [t] = await dbi.select().from(teams).where(eq(teams.id, lead[0].teamId)).limit(1);
-        if (t) managerTeam = t as any;
+        if (t) managerTeam = t;
       }
     }
     if (!managerTeam) {
@@ -1131,7 +1135,7 @@ router.post('/membership-requests/approve-all', requireAuth, async (req: Request
         .values({ name: `team-${managerId.slice(0, 8)}`, managerUserId: managerId })
         .returning();
       await dbi.insert(teamMembership).values({ teamId: newTeam.id, userId: managerId, role: 'lead' }).onConflictDoNothing();
-      managerTeam = newTeam as any;
+      managerTeam = newTeam;
     }
 
     let approved = 0;
@@ -1142,13 +1146,13 @@ router.post('/membership-requests/approve-all', requireAuth, async (req: Request
         .where(eq(teamMembershipRequests.id, reqRow.id));
       await dbi
         .insert(teamMembership)
-        .values({ teamId: (managerTeam as any).id, userId: reqRow.userId, role: 'member' })
+        .values({ teamId: managerTeam.id, userId: reqRow.userId, role: 'member' })
         .onConflictDoNothing();
       approved += 1;
     }
 
     req.log.info({ managerId, approved }, 'approved all pending membership requests');
-    return res.json({ ok: true, approved, teamId: (managerTeam as any).id });
+    return res.json({ ok: true, approved, teamId: managerTeam.id });
   } catch (err) {
     req.log.error({ err }, 'failed to approve all requests');
     next(err);

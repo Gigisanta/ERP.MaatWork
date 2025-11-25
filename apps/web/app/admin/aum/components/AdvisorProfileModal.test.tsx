@@ -62,7 +62,6 @@ const baseRow: Row = {
     totalParsed: 1,
     totalMatched: 1,
     totalUnmatched: 0,
-    totals: undefined,
     createdAt: new Date().toISOString(),
   },
   contact: null,
@@ -99,7 +98,6 @@ describe('AdvisorProfileModal', () => {
         row={createRow()}
         open
         onClose={() => {}}
-        onUpdated={() => {}}
       />
     );
 

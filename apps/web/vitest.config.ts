@@ -40,7 +40,10 @@ export default defineConfig({
         functions: 60,
         branches: 60,
         statements: 60
-      }
+      },
+      // AI_DECISION: Coverage thresholds configurados según estándares del proyecto
+      // Justificación: 60% es el mínimo aceptable para mantener calidad sin ser demasiado restrictivo
+      // Impacto: Asegura cobertura básica en toda la aplicación
     }
   },
   resolve: {

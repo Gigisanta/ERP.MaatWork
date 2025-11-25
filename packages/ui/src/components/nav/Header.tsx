@@ -53,7 +53,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
       >
         <div className="flex h-12 items-center justify-between flex-nowrap gap-2">
           {/* Left section: Logo + Page Title + Mobile menu button */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
             {onToggleSidebar && (
               <Button
                 variant="ghost"
@@ -67,7 +67,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
             )}
             
             {logo && (
-              <div className="flex items-center shrink-0">
+              <div className="flex items-center min-w-0 flex-1 overflow-hidden">
                 {logo}
               </div>
             )}
@@ -176,21 +176,6 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                       >
                         <Icon name="User" size={16} />
                         Profile
-                      </a>
-                    </DropdownMenu.Item>
-                    
-                    <DropdownMenu.Item asChild>
-                      <a
-                        href="/profile"
-                        className={cn(
-                          'flex items-center gap-2 px-3 py-2 text-sm cursor-pointer no-underline',
-                          'text-text hover:bg-surface-hover',
-                          'focus:bg-surface-hover focus:outline-none',
-                          'rounded-sm transition-colors'
-                        )}
-                      >
-                        <Icon name="Settings" size={16} />
-                        Settings
                       </a>
                     </DropdownMenu.Item>
 

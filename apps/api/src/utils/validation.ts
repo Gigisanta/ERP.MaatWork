@@ -35,15 +35,9 @@ export const rowIdParamSchema = z.object({
   rowId: z.string().uuid('Invalid UUID format')
 });
 
-/**
- * @deprecated Import directly from '../utils/common-schemas' instead
- */
-export const aumStatusSchema = z.enum(['uploaded', 'parsed', 'committed', 'failed']);
-
-/**
- * @deprecated Import directly from '../utils/common-schemas' instead
- */
-export const matchStatusSchema = z.enum(['matched', 'unmatched', 'ambiguous']);
+// Schemas deprecados removidos - usar common-schemas directamente
+// Si encuentras imports de estos schemas, actualizar a:
+// import { aumStatusSchema, matchStatusSchema } from '../utils/common-schemas';
 
 // ==========================================================
 // Validation Middleware Factory

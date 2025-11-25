@@ -12,6 +12,48 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  */
 export type LogContextValue = string | number | boolean | null | undefined | LogContextValue[] | { [key: string]: LogContextValue };
 
+/**
+ * Convierte un valor desconocido a LogContextValue de forma segura
+ * Útil para convertir errores y otros valores unknown a formato de log
+ */
+export function toLogContextValue(value: unknown): LogContextValue {
+  if (value === null || value === undefined) {
+    return value;
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (value instanceof Error) {
+    return {
+      message: value.message,
+      name: value.name,
+      ...(value.stack && { stack: value.stack }),
+    };
+  }
+  if (Array.isArray(value)) {
+    return value.map(toLogContextValue);
+  }
+  if (typeof value === 'object') {
+    const result: Record<string, LogContextValue> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = toLogContextValue(val);
+    }
+    return result;
+  }
+  return String(value);
+}
+
+/**
+ * Convierte un Record con valores unknown a Record<string, LogContextValue>
+ */
+export function toLogContext(record: Record<string, unknown>): Record<string, LogContextValue> {
+  const result: Record<string, LogContextValue> = {};
+  for (const [key, value] of Object.entries(record)) {
+    result[key] = toLogContextValue(value);
+  }
+  return result;
+}
+
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
@@ -95,40 +137,23 @@ class ClientLogger {
     }
 
     this.isSendingLog = true;
-    let timeoutId: NodeJS.Timeout | undefined;
     try {
-      // Importar config dinámicamente para evitar ciclos de dependencia
-      const { config } = await import('./config');
+      // Importar apiClient dinámicamente para evitar ciclos de dependencia
+      const { apiClient } = await import('./api-client');
       
-      // Crear AbortController para timeout (compatible con navegadores antiguos)
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(`${config.apiUrl}/logs/client`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(entry),
-        signal: controller.signal
+      // Usar apiClient.post() con timeout configurado y sin retries para logs
+      // AI_DECISION: Usar apiClient en lugar de fetch directo
+      // Justificación: Aprovecha retry logic, manejo de errores y timeout del cliente centralizado
+      // Impacto: Mejor manejo de errores y consistencia con resto de la aplicación
+      await apiClient.post('/v1/logs/client', entry, {
+        timeout: this.LOG_TIMEOUT_MS,
+        retries: 0, // No retry para logs para evitar spam
+        requireAuth: false // Los logs pueden enviarse sin autenticación
       });
       
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
       // Si fue exitoso, resetear contador de errores
-      if (response.ok) {
-        this.backendErrorCount = 0;
-      } else {
-        this.backendErrorCount++;
-      }
+      this.backendErrorCount = 0;
     } catch (error) {
-      // Asegurar que el timeout se limpie incluso si hay error
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
       this.backendErrorCount++;
       // NO loguear este error para evitar recursión
       // Solo usar console.error directamente sin pasar por el logger

@@ -2,6 +2,8 @@ import { AuthProvider } from './auth/AuthContext';
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
+import AppLayout from './components/AppLayout';
+import { SidebarProvider } from './components/SidebarContext';
 import DebugConsole from './components/DebugConsole';
 import { PageTitleProvider } from './components/PageTitleContext';
 import { ConditionalAnalytics } from './components/ConditionalAnalytics';
@@ -21,12 +23,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ErrorBoundary>
             <AuthProvider>
               <ToastProvider>
-                <PageTitleProvider>
-                  <NavigationNew />
-                  <main className="min-h-screen bg-background">
-                    {children}
-                  </main>
-                </PageTitleProvider>
+                <SidebarProvider>
+                  <PageTitleProvider>
+                    <NavigationNew />
+                    <AppLayout>
+                      {children}
+                    </AppLayout>
+                  </PageTitleProvider>
+                </SidebarProvider>
               </ToastProvider>
             </AuthProvider>
           </ErrorBoundary>

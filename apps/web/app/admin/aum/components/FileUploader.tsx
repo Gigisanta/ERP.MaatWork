@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { uploadAumFile } from '@/lib/api';
 import type { ApiErrorWithMessage } from '@/types/aum';
 import { Button, Select, Spinner, Text } from '@cactus/ui';
+import { logger } from '@/lib/logger';
 
 // AI_DECISION: File upload limits aligned with backend
 // Justificación: Client-side validation prevents unnecessary uploads and provides better UX
@@ -74,6 +75,11 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     // Validate file before setting
     const validationError = validateFile(f);
     if (validationError) {
+      logger.warn('AUM file validation failed', {
+        fileName: f.name,
+        fileSize: f.size,
+        error: validationError
+      });
       setError(validationError);
       // Clear the input
       if (fileInputRef.current) {
@@ -116,9 +122,12 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           fileInputRef.current.value = '';
         }
         
-        // AI_DECISION: Remover console.log en producción
-        // Justificación: Logging estructurado debe usar logger, no console.log
-        // Impacto: Código más limpio y profesional
+        logger.info('AUM file uploaded successfully', {
+          fileId: resp.data.fileId,
+          fileName: file.name,
+          fileSize: file.size,
+          broker
+        });
         
         if (onUploadSuccess && resp.data.fileId) {
           onUploadSuccess(resp.data.fileId);
@@ -130,11 +139,25 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           ? (Array.isArray(resp.details) ? resp.details.join('; ') : resp.details)
           : null;
         const errorMsg = resp?.error || details || 'Error desconocido al procesar archivo';
+        logger.error('AUM file upload failed', {
+          fileName: file.name,
+          fileSize: file.size,
+          broker,
+          error: resp?.error,
+          details
+        });
         setError(errorMsg);
       }
     } catch (e: unknown) {
       const apiErr = e as ApiErrorWithMessage;
       const errorMsg = apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
+      logger.error('AUM file upload error', {
+        fileName: file.name,
+        fileSize: file.size,
+        broker,
+        error: apiErr.message || apiErr.error,
+        userMessage: apiErr.userMessage
+      });
       setError(errorMsg);
     } finally {
       setUploading(false);

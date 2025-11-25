@@ -106,7 +106,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
   return (
     <Card className={className}>
       <CardHeader>
-        <Stack direction="row" gap="md" alignItems="center" justifyContent="spaceBetween">
+        <Stack direction="row" gap="md" align="center" justify="between">
           <CardTitle>Macro Economic Data</CardTitle>
           <Tabs value={country} onValueChange={(v) => setCountry(v as 'US' | 'AR')}>
             <TabsList>
@@ -137,7 +137,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
               <Stack direction="column" gap="xs">
                 <Heading level={4}>{selectedSeriesInfo.name}</Heading>
                 <Text size="sm" color="secondary">{selectedSeriesInfo.description || 'No description available'}</Text>
-                <Text size="xs" color="tertiary">
+                <Text size="xs" color="muted">
                   Frequency: {selectedSeriesInfo.frequency} | Units: {selectedSeriesInfo.units || 'N/A'}
                 </Text>
               </Stack>

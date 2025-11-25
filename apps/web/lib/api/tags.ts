@@ -4,7 +4,13 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { Tag, CreateTagRequest, UpdateTagRequest } from '@/types/tag';
+import type { 
+  Tag, 
+  CreateTagRequest, 
+  UpdateTagRequest,
+  ContactTagWithDetails,
+  UpdateContactTagRequest
+} from '@/types/tag';
 
 // ==========================================================
 // API Methods
@@ -88,5 +94,37 @@ export async function updateContactTags(
   remove: string[]
 ): Promise<ApiResponse<Tag[]>> {
   return apiClient.put<Tag[]>(`/v1/tags/contacts/${contactId}`, { add, remove });
+}
+
+/**
+ * Obtener datos de relación contacto-etiqueta específica
+ * 
+ * @param contactId - ID del contacto
+ * @param tagId - ID de la etiqueta
+ */
+export async function getContactTag(
+  contactId: string,
+  tagId: string
+): Promise<ApiResponse<ContactTagWithDetails>> {
+  return apiClient.get<ContactTagWithDetails>(`/v1/tags/contacts/${contactId}/tags/${tagId}`);
+}
+
+/**
+ * Actualizar datos de relación contacto-etiqueta
+ * Solo disponible para etiquetas con businessLine 'zurich'
+ * 
+ * @param contactId - ID del contacto
+ * @param tagId - ID de la etiqueta
+ * @param data - Datos a actualizar (monthlyPremium, policyNumber)
+ */
+export async function updateContactTag(
+  contactId: string,
+  tagId: string,
+  data: UpdateContactTagRequest
+): Promise<ApiResponse<ContactTagWithDetails>> {
+  return apiClient.put<ContactTagWithDetails>(
+    `/v1/tags/contacts/${contactId}/tags/${tagId}`,
+    data
+  );
 }
 

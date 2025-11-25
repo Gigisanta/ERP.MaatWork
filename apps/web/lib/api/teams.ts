@@ -22,6 +22,7 @@ import type {
 export interface CreateTeamRequest {
   name: string;
   managerUserId: string;
+  calendarUrl?: string | null;
 }
 
 export interface AddTeamMemberRequest {

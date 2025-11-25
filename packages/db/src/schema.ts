@@ -58,6 +58,7 @@ export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   managerUserId: uuid('manager_user_id'),
+  calendarUrl: text('calendar_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -77,6 +78,7 @@ export const users = pgTable(
     username: text('username'),
     usernameNormalized: text('username_normalized'),
     fullName: text('full_name').notNull(),
+    phone: text('phone'), // Número de teléfono para automatizaciones
     role: text('role').notNull(), // advisor, manager, admin
     passwordHash: text('password_hash'),
     isActive: boolean('is_active').notNull().default(true),
@@ -158,6 +160,32 @@ export const advisorAliases = pgTable(
   (table) => ({
     advisorAliasUnique: uniqueIndex('advisor_aliases_normalized_unique').on(table.aliasNormalized),
     advisorAliasUserIdx: index('idx_advisor_aliases_user').on(table.userId)
+  })
+);
+
+/**
+ * career_plan_levels
+ * Niveles del plan de carrera comercial por objetivos.
+ * Define los niveles de carrera con objetivos anuales en USD.
+ */
+export const careerPlanLevels = pgTable(
+  'career_plan_levels',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    category: text('category').notNull(), // Ej: "AGENTE F. JUNIOR"
+    level: text('level').notNull(), // Ej: "Nivel 1 Junior"
+    levelNumber: integer('level_number').notNull(), // Orden numérico (1, 2, 3...)
+    index: numeric('index').notNull(), // Índice del nivel
+    percentage: numeric('percentage').notNull(), // Porcentaje
+    annualGoalUsd: integer('annual_goal_usd').notNull(), // Objetivo anual en USD (sin comas)
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    careerPlanLevelsLevelNumberUnique: uniqueIndex('career_plan_levels_level_number_unique').on(table.levelNumber),
+    careerPlanLevelsLevelNumberIdx: index('idx_career_plan_levels_level_number').on(table.levelNumber),
+    careerPlanLevelsIsActiveIdx: index('idx_career_plan_levels_is_active').on(table.isActive)
   })
 );
 
@@ -418,6 +446,7 @@ export const segmentMembers = pgTable(
 /**
  * contact_tags
  * Relación N:M entre contactos y etiquetas.
+ * Campos adicionales para datos específicos de líneas de negocio (ej: Zurich).
  */
 export const contactTags = pgTable(
   'contact_tags',
@@ -425,6 +454,8 @@ export const contactTags = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
     tagId: uuid('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+    monthlyPremium: integer('monthly_premium'), // Prima mensual (números enteros, ej: 550)
+    policyNumber: text('policy_number'), // Número de póliza (texto y números)
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
@@ -1483,6 +1514,34 @@ export const capacitaciones = pgTable(
     capacitacionesTemaIdx: index('idx_capacitaciones_tema').on(table.tema),
     capacitacionesFechaIdx: index('idx_capacitaciones_fecha').on(table.fecha),
     capacitacionesCreatedByIdx: index('idx_capacitaciones_created_by').on(table.createdByUserId)
+  })
+);
+
+// ==========================================================
+// Automatizaciones
+// ==========================================================
+
+/**
+ * automation_configs
+ * Configuraciones de automatizaciones del sistema (webhooks, triggers, etc.).
+ */
+export const automationConfigs = pgTable(
+  'automation_configs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    name: text('name').notNull(), // Identificador único (ej: "mail_bienvenida")
+    displayName: text('display_name').notNull(), // Nombre para mostrar (ej: "Mail de bienvenida")
+    triggerType: text('trigger_type').notNull(), // Tipo de trigger (ej: "pipeline_stage_change")
+    triggerConfig: jsonb('trigger_config').notNull().default(sql`'{}'::jsonb`), // Configuración del trigger (ej: { stageName: "Cliente" })
+    webhookUrl: text('webhook_url'), // URL del webhook de N8N
+    enabled: boolean('enabled').notNull().default(true), // Si está habilitada
+    config: jsonb('config').notNull().default(sql`'{}'::jsonb`), // Configuración adicional (payload personalizado, etc.)
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    automationConfigsNameUnique: uniqueIndex('automation_configs_name_unique').on(table.name),
+    automationConfigsTriggerIdx: index('idx_automation_configs_trigger').on(table.triggerType, table.enabled)
   })
 );
 

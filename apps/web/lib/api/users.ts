@@ -39,6 +39,16 @@ export async function getCurrentUser(): Promise<ApiResponse<UserApiResponse>> {
 }
 
 /**
+ * Actualizar perfil del usuario actual
+ */
+export async function updateUserProfile(data: {
+  phone: string;
+  fullName?: string;
+}): Promise<ApiResponse<UserApiResponse>> {
+  return apiClient.patch<UserApiResponse>('/v1/users/me', data);
+}
+
+/**
  * Cambiar contraseña del usuario actual
  */
 export async function changePassword(data: {

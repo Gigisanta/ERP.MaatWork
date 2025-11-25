@@ -2,6 +2,16 @@
  * Wrapper de fetch con logging estructurado y correlación de request IDs
  * Reemplaza fetch nativo para incluir X-Request-ID automáticamente
  * REGLA CURSOR: Mantener propagación de X-Request-ID, no alterar estructura de logging, preservar correlación
+ * 
+ * AI_DECISION: Mantener fetch directo en lugar de usar apiClient
+ * Justificación: Este archivo ES un wrapper de fetch que agrega funcionalidad específica:
+ *                 - Logging estructurado con correlación de request IDs
+ *                 - Propagación automática de X-Request-ID header
+ *                 - Timeout configurable con logging de errores
+ *                 Si usáramos apiClient aquí, crearíamos una dependencia circular ya que
+ *                 apiClient podría usar este wrapper. Este wrapper es la capa base de logging.
+ * Impacto: Mantiene separación de responsabilidades - este wrapper es para logging,
+ *          apiClient es para retry logic y manejo de autenticación
  */
 
 import { logger } from './logger';
