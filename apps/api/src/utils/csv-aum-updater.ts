@@ -406,10 +406,10 @@ export function validateUpdate(
     if (hasIdCuenta || hasComitente || hasDescripcion) {
       sourceValidRows++;
       
-      if (hasIdCuenta) {
+      if (hasIdCuenta && row.idCuenta) {
         sourceIdCuentas.add(row.idCuenta.trim());
       }
-      if (hasComitente) {
+      if (hasComitente && row.comitente) {
         sourceComitentes.add(row.comitente.trim());
       }
       if (row.Asesor && row.Asesor.trim() !== '') {
@@ -427,10 +427,10 @@ export function validateUpdate(
     if (hasIdCuenta || hasComitente || hasCuenta) {
       updatedValidRows++;
       
-      if (hasIdCuenta) {
+      if (hasIdCuenta && row.idCuenta) {
         updatedIdCuentas.add(row.idCuenta.trim());
       }
-      if (hasComitente) {
+      if (hasComitente && row.comitente) {
         updatedComitentes.add(row.comitente.trim());
       }
     }

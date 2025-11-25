@@ -1,7 +1,12 @@
 import { config } from 'dotenv';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import type { Config } from 'drizzle-kit';
+
+// Obtener __dirname equivalente para módulos ES
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Buscar .env en la raíz del monorepo (2 niveles arriba de packages/db)
 const rootDir = resolve(__dirname, '../..');

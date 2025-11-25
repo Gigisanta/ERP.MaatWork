@@ -60,6 +60,10 @@ describe('redis config', () => {
     });
 
     it('debería retornar cliente existente si ya está inicializado', async () => {
+      // Limpiar singleton antes del test
+      const { closeRedis } = await import('./redis');
+      await closeRedis();
+      
       const client1 = await initializeRedis();
       const client2 = await initializeRedis();
 
@@ -68,9 +72,14 @@ describe('redis config', () => {
     });
 
     it('debería manejar error de conexión', async () => {
-      mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'));
+      // Reset singleton first
+      const { closeRedis } = await import('./redis');
+      await closeRedis();
+      
+      // Setup mock to reject
+      mockRedisClient.connect.mockRejectedValueOnce(new Error('Connection failed'));
 
-      await expect(initializeRedis()).rejects.toThrow();
+      await expect(initializeRedis()).rejects.toThrow('Connection failed');
       expect(mockLogger.error).toHaveBeenCalled();
     });
   });
@@ -83,9 +92,11 @@ describe('redis config', () => {
       expect(client).toBeDefined();
     });
 
-    it('debería retornar null cuando no está inicializado', () => {
-      // Reset module to clear singleton
-      vi.resetModules();
+    it('debería retornar null cuando no está inicializado', async () => {
+      // Cerrar conexión para limpiar singleton
+      const { closeRedis } = await import('./redis');
+      await closeRedis();
+      
       const client = getRedisClient();
 
       expect(client).toBeNull();
@@ -101,8 +112,13 @@ describe('redis config', () => {
     });
 
     it('debería no hacer nada cuando cliente no está inicializado', async () => {
-      // Reset module
-      vi.resetModules();
+      // Cerrar conexión primero para limpiar singleton
+      await closeRedis();
+      
+      // Reset mock call count
+      mockRedisClient.quit.mockClear();
+      
+      // Intentar cerrar de nuevo (no debería llamar quit porque no hay cliente)
       await closeRedis();
 
       expect(mockRedisClient.quit).not.toHaveBeenCalled();
@@ -133,6 +149,7 @@ describe('redis config', () => {
     });
   });
 });
+
 
 
 

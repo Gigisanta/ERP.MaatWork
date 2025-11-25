@@ -33,6 +33,8 @@ export async function apiCall<T>(
     body?: unknown;
     headers?: Record<string, string>;
     timeoutMs?: number;
+    cache?: RequestCache;
+    revalidate?: number | false;
   } = {}
 ): Promise<ApiResponse<T>> {
   const url = `${config.apiUrl}${endpoint}`;
@@ -55,12 +57,24 @@ export async function apiCall<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
 
-  const fetchOptions: RequestInit = {
+  // AI_DECISION: Use force-cache when revalidate is specified, otherwise no-store
+  // Justificación: Next.js revalidate requires cache to be enabled. Default to no-store for fresh data when no revalidate.
+  // Impacto: Enables proper caching with revalidation for optimized requests
+  const shouldCache = options.revalidate !== undefined && options.revalidate !== false;
+  const cacheStrategy: RequestCache = options.cache ?? (shouldCache ? 'force-cache' : 'no-store');
+
+  const fetchOptions: RequestInit & { next?: { revalidate: number | false } } = {
     method: options.method || 'GET',
     headers,
-    cache: 'no-store',
+    cache: cacheStrategy,
     signal: controller.signal,
   };
+  
+  // Next.js revalidate option
+  if (shouldCache && typeof options.revalidate === 'number') {
+    fetchOptions.next = { revalidate: options.revalidate };
+  }
+  
   if (options.body !== undefined) {
     fetchOptions.body = JSON.stringify(options.body);
   }
@@ -149,5 +163,78 @@ export async function getContactByIdWithToken(
   token: string
 ): Promise<ApiResponse<import('@/types/contact').Contact>> {
   return apiCallWithToken(`/v1/contacts/${id}`, { token });
+}
+
+/**
+ * Helper para obtener dashboard KPIs en Server Components
+ */
+export async function getDashboardKPIs(): Promise<ApiResponse<import('@/types').DashboardData>> {
+  return apiCall('/v1/analytics/dashboard');
+}
+
+/**
+ * Helper para obtener equipos en Server Components
+ */
+export async function getTeams(): Promise<ApiResponse<import('@/types/team').Team[]>> {
+  return apiCall('/v1/teams');
+}
+
+/**
+ * Helper para obtener solicitudes de membresía en Server Components
+ */
+export async function getMembershipRequests(): Promise<ApiResponse<import('@/types/team').MembershipRequest[]>> {
+  return apiCall('/v1/teams/membership-requests');
+}
+
+/**
+ * Helper para obtener portfolios en Server Components
+ */
+export async function getPortfolios(): Promise<ApiResponse<import('@/types').Portfolio[]>> {
+  return apiCall('/v1/portfolios/templates');
+}
+
+/**
+ * Helper para obtener usuario actual en Server Components
+ * 
+ * AI_DECISION: Usar /v1/users/me en lugar de /v1/auth/me para información completa
+ * Justificación: /v1/users/me retorna información completa del usuario desde DB (phone, isActive, createdAt, etc.)
+ *                 mientras que /v1/auth/me solo retorna AuthUser básico del token
+ * Impacto: Consistencia con tipos esperados y acceso a más información del usuario
+ */
+export async function getCurrentUser(): Promise<ApiResponse<import('@/types').UserApiResponse>> {
+  return apiCall('/v1/users/me');
+}
+
+/**
+ * Helper para obtener benchmarks en Server Components
+ */
+export async function getBenchmarks(): Promise<ApiResponse<import('@/types').Benchmark[]>> {
+  return apiCall('/v1/benchmarks');
+}
+
+/**
+ * Helper para obtener capacitaciones en Server Components
+ */
+export async function getCapacitaciones(params?: {
+  tema?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<ApiResponse<import('@/types/capacitaciones').CapacitacionesListResponse>> {
+  const queryParams = new URLSearchParams();
+  if (params?.tema) queryParams.append('tema', params.tema);
+  if (params?.search) queryParams.append('search', params.search);
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+  if (params?.offset) queryParams.append('offset', String(params.offset));
+
+  const endpoint = `/v1/capacitaciones${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  return apiCall(endpoint);
+}
+
+/**
+ * Helper para obtener pipeline board en Server Components
+ */
+export async function getPipelineBoard(): Promise<ApiResponse<import('@/types/pipeline').PipelineStageWithContacts[]>> {
+  return apiCall('/v1/pipeline/board');
 }
 

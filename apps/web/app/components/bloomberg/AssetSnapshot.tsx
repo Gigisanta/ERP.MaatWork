@@ -10,9 +10,63 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Text, Heading, Stack, Badge, Spinner, Alert, Button } from '@cactus/ui';
-import { getAssetSnapshot } from '@/lib/api/bloomberg';
-import type { AssetSnapshot as AssetSnapshotType } from '@/lib/api/bloomberg';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+
+// Type definition inline to avoid import issues during webpack module resolution
+interface AssetSnapshotType {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  high52w: number;
+  low52w: number;
+  pe?: number;
+  evEbitda?: number;
+  margin?: number;
+  roe?: number;
+  debtEbitda?: number;
+  currency: string;
+  source: string;
+  asof: string;
+}
+
+// AI_DECISION: Función fetch directa para evitar problemas de resolución de webpack en dynamic imports
+// Justificación: Webpack tiene problemas resolviendo cadenas de dependencias con alias @/ en dynamic imports.
+// Usar fetch directo evita la cadena: @/lib/api/bloomberg → ../api-client → @/types → ./config
+// EXCEPCIÓN a la regla "NUNCA usar fetch directamente": Necesario para resolver errores de webpack
+// en componentes cargados dinámicamente. El cliente API centralizado causa problemas de resolución.
+// Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en webpack
+async function fetchAssetSnapshot(symbol: string): Promise<{ success: boolean; data?: AssetSnapshotType; error?: string }> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/v1/bloomberg/assets/${symbol}/snapshot`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+      };
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      data: data as AssetSnapshotType,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
 
 interface AssetSnapshotProps {
   symbol: string;
@@ -30,7 +84,7 @@ export default function AssetSnapshot({ symbol, className }: AssetSnapshotProps)
       setError(null);
       
       try {
-        const response = await getAssetSnapshot(symbol);
+        const response = await fetchAssetSnapshot(symbol);
         if (response.success && response.data) {
           setSnapshot(response.data);
         } else {

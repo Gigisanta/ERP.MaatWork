@@ -16,12 +16,23 @@ import type {
 } from '../types/python-service';
 import { isConnectionError } from '../types/python-service';
 import { PAGINATION_LIMITS } from '../config/api-limits';
-import { instrumentsCache } from '../utils/cache';
+import { instrumentsSearchCache, normalizeCacheKey } from '../utils/cache';
+import { CircuitBreaker } from '../utils/circuit-breaker';
 
 const router = Router();
 
 // URL del microservicio Python
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:3002';
+
+// AI_DECISION: Circuit breaker para servicio Python externo
+// Justificación: Previene llamadas repetidas cuando el servicio está caído, permite fallback rápido
+// Impacto: Mejor resiliencia, menos carga en servicio fallido, recuperación automática
+const pythonServiceCircuitBreaker = new CircuitBreaker({
+  failureThreshold: 5,      // Abrir después de 5 fallos
+  resetTimeout: 30000,      // Intentar half-open después de 30 segundos
+  timeout: 15000,           // Timeout de 15 segundos por request
+  successThreshold: 2       // Cerrar después de 2 éxitos en half-open
+});
 
 // Helper: Buscar instrumentos en base de datos como fallback
 async function searchInstrumentsInDB(query: string, maxResults: number) {
@@ -111,9 +122,10 @@ router.post('/search', requireAuth, requireRole(['advisor', 'manager', 'admin'])
     // AI_DECISION: Cache instrument search results
     // Justificación: Búsquedas frecuentes con resultados relativamente estables, cache reduce carga en servicio Python y BD
     // Impacto: Reducción de llamadas al servicio Python en ~70% para queries repetidas
-    const cached = instrumentsCache.get(query);
+    const cacheKey = normalizeCacheKey('instruments:search', query);
+    const cached = instrumentsSearchCache.get(cacheKey);
     if (cached) {
-      req.log.debug({ query }, 'instrument search served from cache');
+      req.log.debug({ query, cacheKey }, 'instrument search served from cache');
       return res.json({
         success: true,
         data: cached,
@@ -127,65 +139,103 @@ router.post('/search', requireAuth, requireRole(['advisor', 'manager', 'admin'])
     let pythonResults: SymbolSearchResult[] = [];
     let usedFallback = false;
 
-    // Intentar llamar al microservicio Python primero
+    // Intentar llamar al microservicio Python primero (con circuit breaker)
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(`${PYTHON_SERVICE_URL}/search/symbols`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          max_results
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        throw new Error(`Python service error: ${response.statusText}`);
-      }
-
-      const data = await response.json() as SymbolSearchResponse;
-
-      // Validar formato de respuesta Python
-      if (data.status === 'success' && data.data) {
-        if (Array.isArray(data.data)) {
-          // Formato alternativo: data.data es directamente un array
-          pythonResults = data.data;
-        } else if ('results' in data.data && Array.isArray(data.data.results)) {
-          pythonResults = data.data.results;
-        }
-      } else if (data.status === 'error') {
-        req.log.warn({ query, error: data.message }, 'Python service returned error status');
-        // Continuar con fallback
-      } else {
-        req.log.warn({ query, data }, 'Unexpected Python service response format');
-        // Continuar con fallback
-      }
-    } catch (fetchError: unknown) {
-      // Detectar errores de conexión específicos usando type guard
-      const isConnError = isConnectionError(fetchError);
-
-      if (isConnError) {
-        const errorType = fetchError.code === 'ECONNREFUSED' 
-          ? 'connection refused (service not running)' 
-          : fetchError.code === 'ETIMEDOUT' || fetchError.name === 'AbortError'
-          ? 'timeout'
-          : 'connection error';
-        
-        req.log.warn({ 
-          query, 
-          errorType,
-          pythonServiceUrl: PYTHON_SERVICE_URL,
-          hint: 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
-        }, `Python analytics service unavailable (${errorType}), using database fallback`);
+      // Si el circuit breaker está abierto, usar fallback inmediato
+      if (pythonServiceCircuitBreaker.isOpen()) {
+        req.log.warn({
+          circuitState: pythonServiceCircuitBreaker.getState(),
+          metrics: pythonServiceCircuitBreaker.getMetrics()
+        }, 'Circuit breaker OPEN - usando fallback a BD');
         usedFallback = true;
+        pythonResults = await searchInstrumentsInDB(query, max_results);
       } else {
-        // Error no relacionado con conexión, propagar
-        throw fetchError;
+        // Ejecutar llamada protegida por circuit breaker
+        try {
+          const data = await pythonServiceCircuitBreaker.execute(async () => {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            const response = await fetch(`${PYTHON_SERVICE_URL}/search/symbols`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query,
+                max_results
+              }),
+              signal: controller.signal
+            });
+            clearTimeout(timeout);
+
+            if (!response.ok) {
+              throw new Error(`Python service error: ${response.statusText}`);
+            }
+
+            const responseData = await response.json() as SymbolSearchResponse;
+            return responseData;
+          });
+
+          // Validar formato de respuesta Python
+          if (data.status === 'success' && data.data) {
+            if (Array.isArray(data.data)) {
+              // Formato alternativo: data.data es directamente un array
+              pythonResults = data.data;
+            } else if ('results' in data.data && Array.isArray(data.data.results)) {
+              pythonResults = data.data.results;
+            }
+          } else if (data.status === 'error') {
+            req.log.warn({ query, error: data.message }, 'Python service returned error status');
+            // Continuar con fallback
+            usedFallback = true;
+            pythonResults = await searchInstrumentsInDB(query, max_results);
+          } else {
+            req.log.warn({ query, data }, 'Unexpected Python service response format');
+            // Continuar con fallback
+            usedFallback = true;
+            pythonResults = await searchInstrumentsInDB(query, max_results);
+          }
+        } catch (fetchError: unknown) {
+          // Detectar errores de conexión específicos usando type guard
+          const isConnError = isConnectionError(fetchError);
+
+          if (isConnError) {
+            const errorType = fetchError.code === 'ECONNREFUSED' 
+              ? 'connection refused (service not running)' 
+              : fetchError.code === 'ETIMEDOUT' || fetchError.name === 'AbortError'
+              ? 'timeout'
+              : 'connection error';
+            
+            req.log.warn({ 
+              query, 
+              errorType,
+              pythonServiceUrl: PYTHON_SERVICE_URL,
+              hint: 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
+            }, `Python analytics service unavailable (${errorType}), using database fallback`);
+            usedFallback = true;
+            pythonResults = await searchInstrumentsInDB(query, max_results);
+          } else {
+            // Error no relacionado con conexión, propagar
+            throw fetchError;
+          }
+        }
+      }
+    } catch (pythonServiceError: unknown) {
+      // Si hay un error en el servicio Python que no fue manejado por los catch internos,
+      // usar fallback a BD
+      const error = pythonServiceError instanceof Error ? pythonServiceError : new Error(String(pythonServiceError));
+      req.log.warn({ 
+        query, 
+        error: error.message,
+        hint: 'Python service error, using database fallback'
+      }, 'Python service error, falling back to database');
+      usedFallback = true;
+      try {
+        pythonResults = await searchInstrumentsInDB(query, max_results);
+      } catch (dbError: unknown) {
+        const dbErr = dbError instanceof Error ? dbError : new Error(String(dbError));
+        req.log.error({ query, error: dbErr.message }, 'Database fallback also failed');
+        throw dbErr;
       }
     }
 
@@ -228,8 +278,9 @@ router.post('/search', requireAuth, requireRole(['advisor', 'manager', 'admin'])
     }
 
     // Cache the results (only if we have results to avoid caching empty results)
+    // Cache key normalization is handled by the cache utility (only caches queries > 2 chars)
     if (pythonResults.length > 0) {
-      instrumentsCache.set(query, pythonResults);
+      instrumentsSearchCache.set(cacheKey, pythonResults);
     }
 
     res.json({
@@ -571,7 +622,7 @@ router.post('/', requireAuth, requireRole(['advisor', 'manager', 'admin']), asyn
 
     // Invalidate cache when instrument is created
     // Invalidate all search caches since new instrument might match existing queries
-    instrumentsCache.invalidate();
+    instrumentsSearchCache.clear();
 
     res.status(201).json({
       success: true,
@@ -751,7 +802,7 @@ router.put('/:id', requireAuth, requireRole(['manager', 'admin']), async (req: R
     }
 
     // Invalidate cache when instrument is updated
-    instrumentsCache.invalidate();
+    instrumentsSearchCache.clear();
 
     res.json({
       success: true,
@@ -786,7 +837,7 @@ router.delete('/:id', requireAuth, requireRole(['admin']), async (req: Request, 
     }
 
     // Invalidate cache when instrument is deleted
-    instrumentsCache.invalidate();
+    instrumentsSearchCache.clear();
 
     res.json({
       success: true,

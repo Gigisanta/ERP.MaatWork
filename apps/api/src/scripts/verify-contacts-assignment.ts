@@ -8,14 +8,11 @@
  */
 
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { db, contacts, users } from '@cactus/db';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 
 // Cargar .env
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..', '..', '..');
 config({ path: join(projectRoot, 'apps', 'api', '.env') });
 
@@ -143,7 +140,7 @@ async function verifyContactsAssignment(): Promise<VerificationResult> {
       assignedContacts: assigned,
       unassignedContacts: unassigned,
       invalidAssignments: invalidAssignments.length,
-      unassignedList: unassignedList.map(c => ({
+      unassignedList: unassignedList.map((c: { id: string; fullName: string | null; email: string | null }) => ({
         id: c.id,
         fullName: c.fullName,
         email: c.email

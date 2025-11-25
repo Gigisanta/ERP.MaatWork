@@ -8,13 +8,10 @@
  */
 
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { execSync } from 'child_process';
 
 // Cargar .env
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..', '..', '..');
 config({ path: join(projectRoot, 'apps', 'api', '.env') });
 
@@ -64,13 +61,18 @@ async function runVerification(verification: typeof VERIFICATIONS[0]): Promise<V
     const output = error.stdout || '';
     const stderr = error.stderr || '';
     
-    return {
+    const result: VerificationResult = {
       name: verification.name,
       success: false,
       exitCode,
-      output: output + (stderr ? `\nSTDERR:\n${stderr}` : ''),
-      errors: stderr ? [stderr] : undefined
+      output: output + (stderr ? `\nSTDERR:\n${stderr}` : '')
     };
+    
+    if (stderr) {
+      result.errors = [stderr];
+    }
+    
+    return result;
   }
 }
 
@@ -149,6 +151,10 @@ main().catch((error) => {
   }
   process.exit(1);
 });
+
+
+
+
 
 
 

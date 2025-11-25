@@ -219,22 +219,25 @@ describe('aumUpsert', () => {
 
     it('debería insertar nuevas filas cuando no existen', async () => {
       // Mock findExistingRow returns null (no existing row)
+      // findExistingRow with accountNumber will try strategy 3 (by accountNumber)
+      // So it will call execute once
       const mockExecute = vi.fn().mockResolvedValue({
         rows: []
       });
 
+      const mockValues = vi.fn().mockResolvedValue(undefined);
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: mockValues
       });
 
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        // First call: findExistingRow (execute)
+        // Call 1: findExistingRow strategy 3 (execute by accountNumber)
         if (callCount === 1) {
           return { execute: mockExecute } as any;
         }
-        // Second call: insertNewRow (insert)
+        // Call 2: insertNewRow (insert().values())
         return { insert: mockInsert } as any;
       });
 
@@ -245,6 +248,7 @@ describe('aumUpsert', () => {
       expect(result.stats.inserted).toBe(1);
       expect(result.stats.updated).toBe(0);
       expect(result.stats.errors).toBe(0);
+      expect(mockValues).toHaveBeenCalled();
     });
 
     it('debería actualizar filas existentes cuando existen', async () => {
@@ -303,13 +307,17 @@ describe('aumUpsert', () => {
         rows: []
       });
 
+      const mockValues = vi.fn().mockResolvedValue(undefined);
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: mockValues
       });
 
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
+        // Each row with accountNumber: 1 execute call (strategy 3) + 1 insert
+        // For 3 rows: 3 execute calls + 3 insert calls = 6 total calls
+        // Execute calls: 1, 3, 5; Insert calls: 2, 4, 6
         if (callCount % 2 === 1) {
           return { execute: mockExecute } as any;
         }
@@ -335,23 +343,26 @@ describe('aumUpsert', () => {
         rows: []
       });
 
+      const mockValues = vi.fn().mockRejectedValue(new Error('Insert error'));
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockRejectedValue(new Error('Insert error'))
+        values: mockValues
       });
 
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount % 2 === 1) {
+        // Call 1: findExistingRow strategy 3 (execute by accountNumber)
+        if (callCount === 1) {
           return { execute: mockExecute } as any;
         }
+        // Call 2: insertNewRow (insert) - fails
         return { insert: mockInsert } as any;
       });
 
       const rows = [createMockRow()];
       const result = await upsertAumRows(rows, 'balanz');
 
-      expect(result.success).toBe(true); // Still success if some rows processed
+      expect(result.success).toBe(false); // Fails because all rows failed
       expect(result.stats.inserted).toBe(0);
       expect(result.stats.updated).toBe(0);
       expect(result.stats.errors).toBe(1);
@@ -432,6 +443,10 @@ describe('aumUpsert', () => {
 
     it('debería insertar nuevo snapshot cuando no existe', async () => {
       // Mock check for existing snapshot returns empty
+      // upsertAumMonthlySnapshots calls db() 3 times per snapshot:
+      // 1. execute (check in upsertAumMonthlySnapshots)
+      // 2. execute (check in upsertSingleMonthlySnapshot)
+      // 3. insert (in upsertSingleMonthlySnapshot)
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: []
       });
@@ -440,15 +455,21 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined)
       });
 
-      // Mock check for existing (execute)
-      // Then insert (insert)
+      const mockUpdate = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined)
+        })
+      });
+
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount % 2 === 1) {
+        // Calls 1-2: execute (checks)
+        if (callCount <= 2) {
           return { execute: mockExecuteCheck } as any;
         }
-        return { insert: mockInsert } as any;
+        // Call 3: insert
+        return { insert: mockInsert, update: mockUpdate } as any;
       });
 
       const snapshots = [createMockSnapshot()];
@@ -462,6 +483,10 @@ describe('aumUpsert', () => {
 
     it('debería actualizar snapshot existente cuando existe', async () => {
       // Mock check for existing snapshot returns existing
+      // upsertAumMonthlySnapshots calls db() 3 times per snapshot:
+      // 1. execute (check in upsertAumMonthlySnapshots) - returns existing
+      // 2. execute (check in upsertSingleMonthlySnapshot) - returns existing
+      // 3. update (in upsertSingleMonthlySnapshot)
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: [{ id: 'snapshot-123' }]
       });
@@ -469,22 +494,17 @@ describe('aumUpsert', () => {
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined)
-      })
-      });
-
-      const mockExecuteUpdate = vi.fn().mockResolvedValue({
-        rows: []
+        })
       });
 
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount === 1) {
+        // Calls 1-2: execute (checks) - both return existing
+        if (callCount <= 2) {
           return { execute: mockExecuteCheck } as any;
         }
-        if (callCount === 2) {
-          return { execute: mockExecuteUpdate } as any;
-        }
+        // Call 3: update
         return { update: mockUpdate } as any;
       });
 
@@ -506,13 +526,22 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined)
       });
 
+      const mockUpdate = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined)
+        })
+      });
+
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount % 2 === 1) {
+        // For 3 snapshots: 3 snapshots * 3 calls each = 9 total calls
+        // Each snapshot: 2 execute calls (checks) + 1 insert call
+        // Calls 1-6: execute (checks), Calls 7-9: insert
+        if (callCount <= 6) {
           return { execute: mockExecuteCheck } as any;
         }
-        return { insert: mockInsert } as any;
+        return { insert: mockInsert, update: mockUpdate } as any;
       });
 
       const snapshots = [
@@ -537,19 +566,27 @@ describe('aumUpsert', () => {
         values: vi.fn().mockRejectedValue(new Error('Insert error'))
       });
 
+      const mockUpdate = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined)
+        })
+      });
+
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount % 2 === 1) {
+        // Calls 1-2: execute (checks)
+        if (callCount <= 2) {
           return { execute: mockExecuteCheck } as any;
         }
-        return { insert: mockInsert } as any;
+        // Call 3: insert - fails
+        return { insert: mockInsert, update: mockUpdate } as any;
       });
 
       const snapshots = [createMockSnapshot()];
       const result = await upsertAumMonthlySnapshots(snapshots);
 
-      expect(result.success).toBe(true); // Still success if some processed
+      expect(result.success).toBe(false); // Fails because all failed
       expect(result.stats.inserted).toBe(0);
       expect(result.stats.updated).toBe(0);
       expect(result.stats.errors).toBe(1);
@@ -565,13 +602,21 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined)
       });
 
+      const mockUpdate = vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined)
+        })
+      });
+
       let callCount = 0;
       mockDb.mockImplementation(() => {
         callCount++;
-        if (callCount % 2 === 1) {
+        // Calls 1-2: execute (checks)
+        if (callCount <= 2) {
           return { execute: mockExecuteCheck } as any;
         }
-        return { insert: mockInsert } as any;
+        // Call 3: insert
+        return { insert: mockInsert, update: mockUpdate } as any;
       });
 
       const snapshots = [createMockSnapshot({ accountNumber: null, idCuenta: 'cuenta-123' })];

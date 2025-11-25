@@ -1,0 +1,1 @@
+ALTER TABLE "aum_import_rows" ADD COLUMN "is_normalized" boolean DEFAULT false NOT NULL;

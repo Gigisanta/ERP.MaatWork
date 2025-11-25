@@ -41,8 +41,23 @@
       ]
     },
     "dev": {
+      "persistent": true,
       "cache": false,
-      "persistent": true
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.tsx",
+        "app/**/*.ts",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
+        "components/**/*.tsx",
+        "components/**/*.ts",
+        "package.json",
+        "tsconfig.json",
+        "next.config.js",
+        "tailwind.config.js",
+        "postcss.config.js"
+      ]
     },
     "lint": {
       "inputs": [
@@ -63,7 +78,6 @@
       ]
     },
     "test:watch": {
-      "cache": false,
       "persistent": true
     },
     "test:coverage": {
@@ -81,7 +95,6 @@
       "cache": false
     },
     "storybook": {
-      "cache": false,
       "persistent": true
     },
     "build-storybook": {

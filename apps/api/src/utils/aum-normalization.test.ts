@@ -1,6 +1,6 @@
 /**
  * Tests para AUM normalization utilities
- * 
+ *
  * AI_DECISION: Tests unitarios para normalización de datos AUM
  * Justificación: Consistencia en parsing, matching y commit de AUM
  * Impacto: Prevenir errores por diferencias de formato
@@ -90,13 +90,3 @@ describe('normalizeAccountNumber', () => {
     expect(normalizeAccountNumber('Account #123-456')).toBe('123456');
   });
 });
-
-
-
-
-
-
-
-
-
-

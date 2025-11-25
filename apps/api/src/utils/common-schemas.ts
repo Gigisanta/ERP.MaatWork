@@ -155,6 +155,35 @@ export function optionalUuidSchema(fieldName: string = 'id') {
 }
 
 /**
+ * Validates a UUID parameter and throws an error if invalid
+ * Useful for inline validation in route handlers
+ * 
+ * @param value - The value to validate
+ * @param fieldName - Name of the field for error messages (default: 'id')
+ * @returns The validated UUID string
+ * @throws Error if the value is not a valid UUID (should be caught and return 400)
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   const teamId = validateUuidParam(req.params.id, 'teamId');
+ * } catch (err) {
+ *   return res.status(400).json({ error: err.message });
+ * }
+ * ```
+ */
+export function validateUuidParam(value: string | undefined, fieldName: string = 'id'): string {
+  if (!value) {
+    throw new Error(`${fieldName} is required`);
+  }
+  const result = uuidSchema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`Invalid ${fieldName} format: must be a valid UUID`);
+  }
+  return result.data;
+}
+
+/**
  * Creates pagination schema with custom limits
  */
 export function paginationSchemaWithLimit(maxLimit: number = 500) {

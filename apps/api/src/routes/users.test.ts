@@ -1,6 +1,6 @@
 /**
  * Tests para users routes
- * 
+ *
  * AI_DECISION: Tests unitarios para gestión de usuarios
  * Justificación: Validación crítica de RBAC y administración de usuarios
  * Impacto: Prevenir accesos no autorizados y errores en gestión de usuarios
@@ -19,19 +19,19 @@ vi.mock('@cactus/db', () => ({
   users: {},
   teamMembershipRequests: {},
   eq: vi.fn(),
-  and: vi.fn()
+  and: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('bcrypt', () => ({
   default: {
     hash: vi.fn(),
-    compare: vi.fn()
-  }
+    compare: vi.fn(),
+  },
 }));
 
 const mockDb = vi.mocked(db);
@@ -41,12 +41,12 @@ describe('GET /users', () => {
   it('debería listar usuarios (manager/admin)', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        limit: vi.fn().mockResolvedValue([])
-      })
+        limit: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(requireRole).toBeDefined();
@@ -60,29 +60,31 @@ describe('POST /users', () => {
       fullName: 'New User',
       role: 'advisor' as const,
       password: 'password123',
-      isActive: true
+      isActive: true,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // Email no existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // Email no existe
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'user-123',
-          ...newUser
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'user-123',
+            ...newUser,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     mockBcrypt.hash.mockResolvedValue('hashed-password' as never);
@@ -94,13 +96,13 @@ describe('POST /users', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]) // Email existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]), // Email existe
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -116,13 +118,13 @@ describe('GET /users/pending', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([])
-        })
-      })
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(requireRole).toBeDefined();
@@ -134,13 +136,13 @@ describe('GET /users/managers', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([])
-        })
-      })
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -152,13 +154,13 @@ describe('GET /users/advisors', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue([])
-        })
-      })
+          orderBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -171,17 +173,19 @@ describe('GET /users/me', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            id: userId,
-            email: 'user@example.com',
-            fullName: 'Test User'
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: userId,
+              email: 'user@example.com',
+              fullName: 'Test User',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(userId).toBe('user-123');
@@ -196,22 +200,24 @@ describe('POST /users/change-password', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            passwordHash: 'hashed-old-password'
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              passwordHash: 'hashed-old-password',
+            },
+          ]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     mockBcrypt.compare.mockResolvedValue(true as never);
@@ -237,16 +243,18 @@ describe('POST /users/:id/approve', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'user-123',
-            isActive: true
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'user-123',
+              isActive: true,
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(requireRole).toBeDefined();
@@ -258,33 +266,25 @@ describe('POST /users/:id/reject', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            id: 'user-123',
-            email: 'user@example.com'
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'user-123',
+              email: 'user@example.com',
+            },
+          ]),
+        }),
+      }),
     });
 
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue([])
+      where: vi.fn().mockResolvedValue([]),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      delete: mockDelete
+      delete: mockDelete,
     } as any);
 
     expect(requireRole).toBeDefined();
   });
 });
-
-
-
-
-
-
-
-
-
-

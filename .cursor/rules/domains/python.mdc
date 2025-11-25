@@ -1,0 +1,99 @@
+---
+description: "Reglas específicas para servicio de analytics Python (yfinance, caching)"
+alwaysApply: false
+---
+
+# Analytics Service - Python
+
+## Estructura
+
+```text
+apps/analytics-service/
+├── cactus_ingestors/
+│   ├── core/           # Lógica core del servicio
+│   ├── jobs/           # Jobs programados
+│   ├── parsers/        # Parsers de datos
+│   ├── store/          # Almacenamiento
+│   └── utils/          # Utilidades
+├── main.py             # Entrypoint
+└── yfinance_client_improved.py  # Cliente mejorado de yfinance
+```
+
+## Patrones de yfinance Client
+
+### Caching con TTLCache
+
+**Usar TTLCache para caching en memoria:**
+
+```python
+from cachetools import TTLCache
+
+class YFinanceClientImproved:
+    def __init__(self):
+        # Cache ligero en memoria: 5 minutos para precios actuales, 1 hora históricos
+        self._current_price_cache = TTLCache(maxsize=1024, ttl=300)
+        self._historical_cache = TTLCache(maxsize=256, ttl=3600)
+        self._symbol_info_cache = TTLCache(maxsize=2048, ttl=1800)  # 30 min cache para info
+```
+
+### Búsqueda de Símbolos
+
+**NO depender de listas hardcodeadas:**
+
+```python
+# ✅ BIEN - Usar APIs reales
+def search_symbols(self, query: str, max_results: int = 10) -> List[Dict]:
+    # Validar si el query es un símbolo directo
+    # Buscar en sugerencias populares solo como complemento
+    # NO depender de listas hardcodeadas como fuente principal
+    pass
+
+# ❌ MAL - Listas hardcodeadas
+POPULAR_SYMBOLS = ['AAPL', 'MSFT', ...]  # NO hacer esto
+```
+
+### Retry con Backoff
+
+**Usar backoff para reintentos:**
+
+```python
+import backoff
+
+@backoff.on_exception(
+    backoff.expo,
+    Exception,
+    max_tries=3
+)
+def fetch_data(self, symbol: str):
+    # ...
+```
+
+## Logging
+
+**Usar logging estándar de Python:**
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info('Processing symbol', extra={'symbol': symbol})
+logger.error('Failed to fetch data', exc_info=True)
+```
+
+## Documentación de Decisiones
+
+**Para decisiones no obvias, usar formato:**
+
+```python
+# AI_DECISION: Eliminar listas hardcodeadas y usar APIs reales
+# Justificación: Permite buscar cualquier símbolo sin límites artificiales
+# Impacto: Búsqueda más flexible, escalable y profesional
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ Listas hardcodeadas de símbolos
+2. ❌ Sin caching (usar TTLCache)
+3. ❌ Sin retry logic (usar backoff)
+4. ❌ print() en lugar de logging estructurado

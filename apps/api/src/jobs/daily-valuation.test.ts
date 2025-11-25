@@ -12,18 +12,40 @@ import { db, instruments, priceSnapshots, brokerPositions, aumSnapshots } from '
 import axios from 'axios';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
-  db: vi.fn(),
-  instruments: {},
-  priceSnapshots: {},
-  brokerPositions: {},
-  aumSnapshots: {},
-  eq: vi.fn(),
-  and: vi.fn(),
-  sql: vi.fn(),
-  desc: vi.fn(),
-  lte: vi.fn()
-}));
+vi.mock('@cactus/db', async () => {
+  const actual = await vi.importActual('@cactus/db');
+  return {
+    ...actual,
+    db: vi.fn(),
+    instruments: {},
+    priceSnapshots: {},
+    brokerPositions: {},
+    aumSnapshots: {},
+    eq: vi.fn(),
+    and: vi.fn(),
+    sql: vi.fn(),
+    desc: vi.fn(),
+    lte: vi.fn()
+  };
+});
+
+vi.mock('@cactus/db/schema', async () => {
+  const actual = await vi.importActual('@cactus/db/schema');
+  return {
+    ...actual,
+    instruments: {},
+    priceSnapshots: {},
+    brokerPositions: {},
+    brokerBalances: {},
+    brokerAccounts: {},
+    aumSnapshots: {},
+    clientPortfolioAssignments: {},
+    portfolioMonitoringSnapshot: {},
+    portfolioMonitoringDetails: {},
+    portfolioTemplateLines: {},
+    contacts: {}
+  };
+});
 
 vi.mock('axios', () => ({
   default: {
@@ -271,6 +293,10 @@ describe('runPriceBackfillJob', () => {
     await expect(runPriceBackfillJob(365)).resolves.not.toThrow();
   });
 });
+
+
+
+
 
 
 

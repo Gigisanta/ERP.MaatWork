@@ -14,7 +14,7 @@ import {
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 // Schema de validación Zod
 // AI_DECISION: Usar union para manejar null correctamente con positive()
@@ -72,7 +72,10 @@ export default function TagDetailsForm({
     
     if (trimmedValue === '') {
       setFormData(prev => ({ ...prev, monthlyPremium: null }));
-      setErrors(prev => ({ ...prev, monthlyPremium: undefined }));
+      setErrors(prev => {
+        const { monthlyPremium, ...rest } = prev;
+        return rest;
+      });
       return;
     }
 
@@ -89,7 +92,10 @@ export default function TagDetailsForm({
     }
 
     setFormData(prev => ({ ...prev, monthlyPremium: numValue }));
-    setErrors(prev => ({ ...prev, monthlyPremium: undefined }));
+    setErrors(prev => {
+      const { monthlyPremium, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handlePolicyNumberChange = (value: string) => {
@@ -97,7 +103,10 @@ export default function TagDetailsForm({
     
     if (trimmedValue === '') {
       setFormData(prev => ({ ...prev, policyNumber: null }));
-      setErrors(prev => ({ ...prev, policyNumber: undefined }));
+      setErrors(prev => {
+        const { policyNumber, ...rest } = prev;
+        return rest;
+      });
       return;
     }
 
@@ -107,14 +116,17 @@ export default function TagDetailsForm({
     }
 
     setFormData(prev => ({ ...prev, policyNumber: trimmedValue }));
-    setErrors(prev => ({ ...prev, policyNumber: undefined }));
+    setErrors(prev => {
+      const { policyNumber, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    logger.debug('handleSubmit llamado', { contactId, tagId, hasErrors: Object.keys(errors).length > 0 });
+    logger.debug('handleSubmit llamado', toLogContext({ contactId, tagId, hasErrors: Object.keys(errors).length > 0 }));
     
     // Limpiar errores previos
     setErrors({});
@@ -123,11 +135,11 @@ export default function TagDetailsForm({
     const validationResult = contactTagFormSchema.safeParse(formData);
     
     if (!validationResult.success) {
-      logger.warn('Validación Zod falló', {
+      logger.warn('Validación Zod falló', toLogContext({
         contactId,
         tagId,
-        errors: validationResult.error.errors
-      });
+        errors: validationResult.error.errors.map(e => ({ path: e.path, message: e.message }))
+      }));
       const zodErrors: typeof errors = {};
       validationResult.error.errors.forEach((error) => {
         if (error.path[0] === 'monthlyPremium') {
@@ -154,11 +166,11 @@ export default function TagDetailsForm({
         payload.policyNumber = formData.policyNumber;
       }
       
-      logger.debug('Enviando datos de contact tag', { contactId, tagId, payload });
+      logger.debug('Enviando datos de contact tag', toLogContext({ contactId, tagId, payload }));
       
       const response = await updateContactTag(contactId, tagId, payload);
       
-      logger.info('Contact tag actualizado exitosamente', { contactId, tagId });
+      logger.info('Contact tag actualizado exitosamente', toLogContext({ contactId, tagId }));
       
       if (response.success && response.data) {
         showToast('Datos guardados', 'La información de la póliza se ha actualizado correctamente', 'success');
@@ -169,20 +181,20 @@ export default function TagDetailsForm({
         });
       } else {
         const errorMsg = response.error || 'Error al guardar los datos';
-        logger.error('Error en respuesta de updateContactTag', {
+        logger.error('Error en respuesta de updateContactTag', toLogContext({
           contactId,
           tagId,
           error: errorMsg,
           response
-        });
+        }));
         throw new Error(errorMsg);
       }
     } catch (err) {
-      logger.error('Error al guardar contact tag', {
+      logger.error('Error al guardar contact tag', toLogContext({
         error: err instanceof Error ? err.message : String(err),
         contactId,
         tagId
-      });
+      }));
       let errorMessage = 'Error desconocido al guardar';
       
       if (err instanceof Error) {

@@ -1,6 +1,7 @@
 import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
 import { eq, and, or, sql, inArray, isNull, type SQL } from 'drizzle-orm';
 import { UserRole } from './types';
+import { getCachedAccessScope, setCachedAccessScope } from './cache';
 
 export interface AccessScope {
   userId: string;
@@ -18,8 +19,30 @@ export interface ContactAccessFilter {
 
 /**
  * Get the access scope for a user based on their role and team memberships
+ * 
+ * AI_DECISION: Add in-memory cache with TTL to reduce redundant DB queries
+ * Justificación: getUserAccessScope se llama frecuentemente pero cambia raramente (solo cuando cambia team membership)
+ * Impacto: Reduce queries redundantes a DB, mejora performance de endpoints que verifican acceso
  */
 export async function getUserAccessScope(userId: string, role: UserRole): Promise<AccessScope> {
+  // Check cache first
+  const cached = getCachedAccessScope(userId, role);
+  if (cached) {
+    // AI_DECISION: Log cache hit for monitoring (optional, can be removed if too verbose)
+    // Justificación: Permite monitorear efectividad del caché
+    // Impacto: Mejora visibilidad de cache hit rate
+    // Note: Using console.log here since we don't have logger context, can be enhanced later
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[Cache Hit] getUserAccessScope(${userId}, ${role})`);
+    }
+    return cached;
+  }
+  
+  // Cache miss - will query DB
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`[Cache Miss] getUserAccessScope(${userId}, ${role})`);
+  }
+
   // Ensure user exists in database
   const user = await db().select().from(users).where(eq(users.id, userId)).limit(1);
   if (user.length === 0) {
@@ -80,7 +103,7 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
       throw new Error(`Unknown role: ${role}`);
   }
 
-  return {
+  const scope: AccessScope = {
     userId,
     role,
     accessibleAdvisorIds,
@@ -88,6 +111,11 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
     canAssignToOthers,
     canReassign
   };
+
+  // Cache the result
+  setCachedAccessScope(userId, role, scope);
+
+  return scope;
 }
 
 /**
@@ -143,11 +171,27 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
 
 /**
  * Check if a user can access a specific contact
+ * 
+ * AI_DECISION: Accept optional AccessScope parameter to avoid redundant getUserAccessScope calls
+ * Justificación: Cuando AccessScope ya está calculado (ej: en GET /tasks), evita llamada redundante a getUserAccessScope
+ * Impacto: Reduce queries N+1 eliminando llamadas redundantes a getUserAccessScope
+ * 
+ * @param userId - User ID
+ * @param role - User role
+ * @param contactId - Contact ID to check access for
+ * @param accessScope - Optional pre-calculated access scope (avoids redundant getUserAccessScope call)
+ * @returns Promise<boolean> - True if user can access the contact
  */
-export async function canAccessContact(userId: string, role: UserRole, contactId: string): Promise<boolean> {
+export async function canAccessContact(
+  userId: string, 
+  role: UserRole, 
+  contactId: string,
+  accessScope?: AccessScope
+): Promise<boolean> {
   try {
-    const accessScope = await getUserAccessScope(userId, role);
-    const filter = buildContactAccessFilter(accessScope);
+    // Use provided accessScope or fetch it if not provided
+    const scope = accessScope ?? await getUserAccessScope(userId, role);
+    const filter = buildContactAccessFilter(scope);
     
     // Query the contact with the access filter
     const contact = await db()

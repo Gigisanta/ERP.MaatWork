@@ -292,14 +292,17 @@ async function seedLookupTables(): Promise<void> {
     { id: 'commodities', label: 'Commodities' }
   ];
   
-  for (const assetClass of assetClasses) {
+  // AI_DECISION: Optimizar batch insert - reemplazar loop con INSERTs individuales por batch insert
+  // Justificación: Reduce de N queries a 1 query (N-1 reducción, típicamente 5 queries → 1)
+  // Impacto: Mejora performance del seed de lookup tables
+  if (assetClasses.length > 0) {
     try {
       await dbInstance
         .insert(lookupAssetClass)
-        .values(assetClass)
+        .values(assetClasses)
         .onConflictDoNothing();
     } catch (error) {
-      logger.debug({ assetClass }, 'Asset class already exists or error occurred');
+      logger.debug({ error }, 'Asset classes batch insert failed or already exist');
     }
   }
   

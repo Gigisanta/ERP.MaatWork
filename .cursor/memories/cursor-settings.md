@@ -1,8 +1,19 @@
 # Memoria: Configuración de Cursor para Proyecto CACTUS
 
+## Propósito
+Configuración recomendada de Cursor IDE y VS Code para optimizar el desarrollo en el monorepo CACTUS CRM con TypeScript strict mode y pnpm workspaces.
+
+## Contexto
+Usar esta memoria cuando:
+- Configurar Cursor/VS Code por primera vez
+- Optimizar settings para TypeScript strict mode
+- Configurar terminal para monorepo con pnpm
+- Troubleshooting de problemas de configuración
+
 ## Configuración de Terminal/Consola
 
 ### Settings Recomendados en Cursor
+
 ```json
 {
   "terminal.integrated.commandTimeout": 30000,
@@ -22,6 +33,7 @@
 ```
 
 ### Variables de Entorno Globales
+
 ```bash
 # En el sistema o .env global
 CI=true
@@ -31,6 +43,7 @@ PNPM_DISABLE_PROMPT=true
 ```
 
 ### Configuración de PowerShell
+
 ```powershell
 # En el perfil de PowerShell ($PROFILE)
 $env:CI = "true"
@@ -38,9 +51,77 @@ $env:NPM_CONFIG_LOGLEVEL = "warn"
 Set-PSReadLineOption -PredictionSource None
 ```
 
+## Configuración de TypeScript Strict Mode
+
+### Settings para TypeScript
+
+```json
+{
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.useLabelDetailsInCompletionEntries": true
+}
+```
+
+### Settings para Editor
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.organizeImports": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
+```
+
+## Configuración para Monorepo (pnpm workspaces)
+
+### Settings de Archivos
+
+```json
+{
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.turbo/**": true,
+    "**/coverage/**": true
+  },
+  "files.exclude": {
+    "**/.turbo": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    "**/coverage": true
+  }
+}
+```
+
+### Configuración de Workspace
+
+```json
+{
+  "typescript.preferences.useAliasesForRenames": false,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.includePackageJsonAutoImports": "auto"
+}
+```
+
 ## Configuración del Proyecto CACTUS
 
 ### package.json Scripts Optimizados
+
 ```json
 {
   "scripts": {
@@ -55,6 +136,7 @@ Set-PSReadLineOption -PredictionSource None
 ```
 
 ### Configuración de Turbo
+
 ```json
 {
   "pipeline": {
@@ -73,6 +155,7 @@ Set-PSReadLineOption -PredictionSource None
 ## Comandos de Diagnóstico
 
 ### Script de Verificación del Sistema
+
 ```bash
 # Crear script: scripts/verify-system.js
 #!/usr/bin/env node
@@ -90,6 +173,7 @@ try {
 ```
 
 ### Comandos de Limpieza
+
 ```bash
 # Limpiar cache de pnpm
 pnpm store prune
@@ -104,13 +188,15 @@ rimraf node_modules
 ## Troubleshooting
 
 ### Si Cursor se Cuelga
+
 1. **Cancelar comando**: Ctrl+C
-2. **Verificar procesos**: `tasklist | findstr node`
-3. **Matar procesos colgados**: `taskkill /F /IM node.exe`
+2. **Verificar procesos**: `tasklist | findstr node` (Windows)
+3. **Matar procesos colgados**: `taskkill /F /IM node.exe` (Windows)
 4. **Reiniciar terminal**: Ctrl+Shift+P → "Terminal: Kill All Terminals"
-5. **Reiniciar Cursor**: Si persiste
+5. **Reiniciar Cursor**: Si persiste el problema
 
 ### Comandos de Recuperación
+
 ```bash
 # Verificar estado
 git status
@@ -124,28 +210,17 @@ pnpm install --frozen-lockfile
 pnpm build
 ```
 
-## Configuración de Desarrollo
+## Referencias
 
-### VS Code/Cursor Settings
-```json
-{
-  "typescript.preferences.includePackageJsonAutoImports": "auto",
-  "typescript.suggest.autoImports": true,
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "terminal.integrated.defaultProfile.windows": "PowerShell",
-  "files.watcherExclude": {
-    "**/node_modules/**": true,
-    "**/dist/**": true,
-    "**/.turbo/**": true
-  }
-}
-```
+- Reglas relacionadas: 
+  - `.cursor/rules/00-core.mdc` (arquitectura general)
+  - `.cursor/rules/01-typescript.mdc` (reglas TypeScript)
+- Memorias relacionadas: 
+  - `.cursor/memories/terminal-best-practices.md`
+- Documentación: 
+  - `docs/DEVELOPMENT.md`
+  - `docs/ARCHITECTURE.md`
 
+## Última Actualización
 
-
-
-
-
+2025-01-16 - Agregada configuración TypeScript strict mode y monorepo

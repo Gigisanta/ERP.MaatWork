@@ -1,4 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// Mock @cactus/db before importing routers
+vi.mock('@cactus/db', async () => {
+  const actual = await vi.importActual('@cactus/db');
+  return {
+    ...actual,
+    db: vi.fn(),
+    aumImportRows: {},
+    aumImportFiles: {},
+    contacts: {},
+    users: {},
+    advisorAliases: {},
+    aumMonthlySnapshots: {},
+    eq: vi.fn(),
+    sql: vi.fn()
+  };
+});
+
 import rowsRouter from './aum/rows';
 import adminRouter from './aum/admin';
 

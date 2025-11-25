@@ -88,7 +88,8 @@ export type {
   TeamInvitation,
   TeamInvitationResponse,
   TeamMetrics,
-  TeamMemberMetrics
+  TeamMemberMetrics,
+  AumTrendItem
 } from './team';
 
 // Contact types

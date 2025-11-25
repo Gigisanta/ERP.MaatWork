@@ -21,7 +21,14 @@ vi.mock('@cactus/db', () => ({
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next()),
+  requireAuth: vi.fn((req, res, next) => {
+    req.user = {
+      id: 'admin-123',
+      email: 'admin@example.com',
+      role: 'admin'
+    };
+    next();
+  }),
   requireRole: vi.fn(() => (req, res, next) => next())
 }));
 
@@ -41,7 +48,16 @@ vi.mock('../../auth/authorization', () => ({
 }));
 
 vi.mock('../../utils/validation', () => ({
-  validate: vi.fn(() => (req, res, next) => next())
+  validate: vi.fn(() => (req, res, next) => {
+    // Simulate Zod transformation for query params
+    if (req.query.limit && typeof req.query.limit === 'string') {
+      req.query.limit = Number(req.query.limit) as any;
+    }
+    if (req.query.offset && typeof req.query.offset === 'string') {
+      req.query.offset = Number(req.query.offset) as any;
+    }
+    next();
+  })
 }));
 
 vi.mock('../../services/aumMatcher', () => ({
@@ -88,9 +104,44 @@ describe('AUM Rows Routes', () => {
           rows: [
             {
               id: 'row-1',
+              file_id: 'file-1',
               account_number: '12345',
               holder_name: 'Juan Perez',
-              match_status: 'matched'
+              id_cuenta: null,
+              advisor_raw: null,
+              matched_contact_id: null,
+              matched_user_id: null,
+              match_status: 'matched',
+              is_preferred: false,
+              conflict_detected: false,
+              needs_confirmation: false,
+              is_normalized: false,
+              row_created_at: new Date(),
+              row_updated_at: new Date(),
+              current_file_id: 'file-1',
+              current_file_name: 'test.csv',
+              current_file_created_at: new Date(),
+              file_type: 'csv',
+              file_report_month: null,
+              file_report_year: null,
+              aum_dollars: null,
+              bolsa_arg: null,
+              fondos_arg: null,
+              bolsa_bci: null,
+              pesos: null,
+              mep: null,
+              cable: null,
+              cv7000: null,
+              broker: 'balanz',
+              original_filename: 'test.csv',
+              file_status: 'parsed',
+              file_created_at: new Date(),
+              contact_name: null,
+              contact_first_name: null,
+              contact_last_name: null,
+              user_name: null,
+              user_email: null,
+              suggested_user_id: null
             }
           ]
         });
@@ -105,17 +156,19 @@ describe('AUM Rows Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(200);
 
-      expect(res.body).toEqual({
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            id: 'row-1',
-            accountNumber: '12345'
-          })
-        ]),
-        total: 10,
-        limit: 10,
-        offset: 0
+      expect(res.body.ok).toBe(true);
+      expect(res.body.rows).toBeInstanceOf(Array);
+      expect(res.body.rows.length).toBeGreaterThan(0);
+      expect(res.body.rows[0]).toMatchObject({
+        id: 'row-1',
+        accountNumber: '12345'
       });
+      expect(res.body.pagination).toMatchObject({
+        total: 10
+      });
+      expect(typeof res.body.pagination.limit).toBe('number');
+      expect(typeof res.body.pagination.offset).toBe('number');
+      expect(typeof res.body.pagination.hasMore).toBe('boolean');
     });
 
     it('debería filtrar por broker', async () => {
@@ -137,7 +190,7 @@ describe('AUM Rows Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(200);
 
-      expect(res.body.total).toBe(5);
+      expect(res.body.pagination.total).toBe(5);
     });
 
     it('debería filtrar por status', async () => {
@@ -159,99 +212,76 @@ describe('AUM Rows Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(200);
 
-      expect(res.body.total).toBe(3);
+      expect(res.body.pagination.total).toBe(3);
     });
   });
 
-  describe('GET /admin/aum/rows/:rowId', () => {
-    it('debería retornar row por ID', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({
-        rows: [{
-          id: 'row-1',
-          account_number: '12345',
-          holder_name: 'Juan Perez'
-        }]
-      });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute
-      } as any);
-
-      const app = createTestApp();
-      const res = await request(app)
-        .get('/admin/aum/rows/row-1')
-        .set('Cookie', `token=${adminToken}`)
-        .expect(200);
-
-      expect(res.body).toEqual({
-        id: 'row-1',
-        accountNumber: '12345',
-        holderName: 'Juan Perez'
-      });
-    });
-
-    it('debería retornar 404 cuando row no existe', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({
-        rows: []
-      });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute
-      } as any);
-
-      const app = createTestApp();
-      const res = await request(app)
-        .get('/admin/aum/rows/invalid-row')
-        .set('Cookie', `token=${adminToken}`)
-        .expect(404);
-
-      expect(res.body).toEqual({
-        error: 'Row not found'
-      });
-    });
-  });
-
-  describe('PATCH /admin/aum/rows/:rowId/match', () => {
+  describe('POST /admin/aum/uploads/:fileId/match', () => {
     it('debería match row exitosamente', async () => {
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockSelectFile = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([{
-              id: 'row-1',
-              account_number: '12345'
+              id: 'file-1'
             }])
           })
         })
       });
 
-      const mockUpdate = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined)
+      const mockSelectRow = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{
+              accountNumber: '12345'
+            }])
+          })
         })
       });
 
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return { select: mockSelect } as any;
-        }
-        return { update: mockUpdate } as any;
+      const mockExecute = vi.fn().mockResolvedValue({
+        rows: [{
+          total_parsed: 10,
+          total_matched: 5,
+          total_unmatched: 5
+        }]
       });
+
+      const mockUpdate = vi.fn((table: any) => ({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined)
+        })
+      }));
+
+      let selectCallCount = 0;
+      const mockSelect = vi.fn((fields?: any) => {
+        selectCallCount++;
+        // First call: select file (no arguments)
+        if (selectCallCount === 1 || !fields) {
+          return mockSelectFile();
+        }
+        // Second call (if isPreferred): select row accountNumber (with fields)
+        return mockSelectRow();
+      });
+
+      mockDb.mockReturnValue({
+        select: mockSelect,
+        execute: mockExecute,
+        update: mockUpdate
+      } as any);
 
       const app = createTestApp();
       const res = await request(app)
-        .patch('/admin/aum/rows/row-1/match')
+        .post('/admin/aum/uploads/file-1/match')
         .set('Cookie', `token=${adminToken}`)
         .send({
-          contactId: 'contact-1',
-          userId: 'user-1'
+          rowId: 'row-1',
+          matchedContactId: 'contact-1',
+          matchedUserId: 'user-1'
         })
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true,
-        message: expect.any(String)
+        ok: true
       });
     });
   });

@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { signUserToken, verifyUserToken } from './jwt';
-import type { AuthUser } from './types';
+import type { AuthUser, UserRole } from './types';
 
 describe('signUserToken', () => {
   const mockUser: AuthUser = {
@@ -186,11 +186,11 @@ describe('verifyUserToken', () => {
     });
 
     it('debería rechazar token expirado', async () => {
-      // Generar token con expiración muy corta
-      const token = await signUserToken(mockUser, '1ms');
+      // Generar token con expiración muy corta (1 segundo)
+      const token = await signUserToken(mockUser, '1s');
 
-      // Esperar a que expire
-      await new Promise(resolve => setTimeout(resolve, 10));
+      // Esperar a que expire (esperar más de 1 segundo)
+      await new Promise(resolve => setTimeout(resolve, 1100));
 
       await expect(verifyUserToken(token)).rejects.toThrow();
     });
@@ -266,6 +266,90 @@ describe('verifyUserToken', () => {
     });
   });
 
+  describe('Role validation', () => {
+    it('debería rechazar token con role inválido', async () => {
+      // Crear un token manualmente con role inválido
+      // Esto requiere usar jose directamente para crear un token malformado
+      const { SignJWT } = await import('jose');
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing');
+      
+      const invalidToken = await new SignJWT({
+        role: 'invalid-role',
+        email: mockUser.email,
+      })
+        .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+        .setSubject(mockUser.id)
+        .setIssuedAt()
+        .setIssuer('cactus-api')
+        .setAudience('cactus-web')
+        .setExpirationTime('7d')
+        .sign(secret);
+
+      await expect(verifyUserToken(invalidToken)).rejects.toThrow(/Invalid role/);
+    });
+
+    it('debería aceptar todos los roles válidos', async () => {
+      const roles: Array<'admin' | 'manager' | 'advisor'> = ['admin', 'manager', 'advisor'];
+      
+      for (const role of roles) {
+        const user: AuthUser = {
+          id: `user-${role}`,
+          email: `${role}@example.com`,
+          role,
+        };
+        
+        const token = await signUserToken(user);
+        const decoded = await verifyUserToken(token);
+        
+        expect(decoded.role).toBe(role);
+      }
+    });
+  });
+
+  describe('Email handling', () => {
+    it('debería manejar token sin email en payload', async () => {
+      // Crear token sin email (edge case)
+      const { SignJWT } = await import('jose');
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing');
+      
+      const tokenWithoutEmail = await new SignJWT({
+        role: mockUser.role,
+        // Sin email
+      })
+        .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+        .setSubject(mockUser.id)
+        .setIssuedAt()
+        .setIssuer('cactus-api')
+        .setAudience('cactus-web')
+        .setExpirationTime('7d')
+        .sign(secret);
+
+      const decoded = await verifyUserToken(tokenWithoutEmail);
+      expect(decoded.email).toBe(''); // Debería usar string vacío como fallback
+    });
+  });
+
+  describe('Edge cases - signUserToken', () => {
+    it('debería rechazar usuario con role inválido', async () => {
+      const invalidUser = {
+        ...mockUser,
+        role: 'invalid-role' as UserRole,
+      };
+
+      await expect(signUserToken(invalidUser as AuthUser)).rejects.toThrow(/Invalid role/);
+    });
+
+    it('debería manejar diferentes formatos de expiración', async () => {
+      const formats = ['1h', '1d', '7d', '30d', '1s'];
+      
+      for (const expiresIn of formats) {
+        const token = await signUserToken(mockUser, expiresIn);
+        const decoded = await verifyUserToken(token);
+        expect(decoded).toBeDefined();
+      }
+    });
+  });
+
   describe('Edge cases', () => {
     it('debería manejar email vacío en payload', async () => {
       const userWithEmptyEmail: AuthUser = {
@@ -313,6 +397,7 @@ describe('verifyUserToken', () => {
     });
   });
 });
+
 
 
 

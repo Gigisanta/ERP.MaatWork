@@ -3,7 +3,7 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 import { usePageTitle } from '../../components/PageTitleContext';
 import { createContact } from '@/lib/api';
 import { usePipelineStages, useAdvisors, useInvalidateContactsCache } from '@/lib/api-hooks';
@@ -82,10 +82,10 @@ export default function NewContactPage() {
   
   // Set error if SWR hooks have errors
   if (stagesError && !error) {
-    logger.error('Error fetching pipeline stages', { err: stagesError });
+    logger.error('Error fetching pipeline stages', toLogContext({ err: stagesError }));
   }
   if (advisorsError && !error) {
-    logger.error('Error fetching advisors', { err: advisorsError });
+    logger.error('Error fetching advisors', toLogContext({ err: advisorsError }));
   }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -210,7 +210,7 @@ export default function NewContactPage() {
   // Show loading state while auth or data is loading
   const isLoading = loading || dataLoading;
   
-  if (isLoading && !pipelineStages.length) {
+  if (isLoading && !(pipelineStages as PipelineStage[]).length) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
         <Stack direction="column" gap="md" align="center">
@@ -233,7 +233,7 @@ export default function NewContactPage() {
         <div className="mb-5">
           <div className="flex justify-between items-start">
             <div>
-              <Text size="md" color="secondary" className="text-gray-600">
+              <Text size="base" color="secondary" className="text-gray-600">
                 Agrega un nuevo contacto al sistema CRM
               </Text>
             </div>
@@ -285,7 +285,10 @@ export default function NewContactPage() {
                         onChange={(e) => {
                           handleInputChange('firstName', e.target.value);
                           if (fieldErrors.firstName) {
-                            setFieldErrors(prev => ({ ...prev, firstName: undefined }));
+                            setFieldErrors(prev => {
+                              const { firstName, ...rest } = prev;
+                              return rest;
+                            });
                           }
                         }}
                         placeholder="Juan"
@@ -301,7 +304,10 @@ export default function NewContactPage() {
                         onChange={(e) => {
                           handleInputChange('lastName', e.target.value);
                           if (fieldErrors.lastName) {
-                            setFieldErrors(prev => ({ ...prev, lastName: undefined }));
+                            setFieldErrors(prev => {
+                              const { lastName, ...rest } = prev;
+                              return rest;
+                            });
                           }
                         }}
                         placeholder="Pérez"
@@ -359,7 +365,7 @@ export default function NewContactPage() {
                         value={formData.pipelineStageId}
                         onValueChange={(value) => handleInputChange('pipelineStageId', value)}
                         disabled={isLoading || submitLoading}
-                        items={pipelineStages.map(stage => ({
+                        items={(pipelineStages as PipelineStage[]).map((stage) => ({
                           value: stage.id,
                           label: stage.name
                         }))}
@@ -560,7 +566,7 @@ export default function NewContactPage() {
               </Card>
 
               {/* Card de Información del Pipeline */}
-              {pipelineStages.length > 0 && (
+              {(pipelineStages as PipelineStage[]).length > 0 && (
                 <Card padding="sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs font-semibold text-gray-900">
@@ -569,7 +575,7 @@ export default function NewContactPage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1.5">
-                      {pipelineStages.slice(0, 3).map((stage) => (
+                      {(pipelineStages as PipelineStage[]).slice(0, 3).map((stage) => (
                         <div key={stage.id} className="flex items-center space-x-1.5">
                           <div 
                             className="w-2.5 h-2.5 rounded-full" 
@@ -580,9 +586,9 @@ export default function NewContactPage() {
                           </Text>
                         </div>
                       ))}
-                      {pipelineStages.length > 3 && (
+                      {(pipelineStages as PipelineStage[]).length > 3 && (
                         <Text size="xs" className="text-gray-500">
-                          +{pipelineStages.length - 3} más...
+                          +{(pipelineStages as PipelineStage[]).length - 3} más...
                         </Text>
                       )}
                     </div>

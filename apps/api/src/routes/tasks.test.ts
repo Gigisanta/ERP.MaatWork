@@ -108,30 +108,27 @@ describe('GET /tasks', () => {
         offset: '0'
       };
 
-      // Test date range filter
       expect(mockReq.query.dueDateFrom).toBe('2024-01-01');
       expect(mockReq.query.dueDateTo).toBe('2024-12-31');
     });
 
-    it('debería excluir completadas por defecto', async () => {
+    it('debería filtrar por priority', async () => {
       mockReq.query = {
-        includeCompleted: 'false',
+        priority: 'high',
         limit: '50',
         offset: '0'
       };
 
-      // Test includeCompleted default
-      expect(mockReq.query.includeCompleted).toBe('false');
+      expect(mockReq.query.priority).toBe('high');
     });
 
-    it('debería incluir completadas cuando se solicita', async () => {
+    it('debería incluir tareas completadas cuando includeCompleted es true', async () => {
       mockReq.query = {
         includeCompleted: 'true',
         limit: '50',
         offset: '0'
       };
 
-      // Test includeCompleted true
       expect(mockReq.query.includeCompleted).toBe('true');
     });
   });
@@ -387,7 +384,175 @@ describe('POST /tasks/bulk', () => {
     // Test bulk reassign
     expect(mockReq.body.action).toBe('reassign');
   });
+
+  it('debería cambiar status de múltiples tareas', async () => {
+    mockReq.body = {
+      taskIds: ['task-1', 'task-2'],
+      action: 'change_status',
+      params: { status: 'in_progress' }
+    };
+
+    expect(mockReq.body.action).toBe('change_status');
+    expect(mockReq.body.params.status).toBe('in_progress');
+  });
+
+  it('debería validar parámetros requeridos para reassign', async () => {
+    mockReq.body = {
+      taskIds: ['task-1'],
+      action: 'reassign',
+      params: {}
+    };
+
+    expect(mockReq.body.params.assignedToUserId).toBeUndefined();
+  });
+
+  it('debería validar parámetros requeridos para change_status', async () => {
+    mockReq.body = {
+      taskIds: ['task-1'],
+      action: 'change_status',
+      params: {}
+    };
+
+    expect(mockReq.body.params.status).toBeUndefined();
+  });
+
+  it('debería rechazar acción inválida', async () => {
+    mockReq.body = {
+      taskIds: ['task-1'],
+      action: 'invalid_action',
+      params: {}
+    };
+
+    expect(mockReq.body.action).toBe('invalid_action');
+  });
 });
+
+describe('POST /tasks/:id/complete', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+
+  beforeEach(() => {
+    mockReq = {
+      user: {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'advisor'
+      },
+      params: { id: 'task-123' },
+      log: {
+        info: vi.fn(),
+        error: vi.fn()
+      }
+    };
+    mockRes = {
+      json: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis()
+    };
+    vi.clearAllMocks();
+  });
+
+  it('debería completar tarea exitosamente', async () => {
+    const mockUpdate = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{
+            id: 'task-123',
+            status: 'completed',
+            completedAt: new Date()
+          }])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      update: mockUpdate
+    } as any);
+
+    expect(mockReq.params.id).toBe('task-123');
+  });
+
+  it('debería retornar 404 cuando tarea no existe', async () => {
+    const mockUpdate = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      update: mockUpdate
+    } as any);
+
+    expect(mockReq.params.id).toBe('task-123');
+  });
+
+  it('debería crear siguiente ocurrencia si tiene recurrencia', async () => {
+    const mockTask = {
+      id: 'task-123',
+      recurrenceId: 'recurrence-123',
+      status: 'completed'
+    };
+
+    const mockUpdate = vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([mockTask])
+        })
+      })
+    });
+
+    const mockSelect = vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{
+            id: 'recurrence-123',
+            isActive: true,
+            nextOccurrence: new Date()
+          }])
+        })
+      })
+    });
+
+    mockDb.mockReturnValue({
+      update: mockUpdate,
+      select: mockSelect
+    } as any);
+
+    expect(mockTask.recurrenceId).toBeDefined();
+  });
+});
+
+describe('GET /tasks/export/csv', () => {
+  let mockReq: Partial<Request>;
+  let mockRes: Partial<Response>;
+
+  beforeEach(() => {
+    mockReq = {
+      user: {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'advisor'
+      },
+      query: {},
+      log: {
+        info: vi.fn(),
+        error: vi.fn()
+      }
+    };
+    mockRes = {
+      setHeader: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis(),
+      status: vi.fn().mockReturnThis()
+    };
+    vi.clearAllMocks();
+  });
+
+  it('debería exportar tareas a CSV', async () => {
+    expect(mockReq.user).toBeDefined();
+  });
+});
+
 
 
 

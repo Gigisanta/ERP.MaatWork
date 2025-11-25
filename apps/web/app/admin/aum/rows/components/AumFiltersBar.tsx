@@ -1,6 +1,6 @@
 /**
  * AumFiltersBar Component
- * 
+ *
  * AI_DECISION: Componente separado para filtros con responsabilidad única
  * Justificación: Separar UI de filtros facilita testing y reutilización
  * Impacto: Componente < 100 líneas, testeable independientemente
@@ -36,53 +36,52 @@ export function AumFiltersBar({
   onStatusChange,
   onSearchChange,
   onOnlyUpdatedChange,
-  className = ''
+  className = '',
 }: AumFiltersBarProps) {
   return (
-    <div className={`flex gap-4 items-center flex-wrap ${className}`}>
+    <div className={`flex gap-2 items-center flex-wrap ${className}`}>
       <Select
         value={broker}
         onValueChange={onBrokerChange}
-        placeholder="Todos los Brokers"
+        placeholder="Broker"
         items={[
-          { value: 'all', label: 'Todos los Brokers' },
-          { value: 'balanz', label: 'Balanz' }
+          { value: 'all', label: 'Todos' },
+          { value: 'balanz', label: 'Balanz' },
         ]}
       />
 
       <Select
         value={status}
         onValueChange={onStatusChange}
-        placeholder="Todos los Estados"
+        placeholder="Estado"
         items={[
-          { value: 'all', label: 'Todos los Estados' },
+          { value: 'all', label: 'Todos' },
           { value: 'matched', label: 'Coincidencia' },
           { value: 'ambiguous', label: 'Ambiguo' },
-          { value: 'unmatched', label: 'Sin Coincidencia' }
+          { value: 'unmatched', label: 'Sin Coincidencia' },
         ]}
       />
 
       <Input
-        placeholder="Buscar por cuenta, comitente, ID cuenta o asesor..."
+        placeholder="Buscar..."
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         leftIcon="search"
         size="sm"
-        className="w-[300px]"
+        className="w-[200px]"
       />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Checkbox
           checked={onlyUpdated}
           onCheckedChange={(checked) => {
             onOnlyUpdatedChange(typeof checked === 'boolean' ? checked : false);
           }}
         />
-        <Text size="sm" className="text-gray-700">
+        <Text size="xs" className="text-gray-600">
           Solo actualizados
         </Text>
       </div>
     </div>
   );
 }
-

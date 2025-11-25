@@ -3,16 +3,14 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  getTeams, 
-  getTeamMembers, 
+  getTeamDetail,
   getTeamAdvisors, 
   createTeamInvitation,
-  getTeamMetrics,
   updateTeam,
   deleteTeam,
   removeTeamMember
 } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { logger, toLogContext } from '../../../lib/logger';
 import type { Team, TeamMember, TeamMetrics } from '@/types';
 import { 
   Card,
@@ -78,7 +76,7 @@ export default function TeamDetailsPage() {
   useEffect(() => {
     if (!user) return;
     if (!['manager', 'admin'].includes(user.role)) {
-      router.push('/');
+      router.push('/home');
       return;
     }
     fetchAll();
@@ -89,28 +87,15 @@ export default function TeamDetailsPage() {
       setLoadingData(true);
       setError(null);
 
-      // Get team info
-      const teamsRes = await getTeams();
-      if (teamsRes.success && teamsRes.data) {
-        const foundTeam = teamsRes.data.find((t: Team) => t.id === teamId);
-        if (foundTeam) {
-          setTeam(foundTeam);
-          setEditTeamName(foundTeam.name);
-        }
-      }
-
-      // Get members
-      const memRes = await getTeamMembers(teamId);
-      if (memRes.success && memRes.data) {
-        setMembers(memRes.data || []);
+      // Get team detail (team + members + metrics) in a single request
+      const detailRes = await getTeamDetail(teamId);
+      if (detailRes.success && detailRes.data) {
+        setTeam(detailRes.data.team);
+        setEditTeamName(detailRes.data.team.name);
+        setMembers(detailRes.data.team.members || []);
+        setTeamMetrics(detailRes.data.metrics);
       } else {
-        throw new Error('No se pudieron cargar los miembros');
-      }
-
-      // Get metrics
-      const metricsRes = await getTeamMetrics(teamId);
-      if (metricsRes.success && metricsRes.data) {
-        setTeamMetrics(metricsRes.data);
+        throw new Error('No se pudo cargar la información del equipo');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar equipo');
@@ -154,7 +139,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo enviar la invitación', 'error');
       }
     } catch (err) {
-      logger.error('Error inviting advisor', { err, teamId, inviteeId });
+      logger.error('Error inviting advisor', toLogContext({ err, teamId, inviteeId }));
       showToast('Error', 'No se pudo enviar la invitación', 'error');
     } finally {
       setInviteLoading(null);
@@ -179,7 +164,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo actualizar el equipo', 'error');
       }
     } catch (err) {
-      logger.error('Error updating team', { err, teamId });
+      logger.error('Error updating team', toLogContext({ err, teamId }));
       showToast('Error', 'No se pudo actualizar el equipo', 'error');
     } finally {
       setActionLoading(null);
@@ -199,7 +184,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo eliminar el equipo', 'error');
       }
     } catch (err) {
-      logger.error('Error deleting team', { err, teamId });
+      logger.error('Error deleting team', toLogContext({ err, teamId }));
       showToast('Error', 'No se pudo eliminar el equipo', 'error');
     } finally {
       setActionLoading(null);
@@ -221,7 +206,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo remover el miembro', 'error');
       }
     } catch (err) {
-      logger.error('Error removing member', { err, teamId, memberId: removeMemberConfirm.memberId });
+      logger.error('Error removing member', toLogContext({ err, teamId, memberId: removeMemberConfirm.memberId }));
       showToast('Error', 'No se pudo remover el miembro', 'error');
     } finally {
       setActionLoading(null);

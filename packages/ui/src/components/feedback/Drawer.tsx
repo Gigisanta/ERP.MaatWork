@@ -61,7 +61,7 @@ export function Drawer({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'absolute top-0 h-full w-72 bg-surface border-border border shadow-lg outline-none',
+          'absolute top-0 h-full bg-surface border-border border shadow-lg outline-none',
           'transition-transform duration-300 ease-out',
           side === 'left' ? 'left-0' : 'right-0',
           open
@@ -69,6 +69,10 @@ export function Drawer({
             : side === 'left'
             ? '-translate-x-full'
             : 'translate-x-full',
+          // Default width only if className doesn't specify width
+          !className || (!className.includes('w-') && !className.includes('max-w-') && !className.includes('min-w-'))
+            ? 'w-72'
+            : null,
           className
         )}
       >

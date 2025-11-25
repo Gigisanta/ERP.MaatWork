@@ -105,7 +105,10 @@ describe('validate middleware', () => {
 
     it('debería rechazar query inválido', () => {
       const querySchema = z.object({
-        page: z.string().transform(Number)
+        page: z.string()
+          .regex(/^\d+$/, 'Page must be a number')
+          .transform(Number)
+          .pipe(z.number().int().min(1))
       });
 
       mockReq.query = { page: 'not-a-number' };
@@ -114,6 +117,7 @@ describe('validate middleware', () => {
       middleware(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.json).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

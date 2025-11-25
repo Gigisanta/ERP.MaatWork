@@ -13,7 +13,8 @@ import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
 import { z } from 'zod';
-import { cache, REDIS_TTL } from '../middleware/cache';
+import { cache } from '../middleware/cache';
+import { REDIS_TTL } from '../config/redis';
 import { buildCacheKey } from '../config/redis';
 
 const router = Router();
@@ -50,9 +51,9 @@ router.get(
     keyPrefix: 'yields',
     keyBuilder: (req) => buildCacheKey(
       'yields',
-      req.query.country || 'all',
-      req.query.date || req.query.from || 'latest',
-      req.query.tenor || 'all'
+      typeof req.query.country === 'string' ? req.query.country : 'all',
+      typeof (req.query.date || req.query.from) === 'string' ? (req.query.date || req.query.from) as string : 'latest',
+      typeof req.query.tenor === 'string' ? req.query.tenor : 'all'
     )
   }),
   async (req, res) => {
@@ -84,11 +85,12 @@ router.get(
         .orderBy(desc(yields.date), yields.tenor);
       
       // If specific date requested and no tenor filter, return as curve
-      if (date && !tenor && !from && !to) {
-        const dateYields = yieldsData.filter(y => y.date === date);
+      const dateStr = typeof date === 'string' ? date : undefined;
+      if (dateStr && !tenor && !from && !to) {
+        const dateYields = yieldsData.filter((y: typeof yieldsData[0]) => y.date === dateStr);
         const curveData: Record<string, { value: number; provider: string }> = {};
         
-        dateYields.forEach(y => {
+        dateYields.forEach((y: typeof yieldsData[0]) => {
           curveData[y.tenor] = {
             value: parseFloat(y.value),
             provider: y.provider
@@ -97,13 +99,13 @@ router.get(
         
         // Get spreads for this date
         try {
-          const spreadsResponse = await getYieldSpreadsInternal(country as string, date);
+          const spreadsResponse = await getYieldSpreadsInternal(country as string, dateStr);
           const spreads = spreadsResponse?.spreads || {};
           
           return res.json({
             success: true,
             data: {
-              date,
+              date: dateStr,
               country: country || 'US',
               yields: curveData,
               spreads
@@ -115,7 +117,7 @@ router.get(
           return res.json({
             success: true,
             data: {
-              date,
+              date: dateStr,
               country: country || 'US',
               yields: curveData
             },
@@ -125,13 +127,21 @@ router.get(
       }
       
       // If no date specified but country is specified, get latest date and return as curve
-      if (!date && !tenor && !from && !to && country) {
+      if (!dateStr && !tenor && !from && !to && country) {
         if (yieldsData.length > 0) {
-          const latestDate = yieldsData[0].date;
-          const dateYields = yieldsData.filter(y => y.date === latestDate);
+          const latestDate = yieldsData[0]?.date;
+          if (!latestDate) {
+            return res.json({
+              success: true,
+              data: [],
+              count: 0,
+              timestamp: new Date().toISOString()
+            });
+          }
+          const dateYields = yieldsData.filter((y: typeof yieldsData[0]) => y.date === latestDate);
           const curveData: Record<string, { value: number; provider: string }> = {};
           
-          dateYields.forEach(y => {
+          dateYields.forEach((y: typeof yieldsData[0]) => {
             curveData[y.tenor] = {
               value: parseFloat(y.value),
               provider: y.provider
@@ -205,6 +215,10 @@ async function getYieldSpreadsInternal(country: string, date?: string): Promise<
       targetDate = latest[0].date;
     }
     
+    if (!targetDate) {
+      return null;
+    }
+    
     // Get all tenors for the date
     const yieldsData = await db()
       .select()
@@ -215,7 +229,7 @@ async function getYieldSpreadsInternal(country: string, date?: string): Promise<
       ));
     
     // Calculate spreads
-    const yieldMap = yieldsData.reduce((acc, y) => {
+    const yieldMap = yieldsData.reduce((acc: Record<string, number>, y: typeof yieldsData[0]) => {
       acc[y.tenor] = parseFloat(y.value);
       return acc;
     }, {} as Record<string, number>);
@@ -260,7 +274,12 @@ router.get(
   cache({
     ttl: REDIS_TTL.YIELD_CURVE,
     keyPrefix: 'yields:spreads',
-    keyBuilder: (req) => buildCacheKey('yields', 'spreads', req.query.country || 'US', req.query.date || 'latest')
+    keyBuilder: (req) => buildCacheKey(
+      'yields',
+      'spreads',
+      typeof req.query.country === 'string' ? req.query.country : 'US',
+      typeof req.query.date === 'string' ? req.query.date : 'latest'
+    )
   }),
   async (req, res) => {
     try {

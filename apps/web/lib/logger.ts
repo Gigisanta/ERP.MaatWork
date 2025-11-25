@@ -146,7 +146,7 @@ class ClientLogger {
       // Justificación: Aprovecha retry logic, manejo de errores y timeout del cliente centralizado
       // Impacto: Mejor manejo de errores y consistencia con resto de la aplicación
       await apiClient.post('/v1/logs/client', entry, {
-        timeout: this.LOG_TIMEOUT_MS,
+        timeout: 5000, // 5 segundos timeout para logs
         retries: 0, // No retry para logs para evitar spam
         requireAuth: false // Los logs pueden enviarse sin autenticación
       });
@@ -217,7 +217,10 @@ class ClientLogger {
       return;
     }
     
-    // En desarrollo: formato compacto pero completo
+    // En desarrollo: reducir verbosidad - solo mostrar logs críticos por defecto
+    // AI_DECISION: Reducir verbosidad en desarrollo para limpiar consola
+    // Justificación: Logs de info y debug generan demasiado ruido en consola durante desarrollo
+    // Impacto: Consola más limpia, solo información crítica visible
     const time = this.formatTime(entry.timestamp);
     const prefix = `${time} [${level.toUpperCase()}]`;
     
@@ -231,7 +234,10 @@ class ClientLogger {
       logContext.userId = entry.userId;
     }
     
-    // Log compacto sin groups
+    // Solo mostrar logs críticos (error, warn) en consola por defecto
+    // Los logs de info y debug se pueden habilitar con flag de entorno si es necesario
+    const verboseLogs = process.env.NEXT_PUBLIC_VERBOSE_LOGS === 'true';
+    
     if (level === 'error') {
       console.error(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
       if (context?.error || context?.err) {
@@ -239,11 +245,14 @@ class ClientLogger {
       }
     } else if (level === 'warn') {
       console.warn(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
-    } else if (level === 'debug') {
+    } else if (level === 'debug' && verboseLogs) {
+      // Solo mostrar debug si está habilitado explícitamente
       console.debug(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
-    } else {
+    } else if (level === 'info' && verboseLogs) {
+      // Solo mostrar info si está habilitado explícitamente
       console.log(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
     }
+    // Si no es verbose, los logs de info y debug se omiten en consola (pero se pueden enviar al backend si es necesario)
   }
 
   /**

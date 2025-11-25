@@ -269,9 +269,23 @@ export const contacts = pgTable(
       table.pipelineStageId, 
       table.deletedAt
     ),
+    // AI_DECISION: Add composite index for advisor + deletedAt + updatedAt ordering
+    // Justificación: Query principal de /contacts filtra por advisor, deletedAt y ordena por updatedAt DESC
+    // Impacto: Faster contact list loading with proper ordering
+    contactsAdvisorDeletedUpdatedIdx: index('idx_contacts_advisor_deleted_updated').on(
+      table.assignedAdvisorId,
+      table.deletedAt,
+      table.updatedAt
+    ),
     // TRGM GIN index creado vía migración SQL
     contactsNameIdx: index('idx_contacts_full_name').on(table.fullName),
-    contactsEmailUnique: uniqueIndex('contacts_email_unique').on(table.email)
+    contactsEmailUnique: uniqueIndex('contacts_email_unique').on(table.email),
+    // AI_DECISION: Add partial index for active contacts by advisor
+    // Justificación: Most queries filter active contacts (deleted_at IS NULL) by advisor and order by updated_at DESC
+    // Impacto: Faster active contact list loading, smaller index size (only active contacts)
+    contactsActiveByAdvisorIdx: index('idx_contacts_active_by_advisor')
+      .on(table.assignedAdvisorId, table.updatedAt)
+      .where(sql`${table.deletedAt} IS NULL`)
   })
 );
 
@@ -517,7 +531,19 @@ export const notes = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    notesContactCreatedIdx: index('idx_notes_contact_created').on(table.contactId, table.createdAt)
+    notesContactCreatedIdx: index('idx_notes_contact_created').on(table.contactId, table.createdAt),
+    // AI_DECISION: Add index optimized for DESC ordering (PostgreSQL can use index backwards)
+    // Justificación: Query de timeline ordena por createdAt DESC, este índice optimiza esa ordenación
+    // Impacto: Faster timeline loading when sorting by createdAt DESC
+    notesContactCreatedDescIdx: index('idx_notes_contact_created_desc').on(table.contactId, table.createdAt),
+    // AI_DECISION: Add composite index for timeline queries with deletedAt filter
+    // Justificación: Timeline queries filter by contactId + deletedAt and order by createdAt DESC
+    // Impacto: Faster timeline loading when filtering by deletedAt and sorting by createdAt DESC
+    notesContactDeletedCreatedIdx: index('idx_notes_contact_deleted_created').on(
+      table.contactId,
+      table.deletedAt,
+      table.createdAt
+    )
   })
 );
 
@@ -609,7 +635,28 @@ export const tasks = pgTable(
       table.contactId,
       table.status,
       table.dueDate
-    )
+    ),
+    // AI_DECISION: Add partial index for open tasks by user
+    // Justificación: Dashboard de tareas filtra frecuentemente por usuario + estado abierto
+    // Impacto: Faster task dashboard loading for open tasks
+    tasksOpenByUserIdx: index('idx_tasks_open_by_user').on(
+      table.assignedToUserId,
+      table.dueDate
+    ).where(sql`${table.status} IN ('open', 'in_progress') AND ${table.deletedAt} IS NULL`),
+    // AI_DECISION: Add composite index for timeline queries
+    // Justificación: Timeline queries filter by contactId + deletedAt and order by createdAt DESC
+    // Impacto: Faster timeline loading when sorting by createdAt DESC
+    tasksContactDeletedCreatedIdx: index('idx_tasks_contact_deleted_created').on(
+      table.contactId,
+      table.deletedAt,
+      table.createdAt
+    ),
+    // AI_DECISION: Add partial index for overdue tasks
+    // Justificación: Dashboard queries frequently filter overdue tasks (open/in_progress with due_date < today)
+    // Impacto: Faster overdue task queries, smaller index size (only overdue tasks)
+    tasksOverdueIdx: index('idx_tasks_overdue')
+      .on(table.assignedToUserId, table.dueDate)
+      .where(sql`${table.status} IN ('open', 'in_progress') AND ${table.dueDate} < CURRENT_DATE AND ${table.deletedAt} IS NULL`)
   })
 );
 
@@ -681,7 +728,13 @@ export const notifications = pgTable(
       .where(sql`${table.processed} = false`),
     notificationsSnoozedIdx: index('idx_notifications_snoozed')
       .on(table.userId, table.snoozedUntil)
-      .where(sql`${table.snoozedUntil} is not null`)
+      .where(sql`${table.snoozedUntil} is not null`),
+    // AI_DECISION: Add partial index for recent unread notifications
+    // Justificación: Dashboard queries frequently filter unread notifications from last 30 days
+    // Impacto: Faster unread notification queries, smaller index size (only recent unread)
+    notificationsUnreadRecentIdx: index('idx_notifications_unread_recent')
+      .on(table.userId, table.createdAt)
+      .where(sql`${table.readAt} IS NULL AND ${table.createdAt} > NOW() - INTERVAL '30 days'`)
   })
 );
 
@@ -708,18 +761,34 @@ export const userChannelPreferences = pgTable(
  * message_log
  * Bitácora de mensajes enviados por los distintos canales.
  */
-export const messageLog = pgTable('message_log', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  channel: text('channel').notNull(), // email, whatsapp, push
-  toRef: jsonb('to_ref').notNull(),
-  subject: text('subject'),
-  body: text('body').notNull(),
-  status: text('status').notNull(), // queued, sent, failed
-  providerMessageId: text('provider_message_id'),
-  error: text('error'),
-  relatedNotificationId: uuid('related_notification_id').references(() => notifications.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-});
+export const messageLog = pgTable(
+  'message_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    channel: text('channel').notNull(), // email, whatsapp, push
+    toRef: jsonb('to_ref').notNull(),
+    subject: text('subject'),
+    body: text('body').notNull(),
+    status: text('status').notNull(), // queued, sent, failed
+    providerMessageId: text('provider_message_id'),
+    error: text('error'),
+    relatedNotificationId: uuid('related_notification_id').references(() => notifications.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    // AI_DECISION: Add indexes for log table queries
+    // Justificación: Log tables grow large and are frequently queried by date, channel, and status
+    // Impacto: Faster queries for message logs filtering by channel, status, and date ranges
+    messageLogCreatedAtIdx: index('idx_message_log_created_at').on(table.createdAt),
+    messageLogChannelIdx: index('idx_message_log_channel').on(table.channel),
+    messageLogStatusIdx: index('idx_message_log_status').on(table.status),
+    messageLogChannelStatusCreatedIdx: index('idx_message_log_channel_status_created').on(
+      table.channel,
+      table.status,
+      table.createdAt
+    )
+  })
+);
 
 // ==========================================================
 // Instrumentos
@@ -859,7 +928,15 @@ export const brokerAccounts = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    brokerAccountUnique: uniqueIndex('broker_accounts_unique').on(table.broker, table.accountNumber)
+    brokerAccountUnique: uniqueIndex('broker_accounts_unique').on(table.broker, table.accountNumber),
+    // AI_DECISION: Add index for contact + status + deletedAt queries
+    // Justificación: Contact detail page carga broker accounts filtradas por contacto
+    // Impacto: Faster broker accounts loading in contact detail page
+    brokerAccountsContactStatusIdx: index('idx_broker_accounts_contact_status').on(
+      table.contactId,
+      table.status,
+      table.deletedAt
+    )
   })
 );
 
@@ -913,7 +990,23 @@ export const brokerTransactions = pgTable(
   (table) => ({
     btxAccountSettleIdx: index('idx_btx_account_settle').on(table.brokerAccountId, table.settleDate),
     btxAccountTradeIdx: index('idx_btx_account_trade').on(table.brokerAccountId, table.tradeDate),
-    btxTypeTradeIdx: index('idx_btx_type_trade').on(table.type, table.tradeDate)
+    btxTypeTradeIdx: index('idx_btx_type_trade').on(table.type, table.tradeDate),
+    // AI_DECISION: Add composite index for transaction history queries
+    // Justificación: Queries de historial filtran por cuenta, ordenan por fecha DESC y filtran por tipo
+    // Impacto: Faster transaction history loading with proper ordering and filtering
+    btxAccountTradeTypeIdx: index('idx_btx_account_trade_type').on(
+      table.brokerAccountId,
+      table.tradeDate,
+      table.type
+    ),
+    // AI_DECISION: Add composite index optimized for DESC ordering with type filter
+    // Justificación: Queries frecuentes filtran por cuenta, tipo y ordenan por trade_date DESC
+    // Impacto: Faster transaction queries with DESC ordering and type filtering
+    btxAccountTypeTradeDescIdx: index('idx_btx_account_type_trade_desc').on(
+      table.brokerAccountId,
+      table.type,
+      table.tradeDate
+    )
   })
 );
 
@@ -938,7 +1031,15 @@ export const brokerPositions = pgTable(
       table.asOfDate,
       table.instrumentId
     ),
-    brokerPositionsLatestIdx: index('idx_bpos_latest').on(table.brokerAccountId, table.asOfDate)
+    brokerPositionsLatestIdx: index('idx_bpos_latest').on(table.brokerAccountId, table.asOfDate),
+    // AI_DECISION: Add composite index optimized for DESC ordering with instrument filter
+    // Justificación: Queries frecuentes filtran por cuenta, instrumento y ordenan por fecha DESC
+    // Impacto: Faster position queries with DESC ordering and instrument filtering
+    brokerPositionsAccountInstrumentDateIdx: index('idx_bpos_account_instrument_date').on(
+      table.brokerAccountId,
+      table.instrumentId,
+      table.asOfDate
+    )
   })
 );
 
@@ -1003,6 +1104,10 @@ export const aumImportRows = pgTable(
     isPreferred: boolean('is_preferred').notNull().default(true),
     conflictDetected: boolean('conflict_detected').notNull().default(false),
     needsConfirmation: boolean('needs_confirmation').notNull().default(false),
+    // AI_DECISION: Campo para marcar filas normalizadas manualmente
+    // Justificación: Permite preservar asesores asignados manualmente en futuras importaciones
+    // Impacto: Las filas completadas manualmente no perderán su asesor en actualizaciones
+    isNormalized: boolean('is_normalized').notNull().default(false),
     // Columnas financieras extendidas
     aumDollars: numeric('aum_dollars', { precision: 18, scale: 6 }),
     bolsaArg: numeric('bolsa_arg', { precision: 18, scale: 6 }),
@@ -1028,7 +1133,15 @@ export const aumImportRows = pgTable(
     // AI_DECISION: Índice compuesto para filtros comunes por status y preferred
     // Justificación: Optimiza queries que filtran por match_status e is_preferred ordenadas por fecha
     // Impacto: Reducción significativa en tiempo de query para filtros de estado
-    aumRowsStatusPreferredCreatedIdx: index('idx_aum_rows_status_preferred_created').on(table.matchStatus, table.isPreferred, table.createdAt)
+    aumRowsStatusPreferredCreatedIdx: index('idx_aum_rows_status_preferred_created').on(table.matchStatus, table.isPreferred, table.createdAt),
+    // AI_DECISION: Add composite index for matching queries
+    // Justificación: Queries de matching filtran por status + accountNumber frecuentemente
+    // Impacto: Faster AUM matching operations
+    aumRowsMatchStatusAccountIdx: index('idx_aum_rows_match_status_account').on(
+      table.matchStatus,
+      table.accountNumber,
+      table.isPreferred
+    )
   })
 );
 
@@ -1286,7 +1399,15 @@ export const activityEvents = pgTable(
   },
   (table) => ({
     activityByUserIdx: index('idx_activity_by_user').on(table.userId, table.occurredAt),
-    activityByAdvisorIdx: index('idx_activity_by_advisor').on(table.advisorUserId, table.occurredAt)
+    activityByAdvisorIdx: index('idx_activity_by_advisor').on(table.advisorUserId, table.occurredAt),
+    // AI_DECISION: Add composite index for dashboard queries filtering by user and type
+    // Justificación: Dashboard queries filter by user_id, type and order by occurred_at DESC
+    // Impacto: Faster activity dashboard loading with proper filtering and ordering
+    activityUserTypeOccurredIdx: index('idx_activity_user_type_occurred').on(
+      table.userId,
+      table.type,
+      table.occurredAt
+    )
   })
 );
 
@@ -1310,7 +1431,11 @@ export const dailyMetricsUser = pgTable(
     generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    dailyMetricsUserUnique: uniqueIndex('daily_metrics_user_unique').on(table.userId, table.date)
+    dailyMetricsUserUnique: uniqueIndex('daily_metrics_user_unique').on(table.userId, table.date),
+    // AI_DECISION: Add index for queries ordered by date DESC
+    // Justificación: Dashboard carga métricas ordenadas por fecha DESC
+    // Impacto: Faster metrics dashboard loading with proper ordering
+    dailyMetricsUserDateIdx: index('idx_daily_metrics_user_date').on(table.userId, table.date)
   })
 );
 
@@ -1349,7 +1474,11 @@ export const aumSnapshots = pgTable(
     aumTotal: numeric('aum_total', { precision: 18, scale: 6 }).notNull()
   },
   (table) => ({
-    aumSnapshotsUnique: uniqueIndex('aum_snapshots_unique').on(table.contactId, table.date)
+    aumSnapshotsUnique: uniqueIndex('aum_snapshots_unique').on(table.contactId, table.date),
+    // AI_DECISION: Add composite index for aggregations by contact ordered by date DESC
+    // Justificación: Analytics queries agregan AUM por contacto ordenado por fecha DESC
+    // Impacto: Faster AUM analytics queries with proper ordering
+    aumSnapshotsContactDateIdx: index('idx_aum_snapshots_contact_date').on(table.contactId, table.date)
   })
 );
 
@@ -1361,15 +1490,31 @@ export const aumSnapshots = pgTable(
  * audit_logs
  * Auditoría técnica de acciones con contexto.
  */
-export const auditLogs = pgTable('audit_logs', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  actorUserId: uuid('actor_user_id').notNull().references(() => users.id),
-  action: text('action').notNull(),
-  entityType: text('entity_type').notNull(),
-  entityId: uuid('entity_id').notNull(),
-  context: jsonb('context').notNull().default(sql`'{}'::jsonb`),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-});
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    actorUserId: uuid('actor_user_id').notNull().references(() => users.id),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: uuid('entity_id').notNull(),
+    context: jsonb('context').notNull().default(sql`'{}'::jsonb`),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    // AI_DECISION: Add indexes for audit log queries
+    // Justificación: Audit logs grow large and are frequently queried by user, entity type, and date
+    // Impacto: Faster queries for audit logs filtering by actor, entity type, and date ranges
+    auditLogsCreatedAtIdx: index('idx_audit_logs_created_at').on(table.createdAt),
+    auditLogsActorUserIdIdx: index('idx_audit_logs_actor_user_id').on(table.actorUserId),
+    auditLogsEntityTypeIdx: index('idx_audit_logs_entity_type').on(table.entityType),
+    auditLogsEntityTypeEntityIdCreatedIdx: index('idx_audit_logs_entity_type_entity_id_created').on(
+      table.entityType,
+      table.entityId,
+      table.createdAt
+    )
+  })
+);
 
 /**
  * alert_policies
@@ -1469,6 +1614,65 @@ export const priceSnapshots = pgTable(
 );
 
 /**
+ * prices_daily
+ * Precios diarios OHLCV (Open, High, Low, Close, Volume) por instrumento y fecha.
+ * Usado para análisis técnico y visualización de gráficos diarios.
+ */
+export const pricesDaily = pgTable(
+  'prices_daily',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    assetId: uuid('asset_id').notNull().references(() => instruments.id),
+    date: date('date').notNull(),
+    open: numeric('open', { precision: 18, scale: 6 }).notNull(),
+    high: numeric('high', { precision: 18, scale: 6 }).notNull(),
+    low: numeric('low', { precision: 18, scale: 6 }).notNull(),
+    close: numeric('close', { precision: 18, scale: 6 }).notNull(),
+    adjClose: numeric('adj_close', { precision: 18, scale: 6 }),
+    volume: numeric('volume', { precision: 28, scale: 8 }),
+    currency: text('currency').notNull(),
+    source: text('source').notNull(), // yfinance, bloomberg, manual
+    asof: timestamp('asof', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    pricesDailyUnique: uniqueIndex('prices_daily_unique').on(table.assetId, table.date),
+    pricesDailyDateIdx: index('idx_prices_daily_date').on(table.date),
+    pricesDailyAssetIdx: index('idx_prices_daily_asset').on(table.assetId),
+    pricesDailyAssetDateIdx: index('idx_prices_daily_asset_date').on(table.assetId, table.date)
+  })
+);
+
+/**
+ * prices_intraday
+ * Precios intraday OHLCV (Open, High, Low, Close, Volume) por instrumento y timestamp.
+ * Usado para análisis técnico y visualización de gráficos intraday (1h, 5m, 15m).
+ */
+export const pricesIntraday = pgTable(
+  'prices_intraday',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    assetId: uuid('asset_id').notNull().references(() => instruments.id),
+    timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
+    open: numeric('open', { precision: 18, scale: 6 }).notNull(),
+    high: numeric('high', { precision: 18, scale: 6 }).notNull(),
+    low: numeric('low', { precision: 18, scale: 6 }).notNull(),
+    close: numeric('close', { precision: 18, scale: 6 }).notNull(),
+    adjClose: numeric('adj_close', { precision: 18, scale: 6 }),
+    volume: numeric('volume', { precision: 28, scale: 8 }),
+    currency: text('currency').notNull(),
+    source: text('source').notNull(), // yfinance, bloomberg, manual
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  },
+  (table) => ({
+    pricesIntradayUnique: uniqueIndex('prices_intraday_unique').on(table.assetId, table.timestamp),
+    pricesIntradayTimestampIdx: index('idx_prices_intraday_timestamp').on(table.timestamp),
+    pricesIntradayAssetIdx: index('idx_prices_intraday_asset').on(table.assetId),
+    pricesIntradayAssetTimestampIdx: index('idx_prices_intraday_asset_timestamp').on(table.assetId, table.timestamp)
+  })
+);
+
+/**
  * metric_definitions
  * Catálogo de métricas financieras disponibles.
  */
@@ -1514,6 +1718,13 @@ export const capacitaciones = pgTable(
     capacitacionesTemaIdx: index('idx_capacitaciones_tema').on(table.tema),
     capacitacionesFechaIdx: index('idx_capacitaciones_fecha').on(table.fecha),
     capacitacionesCreatedByIdx: index('idx_capacitaciones_created_by').on(table.createdByUserId)
+    // AI_DECISION: Advanced indexes created via migration SQL (0022_optimize_capacitaciones_indexes.sql)
+    // Justificación: Drizzle doesn't fully support GIN trigram and composite DESC indexes
+    // Impacto: Better query performance for text search and tema+created_at filtering
+    // Additional indexes:
+    // - idx_capacitaciones_titulo_trgm: GIN trigram index for ILIKE searches
+    // - idx_capacitaciones_tema_created_at: Composite (tema, created_at DESC) for filtered ordering
+    // - idx_capacitaciones_created_at_desc: Index for general created_at DESC ordering
   })
 );
 

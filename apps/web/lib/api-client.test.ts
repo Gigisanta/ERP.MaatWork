@@ -281,6 +281,140 @@ describe('ApiClient', () => {
       await expect(client.get('/test')).rejects.toThrow();
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
+
+    it('debería respetar número máximo de retries', async () => {
+      const clientWithRetries = new ApiClient({
+        baseUrl: 'http://localhost:3001',
+        timeout: 5000,
+        retries: 2,
+      });
+
+      // Todas las llamadas fallan con 500
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      } as Response);
+
+      await expect(clientWithRetries.get('/test')).rejects.toThrow();
+      expect(mockFetch).toHaveBeenCalledTimes(3); // 1 inicial + 2 retries
+    });
+
+    it('debería usar retries personalizados por request', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      } as Response);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      } as Response);
+
+      await client.get('/test', { retries: 1 });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('Refresh token logic', () => {
+    it('debería intentar refresh token en 401', async () => {
+      // Primera llamada falla con 401
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: async () => ({ error: 'Unauthorized' }),
+      } as Response);
+
+      // Refresh token exitoso
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      } as Response);
+
+      // Retry de request original exitoso
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, data: { id: '123' } }),
+      } as Response);
+
+      const result = await client.get('/test');
+      expect(result.success).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(3); // Original + refresh + retry
+    });
+
+    it('NO debería intentar refresh si ya está refrescando', async () => {
+      // Primera llamada falla con 401
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: async () => ({ error: 'Unauthorized' }),
+      } as Response);
+
+      // Refresh token también falla
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: 'Refresh failed' }),
+      } as Response);
+
+      await expect(client.get('/test')).rejects.toThrow();
+      expect(mockFetch).toHaveBeenCalledTimes(2); // Original + refresh (no más retries)
+    });
+  });
+
+  describe('Timeout handling', () => {
+    it('debería usar timeout por defecto', async () => {
+      mockFetch.mockImplementation(() => {
+        return new Promise((_, reject) => {
+          setTimeout(() => {
+            const error = new Error('Aborted');
+            error.name = 'AbortError';
+            reject(error);
+          }, 100);
+        });
+      });
+
+      await expect(client.get('/test')).rejects.toThrow();
+    });
+
+    it('debería usar timeout personalizado por request', async () => {
+      mockFetch.mockImplementation(() => {
+        return new Promise((_, reject) => {
+          setTimeout(() => {
+            const error = new Error('Aborted');
+            error.name = 'AbortError';
+            reject(error);
+          }, 100);
+        });
+      });
+
+      await expect(client.get('/test', { timeout: 50 })).rejects.toThrow();
+    });
+
+    it('debería crear ApiError con código 504 en timeout', async () => {
+      mockFetch.mockImplementation(() => {
+        return new Promise((_, reject) => {
+          setTimeout(() => {
+            const error = new Error('Aborted');
+            error.name = 'AbortError';
+            reject(error);
+          }, 100);
+        });
+      });
+
+      try {
+        await client.get('/test', { timeout: 50 });
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        if (error instanceof ApiError) {
+          expect(error.status).toBe(504);
+        }
+      }
+    });
   });
 
   describe('PUT/PATCH/DELETE requests', () => {

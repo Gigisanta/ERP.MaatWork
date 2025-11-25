@@ -4,7 +4,6 @@
 
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import {
   Card,
   CardHeader,
@@ -25,20 +24,19 @@ import type {
 import TagDetailsForm from './TagDetailsForm';
 
 // Server-side data fetching
-import { apiCallWithToken } from '@/lib/api-server';
+import { apiCall } from '@/lib/api-server';
 import { config } from '@/lib/config';
 
-async function getContactTagData(contactId: string, tagId: string, token: string) {
+async function getContactTagData(contactId: string, tagId: string) {
   try {
     // Obtener datos de contacto y relación contacto-etiqueta en paralelo
+    // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
     const [contactResponse, contactTagResponse] = await Promise.all([
-      apiCallWithToken<Contact>(`/v1/contacts/${contactId}`, {
-        token,
+      apiCall<Contact>(`/v1/contacts/${contactId}`, {
         method: 'GET',
         timeoutMs: Math.min(config.apiTimeout, 8000)
       }),
-      apiCallWithToken<ContactTagWithDetails>(`/v1/tags/contacts/${contactId}/tags/${tagId}`, {
-        token,
+      apiCall<ContactTagWithDetails>(`/v1/tags/contacts/${contactId}/tags/${tagId}`, {
         method: 'GET',
         timeoutMs: Math.min(config.apiTimeout, 8000)
       })
@@ -73,15 +71,8 @@ interface ContactTagDetailPageProps {
 export default async function ContactTagDetailPage({ params }: ContactTagDetailPageProps) {
   const { id: contactId, tagId } = params;
   
-  // Get token from cookies
-  const cookieStore = cookies();
-  const token = cookieStore.get('token')?.value;
-  
-  if (!token) {
-    return <Alert variant="error">Authentication required. Please log in.</Alert>;
-  }
-  
-  const data = await getContactTagData(contactId, tagId, token);
+  // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
+  const data = await getContactTagData(contactId, tagId);
 
   if (!data) {
     notFound();
@@ -124,7 +115,7 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
         {/* Badge de etiqueta */}
         <div>
           <Badge 
-            style={{ backgroundColor: contactTag.tag.color, color: 'white' }} 
+            style={{ backgroundColor: contactTag.tag.color ?? '#6B7280', color: 'white' }} 
             className="text-sm px-2.5 py-1"
           >
             {contactTag.tag.name}
@@ -141,8 +132,8 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
               contactId={contactId}
               tagId={tagId}
               initialData={{
-                monthlyPremium: contactTag.monthlyPremium,
-                policyNumber: contactTag.policyNumber
+                ...(contactTag.monthlyPremium !== undefined && { monthlyPremium: contactTag.monthlyPremium }),
+                ...(contactTag.policyNumber !== undefined && { policyNumber: contactTag.policyNumber })
               }}
             />
           </CardContent>

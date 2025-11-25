@@ -5,7 +5,7 @@
  * - Unit tests: Vitest, al lado del archivo con .test.ts
  * - E2E tests: Playwright, en tests/e2e/ con .spec.ts
  * 
- * Coverage target: ≥70% (lines, functions, branches, statements)
+ * Coverage target: ≥80% (lines, functions, branches, statements)
  */
 import { defineConfig } from 'vitest/config';
 
@@ -16,11 +16,20 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     exclude: [
       'node_modules/**',
-      'dist/**'
+      'dist/**',
+      'src/**/*.integration.test.ts' // Exclude integration tests from unit test runs
     ],
+    // Parallelization configuration
+    threads: true,
+    maxConcurrency: 5,
+    minThreads: 1,
+    maxThreads: 4,
+    testTimeout: 10000, // 10 seconds default timeout
+    hookTimeout: 10000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
@@ -31,10 +40,10 @@ export default defineConfig({
         'src/__tests__/**'
       ],
       thresholds: {
-        lines: 70,
-        functions: 70,
-        branches: 70,
-        statements: 70
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80
       }
     }
   }

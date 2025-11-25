@@ -20,7 +20,7 @@ describe('usePortfolioAssets', () => {
             instrumentSymbol: 'AAPL',
             instrumentName: 'Apple Inc.',
             instrumentId: 'inst-1',
-            targetWeight: 0.5
+            targetWeight: 0.5,
           },
           {
             id: 'line-2',
@@ -28,10 +28,10 @@ describe('usePortfolioAssets', () => {
             instrumentSymbol: 'GOOGL',
             instrumentName: 'Alphabet Inc.',
             instrumentId: 'inst-2',
-            targetWeight: 0.5
-          }
-        ]
-      } as Portfolio
+            targetWeight: 0.5,
+          },
+        ],
+      } as Portfolio,
     ];
 
     const { result } = renderHook(() => usePortfolioAssets(portfolios));
@@ -52,9 +52,9 @@ describe('usePortfolioAssets', () => {
             targetType: 'instrument',
             instrumentSymbol: 'AAPL',
             instrumentId: 'inst-1',
-            targetWeight: 0.5
-          }
-        ]
+            targetWeight: 0.5,
+          },
+        ],
       } as Portfolio,
       {
         id: 'portfolio-2',
@@ -65,10 +65,10 @@ describe('usePortfolioAssets', () => {
             targetType: 'instrument',
             instrumentSymbol: 'AAPL',
             instrumentId: 'inst-1',
-            targetWeight: 0.3
-          }
-        ]
-      } as Portfolio
+            targetWeight: 0.3,
+          },
+        ],
+      } as Portfolio,
     ];
 
     const { result } = renderHook(() => usePortfolioAssets(portfolios));
@@ -89,10 +89,10 @@ describe('usePortfolioAssets', () => {
             id: 'line-1',
             targetType: 'assetClass',
             assetClass: 'stocks',
-            targetWeight: 0.5
-          }
-        ]
-      } as Portfolio
+            targetWeight: 0.5,
+          },
+        ],
+      } as Portfolio,
     ];
 
     const { result } = renderHook(() => usePortfolioAssets(portfolios));
@@ -106,6 +106,3 @@ describe('usePortfolioAssets', () => {
     expect(result.current).toHaveLength(0);
   });
 });
-
-
-

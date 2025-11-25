@@ -240,8 +240,8 @@ export default function PortfolioPerformanceMetrics({
           </div>
         ) : (
           <DataTable
-            columns={columns}
-            data={performanceData}
+            columns={columns as unknown as Column<Record<string, unknown>>[]}
+            data={performanceData as unknown as Record<string, unknown>[]}
             keyField="portfolioId"
             emptyMessage="No hay datos de rendimiento disponibles"
           />

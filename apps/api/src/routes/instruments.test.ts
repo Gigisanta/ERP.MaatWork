@@ -1,6 +1,6 @@
 /**
  * Tests para instruments routes
- * 
+ *
  * AI_DECISION: Tests unitarios para gestión de instrumentos
  * Justificación: Validación crítica de búsqueda y creación de instrumentos
  * Impacto: Prevenir errores en gestión de instrumentos financieros
@@ -20,16 +20,16 @@ vi.mock('@cactus/db', () => ({
   ilike: vi.fn(),
   and: vi.fn(),
   desc: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('node-fetch', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -56,23 +56,25 @@ describe('POST /instruments', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No existe
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'instrument-123',
-          symbol
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'instrument-123',
+            symbol,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(symbol).toBe('AAPL');
@@ -82,13 +84,13 @@ describe('POST /instruments', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]) // Ya existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]), // Ya existe
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -102,15 +104,15 @@ describe('GET /instruments', () => {
         where: vi.fn().mockReturnValue({
           orderBy: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
-              offset: vi.fn().mockResolvedValue([])
-            })
-          })
-        })
-      })
+              offset: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -124,38 +126,29 @@ describe('GET /instruments', () => {
 
 describe('GET /instruments/:id', () => {
   it('debería retornar instrumento con último precio', async () => {
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'instrument-123' }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'instrument-123' }]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             orderBy: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{ closePrice: '150.00' }])
-            })
-          })
-        })
+              limit: vi.fn().mockResolvedValue([{ closePrice: '150.00' }]),
+            }),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
   });
 });
-
-
-
-
-
-
-
-
-
-

@@ -1,218 +1,437 @@
 /**
- * Simple in-memory cache utility
+ * Cache utilities for frequently accessed data
  * 
- * Uses Node.js Map for thread-safe caching with TTL support
- * Suitable for single-instance deployments
+ * Uses NodeCache for in-memory caching by default.
+ * Automatically uses Redis if REDIS_URL is configured for distributed caching.
+ * Falls back to NodeCache if Redis is unavailable.
  * 
- * For multi-instance deployments, consider migrating to Redis
+ * Features:
+ * - Automatic TTL expiration
+ * - Statistics tracking (hits, misses, hit rate)
+ * - Memory-efficient (no cloning by default)
+ * - Thread-safe operations
+ * - Redis support for multi-instance deployments
+ * 
+ * AI_DECISION: Support Redis with NodeCache fallback
+ * Justificación: Redis enables distributed caching across instances, NodeCache fallback ensures compatibility
+ * Impacto: Better scalability with Redis, seamless fallback for development
  */
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
-}
+import NodeCache from 'node-cache';
+import Redis from 'ioredis';
 
-class SimpleCache {
-  private cache = new Map<string, CacheEntry<unknown>>();
-  private cleanupInterval: NodeJS.Timeout | null = null;
+// Initialize Redis if REDIS_URL is available
+let redisClient: Redis | null = null;
+const useRedis = !!process.env.REDIS_URL;
 
-  constructor() {
-    // Cleanup expired entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
-  }
+if (useRedis) {
+  try {
+    redisClient = new Redis(process.env.REDIS_URL!, {
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      lazyConnect: true
+    });
 
-  /**
-   * Get value from cache
-   */
-  get<T>(key: string): T | null {
-    const entry = this.cache.get(key);
-    
-    if (!entry) {
-      return null;
-    }
+    redisClient.on('error', (err) => {
+      console.error('[Redis] Connection error:', err.message);
+      redisClient = null; // Fallback to NodeCache
+    });
 
-    // Check if expired
-    if (Date.now() > entry.expiresAt) {
-      this.cache.delete(key);
-      return null;
-    }
+    redisClient.on('connect', () => {
+      console.log('[Redis] Connected successfully');
+    });
 
-    return entry.value as T;
-  }
-
-  /**
-   * Set value in cache with TTL (time to live) in milliseconds
-   */
-  set<T>(key: string, value: T, ttlMs: number): void {
-    const expiresAt = Date.now() + ttlMs;
-    this.cache.set(key, { value, expiresAt });
-  }
-
-  /**
-   * Delete value from cache
-   */
-  delete(key: string): void {
-    this.cache.delete(key);
-  }
-
-  /**
-   * Clear all cache entries
-   */
-  clear(): void {
-    this.cache.clear();
-  }
-
-  /**
-   * Clear all cache entries matching a pattern
-   */
-  clearPattern(pattern: string): void {
-    const regex = new RegExp(pattern);
-    for (const key of this.cache.keys()) {
-      if (regex.test(key)) {
-        this.cache.delete(key);
-      }
-    }
-  }
-
-  /**
-   * Cleanup expired entries
-   */
-  private cleanup(): void {
-    const now = Date.now();
-    for (const [key, entry] of this.cache.entries()) {
-      if (now > entry.expiresAt) {
-        this.cache.delete(key);
-      }
-    }
-  }
-
-  /**
-   * Destroy cache and cleanup interval
-   */
-  destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
-    }
-    this.cache.clear();
+    // Connect asynchronously (non-blocking)
+    redisClient.connect().catch((err) => {
+      console.warn('[Redis] Failed to connect, using NodeCache fallback:', err.message);
+      redisClient = null;
+    });
+  } catch (err) {
+    console.warn('[Redis] Failed to initialize, using NodeCache fallback:', err instanceof Error ? err.message : String(err));
+    redisClient = null;
   }
 }
 
-// Singleton instance
-const cacheInstance = new SimpleCache();
+// Helper function to create cache with Redis support
+function createCacheWithRedis(defaultTtl: number, maxKeys: number): NodeCache {
+  return new NodeCache({ 
+    stdTTL: defaultTtl,
+    checkperiod: 600,
+    maxKeys,
+    useClones: false,
+    deleteOnExpire: true,
+    enableLegacyCallbacks: false
+  });
+}
 
-// Cleanup on process exit
-process.on('SIGTERM', () => {
-  cacheInstance.destroy();
-});
+// Cache instance with 30 minute default TTL
+const cache = createCacheWithRedis(1800, 1000);
 
-process.on('SIGINT', () => {
-  cacheInstance.destroy();
-});
+// Helper to get from Redis (async, used as fallback)
+async function getFromRedis(key: string): Promise<unknown | null> {
+  if (!redisClient) return null;
+  try {
+    const value = await redisClient.get(key);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Helper to set in Redis (async, used for write-through)
+async function setInRedis(key: string, value: unknown, ttl?: number): Promise<void> {
+  if (!redisClient) return;
+  try {
+    const serialized = JSON.stringify(value);
+    if (ttl) {
+      await redisClient.setex(key, ttl, serialized);
+    } else {
+      await redisClient.set(key, serialized);
+    }
+  } catch (err) {
+    // Silently fail, NodeCache is the source of truth
+    console.debug('[Redis] Set failed, using NodeCache only:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+// Helper function to create cache wrapper with Redis support
+function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default') {
+  return {
+    get: (key: string) => {
+      const value = nodeCache.get(key);
+      
+      // Track cache metrics (async, non-blocking)
+      if (value !== undefined) {
+        import('./metrics').then(({ cacheHitsTotal }) => {
+          cacheHitsTotal.inc({ cache_type: cacheType });
+        }).catch(() => {
+          // Silently fail metrics
+        });
+      } else {
+        import('./metrics').then(({ cacheMissesTotal }) => {
+          cacheMissesTotal.inc({ cache_type: cacheType });
+        }).catch(() => {
+          // Silently fail metrics
+        });
+      }
+      
+      return value as unknown;
+    },
+    set: (key: string, value: unknown, ttl?: number) => {
+      if (ttl) {
+        nodeCache.set(key, value, ttl);
+      } else {
+        nodeCache.set(key, value);
+      }
+      // Write-through to Redis (async, non-blocking)
+      setInRedis(key, value, ttl).catch(() => {
+        // Silently fail, NodeCache is primary
+      });
+    },
+    delete: (key: string) => {
+      const result = nodeCache.del(key);
+      // Delete from Redis (async, non-blocking)
+      if (redisClient) {
+        redisClient.del(key).catch(() => {
+          // Silently fail
+        });
+      }
+      return result;
+    },
+    clear: () => {
+      nodeCache.flushAll();
+      // Clear Redis (async, non-blocking)
+      if (redisClient) {
+        redisClient.flushdb().catch(() => {
+          // Silently fail
+        });
+      }
+    },
+    getStats: () => nodeCache.getStats(),
+    has: (key: string) => nodeCache.has(key)
+  };
+}
 
 /**
- * Cache utilities for specific domains
+ * Pipeline Stages Cache
+ * Caches pipeline stages which change infrequently
+ * 
+ * TTL: 30 minutes
+ * Use case: Stages are shared across all users and change rarely
  */
-export const pipelineStagesCache = {
-  /**
-   * Get pipeline stages for a user/team
-   */
-  get: (key: string) => cacheInstance.get<unknown>(`pipeline:stages:${key}`),
-  
-  /**
-   * Set pipeline stages with 30 minute TTL
-   */
-  set: (key: string, value: unknown) => {
-    cacheInstance.set(`pipeline:stages:${key}`, value, 30 * 60 * 1000); // 30 minutes
-  },
-  
-  /**
-   * Invalidate all pipeline stages cache
-   */
-  invalidate: () => {
-    cacheInstance.clearPattern('^pipeline:stages:');
-  },
-  
-  /**
-   * Invalidate specific pipeline stages cache
-   */
-  invalidateKey: (key: string) => {
-    cacheInstance.delete(`pipeline:stages:${key}`);
+export const pipelineStagesCache = createCacheWrapper(cache, 'pipeline_stages');
+
+/**
+ * Instruments Cache
+ * Caches instrument search results with 1 hour TTL
+ */
+const instrumentsCache = createCacheWithRedis(3600, 500);
+
+export const instrumentsSearchCache = {
+  ...createCacheWrapper(instrumentsCache, 'instruments'),
+  set: (key: string, value: unknown, ttl?: number) => {
+    // Only cache queries with more than 2 characters to avoid caching too many short queries
+    if (key.length > 2) {
+      if (ttl) {
+        instrumentsCache.set(key, value, ttl);
+      } else {
+        instrumentsCache.set(key, value);
+      }
+      // Write-through to Redis
+      setInRedis(key, value, ttl).catch(() => {});
+    }
   }
 };
 
 /**
- * Cache utilities for instruments search
+ * Benchmarks Cache
+ * Caches benchmark definitions and lists with 1 hour TTL
  */
-export const instrumentsCache = {
+const benchmarksCache = createCacheWithRedis(3600, 100);
+
+export const benchmarksCacheUtil = createCacheWrapper(benchmarksCache, 'benchmarks');
+
+/**
+ * Helper function to normalize cache keys
+ * 
+ * Ensures consistent cache key format across the application.
+ * Filters out null/undefined values and normalizes strings.
+ * 
+ * @param prefix - Cache key prefix (e.g., 'pipeline', 'instruments')
+ * @param parts - Variable number of parts to join
+ * @returns Normalized cache key string
+ * 
+ * @example
+ * normalizeCacheKey('pipeline', 'stages', 'all') // 'pipeline:stages:all'
+ * normalizeCacheKey('instruments', 'search', 'AAPL') // 'instruments:search:aapl'
+ */
+export function normalizeCacheKey(prefix: string, ...parts: (string | number | null | undefined)[]): string {
+  const normalizedParts = parts
+    .filter(part => part !== null && part !== undefined)
+    .map(part => String(part).toLowerCase().trim().replace(/\s+/g, '_'));
+  return `${prefix}:${normalizedParts.join(':')}`;
+}
+
+/**
+ * Calculate cache hit rate percentage
+ * 
+ * @param stats - Cache statistics from getStats()
+ * @returns Hit rate as percentage (0-100)
+ */
+export function calculateHitRate(stats: ReturnType<typeof cache.getStats>): number {
+  const total = stats.hits + stats.misses;
+  if (total === 0) return 0;
+  return (stats.hits / total) * 100;
+}
+
+/**
+ * Lookup Tables Cache
+ * Caches lookup tables (lookupAssetClass, lookupTaskStatus, lookupPriority, pipelineStages)
+ * which change infrequently but are queried frequently
+ * 
+ * TTL: 1 hour for lookup tables, 30 minutes for pipeline stages
+ */
+const lookupTablesCache = createCacheWithRedis(3600, 50);
+
+export const lookupTablesCacheUtil = createCacheWrapper(lookupTablesCache, 'lookup_tables');
+
+/**
+ * Benchmark Components Cache
+ * Caches individual benchmark components with 15 minute TTL
+ */
+const benchmarkComponentsCache = createCacheWithRedis(900, 200);
+
+export const benchmarkComponentsCacheUtil = createCacheWrapper(benchmarkComponentsCache, 'benchmark_components');
+
+/**
+ * Contacts List Cache
+ * Caches contact lists by advisor with 5 minute TTL
+ */
+const contactsListCache = createCacheWithRedis(300, 200);
+
+export const contactsListCacheUtil = createCacheWrapper(contactsListCache, 'contacts_list');
+
+/**
+ * Team Metrics Cache
+ * Caches team metrics with 10 minute TTL
+ */
+const teamMetricsCache = createCacheWithRedis(600, 100);
+
+export const teamMetricsCacheUtil = createCacheWrapper(teamMetricsCache, 'team_metrics');
+
+/**
+ * Portfolio Assignments Cache
+ * Caches active portfolio assignments with 15 minute TTL
+ */
+const portfolioAssignmentsCache = createCacheWithRedis(900, 500);
+
+export const portfolioAssignmentsCacheUtil = createCacheWrapper(portfolioAssignmentsCache, 'portfolio_assignments');
+
+/**
+ * AUM Aggregations Cache
+ * Caches AUM totals by advisor with 30 minute TTL
+ */
+const aumAggregationsCache = createCacheWithRedis(1800, 200);
+
+export const aumAggregationsCacheUtil = createCacheWrapper(aumAggregationsCache, 'aum_aggregations');
+
+/**
+ * Pipeline Metrics Cache
+ * Caches pipeline metrics by stage with optimized TTL
+ * Uses materialized views for fast retrieval
+ * 
+ * TTL: 10 minutes (optimized for pipeline metrics that change with stage moves)
+ * Use case: Pipeline metrics are queried frequently, invalidated on stage changes
+ */
+const pipelineMetricsCache = createCacheWithRedis(600, 100);
+
+export const pipelineMetricsCacheUtil = {
+  ...createCacheWrapper(pipelineMetricsCache, 'pipeline_metrics'),
   /**
-   * Get instrument search results
+   * Invalidate cache when pipeline stage changes occur
+   * This should be called after contact stage moves
    */
-  get: (query: string) => {
-    const normalizedQuery = query.trim().toUpperCase();
-    return cacheInstance.get<unknown>(`instruments:search:${normalizedQuery}`);
-  },
-  
-  /**
-   * Set instrument search results with 1 hour TTL
-   */
-  set: (query: string, value: unknown) => {
-    const normalizedQuery = query.trim().toUpperCase();
-    // Only cache queries with 2+ characters to avoid cache pollution
-    if (normalizedQuery.length >= 2) {
-      cacheInstance.set(`instruments:search:${normalizedQuery}`, value, 60 * 60 * 1000); // 1 hour
+  invalidateOnStageChange: () => {
+    // Clear all pipeline metrics cache when stages change
+    pipelineMetricsCache.flushAll();
+    if (redisClient) {
+      redisClient.flushdb().catch(() => {});
     }
   },
-  
   /**
-   * Invalidate all instrument search cache
+   * Invalidate cache for specific stage
    */
-  invalidate: () => {
-    cacheInstance.clearPattern('^instruments:search:');
-  },
-  
-  /**
-   * Invalidate specific instrument search cache
-   */
-  invalidateQuery: (query: string) => {
-    const normalizedQuery = query.trim().toUpperCase();
-    cacheInstance.delete(`instruments:search:${normalizedQuery}`);
+  invalidateByStage: (stageId: string) => {
+    const keys = pipelineMetricsCache.keys();
+    keys.forEach(key => {
+      if (String(key).includes(`stage:${stageId}`)) {
+        pipelineMetricsCache.del(key);
+        if (redisClient) {
+          redisClient.del(String(key)).catch(() => {});
+        }
+      }
+    });
   }
 };
 
 /**
- * Cache utilities for benchmarks
+ * Task Statistics Cache
+ * Caches task statistics by user with 10 minute TTL
  */
-export const benchmarksCache = {
+const taskStatisticsCache = createCacheWithRedis(600, 300);
+
+export const taskStatisticsCacheUtil = createCacheWrapper(taskStatisticsCache, 'task_statistics');
+
+/**
+ * Dashboard KPIs Cache
+ * Caches dashboard KPIs by user role/advisor with 5 minute TTL
+ * Uses materialized views for fast retrieval
+ * 
+ * TTL: 5 minutes (optimized for near-real-time data)
+ * Use case: Dashboard KPIs are queried frequently but change relatively slowly
+ */
+const dashboardKpisCache = createCacheWithRedis(300, 200);
+
+export const dashboardKpisCacheUtil = {
+  ...createCacheWrapper(dashboardKpisCache, 'dashboard_kpis'),
   /**
-   * Get benchmark data
+   * Invalidate cache for specific advisor or role
    */
-  get: (key: string) => cacheInstance.get<unknown>(`benchmarks:${key}`),
-  
-  /**
-   * Set benchmark data with 1 hour TTL
-   */
-  set: (key: string, value: unknown) => {
-    cacheInstance.set(`benchmarks:${key}`, value, 60 * 60 * 1000); // 1 hour
+  invalidateByAdvisor: (advisorId: string) => {
+    const keys = dashboardKpisCache.keys();
+    keys.forEach(key => {
+      if (String(key).includes(`advisor:${advisorId}`) || String(key).includes(`user:${advisorId}`)) {
+        dashboardKpisCache.del(key);
+        if (redisClient) {
+          redisClient.del(String(key)).catch(() => {});
+        }
+      }
+    });
   },
-  
   /**
-   * Invalidate all benchmarks cache
+   * Invalidate cache for specific role
    */
-  invalidate: () => {
-    cacheInstance.clearPattern('^benchmarks:');
-  },
-  
-  /**
-   * Invalidate specific benchmark cache
-   */
-  invalidateKey: (key: string) => {
-    cacheInstance.delete(`benchmarks:${key}`);
+  invalidateByRole: (role: string) => {
+    const keys = dashboardKpisCache.keys();
+    keys.forEach(key => {
+      if (String(key).includes(`role:${role}`)) {
+        dashboardKpisCache.del(key);
+        if (redisClient) {
+          redisClient.del(String(key)).catch(() => {});
+        }
+      }
+    });
   }
 };
 
-export default cacheInstance;
+/**
+ * Get cache health metrics
+ * 
+ * Returns comprehensive cache health information including hit rate,
+ * memory usage, and key count.
+ */
+export function getCacheHealth() {
+  const pipelineStats = pipelineStagesCache.getStats();
+  const instrumentsStats = instrumentsSearchCache.getStats();
+  const benchmarksStats = benchmarksCacheUtil.getStats();
+  const lookupTablesStats = lookupTablesCacheUtil.getStats();
+  const benchmarkComponentsStats = benchmarkComponentsCacheUtil.getStats();
+  const contactsListStats = contactsListCacheUtil.getStats();
+  const teamMetricsStats = teamMetricsCacheUtil.getStats();
+  const portfolioAssignmentsStats = portfolioAssignmentsCacheUtil.getStats();
+  const aumAggregationsStats = aumAggregationsCacheUtil.getStats();
+  const pipelineMetricsStats = pipelineMetricsCacheUtil.getStats();
+  const taskStatisticsStats = taskStatisticsCacheUtil.getStats();
 
-
+  return {
+    pipeline: {
+      ...pipelineStats,
+      hitRate: calculateHitRate(pipelineStats)
+    },
+    instruments: {
+      ...instrumentsStats,
+      hitRate: calculateHitRate(instrumentsStats)
+    },
+    benchmarks: {
+      ...benchmarksStats,
+      hitRate: calculateHitRate(benchmarksStats)
+    },
+    lookupTables: {
+      ...lookupTablesStats,
+      hitRate: calculateHitRate(lookupTablesStats)
+    },
+    benchmarkComponents: {
+      ...benchmarkComponentsStats,
+      hitRate: calculateHitRate(benchmarkComponentsStats)
+    },
+    contactsList: {
+      ...contactsListStats,
+      hitRate: calculateHitRate(contactsListStats)
+    },
+    teamMetrics: {
+      ...teamMetricsStats,
+      hitRate: calculateHitRate(teamMetricsStats)
+    },
+    portfolioAssignments: {
+      ...portfolioAssignmentsStats,
+      hitRate: calculateHitRate(portfolioAssignmentsStats)
+    },
+    aumAggregations: {
+      ...aumAggregationsStats,
+      hitRate: calculateHitRate(aumAggregationsStats)
+    },
+    pipelineMetrics: {
+      ...pipelineMetricsStats,
+      hitRate: calculateHitRate(pipelineMetricsStats)
+    },
+    taskStatistics: {
+      ...taskStatisticsStats,
+      hitRate: calculateHitRate(taskStatisticsStats)
+    },
+    dashboardKpis: {
+      ...dashboardKpisCache.getStats(),
+      hitRate: calculateHitRate(dashboardKpisCache.getStats())
+    }
+  };
+}

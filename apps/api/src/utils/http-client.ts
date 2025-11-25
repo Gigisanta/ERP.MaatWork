@@ -45,7 +45,9 @@ export class HttpClient {
       logger
     } = options;
 
-    this.logger = logger;
+    if (logger !== undefined) {
+      this.logger = logger;
+    }
 
     // Configurar agent HTTP con keepalive
     this.httpAgent = new http.Agent({
@@ -203,14 +205,17 @@ let httpClientInstance: HttpClient | null = null;
  */
 export function getHttpClient(logger?: Logger): HttpClient {
   if (!httpClientInstance) {
-    httpClientInstance = new HttpClient({
+    const options: HttpClientOptions = {
       keepAlive: true,
       keepAliveMsecs: 1000,
       maxSockets: 50,
       maxFreeSockets: 10,
-      timeout: 30000,
-      logger
-    });
+      timeout: 30000
+    };
+    if (logger !== undefined) {
+      options.logger = logger;
+    }
+    httpClientInstance = new HttpClient(options);
   }
   return httpClientInstance;
 }

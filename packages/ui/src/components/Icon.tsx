@@ -35,7 +35,13 @@ export type IconName =
   | 'grid'
   | 'download'
   | 'Book'
-  | 'ExternalLink';
+  | 'ExternalLink'
+  | 'Contact'
+  | 'Team'
+  | 'GraduationCap'
+  | 'TrendingUp'
+  | 'Briefcase'
+  | 'Shield';
 
 interface IconProps {
   name: IconName;
@@ -81,6 +87,12 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     'download': '📥',
     'Book': '📚',
     'ExternalLink': '🔗',
+    'Contact': '👤',
+    'Team': '👨‍👩‍👧‍👦',
+    'GraduationCap': '🎓',
+    'TrendingUp': '📈',
+    'Briefcase': '💼',
+    'Shield': '🛡️',
   };
 
   const iconChar = iconMap[name] || '?';

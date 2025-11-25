@@ -198,6 +198,46 @@ export async function resetAumSystem(): Promise<ApiResponse<{
 }
 
 /**
+ * Actualizar asesor de una fila AUM y marcarla como normalizada
+ * 
+ * @param rowId - ID de la fila AUM a actualizar
+ * @param advisorRaw - Nombre del asesor (fullName o email)
+ * @param matchedUserId - ID del usuario asesor asignado
+ * @returns Promise con la respuesta de la API
+ * @throws Error si la actualización falla
+ * 
+ * AI_DECISION: Función dedicada para actualización de asesor
+ * Justificación: Encapsula la lógica de actualización y permite mejor manejo de errores
+ * Impacto: Mejor trazabilidad y manejo de errores consistente
+ */
+export async function updateAumRowAdvisor(
+  rowId: string,
+  advisorRaw: string,
+  matchedUserId: string
+): Promise<ApiResponse<void>> {
+  // Validación temprana de parámetros
+  if (!rowId || rowId.trim().length === 0) {
+    throw new Error('El ID de la fila es requerido');
+  }
+  
+  if (!advisorRaw || advisorRaw.trim().length === 0) {
+    throw new Error('El nombre del asesor es requerido');
+  }
+  
+  if (!matchedUserId || matchedUserId.trim().length === 0) {
+    throw new Error('El ID del usuario asesor es requerido');
+  }
+
+  return apiClient.patch<void>(
+    `/v1/admin/aum/rows/${rowId}`,
+    { 
+      advisorRaw: advisorRaw.trim(), 
+      matchedUserId: matchedUserId.trim() 
+    }
+  );
+}
+
+/**
  * Subir archivo de mapeo asesor-cuenta
  * 
  * AI_DECISION: Implementar retry con exponential backoff para FormData uploads

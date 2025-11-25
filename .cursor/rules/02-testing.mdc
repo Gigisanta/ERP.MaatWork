@@ -1,0 +1,133 @@
+---
+description: "Reglas de testing (Vitest, Playwright, Testing Library)"
+alwaysApply: false
+---
+
+# Testing
+
+## Framework Stack
+
+- ✅ **Vitest** para unit tests (NO Jest)
+- ✅ **Playwright** para E2E tests
+- ✅ **Testing Library** para componentes React
+
+## Ubicación por Workspace
+
+**Apps (api/web):**
+
+- Unit: `src/**/*.test.ts` (mismo directorio que el archivo)
+- E2E: `tests/e2e/[feature].spec.ts` (raíz del monorepo)
+
+**Packages:**
+
+- **@cactus/ui:** `src/**/*.test.tsx` (co-ubicados con componentes)
+- **@cactus/db:** Sin tests unit (validación vía migraciones y seeds)
+
+## Coverage Targets
+
+- Backend (api): 100% (lines, functions, branches, statements)
+- Frontend (web): 100% (lines, functions, branches, statements)
+- UI Package: 100% (lines, functions, branches, statements)
+
+## Patrones de Testing
+
+### Estructura de Tests (Arrange-Act-Assert)
+
+```typescript
+describe('FeatureName', () => {
+  it('should do something specific', () => {
+    // Arrange - Setup
+    const input = { ... };
+    
+    // Act - Execute
+    const result = functionUnderTest(input);
+    
+    // Assert - Verify
+    expect(result).toEqual(expected);
+  });
+});
+```
+
+### Testing de Componentes React
+
+```typescript
+// Button.test.tsx (mismo directorio que Button.tsx)
+import { render, screen } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+});
+```
+
+### Testing de API Routes
+
+```typescript
+import { describe, it, expect } from 'vitest';
+import request from 'supertest';
+import app from '../index';
+
+describe('POST /v1/contacts', () => {
+  it('should create contact with valid data', async () => {
+    const response = await request(app)
+      .post('/v1/contacts')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ firstName: 'John', lastName: 'Doe' });
+    
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty('id');
+  });
+});
+```
+
+### Mocking de Dependencias
+
+```typescript
+import { vi } from 'vitest';
+
+// Mock de módulo completo
+vi.mock('@/lib/api', () => ({
+  createContact: vi.fn(),
+}));
+
+// Mock de función específica
+const mockCreateContact = vi.fn();
+vi.mock('@/lib/api', () => ({
+  createContact: mockCreateContact,
+}));
+```
+
+### Tests de Integración vs Unitarios
+
+**Unitarios:**
+- Testean una función/clase aislada
+- Mocks de todas las dependencias
+- Ubicación: mismo directorio que el código (`Component.test.tsx`)
+
+**Integración:**
+- Testean interacción entre componentes
+- Mocks mínimos (solo servicios externos)
+- Ubicación: `**/*.integration.test.ts`
+
+**E2E:**
+- Testean flujos completos de usuario
+- Sin mocks (usa servicios reales)
+- Ubicación: `tests/e2e/[feature].spec.ts`
+
+## Reglas Específicas
+
+### @cactus/ui
+
+- ✅ **Tests co-ubicados** (`Component.test.tsx` junto a `Component.tsx`)
+- ✅ **Testing Library** para queries accesibles
+- ✅ **Coverage 100%** requerido antes de merge
+
+### @cactus/db
+
+- ✅ **No tests unit** - Validación vía migraciones y seeds
+- ✅ **Seeds como tests** - Verifican integridad de schema
+
+**Documentación:** Ver [docs/TESTING.md](../../docs/TESTING.md) para guía completa

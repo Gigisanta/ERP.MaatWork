@@ -10,8 +10,8 @@ vi.mock('../api-client', () => ({
     get: vi.fn(async (_p: string) => ({ success: true, data: [] })),
     post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
     patch: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-    delete: vi.fn(async (_p: string) => ({ success: true }))
-  }
+    delete: vi.fn(async (_p: string) => ({ success: true })),
+  },
 }));
 
 describe('contacts api client', () => {
@@ -51,6 +51,3 @@ describe('contacts api client', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/contacts/contact-1');
   });
 });
-
-
-

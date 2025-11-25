@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "analyze": "cross-env ANALYZE=true next build",
+    "check:bundle": "node scripts/check-bundle-size.js"
   },
   "dependencies": {
     "@cactus/ui": "workspace:*",

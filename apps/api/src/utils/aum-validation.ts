@@ -175,6 +175,25 @@ export const aumMatchRowBodySchema = z.object({
   matchedUserId: uuidSchema.optional().nullable()
 });
 
+/**
+ * Schema para actualizar asesor de una fila AUM
+ * 
+ * AI_DECISION: Validación estricta de datos de entrada
+ * Justificación: Previene datos inválidos y mejora la integridad de la base de datos
+ * Impacto: Mejor validación y mensajes de error más claros
+ */
+export const aumUpdateAdvisorBodySchema = z.object({
+  advisorRaw: z.string()
+    .min(1, 'El nombre del asesor es requerido')
+    .max(200, 'El nombre del asesor no puede exceder 200 caracteres')
+    .trim(),
+  matchedUserId: uuidSchema
+});
+
+export const aumRowIdParamsSchema = z.object({
+  rowId: uuidSchema
+});
+
 export const aumConfirmChangesBodySchema = z.object({
   changes: z.array(z.object({
     rowId: uuidSchema,

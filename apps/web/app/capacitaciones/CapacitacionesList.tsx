@@ -6,6 +6,7 @@ import { canImportFiles, canEditSharedResources } from '@/lib/auth-helpers';
 import { useCapacitaciones, useInvalidateCapacitacionesCache } from '@/lib/api-hooks';
 import { createCapacitacion, updateCapacitacion, deleteCapacitacion } from '@/lib/api';
 import type { Capacitacion, CreateCapacitacionRequest } from '@/types';
+import type { CapacitacionesListResponse } from '@/types/capacitaciones';
 import {
   Card,
   CardHeader,
@@ -38,7 +39,12 @@ import CapacitacionForm from './CapacitacionForm';
 import ImportCSVModal from './ImportCSVModal';
 import { useToast } from '../../lib/hooks/useToast';
 
-export default function CapacitacionesList() {
+interface CapacitacionesListProps {
+  initialData?: CapacitacionesListResponse | null;
+  initialError?: string | null;
+}
+
+export default function CapacitacionesList({ initialData, initialError }: CapacitacionesListProps) {
   const { user } = useAuth();
   const canImport = canImportFiles(user);
   const canEdit = canEditSharedResources(user);
@@ -64,14 +70,23 @@ export default function CapacitacionesList() {
     onConfirm: () => {}
   });
 
-  const queryParams: { tema?: string; search?: string; limit?: number } = { limit: 100 };
+  // AI_DECISION: Remove client-side filtering - backend already filters by search parameter
+  // Justificación: Eliminates redundant filtering, reduces client-side processing
+  // Impacto: Better performance, consistent filtering logic in backend
+  const queryParams: { tema?: string; search?: string; limit?: number } = { limit: 50 };
   if (selectedTema !== 'all') {
     queryParams.tema = selectedTema;
   }
   if (searchTerm) {
     queryParams.search = searchTerm;
   }
-  const { capacitaciones, pagination, isLoading, error, mutate } = useCapacitaciones(queryParams);
+  // AI_DECISION: Use SWR with fallbackData for server-side initial data
+  // Justificación: Maintains revalidation after mutations while using server-fetched initial data
+  // Impacto: Faster initial load with server data, automatic revalidation for updates
+  const { capacitaciones, pagination, isLoading, error, mutate } = useCapacitaciones(
+    queryParams,
+    initialData ? { data: initialData.data, success: true, pagination: initialData.pagination } : undefined
+  );
   const invalidateCache = useInvalidateCapacitacionesCache();
 
   // Get unique temas from capacitaciones
@@ -82,17 +97,6 @@ export default function CapacitacionesList() {
     });
     return Array.from(temasSet).sort();
   }, [capacitaciones]);
-
-  // Filter capacitaciones client-side for search
-  const filteredCapacitaciones = useMemo(() => {
-    const capArray = capacitaciones as Capacitacion[];
-    if (!searchTerm) return capArray;
-    const searchLower = searchTerm.toLowerCase();
-    return capArray.filter((c: Capacitacion) =>
-      c.titulo.toLowerCase().includes(searchLower) ||
-      c.tema.toLowerCase().includes(searchLower)
-    );
-  }, [capacitaciones, searchTerm]);
 
   const handleCreate = async (data: CreateCapacitacionRequest) => {
     try {
@@ -216,10 +220,13 @@ export default function CapacitacionesList() {
     return baseColumns;
   }, [canEdit]);
 
-  if (error) {
+  // Use initialError if available, otherwise use SWR error
+  const displayError = initialError || (error instanceof Error ? error.message : error ? String(error) : null);
+  
+  if (displayError) {
     return (
       <Alert variant="error">
-        Error al cargar capacitaciones: {error instanceof Error ? error.message : 'Error desconocido'}
+        Error al cargar capacitaciones: {displayError}
       </Alert>
     );
   }
@@ -279,7 +286,7 @@ export default function CapacitacionesList() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Capacitaciones ({filteredCapacitaciones.length})
+            Capacitaciones ({capacitaciones.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -287,14 +294,14 @@ export default function CapacitacionesList() {
             <div className="flex justify-center py-8">
               <Spinner />
             </div>
-          ) : filteredCapacitaciones.length === 0 ? (
+          ) : capacitaciones.length === 0 ? (
             <EmptyState
               title="No hay capacitaciones"
               description="Comienza agregando tu primera capacitación o importando desde CSV"
             />
           ) : (
             <DataTable
-              data={filteredCapacitaciones as unknown as Record<string, unknown>[]}
+              data={capacitaciones as unknown as Record<string, unknown>[]}
               columns={columns as unknown as Column<Record<string, unknown>>[]}
               keyField="id"
               emptyMessage="No se encontraron capacitaciones"

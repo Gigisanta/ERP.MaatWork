@@ -24,7 +24,7 @@ const seedAdvisors: SeedAdvisor[] = [
   { username: 'Fandreacchio', password: 'Fandreacchio123', email: 'Fandreacchio@grupoabax.com' }
 ];
 
-async function upsertAdvisor({ username, password, email }: SeedAdvisor): Promise<void> {
+export async function upsertAdvisor({ username, password, email }: SeedAdvisor): Promise<void> {
   // Normalizamos username para unicidad case-insensitive
   const normalized = username.toLowerCase();
 

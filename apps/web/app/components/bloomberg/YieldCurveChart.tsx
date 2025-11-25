@@ -117,7 +117,7 @@ export default function YieldCurveChart({ country = 'US', className, height = 40
   return (
     <Card className={className}>
       <CardHeader>
-        <Stack direction="row" gap="md" alignItems="center" justifyContent="spaceBetween">
+        <Stack direction="row" gap="md" align="center" justify="between">
           <CardTitle>
             {country} Treasury Yield Curve
             {isInverted && (
@@ -172,14 +172,14 @@ export default function YieldCurveChart({ country = 'US', className, height = 40
           <Stack direction="row" gap="lg" className="mt-4">
             <div>
               <Text size="sm" color="secondary">2s10s Spread</Text>
-              <Text size="md" weight="semibold" style={{ color: spreads['2s10s'] && spreads['2s10s'] < 0 ? '#ef4444' : '#10b981' }}>
+              <Text size="base" weight="semibold" style={{ color: spreads['2s10s'] && spreads['2s10s'] < 0 ? '#ef4444' : '#10b981' }}>
                 {spreads['2s10s']?.toFixed(2)}%
               </Text>
             </div>
             {spreads['3m10y'] && (
               <div>
                 <Text size="sm" color="secondary">3m-10y Spread</Text>
-                <Text size="md" weight="semibold">
+                <Text size="base" weight="semibold">
                   {spreads['3m10y'].toFixed(2)}%
                 </Text>
               </div>

@@ -1,6 +1,6 @@
 /**
  * AUM Rows Page - Orchestrator Component
- * 
+ *
  * AI_DECISION: Componente orquestador minimalista (< 100 líneas)
  * Justificación: Delega lógica a hooks y componentes, facilita mantenimiento y testing
  * Impacto: Reducción de 803 → 85 líneas (90%), mejor separación de responsabilidades
@@ -12,7 +12,7 @@ import { useCallback } from 'react';
 import { useAuth } from '../../../auth/AuthContext';
 import { canImportFiles } from '@/lib/auth-helpers';
 import { useAumRows } from '@/lib/api-hooks';
-import { cleanupAumDuplicates, resetAumSystem } from '@/lib/api/aum';
+import { resetAumSystem } from '@/lib/api/aum';
 import { AumErrorBoundary } from './components/AumErrorBoundary';
 import { AumFiltersBar } from './components/AumFiltersBar';
 import { AumAdminActions } from './components/AumAdminActions';
@@ -26,6 +26,7 @@ import { useDebouncedValue } from './hooks/useDebouncedState';
 import { useUrlSync } from './hooks/useUrlSync';
 import { AUM_ROWS_CONFIG } from './lib/aumRowsConstants';
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export default function AumRowsPage() {
   const { user } = useAuth();
@@ -33,22 +34,19 @@ export default function AumRowsPage() {
 
   // Centralized state management
   const { state, actions } = useAumRowsState();
-  
+
   // Sync URL with state (URL → State) for fileId
-  useUrlSync({
+  const { updateUrl } = useUrlSync({
     onFileIdChange: (fileId) => {
       if (fileId !== state.uploadedFileId) {
         actions.setUploadedFileId(fileId);
       }
-    }
+    },
   });
-  
+
   // Debounced search term
-  const debouncedSearchTerm = useDebouncedValue(
-    state.search.term,
-    AUM_ROWS_CONFIG.DEBOUNCE_MS
-  );
-  
+  const debouncedSearchTerm = useDebouncedValue(state.search.term, AUM_ROWS_CONFIG.DEBOUNCE_MS);
+
   // Sync debounced search back to state for consistency
   useEffect(() => {
     if (debouncedSearchTerm !== state.search.debounced) {
@@ -65,28 +63,15 @@ export default function AumRowsPage() {
     ...(state.uploadedFileId && { fileId: state.uploadedFileId }),
     preferredOnly: !state.uploadedFileId, // Show all when filtering by file
     ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
-    onlyUpdated: state.onlyUpdated
+    onlyUpdated: state.onlyUpdated,
   });
-
-  // Admin actions
-  const handleCleanupDuplicates = useCallback(async () => {
-    if (!confirm('¿Confirmar limpieza de duplicados no preferidos?')) return;
-    
-    actions.setLoading('cleaning', true);
-    try {
-      await cleanupAumDuplicates();
-      await mutate();
-    } finally {
-      actions.setLoading('cleaning', false);
-    }
-  }, [actions, mutate]);
 
   // AI_DECISION: Doble confirmación para acción destructiva crítica
   // Justificación: Reset elimina TODOS los datos, requiere confirmación explícita
   // Impacto: Previene pérdida de datos por error del usuario
   const handleResetAll = useCallback(async () => {
     if (!confirm('⚠️ ADVERTENCIA: Esto eliminará TODAS las filas AUM. ¿Continuar?')) return;
-    
+
     actions.setLoading('resetting', true);
     try {
       await resetAumSystem();
@@ -96,22 +81,45 @@ export default function AumRowsPage() {
     }
   }, [actions, mutate]);
 
-  const handleUploadSuccess = useCallback((fileId: string) => {
-    actions.setUploadedFileId(fileId);
-    actions.setLoading('waitingUpload', false);
-    mutate();
-  }, [actions, mutate]);
+  const handleUploadSuccess = useCallback(
+    (fileId: string) => {
+      logger.info('handleUploadSuccess called', { fileId });
+      console.log('[AUM Rows] handleUploadSuccess called', { fileId });
+
+      // Establecer fileId y resetear paginación para mostrar las nuevas filas
+      actions.setUploadedFileId(fileId);
+      actions.setPagination({ offset: 0 });
+      actions.setLoading('waitingUpload', false);
+
+      // Sincronizar fileId con URL para que el filtro funcione correctamente
+      updateUrl({ fileId });
+      console.log('[AUM Rows] URL updated with fileId', { fileId });
+
+      logger.info('State and URL updated, calling mutate', {
+        fileId,
+        currentStateFileId: state.uploadedFileId,
+      });
+      console.log('[AUM Rows] State updated, calling mutate', {
+        fileId,
+        currentStateFileId: state.uploadedFileId,
+      });
+
+      // Mutate con revalidate para forzar refresh de datos
+      mutate(undefined, { revalidate: true });
+    },
+    [actions, mutate, updateUrl, state.uploadedFileId]
+  );
 
   // Pagination handlers
   const handlePrevPage = useCallback(() => {
     actions.setPagination({
-      offset: Math.max(0, state.pagination.offset - state.pagination.limit)
+      offset: Math.max(0, state.pagination.offset - state.pagination.limit),
     });
   }, [state.pagination, actions]);
 
   const handleNextPage = useCallback(() => {
     actions.setPagination({
-      offset: state.pagination.offset + state.pagination.limit
+      offset: state.pagination.offset + state.pagination.limit,
     });
   }, [state.pagination, actions]);
 
@@ -120,31 +128,48 @@ export default function AumRowsPage() {
 
   return (
     <AumErrorBoundary onReset={() => mutate()}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col h-[calc(100vh-1rem)] min-h-0 -m-6">
         {/* Header y Admin Actions */}
-        <section className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Panel de Administración AUM y Brokers
+        <section className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0">
+          <div className="px-6 py-1.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-3">
+                <h1 className="text-base font-semibold text-gray-900">
+                  AUM - Normalización de Cuentas
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Normalización de cuentas comitentes
-                </p>
+                {/* Estadísticas inline */}
+                {!isLoading && rows && rows.length > 0 && (
+                  <div className="flex gap-1.5 text-xs text-gray-500">
+                    <span>
+                      Total: <strong className="text-gray-700">{totalRows.toLocaleString()}</strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Sin asesor:{' '}
+                      <strong className="text-yellow-600">
+                        {rows.filter((r) => !r.matchedUserId).length}
+                      </strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Normalizadas:{' '}
+                      <strong className="text-green-600">
+                        {rows.filter((r) => r.isNormalized).length}
+                      </strong>
+                    </span>
+                  </div>
+                )}
               </div>
 
               <AumAdminActions
                 isResetting={state.loading.resetting}
-                isCleaningDuplicates={state.loading.cleaning}
                 canImport={canImport}
                 onReset={handleResetAll}
-                onCleanupDuplicates={handleCleanupDuplicates}
               />
             </div>
 
             {/* Filtros y Uploader */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-2">
               <AumFiltersBar
                 broker={state.filters.broker}
                 status={state.filters.status}
@@ -157,7 +182,7 @@ export default function AumRowsPage() {
               />
 
               {canImport && (
-                <div className="ml-auto">
+                <div className="flex-shrink-0">
                   <FileUploader onUploadSuccess={handleUploadSuccess} />
                 </div>
               )}
@@ -166,28 +191,31 @@ export default function AumRowsPage() {
         </section>
 
         {/* Tabla Principal */}
-        <div className="px-6 py-6">
+        <div className="flex-1 flex flex-col min-h-0 px-6 py-2">
           <AumVirtualTable
             rows={rows || []}
             isLoading={isLoading}
             error={error}
             onOpenAdvisorModal={(row) => actions.openAdvisorModal(row)}
             onShowDuplicates={(accountNumber) => actions.openDuplicateModal(accountNumber)}
+            onAdvisorUpdated={() => mutate()}
           />
 
           {/* Paginación */}
           {!isLoading && rows && rows.length > 0 && (
-            <AumPagination
-              limit={state.pagination.limit}
-              offset={state.pagination.offset}
-              total={totalRows}
-              onPrevPage={handlePrevPage}
-              onNextPage={handleNextPage}
-              hasPrevPage={hasPrevPage}
-              hasNextPage={hasNextPage}
-              showSearchInfo={!!debouncedSearchTerm}
-              searchActive={!!debouncedSearchTerm}
-            />
+            <div className="flex-shrink-0 pt-4">
+              <AumPagination
+                limit={state.pagination.limit}
+                offset={state.pagination.offset}
+                total={totalRows}
+                onPrevPage={handlePrevPage}
+                onNextPage={handleNextPage}
+                hasPrevPage={hasPrevPage}
+                hasNextPage={hasNextPage}
+                showSearchInfo={!!debouncedSearchTerm}
+                searchActive={!!debouncedSearchTerm}
+              />
+            </div>
           )}
         </div>
 
@@ -217,4 +245,3 @@ export default function AumRowsPage() {
     </AumErrorBoundary>
   );
 }
-

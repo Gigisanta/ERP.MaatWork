@@ -1,61 +1,53 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { getAumRows } from '@/lib/api';
+import { useAumRows } from '@/lib/api-hooks';
 import ContactUserPicker from '../components/ContactUserPicker';
 import DuplicateResolutionModal from '../components/DuplicateResolutionModal';
-import type { Row, ApiErrorWithMessage, AumRow } from '@/types';
+import type { Row, AumRow } from '@/types';
 
 export default function AumHistoryPage() {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ total: 0, limit: 50, offset: 0, hasMore: false });
   const [filters, setFilters] = useState({ broker: '', status: '', fileId: '' });
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [selectedAccountNumber, setSelectedAccountNumber] = useState<string | null>(null);
   
-  const loadRows = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params: {
-        limit: number;
-        offset: number;
-        broker?: string;
-        status?: string;
-        fileId?: string;
-      } = {
-        limit: pagination.limit,
-        offset: pagination.offset,
-      };
-      if (filters.broker) params.broker = filters.broker;
-      if (filters.status) params.status = filters.status;
-      if (filters.fileId) params.fileId = filters.fileId;
-      
-      const response = await getAumRows(params);
-      
-      if (response.success && response.data) {
-        // Convertir AumRow[] a Row[] (requiere file)
-        const allRows: AumRow[] = response.data.rows || [];
-        const validRows: Row[] = allRows
-          .filter((r): r is Row => r.file !== undefined)
-          .map(r => ({ ...r, file: r.file! }));
-        setRows(validRows);
-        setPagination(prev => ({ ...prev, ...(response.data?.pagination || {}) }));
-      }
-    } catch (e: unknown) {
-      const error = e as ApiErrorWithMessage;
-      setError(error.userMessage || error.message || error.error || 'Error cargando datos');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch AUM rows with SWR
+  const { rows: allRows = [], totalRows, isLoading: loading, error: fetchError, mutate } = useAumRows({
+    limit: pagination.limit,
+    offset: pagination.offset,
+    ...(filters.broker && { broker: filters.broker }),
+    ...(filters.status && { status: filters.status as 'matched' | 'ambiguous' | 'unmatched' }),
+    ...(filters.fileId && { fileId: filters.fileId }),
+    preferredOnly: false // Show all rows in history
+  });
+  
+  // Extract error message from SWR error
+  const error = fetchError ? (fetchError instanceof Error ? fetchError.message : 'Error cargando datos') : null;
+  
+  // Convert AumRow[] to Row[] (requires file)
+  const rows = useMemo(() => {
+    const validRows: Row[] = (allRows as AumRow[])
+      .filter((r): r is Row => r.file !== undefined)
+      .map(r => ({ ...r, file: r.file! }));
+    return validRows;
+  }, [allRows]);
+  
+  // Update pagination when data changes
   useEffect(() => {
-    loadRows();
-  }, [pagination.offset, filters.broker, filters.status, filters.fileId]);
+    if (totalRows > 0) {
+      setPagination(prev => ({
+        ...prev,
+        total: totalRows,
+        hasMore: prev.offset + prev.limit < totalRows
+      }));
+    }
+  }, [totalRows]);
+  
+  const handleRefresh = () => {
+    mutate();
+  };
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -159,7 +151,7 @@ export default function AumHistoryPage() {
                         rowId={row.id}
                         initialContactId={row.matchedContactId}
                         initialUserId={row.matchedUserId}
-                        onSave={() => loadRows()}
+                        onSave={handleRefresh}
                       />
                     </td>
                     <td className="px-4 py-2 text-sm">
@@ -227,9 +219,7 @@ export default function AumHistoryPage() {
             setShowDuplicateModal(false);
             setSelectedAccountNumber(null);
           }}
-          onResolved={() => {
-            loadRows();
-          }}
+          onResolved={handleRefresh}
         />
       )}
     </div>

@@ -32,14 +32,3 @@ export function canEditSharedResources(user: AuthUser | null): boolean {
 export function isManagerOrAdmin(user: AuthUser | null): boolean {
   return user?.role === 'manager' || user?.role === 'admin';
 }
-
-
-
-
-
-
-
-
-
-
-

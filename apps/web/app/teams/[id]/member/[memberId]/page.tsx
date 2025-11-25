@@ -1,6 +1,6 @@
 "use client";
 import { useRequireAuth } from '../../../../auth/useRequireAuth';
-import { getTeams, getTeamMembers, getTeamMemberMetrics } from '@/lib/api';
+import { getTeamById, getTeamMemberById, getTeamMemberMetrics } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Team, TeamMember, TeamMemberMetrics } from '@/types';
@@ -18,7 +18,65 @@ import {
   Grid,
 } from '@cactus/ui';
 import Link from 'next/link';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import dynamic from 'next/dynamic';
+
+// AI_DECISION: Lazy load Recharts to reduce initial bundle size
+// Justificación: Recharts is heavy (~200KB), loading it async reduces initial bundle significantly
+// Impacto: Faster initial page load, smaller initial JavaScript bundle (~200KB reduction)
+const RechartsLineChart = dynamic(() => import('recharts').then(mod => ({
+  default: ({
+    data,
+    formatCurrency
+  }: {
+    data: Array<{ date: string; value: number }>;
+    formatCurrency: (value: number) => string;
+  }) => {
+    const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
+    return (
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="date" 
+            tickFormatter={(value) => {
+              const date = new Date(value);
+              return `${date.getDate()}/${date.getMonth() + 1}`;
+            }}
+          />
+          <YAxis 
+            tickFormatter={(value) => {
+              if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+              if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+              return `$${value}`;
+            }}
+          />
+          <Tooltip 
+            formatter={(value: number) => formatCurrency(value)}
+            labelFormatter={(label) => {
+              const date = new Date(label);
+              return date.toLocaleDateString('es-ES');
+            }}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="value" 
+            stroke="#3b82f6" 
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
+})), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: '2rem', textAlign: 'center', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Spinner size="lg" />
+    </div>
+  )
+});
 
 export default function TeamMemberPage() {
   const { user, loading } = useRequireAuth();
@@ -36,7 +94,7 @@ export default function TeamMemberPage() {
   useEffect(() => {
     if (!user) return;
     if (!['manager', 'admin'].includes(user.role)) {
-      router.push('/');
+      router.push('/home');
       return;
     }
     fetchData();
@@ -47,32 +105,25 @@ export default function TeamMemberPage() {
       setLoadingData(true);
       setError(null);
 
-      // Get team info
-      const teamsRes = await getTeams();
-      if (teamsRes.success && teamsRes.data) {
-        const foundTeam = teamsRes.data.find((t: Team) => t.id === teamId);
-        if (foundTeam) setTeam({
-          id: foundTeam.id,
-          name: foundTeam.name,
-          managerUserId: foundTeam.managerUserId,
-          createdAt: foundTeam.createdAt,
-          updatedAt: foundTeam.updatedAt
-        });
+      // Get team info and member info in parallel
+      const [teamRes, memberRes, metricsRes] = await Promise.all([
+        getTeamById(teamId),
+        getTeamMemberById(teamId, memberId),
+        getTeamMemberMetrics(teamId, memberId)
+      ]);
+
+      if (teamRes.success && teamRes.data) {
+        setTeam(teamRes.data);
+      } else {
+        throw new Error('No se pudo cargar la información del equipo');
       }
 
-      // Get member info from team members
-      const memRes = await getTeamMembers(teamId);
-      if (memRes.success && memRes.data) {
-        const foundMember = memRes.data.find((m: TeamMember) => m.id === memberId);
-        if (foundMember) {
-          setMember(foundMember);
-        } else {
-          setError('Miembro no encontrado en este equipo');
-        }
+      if (memberRes.success && memberRes.data) {
+        setMember(memberRes.data);
+      } else {
+        setError('Miembro no encontrado en este equipo');
       }
 
-      // Get metrics
-      const metricsRes = await getTeamMemberMetrics(teamId, memberId);
       if (metricsRes.success && metricsRes.data) {
         setMetrics(metricsRes.data);
       }
@@ -203,40 +254,7 @@ export default function TeamMemberPage() {
                   <CardTitle className="text-base">Tendencia AUM (Últimos 30 días)</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={metrics.aumTrend}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="date" 
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return `${date.getDate()}/${date.getMonth() + 1}`;
-                        }}
-                      />
-                      <YAxis 
-                        tickFormatter={(value) => {
-                          if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-                          if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-                          return `$${value}`;
-                        }}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return date.toLocaleDateString('es-ES');
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#3b82f6" 
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <RechartsLineChart data={metrics.aumTrend} formatCurrency={formatCurrency} />
                 </CardContent>
               </Card>
             )}

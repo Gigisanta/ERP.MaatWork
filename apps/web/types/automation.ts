@@ -41,8 +41,8 @@ export interface CreateAutomationConfigRequest extends CreateRequest<AutomationC
   triggerType: string;
   triggerConfig: TriggerConfig;
   webhookUrl?: string | null;
-  enabled?: boolean;
-  config?: AutomationConfigData;
+  enabled: boolean;
+  config: AutomationConfigData;
 }
 
 /**

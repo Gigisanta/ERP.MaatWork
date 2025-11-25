@@ -356,6 +356,106 @@ router.delete('/:id/contacts/:contactId', requireAuth, async (req: Request, res:
 });
 
 // ==========================================================
+// GET /contacts/tags/batch - Obtener tags de múltiples contactos (batch)
+// ==========================================================
+const batchContactTagsQuerySchema = z.object({
+  contactIds: z.string().min(1)
+});
+
+router.get('/contacts/batch',
+  requireAuth,
+  validate({ query: batchContactTagsQuerySchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { validateBatchIds, BATCH_LIMITS } = await import('../utils/batch-validation');
+      
+      const validation = validateBatchIds(req.query.contactIds as string, {
+        maxCount: 50, // Límite específico para contact tags
+        fieldName: 'contactIds'
+      });
+
+      if (!validation.valid) {
+        return res.status(400).json({
+          error: 'Invalid contact IDs',
+          details: validation.errors
+        });
+      }
+
+      const userId = req.user!.id;
+      const userRole = req.user!.role;
+      
+      // AI_DECISION: Use JOIN with access filter instead of loop to avoid N+1
+      // Justificación: Elimina N queries de canAccessContact, usando JOIN con filtro de acceso
+      // Impacto: Reducción de latencia de N queries a 1 query optimizada
+      const accessScope = await getUserAccessScope(userId, userRole);
+      const accessFilter = buildContactAccessFilter(accessScope);
+
+      // Obtener tags de todos los contactos accesibles en una sola query con filtro de acceso
+      const contactTagsList = await db()
+        .select({
+          contactId: contactTags.contactId,
+          id: tags.id,
+          name: tags.name,
+          color: tags.color,
+          icon: tags.icon,
+          businessLine: tags.businessLine,
+          monthlyPremium: contactTags.monthlyPremium,
+          policyNumber: contactTags.policyNumber
+        })
+        .from(contactTags)
+        .innerJoin(tags, eq(contactTags.tagId, tags.id))
+        .innerJoin(contacts, eq(contactTags.contactId, contacts.id))
+        .where(and(
+          inArray(contactTags.contactId, validation.ids),
+          accessFilter.whereClause
+        ));
+
+      // Agrupar por contactId
+      const tagsByContactId: Record<string, typeof contactTagsList> = {};
+      const accessibleContactIds = new Set<string>();
+      
+      for (const tag of contactTagsList) {
+        accessibleContactIds.add(tag.contactId);
+        if (!tagsByContactId[tag.contactId]) {
+          tagsByContactId[tag.contactId] = [];
+        }
+        tagsByContactId[tag.contactId].push(tag);
+      }
+
+      // Asegurar que todos los contactos accesibles estén en el resultado (aunque no tengan tags)
+      // Query accessible contacts to ensure all accessible IDs are included even without tags
+      const accessibleContacts = await db()
+        .select({ id: contacts.id })
+        .from(contacts)
+        .where(and(
+          inArray(contacts.id, validation.ids),
+          accessFilter.whereClause
+        ));
+
+      for (const contact of accessibleContacts) {
+        if (!tagsByContactId[contact.id]) {
+          tagsByContactId[contact.id] = [];
+        }
+      }
+
+      req.log.info({ 
+        requested: validation.ids.length, 
+        accessible: accessibleContacts.length,
+        withTags: Object.keys(tagsByContactId).filter(k => tagsByContactId[k].length > 0).length 
+      }, 'contact tags batch fetched');
+
+      res.json({ 
+        success: true, 
+        data: tagsByContactId 
+      });
+    } catch (err) {
+      req.log.error({ err }, 'failed to fetch contact tags batch');
+      next(err);
+    }
+  }
+);
+
+// ==========================================================
 // GET /contacts/:id/tags - Listar etiquetas de un contacto
 // ==========================================================
 router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {

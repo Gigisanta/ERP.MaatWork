@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getManagers } from '@/lib/api';
-import { logger } from '../../lib/logger';
+import { logger, toLogContext } from '../../lib/logger';
 import { 
   Card, 
   CardContent, 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
         throw new Error('Failed to fetch managers');
       }
     } catch (err) {
-      logger.error('Error fetching managers', { err });
+      logger.error('Error fetching managers', toLogContext({ err }));
       setManagers([]);
     } finally {
       setLoadingManagers(false);

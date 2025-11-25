@@ -1,6 +1,6 @@
 /**
  * Tests para contacts routes
- * 
+ *
  * AI_DECISION: Tests unitarios para CRUD de contactos con RBAC
  * Justificación: Validación crítica de data isolation y permisos
  * Impacto: Prevenir accesos no autorizados y errores de datos
@@ -8,9 +8,24 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, contacts, contactFieldHistory, contactTags, tags, tasks, attachments, pipelineStages, users } from '@cactus/db';
+import {
+  db,
+  contacts,
+  contactFieldHistory,
+  contactTags,
+  tags,
+  tasks,
+  attachments,
+  pipelineStages,
+  users,
+} from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
-import { getUserAccessScope, buildContactAccessFilter, canAccessContact, canAssignContactTo } from '../auth/authorization';
+import {
+  getUserAccessScope,
+  buildContactAccessFilter,
+  canAccessContact,
+  canAssignContactTo,
+} from '../auth/authorization';
 import { requireAuth, requireRole } from '../auth/middlewares';
 
 // Mock dependencies
@@ -29,19 +44,19 @@ vi.mock('@cactus/db', () => ({
   and: vi.fn(),
   isNull: vi.fn(),
   sql: vi.fn(),
-  inArray: vi.fn()
+  inArray: vi.fn(),
 }));
 
 vi.mock('../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
   buildContactAccessFilter: vi.fn(),
   canAccessContact: vi.fn(),
-  canAssignContactTo: vi.fn()
+  canAssignContactTo: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -60,18 +75,18 @@ describe('GET /contacts', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       query: {},
       log: {
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -82,7 +97,7 @@ describe('GET /contacts', () => {
       mockReq.user = {
         id: 'admin-123',
         email: 'admin@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       const accessScope = {
@@ -91,13 +106,13 @@ describe('GET /contacts', () => {
         accessibleAdvisorIds: [],
         canSeeUnassigned: true,
         canAssignToOthers: true,
-        canReassign: true
+        canReassign: true,
       };
 
       mockGetUserAccessScope.mockResolvedValue(accessScope);
       mockBuildContactAccessFilter.mockReturnValue({
         whereClause: sql`1=1`,
-        description: 'admin access'
+        description: 'admin access',
       });
 
       const mockSelect = vi.fn().mockReturnValue({
@@ -105,15 +120,15 @@ describe('GET /contacts', () => {
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
               offset: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue([])
-              })
-            })
-          })
-        })
+                orderBy: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // Test admin access
@@ -127,7 +142,7 @@ describe('GET /contacts', () => {
       mockReq.user = {
         id: 'manager-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       const accessScope = {
@@ -136,7 +151,7 @@ describe('GET /contacts', () => {
         accessibleAdvisorIds: ['manager-123', 'member-1', 'member-2'],
         canSeeUnassigned: true,
         canAssignToOthers: true,
-        canReassign: true
+        canReassign: true,
       };
 
       mockGetUserAccessScope.mockResolvedValue(accessScope);
@@ -151,7 +166,7 @@ describe('GET /contacts', () => {
       mockReq.user = {
         id: 'advisor-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       const accessScope = {
@@ -160,7 +175,7 @@ describe('GET /contacts', () => {
         accessibleAdvisorIds: ['advisor-123'],
         canSeeUnassigned: false,
         canAssignToOthers: false,
-        canReassign: false
+        canReassign: false,
       };
 
       mockGetUserAccessScope.mockResolvedValue(accessScope);
@@ -176,7 +191,7 @@ describe('GET /contacts', () => {
       mockReq.query = {
         pipelineStageId: 'stage-123',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       // Test pipelineStageId filter
@@ -187,7 +202,7 @@ describe('GET /contacts', () => {
       mockReq.query = {
         assignedAdvisorId: 'advisor-123',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       // Test assignedAdvisorId filter
@@ -197,7 +212,7 @@ describe('GET /contacts', () => {
     it('debería paginar correctamente', async () => {
       mockReq.query = {
         limit: '25',
-        offset: '50'
+        offset: '50',
       };
 
       // Test pagination
@@ -216,18 +231,18 @@ describe('GET /contacts/:id', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'contact-123' },
       query: {},
       log: {
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -239,7 +254,7 @@ describe('GET /contacts/:id', () => {
     const contact = {
       id: 'contact-123',
       firstName: 'John',
-      lastName: 'Doe'
+      lastName: 'Doe',
     };
 
     // Test contact retrieval with timeline
@@ -271,21 +286,21 @@ describe('POST /contacts', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       body: {
         firstName: 'John',
         lastName: 'Doe',
-        email: 'john@example.com'
+        email: 'john@example.com',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -293,15 +308,17 @@ describe('POST /contacts', () => {
   it('debería crear contacto exitosamente', async () => {
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'contact-123',
-          ...mockReq.body
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'contact-123',
+            ...mockReq.body,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     // Test contact creation
@@ -317,7 +334,7 @@ describe('POST /contacts', () => {
     const validContact = {
       firstName: 'John',
       lastName: 'Doe',
-      email: 'john@example.com'
+      email: 'john@example.com',
     };
 
     // Test schema validation
@@ -335,20 +352,20 @@ describe('PATCH /contacts/:id', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'contact-123' },
       body: {
-        firstName: 'Jane'
+        firstName: 'Jane',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -358,12 +375,12 @@ describe('PATCH /contacts/:id', () => {
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     // Test contact update
@@ -387,17 +404,17 @@ describe('DELETE /contacts/:id', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'contact-123' },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -407,12 +424,12 @@ describe('DELETE /contacts/:id', () => {
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     // Test soft delete
@@ -436,16 +453,16 @@ describe('GET /contacts/:id/history', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'contact-123' },
       query: { limit: '50', offset: '0' },
       log: {
-        info: vi.fn()
-      }
+        info: vi.fn(),
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -458,28 +475,18 @@ describe('GET /contacts/:id/history', () => {
         where: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
             offset: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue([])
-            })
-          })
-        })
-      })
+              orderBy: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     // Test history retrieval
     expect(mockReq.query.limit).toBe('50');
   });
 });
-
-
-
-
-
-
-
-
-
-

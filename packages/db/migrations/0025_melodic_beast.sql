@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "idx_btx_account_trade_type" ON "broker_transactions" USING btree ("broker_account_id","trade_date","type");

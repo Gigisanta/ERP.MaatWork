@@ -1,6 +1,6 @@
 /**
  * Tests para settings-advisors routes
- * 
+ *
  * AI_DECISION: Tests unitarios para configuración de asesores
  * Justificación: Validación crítica de aliases y RBAC
  * Impacto: Prevenir errores en configuración
@@ -17,15 +17,15 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   advisorAliases: {},
   users: {},
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../utils/aum-normalization', () => ({
-  normalizeAdvisorAlias: vi.fn((alias) => alias.toLowerCase().trim())
+  normalizeAdvisorAlias: vi.fn((alias) => alias.toLowerCase().trim()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -35,12 +35,12 @@ describe('GET /admin/settings/advisors/aliases', () => {
     const userId = 'advisor-123';
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(userId).toBe('advisor-123');
@@ -56,29 +56,31 @@ describe('POST /admin/settings/advisors/aliases', () => {
   it('debería crear alias exitosamente', async () => {
     const newAlias = {
       alias: 'John Doe',
-      userId: 'user-123'
+      userId: 'user-123',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'user-123', isActive: true }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'user-123', isActive: true }]),
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'alias-123',
-          ...newAlias
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'alias-123',
+            ...newAlias,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(newAlias.alias).toBe('John Doe');
@@ -95,13 +97,3 @@ describe('POST /admin/settings/advisors/aliases', () => {
     expect(error.code).toBe('23505');
   });
 });
-
-
-
-
-
-
-
-
-
-

@@ -109,15 +109,16 @@ export function isConnectionError(error: unknown): error is PythonServiceConnect
   }
   
   const err = error as PythonServiceConnectionError;
+  const message = typeof err.message === 'string' ? err.message : '';
   return (
     err.code === 'ECONNREFUSED' ||
     err.code === 'ETIMEDOUT' ||
     err.name === 'AbortError' ||
-    (err.message && (
-      err.message.includes('ECONNREFUSED') ||
-      err.message.includes('ETIMEDOUT') ||
-      err.message.includes('timeout') ||
-      err.message.includes('fetch failed')
+    (message !== '' && (
+      message.includes('ECONNREFUSED') ||
+      message.includes('ETIMEDOUT') ||
+      message.includes('timeout') ||
+      message.includes('fetch failed')
     ))
   );
 }

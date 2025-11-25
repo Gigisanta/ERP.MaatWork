@@ -25,10 +25,38 @@ jobs:
       - name: Build web app
         run: pnpm -F @cactus/web build
       
+      # AI_DECISION: Add bundle size check before Lighthouse CI
+      # Justificación: Verificar bundle size antes de ejecutar Lighthouse para detectar problemas temprano
+      # Impacto: Detecta regresiones de bundle size junto con métricas de performance
+      - name: Check Bundle Size
+        run: pnpm -F @cactus/web check:bundle
+        continue-on-error: true
+        env:
+          BUNDLE_REPORT_PATH: bundle-report.json
+      
       - name: Run Lighthouse CI
         run: |
           npm install -g @lhci/cli
           lhci autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      
+      # AI_DECISION: Upload bundle report and Lighthouse artifacts
+      # Justificación: Hacer disponibles reportes de performance y bundle size para análisis
+      # Impacto: Reportes accesibles en GitHub Actions para debugging y análisis
+      - name: Upload Bundle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report-lighthouse
+          path: apps/web/.next/bundle-report.json
+          if-no-files-found: ignore
+      
+      - name: Upload Lighthouse Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/**
+          if-no-files-found: ignore
 

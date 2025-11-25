@@ -39,13 +39,16 @@ export function usePortfolioAssets(portfolios: Portfolio[]): PortfolioAsset[] {
             asset.portfolios.push(portfolio.id);
             asset.totalWeight += line.targetWeight;
           } else {
-            assetMap.set(symbol, {
+            const asset: PortfolioAsset = {
               symbol,
-              name: line.instrumentName,
               instrumentId: line.instrumentId,
               portfolios: [portfolio.id],
               totalWeight: line.targetWeight
-            });
+            };
+            if (line.instrumentName) {
+              asset.name = line.instrumentName;
+            }
+            assetMap.set(symbol, asset);
           }
         }
       });

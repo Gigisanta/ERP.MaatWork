@@ -143,6 +143,8 @@ export {
 export {
   getTeams,
   getTeamById,
+  getTeamDetail,
+  getTeamMemberById,
   createTeam,
   updateTeam,
   deleteTeam,
@@ -188,8 +190,28 @@ export {
   deleteAutomationConfig
 } from './automations';
 
+// Bloomberg methods
+export {
+  getAssetSnapshot,
+  getOHLCV,
+  getMacroSeries,
+  getYieldCurve,
+  getYieldSpreads,
+  getMacroSeriesList
+} from './bloomberg';
+
 // Export types from teams
 export type {
   CreateTeamRequest,
-  AddTeamMemberRequest
+  AddTeamMemberRequest,
+  TeamDetailResponse
 } from './teams';
+
+// Export types from bloomberg
+export type {
+  AssetSnapshot,
+  OHLCVPoint,
+  MacroSeriesPoint,
+  YieldPoint,
+  YieldCurve
+} from './bloomberg';

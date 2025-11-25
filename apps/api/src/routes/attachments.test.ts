@@ -1,6 +1,6 @@
 /**
  * Tests para attachments routes
- * 
+ *
  * AI_DECISION: Tests unitarios para gestión de adjuntos
  * Justificación: Validación crítica de upload y RBAC
  * Impacto: Prevenir errores en gestión de archivos
@@ -21,19 +21,19 @@ vi.mock('@cactus/db', () => ({
   eq: vi.fn(),
   and: vi.fn(),
   isNull: vi.fn(),
-  desc: vi.fn()
+  desc: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../auth/authorization', () => ({
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 vi.mock('multer', () => ({
-  default: vi.fn()
+  default: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -45,22 +45,24 @@ describe('POST /attachments/upload', () => {
       originalname: 'test.pdf',
       mimetype: 'application/pdf',
       size: 1024,
-      path: '/uploads/test.pdf'
+      path: '/uploads/test.pdf',
     };
 
     mockCanAccessContact.mockResolvedValue(true);
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'attachment-123',
-          fileName: mockFile.originalname
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'attachment-123',
+            fileName: mockFile.originalname,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(mockFile.originalname).toBe('test.pdf');
@@ -90,17 +92,17 @@ describe('GET /attachments/:id/download', () => {
       filePath: '/uploads/test.pdf',
       mimeType: 'application/pdf',
       fileName: 'test.pdf',
-      fileSize: 1024
+      fileSize: 1024,
     };
 
     const mockQuery = {
       attachments: {
-        findFirst: vi.fn().mockResolvedValue(attachment)
-      }
+        findFirst: vi.fn().mockResolvedValue(attachment),
+      },
     };
 
     mockDb.mockReturnValue({
-      query: mockQuery
+      query: mockQuery,
     } as any);
 
     expect(attachment.filePath).toBeDefined();
@@ -109,12 +111,12 @@ describe('GET /attachments/:id/download', () => {
   it('debería retornar 404 cuando archivo no existe', async () => {
     const mockQuery = {
       attachments: {
-        findFirst: vi.fn().mockResolvedValue(null)
-      }
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
     };
 
     mockDb.mockReturnValue({
-      query: mockQuery
+      query: mockQuery,
     } as any);
 
     expect(null).toBeNull();
@@ -124,36 +126,26 @@ describe('GET /attachments/:id/download', () => {
 describe('DELETE /attachments/:id', () => {
   it('debería eliminar adjunto (soft delete)', async () => {
     const attachment = {
-      id: 'attachment-123'
+      id: 'attachment-123',
     };
 
     const mockQuery = {
       attachments: {
-        findFirst: vi.fn().mockResolvedValue(attachment)
-      }
+        findFirst: vi.fn().mockResolvedValue(attachment),
+      },
     };
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       query: mockQuery,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(attachment.id).toBe('attachment-123');
   });
 });
-
-
-
-
-
-
-
-
-
-

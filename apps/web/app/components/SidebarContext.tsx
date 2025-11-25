@@ -9,8 +9,8 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  // Default to collapsed (true)
-  const [collapsed, setCollapsed] = useState(true);
+  // Default to expanded (false)
+  const [collapsed, setCollapsed] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -19,8 +19,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       if (saved !== null) {
         setCollapsed(JSON.parse(saved));
       } else {
-        // If no saved value, default to collapsed
-        setCollapsed(true);
+        // If no saved value, default to expanded
+        setCollapsed(false);
       }
     }
   }, []);

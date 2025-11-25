@@ -112,10 +112,46 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setSuccess(false);
     
     try {
+      logger.info('Starting AUM file upload', {
+        fileName: file.name,
+        fileSize: file.size,
+        broker
+      });
+      // Console log directo para debugging inmediato
+      console.log('[AUM Upload] Starting upload', { fileName: file.name, fileSize: file.size, broker });
+
       const resp = await uploadAumFile(file, broker);
       
+      logger.info('AUM file upload response received', {
+        success: resp?.success,
+        hasData: !!resp?.data,
+        dataKeys: resp?.data ? Object.keys(resp.data) : [],
+        fullResponse: resp
+      });
+      // Console log directo para debugging inmediato
+      console.log('[AUM Upload] Response received', {
+        success: resp?.success,
+        hasData: !!resp?.data,
+        dataKeys: resp?.data ? Object.keys(resp.data) : [],
+        fullResponse: resp
+      });
+      
       // Verificar respuesta del servidor
+      // El apiClient normaliza { ok: true, ... } a { success: true, data: { ok: true, fileId, ... } }
       if (resp?.success && resp.data) {
+        // El backend retorna { ok: true, fileId, filename, totals, ... }
+        // que se normaliza a resp.data = { ok: true, fileId, filename, totals, ... }
+        const fileId = (resp.data as any).fileId;
+        
+        if (!fileId) {
+          logger.error('AUM file upload response missing fileId', {
+            fileName: file.name,
+            responseData: resp.data
+          });
+          setError('Error: El servidor no retornó un ID de archivo válido');
+          return;
+        }
+
         setSuccess(true);
         setFile(null);
         if (fileInputRef.current) {
@@ -123,15 +159,24 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         }
         
         logger.info('AUM file uploaded successfully', {
-          fileId: resp.data.fileId,
+          fileId,
           fileName: file.name,
           fileSize: file.size,
-          broker
+          broker,
+          totals: (resp.data as any).totals
         });
+        // Console log directo para debugging inmediato
+        console.log('[AUM Upload] Upload successful', { fileId, fileName: file.name, totals: (resp.data as any).totals });
         
-        if (onUploadSuccess && resp.data.fileId) {
-          onUploadSuccess(resp.data.fileId);
+        if (onUploadSuccess) {
+          logger.info('Calling onUploadSuccess callback', { fileId });
+          console.log('[AUM Upload] Calling onUploadSuccess callback', { fileId });
+          onUploadSuccess(fileId);
+        } else {
+          logger.warn('onUploadSuccess callback not provided');
+          console.warn('[AUM Upload] onUploadSuccess callback not provided');
         }
+        
         setTimeout(() => setSuccess(false), 5000); // Mostrar éxito por más tiempo
       } else {
         // Respuesta sin éxito
@@ -144,7 +189,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           fileSize: file.size,
           broker,
           error: resp?.error,
-          details
+          details,
+          response: resp
         });
         setError(errorMsg);
       }
@@ -156,7 +202,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         fileSize: file.size,
         broker,
         error: apiErr.message || apiErr.error,
-        userMessage: apiErr.userMessage
+        userMessage: apiErr.userMessage,
+        fullError: e
       });
       setError(errorMsg);
     } finally {

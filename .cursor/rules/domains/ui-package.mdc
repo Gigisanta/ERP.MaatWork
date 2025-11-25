@@ -1,0 +1,121 @@
+---
+description: "Reglas específicas para paquete UI (React Components, Design System)"
+alwaysApply: false
+---
+# UI Package - React Components
+
+## Estructura
+
+```text
+packages/ui/src/
+├── components/          # Componentes React organizados por categoría
+│   ├── forms/          # Input, Select, Checkbox, Switch, etc.
+│   ├── feedback/       # Alert, Modal, Toast, Card, etc.
+│   └── nav/             # Header, Sidebar, Nav, Pagination, etc.
+├── primitives/          # Box, Text, Stack, Grid, etc. (building blocks)
+├── hooks/               # useTheme, etc.
+├── styles/              # CSS global y variables
+├── tokens/              # Design tokens (colores, spacing, etc.)
+├── utils/               # Utilidades (cn, etc.)
+└── index.ts             # Barrel export (exports específicos para tree-shaking)
+```
+
+## Reglas de Exportación
+
+### Exports Específicos (NO `export *`)
+
+**✅ BIEN - Export específico con tipo:**
+
+```typescript
+// packages/ui/src/index.ts
+export { Button, type ButtonProps } from './components/nav/Button';
+export { Input, type InputProps } from './components/forms/Input';
+```
+
+**❌ MAL - Barrel export genérico:**
+
+```typescript
+export * from './components'; // Rompe tree-shaking
+```
+
+### Tipos Exportados Explícitamente
+
+**SIEMPRE exportar tipos junto al componente:**
+
+```typescript
+// Button.tsx
+export interface ButtonProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary';
+}
+
+export function Button({ children, onClick, variant = 'primary' }: ButtonProps) {
+  // ...
+}
+
+// index.ts
+export { Button, type ButtonProps } from './Button';
+```
+
+## Build y Tipos
+
+**Build genera `dist/`** con `.js` y `.d.ts` (tipos en dist/)
+
+**Comandos:**
+
+```bash
+pnpm -F @cactus/ui build        # Compilar TypeScript + copiar CSS
+pnpm -F @cactus/ui test         # Vitest (Testing Library)
+pnpm -F @cactus/ui typecheck    # Verificar tipos
+```
+
+## Testing
+
+- ✅ **Vitest** + **Testing Library** para componentes
+- ✅ **Tests co-ubicados** (`Component.test.tsx` junto a `Component.tsx`)
+- ✅ **Coverage target:** 100% (lines, functions, branches, statements)
+
+**Ubicación:** `packages/ui/src/**/*.test.tsx`
+
+**Ejemplo:**
+
+```typescript
+// Button.test.tsx (mismo directorio que Button.tsx)
+import { render, screen } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+});
+```
+
+## Manejo de Tipos en Paquetes
+
+**Principios:**
+
+1. **Tipos exportados desde `dist/`** - Definir `"types"` en `package.json`
+2. **Exports específicos** - NO usar `export *` (rompe tree-shaking)
+3. **Tipos explícitos** - Exportar `type ComponentProps` junto al componente
+4. **Build antes de typecheck** - Si modificas tipos, build primero
+
+**Flujo de trabajo:**
+
+```bash
+# 1. Modificar tipos en @cactus/ui
+# 2. Build del paquete
+pnpm -F @cactus/ui build
+
+# 3. Luego typecheck en apps que lo usan
+pnpm -F @cactus/web typecheck
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ `export *` (rompe tree-shaking)
+2. ❌ Tipos no exportados explícitamente
+3. ❌ Tests fuera del directorio del componente
+4. ❌ Componentes sin tests (coverage 100% requerido)

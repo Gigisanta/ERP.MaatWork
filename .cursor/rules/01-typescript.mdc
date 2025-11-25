@@ -1,0 +1,338 @@
+---
+description: "Reglas críticas de TypeScript y arquitectura de tipos"
+alwaysApply: false
+---
+
+# Reglas Críticas TypeScript
+
+**Configuración:** `tsconfig.base.json` tiene `exactOptionalPropertyTypes: true` y `strict: true`
+
+## 1. Manejo de Propiedades Opcionales
+
+```typescript
+// ❌ MAL - Con exactOptionalPropertyTypes: true
+interface User { name?: string; }
+const user: User = { name: undefined };  // ERROR
+
+// ✅ BIEN - Omitir propiedad si es undefined
+const user: User = {};
+if (someValue) user.name = someValue;
+
+// ✅ BIEN - Permitir null explícitamente
+interface User { name?: string | null; }
+const user: User = { name: null };
+
+// ✅ BIEN - Usar nullish coalescing (NO ||)
+const description = portfolio.description ?? null;
+```
+
+## 2. Evitar Shadowing de Funciones
+
+```typescript
+// ❌ MAL - Función local oculta import
+import { createPortfolio } from '@/lib/api';
+const createPortfolio = async () => { ... };  // ERROR
+
+// ✅ BIEN - Usar prefijo handle/do/perform
+const handleCreatePortfolio = async () => {
+  await createPortfolio({ ... });
+};
+```
+
+## 3. Verificar Tipos de Componentes UI Antes de Usar
+
+**SIEMPRE verificar props aceptadas en `packages/ui/src/components/*` antes de usar:**
+
+```typescript
+// ❌ MAL - Asumir props sin verificar
+<Text color="error">Error</Text>  // Text no acepta "error"
+
+// ✅ BIEN - Text acepta: 'primary' | 'secondary' | 'muted'
+<Text color="secondary">Error</Text>
+
+// ✅ BIEN - Button onClick espera: () => void
+<Button onClick={() => router.push('/path')} />  // NO onClick={(e) => ...}
+```
+
+## 4. Evitar Tipos Duplicados
+
+```typescript
+// ❌ MAL - Definición duplicada causa conflictos
+export interface BenchmarkComponentForm { ... }
+export interface BenchmarkComponentForm { ... }  // ERROR
+
+// ✅ BIEN - Una sola definición, reutilizar desde types/
+```
+
+## 5. Construir Paquetes Compartidos Antes de Typecheck
+
+```bash
+# Si modificas tipos exportados:
+pnpm -F @cactus/ui build
+pnpm -F @cactus/db build
+# Luego:
+pnpm typecheck
+```
+
+---
+
+## Arquitectura de Tipos
+
+**NUNCA usar `any`** - Crear tipos explícitos siempre.
+
+**Estructura:**
+
+```text
+types/
+├── index.ts          # Barrel export
+├── common.ts         # Tipos base y utility types compartidos
+├── [domain].ts       # Un archivo por dominio
+```
+
+**Reglas:** 50-150 líneas máximo por archivo, separar por dominio, evitar definiciones duplicadas.
+
+### Principios de Diseño de Tipos
+
+#### 1. Tipos Base Reutilizables
+
+**SIEMPRE usar tipos base en lugar de duplicar campos comunes:**
+
+```typescript
+// ✅ BIEN - Tipos base en common.ts
+export interface BaseEntity {
+  id: string;
+}
+
+export interface TimestampedEntity extends BaseEntity {
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ✅ BIEN - Extender tipos base
+export interface Contact extends TimestampedEntity {
+  firstName: string;
+  lastName: string;
+}
+
+// ❌ MAL - Duplicar campos comunes
+export interface Contact {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  firstName: string;
+}
+```
+
+**Tipos base disponibles:**
+
+- `BaseEntity`: Solo `id: string`
+- `TimestampedEntity`: `BaseEntity` + `createdAt` + `updatedAt`
+- `TimestampedEntityOptional`: `BaseEntity` + timestamps opcionales
+
+#### 2. Utility Types para Patrones Comunes
+
+**Usar utility types para evitar duplicación en Request/Response:**
+
+```typescript
+// ✅ BIEN - Utility types reutilizables
+export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'> & {
+  [K in keyof T]?: T[K] extends string | number | boolean | null | undefined
+    ? T[K]
+    : T[K] extends Date
+    ? string | Date
+    : T[K];
+};
+
+export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+
+// ✅ BIEN - Usar utility types
+export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> {
+  email?: string | null;
+}
+
+export interface UpdateTaskRequest extends UpdateRequest<Task> {}
+
+// ❌ MAL - Duplicar estructura de Request
+export interface CreateContactRequest {
+  firstName: string;
+  lastName: string;
+  email?: string;
+}
+```
+
+#### 3. Herencia con `extends` vs Duplicación
+
+**SIEMPRE usar herencia en lugar de duplicar campos:**
+
+```typescript
+// ✅ BIEN - Herencia para evitar duplicación
+export interface Portfolio extends TimestampedEntity {
+  name: string;
+  riskLevel: RiskLevel;
+}
+
+// ❌ MAL - Duplicar campos base
+export interface Portfolio {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+}
+```
+
+#### 4. Uso de Pick, Omit, Partial
+
+**Usar utility types de TypeScript para crear variantes:**
+
+```typescript
+// ✅ BIEN - Pick para seleccionar campos
+export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> {
+  email?: string | null;
+}
+
+// ✅ BIEN - Omit para excluir campos
+export interface UserApiResponse extends Omit<User, 'role' | 'active' | 'createdAt' | 'updatedAt'> {
+  role: Exclude<UserRole, 'client'>;
+  isActive: boolean;
+}
+
+// ✅ BIEN - Partial para hacer campos opcionales
+export interface UpdateTagRequest extends Partial<Pick<Tag, 'name' | 'color' | 'icon'>> {}
+```
+
+#### 5. Intersection Types para Combinar
+
+**Usar `&` para combinar tipos en lugar de duplicar:**
+
+```typescript
+// ✅ BIEN - Intersection types
+export type ContactWithTags = Contact & {
+  tags: ContactTag[];
+};
+
+// ❌ MAL - Duplicar estructura
+export interface ContactWithTags {
+  id: string;
+  firstName: string;
+  // ... todos los campos de Contact duplicados
+  tags: ContactTag[];
+}
+```
+
+#### 6. Uniones de Tipos para Estados
+
+**Usar uniones de tipos para estados y variantes:**
+
+```typescript
+// ✅ BIEN - Uniones de tipos
+export type AumMatchStatus = 'matched' | 'ambiguous' | 'unmatched';
+export type TeamMemberRole = 'member' | 'lead';
+export type PortfolioAssignmentStatus = 'active' | 'paused' | 'ended';
+
+// ✅ BIEN - Usar en interfaces
+export interface AumRow {
+  matchStatus: AumMatchStatus;
+}
+
+// ❌ MAL - Usar string genérico
+export interface AumRow {
+  matchStatus: string; // Sin type safety
+}
+```
+
+#### 7. Tipos Compartidos entre Dominios
+
+**Extraer tipos comunes a tipos base compartidos:**
+
+```typescript
+// ✅ BIEN - Tipo base compartido
+export interface ComponentBase {
+  instrumentId?: string;
+  instrumentSymbol: string;
+  instrumentName?: string;
+  targetWeight: number;
+}
+
+// ✅ BIEN - Extender tipo base
+export interface BenchmarkComponent extends ComponentBase {
+  id: string;
+  benchmarkId: string;
+  instrumentId: string; // Required en componente
+}
+```
+
+#### 8. Tipos Condicionales
+
+**Usar `Exclude`, `Extract`, `NonNullable` para tipos condicionales:**
+
+```typescript
+// ✅ BIEN - Tipos condicionales
+export interface UserApiResponse extends Omit<User, 'role' | 'active'> {
+  role: Exclude<UserRole, 'client'>; // Excluye 'client'
+  isActive: boolean;
+}
+
+// ✅ BIEN - Combinar con utility types
+export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
+```
+
+#### 9. Organización de Tipos por Dominio
+
+**Estructura recomendada:**
+
+```typescript
+// types/common.ts - Tipos base y utility types
+export interface BaseEntity { id: string; }
+export interface TimestampedEntity extends BaseEntity { /* ... */ }
+export type CreateRequest<T> = /* ... */;
+export type UpdateRequest<T> = /* ... */;
+
+// types/contact.ts - Tipos específicos del dominio
+import type { TimestampedEntity } from './common';
+export interface Contact extends TimestampedEntity { /* ... */ }
+export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastName'> { /* ... */ }
+```
+
+#### 10. Inferencia de Tipos desde Drizzle
+
+**Usar `InferSelectModel` para inferir tipos desde schema:**
+
+```typescript
+// ✅ BIEN - Inferir tipos desde schema
+import { type InferSelectModel } from 'drizzle-orm';
+import { contacts } from '@cactus/db/schema';
+
+export type Contact = InferSelectModel<typeof contacts>;
+
+// ✅ BIEN - Combinar con tipos base
+export type ContactWithTags = Contact & {
+  tags: ContactTag[];
+};
+
+// ❌ MAL - Duplicar definición de tipo
+export interface Contact {
+  id: string;
+  firstName: string;
+  // ... repetir campos del schema
+}
+```
+
+### Checklist de Buenas Prácticas de Tipos
+
+**Al crear nuevos tipos:**
+
+- [ ] ¿Extiende un tipo base (`BaseEntity`, `TimestampedEntity`) si tiene campos comunes?
+- [ ] ¿Usa `Pick`, `Omit`, `Partial` para crear variantes en lugar de duplicar?
+- [ ] ¿Usa utility types (`CreateRequest`, `UpdateRequest`) para patrones comunes?
+- [ ] ¿Usa intersection types (`&`) para combinar tipos?
+- [ ] ¿Usa uniones de tipos para estados/variantes en lugar de `string`?
+- [ ] ¿Extrae tipos compartidos entre dominios a tipos base?
+- [ ] ¿Usa `InferSelectModel` para tipos de base de datos?
+- [ ] ¿Evita duplicar campos comunes (`id`, `createdAt`, `updatedAt`)?
+
+**Beneficios:**
+
+- ✅ Eliminación de duplicación de código
+- ✅ Mejor mantenibilidad (cambios en tipos base se propagan)
+- ✅ Tipos más seguros y expresivos
+- ✅ Mejor aprovechamiento de features avanzadas de TypeScript

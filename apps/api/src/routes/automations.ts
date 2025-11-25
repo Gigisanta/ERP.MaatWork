@@ -1,6 +1,6 @@
 /**
  * Automations Routes
- * 
+ *
  * Handles CRUD operations for automation configurations
  */
 
@@ -30,7 +30,7 @@ const createAutomationConfigSchema = z.object({
   triggerConfig: triggerConfigSchema,
   webhookUrl: z.string().url().optional().nullable(),
   enabled: z.boolean().default(true),
-  config: automationConfigDataSchema.optional().default({})
+  config: automationConfigDataSchema.optional().default({}),
 });
 
 const updateAutomationConfigSchema = z.object({
@@ -39,7 +39,7 @@ const updateAutomationConfigSchema = z.object({
   triggerConfig: triggerConfigSchema.optional(),
   webhookUrl: z.string().url().optional().nullable(),
   enabled: z.boolean().optional(),
-  config: automationConfigDataSchema.optional()
+  config: automationConfigDataSchema.optional(),
 });
 
 // ==========================================================
@@ -49,27 +49,25 @@ const updateAutomationConfigSchema = z.object({
 /**
  * GET /v1/automations - Listar configuraciones de automatización
  */
-router.get('/',
-  requireAuth,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const items = await db()
-        .select()
-        .from(automationConfigs)
-        .orderBy(automationConfigs.displayName);
+router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const items = await db()
+      .select()
+      .from(automationConfigs)
+      .orderBy(automationConfigs.displayName);
 
-      res.json({ success: true, data: items });
-    } catch (err) {
-      req.log.error({ err }, 'failed to list automation configs');
-      next(err);
-    }
+    res.json({ success: true, data: items });
+  } catch (err) {
+    req.log.error({ err }, 'failed to list automation configs');
+    next(err);
   }
-);
+});
 
 /**
  * GET /v1/automations/:id - Obtener configuración específica
  */
-router.get('/:id',
+router.get(
+  '/:id',
   requireAuth,
   validate({ params: idParamSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -97,7 +95,8 @@ router.get('/:id',
 /**
  * GET /v1/automations/by-name/:name - Obtener configuración por nombre
  */
-router.get('/by-name/:name',
+router.get(
+  '/by-name/:name',
   requireAuth,
   validate({ params: z.object({ name: z.string().min(1) }) }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -125,7 +124,8 @@ router.get('/by-name/:name',
 /**
  * POST /v1/automations - Crear nueva configuración de automatización
  */
-router.post('/',
+router.post(
+  '/',
   requireAuth,
   validate({ body: createAutomationConfigSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -147,7 +147,7 @@ router.post('/',
         .insert(automationConfigs)
         .values({
           ...validated,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .returning();
 
@@ -163,7 +163,8 @@ router.post('/',
 /**
  * PATCH /v1/automations/:id - Actualizar configuración de automatización
  */
-router.patch('/:id',
+router.patch(
+  '/:id',
   requireAuth,
   validate({ params: idParamSchema, body: updateAutomationConfigSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -186,7 +187,7 @@ router.patch('/:id',
         .update(automationConfigs)
         .set({
           ...validated,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(automationConfigs.id, id))
         .returning();
@@ -203,7 +204,8 @@ router.patch('/:id',
 /**
  * DELETE /v1/automations/:id - Eliminar configuración de automatización
  */
-router.delete('/:id',
+router.delete(
+  '/:id',
   requireAuth,
   validate({ params: idParamSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -221,9 +223,7 @@ router.delete('/:id',
         return res.status(404).json({ error: 'Automation config not found' });
       }
 
-      await db()
-        .delete(automationConfigs)
-        .where(eq(automationConfigs.id, id));
+      await db().delete(automationConfigs).where(eq(automationConfigs.id, id));
 
       req.log.info({ automationConfigId: id }, 'automation config deleted');
       res.json({ success: true });
@@ -235,4 +235,3 @@ router.delete('/:id',
 );
 
 export default router;
-

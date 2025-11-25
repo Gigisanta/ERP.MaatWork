@@ -1,10 +1,11 @@
 "use client";
 import { useRequireAuth } from '../../auth/useRequireAuth';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getUsers, updateUserRole, updateUserStatus, deleteUser as deleteUserApi, approveUser, rejectUser } from '@/lib/api';
-import { logger } from '../../../lib/logger';
+import { updateUserRole, updateUserStatus, deleteUser as deleteUserApi, approveUser, rejectUser } from '@/lib/api';
+import { useUsers } from '@/lib/api-hooks';
+import { logger, toLogContext } from '../../../lib/logger';
 import type { UserRole, UserApiResponse } from '@/types';
 import {
   Card,
@@ -34,9 +35,6 @@ import {
 export default function AdminUsersPage() {
   const { user, loading } = useRequireAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<UserApiResponse[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
 
@@ -44,32 +42,19 @@ export default function AdminUsersPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserApiResponse | null>(null);
 
-  // Fetch users (must be declared before any early return to keep hooks order)
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [user]);
-
-  const fetchUsers = async () => {
-    try {
-      setDataLoading(true);
-      setError(null);
-      
-      const response = await getUsers();
-
-      if (response.success && response.data) {
-        setUsers(response.data || []);
-      } else {
-        throw new Error('Failed to fetch users');
-      }
-    } catch (err) {
-      logger.error('Error fetching users', { err: err instanceof Error ? err.message : String(err) });
-      setError(err instanceof Error ? err.message : 'Error al cargar usuarios');
-    } finally {
-      setDataLoading(false);
-    }
-  };
+  // Fetch users with SWR
+  const { users: allUsers = [], isLoading: dataLoading, error: fetchError, mutate } = useUsers();
+  
+  // Local error state for action errors
+  const [error, setError] = useState<string | null>(null);
+  
+  // Extract error message from SWR error
+  const displayError = fetchError ? (fetchError instanceof Error ? fetchError.message : 'Error al cargar usuarios') : error;
+  
+  // Filter users based on showPendingOnly
+  const users = useMemo(() => {
+    return showPendingOnly ? allUsers.filter(u => !u.isActive) : allUsers;
+  }, [allUsers, showPendingOnly]);
   // Early return for loading
   if (loading) {
     return (
@@ -84,7 +69,7 @@ export default function AdminUsersPage() {
 
   // Redirect if not admin
   if (user && user.role !== 'admin') {
-    router.push('/');
+    router.push('/home');
     return null;
   }
 
@@ -103,11 +88,10 @@ export default function AdminUsersPage() {
       
       await updateUserRole(userId, newRole as UserRole);
 
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, role: newRole as UserRole } : user
-      ));
+      // Invalidate cache to refetch users
+      await mutate();
     } catch (err) {
-      logger.error('Error updating user role', { err: err instanceof Error ? err.message : String(err), userId, newRole });
+      logger.error('Error updating user role', toLogContext({ err: err instanceof Error ? err.message : String(err), userId, newRole }));
       setError(err instanceof Error ? err.message : 'Error al actualizar rol');
     } finally {
       setActionLoading(null);
@@ -123,11 +107,10 @@ export default function AdminUsersPage() {
       
       await updateUserStatus(userId, isActive);
 
-      setUsers(prev => prev.map(user => 
-        user.id === userId ? { ...user, isActive } : user
-      ));
+      // Invalidate cache to refetch users
+      await mutate();
     } catch (err) {
-      logger.error('Error updating user status', { err: err instanceof Error ? err.message : String(err), userId, isActive });
+      logger.error('Error updating user status', toLogContext({ err: err instanceof Error ? err.message : String(err), userId, isActive }));
       setError(err instanceof Error ? err.message : 'Error al actualizar estado');
     } finally {
       setActionLoading(null);
@@ -143,7 +126,8 @@ export default function AdminUsersPage() {
       
       await deleteUserApi(userToDelete.id);
 
-      setUsers(prev => prev.filter(user => user.id !== userToDelete.id));
+      // Invalidate cache to refetch users
+      await mutate();
       setShowDeleteModal(false);
       setUserToDelete(null);
     } catch (err) {
@@ -246,7 +230,8 @@ export default function AdminUsersPage() {
                     setActionLoading(row.id);
                     setError(null);
                     await approveUser(row.id);
-                    setUsers(prev => prev.map(u => u.id === row.id ? { ...u, isActive: true } : u));
+                    // Invalidate cache to refetch users
+                    await mutate();
                   } catch (err) {
                     setError(err instanceof Error ? err.message : 'Error al aprobar usuario');
                   } finally {
@@ -265,7 +250,8 @@ export default function AdminUsersPage() {
                     setActionLoading(row.id);
                     setError(null);
                     await rejectUser(row.id);
-                    setUsers(prev => prev.filter(u => u.id !== row.id));
+                    // Invalidate cache to refetch users
+                    await mutate();
                   } catch (err) {
                     setError(err instanceof Error ? err.message : 'Error al rechazar usuario');
                   } finally {
@@ -307,7 +293,7 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <Link href="/" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
+            <Link href="/home" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
               ← Volver al inicio
             </Link>
             <Heading level={1}>Administración de Usuarios</Heading>
@@ -318,9 +304,9 @@ export default function AdminUsersPage() {
           </Button>
         </div>
 
-        {error && (
+        {displayError && (
           <Alert variant="error" title="Error">
-            {error}
+            {displayError}
           </Alert>
         )}
 

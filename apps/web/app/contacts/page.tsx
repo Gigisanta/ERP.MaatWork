@@ -10,7 +10,41 @@ import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
-import FiltersDropdown from './components/FiltersDropdown';
+import dynamic from 'next/dynamic';
+
+// AI_DECISION: Lazy load FiltersDropdown to reduce initial bundle size
+// Justificación: FiltersDropdown uses @radix-ui/react-dropdown-menu which is heavy, not needed until user interacts
+// Impacto: Reduces initial bundle size, faster first paint for contacts page
+const FiltersDropdown = dynamic(() => import('./components/FiltersDropdown'), {
+  ssr: false,
+  loading: () => (
+    <div className="shrink-0">
+      <Button variant="outline" size="sm" disabled>
+        <Spinner size="sm" />
+      </Button>
+    </div>
+  )
+});
+
+// AI_DECISION: Lazy load DataTable to reduce initial bundle size
+// Justificación: DataTable component is heavy with table rendering logic, not needed until contacts are loaded
+// Impacto: Reduces initial bundle size, faster first paint for contacts page
+const DataTable = dynamic(() => import('@cactus/ui').then(mod => ({ default: mod.DataTable })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <Spinner size="md" />
+    </div>
+  )
+});
+
+// AI_DECISION: Lazy load ConfirmDialog to reduce initial bundle size
+// Justificación: ConfirmDialog is only needed when user performs destructive actions
+// Impacto: Reduces initial bundle size, faster first paint
+const ConfirmDialog = dynamic(() => import('../components/ConfirmDialog'), {
+  ssr: false
+});
+
 import { useSearchShortcut, useEscapeShortcut } from '../../lib/hooks/useKeyboardShortcuts';
 import {
   Card,
@@ -24,7 +58,6 @@ import {
   Input,
   Select,
   Badge,
-  DataTable,
   DropdownMenu,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -42,7 +75,6 @@ import {
   Icon,
   type Column,
 } from '@cactus/ui';
-import ConfirmDialog from '../components/ConfirmDialog';
 import { useViewport } from '../(shared)/useViewport';
 import { useDebouncedValue } from '../admin/aum/rows/hooks/useDebouncedState';
 import { useToast } from '../../lib/hooks/useToast';
@@ -859,9 +891,9 @@ export default function ContactsPage() {
                   )}
                 </div>
               ) : (
-                <DataTable<Contact & Record<string, unknown>>
-                  data={(Array.isArray(filteredContacts) ? filteredContacts : []) as (Contact & Record<string, unknown>)[]}
-                  columns={columns as Column<Contact & Record<string, unknown>>[]}
+                <DataTable
+                  data={(Array.isArray(filteredContacts) ? filteredContacts : []) as unknown as Record<string, unknown>[]}
+                  columns={columns as unknown as Column<Record<string, unknown>>[]}
                   keyField="id"
                   emptyMessage={
                     searchTerm || selectedStage !== 'all' || selectedTags.length > 0 || advisorIdFilter

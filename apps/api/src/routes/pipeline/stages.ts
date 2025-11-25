@@ -52,10 +52,10 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     const userRole = req.user!.role;
     const accessScope = await getUserAccessScope(userId, userRole);
     
-    // AI_DECISION: Cache pipeline stages with user-specific key
+    // AI_DECISION: Cache pipeline stages - stages are shared across all users
     // Justificación: Stages cambian poco pero se consultan frecuentemente, cache reduce carga en BD
     // Impacto: Reducción de queries a BD en ~80% para requests repetidos
-    const cacheKey = `${userRole}:${accessScope.accessibleAdvisorIds.join(',')}`;
+    const cacheKey = 'pipeline:stages:all';
     const cached = pipelineStagesCache.get(cacheKey);
     
     if (cached) {
@@ -132,7 +132,7 @@ router.post('/stages',
       .returning();
 
     // Invalidate cache when stage is created
-    pipelineStagesCache.invalidate();
+    pipelineStagesCache.clear();
     
     req.log.info({ stageId: newStage.id }, 'pipeline stage created');
     res.status(201).json({ data: newStage });
@@ -171,7 +171,7 @@ router.put('/stages/:id',
     }
 
     // Invalidate cache when stage is updated
-    pipelineStagesCache.invalidate();
+    pipelineStagesCache.clear();
     
     req.log.info({ stageId: id }, 'pipeline stage updated');
     res.json({ success: true, data: updated });

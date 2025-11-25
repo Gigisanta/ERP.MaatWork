@@ -244,21 +244,30 @@ router.get(
       
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
       
-      const [data, totalResult] = await Promise.all([
-        dbi
-          .select()
-          .from(capacitaciones)
-          .where(whereClause)
-          .orderBy(desc(capacitaciones.createdAt))
-          .limit(limit)
-          .offset(offset),
-        dbi
-          .select({ count: sql<number>`count(*)`.as('count') })
-          .from(capacitaciones)
-          .where(whereClause)
-      ]);
+      // AI_DECISION: Optimize COUNT query using window function
+      // Justificación: Reduces from 2 queries to 1 query, improves performance
+      // Impacto: Single database round-trip instead of two parallel queries
+      const result = await dbi
+        .select({
+          id: capacitaciones.id,
+          titulo: capacitaciones.titulo,
+          tema: capacitaciones.tema,
+          link: capacitaciones.link,
+          fecha: capacitaciones.fecha,
+          createdByUserId: capacitaciones.createdByUserId,
+          createdAt: capacitaciones.createdAt,
+          updatedAt: capacitaciones.updatedAt,
+          total: sql<number>`count(*) OVER()`.as('total')
+        })
+        .from(capacitaciones)
+        .where(whereClause)
+        .orderBy(desc(capacitaciones.createdAt))
+        .limit(limit)
+        .offset(offset);
       
-      const total = Number(totalResult[0]?.count || 0);
+      type CapacitacionWithTotal = typeof result[0] & { total: number };
+      const data = result.map(({ total: _total, ...row }: CapacitacionWithTotal) => row);
+      const total: number = result.length > 0 ? Number(result[0]?.total) : 0;
       
       req.log?.info?.({ count: data.length, total, tema, search }, 'capacitaciones fetched');
       res.json({
@@ -433,23 +442,44 @@ router.post(
       // Agregar errores de parsing a la lista
       parseErrors.forEach(e => errorsList.push(e.message));
       
+      // AI_DECISION: Optimizar batch insert - reemplazar loop con INSERTs individuales por batch insert
+      // Justificación: Reduce de N queries a 1 query dentro de transacción (N-1 reducción, mejora significativa para imports grandes)
+      // Impacto: Mejora performance del endpoint de importación de capacitaciones
       await transactionWithLogging(
         req.log,
         'import-capacitaciones-csv',
         async (tx) => {
-          for (const item of parsedData) {
+          if (parsedData.length > 0) {
             try {
-              await tx.insert(capacitaciones).values({
-                titulo: item.titulo,
-                tema: item.tema,
-                link: item.link,
-                fecha: item.fecha,
-                createdByUserId: userId
-              });
-              inserted++;
+              // Batch insert de todos los items
+              await tx.insert(capacitaciones).values(
+                parsedData.map(item => ({
+                  titulo: item.titulo,
+                  tema: item.tema,
+                  link: item.link,
+                  fecha: item.fecha,
+                  createdByUserId: userId
+                }))
+              );
+              inserted = parsedData.length;
             } catch (error) {
-              insertErrors++;
-              errorsList.push(`Error insertando "${item.titulo}": ${error instanceof Error ? error.message : String(error)}`);
+              // Si batch insert falla, intentar inserts individuales como fallback para identificar items problemáticos
+              req.log.warn({ error, batchSize: parsedData.length }, 'Batch insert failed, falling back to individual inserts');
+              for (const item of parsedData) {
+                try {
+                  await tx.insert(capacitaciones).values({
+                    titulo: item.titulo,
+                    tema: item.tema,
+                    link: item.link,
+                    fecha: item.fecha,
+                    createdByUserId: userId
+                  });
+                  inserted++;
+                } catch (individualError) {
+                  insertErrors++;
+                  errorsList.push(`Error insertando "${item.titulo}": ${individualError instanceof Error ? individualError.message : String(individualError)}`);
+                }
+              }
             }
           }
         }

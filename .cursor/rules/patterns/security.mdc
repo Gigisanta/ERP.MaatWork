@@ -1,0 +1,134 @@
+---
+description: "Patrones de seguridad (autenticación, autorización, sanitización, headers)"
+alwaysApply: false
+---
+
+# Seguridad y Autenticación
+
+## Middleware de Autenticación
+
+### requireAuth
+
+**Usar `requireAuth` para proteger rutas:**
+
+```typescript
+import { requireAuth } from '../auth/middlewares';
+
+router.get('/protected', requireAuth, async (req, res) => {
+  // req.user está disponible
+  const userId = req.user.id;
+});
+```
+
+**Características:**
+
+- ✅ Prioriza cookie httpOnly sobre Bearer token (más seguro)
+- ✅ Valida token JWT
+- ✅ Verifica usuario en DB (detecta cambios de role)
+- ✅ Verifica que usuario esté activo
+
+### requireRole
+
+**Usar `requireRole` para control de acceso basado en roles:**
+
+```typescript
+import { requireAuth, requireRole } from '../auth/middlewares';
+
+router.delete('/admin-only', 
+  requireAuth, 
+  requireRole(['admin']),
+  async (req, res) => {
+    // Solo admins pueden acceder
+  }
+);
+```
+
+## Validación de Tokens JWT
+
+**Tokens se validan automáticamente en `requireAuth`:**
+
+```typescript
+// El middleware verifica:
+// - Token válido y no expirado
+// - Usuario existe en DB
+// - Usuario está activo
+// - Role coincide con DB (o usa role de DB si cambió)
+```
+
+## Headers de Seguridad (Helmet)
+
+**Configuración en `apps/api/src/index.ts`:**
+
+```typescript
+import helmet from 'helmet';
+
+const helmetOptions: HelmetOptions = {
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false
+};
+
+if (process.env.CSP_ENABLED !== 'true') {
+  helmetOptions.contentSecurityPolicy = false;
+}
+
+app.use(helmet(helmetOptions));
+```
+
+## Sanitización de Inputs
+
+**Validar TODOS los inputs con Zod:**
+
+```typescript
+import { validate } from '../utils/validation';
+import { z } from 'zod';
+
+const createSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+  age: z.number().int().min(0).max(150)
+});
+
+router.post('/',
+  requireAuth,
+  validate({ body: createSchema }),
+  async (req, res) => {
+    // req.body ya está validado y sanitizado
+  }
+);
+```
+
+## Autenticación en Frontend
+
+**Usar cookies httpOnly exclusivamente:**
+
+- ✅ Más seguro (inmune a XSS)
+- ✅ Simplificado (sin dual storage)
+- ✅ Persistente (sesión se mantiene entre refrescos)
+- ✅ Automático (cookies se envían en todas las requests)
+
+**Flujo:**
+
+1. Usuario hace login → Backend establece cookie httpOnly
+2. Frontend recibe datos del usuario en respuesta
+3. Cookie se envía automáticamente en todas las requests
+4. Backend valida cookie en cada request con middleware `requireAuth`
+5. Si el token expira (401), el cliente API intenta refresh automáticamente
+
+## Redacción de Datos Sensibles
+
+**Redactar información sensible en logs:**
+
+```typescript
+redact: isProduction ? {
+  paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers.set-cookie'],
+  remove: true
+} : []
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ Almacenar tokens en localStorage (usar cookies httpOnly)
+2. ❌ Exponer información sensible en logs
+3. ❌ Sin validación de inputs (usar Zod)
+4. ❌ Confiar solo en token sin verificar DB
+5. ❌ Headers de seguridad deshabilitados en producción

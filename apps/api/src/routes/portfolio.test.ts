@@ -8,10 +8,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import { db, portfolioTemplates, portfolioTemplateLines, clientPortfolioAssignments, contacts, instruments, lookupAssetClass } from '@cactus/db';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope } from '../auth/authorization';
 import { eq, and, sql, desc, asc } from 'drizzle-orm';
+import { uuidSchema } from '../utils/common-schemas';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -395,12 +397,22 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
   });
 
   it('debería validar que targetWeight está entre 0 y 1', () => {
-    const invalidWeights = [-0.1, 1.1, 2.0];
-    
-    invalidWeights.forEach(weight => {
-      expect(weight).not.toBeGreaterThanOrEqual(0);
-      expect(weight).not.toBeLessThanOrEqual(1);
+    const schema = z.object({
+      targetType: z.enum(['instrument', 'assetClass']),
+      instrumentId: uuidSchema.optional(),
+      assetClass: z.string().optional(),
+      targetWeight: z.number().min(0, 'El peso debe ser mayor o igual a 0').max(1, 'El peso debe ser menor o igual a 1')
     });
+    
+    // Validar pesos válidos
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 0.5 })).not.toThrow();
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 0 })).not.toThrow();
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 1 })).not.toThrow();
+    
+    // Validar pesos inválidos
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: -0.1 })).toThrow();
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 1.1 })).toThrow();
+    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 2.0 })).toThrow();
   });
 
   it('debería validar que suma de pesos no exceda 1.0', async () => {

@@ -75,6 +75,7 @@ export interface AumRow extends BaseEntity {
   isPreferred: boolean;
   conflictDetected: boolean;
   needsConfirmation?: boolean;
+  isNormalized?: boolean;
   rowCreatedAt: string;
   rowUpdatedAt?: string;
   isUpdated?: boolean;

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getUserById } from '@/lib/api/users';
-import type { ApiErrorWithMessage, Row, UserApiResponse } from '@/types';
+import type { ApiErrorWithMessage, AumRow, UserApiResponse } from '@/types';
 import {
   Badge,
   Button,
@@ -17,7 +17,7 @@ import {
 } from '@cactus/ui';
 
 interface AdvisorProfileModalProps {
-  row: Row;
+  row: AumRow;
   open: boolean;
   onClose: () => void;
 }
@@ -65,7 +65,9 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
       .catch((error: unknown) => {
         if (isCancelled) return;
         const apiError = error as ApiErrorWithMessage;
-        setUserError(apiError.userMessage || apiError.message || 'No se pudo cargar la información del asesor');
+        setUserError(
+          apiError.userMessage || apiError.message || 'No se pudo cargar la información del asesor'
+        );
       })
       .finally(() => {
         if (isCancelled) return;
@@ -134,7 +136,9 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
       <ModalContent>
         <div className="space-y-4">
           <div className="space-y-1">
-            <Text size="sm" weight="medium">Alias normalizado</Text>
+            <Text size="sm" weight="medium">
+              Alias normalizado
+            </Text>
             <Text>{aliasNormalized || 'Sin alias normalizado'}</Text>
             <Text size="xs" color="secondary">
               Se calcula automáticamente aplicando trim + lowercase.
@@ -142,8 +146,12 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
           </div>
 
           <div className="space-y-1">
-            <Text size="sm" weight="medium">Estado actual</Text>
-            <Badge variant={matchStatusVariant} size="sm">{matchStatusLabel}</Badge>
+            <Text size="sm" weight="medium">
+              Estado actual
+            </Text>
+            <Badge variant={matchStatusVariant} size="sm">
+              {matchStatusLabel}
+            </Badge>
             {row.suggestedUserId && !row.matchedUserId ? (
               <Text size="xs" color="secondary">
                 Hay un alias sugerido listo para vincular.
@@ -153,19 +161,29 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
 
           {row.contact ? (
             <div className="space-y-1">
-              <Text size="sm" weight="medium">Contacto vinculado</Text>
+              <Text size="sm" weight="medium">
+                Contacto vinculado
+              </Text>
               <Text>{row.contact.fullName || row.contact.id}</Text>
-              <Text size="xs" color="secondary">ID contacto: {row.contact.id}</Text>
+              <Text size="xs" color="secondary">
+                ID contacto: {row.contact.id}
+              </Text>
             </div>
           ) : (
             <div className="space-y-1">
-              <Text size="sm" weight="medium">Contacto vinculado</Text>
-              <Text color="secondary" size="sm">Sin contacto asociado.</Text>
+              <Text size="sm" weight="medium">
+                Contacto vinculado
+              </Text>
+              <Text color="secondary" size="sm">
+                Sin contacto asociado.
+              </Text>
             </div>
           )}
 
           <div className="space-y-2">
-            <Text size="sm" weight="medium">Asesor CRM</Text>
+            <Text size="sm" weight="medium">
+              Asesor CRM
+            </Text>
             {loadingUser ? (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Spinner size="sm" /> Cargando información...
@@ -176,14 +194,20 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
                   <>
                     {displayUserName ? <Text>{displayUserName}</Text> : null}
                     {displayUserEmail ? (
-                      <Text size="sm" color="secondary">{displayUserEmail}</Text>
+                      <Text size="sm" color="secondary">
+                        {displayUserEmail}
+                      </Text>
                     ) : null}
                   </>
                 ) : (
-                  <Text color="secondary" size="sm">Sin asesor vinculado.</Text>
+                  <Text color="secondary" size="sm">
+                    Sin asesor vinculado.
+                  </Text>
                 )}
                 {displayUserRole ? (
-                  <Text size="xs" color="secondary">Rol: {displayUserRole}</Text>
+                  <Text size="xs" color="secondary">
+                    Rol: {displayUserRole}
+                  </Text>
                 ) : null}
                 {displayUserActive !== undefined ? (
                   <Text size="xs" color="secondary">
@@ -191,12 +215,13 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
                   </Text>
                 ) : null}
                 {userError ? (
-                  <Text size="xs" className="text-error">{userError}</Text>
+                  <Text size="xs" className="text-error">
+                    {userError}
+                  </Text>
                 ) : null}
               </div>
             )}
           </div>
-
         </div>
       </ModalContent>
 
@@ -210,4 +235,3 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
     </Modal>
   );
 }
-

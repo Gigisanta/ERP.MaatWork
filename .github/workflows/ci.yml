@@ -2,46 +2,79 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main, develop]
 
 jobs:
-  build:
+  typecheck:
+    name: TypeCheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v2
         with:
           version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: '22'
           cache: 'pnpm'
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Lint
-        run: pnpm lint
-      - name: Test
-        run: pnpm test -- --coverage --passWithNoTests
-      - name: Build
-        run: pnpm build
-      - name: Upload API dist
-        if: success()
-        uses: actions/upload-artifact@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
         with:
-          name: api-dist
-          path: apps/api/dist
-      - name: Upload Web .next
-        if: success()
-        uses: actions/upload-artifact@v4
+          version: 9
+      - uses: actions/setup-node@v4
         with:
-          name: web-next
-          path: apps/web/.next
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage
+      - name: Check Coverage Thresholds
+        run: pnpm test:coverage:check
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            apps/api/coverage/
+            apps/web/coverage/
+            packages/ui/coverage/
+          retention-days: 7
 
-
-
-
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build

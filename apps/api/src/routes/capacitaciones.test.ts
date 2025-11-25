@@ -18,34 +18,34 @@ vi.mock('@cactus/db', () => ({
   or: vi.fn(),
   desc: vi.fn(),
   asc: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../utils/validation', () => ({
-  validate: vi.fn(() => (req, res, next) => next())
+  validate: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../utils/db-transactions', () => ({
-  transactionWithLogging: vi.fn()
+  transactionWithLogging: vi.fn(),
 }));
 
 vi.mock('multer', () => ({
   default: vi.fn(() => ({
-    single: vi.fn(() => (req, res, next) => next())
+    single: vi.fn(() => (req, res, next) => next()),
   })),
-  diskStorage: vi.fn(() => ({}))
+  diskStorage: vi.fn(() => ({})),
 }));
 
 vi.mock('node:fs', () => ({
   promises: {
     readFile: vi.fn().mockResolvedValue('test content'),
-    unlink: vi.fn().mockResolvedValue(undefined)
-  }
+    unlink: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { db } from '@cactus/db';
@@ -70,7 +70,7 @@ describe('Capacitaciones Routes', () => {
     adminToken = await signUserToken({
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     });
   });
 
@@ -87,17 +87,17 @@ describe('Capacitaciones Routes', () => {
                     titulo: 'Test Capacitacion',
                     tema: 'Test',
                     link: 'https://example.com',
-                    fecha: new Date('2024-01-01')
-                  }
-                ])
-              })
-            })
-          })
-        })
+                    fecha: new Date('2024-01-01'),
+                  },
+                ]),
+              }),
+            }),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -110,12 +110,12 @@ describe('Capacitaciones Routes', () => {
         data: expect.arrayContaining([
           expect.objectContaining({
             id: 'cap-1',
-            titulo: 'Test Capacitacion'
-          })
+            titulo: 'Test Capacitacion',
+          }),
         ]),
         total: expect.any(Number),
         limit: expect.any(Number),
-        offset: expect.any(Number)
+        offset: expect.any(Number),
       });
     });
 
@@ -125,15 +125,15 @@ describe('Capacitaciones Routes', () => {
           where: vi.fn().mockReturnValue({
             orderBy: vi.fn().mockReturnValue({
               limit: vi.fn().mockReturnValue({
-                offset: vi.fn().mockResolvedValue([])
-              })
-            })
-          })
-        })
+                offset: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -151,18 +151,20 @@ describe('Capacitaciones Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'cap-1',
-              titulo: 'Test Capacitacion',
-              tema: 'Test',
-              link: 'https://example.com'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'cap-1',
+                titulo: 'Test Capacitacion',
+                tema: 'Test',
+                link: 'https://example.com',
+              },
+            ]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -175,7 +177,7 @@ describe('Capacitaciones Routes', () => {
         id: 'cap-1',
         titulo: 'Test Capacitacion',
         tema: 'Test',
-        link: 'https://example.com'
+        link: 'https://example.com',
       });
     });
 
@@ -183,13 +185,13 @@ describe('Capacitaciones Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const app = createTestApp();
@@ -199,7 +201,7 @@ describe('Capacitaciones Routes', () => {
         .expect(404);
 
       expect(res.body).toEqual({
-        error: 'Capacitación not found'
+        error: 'Capacitación not found',
       });
     });
   });
@@ -209,25 +211,27 @@ describe('Capacitaciones Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'cap-1',
-            titulo: 'New Capacitacion',
-            tema: 'Test',
-            link: 'https://example.com'
-          }])
-        })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'cap-1',
+              titulo: 'New Capacitacion',
+              tema: 'Test',
+              link: 'https://example.com',
+            },
+          ]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       const app = createTestApp();
@@ -237,7 +241,7 @@ describe('Capacitaciones Routes', () => {
         .send({
           titulo: 'New Capacitacion',
           tema: 'Test',
-          link: 'https://example.com'
+          link: 'https://example.com',
         })
         .expect(201);
 
@@ -245,7 +249,7 @@ describe('Capacitaciones Routes', () => {
         id: 'cap-1',
         titulo: 'New Capacitacion',
         tema: 'Test',
-        link: 'https://example.com'
+        link: 'https://example.com',
       });
     });
   });
@@ -255,23 +259,27 @@ describe('Capacitaciones Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'cap-1',
-              titulo: 'Old Title'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'cap-1',
+                titulo: 'Old Title',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([{
-              id: 'cap-1',
-              titulo: 'Updated Title'
-            }])
-          })
-        })
+            returning: vi.fn().mockResolvedValue([
+              {
+                id: 'cap-1',
+                titulo: 'Updated Title',
+              },
+            ]),
+          }),
+        }),
       });
 
       let callCount = 0;
@@ -288,13 +296,13 @@ describe('Capacitaciones Routes', () => {
         .put('/capacitaciones/cap-1')
         .set('Cookie', `token=${adminToken}`)
         .send({
-          titulo: 'Updated Title'
+          titulo: 'Updated Title',
         })
         .expect(200);
 
       expect(res.body).toEqual({
         id: 'cap-1',
-        titulo: 'Updated Title'
+        titulo: 'Updated Title',
       });
     });
   });
@@ -304,11 +312,13 @@ describe('Capacitaciones Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'cap-1'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'cap-1',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDelete = vi.fn().mockResolvedValue(undefined);
@@ -330,11 +340,8 @@ describe('Capacitaciones Routes', () => {
 
       expect(res.body).toEqual({
         ok: true,
-        message: expect.any(String)
+        message: expect.any(String),
       });
     });
   });
 });
-
-
-

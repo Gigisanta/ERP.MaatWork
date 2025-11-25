@@ -1,0 +1,130 @@
+---
+description: "Patrones de optimización (caching, ETags, SWR, batch queries, timeouts)"
+alwaysApply: false
+---
+
+# Optimización y Performance
+
+## Caching con ETags
+
+**ETags se agregan automáticamente en middleware:**
+
+```typescript
+// apps/api/src/index.ts
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method !== 'GET') return next();
+  
+  const originalJson = res.json.bind(res);
+  res.json = function(data: any) {
+    const etag = crypto.createHash('md5')
+      .update(JSON.stringify(data))
+      .digest('hex');
+    
+    res.setHeader('ETag', `"${etag}"`);
+    
+    // Check if client has matching ETag (304 Not Modified)
+    const clientEtag = req.headers['if-none-match'];
+    if (clientEtag === `"${etag}"`) {
+      return res.status(304).end();
+    }
+    
+    return originalJson(data);
+  };
+  
+  next();
+});
+```
+
+**Beneficios:**
+
+- ✅ Reduce bandwidth (304 Not Modified)
+- ✅ Mejora velocidad de respuesta (50-70% más rápido)
+- ✅ Menor carga en servidor
+
+## SWR Configuration (Frontend)
+
+**Usar configuración optimizada para caching agresivo:**
+
+```typescript
+// apps/web/lib/api-hooks.ts
+const swrConfig = {
+  revalidateOnFocus: false,        // No refetch cuando window gana focus
+  revalidateOnReconnect: false,   // No refetch en reconexión de red
+  revalidateIfStale: false,       // No revalidar automáticamente datos stale
+  dedupingInterval: 10000,        // 10s para reducir requests duplicados
+  focusThrottleInterval: 60000,   // Throttle focus revalidations a 1min
+  shouldRetryOnError: false,      // Deshabilitar retries automáticos
+};
+
+// Para datos que cambian menos frecuentemente
+const swrConfigLonger = {
+  ...swrConfig,
+  dedupingInterval: 30000,  // 30s
+};
+```
+
+**Beneficios:**
+
+- ✅ Reduce carga en API (50-70% menos requests)
+- ✅ Mejor performance percibida (cache hits instantáneos)
+- ✅ Mejor UX con datos instantáneos
+
+## Batch Queries (Evitar N+1)
+
+**Usar batch loading para evitar queries N+1:**
+
+```typescript
+import { batchLoad } from '../utils/batch-loading';
+
+// ❌ MAL - N+1 queries
+for (const contact of contacts) {
+  const tags = await db().select().from(contactTags)
+    .where(eq(contactTags.contactId, contact.id));
+}
+
+// ✅ BIEN - Batch query
+const allTags = await batchLoad(
+  contacts.map(c => c.id),
+  (ids) => db().select().from(contactTags)
+    .where(inArray(contactTags.contactId, ids))
+);
+```
+
+## Timeouts Dinámicos
+
+**Usar timeouts dinámicos basados en cantidad de items:**
+
+```typescript
+import { calculateDynamicTimeout } from '../config/timeouts';
+
+const timeout = calculateDynamicTimeout(
+  5000,      // base timeout
+  itemCount, // cantidad de items
+  100,       // timeout por item
+  30000      // max timeout
+);
+```
+
+**Configuración centralizada:**
+
+- `apps/api/src/config/timeouts.ts` - Timeouts configurables
+- `apps/api/src/config/api-limits.ts` - Límites de API
+
+## Detección de N+1
+
+**El sistema detecta automáticamente patrones N+1:**
+
+```typescript
+// db-logger.ts detecta automáticamente:
+// - Múltiples queries similares en ventana de tiempo corta
+// - Logs warning cuando detecta patrón N+1
+// - Métricas agregadas de queries
+```
+
+## Anti-Patterns a Evitar
+
+1. ❌ Queries N+1 en loops (usar batch queries)
+2. ❌ Timeouts hardcodeados (usar config centralizada)
+3. ❌ SWR con revalidación agresiva (usar config optimizada)
+4. ❌ Sin caching (usar ETags y SWR)
+5. ❌ Magic numbers (usar constantes/config)

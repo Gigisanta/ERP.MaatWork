@@ -46,12 +46,15 @@ export function ToastProvider({ children }: ToastProviderProps) {
   });
 
   const showToast = useCallback((title: string, description?: string, variant: ToastVariant = 'info') => {
-    setToast({
+    const toastState: ToastState = {
       show: true,
       title,
-      description,
       variant
-    });
+    };
+    if (description) {
+      toastState.description = description;
+    }
+    setToast(toastState);
   }, []);
 
   const hideToast = useCallback(() => {
@@ -70,7 +73,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
           }
         }}
         title={toast.title}
-        description={toast.description}
+        {...(toast.description && { description: toast.description })}
         variant={toast.variant}
       />
     </ToastContext.Provider>

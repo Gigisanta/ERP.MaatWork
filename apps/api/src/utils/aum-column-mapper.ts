@@ -537,11 +537,34 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
   const assignedColumns = new Set<string>();
   
   // Helper function para buscar columna excluyendo las ya asignadas
-  const findColumnExcluding = (patterns: string[], excludeColumns: string[] = []): string | null => {
+  // AI_DECISION: Agregar validación para evitar mapear columnas numéricas a campos de texto
+  // Justificación: Previene que columnas financieras se mapeen incorrectamente a advisorRaw
+  // Impacto: Mapeo más preciso y menos errores de datos
+  const findColumnExcluding = (patterns: string[], excludeColumns: string[] = [], isTextField: boolean = false): string | null => {
     const available = availableColumns.filter(col => 
       !assignedColumns.has(col) && !excludeColumns.includes(col)
     );
-    return findColumnByPatterns(available, patterns);
+    const foundColumn = findColumnByPatterns(available, patterns);
+    
+    // Si es un campo de texto (como advisorRaw), validar que la columna no sea principalmente numérica
+    if (foundColumn && isTextField) {
+      // Verificar si la columna tiene principalmente valores numéricos en las primeras filas
+      // (esto se hace en el parser, pero aquí podemos hacer una validación básica del nombre)
+      const normalizedColName = normalizeColumnName(foundColumn);
+      // Si el nombre de la columna contiene palabras clave numéricas, podría ser un error
+      const numericKeywords = ['dolar', 'dollar', 'aum', 'bolsa', 'fondos', 'pesos', 'mep', 'cable', 'cv7000', 'usd', 'arg', 'bci'];
+      const hasNumericKeyword = numericKeywords.some(keyword => normalizedColName.includes(keyword));
+      
+      if (hasNumericKeyword && isFirstRow) {
+        logger.warn({
+          column: foundColumn,
+          normalizedName: normalizedColName,
+          patterns: patterns.slice(0, 3).join(', ')
+        }, 'AUM Column Mapper: posible mapeo incorrecto - columna con nombre numérico mapeada a campo de texto');
+      }
+    }
+    
+    return foundColumn;
   };
   
   // 1. Buscar accountNumber primero (prioriza 'comitente')
@@ -587,7 +610,7 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
       excludeFromAdvisorSearch.push(cuentaCol);
     }
   }
-  const advisorRawColumn = findColumnExcluding(ADVISOR_RAW_PATTERNS, excludeFromAdvisorSearch);
+  const advisorRawColumn = findColumnExcluding(ADVISOR_RAW_PATTERNS, excludeFromAdvisorSearch, true); // true = isTextField
   if (advisorRawColumn) {
     assignedColumns.add(advisorRawColumn);
   }
@@ -683,6 +706,17 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
   let advisorRawValue: string | null = null;
   if (advisorRawColumn) {
     const rawValue = record[advisorRawColumn];
+    
+    // Logging detallado en primera fila para debugging
+    if (isFirstRow) {
+      logger.info({
+        advisorColumn: advisorRawColumn,
+        rawValue,
+        valueType: typeof rawValue,
+        availableColumns: availableColumns.join(', ')
+      }, 'AUM Column Mapper: mapeo resuelto');
+    }
+    
     // Si el valor es null o undefined, mantener null
     if (rawValue === null || rawValue === undefined) {
       advisorRawValue = null;
@@ -692,18 +726,32 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
       if (strValue === '' || strValue === '-' || strValue === '--' || strValue === '—') {
         advisorRawValue = null;
       } else {
-        // Verificar si es un número (incluyendo formato con comas/puntos)
-        // Patrón: número opcionalmente negativo, con o sin decimales (coma o punto)
-        const numericPattern = /^-?\d+([.,]\d+)?$/;
-        if (numericPattern.test(strValue)) {
+        // Verificar si es un número (incluyendo formatos europeos y US)
+        // Patrón mejorado para detectar números con separadores de miles y decimales
+        // Formato europeo: "1.046,62" (punto = miles, coma = decimal)
+        // Formato US: "1,046.62" (coma = miles, punto = decimal)
+        // Formato simple: "1046.62" o "1046,62"
+        const cleanedForNumericCheck = strValue.replace(/\./g, '').replace(',', '.');
+        const numericPattern = /^-?\d+\.?\d*$/;
+        const isNumeric = numericPattern.test(cleanedForNumericCheck) && 
+                         !isNaN(parseFloat(cleanedForNumericCheck)) &&
+                         isFinite(parseFloat(cleanedForNumericCheck));
+        
+        // También verificar si tiene formato de número con separadores (ej: "1.046,62" o "1,046.62")
+        const hasNumberFormat = /^\d+[.,]\d+([.,]\d+)*$/.test(strValue.replace(/\s/g, ''));
+        
+        if (isNumeric || hasNumberFormat) {
           // Si es numérico, es probablemente un error de mapeo, asignar null y loguear warning
           // Solo loguear en primera fila para evitar spam
           if (isFirstRow) {
             logger.warn({
               column: advisorRawColumn,
               value: rawValue,
-              availableColumns: availableColumns.slice(0, 5).join(', ')
-            }, 'AUM Column Mapper: advisorRaw contiene valor numérico, posible error de mapeo');
+              strValue,
+              isNumeric,
+              hasNumberFormat,
+              availableColumns: availableColumns.join(', ')
+            }, 'AUM Column Mapper: advisorRaw contiene valor numérico, posible error de mapeo - se asignará null');
           }
           advisorRawValue = null;
         } else {
