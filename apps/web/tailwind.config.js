@@ -1,4 +1,7 @@
-const { uiPreset } = require('@cactus/ui/tailwind-preset');
+// AI_DECISION: Use relative path for tailwind-preset due to workspace linking issues
+// Justificación: pnpm workspaces with custom exports not resolving correctly in tailwind.config.js
+// Impacto: Enables Next.js to load tailwind preset correctly
+const { uiPreset } = require('../../packages/ui/dist/tailwind-preset');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {

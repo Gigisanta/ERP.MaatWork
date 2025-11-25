@@ -11,9 +11,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ variant = 'outlined', padding = 'md', children, className, ...props }, ref) => {
     const variantClasses = {
-      outlined: 'border border-border-default bg-bg-surface',
-      elevated: 'shadow-md bg-bg-surface',
-      interactive: 'border border-border-default bg-bg-surface hover:shadow-md hover:border-border-focus transition-all cursor-pointer',
+      outlined: 'border border-border bg-surface',
+      elevated: 'shadow-md bg-surface',
+      interactive: 'border border-border bg-surface hover:shadow-md hover:border-border-hover transition-all cursor-pointer',
     };
 
     const paddingClasses = {
@@ -73,7 +73,7 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, CardTitleProps>(
     return (
       <h3
         ref={ref}
-        className={cn('text-lg font-semibold text-text-primary', className)}
+        className={cn('text-lg font-semibold text-text', className)}
         {...props}
       >
         {children}
@@ -136,7 +136,7 @@ export const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
     return (
       <div
         ref={ref}
-        className={cn('mt-4 pt-4 border-t border-border-default', className)}
+        className={cn('mt-4 pt-4 border-t border-border', className)}
         {...props}
       >
         {children}

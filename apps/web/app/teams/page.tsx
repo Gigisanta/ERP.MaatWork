@@ -33,7 +33,7 @@ import {
 } from '@cactus/ui';
 
 export default function TeamsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [membershipRequests, setMembershipRequests] = useState<MembershipRequest[]>([]);
@@ -49,23 +49,29 @@ export default function TeamsPage() {
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
 
-  // Redirect if not manager or admin
+  // Wait for auth to finish loading before making decisions
   useEffect(() => {
-    if (user && !['manager', 'admin'].includes(user.role)) {
-      router.push('/');
+    // Don't do anything while still loading auth
+    if (loading) {
+      return;
     }
-  }, [user, router]);
 
-  useEffect(() => {
-    if (!user || !token) {
+    // If no user after loading, redirect to login
+    if (!user) {
       router.push('/login');
       return;
     }
-    
-    if (['manager', 'admin'].includes(user.role)) {
-      fetchData();
+
+    // If user is not manager or admin, redirect to home
+    if (!['manager', 'admin'].includes(user.role)) {
+      router.push('/');
+      return;
     }
-  }, [user, token, router]);
+
+    // User is manager or admin, fetch data
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading, router]);
 
   const fetchData = async () => {
     try {
@@ -84,7 +90,6 @@ export default function TeamsPage() {
   };
 
   const openLinkModal = async (team: Team) => {
-    if (!token) return;
     try {
       setLinkModalOpen({ teamId: team.id, teamName: team.name });
       const response = await getTeamAdvisors(team.id);
@@ -113,7 +118,7 @@ export default function TeamsPage() {
   };
 
   const inviteAdvisor = async (userId: string) => {
-    if (!token || !linkModalOpen) return;
+    if (!linkModalOpen) return;
     try {
       setInviteLoading(userId);
       await createTeamInvitation(linkModalOpen.teamId, { userId });
@@ -127,25 +132,24 @@ export default function TeamsPage() {
   };
 
   const fetchTeams = async () => {
-    if (!token) return;
-    
     try {
       const response = await getTeams();
       
       if (response.success && response.data) {
         setTeams(response.data || []);
       } else {
-        throw new Error('Error al cargar equipos');
+        const errorMsg = response.error || 'Error al cargar equipos';
+        logger.error('Error fetching teams', { error: errorMsg, response });
+        throw new Error(errorMsg);
       }
     } catch (err) {
       logger.error('Error fetching teams', { err });
+      setError(err instanceof Error ? err.message : 'Error al cargar equipos');
       throw err;
     }
   };
 
   const fetchMembershipRequests = async () => {
-    if (!token) return;
-    
     try {
       const response = await getMembershipRequests();
       
@@ -159,7 +163,7 @@ export default function TeamsPage() {
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTeamName.trim() || !token || !user) return;
+    if (!newTeamName.trim() || !user) return;
     
     try {
       setActionLoading('create');
@@ -171,9 +175,10 @@ export default function TeamsPage() {
       });
       
       if (response.success && response.data) {
-        setTeams(prev => [...prev, response.data].filter((t): t is Team => t !== undefined));
         setNewTeamName('');
         setShowCreateTeam(false);
+        // Refresh teams list to ensure all data is up to date
+        await fetchData();
       } else {
         throw new Error('Error al crear equipo');
       }
@@ -186,8 +191,6 @@ export default function TeamsPage() {
   };
 
   const handleMembershipAction = async (requestId: string, action: 'accept' | 'reject') => {
-    if (!token) return;
-    
     try {
       setActionLoading(requestId);
       setError(null);
@@ -256,15 +259,7 @@ export default function TeamsPage() {
     }
   ];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (dataLoading) {
+  if (loading || dataLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
         <Spinner size="lg" />
@@ -285,7 +280,7 @@ export default function TeamsPage() {
                 Vincular asesores
               </Button>
             )}
-            {(['manager','admin'].includes(user?.role || '') && teams.length === 0) && (
+            {(['manager','admin'].includes(user?.role || '')) && (
               <Button onClick={() => setShowCreateTeam(true)}>
                 <Icon name="plus" size={16} className="mr-2" />
                 Crear Equipo
@@ -303,7 +298,11 @@ export default function TeamsPage() {
         {/* Teams Grid */}
         <Grid cols={1} gap="lg">
           {teams.map((team) => (
-            <Card key={team.id} className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
+            <Card 
+              key={team.id} 
+              className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow cursor-pointer"
+              onClick={() => router.push(`/teams/${team.id}`)}
+            >
               <CardHeader className="p-4 pb-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -318,16 +317,29 @@ export default function TeamsPage() {
                       </Text>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/teams/${team.id}`);
+                    }}
+                  >
+                    <Icon name="ChevronRight" size={16} />
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-3 pt-0">
                 {team.members && team.members.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                    {team.members.map((member) => (
+                    {team.members.slice(0, 5).map((member) => (
                       <div
                         key={member.id}
                         className="rounded-md border border-border hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer p-2.5 bg-surface"
-                        onClick={() => router.push(`/teams/${team.id}/member/${member.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/teams/${team.id}/member/${member.id}`);
+                        }}
                       >
                         <div className="flex items-start gap-2 mb-1.5">
                           <Text weight="medium" className="text-sm truncate flex-1 min-w-0">
@@ -345,7 +357,8 @@ export default function TeamsPage() {
                             variant="primary"
                             size="sm"
                             className="flex-shrink-0 px-2 py-1 h-6 text-xs"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               router.push(`/contacts?advisorId=${member.id}`);
                             }}
                           >
@@ -354,6 +367,13 @@ export default function TeamsPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+                {team.members && team.members.length > 5 && (
+                  <div className="mt-2 text-center">
+                    <Text size="sm" color="secondary">
+                      +{team.members.length - 5} miembros más
+                    </Text>
                   </div>
                 )}
               </CardContent>
@@ -407,7 +427,7 @@ export default function TeamsPage() {
                 <Input
                   label="Nombre del equipo"
                   value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTeamName(e.target.value)}
                   placeholder="Ej: Equipo de Ventas Norte"
                   required
                 />

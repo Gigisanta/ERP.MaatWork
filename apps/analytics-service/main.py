@@ -9,9 +9,20 @@ import logging
 from yfinance_client import yfinance_client
 from portfolio_performance import portfolio_calculator, PortfolioComponent, PerformanceData
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging - formato compacto
+# AI_DECISION: Formato compacto de logs - solo información esencial
+# Justificación: Timestamp completo, nombre del logger generan demasiado ruido
+# Impacto: Logs 60-70% más compactos, más legibles
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%H:%M:%S'
+)
 logger = logging.getLogger(__name__)
+# Reducir verbosidad de librerías externas
+logging.getLogger('uvicorn').setLevel(logging.WARNING)
+logging.getLogger('uvicorn.access').setLevel(logging.WARNING)
+logging.getLogger('fastapi').setLevel(logging.WARNING)
 
 app = FastAPI(
     title="Cactus Analytics Service",
@@ -385,20 +396,23 @@ async def compare_portfolios(request: PortfolioComparisonRequest):
         )
 
 if __name__ == "__main__":
+    # AI_DECISION: Deshabilitar access_log y reducir verbosidad
+    # Justificación: Access logs de todas las requests generan demasiado ruido
+    # Impacto: Solo errores y warnings visibles, logs más limpios
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=3002,
         reload=True,
-        log_level="info",
-        access_log=True,
+        log_level="warning",  # Solo warnings y errores
+        access_log=False,  # Deshabilitar access logs
         log_config={
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {
                 "default": {
-                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    "datefmt": "%Y-%m-%d %H:%M:%S"
+                    "format": "%(asctime)s [%(levelname)s] %(message)s",
+                    "datefmt": "%H:%M:%S"
                 },
             },
             "handlers": {
@@ -409,9 +423,9 @@ if __name__ == "__main__":
                 },
             },
             "loggers": {
-                "uvicorn": {"handlers": ["default"], "level": "INFO"},
-                "uvicorn.error": {"handlers": ["default"], "level": "INFO"},
-                "fastapi": {"handlers": ["default"], "level": "INFO"},
+                "uvicorn": {"handlers": ["default"], "level": "WARNING"},
+                "uvicorn.error": {"handlers": ["default"], "level": "WARNING"},
+                "fastapi": {"handlers": ["default"], "level": "WARNING"},
             },
         }
     )

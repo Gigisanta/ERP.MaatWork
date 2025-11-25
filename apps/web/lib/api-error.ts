@@ -140,14 +140,23 @@ export async function createApiErrorFromResponse(response: Response): Promise<Ap
     errorData = { error: textData };
   }
 
+  const options: {
+    statusText?: string;
+    details?: string | string[];
+    timestamp?: string;
+  } = {
+    statusText: response.statusText,
+  };
+  if (errorData.details) {
+    options.details = errorData.details;
+  }
+  if (errorData.timestamp) {
+    options.timestamp = errorData.timestamp;
+  }
   return new ApiError(
     response.status,
     errorData.error || errorData.message || response.statusText,
-    {
-      statusText: response.statusText,
-      details: errorData.details,
-      timestamp: errorData.timestamp,
-    }
+    options
   );
 }
 

@@ -1,6 +1,14 @@
 // Cactus UI Tailwind Preset - Semantic Design System
-export const uiPreset = {
+const uiPreset = {
   theme: {
+    screens: {
+      xs: '360px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         // Primary Brand Colors
@@ -115,3 +123,10 @@ export const uiPreset = {
     },
   },
 };
+
+// AI_DECISION: Export both named and default for ESM/CommonJS compatibility
+// Justificación: Next.js tailwind.config.js requires CommonJS compatibility
+// Impacto: Enables both import and require() to work correctly
+
+export { uiPreset };
+export default uiPreset;

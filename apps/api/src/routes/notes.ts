@@ -5,6 +5,8 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
+import { validate } from '../utils/validation';
+import { uuidSchema, idParamSchema } from '../utils/common-schemas';
 
 const router = Router();
 
@@ -27,18 +29,18 @@ const updateNoteSchema = z.object({
 // ==========================================================
 // GET /notes - Listar notas de un contacto
 // ==========================================================
-router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/',
+  requireAuth,
+  validate({ query: z.object({ contactId: uuidSchema }) }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { contactId } = req.query;
+    const { contactId } = req.query as { contactId: string };
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
-    if (!contactId) {
-      return res.status(400).json({ error: 'contactId is required' });
-    }
-
     // Verificar que el usuario tenga acceso al contacto
-    const hasAccess = await canAccessContact(userId, userRole, contactId as string);
+    const hasAccess = await canAccessContact(userId, userRole, contactId);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this contact' });
     }
@@ -48,14 +50,14 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
       .from(notes)
       .where(
         and(
-          eq(notes.contactId, contactId as string),
+          eq(notes.contactId, contactId),
           isNull(notes.deletedAt)
         )
       )
       .orderBy(notes.createdAt);
 
     req.log.info({ contactId, count: notesList.length }, 'notes fetched');
-    res.json({ data: notesList });
+    res.json({ success: true, data: notesList });
   } catch (err) {
     req.log.error({ err }, 'failed to fetch notes');
     next(err);
@@ -65,7 +67,11 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 // ==========================================================
 // GET /notes/:id - Obtener nota específica
 // ==========================================================
-router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.get(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
@@ -93,7 +99,7 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     }
 
     req.log.info({ noteId: id }, 'note fetched');
-    res.json({ data: note });
+    res.json({ success: true, data: note });
   } catch (err) {
     req.log.error({ err, noteId: req.params.id }, 'failed to fetch note');
     next(err);
@@ -103,9 +109,13 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 // ==========================================================
 // POST /notes - Crear nota manual
 // ==========================================================
-router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.post(
+  '/',
+  requireAuth,
+  validate({ body: createNoteSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const validated = createNoteSchema.parse(req.body);
+    const validated = req.body as z.infer<typeof createNoteSchema>;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -127,9 +137,6 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
     req.log.info({ noteId: newNote.id, contactId: validated.contactId }, 'note created');
     res.status(201).json({ data: newNote });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err }, 'failed to create note');
     next(err);
   }
@@ -138,10 +145,14 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
 // ==========================================================
 // PUT /notes/:id - Actualizar nota
 // ==========================================================
-router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+router.put(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema, body: updateNoteSchema }),
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const validated = updateNoteSchema.parse(req.body);
+    const validated = req.body as z.infer<typeof updateNoteSchema>;
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
@@ -174,11 +185,8 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
       .returning();
 
     req.log.info({ noteId: id }, 'note updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, noteId: req.params.id }, 'failed to update note');
     next(err);
   }
@@ -222,7 +230,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
       .where(eq(notes.id, id));
 
     req.log.info({ noteId: id }, 'note deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, noteId: req.params.id }, 'failed to delete note');
     next(err);

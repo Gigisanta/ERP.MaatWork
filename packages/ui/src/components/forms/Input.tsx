@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import Icon, { type IconName } from '../Icon';
 import { cn } from '../../utils/cn';
 
@@ -14,7 +14,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   showPasswordToggle?: boolean;
 }
 
-export default function Input({ 
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ 
   label, 
   error, 
   className = '', 
@@ -56,6 +56,7 @@ export default function Input({
           </div>
         )}
         <input
+          ref={ref}
           type={inputType}
           className={cn(
             'w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors',
@@ -91,4 +92,6 @@ export default function Input({
       )}
     </div>
   );
-}
+});
+
+export default Input;

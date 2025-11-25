@@ -19,7 +19,7 @@ export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
         ref={ref}
         className={cn(
           'animate-spin rounded-full border-2 border-current border-t-transparent',
-          'text-foreground-secondary',
+          'text-text-secondary',
           sizeClasses[size],
           className
         )}
@@ -51,11 +51,11 @@ export const LoadingOverlay = React.forwardRef<HTMLDivElement, LoadingOverlayPro
       >
         {children}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background-base/80 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="flex flex-col items-center space-y-2">
               <Spinner size="lg" />
               {text && (
-                <p className="text-sm text-foreground-secondary">{text}</p>
+                <p className="text-sm text-text-secondary">{text}</p>
               )}
             </div>
           </div>

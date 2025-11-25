@@ -1,9 +1,9 @@
 /**
  * API methods para AUM (Assets Under Management)
  * 
- * AI_DECISION: Centralizar métodos de AUM siguiendo patrón de otros dominios
- * Justificación: Elimina fetch directo, mejor error handling y retry automático
- * Impacto: Código más mantenible y consistente con resto de la aplicación
+ * AI_DECISION: Centralizar métodos de AUM siguiendo patrón de otros dominios + validación Zod
+ * Justificación: Elimina fetch directo, mejor error handling, retry automático, runtime validation
+ * Impacto: Código más mantenible, consistente y robusto contra cambios de API
  */
 
 import { apiClient } from '../api-client';
@@ -17,6 +17,12 @@ import type {
   AumRowsResponse,
   AumDuplicatesResponse
 } from '@/types/aum';
+import {
+  aumRowsResponseSchema,
+  aumUploadResponseSchema,
+  aumHistoryResponseSchema,
+  aumMatchRowResponseSchema
+} from './aum-validation';
 
 // ==========================================================
 // API Methods
@@ -30,46 +36,85 @@ export async function getAumRows(params?: {
   offset?: number;
   broker?: string;
   status?: string;
+  fileId?: string;
+  preferredOnly?: boolean;
+  search?: string;
+  onlyUpdated?: boolean;
 }): Promise<ApiResponse<AumRowsResponse>> {
   const queryParams = new URLSearchParams();
   if (params?.limit) queryParams.append('limit', String(params.limit));
   if (params?.offset) queryParams.append('offset', String(params.offset));
   if (params?.broker) queryParams.append('broker', params.broker);
   if (params?.status) queryParams.append('status', params.status);
+  if (params?.fileId) queryParams.append('fileId', params.fileId);
+  const preferredOnly = params?.preferredOnly ?? false;
+  queryParams.append('preferredOnly', String(preferredOnly));
+  if (params?.search) queryParams.append('search', params.search);
+  const onlyUpdated = params?.onlyUpdated ?? false;
+  queryParams.append('onlyUpdated', String(onlyUpdated));
 
   const endpoint = `/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  return apiClient.get<AumRowsResponse>(endpoint);
+  const response = await apiClient.get<AumRowsResponse>(endpoint);
+  
+  // AI_DECISION: Validar respuesta en runtime con Zod
+  // Justificación: Previene errores silenciosos por cambios en API, mejora debugging
+  // Impacto: Mayor robustez, mensajes de error claros
+  try {
+    const validated = aumRowsResponseSchema.parse(response.data);
+    return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
+  } catch (error) {
+    console.error('[AUM API] Validation error:', error);
+    throw new Error(`API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
- * Subir archivo AUM
+ * Subir archivo AUM con retry logic
+ * 
+ * AI_DECISION: Implementar retry con exponential backoff para FormData uploads
+ * Justificación: FormData no tiene retry automático como apiClient, necesitamos manejarlo manualmente
+ * Impacto: Mejor resiliencia ante errores de red temporales
  */
 export async function uploadAumFile(
   file: File,
-  broker: string = 'balanz'
+  broker: string = 'balanz',
+  maxRetries: number = 3
 ): Promise<ApiResponse<AumUploadResponse>> {
-  const formData = new FormData();
-  formData.append('file', file);
+  let lastError: Error | unknown;
 
-  // Para FormData, necesitamos usar fetch directamente ya que apiClient usa JSON.stringify
-  // Pero mejoramos el manejo de errores
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-  const response = await fetch(`${API_BASE_URL}/v1/admin/aum/uploads?broker=${broker}`, {
-    method: 'POST',
-    headers: {
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    },
-    body: formData,
-  });
+      const data = await apiClient.post<AumUploadResponse>(
+        `/v1/admin/aum/uploads?broker=${broker}`,
+        formData,
+        { retries: 0 } // manual retry handled here
+      );
+      return data;
+    } catch (error) {
+      lastError = error;
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Upload failed' }));
-    throw new Error(error.error || 'Error al subir archivo');
+      // Don't retry on client errors (4xx) except 408, 429
+      if (error && typeof error === 'object' && 'status' in error) {
+        const status = (error as any).status as number;
+        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          throw error;
+        }
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+    }
   }
 
-  const data = await response.json();
-  return data;
+  // All retries exhausted
+  throw lastError;
 }
 
 /**
@@ -122,5 +167,99 @@ export async function getAumDuplicates(
 export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> {
   // Este endpoint usa POST sin body
   return apiClient.post<void>(`/v1/admin/aum/uploads/${fileId}/commit`);
+}
+
+/**
+ * Limpiar duplicados AUM manteniendo solo la fila más reciente por broker+accountNumber
+ */
+export async function cleanupAumDuplicates(): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+  deletedCount: number;
+}>> {
+  return apiClient.post<{
+    ok: boolean;
+    message: string;
+    deletedCount: number;
+  }>('/v1/admin/aum/cleanup-duplicates');
+}
+
+/**
+ * Resetear completamente el sistema AUM (eliminar todo)
+ */
+export async function resetAumSystem(): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+}>> {
+  return apiClient.post<{
+    ok: boolean;
+    message: string;
+  }>('/v1/admin/aum/reset-all');
+}
+
+/**
+ * Subir archivo de mapeo asesor-cuenta
+ * 
+ * AI_DECISION: Implementar retry con exponential backoff para FormData uploads
+ * Justificación: FormData no tiene retry automático como apiClient, necesitamos manejarlo manualmente
+ * Impacto: Mejor resiliencia ante errores de red temporales
+ */
+export async function uploadAdvisorMapping(
+  file: File,
+  maxRetries: number = 3
+): Promise<ApiResponse<{
+  ok: boolean;
+  message: string;
+  totals: {
+    inserted: number;
+    updated: number;
+    errors: number;
+    total: number;
+  };
+}>> {
+  let lastError: Error | unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const data = await apiClient.post<{
+        ok: boolean;
+        message: string;
+        totals: {
+          inserted: number;
+          updated: number;
+          errors: number;
+          total: number;
+        };
+      }>(
+        `/v1/admin/aum/advisor-mapping/upload`,
+        formData,
+        { retries: 0 } // manual retry handled here
+      );
+      return data;
+    } catch (error) {
+      lastError = error;
+
+      // Don't retry on client errors (4xx) except 408, 429
+      if (error && typeof error === 'object' && 'status' in error) {
+        const status = (error as any).status as number;
+        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          throw error;
+        }
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      if (attempt < maxRetries) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+    }
+  }
+
+  // All retries exhausted
+  throw lastError;
 }
 

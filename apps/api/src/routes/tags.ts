@@ -47,7 +47,8 @@ const createTagSchema = z.object({
   name: z.string().min(1).max(100),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#6B7280'),
   icon: z.string().max(50).optional().nullable(),
-  description: z.string().max(500).optional().nullable()
+  description: z.string().max(500).optional().nullable(),
+  businessLine: z.enum(['inversiones', 'zurich', 'patrimonial']).optional().nullable()
 });
 
 const updateTagSchema = createTagSchema.partial().omit({ scope: true });
@@ -92,14 +93,15 @@ router.get('/',
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(tags)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(sql`LOWER(${tags.name})`)
       .limit(parseInt(limit as string));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list tags');
     next(err);
@@ -193,7 +195,7 @@ router.put('/:id',
       .returning();
 
     req.log.info({ tagId: id }, 'tag updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to update tag');
     next(err);
@@ -234,7 +236,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
       .where(eq(tags.id, id));
 
     req.log.info({ tagId: id }, 'tag deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to delete tag');
     next(err);
@@ -345,7 +347,7 @@ router.delete('/:id/contacts/:contactId', requireAuth, async (req: Request, res:
       ));
 
     req.log.info({ tagId: id, contactId }, 'tag removed from contact');
-    res.json({ data: { removed: true } });
+    res.json({ success: true, data: { removed: true } });
   } catch (err) {
     req.log.error({ err, tagId: req.params.id }, 'failed to remove tag');
     next(err);
@@ -378,13 +380,14 @@ router.get('/contacts/:id', requireAuth, async (req: Request, res: Response, nex
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
       .where(eq(contactTags.contactId, id));
 
-    res.json({ data: contactTagsList });
+    res.json({ success: true, data: contactTagsList });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to list contact tags');
     next(err);
@@ -486,14 +489,15 @@ router.put('/contacts/:id',
         id: tags.id,
         name: tags.name,
         color: tags.color,
-        icon: tags.icon
+        icon: tags.icon,
+        businessLine: tags.businessLine
       })
       .from(contactTags)
       .innerJoin(tags, eq(contactTags.tagId, tags.id))
       .where(eq(contactTags.contactId, id));
 
     req.log.info({ contactId: id, added: tagsToAdd.length, removed: remove.length }, 'contact tags updated');
-    res.json({ data: updatedTags });
+    res.json({ success: true, data: updatedTags });
   } catch (err) {
     req.log.error({ err, contactId: req.params.id }, 'failed to update contact tags');
     next(err);
@@ -521,7 +525,7 @@ router.get('/rules',
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(tagRules.createdAt));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list tag rules');
     next(err);
@@ -617,7 +621,7 @@ router.get('/segments',
       .where(sql`${segments.ownerId} = ${userId} OR ${segments.isShared} = true`)
       .orderBy(desc(segments.updatedAt));
 
-    res.json({ data: items });
+    res.json({ success: true, data: items });
   } catch (err) {
     req.log.error({ err }, 'failed to list segments');
     next(err);

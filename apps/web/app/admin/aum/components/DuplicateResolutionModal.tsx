@@ -1,192 +1,111 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getAumDuplicates, matchAumRow } from '@/lib/api';
-import {
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  ModalDescription,
-  ModalContent,
-  ModalFooter,
-  Button,
-  Text,
-  Badge,
-  Spinner,
-  Alert,
-} from '@cactus/ui';
-import type { AumRow, ApiErrorWithMessage } from '@/types';
+import type { AumRow, ApiErrorWithMessage } from '@/types/aum';
+import { Button, Modal, Spinner, Text } from '@cactus/ui';
 
 interface DuplicateResolutionModalProps {
-  accountNumber: string | null;
+  accountNumber: string;
   onClose: () => void;
   onResolved?: () => void;
 }
 
-export default function DuplicateResolutionModal({
-  accountNumber,
-  onClose,
-  onResolved
-}: DuplicateResolutionModalProps) {
+export default function DuplicateResolutionModal({ accountNumber, onClose, onResolved }: DuplicateResolutionModalProps) {
   const [rows, setRows] = useState<AumRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (accountNumber) {
-      loadDuplicates();
-    }
-  }, [accountNumber]);
+  const preferredRowId = useMemo(() => rows.find((r) => r.isPreferred)?.id ?? null, [rows]);
 
-  const loadDuplicates = async () => {
-    if (!accountNumber) return;
-    
+  const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getAumDuplicates(accountNumber);
-      
-      if (response.success && response.data) {
-        setRows(response.data.rows || []);
-        // Auto-select the preferred row if exists
-        const preferred = response.data.rows.find((r: AumRow) => r.isPreferred);
-        if (preferred) setSelectedRowId(preferred.id);
+      const res = await getAumDuplicates(accountNumber);
+      if (res.success && res.data) {
+        setRows(res.data.rows || []);
+        const currentPreferred = res.data.rows?.find((r) => r.isPreferred)?.id ?? null;
+        setSelectedRowId(currentPreferred);
       }
     } catch (e: unknown) {
-      const error = e as ApiErrorWithMessage;
-      setError(error.userMessage || error.message || error.error || 'Error');
+      const apiErr = e as ApiErrorWithMessage;
+      setError(apiErr.userMessage || apiErr.message || 'Error cargando duplicados');
     } finally {
       setLoading(false);
     }
   };
 
-  const saveResolution = async () => {
+  useEffect(() => {
+    void load();
+  }, [accountNumber]);
+
+  const handleResolve = async () => {
     if (!selectedRowId) return;
+    const target = rows.find((r) => r.id === selectedRowId);
+    if (!target) return;
     setSaving(true);
     setError(null);
     try {
-      // Update is_preferred for all rows for this account
-      for (const row of rows) {
-        if (!row.fileId) continue;
-        await matchAumRow(row.fileId, {
-          rowId: row.id,
-          matchedContactId: row.matchedContactId,
-          matchedUserId: row.matchedUserId,
-          isPreferred: row.id === selectedRowId,
-        });
-      }
-      
+      await matchAumRow(target.fileId, {
+        rowId: target.id,
+        matchedContactId: target.matchedContactId,
+        matchedUserId: target.matchedUserId,
+        isPreferred: true,
+      });
       if (onResolved) onResolved();
       onClose();
     } catch (e: unknown) {
-      const error = e as ApiErrorWithMessage;
-      setError(error.userMessage || error.message || error.error || 'Error al guardar');
+      const apiErr = e as ApiErrorWithMessage;
+      setError(apiErr.userMessage || apiErr.message || 'Error al resolver duplicados');
     } finally {
       setSaving(false);
     }
   };
 
-  if (!accountNumber) return null;
-
   return (
-    <Modal open={!!accountNumber} onOpenChange={(open) => !open && onClose()} size="full">
-      <ModalHeader>
-        <ModalTitle>Resolución de duplicados</ModalTitle>
-        <ModalDescription>
-          Cuenta: <span className="font-mono">{accountNumber}</span>
-        </ModalDescription>
-      </ModalHeader>
-      <ModalContent>
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Spinner size="lg" />
-            <Text color="secondary" className="mt-4">Cargando...</Text>
-          </div>
-        ) : error ? (
-          <Alert variant="error" title="Error">
-            {error}
-          </Alert>
-        ) : (
-          <div className="space-y-4">
-            <Text size="sm" color="secondary">
-              Se encontraron {rows.length} importaciones con esta cuenta. Selecciona cuál es la versión correcta:
-            </Text>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 border">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Seleccionar</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Archivo</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Fecha</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Titular</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Asesor</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Contacto</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {rows.map((row) => (
-                    <tr key={row.id} className={row.conflictDetected ? 'bg-orange-50' : ''}>
-                      <td className="px-4 py-2">
-                        <input
-                          type="radio"
-                          name="selectedRow"
-                          checked={selectedRowId === row.id}
-                          onChange={() => setSelectedRowId(row.id)}
-                          className="h-4 w-4"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{row.file?.originalFilename || '-'}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">
-                        {row.file?.createdAt ? new Date(row.file.createdAt).toLocaleDateString() : '-'}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{row.holderName}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{row.advisorRaw}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">
-                        {row.contact ? row.contact.fullName : '-'}
-                      </td>
-                      <td className="px-4 py-2 text-sm">
-                        <Badge
-                          variant={
-                            row.matchStatus === 'matched' ? 'success' :
-                            row.matchStatus === 'ambiguous' ? 'warning' :
-                            'default'
-                          }
-                          size="sm"
-                        >
-                          {row.matchStatus}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </ModalContent>
-      <ModalFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button 
-          variant="primary" 
-          onClick={saveResolution}
-          disabled={!selectedRowId || saving}
-        >
-          {saving ? (
-            <>
-              <Spinner size="sm" className="mr-2" />
-              Guardando...
-            </>
+    <Modal open onOpenChange={(open) => { if (!open) onClose(); }} title={`Duplicados para ${accountNumber}`}>
+      {loading ? (
+        <div className="py-6 flex items-center justify-center text-gray-600">
+          <Spinner size="sm" className="mr-2" /> Cargando...
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {rows.length === 0 ? (
+            <Text size="sm" className="text-gray-600">No hay duplicados para esta cuenta.</Text>
           ) : (
-            'Marcar como preferida'
+            <>
+              <div className="space-y-2">
+                {rows.map((r) => (
+                  <label key={r.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="preferredRow"
+                      checked={(selectedRowId || preferredRowId) === r.id}
+                      onChange={() => setSelectedRowId(r.id)}
+                    />
+                    <span>
+                      {new Date(r.rowCreatedAt).toLocaleString()} • {r.holderName ?? ''} • {r.advisorRaw ?? ''} • {r.matchStatus}
+                      {r.file ? ` • ${r.file.originalFilename} (${r.file.broker})` : ''}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {error && (
+                <Text size="sm" className="text-error">{error}</Text>
+              )}
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={onClose} size="sm">Cancelar</Button>
+                <Button variant="primary" size="sm" disabled={!selectedRowId || saving} onClick={handleResolve}>
+                  {saving ? <><Spinner size="sm" className="mr-1" /> Guardando...</> : 'Guardar preferida'}
+                </Button>
+              </div>
+            </>
           )}
-        </Button>
-      </ModalFooter>
+        </div>
+      )}
     </Modal>
   );
 }

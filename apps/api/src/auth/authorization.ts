@@ -196,7 +196,7 @@ export async function getTeamMembers(managerId: string): Promise<Array<{ id: str
       id: users.id,
       email: users.email,
       fullName: users.fullName,
-      role: users.role
+      role: teamMembership.role // Return team membership role (lead/member) instead of user system role
     })
     .from(users)
     .innerJoin(teamMembership, eq(users.id, teamMembership.userId))

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { DataTable } from './DataTable';
 import type { Column } from './DataTable';
 
-interface TestData {
+interface TestData extends Record<string, unknown> {
   id: string;
   name: string;
   age: number;
@@ -371,7 +371,7 @@ describe('DataTable Component', () => {
     it('should have hover styles on rows', () => {
       render(<DataTable data={mockData} columns={mockColumns} keyField="id" />);
       const row = screen.getByText('Alice').closest('tr');
-      expect(row).toHaveClass('hover:bg-background-surface');
+      expect(row).toHaveClass('hover:bg-surface-hover');
     });
 
     it('should have border and rounded corners', () => {

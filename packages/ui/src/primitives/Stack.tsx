@@ -1,9 +1,11 @@
 import React from 'react';
 import { cn } from '../utils/cn';
+import { type ResponsiveProp } from '../tokens/breakpoints';
+import { buildResponsiveClasses } from '../utils/responsive';
 
 export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
-  direction?: 'row' | 'column';
-  gap?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  direction?: ResponsiveProp<'row' | 'column'>;
+  gap?: ResponsiveProp<'xs' | 'sm' | 'md' | 'lg' | 'xl'>;
   align?: 'start' | 'center' | 'end' | 'stretch';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
   children?: React.ReactNode;
@@ -23,17 +25,10 @@ export function Stack({
     <div 
       className={cn(
         'flex',
-        {
-          'flex-row': direction === 'row',
-          'flex-col': direction === 'column',
-        },
-        {
-          'gap-1': gap === 'xs',
-          'gap-2': gap === 'sm',
-          'gap-4': gap === 'md',
-          'gap-6': gap === 'lg',
-          'gap-8': gap === 'xl',
-        },
+        buildResponsiveClasses(direction, (d) => (d === 'row' ? 'flex-row' : 'flex-col')),
+        buildResponsiveClasses(gap, (g) =>
+          g === 'xs' ? 'gap-1' : g === 'sm' ? 'gap-2' : g === 'md' ? 'gap-4' : g === 'lg' ? 'gap-6' : 'gap-8'
+        ),
         {
           'items-start': align === 'start',
           'items-center': align === 'center',

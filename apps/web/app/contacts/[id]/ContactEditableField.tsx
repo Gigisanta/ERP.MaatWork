@@ -15,7 +15,8 @@ interface ContactEditableFieldProps {
   contactId: string;
   placeholder?: string;
   emptyText?: string;
-  type?: 'text' | 'email' | 'tel' | 'number';
+  type?: 'text' | 'email' | 'tel' | 'number' | 'textarea';
+  maxLength?: number;
 }
 
 /**
@@ -38,7 +39,8 @@ export default function ContactEditableField({
   contactId,
   placeholder, 
   emptyText = "Sin especificar", 
-  type = 'text' 
+  type = 'text',
+  maxLength
 }: ContactEditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value || '');
@@ -76,6 +78,41 @@ export default function ContactEditableField({
   };
 
   if (isEditing) {
+    if (type === 'textarea') {
+      return (
+        <div className="space-y-2">
+          <textarea
+            value={localValue}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setLocalValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              if (e.key === 'Escape') handleCancel();
+              // Ctrl/Cmd + Enter to save
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSave();
+            }}
+            {...(placeholder ? { placeholder } : {})}
+            {...(maxLength ? { maxLength } : {})}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
+            autoFocus
+          />
+          <div className="flex items-center justify-between">
+            {maxLength && (
+              <Text size="xs" color="muted">
+                {localValue.length} / {maxLength} caracteres
+              </Text>
+            )}
+            <div className="flex items-center gap-2">
+              {isPending && <Spinner size="sm" />}
+              <Text size="xs" color="muted">
+                Ctrl+Enter para guardar, Esc para cancelar
+              </Text>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
     return (
       <div className="flex items-center gap-2">
         <Input
@@ -103,7 +140,13 @@ export default function ContactEditableField({
       onClick={() => setIsEditing(true)}
     >
       <Text size="sm" weight="medium" color="secondary">{label}</Text>
-      <Text className="mt-1">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
+      {type === 'textarea' ? (
+        <Text className="mt-1 whitespace-pre-wrap">
+          {value || <span className="text-gray-400">{emptyText}</span>}
+        </Text>
+      ) : (
+        <Text className="mt-1">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
+      )}
     </div>
   );
 }

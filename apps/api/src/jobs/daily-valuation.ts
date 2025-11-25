@@ -16,6 +16,7 @@ import { eq, and, sql, desc, gte, lte, type InferSelectModel } from 'drizzle-orm
 import axios from 'axios';
 import pino from 'pino';
 import { PositionWithMarketValue } from '../types/daily-valuation';
+import { CircuitBreaker, CircuitBreakerOpenError } from '../utils/circuit-breaker';
 
 const logger = pino({ name: 'daily-valuation' });
 
@@ -50,9 +51,21 @@ interface YFinanceResponse {
  */
 export class DailyValuationJob {
   private analyticsServiceUrl: string;
+  private circuitBreaker: CircuitBreaker;
 
   constructor() {
     this.analyticsServiceUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3002';
+    
+    // AI_DECISION: Circuit breaker para microservicio de precios
+    // Justificación: Previene llamadas repetidas cuando el servicio está caído
+    // Permite fallback rápido a precios históricos
+    // Impacto: Mejor resiliencia, menos carga en servicio fallido, recuperación automática
+    this.circuitBreaker = new CircuitBreaker({
+      failureThreshold: 5,      // Abrir después de 5 fallos
+      resetTimeout: 60000,      // Intentar half-open después de 60 segundos
+      timeout: 30000,           // Timeout de 30 segundos por request
+      successThreshold: 2       // Cerrar después de 2 éxitos en half-open
+    });
   }
 
   /**
@@ -124,30 +137,61 @@ export class DailyValuationJob {
    * Obtener precios actuales del microservicio Python
    */
   private async fetchCurrentPrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
+    // Si el circuit breaker está abierto, usar fallback inmediato
+    if (this.circuitBreaker.isOpen()) {
+      logger.warn({
+        circuitState: this.circuitBreaker.getState(),
+        metrics: this.circuitBreaker.getMetrics()
+      }, 'Circuit breaker OPEN - usando fallback inmediato');
+      return await this.getLastAvailablePrices(instrumentsList);
+    }
+
     try {
-      const symbols = instrumentsList.map(inst => inst.symbol);
-      
-      const response = await axios.post<YFinanceResponse>(
-        `${this.analyticsServiceUrl}/prices/fetch`,
-        { symbols },
-        {
-          timeout: 30000, // 30 segundos timeout
-          headers: {
-            'Content-Type': 'application/json'
+      // Ejecutar llamada protegida por circuit breaker
+      const prices = await this.circuitBreaker.execute(async () => {
+        const symbols = instrumentsList.map(inst => inst.symbol);
+        
+        const response = await axios.post<YFinanceResponse>(
+          `${this.analyticsServiceUrl}/prices/fetch`,
+          { symbols },
+          {
+            timeout: 30000, // 30 segundos timeout
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
+        );
+
+        if (!response.data.success) {
+          throw new Error('Error en respuesta del servicio de precios');
         }
-      );
 
-      if (!response.data.success) {
-        throw new Error('Error en respuesta del servicio de precios');
-      }
+        return response.data.data;
+      });
 
-      return response.data.data;
+      return prices;
 
     } catch (error) {
-      logger.error({ err: error }, 'Error obteniendo precios');
+      // Si es CircuitBreakerOpenError, ya usamos fallback arriba
+      if (error instanceof CircuitBreakerOpenError) {
+        logger.warn('Circuit breaker abierto - usando fallback');
+        return await this.getLastAvailablePrices(instrumentsList);
+      }
+
+      // Para otros errores, loguear y usar fallback
+      logger.error({ 
+        err: error,
+        circuitState: this.circuitBreaker.getState(),
+        metrics: this.circuitBreaker.getMetrics()
+      }, 'Error obteniendo precios');
       
-      // En caso de error, intentar obtener precios del último snapshot disponible
+      // Si el circuit breaker se abrió debido a este error, usar fallback
+      if (this.circuitBreaker.isOpen()) {
+        logger.warn('🔄 Circuit breaker se abrió - usando últimos precios disponibles...');
+        return await this.getLastAvailablePrices(instrumentsList);
+      }
+
+      // Si aún no está abierto pero falló, intentar fallback de todas formas
       logger.warn('🔄 Intentando usar últimos precios disponibles...');
       return await this.getLastAvailablePrices(instrumentsList);
     }
@@ -525,8 +569,8 @@ export async function runPriceBackfillJob(days: number = 365): Promise<void> {
           const snapshotsToInsert = (records as HistoricalRecord[]).map((record: HistoricalRecord) => ({
             instrumentId: instrument.id,
             asOfDate: record.date,
-            closePrice: record.close_price,
-            currency: record.symbol === symbol ? instrument.currency : 'USD',
+            closePrice: record.price,
+            currency: record.currency || instrument.currency || 'USD',
             source: 'yfinance'
           }));
 

@@ -21,3 +21,4 @@ export { Modal, ModalHeader, ModalFooter, ModalTitle, ModalDescription, ModalCon
 export { Spinner, LoadingOverlay, type SpinnerProps, type LoadingOverlayProps } from './Spinner';
 export { Toast, ToastAction, ToastClose, type ToastProps } from './Toast';
 export { Tooltip, type TooltipProps } from './Tooltip';
+export { Drawer, type DrawerProps } from './Drawer';

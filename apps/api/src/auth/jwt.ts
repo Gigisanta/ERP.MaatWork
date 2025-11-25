@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import type { AuthUser } from './types';
+import { ROLES, type UserRole } from './types';
 
 const JWT_ISSUER = 'cactus-api';
 const JWT_AUDIENCE = 'cactus-web';
@@ -9,7 +10,19 @@ function getSecretKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
+/**
+ * Validar que un role sea válido
+ */
+function isValidRole(role: unknown): role is UserRole {
+  return typeof role === 'string' && ROLES.includes(role as UserRole);
+}
+
 export async function signUserToken(user: AuthUser, expiresIn: string = '7d'): Promise<string> {
+  // Validar que el role esté en ROLES antes de crear token
+  if (!isValidRole(user.role)) {
+    throw new Error(`Invalid role: ${user.role}. Must be one of: ${ROLES.join(', ')}`);
+  }
+
   const token = await new SignJWT({
     role: user.role,
     email: user.email,
@@ -34,10 +47,16 @@ export async function verifyUserToken(token: string): Promise<AuthUser> {
   const id = payload.sub as string | undefined;
   if (!id) throw new Error('invalid token: missing sub');
 
+  // Validar role contra ROLES permitidos
+  const role = payload.role;
+  if (!isValidRole(role)) {
+    throw new Error(`Invalid role in token: ${role}. Must be one of: ${ROLES.join(', ')}`);
+  }
+
   const user: AuthUser = {
     id,
     email: (payload.email as string) || '',
-    role: (payload.role as any) || 'advisor'
+    role
   };
   const name = payload.fullName as string | undefined;
   if (name !== undefined) {

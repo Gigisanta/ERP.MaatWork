@@ -1,9 +1,9 @@
 /**
  * Cliente API centralizado
  * 
- * AI_DECISION: Abstracción centralizada de fetch
- * Justificación: Elimina duplicación, manejo consistente de errores, retry logic
- * Impacto: 15+ bloques de código duplicado eliminados
+ * AI_DECISION: Migración a cookies httpOnly exclusivas
+ * Justificación: Más seguro (inmune a XSS), simplifica código (sin dual storage)
+ * Impacto: Breaking change - requiere re-login de usuarios activos
  */
 
 import type { ApiResponse, UserApiResponse } from '@/types';
@@ -24,60 +24,32 @@ interface RequestConfig {
 
 class ApiClient {
   private config: RequestConfig;
-  private tokenKey = 'token';
-  private refreshTokenKey = 'refreshToken';
+  private isRefreshing: boolean = false;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(configOverride?: Partial<RequestConfig>) {
     this.config = {
       baseUrl: config.apiUrl,
       timeout: config.apiTimeout,
-      retries: 1,
+      retries: 2, // AI_DECISION: Aumentar retries por defecto de 1 a 2 (3 intentos totales)
+      // Justificación: Mejor resiliencia ante errores transitorios de red
+      // Impacto: Más intentos antes de fallar, mejor UX en condiciones de red inestable
       ...configOverride,
     };
-  }
-
-  /**
-   * Obtener token de autenticación
-   */
-  private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  /**
-   * Guardar token
-   */
-  private setToken(token: string): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(this.tokenKey, token);
-  }
-
-  /**
-   * Eliminar token
-   */
-  private clearToken(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.refreshTokenKey);
   }
 
   /**
    * Construir headers
    */
   private buildHeaders(options: RequestOptions = {}): HeadersInit {
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(options.headers as Record<string, string> | undefined),
     };
 
-    // Agregar token si se requiere auth (default: true)
-    const requireAuth = options.requireAuth !== false;
-    if (requireAuth) {
-      const token = this.getToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
+    // ELIMINADO: Authorization header Bearer token
+    // Autenticación ahora es exclusivamente vía cookies httpOnly
 
     return headers;
   }
@@ -98,6 +70,7 @@ class ApiClient {
       const response = await fetch(url, {
         ...options,
         signal: controller.signal,
+        credentials: 'include',  // NUEVO: Incluir cookies en todas las requests
       });
 
       clearTimeout(timeoutId);
@@ -133,25 +106,53 @@ class ApiClient {
           headers,
         });
 
-        // Si es 401, intentar refresh token (solo una vez)
-        if (response.status === 401 && attempt === 0) {
-          const refreshed = await this.tryRefreshToken();
-          if (refreshed) {
-            continue; // Retry con nuevo token
-          } else {
-            // No se pudo refrescar, limpiar y retornar error
-            this.clearToken();
-            throw await createApiErrorFromResponse(response);
-          }
-        }
-
-        // Si no es exitoso, throw error
+        // Si no es exitoso, manejar según código de estado
         if (!response.ok) {
-          throw await createApiErrorFromResponse(response);
+          const error = await createApiErrorFromResponse(response);
+          
+          // AI_DECISION: Manejar 401 con refresh token automático
+          // Justificación: Mejora UX, evita deslogueos por tokens expirados
+          // Solo un refresh por request para evitar loops infinitos
+          // Impacto: Sesiones más largas sin interrupciones
+          if (response.status === 401 && !this.isRefreshing && attempt === 0) {
+            // Solo intentar refresh en el primer intento
+            try {
+              return await this.handle401AuthError<T>(url, options);
+            } catch (refreshError) {
+              // Si el refresh falla, lanzar el error original
+              throw error;
+            }
+          }
+          
+          // AI_DECISION: Extraer Retry-After header para 429
+          // Justificación: Permite respetar el tiempo de espera especificado por el servidor
+          // Impacto: Mejor manejo de rate limits, evita reintentos prematuros
+          if (response.status === 429) {
+            const retryAfter = response.headers.get('Retry-After');
+            if (retryAfter) {
+              // Agregar Retry-After a details para uso en backoff
+              (error as any).retryAfter = retryAfter;
+            }
+          }
+          
+          throw error;
         }
 
-        // Parse response
+        // Parse response and normalize to ApiResponse<T>
         const data = await response.json();
+        // Normalize backend responses that use { ok: boolean, ... } instead of { success }
+        if (data && typeof data === 'object' && !('success' in data) && 'ok' in data) {
+          const ok = Boolean((data as any).ok);
+          const normalized: ApiResponse<T> = {
+            success: ok,
+            data: data as T,
+          };
+          // Propagate error message if present
+          if (!ok && (data as any).error) {
+            normalized.error = (data as any).error as string;
+          }
+          return normalized;
+        }
         return data as ApiResponse<T>;
 
       } catch (error) {
@@ -165,8 +166,43 @@ class ApiClient {
           throw error;
         }
 
-        // Esperar antes de reintentar (backoff exponencial)
-        await this.delay(Math.pow(2, attempt) * 1000);
+        // AI_DECISION: Mejorar backoff para 429 usando Retry-After header
+        // Justificación: Rate limiting puede especificar tiempo de espera exacto
+        // Impacto: Respeta límites del servidor, evita reintentos innecesarios
+        let delayMs: number;
+        if (error instanceof ApiError && error.status === 429) {
+          // Intentar usar Retry-After header si está presente (guardado en error.retryAfter)
+          const retryAfter = (error as any).retryAfter;
+          if (retryAfter) {
+            const retryAfterSeconds = parseInt(retryAfter, 10);
+            if (!isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
+              delayMs = retryAfterSeconds * 1000; // Convertir segundos a ms
+            } else {
+              // Si Retry-After es una fecha HTTP, calcular diferencia
+              const retryAfterDate = new Date(retryAfter);
+              if (!isNaN(retryAfterDate.getTime())) {
+                const now = Date.now();
+                const retryTime = retryAfterDate.getTime();
+                delayMs = Math.max(0, retryTime - now);
+              } else {
+                // Fallback a exponential backoff con jitter
+                const baseDelay = Math.pow(2, attempt) * 1000;
+                const jitter = Math.random() * 1000;
+                delayMs = baseDelay + jitter;
+              }
+            }
+          } else {
+            // Exponential backoff con jitter para evitar thundering herd
+            const baseDelay = Math.pow(2, attempt) * 1000;
+            const jitter = Math.random() * 1000; // 0-1 segundo de jitter
+            delayMs = baseDelay + jitter;
+          }
+        } else {
+          // Exponential backoff estándar para otros errores
+          delayMs = Math.pow(2, attempt) * 1000;
+        }
+
+        await this.delay(delayMs);
       }
     }
 
@@ -177,8 +213,10 @@ class ApiClient {
    * Determinar si se debe reintentar
    */
   private shouldRetry(error: ApiError): boolean {
-    // Solo reintentar errores del servidor o timeout
-    return error.status >= 500 || error.status === 504;
+    // AI_DECISION: Agregar retry para 429 (Too Many Requests)
+    // Justificación: Rate limiting puede ser temporal, retry con backoff apropiado
+    // Impacto: Mejor manejo de rate limits, menos errores visibles al usuario
+    return error.status >= 500 || error.status === 504 || error.status === 429;
   }
 
   /**
@@ -189,31 +227,66 @@ class ApiClient {
   }
 
   /**
-   * Intentar refresh token
+   * Intentar refresh token automáticamente
+   * 
+   * AI_DECISION: Implementar refresh token automático para 401
+   * Justificación: Mejora UX, evita que usuarios sean deslogueados por tokens expirados
+   * Impacto: Sesiones más largas sin interrupciones, mejor experiencia
    */
-  private async tryRefreshToken(): Promise<boolean> {
-    try {
-      const refreshToken = localStorage.getItem(this.refreshTokenKey);
-      if (!refreshToken) return false;
-
-      const response = await fetch(`${this.config.baseUrl}/v1/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!response.ok) return false;
-
-      const data = await response.json();
-      if (data.success && data.data?.token) {
-        this.setToken(data.data.token);
-        return true;
-      }
-
-      return false;
-    } catch {
-      return false;
+  private async refreshToken(): Promise<boolean> {
+    // Si ya hay un refresh en progreso, esperar a que termine
+    if (this.isRefreshing && this.refreshPromise) {
+      return await this.refreshPromise;
     }
+
+    // Prevenir múltiples refreshes simultáneos
+    this.isRefreshing = true;
+    this.refreshPromise = (async () => {
+      try {
+        // Llamar a endpoint de refresh
+        const response = await this.fetchWithTimeout(`${this.config.baseUrl}/v1/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          // Cookie actualizada automáticamente por el servidor
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        // Si falla el refresh, retornar false
+        return false;
+      } finally {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+      }
+    })();
+
+    return await this.refreshPromise;
+  }
+
+  /**
+   * Manejar error 401 intentando refresh token
+   */
+  private async handle401AuthError<T>(
+    url: string,
+    options: RequestOptions
+  ): Promise<ApiResponse<T>> {
+    // Intentar refresh token
+    const refreshed = await this.refreshToken();
+    
+    if (!refreshed) {
+      // Si no se pudo refrescar, lanzar error de autenticación
+      throw new ApiError(401, 'Session expired');
+    }
+
+    // Retry request original después de refresh exitoso
+    return this.requestWithRetry<T>(url, {
+      ...options,
+      retries: 0 // No retry adicional después de refresh
+    });
   }
 
   /**
@@ -242,8 +315,14 @@ class ApiClient {
     const requestOptions: RequestOptions = {
       ...options,
       method: 'POST',
-      ...(body && { body: JSON.stringify(body) }),
     };
+    if (body !== undefined) {
+      if (typeof FormData !== 'undefined' && body instanceof FormData) {
+        requestOptions.body = body as BodyInit;
+      } else {
+        requestOptions.body = JSON.stringify(body);
+      }
+    }
     return this.requestWithRetry<T>(url, requestOptions);
   }
 
@@ -259,8 +338,14 @@ class ApiClient {
     const requestOptions: RequestOptions = {
       ...options,
       method: 'PUT',
-      ...(body && { body: JSON.stringify(body) }),
     };
+    if (body !== undefined) {
+      if (typeof FormData !== 'undefined' && body instanceof FormData) {
+        requestOptions.body = body as BodyInit;
+      } else {
+        requestOptions.body = JSON.stringify(body);
+      }
+    }
     return this.requestWithRetry<T>(url, requestOptions);
   }
 
@@ -276,8 +361,14 @@ class ApiClient {
     const requestOptions: RequestOptions = {
       ...options,
       method: 'PATCH',
-      ...(body && { body: JSON.stringify(body) }),
     };
+    if (body !== undefined) {
+      if (typeof FormData !== 'undefined' && body instanceof FormData) {
+        requestOptions.body = body as BodyInit;
+      } else {
+        requestOptions.body = JSON.stringify(body);
+      }
+    }
     return this.requestWithRetry<T>(url, requestOptions);
   }
 
@@ -298,28 +389,22 @@ class ApiClient {
   /**
    * Login helper
    */
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: UserApiResponse }>> {
-    const response = await this.post<{ token: string; refreshToken?: string; user: UserApiResponse }>(
+  async login(email: string, password: string): Promise<ApiResponse<{ user: UserApiResponse }>> {
+    const response = await this.post<{ user: UserApiResponse }>(
       '/v1/auth/login',
-      { email, password },
+      { identifier: email, password },
       { requireAuth: false }
     );
 
-    if (response.success && response.data?.token) {
-      this.setToken(response.data.token);
-      if (response.data.refreshToken) {
-        localStorage.setItem(this.refreshTokenKey, response.data.refreshToken);
-      }
-    }
-
+    // Cookie ya establecida por backend, solo retornar response
     return response;
   }
 
   /**
    * Logout helper
    */
-  logout(): void {
-    this.clearToken();
+  async logout(): Promise<void> {
+    await this.post('/v1/auth/logout', {});
   }
 }
 

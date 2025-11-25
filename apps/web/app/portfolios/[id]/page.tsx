@@ -17,6 +17,8 @@ import {
   Toast,
   Badge,
   DataTable,
+  Breadcrumbs,
+  BreadcrumbItem,
   type Column,
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -58,7 +60,7 @@ interface CreateLineData {
 }
 
 export default function PortfolioDetailPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
   const params = useParams();
   const templateId = params.id as string;
   
@@ -236,9 +238,15 @@ export default function PortfolioDetailPage() {
     );
   }
 
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { href: '/portfolios', label: 'Carteras' },
+    { href: `/portfolios/${templateId}`, label: template?.name || 'Cartera Modelo' }
+  ];
+
   return (
     <main style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
+      <Breadcrumbs items={breadcrumbItems} />
+      <div style={{ marginBottom: 24, marginTop: 16 }}>
         <h1 style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>
           {template?.name || 'Cartera Modelo'}
         </h1>

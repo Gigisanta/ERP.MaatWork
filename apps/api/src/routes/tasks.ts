@@ -1,7 +1,7 @@
 // REGLA CURSOR: Tasks CRUD - mantener RBAC, data isolation, validación Zod, logging estructurado
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, tasks, taskRecurrences, contacts } from '@cactus/db';
-import { eq, desc, and, isNull, inArray, lte, gte, sql, or } from 'drizzle-orm';
+import { eq, desc, and, isNull, inArray, lte, gte, sql, or, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
 import { z } from 'zod';
@@ -121,7 +121,7 @@ router.get('/',
       // Additional check: user must have access to this specific contact
       const hasContactAccess = await canAccessContact(userId, userRole, contactId as string);
       if (!hasContactAccess) {
-        return res.json({ data: [], total: 0 });
+        return res.json({ success: true, data: [], total: 0 });
       }
       conditions.push(eq(tasks.contactId, contactId as string));
     }
@@ -311,6 +311,10 @@ router.put('/:id',
       return res.status(404).json({ error: 'Task not found' });
     }
 
+    // AI_DECISION: Validar versión en where clause para optimistic locking
+    // Justificación: Previene sobrescribir cambios concurrentes, mejora UX
+    // Si la versión no coincide, el update no afecta ningún registro
+    // Impacto: Frontend debe manejar 409 Conflict y recargar datos
     const [updated] = await db()
       .update(tasks)
       .set({
@@ -318,11 +322,28 @@ router.put('/:id',
         version: existing.version + 1,
         updatedAt: new Date()
       })
-      .where(eq(tasks.id, id))
+      .where(and(
+        eq(tasks.id, id),
+        eq(tasks.version, existing.version) // Validar versión para optimistic locking
+      ))
       .returning();
 
+    // Si no se actualizó ningún registro, significa conflicto de versión
+    if (updated.length === 0) {
+      req.log.warn({ 
+        taskId: id, 
+        expectedVersion: existing.version,
+        message: 'Version conflict detected'
+      }, 'Task update failed due to version conflict');
+      
+      return res.status(409).json({
+        error: 'Version conflict',
+        message: 'El recurso fue modificado por otro usuario. Por favor recarga la página.'
+      });
+    }
+
     req.log.info({ taskId: id }, 'task updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to update task');
     next(err);
@@ -369,7 +390,7 @@ router.post('/:id/complete', requireAuth, async (req: Request, res: Response, ne
     }
 
     req.log.info({ taskId: id }, 'task completed');
-    res.json({ data: task });
+    res.json({ success: true, data: task });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to complete task');
     next(err);
@@ -455,7 +476,7 @@ router.post('/bulk',
     }
 
     req.log.info({ action, affected, taskIds }, 'bulk action completed');
-    res.json({ data: { affected, action } });
+    res.json({ success: true, data: { affected, action } });
   } catch (err) {
     req.log.error({ err }, 'failed bulk action');
     next(err);
@@ -510,7 +531,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
       .returning();
 
     req.log.info({ taskId: id }, 'task deleted');
-    res.json({ data: { id, deleted: true } });
+    res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to delete task');
     next(err);

@@ -1,3 +1,30 @@
+import { render as rtlRender, screen as rtlScreen } from '@testing-library/react';
+import React from 'react';
+import { Header as HeaderComponent, type HeaderProps } from './Header';
+
+describe('Header - Settings item', () => {
+  function renderHeader(extraProps: Partial<HeaderProps> = {}) {
+    return rtlRender(
+      <HeaderComponent
+        user={{ name: 'John Doe', email: 'john@example.com' }}
+        navItems={[]}
+        {...extraProps}
+      />
+    );
+  }
+
+  it('renders Settings as link to /profile', async () => {
+    renderHeader();
+
+    // Open the dropdown by clicking the trigger button
+    const trigger = rtlScreen.getByRole('button', { name: /user menu for john doe/i });
+    trigger.click();
+
+    const settingsLink = await rtlScreen.findByRole('menuitem', { name: /settings/i });
+    expect(settingsLink).toHaveAttribute('href', '/profile');
+  });
+});
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

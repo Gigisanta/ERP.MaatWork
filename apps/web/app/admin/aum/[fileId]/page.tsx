@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getAumFilePreview, getAumFileExportUrl, commitAumFile } from '@/lib/api';
-import { Toast, Button, Text, Badge } from '@cactus/ui';
+import { Toast, Button, Text, Badge, Breadcrumbs, BreadcrumbItem } from '@cactus/ui';
 import ContactUserPicker from '../components/ContactUserPicker';
 import type { ApiErrorWithMessage, AumFile, AumRow } from '@/types';
 
@@ -48,8 +48,15 @@ export default function AumPreviewPage() {
     loadRows();
   }, [fileId]);
 
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { href: '/admin', label: 'Administración' },
+    { href: '/admin/aum', label: 'AUM' },
+    { href: `/admin/aum/${fileId}`, label: file?.originalFilename || 'Vista previa' }
+  ];
+
   return (
     <div className="space-y-4">
+      <Breadcrumbs items={breadcrumbItems} />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Vista previa importación</h2>

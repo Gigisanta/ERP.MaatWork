@@ -153,3 +153,24 @@ export type {
   AssignPortfolioResponse
 } from './portfolio-assignment';
 
+// Metrics types
+export type {
+  BusinessLine,
+  MonthlyMetrics,
+  BusinessLineClosures,
+  StageTransitionTime,
+  MonthlyGoal,
+  SaveMonthlyGoalRequest,
+  ContactsMetricsResponse
+} from './metrics';
+
+// Capacitaciones types
+export type {
+  Capacitacion,
+  CreateCapacitacionRequest,
+  UpdateCapacitacionRequest,
+  ImportCapacitacionesResponse,
+  ListCapacitacionesParams,
+  CapacitacionesListResponse
+} from './capacitaciones';
+

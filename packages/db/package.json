@@ -29,18 +29,23 @@
     "seed:all": "tsx src/seed-all.ts",
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",
     "seed:benchmarks": "tsx src/seed-benchmarks.ts",
+    "seed:full": "tsx src/seed-full.ts",
     "db:init": "tsx src/seed-all.ts",
     "db:reset": "node reset-db.js",
     "db:reset-migrations": "node reset-migrations.js",
     "db:full-reset": "node full-reset.js"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.11.4",
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.24.0",
     "drizzle-orm": "^0.33.0",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "redis": "^5.9.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/pg": "^8.10.2",
     "tsx": "^4.16.2",
     "typescript": "^5.9.3"

@@ -1,0 +1,3 @@
+CREATE INDEX IF NOT EXISTS "idx_aum_files_broker_created" ON "aum_import_files" USING btree ("broker","created_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_aum_rows_file_status_created" ON "aum_import_rows" USING btree ("file_id","match_status","created_at");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_aum_rows_status_preferred_created" ON "aum_import_rows" USING btree ("match_status","is_preferred","created_at");

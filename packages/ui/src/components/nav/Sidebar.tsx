@@ -26,6 +26,8 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   onCollapse?: (collapsed: boolean) => void;
   defaultCollapsed?: boolean;
   currentPath?: string;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   LinkComponent?: React.ComponentType<{
     href: string;
     className?: string;
@@ -44,6 +46,8 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
     onCollapse,
     defaultCollapsed = false,
     currentPath = '',
+    isOpen,
+    onOpenChange,
     LinkComponent,
     className,
     ...props 
@@ -85,6 +89,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           collapsed ? 'w-16' : 'w-64',
           className
         )}
+        data-open={isOpen === undefined ? undefined : isOpen}
         {...props}
       >
         {/* Header */}
@@ -95,6 +100,19 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
             </div>
           )}
           
+          {/* Close button for mobile drawer usage */}
+          {onOpenChange && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="lg:hidden mr-2"
+              aria-label="Close menu"
+            >
+              <Icon name="X" size={16} />
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             size="sm"

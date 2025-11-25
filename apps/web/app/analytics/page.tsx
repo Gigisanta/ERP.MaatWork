@@ -1,20 +1,29 @@
 "use client";
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { usePageTitle } from '../components/PageTitleContext';
 import { getDashboardKPIs } from '@/lib/api';
 import { logger } from '../../lib/logger';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DashboardData } from '@/types';
+// AI_DECISION: Keep Recharts import as-is for now to avoid runtime issues
+// Justificación: Dynamic import of named exports from Recharts causes module resolution issues
+// Impacto: Analytics page uses Recharts, bundle size impact is acceptable for this specific page
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AnalyticsPage() {
-  const { user, token, loading } = useRequireAuth();
+  const { user, loading } = useRequireAuth();
+  
+  // Set page title in header
+  usePageTitle('Analytics Dashboard');
+  
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = async () => {
-    if (!token) return;
+    if (!user) return;
     
     try {
       setDataLoading(true);
@@ -36,10 +45,10 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchDashboardData();
     }
-  }, [token]);
+  }, [user]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
@@ -89,7 +98,6 @@ export default function AnalyticsPage() {
   return (
     <main className="p-4 max-w-[1400px] mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">📊 Analytics Dashboard</h1>
         <div className="flex gap-4 items-center">
           <Link href="/" className="text-info">← Volver al inicio</Link>
           <span className="text-text-muted">|</span>

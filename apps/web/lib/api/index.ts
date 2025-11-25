@@ -66,7 +66,8 @@ export {
   getAumFileExportUrl,
   matchAumRow,
   getAumDuplicates,
-  commitAumFile
+  commitAumFile,
+  uploadAdvisorMapping
 } from './aum';
 
 // Contacts methods
@@ -131,7 +132,10 @@ export {
   getManagers,
   updateUserRole,
   updateUserStatus,
-  deleteUser
+  deleteUser,
+  getPendingUsers,
+  approveUser,
+  rejectUser
 } from './users';
 
 // Teams methods
@@ -151,8 +155,27 @@ export {
   getPendingInvitations,
   respondToInvitation,
   inviteTeamMember,
-  getAllTeamMembers
+  getAllTeamMembers,
+  getTeamMetrics,
+  getTeamMemberMetrics
 } from './teams';
+
+// Metrics methods
+export {
+  getContactsMetrics,
+  getMonthlyGoals,
+  saveMonthlyGoals
+} from './metrics';
+
+// Capacitaciones methods
+export {
+  getCapacitaciones,
+  getCapacitacionById,
+  createCapacitacion,
+  updateCapacitacion,
+  deleteCapacitacion,
+  importCapacitacionesCSV
+} from './capacitaciones';
 
 // Export types from teams
 export type {

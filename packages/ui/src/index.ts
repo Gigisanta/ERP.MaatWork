@@ -1,5 +1,3 @@
-import React from 'react';
-
 // AI_DECISION: Replace barrel exports with specific exports for tree-shaking
 // Justificación: Next.js cannot tree-shake unused components with export * syntax
 // Impacto: First Load JS reduction ~30-50KB by eliminating unused UI components
@@ -56,9 +54,14 @@ export { Modal, ModalHeader, ModalFooter, ModalTitle, ModalDescription, ModalCon
 export { Spinner, LoadingOverlay, type SpinnerProps, type LoadingOverlayProps } from './components/feedback/Spinner';
 export { Toast, ToastAction, ToastClose, type ToastProps } from './components/feedback/Toast';
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip';
+export { Drawer, type DrawerProps } from './components/feedback/Drawer';
 
 // Theme Provider - specific export (Client Component)
 export { ThemeProvider, useTheme } from './hooks/useTheme';
 
 // Exportar estilos
 import './styles/index.css';
+
+// Design tokens & responsive utils
+export { breakpoints, type Breakpoint, type ResponsiveProp } from './tokens/breakpoints';
+export { buildResponsiveClasses } from './utils/responsive';

@@ -12,15 +12,19 @@
     },
     "./styles": "./dist/styles/index.css",
     "./styles.css": "./dist/styles/index.css",
-    "./tailwind-preset": "./dist/tailwind-preset.js"
+    "./tailwind-preset": {
+      "require": "./dist/tailwind-preset.js",
+      "import": "./dist/tailwind-preset.js"
+    }
   },
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc && pnpm run build:styles",
+    "build": "tsc && pnpm run build:styles && pnpm run build:link-styles",
     "build:styles": "copyfiles -u 2 src/styles/**/*.css dist/styles",
+    "build:link-styles": "node -e \"try { require('fs').symlinkSync('styles/index.css', 'dist/styles.css', 'file'); } catch(e) { require('fs').copyFileSync('dist/styles/index.css', 'dist/styles.css'); }\"",
     "dev": "echo 'UI package does not need dev mode'",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -39,6 +43,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-virtual": "^3.11.4",
     "clsx": "^2.0.0",
     "lucide-react": "^0.292.0"
   },

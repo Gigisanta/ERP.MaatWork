@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -42,9 +42,33 @@ export const Select = React.forwardRef<
   required = false,
   ..._props
 }, ref) => {
-  const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const selectId = id || generatedId;
   const helperId = helperText ? `${selectId}-helper` : undefined;
   const errorId = error ? `${selectId}-error` : undefined;
+
+  // Filter out items with empty string values (Radix UI Select doesn't allow empty string values)
+  // Also filter out items with undefined/null values for safety
+  const validItems = React.useMemo(() => {
+    return items.filter(item => {
+      if (item.value === '' || item.value == null) {
+        // Only warn in development (when window is available and not in production build)
+        if (typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app')) {
+          console.warn(
+            `Select component received an item with invalid value (empty string or null/undefined):`,
+            item,
+            `This item will be filtered out.`
+          );
+        }
+        return false;
+      }
+      return true;
+    });
+  }, [items]);
+
+  // Normalize empty string values to undefined for Radix UI compatibility
+  const normalizedValue = value === '' ? undefined : value;
+  const normalizedDefaultValue = defaultValue === '' ? undefined : defaultValue;
 
   return (
     <div className="space-y-1">
@@ -59,8 +83,8 @@ export const Select = React.forwardRef<
       )}
       
       <SelectPrimitive.Root
-        value={value}
-        defaultValue={defaultValue}
+        value={normalizedValue}
+        defaultValue={normalizedDefaultValue}
         onValueChange={onValueChange}
         disabled={disabled}
         required={required}
@@ -104,7 +128,7 @@ export const Select = React.forwardRef<
             sideOffset={4}
           >
             <SelectPrimitive.Viewport className="p-1 bg-surface">
-              {items.map((item) => (
+              {validItems.map((item) => (
                 <SelectPrimitive.Item
                   key={item.value}
                   value={item.value}

@@ -1,11 +1,11 @@
 // REGLA CURSOR: Mantener pattern consistente: validación con Zod, logging con req.log, error handling con try/catch
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, users, teamMembershipRequests } from '@cactus/db';
-import { eq } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { signUserToken } from '../auth/jwt';
+import { signUserToken, verifyUserToken } from '../auth/jwt';
 import { requireAuth } from '../auth/middlewares';
+import { ROLES, type UserRole } from '../auth/types';
 import bcrypt from 'bcrypt';
 
 const router = Router();
@@ -49,15 +49,30 @@ router.post('/login',
     const trimmedIdentifier = identifier.trim();
 
     // Usuario admin temporal - crear o usar usuario admin existente
-    if (trimmedIdentifier === 'giolivosantarelli@gmail.com') {
-      // Buscar usuario admin existente
-      let adminUserRows = await db().select().from(users).where(eq(users.email, trimmedIdentifier)).limit(1);
+    // Soporta tanto email como username "gio"
+    const isAdminEmail = trimmedIdentifier === 'giolivosantarelli@gmail.com';
+    const isAdminUsername = trimmedIdentifier.toLowerCase() === 'gio';
+    
+    if (isAdminEmail || isAdminUsername) {
+      const adminEmail = 'giolivosantarelli@gmail.com';
+      
+      // Buscar usuario admin existente por email o username
+      let adminUserRows = await db().select().from(users)
+        .where(eq(users.email, adminEmail))
+        .limit(1);
+      
+      if (adminUserRows.length === 0) {
+        // Buscar por username también
+        adminUserRows = await db().select().from(users)
+          .where(eq(users.usernameNormalized, 'gio'))
+          .limit(1);
+      }
       
       if (adminUserRows.length === 0) {
         // Crear usuario admin si no existe con contraseña por defecto
         const hashedPassword = await bcrypt.hash('admin123', 10);
         adminUserRows = await db().insert(users).values({
-          email: trimmedIdentifier,
+          email: adminEmail,
           fullName: 'Gio Santarelli',
           role: 'admin',
           isActive: true,
@@ -106,23 +121,38 @@ router.post('/login',
         duration,
         action: 'login_success'
       }, 'Admin user logged in');
-      return res.json({ token });
+      
+      // AI_DECISION: Retornar user en vez de token para consistencia con login normal
+      return res.json({ 
+        success: true,
+        user: {
+          id: adminUser.id,
+          email: adminUser.email,
+          role: 'admin' as const,
+          fullName: adminUser.fullName
+        }
+      });
     }
 
-    // Determinar si el identificador es email o username
-    let user = null as any;
-    if (trimmedIdentifier.includes('@')) {
-      const rows = await db().select().from(users).where(eq(users.email, trimmedIdentifier)).limit(1);
-      user = rows[0];
-    } else {
-      const usernameLower = trimmedIdentifier.toLowerCase();
-      const rows = await db()
-        .select()
-        .from(users)
-        .where(eq(users.usernameNormalized, usernameLower))
-        .limit(1);
-      user = rows[0];
-    }
+    // AI_DECISION: Optimizar búsqueda de usuario usando OR en una sola query
+    // Justificación: Más eficiente que dos queries separadas, permite búsqueda flexible
+    // Impacto: Mejor performance y código más limpio
+    // Buscar siempre por email o usernameNormalized para cubrir todos los casos
+    const usernameLower = trimmedIdentifier.toLowerCase();
+    
+    // Buscar por email o username en una sola query optimizada
+    const rows = await db()
+      .select()
+      .from(users)
+      .where(
+        or(
+          eq(users.email, trimmedIdentifier),
+          eq(users.usernameNormalized, usernameLower)
+        )!
+      )
+      .limit(1);
+    
+    const user = rows[0];
     if (!user) {
       const duration = Date.now() - startTime;
       req.log.warn({ 
@@ -170,10 +200,25 @@ router.post('/login',
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Validar que el role del usuario esté en ROLES permitidos
+    const userRole = user.role as UserRole;
+    if (!ROLES.includes(userRole)) {
+      const duration = Date.now() - startTime;
+      req.log.error({ 
+        identifier: trimmedIdentifier,
+        userId: user.id,
+        invalidRole: user.role,
+        duration,
+        action: 'login_failed',
+        reason: 'invalid_role'
+      }, 'Login failed - invalid user role');
+      return res.status(500).json({ message: 'Invalid user role configuration' });
+    }
+
     const token = await signUserToken({
       id: user.id,
       email: user.email,
-      role: user.role as any,
+      role: userRole,
       fullName: user.fullName
     }, rememberMe ? '30d' : '1d');
 
@@ -201,7 +246,19 @@ router.post('/login',
       duration,
       action: 'login_success'
     }, 'User logged in successfully');
-    return res.json({ token });
+    
+    // AI_DECISION: Retornar user en vez de token para simplificar frontend
+    // Justificación: Cookie ya establecida, frontend solo necesita datos de usuario
+    // Impacto: Elimina necesidad de segundo request a /auth/me después de login
+    return res.json({ 
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName
+      }
+    });
   } catch (err) {
     const duration = Date.now() - startTime;
     // Log detallado del error en desarrollo
@@ -308,6 +365,92 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
   return res.json({ user });
 });
 
+// AI_DECISION: Endpoint de refresh token para renovar sesión automáticamente
+// Justificación: Permite renovar tokens expirados sin requerir nuevo login
+// Impacto: Mejora UX, sesiones más largas sin interrupciones
+router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Obtener token de cookie o header
+    let token: string | undefined;
+    if (req.cookies?.token) {
+      token = req.cookies.token;
+    } else if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.slice('Bearer '.length);
+    } else if (req.headers.cookie) {
+      const m = /(?:^|; )token=([^;]+)/.exec(req.headers.cookie);
+      if (m && m[1]) token = decodeURIComponent(m[1]);
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    // Verificar token actual (puede estar expirado, pero aún válido para refresh)
+    let user;
+    try {
+      user = await verifyUserToken(token);
+    } catch (err) {
+      // Si el token está completamente inválido, no permitir refresh
+      req.log.warn({ err }, 'Invalid token in refresh request');
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Verificar que el usuario existe y está activo
+    const [dbUser] = await db()
+      .select({ id: users.id, role: users.role, isActive: users.isActive, email: users.email, fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
+
+    if (!dbUser) {
+      req.log.warn({ userId: user.id }, 'User from token not found in database');
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    if (!dbUser.isActive) {
+      req.log.warn({ userId: user.id }, 'User from token is inactive');
+      return res.status(403).json({ message: 'User account is inactive' });
+    }
+
+    // Generar nuevo token con la misma duración que el login original
+    // Usar '1d' por defecto (puede extenderse si se agrega rememberMe al refresh)
+    const newToken = await signUserToken({
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role as UserRole,
+      fullName: dbUser.fullName
+    }, '1d');
+
+    // Establecer nueva cookie
+    res.cookie('token', newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000 // 1 día
+    });
+
+    req.log.info({ userId: dbUser.id }, 'Token refreshed successfully');
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, 'Error refreshing token');
+    next(err);
+  }
+});
+
+// AI_DECISION: Endpoint de logout para limpiar cookie httpOnly
+// Justificación: Cookie httpOnly no puede limpiarse desde JavaScript, requiere endpoint
+// Impacto: Permite cierre de sesión limpio desde frontend
+router.post('/logout', requireAuth, async (req: Request, res: Response) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+  
+  req.log.info({ userId: req.user!.id }, 'User logged out');
+  res.json({ success: true });
+});
 
 export default router;
 

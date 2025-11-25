@@ -9,14 +9,70 @@
  * REGLA CURSOR: NO simulated/fictional data (benchmarks, instruments, notification templates)
  */
 
-import { Pool } from 'pg';
 import { db, pipelineStages, lookupTaskStatus, lookupPriority, lookupNotificationType, lookupAssetClass, teams, users, teamMembership } from '@cactus/db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { sql } from 'drizzle-orm';
 import { resolve } from 'node:path';
 import { eq } from 'drizzle-orm';
 import pino from 'pino';
+import { ensureDefaultPipelineStages } from './utils/pipeline-stages';
 
 const logger = pino({ name: 'db-init' });
+
+/**
+ * Verify database connection before attempting operations
+ * Provides helpful error messages if PostgreSQL is not available
+ */
+async function verifyDatabaseConnection(): Promise<void> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is not set. Please configure it in apps/api/.env');
+  }
+
+  try {
+    // Extract connection info from DATABASE_URL for better error messages
+    const urlMatch = databaseUrl.match(/postgresql:\/\/(?:([^:]+):([^@]+)@)?([^:]+):(\d+)\/(.+)/);
+    const host = urlMatch?.[3] || 'localhost';
+    const port = urlMatch?.[4] || '5432';
+
+    // Try to connect using a simple query via singleton db
+    await db().execute(sql`SELECT 1`);
+    logger.debug({ host, port }, '✅ Database connection verified');
+  } catch (error: unknown) {
+    const err = error as { 
+      message?: string; 
+      code?: string; 
+      errno?: number;
+      address?: string;
+      port?: number;
+    };
+    const code = err?.code || 'UNKNOWN';
+    
+    if (code === 'ECONNREFUSED' || err?.errno === -61) {
+      const urlMatch = databaseUrl.match(/postgresql:\/\/(?:([^:]+):([^@]+)@)?([^:]+):(\d+)\/(.+)/);
+      const host = urlMatch?.[3] || 'localhost';
+      const port = urlMatch?.[4] || '5432';
+      
+      logger.error({ 
+        host, 
+        port,
+        code,
+        hint: 'PostgreSQL connection refused. Please ensure:',
+        checks: [
+          '1. Docker container is running: docker compose up -d db',
+          '2. Wait a few seconds for PostgreSQL to start',
+          '3. Check container status: docker compose ps',
+          '4. View container logs: docker compose logs db',
+          '5. Verify DATABASE_URL in apps/api/.env is correct'
+        ]
+      }, '❌ Cannot connect to PostgreSQL');
+      
+      throw new Error(`Database connection refused at ${host}:${port}. Please ensure PostgreSQL is running (docker compose up -d db).`);
+    }
+    
+    throw error;
+  }
+}
 
 /**
  * Run pending database migrations using Drizzle migrator
@@ -34,116 +90,79 @@ async function runMigrations(): Promise<void> {
   }
 
   logger.info({ migrationsFolder }, '🔄 Running database migrations');
-  await migrate(db(), { migrationsFolder });
-  logger.info('✅ Migrations completed');
+  try {
+    await migrate(db(), { migrationsFolder });
+    logger.info('✅ Migrations completed');
+  } catch (error: unknown) {
+    const err = error as { 
+      message?: string; 
+      code?: string; 
+      severity?: string;
+      errno?: number;
+      syscall?: string;
+      address?: string;
+      port?: number;
+      aggregateErrors?: Array<{ code?: string; message?: string; address?: string; port?: number }>;
+    };
+    const message = err?.message || 'Unknown error';
+    const code = err?.code || 'UNKNOWN';
+    
+    // Detect ECONNREFUSED (connection refused) errors
+    const isConnectionRefused = 
+      code === 'ECONNREFUSED' ||
+      err?.errno === -61 ||
+      err?.code === 'ECONNREFUSED' ||
+      message.includes('ECONNREFUSED') ||
+      (err?.aggregateErrors?.some(e => e.code === 'ECONNREFUSED'));
+
+    // Detect authentication and other connection errors
+    const isAuthError = 
+      code === '28000' || 
+      message.includes('does not exist') || 
+      message.includes('authentication failed');
+
+    if (isConnectionRefused || isAuthError) {
+      const port = err?.port || err?.aggregateErrors?.[0]?.port || 5433;
+      const address = err?.address || err?.aggregateErrors?.[0]?.address || 'localhost';
+      
+      logger.error({ 
+        err: error,
+        code,
+        port,
+        address,
+        hint: 'Database connection failed. Common causes:',
+        checks: [
+          '1. Ensure PostgreSQL is running: docker compose up -d db',
+          '2. Wait a few seconds after starting Docker container',
+          '3. Verify DATABASE_URL in apps/api/.env matches your PostgreSQL setup',
+          '4. For Docker: ensure container is running: docker compose ps',
+          '5. Check PostgreSQL logs: docker compose logs db'
+        ]
+      }, '❌ Database connection failed - cannot run migrations');
+      
+      const errorMessage = isConnectionRefused
+        ? `Database connection refused at ${address}:${port}. Please ensure PostgreSQL is running (docker compose up -d db).`
+        : `Database connection failed: ${message}. Please ensure PostgreSQL is running and DATABASE_URL is correct.`;
+      
+      throw new Error(errorMessage);
+    }
+    
+    logger.error({ err: error, code }, '❌ Migration failed');
+    throw error;
+  }
 }
 
 /**
  * Seed the 7 required pipeline stages
- * Uses upsert logic to avoid duplicates
+ * Uses centralized default stages configuration
+ * 
+ * AI_DECISION: Usar función helper centralizada en lugar de duplicar lógica
+ * Justificación: Evita duplicación, fuente única de verdad para etapas por defecto
+ * Impacto: Mantenibilidad mejorada, cambios futuros solo en un lugar
  */
 async function seedPipelineStages(): Promise<void> {
   logger.info('🌱 Seeding pipeline stages...');
-  
-  const stages = [
-    {
-      name: 'Prospecto',
-      description: 'Contacto inicial identificado',
-      order: 1,
-      color: '#3b82f6', // Azul
-      wipLimit: null
-    },
-    {
-      name: 'Contactado',
-      description: 'Primer contacto realizado',
-      order: 2,
-      color: '#8b5cf6', // Morado
-      wipLimit: null
-    },
-    {
-      name: 'Primera reunion',
-      description: 'Primera reunión agendada o realizada',
-      order: 3,
-      color: '#f59e0b', // Amarillo/Naranja
-      wipLimit: null
-    },
-    {
-      name: 'Segunda reunion',
-      description: 'Segunda reunión agendada o realizada',
-      order: 4,
-      color: '#f97316', // Naranja
-      wipLimit: null
-    },
-    {
-      name: 'Cliente',
-      description: 'Cliente activo',
-      order: 5,
-      color: '#10b981', // Verde
-      wipLimit: null
-    },
-    {
-      name: 'Cuenta vacia',
-      description: 'Cliente sin saldo',
-      order: 6,
-      color: '#6b7280', // Gris
-      wipLimit: null
-    },
-    {
-      name: 'Caido',
-      description: 'Cliente perdido o inactivo',
-      order: 7,
-      color: '#ef4444', // Rojo
-      wipLimit: null
-    }
-  ];
-
-  const dbInstance = db();
-  
-  for (const stage of stages) {
-    try {
-      // Check if stage exists by name
-      const existing = await dbInstance
-        .select()
-        .from(pipelineStages)
-        .where(eq(pipelineStages.name, stage.name))
-        .limit(1);
-
-      if (existing.length > 0) {
-        // Update existing stage
-        await dbInstance
-          .update(pipelineStages)
-          .set({
-            description: stage.description,
-            order: stage.order,
-            color: stage.color,
-            wipLimit: stage.wipLimit,
-            isActive: true,
-            updatedAt: new Date()
-          })
-          .where(eq(pipelineStages.id, existing[0].id));
-
-        logger.debug(`Updated pipeline stage: ${stage.name}`);
-      } else {
-        // Create new stage
-        await dbInstance
-          .insert(pipelineStages)
-          .values({
-            name: stage.name,
-            description: stage.description,
-            order: stage.order,
-            color: stage.color,
-            wipLimit: stage.wipLimit,
-            isActive: true
-          });
-
-        logger.debug(`Created pipeline stage: ${stage.name}`);
-      }
-    } catch (error) {
-      logger.error({ err: error, stage: stage.name }, `Error processing pipeline stage: ${stage.name}`);
-      throw error;
-    }
-  }
-  
+  await ensureDefaultPipelineStages(false); // false para mostrar logs durante inicialización
   logger.info('✅ Pipeline stages seeded successfully');
 }
 
@@ -239,69 +258,70 @@ async function seedLookupTables(): Promise<void> {
 
 /** Ensure critical auth columns and backfill username for admin if missing */
 async function ensureCriticalColumns(): Promise<void> {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  const client = await pool.connect();
-  try {
-    await client.query(
-      `ALTER TABLE IF EXISTS public.users
+  const dbi = db();
+  await dbi.execute(sql`ALTER TABLE IF EXISTS public.users
        ADD COLUMN IF NOT EXISTS username text,
-       ADD COLUMN IF NOT EXISTS username_normalized text;`
-    );
-    await client.query(
-      `DO $$ BEGIN
+       ADD COLUMN IF NOT EXISTS username_normalized text;`);
+  await dbi.execute(sql`DO $$ BEGIN
          IF NOT EXISTS (
            SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='users_username_normalized_unique'
          ) THEN
            CREATE UNIQUE INDEX users_username_normalized_unique
              ON public.users (username_normalized) WHERE username_normalized IS NOT NULL;
          END IF;
-       END $$;`
-    );
-    await client.query(
-      `DO $$ BEGIN
+       END $$;`);
+  await dbi.execute(sql`DO $$ BEGIN
          IF NOT EXISTS (
            SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='idx_users_username_normalized'
          ) THEN
            CREATE INDEX idx_users_username_normalized
              ON public.users (username_normalized) WHERE username_normalized IS NOT NULL;
          END IF;
-       END $$;`
-    );
-    // Backfill for admin if created without username fields
-    await client.query(
-      `UPDATE public.users
+       END $$;`);
+  // Backfill for admin if created without username fields
+  await dbi.execute(sql`UPDATE public.users
        SET username = 'gio', username_normalized = 'gio'
-       WHERE email = 'giolivosantarelli@gmail.com' AND (username IS NULL OR username_normalized IS NULL);`
-    );
-  } finally {
-    client.release();
-    await pool.end();
-  }
+       WHERE email = 'giolivosantarelli@gmail.com' AND (username IS NULL OR username_normalized IS NULL);`);
 }
 
 export async function initializeDatabase(): Promise<void> {
   logger.info('🚀 Starting SYSTEM-ESSENTIAL database initialization...');
   
   try {
-    // Step 1: Run migrations
+    // Step 1: Verify database connection
+    logger.debug('Step 1/6: Verifying database connection...');
+    await verifyDatabaseConnection();
+    
+    // Step 2: Run migrations
+    logger.debug('Step 2/6: Running migrations...');
     await runMigrations();
     
-    // Step 2: Seed pipeline stages (SYSTEM-REQUIRED)
+    // Step 3: Seed pipeline stages (SYSTEM-REQUIRED)
+    logger.debug('Step 3/6: Seeding pipeline stages...');
     await seedPipelineStages();
     
-    // Step 3: Seed lookup tables (SYSTEM-REQUIRED)
+    // Step 4: Seed lookup tables (SYSTEM-REQUIRED)
+    logger.debug('Step 4/6: Seeding lookup tables...');
     await seedLookupTables();
 
-    // Step 4: Ensure critical columns exist for auth to work in dev
+    // Step 5: Ensure critical columns exist for auth to work in dev
+    logger.debug('Step 5/6: Ensuring critical columns...');
     await ensureCriticalColumns();
     
-    // Step 5: Seed idempotent team "cactus"
+    // Step 6: Seed idempotent team "cactus"
+    logger.debug('Step 6/6: Seeding cactus team...');
     await seedCactusTeam();
     
     logger.info('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
     logger.info('ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios');
   } catch (error) {
-    logger.error({ err: error }, '❌ Database initialization failed');
+    const err = error as { message?: string; code?: string };
+    logger.error({ 
+      err: error,
+      message: err?.message,
+      code: err?.code,
+      troubleshooting: 'See error details above for specific failure step'
+    }, '❌ Database initialization failed');
     throw error;
   }
 }

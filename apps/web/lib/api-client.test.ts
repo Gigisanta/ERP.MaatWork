@@ -139,25 +139,7 @@ describe('ApiClient', () => {
       );
     });
 
-    it('debería incluir Authorization header si hay token', async () => {
-      // Mock localStorage.getItem para retornar el token
-      const localStorageGetItem = vi.fn((key: string) => {
-        if (key === 'token') {
-          return 'test-token';
-        }
-        return null;
-      });
-      
-      // Reemplazar el mock del localStorage del setup
-      Object.defineProperty(window, 'localStorage', {
-        value: {
-          ...window.localStorage,
-          getItem: localStorageGetItem,
-        },
-        writable: true,
-        configurable: true,
-      });
-
+    it('debería incluir credentials include para cookies httpOnly', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true }),
@@ -167,16 +149,10 @@ describe('ApiClient', () => {
 
       expect(mockFetch).toHaveBeenCalled();
       const callArgs = mockFetch.mock.calls[0];
-      const headers = callArgs[1]?.headers;
+      const options = callArgs[1];
       
-      // Headers puede ser un objeto plano o un objeto Headers
-      if (headers instanceof Headers) {
-        expect(headers.get('Authorization')).toBe('Bearer test-token');
-      } else if (headers && typeof headers === 'object') {
-        expect((headers as Record<string, string>)['Authorization']).toBe('Bearer test-token');
-      } else {
-        throw new Error('Headers format not recognized');
-      }
+      // Verificar que credentials: 'include' está presente
+      expect(options.credentials).toBe('include');
     });
   });
 
@@ -200,6 +176,33 @@ describe('ApiClient', () => {
           body: JSON.stringify(requestBody),
         })
       );
+    });
+
+    it('debería soportar FormData sin forzar Content-Type', async () => {
+      const formData = new FormData();
+      formData.append('file', new Blob(['test'], { type: 'text/plain' }), 'test.txt');
+
+      // Capture options passed to fetch
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      } as Response);
+
+      const client = new ApiClient({ baseUrl: 'http://localhost:3001' });
+      await client.post('/upload', formData);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3001/upload',
+        expect.objectContaining({
+          method: 'POST',
+          body: formData,
+        })
+      );
+
+      // Ensure Content-Type header is not set explicitly (browser will set multipart boundary)
+      const options = mockFetch.mock.calls[0][1] as RequestInit;
+      const headers = new Headers(options.headers as HeadersInit | undefined);
+      expect(headers.get('Content-Type')).toBeNull();
     });
   });
 

@@ -1,7 +1,14 @@
 // REGLA CURSOR: Teams management - mantener RBAC, validación Zod, logging estructurado, data isolation
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactus/db';
-import { eq, and, notInArray } from 'drizzle-orm';
+import { 
+  contacts, 
+  aumSnapshots, 
+  clientPortfolioAssignments, 
+  portfolioTemplates,
+  portfolioMonitoringSnapshot
+} from '@cactus/db/schema';
+import { eq, and, notInArray, sum, count, desc, gte, sql } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { getUserAccessScope, getTeamMembers, getUserTeams } from '../auth/authorization';
 import { z } from 'zod';
@@ -36,35 +43,55 @@ router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunct
 
     // Get user's teams
     const userTeams = await getUserTeams(userId, userRole);
+    
+    if (!userTeams || userTeams.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
 
     // For each team, get the team details and members
     const teamsWithDetails = await Promise.all(
       userTeams.map(async (team) => {
-        const [teamDetails] = await db()
-          .select()
-          .from(teams)
-          .where(eq(teams.id, team.id))
-          .limit(1);
+        try {
+          const [teamDetails] = await db()
+            .select()
+            .from(teams)
+            .where(eq(teams.id, team.id))
+            .limit(1);
 
-        let members: Array<{ id: string; email: string; fullName: string; role: string }> = [];
-        
-        // If user is manager of this team, get members
-        if (team.role === 'manager') {
-          members = await getTeamMembers(userId);
-        } else if (userRole === 'admin' && teamDetails?.managerUserId) {
-          // Admins can see members of all teams
-          members = await getTeamMembers(teamDetails.managerUserId);
+          let members: Array<{ id: string; email: string; fullName: string; role: string }> = [];
+          
+          // Get members for this specific team
+          if (teamDetails && (team.role === 'manager' || userRole === 'admin')) {
+            // Query members directly for this team by teamId
+            members = await db()
+              .select({
+                id: users.id,
+                email: users.email,
+                fullName: users.fullName,
+                role: teamMembership.role
+              })
+              .from(users)
+              .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
+              .where(eq(teamMembership.teamId, team.id));
+          }
+
+          return {
+            ...team,
+            ...(teamDetails || {}),
+            members: members || []
+          };
+        } catch (teamErr) {
+          req.log.error({ err: teamErr, teamId: team.id }, 'error processing team');
+          // Return team with empty members on error
+          return {
+            ...team,
+            members: []
+          };
         }
-
-        return {
-          ...team,
-          ...teamDetails,
-          members
-        };
       })
     );
 
-    res.json({ data: teamsWithDetails });
+    res.json({ success: true, data: teamsWithDetails });
   } catch (err) {
     req.log.error({ err }, 'failed to list teams');
     next(err);
@@ -103,7 +130,7 @@ router.get('/my-teams', requireAuth, async (req: Request, res: Response, next: N
       })
     );
 
-    res.json({ data: teamsWithDetails });
+    res.json({ success: true, data: teamsWithDetails });
   } catch (err) {
     req.log.error({ err }, 'failed to get user teams');
     next(err);
@@ -127,9 +154,21 @@ router.get('/:id/members', requireAuth, async (req: Request, res: Response, next
       return res.status(403).json({ error: 'Access denied. Only team managers can view team members.' });
     }
 
-    const members = await getTeamMembers(userId);
+    // Get members for this specific team by teamId
+    const members = await db()
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        role: teamMembership.role,
+        teamId: teamMembership.teamId,
+        userId: teamMembership.userId
+      })
+      .from(users)
+      .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
+      .where(eq(teamMembership.teamId, id));
     
-    res.json({ data: members });
+    res.json({ success: true, data: members });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to get team members');
     next(err);
@@ -173,7 +212,7 @@ router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunc
       .onConflictDoNothing();
 
     req.log.info({ teamId: newTeam.id }, 'team created');
-    res.status(201).json({ data: newTeam });
+    res.status(201).json({ success: true, data: newTeam });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: err.errors });
@@ -217,12 +256,54 @@ router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     }
 
     req.log.info({ teamId: id }, 'team updated');
-    res.json({ data: updated });
+    res.json({ success: true, data: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: err.errors });
     }
     req.log.error({ err, teamId: req.params.id }, 'failed to update team');
+    next(err);
+  }
+});
+
+// ==========================================================
+// DELETE /teams/:id - Eliminar equipo (solo admin o manager del equipo)
+// ==========================================================
+router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Check if user can manage this team
+    if (userRole !== 'admin') {
+      const userTeams = await getUserTeams(userId, userRole);
+      const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
+      
+      if (!isManager) {
+        return res.status(403).json({ error: 'Access denied. Only team managers can delete this team.' });
+      }
+    }
+
+    // Delete team memberships first
+    await db()
+      .delete(teamMembership)
+      .where(eq(teamMembership.teamId, id));
+
+    // Delete the team
+    const [deleted] = await db()
+      .delete(teams)
+      .where(eq(teams.id, id))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+
+    req.log.info({ teamId: id }, 'team deleted');
+    res.json({ success: true, data: { deleted: true } });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id }, 'failed to delete team');
     next(err);
   }
 });
@@ -306,7 +387,7 @@ router.delete('/:id/members/:userId', requireAuth, async (req: Request, res: Res
       ));
 
     req.log.info({ teamId: id, memberUserId }, 'member removed from team');
-    res.json({ data: { removed: true } });
+    res.json({ success: true, data: { removed: true } });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to remove team member');
     next(err);
@@ -345,7 +426,7 @@ router.get('/membership-requests', requireAuth, async (req: Request, res: Respon
       .where(and(eq(teamMembershipRequests.managerId, userId), eq(teamMembershipRequests.status, 'pending')))
       .orderBy(teamMembershipRequests.createdAt);
 
-    res.json({ data: requests });
+    res.json({ success: true, data: requests });
   } catch (err) {
     req.log.error({ err }, 'failed to get membership requests');
     next(err);
@@ -380,7 +461,7 @@ router.post('/membership-requests/:id/approve', requireAuth, async (req: Request
     // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
       // If manager is trying to approve an 'invited' record, it's invite-driven; treat as alreadyResolved
-      return res.json({ data: { approved: request.status === 'approved', alreadyResolved: true } });
+      return res.json({ success: true, data: { approved: request.status === 'approved', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -486,7 +567,7 @@ router.post('/membership-requests/:id/reject', requireAuth, async (req: Request,
 
     // Idempotencia: si ya fue resuelta, devolver 200
     if (request.status !== 'pending') {
-      return res.json({ data: { rejected: request.status === 'rejected', alreadyResolved: true } });
+      return res.json({ success: true, data: { rejected: request.status === 'rejected', alreadyResolved: true } });
     }
 
     // Verificar que el manager actual es el destinatario de la solicitud
@@ -547,6 +628,258 @@ router.delete('/membership-requests/:id', requireAuth, async (req: Request, res:
     return res.json({ ok: true, deleted: true });
   } catch (err) {
     req.log.error({ err, requestId: req.params.id }, 'failed to delete membership request');
+    next(err);
+  }
+});
+
+// ==========================================================
+// GET /teams/:id/metrics - Obtener métricas del equipo
+// ==========================================================
+router.get('/:id/metrics', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Verify user is a manager of this team
+    const userTeams = await getUserTeams(userId, userRole);
+    const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
+
+    if (!isManager && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Only team managers can view team metrics.' });
+    }
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get team members count
+    const memberCountResult = await db()
+      .select({ count: count() })
+      .from(teamMembership)
+      .where(eq(teamMembership.teamId, id));
+
+    // Get AUM total del equipo
+    const [aumResult] = await db()
+      .select({ 
+        totalAum: sum(aumSnapshots.aumTotal) 
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          eq(aumSnapshots.date, today.toISOString().split('T')[0])
+        )
+      );
+
+    // Get client count
+    const [clientCountResult] = await db()
+      .select({ count: count() })
+      .from(contacts)
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          sql`${contacts.deletedAt} IS NULL`
+        )
+      );
+
+    // Get risk distribution
+    const riskDistributionResult = await db()
+      .select({
+        riskLevel: portfolioTemplates.riskLevel,
+        count: count()
+      })
+      .from(contacts)
+      .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
+      .innerJoin(portfolioTemplates, eq(portfolioTemplates.id, clientPortfolioAssignments.templateId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          eq(clientPortfolioAssignments.status, 'active')
+        )
+      )
+      .groupBy(portfolioTemplates.riskLevel);
+
+    // Get AUM trend (last 30 days)
+    const aumTrendResult = await db()
+      .select({
+        date: aumSnapshots.date,
+        totalAum: sum(aumSnapshots.aumTotal)
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
+        )
+      )
+      .groupBy(aumSnapshots.date)
+      .orderBy(aumSnapshots.date);
+
+    // Get portfolios count
+    const [portfolioCountResult] = await db()
+      .select({ count: count() })
+      .from(clientPortfolioAssignments)
+      .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          eq(clientPortfolioAssignments.status, 'active')
+        )
+      );
+
+    res.json({ 
+      success: true, 
+      data: {
+        teamAum: aumResult?.totalAum ? Number(aumResult.totalAum) : 0,
+        memberCount: memberCountResult[0]?.count || 0,
+        clientCount: clientCountResult?.count || 0,
+        portfolioCount: portfolioCountResult?.count || 0,
+        riskDistribution: riskDistributionResult.map(r => ({
+          riskLevel: r.riskLevel,
+          count: Number(r.count)
+        })),
+        aumTrend: aumTrendResult.map(r => ({
+          date: r.date,
+          value: r.totalAum ? Number(r.totalAum) : 0
+        }))
+      }
+    });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id }, 'failed to get team metrics');
+    next(err);
+  }
+});
+
+// ==========================================================
+// GET /teams/:id/members/:memberId/metrics - Obtener métricas del miembro
+// ==========================================================
+router.get('/:id/members/:memberId/metrics', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id, memberId } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Verify user is a manager of this team
+    const userTeams = await getUserTeams(userId, userRole);
+    const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
+
+    if (!isManager && userRole !== 'admin') {
+      return res.status(403).json({ error: 'Access denied. Only team managers can view member metrics.' });
+    }
+
+    // Verify member belongs to this team
+    const [memberCheck] = await db()
+      .select()
+      .from(teamMembership)
+      .where(
+        and(
+          eq(teamMembership.teamId, id),
+          eq(teamMembership.userId, memberId)
+        )
+      )
+      .limit(1);
+
+    if (!memberCheck) {
+      return res.status(404).json({ error: 'Member not found in this team' });
+    }
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get AUM total del asesor
+    const [aumResult] = await db()
+      .select({ 
+        totalAum: sum(aumSnapshots.aumTotal) 
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(aumSnapshots.date, today.toISOString().split('T')[0])
+        )
+      );
+
+    // Get client count
+    const [clientCountResult] = await db()
+      .select({ count: count() })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          sql`${contacts.deletedAt} IS NULL`
+        )
+      );
+
+    // Get portfolios count
+    const [portfolioCountResult] = await db()
+      .select({ count: count() })
+      .from(clientPortfolioAssignments)
+      .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(clientPortfolioAssignments.status, 'active')
+        )
+      );
+
+    // Get deviation alerts count
+    const [deviationAlertsResult] = await db()
+      .select({ count: count() })
+      .from(portfolioMonitoringSnapshot)
+      .innerJoin(contacts, eq(contacts.id, portfolioMonitoringSnapshot.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(portfolioMonitoringSnapshot.asOfDate, today.toISOString().split('T')[0]),
+          sql`${portfolioMonitoringSnapshot.totalDeviationPct} > 10`
+        )
+      );
+
+    // Get AUM trend (last 30 days)
+    const aumTrendResult = await db()
+      .select({
+        date: aumSnapshots.date,
+        totalAum: sum(aumSnapshots.aumTotal)
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
+        )
+      )
+      .groupBy(aumSnapshots.date)
+      .orderBy(aumSnapshots.date);
+
+    res.json({ 
+      success: true, 
+      data: {
+        totalAum: aumResult?.totalAum ? Number(aumResult.totalAum) : 0,
+        clientCount: clientCountResult?.count || 0,
+        portfolioCount: portfolioCountResult?.count || 0,
+        deviationAlerts: deviationAlertsResult?.count || 0,
+        aumTrend: aumTrendResult.map(r => ({
+          date: r.date,
+          value: r.totalAum ? Number(r.totalAum) : 0
+        }))
+      }
+    });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id, memberId: req.params.memberId }, 'failed to get member metrics');
     next(err);
   }
 });
@@ -637,7 +970,7 @@ router.get('/invitations/pending', requireAuth, async (req: Request, res: Respon
       .innerJoin(users, eq(teamMembershipRequests.managerId, users.id))
       .where(and(eq(teamMembershipRequests.userId, userId), (teamMembershipRequests.status as any).in?.(['pending','invited']) ?? eq(teamMembershipRequests.status, 'invited')));
 
-    return res.json({ data: rows });
+    return res.json({ success: true, data: rows });
   } catch (err) {
     req.log.error({ err }, 'failed to list pending invitations');
     next(err);
@@ -665,7 +998,7 @@ router.post('/invitations/:id/accept', requireAuth, async (req: Request, res: Re
       .where(eq(teamMembershipRequests.id, id));
 
     req.log.info({ requestId: id, userId, teamId: managerTeam.id }, 'invitation accepted');
-    return res.json({ data: { accepted: true } });
+    return res.json({ success: true, data: { accepted: true } });
   } catch (err) {
     req.log.error({ err, requestId: req.params.id }, 'failed to accept invitation');
     next(err);
@@ -688,7 +1021,7 @@ router.post('/invitations/:id/reject', requireAuth, async (req: Request, res: Re
       .where(eq(teamMembershipRequests.id, id));
 
     req.log.info({ requestId: id, userId }, 'invitation rejected');
-    return res.json({ data: { rejected: true } });
+    return res.json({ success: true, data: { rejected: true } });
   } catch (err) {
     req.log.error({ err, requestId: req.params.id }, 'failed to reject invitation');
     next(err);
@@ -746,7 +1079,7 @@ router.get('/:id/advisors', requireAuth, async (req: Request, res: Response, nex
     };
     const eligible = advisors.filter((a: Advisor) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
 
-    return res.json({ data: eligible });
+    return res.json({ success: true, data: eligible });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to list advisors');
     next(err);

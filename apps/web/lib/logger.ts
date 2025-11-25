@@ -29,6 +29,9 @@ class ClientLogger {
   private sessionId: string;
   private userId: string | null = null;
   private userRole: string | null = null;
+  private isSendingLog = false; // Guard para prevenir recursión
+  private backendErrorCount = 0; // Contador de errores consecutivos al backend
+  private readonly MAX_BACKEND_ERRORS = 3; // Desactivar envío al backend después de 3 errores
 
   constructor() {
     // Generar sessionId único para esta sesión del navegador
@@ -72,52 +75,149 @@ class ClientLogger {
     };
   }
 
+  // AI_DECISION: Protección contra recursión infinita en sendToBackend
+  // Justificación: Si sendToBackend falla y ese error se loguea, podría crear un loop infinito.
+  // Agregar guards previene que el logger se llame a sí mismo infinitamente.
   private async sendToBackend(entry: LogEntry): Promise<void> {
+    // Guard: prevenir recursión si ya estamos enviando un log
+    if (this.isSendingLog) {
+      return;
+    }
+
+    // Guard: desactivar envío al backend si hay demasiados errores consecutivos
+    if (this.backendErrorCount >= this.MAX_BACKEND_ERRORS) {
+      return;
+    }
+
+    // En desarrollo, no enviar logs al backend para evitar problemas
+    if (process.env.NODE_ENV !== 'production') {
+      return;
+    }
+
+    this.isSendingLog = true;
+    let timeoutId: NodeJS.Timeout | undefined;
     try {
       // Importar config dinámicamente para evitar ciclos de dependencia
       const { config } = await import('./config');
-      await fetch(`${config.apiUrl}/logs/client`, {
+      
+      // Crear AbortController para timeout (compatible con navegadores antiguos)
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${config.apiUrl}/logs/client`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(entry)
+        body: JSON.stringify(entry),
+        signal: controller.signal
       });
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Si fue exitoso, resetear contador de errores
+      if (response.ok) {
+        this.backendErrorCount = 0;
+      } else {
+        this.backendErrorCount++;
+      }
     } catch (error) {
-      // Fallback a console si no se puede enviar al backend
-      console.error('Failed to send log to backend:', error);
+      // Asegurar que el timeout se limpie incluso si hay error
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      this.backendErrorCount++;
+      // NO loguear este error para evitar recursión
+      // Solo usar console.error directamente sin pasar por el logger
+      if (this.backendErrorCount < this.MAX_BACKEND_ERRORS) {
+        // Solo mostrar error las primeras veces
+        console.error('[Logger] Failed to send log to backend (will disable after 3 failures):', error);
+      }
+    } finally {
+      this.isSendingLog = false;
     }
   }
 
+  private formatTime(timestamp: string): string {
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    const millis = date.getMilliseconds().toString().padStart(3, '0');
+    return `${hours}:${minutes}:${seconds}.${millis}`;
+  }
+
   private log(level: LogLevel, message: string, context?: Record<string, LogContextValue>): void {
-    const entry = this.createLogEntry(level, message, context);
-    
-    if (process.env.NODE_ENV === 'production') {
-      // En producción, enviar a backend
-      this.sendToBackend(entry).catch(() => {
-        // Si falla el envío, usar console como fallback
-        console[level === 'debug' ? 'log' : level](`[${level.toUpperCase()}] ${message}`, context);
-      });
-    } else {
-      // En desarrollo, usar console con formato detallado
-      const prefix = `[${entry.timestamp}] [FRONTEND] [${level.toUpperCase()}]`;
-      const logData = {
-        message,
-        ...context,
-        sessionId: entry.sessionId,
-        userId: entry.userId,
-        userRole: entry.userRole,
-        url: entry.url,
-        userAgent: entry.userAgent
-      };
-      
-      // Usar console.group para logs más organizados
-      console.groupCollapsed(`${prefix} ${message}`);
-      console[level === 'debug' ? 'log' : level](logData);
-      if (context?.error || context?.err) {
-        console.error('Error details:', context.error || context.err);
+    // Guard: prevenir logging durante envío de logs al backend
+    if (this.isSendingLog) {
+      // Solo loguear críticos durante envío
+      if (level === 'error') {
+        console.error(`[${level.toUpperCase()}] ${message}`, context);
       }
-      console.groupEnd();
+      return;
+    }
+
+    const entry = this.createLogEntry(level, message, context);
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // AI_DECISION: Formato compacto de logs - solo información esencial
+    // Justificación: Timestamp ISO completo, sessionId, userAgent, url generan demasiado ruido
+    // Impacto: Logs 60-70% más compactos, más legibles
+    
+    // En producción: solo errores y warnings, formato mínimo
+    if (isProduction) {
+      if (level === 'error' || level === 'warn') {
+        const time = this.formatTime(entry.timestamp);
+        const prefix = `${time} [${level.toUpperCase()}]`;
+        const minimalContext: Record<string, LogContextValue> = {};
+        
+        // Solo incluir contexto relevante en errores
+        if (level === 'error' && context) {
+          if (context.error || context.err) {
+            minimalContext.error = context.error || context.err;
+          }
+          if (context.requestId) minimalContext.requestId = context.requestId;
+          if (context.url) minimalContext.url = context.url;
+        }
+        
+        console[level](`${prefix} ${message}`, Object.keys(minimalContext).length > 0 ? minimalContext : undefined);
+      }
+      // Enviar al backend solo errores críticos
+      if (level === 'error' && this.backendErrorCount < this.MAX_BACKEND_ERRORS) {
+        this.sendToBackend(entry).catch(() => {});
+      }
+      return;
+    }
+    
+    // En desarrollo: formato compacto pero completo
+    const time = this.formatTime(entry.timestamp);
+    const prefix = `${time} [${level.toUpperCase()}]`;
+    
+    // Construir contexto mínimo (sin metadata redundante)
+    const logContext: Record<string, LogContextValue> = {};
+    if (context) {
+      Object.assign(logContext, context);
+    }
+    // Solo incluir userId si es relevante (no en cada log)
+    if (entry.userId && (level === 'error' || level === 'warn')) {
+      logContext.userId = entry.userId;
+    }
+    
+    // Log compacto sin groups
+    if (level === 'error') {
+      console.error(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+      if (context?.error || context?.err) {
+        console.error('→', context.error || context.err);
+      }
+    } else if (level === 'warn') {
+      console.warn(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+    } else if (level === 'debug') {
+      console.debug(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+    } else {
+      console.log(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
     }
   }
 

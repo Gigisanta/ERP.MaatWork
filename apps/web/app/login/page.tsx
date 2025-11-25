@@ -1,6 +1,6 @@
 "use client";
 import { useAuth } from '../auth/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -19,7 +19,7 @@ import {
 } from '@cactus/ui';
 
 export default function LoginPage() {
-  const { login, user, token } = useAuth();
+  const { login, user, initialized } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState('');
@@ -27,36 +27,72 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   // AI_DECISION: Redirigir automáticamente si ya hay sesión
   // Justificación: Evita que usuarios autenticados vean el formulario de login (estado inconsistente
-  // entre cookie/localStorage o navegación directa a /login). Mejora UX y previene loops.
-  // Impacto: Afecta navegación en la ruta `/login` cuando `user` o `token` están presentes.
+  // entre cookie o navegación directa a /login). Mejora UX y previene loops.
+  // Impacto: Afecta navegación en la ruta `/login` cuando `user` está presente.
+  // AI_DECISION: Usar useRef para evitar loops infinitos de redirección
+  // Justificación: searchParams es mutable y cambia de referencia, causando re-ejecuciones del useEffect.
+  // Usar useRef previene múltiples redirecciones y rompe el ciclo de recursión.
+  // AI_DECISION: Esperar a que AuthContext termine de inicializar antes de redirigir
+  // Justificación: Evita redirecciones prematuras cuando el middleware permite el acceso pero
+  // el AuthContext aún no ha terminado de verificar la sesión. Esto previene loops de redirección.
   useEffect(() => {
-    if (user || token) {
+    // Esperar a que la autenticación se inicialice antes de tomar decisiones
+    if (!initialized) {
+      return;
+    }
+
+    // Resetear flag cuando el componente se monta o cuando no hay sesión
+    if (!user) {
+      hasRedirectedRef.current = false;
+      return;
+    }
+
+    // Guard: evitar múltiples redirecciones
+    if (hasRedirectedRef.current) {
+      return;
+    }
+
+    if (user) {
+      hasRedirectedRef.current = true;
       const redirectTo = searchParams.get('redirect') || '/';
       router.replace(redirectTo);
     }
-  }, [user, token, router, searchParams]);
+  }, [user, initialized, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const errors: { identifier?: string; password?: string } = {};
+    
     if (!identifier.trim()) {
-      setError('El email o usuario es requerido');
-      return;
+      errors.identifier = 'El email o usuario es requerido';
     }
 
     if (!password.trim()) {
-      setError('La contraseña es requerida');
+      errors.password = 'La contraseña es requerida';
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError('Por favor completa todos los campos requeridos');
       return;
     }
+    
+    setFieldErrors({});
+    setError(null);
 
     try {
       setLoading(true);
       setError(null);
       
       await login(identifier, password, rememberMe);
+      
+      // Marcar que se hizo redirect para evitar que el useEffect lo haga de nuevo
+      hasRedirectedRef.current = true;
       
       // Obtener URL de redirección desde query params
       const redirectTo = searchParams.get('redirect') || '/';
@@ -65,6 +101,8 @@ export default function LoginPage() {
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
+      // Si hay error, resetear el flag para permitir redirección futura
+      hasRedirectedRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -99,11 +137,18 @@ export default function LoginPage() {
                   type="text"
                   label="Email o usuario"
                   value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (fieldErrors.identifier) {
+                      setFieldErrors(prev => ({ ...prev, identifier: undefined }));
+                    }
+                  }}
                   placeholder="tu@email.com o tu_usuario"
                   disabled={loading}
                   required
                   autoComplete="username"
+                  autoFocus
+                  error={fieldErrors.identifier}
                 />
 
                 {/* Password Input */}
@@ -112,12 +157,18 @@ export default function LoginPage() {
                   type="password"
                   label="Contraseña"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors(prev => ({ ...prev, password: undefined }));
+                    }
+                  }}
                   placeholder="Tu contraseña"
                   disabled={loading}
                   required
                   showPasswordToggle={true}
                   autoComplete="current-password"
+                  error={fieldErrors.password}
                 />
 
                 {/* Remember me */}

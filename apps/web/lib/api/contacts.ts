@@ -21,16 +21,16 @@ import type { AssignPortfolioRequest, AssignPortfolioResponse, PortfolioAssignme
  * Listar contactos
  */
 export async function getContacts(params?: {
-  advisorId?: string;
-  stageId?: string;
+  assignedAdvisorId?: string;
+  pipelineStageId?: string;
   tagIds?: string[];
   search?: string;
   limit?: number;
   offset?: number;
 }): Promise<ApiResponse<Contact[]>> {
   const queryParams = new URLSearchParams();
-  if (params?.advisorId) queryParams.append('advisorId', params.advisorId);
-  if (params?.stageId) queryParams.append('stageId', params.stageId);
+  if (params?.assignedAdvisorId) queryParams.append('assignedAdvisorId', params.assignedAdvisorId);
+  if (params?.pipelineStageId) queryParams.append('pipelineStageId', params.pipelineStageId);
   if (params?.tagIds?.length) queryParams.append('tagIds', params.tagIds.join(','));
   if (params?.search) queryParams.append('search', params.search);
   if (params?.limit) queryParams.append('limit', String(params.limit));
@@ -91,14 +91,17 @@ export async function assignPortfolioToContact(
   contactId: string,
   data: AssignPortfolioRequest
 ): Promise<ApiResponse<AssignPortfolioResponse>> {
-  return apiClient.post<AssignPortfolioResponse>(`/v1/contacts/${contactId}/portfolio-assignments`, data);
+  return apiClient.post<AssignPortfolioResponse>('/v1/portfolios/assignments', {
+    ...data,
+    contactId
+  });
 }
 
 /**
  * Eliminar asignación de portfolio
  */
 export async function removePortfolioAssignment(assignmentId: string): Promise<ApiResponse<void>> {
-  return apiClient.delete<void>(`/v1/portfolio-assignments/${assignmentId}`);
+  return apiClient.delete<void>(`/v1/portfolios/assignments/${assignmentId}`);
 }
 
 /**
@@ -108,6 +111,6 @@ export async function updatePortfolioAssignmentStatus(
   assignmentId: string,
   status: 'active' | 'paused' | 'ended'
 ): Promise<ApiResponse<PortfolioAssignment>> {
-  return apiClient.patch<PortfolioAssignment>(`/v1/portfolio-assignments/${assignmentId}`, { status });
+  return apiClient.patch<PortfolioAssignment>(`/v1/portfolios/assignments/${assignmentId}`, { status });
 }
 

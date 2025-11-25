@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { logger } from '../../../lib/logger';
+import { usePageTitle } from '../../components/PageTitleContext';
 import { createContact } from '@/lib/api';
-import { usePipelineStages, useAdvisors } from '@/lib/api-hooks';
+import { usePipelineStages, useAdvisors, useInvalidateContactsCache } from '@/lib/api-hooks';
 import type { PipelineStage, Advisor } from '@/types';
 import {
   Card,
@@ -22,6 +23,7 @@ import {
   Alert,
   Breadcrumbs,
   BreadcrumbItem,
+  Spinner,
 } from '@cactus/ui';
 
 interface FormData {
@@ -34,6 +36,11 @@ interface FormData {
   source: string;
   riskProfile: 'low' | 'mid' | 'high' | '';
   notes: string;
+  queSeDedica: string;
+  familia: string;
+  expectativas: string;
+  objetivos: string;
+  requisitosPlanificacion: string;
 }
 
 const initialFormData: FormData = {
@@ -45,16 +52,25 @@ const initialFormData: FormData = {
   pipelineStageId: '',
   source: '',
   riskProfile: '',
-  notes: ''
+  notes: '',
+  queSeDedica: '',
+  familia: '',
+  expectativas: '',
+  objetivos: '',
+  requisitosPlanificacion: ''
 };
 
 export default function NewContactPage() {
   const router = useRouter();
   const { user, loading } = useRequireAuth();
   
+  // Set page title in header
+  usePageTitle('Nuevo Contacto');
+  
   // Use SWR hooks for data fetching with automatic caching and deduplication
   const { stages: pipelineStages, isLoading: stagesLoading, error: stagesError } = usePipelineStages();
   const { advisors, isLoading: advisorsLoading, error: advisorsError } = useAdvisors();
+  const invalidateContactsCache = useInvalidateContactsCache();
   
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -76,15 +92,27 @@ export default function NewContactPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+
   const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof FormData, string>> = {};
+    
     if (!formData.firstName.trim()) {
-      setError('El nombre es requerido');
-      return false;
+      errors.firstName = 'El nombre es requerido';
     }
     if (!formData.lastName.trim()) {
-      setError('El apellido es requerido');
+      errors.lastName = 'El apellido es requerido';
+    }
+    
+    setFieldErrors(errors);
+    
+    if (Object.keys(errors).length > 0) {
+      setError('Por favor corrige los errores en el formulario');
       return false;
     }
+    
+    setFieldErrors({});
+    setError(null);
     return true;
   };
 
@@ -113,7 +141,12 @@ export default function NewContactPage() {
         pipelineStageId: formData.pipelineStageId || null,
         source: formData.source.trim() || null,
         riskProfile: formData.riskProfile || null,
-        notes: formData.notes.trim() || null
+        notes: formData.notes.trim() || null,
+        queSeDedica: formData.queSeDedica.trim() || null,
+        familia: formData.familia.trim() || null,
+        expectativas: formData.expectativas.trim() || null,
+        objetivos: formData.objetivos.trim() || null,
+        requisitosPlanificacion: formData.requisitosPlanificacion.trim() || null
       });
       
       logger.info('Contact creation API response received', {
@@ -144,11 +177,16 @@ export default function NewContactPage() {
           });
         }
         
+        // Invalidate contacts cache and wait for revalidation to complete
+        // This ensures fresh data is fetched before navigation
+        await invalidateContactsCache();
+        
         setSuccess(true);
         setFormData(initialFormData);
-        setTimeout(() => {
-          router.push('/contacts');
-        }, 2000);
+        
+        // Navigate with refresh parameter to force revalidation on contacts page
+        // This ensures the page updates immediately with the new contact
+        router.replace('/contacts?refresh=true');
       } else {
         throw new Error(response.error || 'Error al crear contacto');
       }
@@ -175,10 +213,10 @@ export default function NewContactPage() {
   if (isLoading && !pipelineStages.length) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p>Cargando...</p>
-        </div>
+        <Stack direction="column" gap="md" align="center">
+          <Spinner size="lg" />
+          <Text color="secondary">Cargando formulario...</Text>
+        </Stack>
       </div>
     );
   }
@@ -195,9 +233,6 @@ export default function NewContactPage() {
         <div className="mb-8">
           <div className="flex justify-between items-start">
             <div>
-              <Heading level={1} className="text-3xl font-bold text-gray-900 mb-2">
-                Nuevo Contacto
-              </Heading>
               <Text size="lg" color="secondary" className="text-gray-600">
                 Agrega un nuevo contacto al sistema CRM
               </Text>
@@ -246,20 +281,33 @@ export default function NewContactPage() {
                       <Input
                         label="Nombre"
                         value={formData.firstName}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        onChange={(e) => {
+                          handleInputChange('firstName', e.target.value);
+                          if (fieldErrors.firstName) {
+                            setFieldErrors(prev => ({ ...prev, firstName: undefined }));
+                          }
+                        }}
                         placeholder="Juan"
                         disabled={isLoading || submitLoading}
                         required
                         className="w-full"
+                        autoFocus
+                        error={fieldErrors.firstName}
                       />
                       <Input
                         label="Apellido"
                         value={formData.lastName}
-                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        onChange={(e) => {
+                          handleInputChange('lastName', e.target.value);
+                          if (fieldErrors.lastName) {
+                            setFieldErrors(prev => ({ ...prev, lastName: undefined }));
+                          }
+                        }}
                         placeholder="Pérez"
                         disabled={isLoading || submitLoading}
                         required
                         className="w-full"
+                        error={fieldErrors.lastName}
                       />
                     </div>
                     
@@ -365,8 +413,98 @@ export default function NewContactPage() {
                         placeholder="Información adicional sobre el contacto..."
                         disabled={isLoading || submitLoading}
                         rows={4}
+                        maxLength={2000}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                       />
+                    </div>
+                  </div>
+
+                  {/* Sección: Información Personal Adicional */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="mb-4">
+                      <Heading level={4} className="text-lg font-semibold text-gray-900 mb-2">
+                        Información Personal Adicional
+                      </Heading>
+                      <Text size="sm" color="secondary" className="text-gray-600">
+                        Información detallada sobre el contacto
+                      </Text>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          A qué se dedica
+                        </label>
+                        <textarea
+                          value={formData.queSeDedica}
+                          onChange={(e) => handleInputChange('queSeDedica', e.target.value)}
+                          placeholder="Describe a qué se dedica el contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Familia
+                        </label>
+                        <textarea
+                          value={formData.familia}
+                          onChange={(e) => handleInputChange('familia', e.target.value)}
+                          placeholder="Información sobre la familia del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Expectativas
+                        </label>
+                        <textarea
+                          value={formData.expectativas}
+                          onChange={(e) => handleInputChange('expectativas', e.target.value)}
+                          placeholder="Expectativas del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Objetivos
+                        </label>
+                        <textarea
+                          value={formData.objetivos}
+                          onChange={(e) => handleInputChange('objetivos', e.target.value)}
+                          placeholder="Objetivos del contacto..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ¿Qué tendría que tener tu planificación para que avancemos?
+                        </label>
+                        <textarea
+                          value={formData.requisitosPlanificacion}
+                          onChange={(e) => handleInputChange('requisitosPlanificacion', e.target.value)}
+                          placeholder="Requisitos o condiciones para avanzar con la planificación..."
+                          disabled={isLoading || submitLoading}
+                          rows={3}
+                          maxLength={2000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>
