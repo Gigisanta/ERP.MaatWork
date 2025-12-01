@@ -84,7 +84,6 @@ export default function AumRowsPage() {
   const handleUploadSuccess = useCallback(
     (fileId: string) => {
       logger.info('handleUploadSuccess called', { fileId });
-      console.log('[AUM Rows] handleUploadSuccess called', { fileId });
 
       // Establecer fileId y resetear paginación para mostrar las nuevas filas
       actions.setUploadedFileId(fileId);
@@ -93,13 +92,8 @@ export default function AumRowsPage() {
 
       // Sincronizar fileId con URL para que el filtro funcione correctamente
       updateUrl({ fileId });
-      console.log('[AUM Rows] URL updated with fileId', { fileId });
 
       logger.info('State and URL updated, calling mutate', {
-        fileId,
-        currentStateFileId: state.uploadedFileId,
-      });
-      console.log('[AUM Rows] State updated, calling mutate', {
         fileId,
         currentStateFileId: state.uploadedFileId,
       });

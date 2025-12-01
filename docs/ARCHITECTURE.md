@@ -46,6 +46,84 @@
 - Error handler devuelve JSON y oculta detalles en prod
 - Shutdown graceful (SIGTERM/SIGINT) con timeout de 10s
 
+### Utilidades Compartidas
+
+**AI_DECISION: Centralizar lógica común para eliminar duplicación**
+**Justificación: DRY principle, facilita mantenimiento y consistencia**
+**Impacto: Código más mantenible, menos bugs por inconsistencias**
+
+#### Validación (`apps/api/src/utils/validation-common.ts`)
+- Helpers reutilizables para validaciones comunes (email, UUID, fechas, etc.)
+- Usado por múltiples rutas para mantener consistencia
+
+#### Paginación (`apps/api/src/utils/pagination.ts`)
+- Helpers centralizados para parse, validate y format de paginación
+- Estandariza paginación en todos los endpoints
+- Usado por: `/contacts`, `/notes`, `/capacitaciones`, y otras rutas
+
+#### Manejo de Errores (`apps/api/src/utils/error-response.ts`)
+- `createErrorResponse`: Crea respuestas de error estandarizadas
+- `getStatusCodeFromError`: Determina código HTTP apropiado
+- Todas las rutas deben usar `createErrorResponse` para consistencia
+
+### Estructura de Módulos Refactorizados
+
+**AI_DECISION: Dividir módulos grandes en módulos especializados**
+**Justificación: Mejora mantenibilidad, testabilidad y separación de responsabilidades**
+**Impacto: Código más modular, fácil de entender y mantener**
+
+#### AUM Column Mapper (`apps/api/src/utils/aum-columns/`)
+
+Estructura modular del mapeo de columnas AUM:
+
+```
+aum-columns/
+├── normalize-column-name.ts    # Normalización de nombres de columnas
+├── column-pattern-matcher.ts   # Matching de patrones de columnas
+├── column-validator.ts         # Validación de mapeos de columnas
+├── column-mapper.ts            # Orquestador principal
+├── types.ts                    # Tipos compartidos
+└── index.ts                    # Barrel export
+```
+
+**Antes:** Un archivo de 858 líneas
+**Después:** 6 módulos especializados, cada uno < 200 líneas
+
+#### Hooks Especializados (`apps/web/app/admin/aum/rows/hooks/`)
+
+Estructura modular de hooks de estado AUM:
+
+```
+hooks/
+├── useAumPagination.ts         # Estado y acciones de paginación
+├── useAumFilters.ts            # Estado y acciones de filtros
+├── useAumSearch.ts             # Estado y acciones de búsqueda
+├── useAumModals.ts             # Estado y acciones de modales
+├── useAumLoading.ts            # Estados de carga
+└── useAumRowsState.ts          # Orquestador que compone hooks especializados
+```
+
+**Antes:** Un hook de 340 líneas
+**Después:** 6 hooks especializados, cada uno < 100 líneas
+
+#### Portfolio Components (`apps/web/app/portfolios/[id]/`)
+
+Estructura modular de página de portfolio:
+
+```
+portfolios/[id]/
+├── hooks/
+│   ├── usePortfolioData.ts           # Fetch y estado del portfolio
+│   └── usePortfolioLineActions.ts    # Acciones de líneas (create, update, delete)
+├── components/
+│   ├── PortfolioLineForm.tsx        # Formulario de creación de líneas
+│   └── PortfolioHeader.tsx          # Header con información y acciones
+└── page.tsx                          # Componente orquestador
+```
+
+**Antes:** Un componente de 517 líneas
+**Después:** 2 hooks + 2 componentes + página orquestadora, cada uno < 150 líneas
+
 ## Portfolio Systems
 
 **AI_DECISION: Clarificar coexistencia de Portfolio Templates (CRM) y Epic-D (Analytics)**

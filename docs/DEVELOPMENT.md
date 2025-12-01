@@ -56,7 +56,7 @@ pnpm dev:kill
 **URLs:**
 - Web: http://localhost:3000
 - API: http://localhost:3001
-- Analytics: http://localhost:3002
+- Analytics: http://localhost:3002 (configurable vía `ANALYTICS_PORT`)
 - N8N: http://localhost:5678
 
 ---
@@ -96,6 +96,153 @@ CactusDashboard-epic-D/
 2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
 3. **Ejecutar typecheck ANTES:** `pnpm typecheck` (todos los workspaces)
 4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
+
+### Logging Estructurado
+
+#### Migración de console.log a Logger
+
+**Regla:** No usar `console.log`, `console.warn`, o `console.info` en código de producción. Usar logger estructurado en su lugar.
+
+**Backend (API):**
+```typescript
+import { logger } from '@/utils/logger';
+
+// ❌ Incorrecto
+console.log('User logged in', userId);
+console.error('Error:', error);
+
+// ✅ Correcto
+logger.info({ userId }, 'User logged in');
+logger.error({ err: error }, 'Error processing request');
+```
+
+**Frontend (Web):**
+```typescript
+import { logger, toLogContext } from '@/lib/logger';
+
+// ❌ Incorrecto
+console.log('Component mounted');
+console.warn('Warning message');
+
+// ✅ Correcto
+logger.info('Component mounted');
+logger.warn('Warning message');
+
+// Para valores unknown, usar toLogContext
+logger.error('Error occurred', toLogContext({ error: err }));
+```
+
+**Excepciones:**
+- Scripts (`apps/api/src/scripts/**`, `apps/api/src/add-*.ts`) pueden usar `console.*`
+- Server Components de Next.js pueden usar `console.error` para debugging en desarrollo
+
+**Verificación:**
+```bash
+# Ejecutar auditoría de console.log
+pnpm tsx scripts/audit-console-logs.ts
+```
+
+### Refactorización de Código Largo
+
+#### Límites Recomendados
+
+- **Archivos:** Máximo 300 líneas
+- **Funciones:** Máximo 50 líneas
+- **Hooks:** Máximo 200 líneas (considerar dividir en hooks especializados)
+
+#### Estrategia de Refactorización
+
+**1. Extraer Funciones Especializadas**
+
+Cuando un archivo excede 300 líneas, dividirlo en módulos especializados:
+
+```typescript
+// ❌ Antes: aum-column-mapper.ts (858 líneas)
+export function mapAumColumns(...) { /* 200+ líneas */ }
+export function normalizeColumnName(...) { /* 100+ líneas */ }
+export function findColumnByPatterns(...) { /* 150+ líneas */ }
+
+// ✅ Después: Estructura modular
+// aum-columns/normalize-column-name.ts
+export function normalizeColumnName(...) { /* 50 líneas */ }
+
+// aum-columns/column-pattern-matcher.ts
+export function findColumnByPatterns(...) { /* 80 líneas */ }
+
+// aum-columns/column-mapper.ts
+export function mapAumColumns(...) { /* 100 líneas, orquesta otros módulos */ }
+
+// aum-columns/index.ts (barrel export)
+export * from './normalize-column-name';
+export * from './column-pattern-matcher';
+export * from './column-mapper';
+```
+
+**2. Dividir Hooks Grandes**
+
+Cuando un hook excede 200 líneas, dividirlo en hooks especializados:
+
+```typescript
+// ❌ Antes: useAumRowsState.ts (340 líneas)
+export function useAumRowsState() {
+  // Paginación, filtros, búsqueda, modales, loading...
+}
+
+// ✅ Después: Hooks especializados
+// hooks/useAumPagination.ts
+export function useAumPagination() { /* 40 líneas */ }
+
+// hooks/useAumFilters.ts
+export function useAumFilters() { /* 35 líneas */ }
+
+// hooks/useAumSearch.ts
+export function useAumSearch() { /* 30 líneas */ }
+
+// hooks/useAumRowsState.ts (orquestador)
+export function useAumRowsState() {
+  const pagination = useAumPagination();
+  const filters = useAumFilters();
+  const search = useAumSearch();
+  // ... compone los hooks especializados
+}
+```
+
+**3. Extraer Componentes**
+
+Cuando un componente excede 300 líneas, extraer sub-componentes y hooks:
+
+```typescript
+// ❌ Antes: PortfolioDetailPage.tsx (517 líneas)
+export default function PortfolioDetailPage() {
+  // Fetch, estado, formularios, acciones, render...
+}
+
+// ✅ Después: Componentes y hooks especializados
+// hooks/usePortfolioData.ts
+export function usePortfolioData(id) { /* 50 líneas */ }
+
+// hooks/usePortfolioLineActions.ts
+export function usePortfolioLineActions(id) { /* 80 líneas */ }
+
+// components/PortfolioLineForm.tsx
+export function PortfolioLineForm() { /* 60 líneas */ }
+
+// components/PortfolioHeader.tsx
+export function PortfolioHeader() { /* 40 líneas */ }
+
+// page.tsx (orquestador)
+export default function PortfolioDetailPage() {
+  const { portfolio } = usePortfolioData(id);
+  const { handleCreateLine } = usePortfolioLineActions(id);
+  // ... compone hooks y componentes
+}
+```
+
+**Verificación:**
+```bash
+# Ejecutar auditoría de archivos grandes
+pnpm tsx scripts/audit-large-files.ts
+```
 
 ### Reglas Críticas TypeScript
 

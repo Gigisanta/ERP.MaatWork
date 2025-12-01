@@ -1,6 +1,6 @@
 /**
  * Yield curve data endpoints
- * 
+ *
  * AI_DECISION: Separate router for yield data
  * Justificación: Yield curves are a distinct domain with different access patterns
  * Impacto: Better code organization, easier to maintain
@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { cache } from '../middleware/cache';
 import { REDIS_TTL } from '../config/redis';
 import { buildCacheKey } from '../config/redis';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ const getYieldsQuerySchema = z.object({
   date: dateSchema.optional(),
   from: dateSchema.optional(),
   to: dateSchema.optional(),
-  tenor: z.string().optional()
+  tenor: z.string().optional(),
 });
 
 // ==========================================================
@@ -49,17 +50,20 @@ router.get(
   cache({
     ttl: REDIS_TTL.YIELD_CURVE,
     keyPrefix: 'yields',
-    keyBuilder: (req) => buildCacheKey(
-      'yields',
-      typeof req.query.country === 'string' ? req.query.country : 'all',
-      typeof (req.query.date || req.query.from) === 'string' ? (req.query.date || req.query.from) as string : 'latest',
-      typeof req.query.tenor === 'string' ? req.query.tenor : 'all'
-    )
+    keyBuilder: (req) =>
+      buildCacheKey(
+        'yields',
+        typeof req.query.country === 'string' ? req.query.country : 'all',
+        typeof (req.query.date || req.query.from) === 'string'
+          ? ((req.query.date || req.query.from) as string)
+          : 'latest',
+        typeof req.query.tenor === 'string' ? req.query.tenor : 'all'
+      ),
   }),
   async (req, res) => {
     try {
       const { country, date, from, to, tenor } = req.query;
-      
+
       const conditions = [];
       if (country) {
         conditions.push(eq(yields.country, country as string));
@@ -77,40 +81,40 @@ router.get(
       if (tenor) {
         conditions.push(eq(yields.tenor, tenor as string));
       }
-      
+
       const yieldsData = await db()
         .select()
         .from(yields)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(yields.date), yields.tenor);
-      
+
       // If specific date requested and no tenor filter, return as curve
       const dateStr = typeof date === 'string' ? date : undefined;
       if (dateStr && !tenor && !from && !to) {
-        const dateYields = yieldsData.filter((y: typeof yieldsData[0]) => y.date === dateStr);
+        const dateYields = yieldsData.filter((y: (typeof yieldsData)[0]) => y.date === dateStr);
         const curveData: Record<string, { value: number; provider: string }> = {};
-        
-        dateYields.forEach((y: typeof yieldsData[0]) => {
+
+        dateYields.forEach((y: (typeof yieldsData)[0]) => {
           curveData[y.tenor] = {
             value: parseFloat(y.value),
-            provider: y.provider
+            provider: y.provider,
           };
         });
-        
+
         // Get spreads for this date
         try {
           const spreadsResponse = await getYieldSpreadsInternal(country as string, dateStr);
           const spreads = spreadsResponse?.spreads || {};
-          
+
           return res.json({
             success: true,
             data: {
               date: dateStr,
               country: country || 'US',
               yields: curveData,
-              spreads
+              spreads,
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         } catch (err) {
           // Return curve without spreads if spreads calculation fails
@@ -119,13 +123,13 @@ router.get(
             data: {
               date: dateStr,
               country: country || 'US',
-              yields: curveData
+              yields: curveData,
             },
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           });
         }
       }
-      
+
       // If no date specified but country is specified, get latest date and return as curve
       if (!dateStr && !tenor && !from && !to && country) {
         if (yieldsData.length > 0) {
@@ -135,33 +139,35 @@ router.get(
               success: true,
               data: [],
               count: 0,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           }
-          const dateYields = yieldsData.filter((y: typeof yieldsData[0]) => y.date === latestDate);
+          const dateYields = yieldsData.filter(
+            (y: (typeof yieldsData)[0]) => y.date === latestDate
+          );
           const curveData: Record<string, { value: number; provider: string }> = {};
-          
-          dateYields.forEach((y: typeof yieldsData[0]) => {
+
+          dateYields.forEach((y: (typeof yieldsData)[0]) => {
             curveData[y.tenor] = {
               value: parseFloat(y.value),
-              provider: y.provider
+              provider: y.provider,
             };
           });
-          
+
           // Get spreads for latest date
           try {
             const spreadsResponse = await getYieldSpreadsInternal(country as string, latestDate);
             const spreads = spreadsResponse?.spreads || {};
-            
+
             return res.json({
               success: true,
               data: {
                 date: latestDate,
                 country: country as string,
                 yields: curveData,
-                spreads
+                spreads,
               },
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           } catch (err) {
             return res.json({
@@ -169,25 +175,25 @@ router.get(
               data: {
                 date: latestDate,
                 country: country as string,
-                yields: curveData
+                yields: curveData,
               },
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           }
         }
       }
-      
+
       res.json({
         success: true,
         data: yieldsData,
         count: yieldsData.length,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('Error fetching yields:', error);
+      logger.error({ err: error }, 'Error fetching yields');
       res.status(500).json({
         error: 'Failed to fetch yields',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
@@ -196,7 +202,14 @@ router.get(
 /**
  * Internal helper to calculate yield spreads
  */
-async function getYieldSpreadsInternal(country: string, date?: string): Promise<{ date: string; spreads: Record<string, number>; yields: Record<string, number> } | null> {
+async function getYieldSpreadsInternal(
+  country: string,
+  date?: string
+): Promise<{
+  date: string;
+  spreads: Record<string, number>;
+  yields: Record<string, number>;
+} | null> {
   try {
     // Get latest date if not specified
     let targetDate = date;
@@ -207,52 +220,52 @@ async function getYieldSpreadsInternal(country: string, date?: string): Promise<
         .where(eq(yields.country, country))
         .orderBy(desc(yields.date))
         .limit(1);
-      
+
       if (latest.length === 0) {
         return null;
       }
-      
+
       targetDate = latest[0].date;
     }
-    
+
     if (!targetDate) {
       return null;
     }
-    
+
     // Get all tenors for the date
     const yieldsData = await db()
       .select()
       .from(yields)
-      .where(and(
-        eq(yields.country, country),
-        eq(yields.date, targetDate)
-      ));
-    
+      .where(and(eq(yields.country, country), eq(yields.date, targetDate)));
+
     // Calculate spreads
-    const yieldMap = yieldsData.reduce((acc: Record<string, number>, y: typeof yieldsData[0]) => {
-      acc[y.tenor] = parseFloat(y.value);
-      return acc;
-    }, {} as Record<string, number>);
-    
+    const yieldMap = yieldsData.reduce(
+      (acc: Record<string, number>, y: (typeof yieldsData)[0]) => {
+        acc[y.tenor] = parseFloat(y.value);
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
     const spreads: Record<string, number> = {};
-    
+
     // 2s10s spread (2-year vs 10-year)
     if (yieldMap['2y'] !== undefined && yieldMap['10y'] !== undefined) {
       spreads['2s10s'] = yieldMap['10y'] - yieldMap['2y'];
     }
-    
+
     // 3m-10y spread
     if (yieldMap['3m'] !== undefined && yieldMap['10y'] !== undefined) {
       spreads['3m10y'] = yieldMap['10y'] - yieldMap['3m'];
     }
-    
+
     return {
       date: targetDate,
       spreads,
-      yields: yieldMap
+      yields: yieldMap,
     };
   } catch (error) {
-    console.error('Error calculating yield spreads:', error);
+    logger.error({ err: error }, 'Error calculating yield spreads');
     return null;
   }
 }
@@ -268,48 +281,46 @@ router.get(
   validate({
     query: z.object({
       country: z.enum(['US', 'AR']).default('US'),
-      date: dateSchema.optional()
-    })
+      date: dateSchema.optional(),
+    }),
   }),
   cache({
     ttl: REDIS_TTL.YIELD_CURVE,
     keyPrefix: 'yields:spreads',
-    keyBuilder: (req) => buildCacheKey(
-      'yields',
-      'spreads',
-      typeof req.query.country === 'string' ? req.query.country : 'US',
-      typeof req.query.date === 'string' ? req.query.date : 'latest'
-    )
+    keyBuilder: (req) =>
+      buildCacheKey(
+        'yields',
+        'spreads',
+        typeof req.query.country === 'string' ? req.query.country : 'US',
+        typeof req.query.date === 'string' ? req.query.date : 'latest'
+      ),
   }),
   async (req, res) => {
     try {
       const { country, date } = req.query;
-      
+
       const result = await getYieldSpreadsInternal(country as string, date as string | undefined);
-      
+
       if (!result) {
         return res.status(404).json({
           error: 'No yield data found',
-          country
+          country,
         });
       }
-      
+
       res.json({
         success: true,
         data: result,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('Error calculating yield spreads:', error);
+      logger.error({ err: error }, 'Error calculating yield spreads');
       res.status(500).json({
         error: 'Failed to calculate yield spreads',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
 );
 
 export default router;
-
-
-

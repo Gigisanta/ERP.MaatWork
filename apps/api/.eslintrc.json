@@ -3,10 +3,7 @@
     "node": true,
     "es2022": true
   },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -14,29 +11,30 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "no-console": ["error", {
-      "allow": ["error"]
-    }],
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unused-vars": ["warn", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "ignoreRestSiblings": true,
-      "caughtErrorsIgnorePattern": "^_"
-    }],
+    "no-console": [
+      "error",
+      {
+        "allow": ["error"]
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/no-unused-imports": "off"
   },
   "overrides": [
     {
-      "files": [
-        "src/scripts/**/*.ts",
-        "src/add-*.ts",
-        "src/db-init.ts"
-      ],
+      "files": ["src/scripts/**/*.ts", "src/add-*.ts", "src/db-init.ts"],
       "rules": {
         "no-console": "off"
       }
     }
   ]
 }
-

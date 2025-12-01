@@ -10,16 +10,29 @@ const path = require('path');
 const fs = require('fs');
 const chalkModule = require('chalk');
 const chalk = chalkModule.default || chalkModule;
+const {
+  resolveAnalyticsPort,
+  buildAnalyticsServiceUrl,
+  DEFAULT_ANALYTICS_PORT
+} = require('./utils/analytics-port');
 
 const isWindows = process.platform === 'win32';
 const projectRoot = path.resolve(__dirname, '..');
 const analyticsServicePath = path.join(projectRoot, 'apps', 'analytics-service');
 const mainPyPath = path.join(analyticsServicePath, 'main.py');
+const analyticsPort = resolveAnalyticsPort();
+const analyticsUrl = buildAnalyticsServiceUrl(analyticsPort);
 
 const success = chalk.green;
 const error = chalk.red;
 const warning = chalk.yellow;
 const info = chalk.blue;
+
+process.env.ANALYTICS_PORT = String(analyticsPort);
+process.env.ANALYTICS_SERVICE_URL =
+  process.env.ANALYTICS_SERVICE_URL || analyticsUrl;
+process.env.PYTHON_SERVICE_URL =
+  process.env.PYTHON_SERVICE_URL || analyticsUrl;
 
 /**
  * Encontrar comando Python disponible
@@ -72,7 +85,14 @@ function runPythonService() {
 
   checkMainPy();
 
-  console.log(info(`🚀 Iniciando Analytics Service en puerto 3002...`));
+  if (analyticsPort !== DEFAULT_ANALYTICS_PORT) {
+    console.log(
+      warning(
+        `⚠️  Puerto 3002 no está disponible. Analytics se levantará en ${analyticsPort}.`
+      )
+    );
+  }
+  console.log(info(`🚀 Iniciando Analytics Service en puerto ${analyticsPort}...`));
   console.log(info(`   Usando: ${pythonCmd} main.py`));
   console.log('');
 

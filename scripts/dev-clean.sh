@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Limpieza de puertos y procesos para un arranque limpio de desarrollo
-# Puertos objetivo: 3000 (Web), 3001 (API), 3002 (Analytics)
+# Puertos objetivo: 3000 (Web), 3001 (API), 3002 (Analytics por defecto)
 
 set -euo pipefail
+
+ANALYTICS_PORT="${ANALYTICS_PORT:-3002}"
 
 echo "🧹 Limpiando entorno de desarrollo (puertos y procesos)"
 
@@ -28,7 +30,7 @@ pkill -f "analytics-service.*python" >/dev/null 2>&1 || true
 # Limpiar puertos típicos
 kill_port 3000
 kill_port 3001
-kill_port 3002
+kill_port "$ANALYTICS_PORT"
 kill_port 5678
 
 echo "✅ Entorno limpio"

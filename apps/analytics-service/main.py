@@ -5,6 +5,7 @@ from typing import List, Dict, Optional, Any
 import uvicorn
 from datetime import datetime
 import logging
+import os
 
 from yfinance_client import yfinance_client
 from portfolio_performance import portfolio_calculator, PortfolioComponent, PerformanceData
@@ -396,13 +397,15 @@ async def compare_portfolios(request: PortfolioComparisonRequest):
         )
 
 if __name__ == "__main__":
+    analytics_port = int(os.getenv("ANALYTICS_PORT", "3002"))
+    logger.warning("Iniciando analytics-service en puerto %s", analytics_port)
     # AI_DECISION: Deshabilitar access_log y reducir verbosidad
     # Justificación: Access logs de todas las requests generan demasiado ruido
     # Impacto: Solo errores y warnings visibles, logs más limpios
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=3002,
+        port=analytics_port,
         reload=True,
         log_level="warning",  # Solo warnings y errores
         access_log=False,  # Deshabilitar access logs

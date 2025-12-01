@@ -181,8 +181,14 @@ async function checkWeb(options = {}) {
 /**
  * Health check para Analytics Service
  */
+const defaultAnalyticsBaseUrl =
+  process.env.ANALYTICS_SERVICE_URL ||
+  process.env.PYTHON_SERVICE_URL ||
+  `http://localhost:${process.env.ANALYTICS_PORT || '3002'}`;
+const defaultAnalyticsHealthUrl = `${defaultAnalyticsBaseUrl.replace(/\/+$/, '')}/health`;
+
 async function checkAnalytics(options = {}) {
-  const url = options.url || 'http://localhost:3002/health';
+  const url = options.url || defaultAnalyticsHealthUrl;
   const name = options.name || 'Analytics Service';
   
   console.log(info(`🔍 Verificando ${name}...`));

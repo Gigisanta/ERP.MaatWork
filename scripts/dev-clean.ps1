@@ -1,10 +1,20 @@
 # Limpieza de puertos y procesos para un arranque limpio de desarrollo
-# Puertos objetivo: 3000 (Web), 3001 (API), 3002 (Analytics)
+# Puertos objetivo: 3000 (Web), 3001 (API), 3002 (Analytics por defecto)
 
 Write-Host "Limpieza de entorno de desarrollo (puertos y procesos)" -ForegroundColor Cyan
 
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDirectory
+
+$analyticsPort = 3002
+if (-not [string]::IsNullOrWhiteSpace($env:ANALYTICS_PORT)) {
+    $parsedPort = 0
+    if ([int]::TryParse($env:ANALYTICS_PORT, [ref]$parsedPort)) {
+        if ($parsedPort -gt 0) {
+            $analyticsPort = $parsedPort
+        }
+    }
+}
 
 function Test-PortFree {
     param([int]$Port)
@@ -284,7 +294,7 @@ Write-Host "Verificando y liberando puertos..." -ForegroundColor Cyan
 # AI_DECISION: Separar puertos críticos de opcionales.
 # Justificación: El puerto 5678 es usado por N8N (Docker) que debe permanecer ejecutándose independientemente.
 # Impacto: Permite que el desarrollo continúe aunque N8N esté corriendo, solo falla si los puertos críticos están ocupados.
-$criticalPorts = @(3000, 3001, 3002)  # Puertos críticos para desarrollo (Web, API, Analytics)
+$criticalPorts = @(3000, 3001, $analyticsPort)  # Puertos críticos para desarrollo (Web, API, Analytics)
 $optionalPorts = @(5678)  # Puertos opcionales (N8N Docker service)
 
 # Limpiar todos los puertos (críticos y opcionales)
@@ -343,7 +353,7 @@ if ($criticalCheckPassed) {
 } else {
     Write-Host ""
     Write-Host "❌ Algunos puertos críticos aún están en uso" -ForegroundColor Red
-    Write-Host "   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o 3002" -ForegroundColor Yellow
+    Write-Host "   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o $analyticsPort" -ForegroundColor Yellow
     Write-Host "   y vuelve a intentar." -ForegroundColor Yellow
     exit 1
 }

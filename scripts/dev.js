@@ -11,6 +11,11 @@ const path = require('path');
 const fs = require('fs');
 const chalkModule = require('chalk');
 const chalk = chalkModule.default || chalkModule;
+const {
+  resolveAnalyticsPort,
+  buildAnalyticsServiceUrl,
+  DEFAULT_ANALYTICS_PORT
+} = require('./utils/analytics-port');
 
 const isWindows = process.platform === 'win32';
 const projectRoot = path.resolve(__dirname, '..');
@@ -23,6 +28,15 @@ const error = chalk.red;
 const warning = chalk.yellow;
 const info = chalk.blue;
 const bold = chalk.bold;
+
+const analyticsPort = resolveAnalyticsPort();
+const analyticsUrl = buildAnalyticsServiceUrl(analyticsPort);
+
+process.env.ANALYTICS_PORT = String(analyticsPort);
+process.env.ANALYTICS_SERVICE_URL =
+  process.env.ANALYTICS_SERVICE_URL || analyticsUrl;
+process.env.PYTHON_SERVICE_URL =
+  process.env.PYTHON_SERVICE_URL || analyticsUrl;
 
 /**
  * Limpiar archivos PID stale de Turbo
@@ -368,6 +382,15 @@ async function main() {
   console.log(bold.cyan('║     CACTUS CRM - Modo Desarrollo                        ║'));
   console.log(bold.cyan('╚═══════════════════════════════════════════════════════════╝'));
   console.log('');
+
+  if (analyticsPort !== DEFAULT_ANALYTICS_PORT) {
+    console.log(
+      warning(
+        `⚠️  Puerto 3002 no está disponible. Analytics usará el puerto ${analyticsPort}.`
+      )
+    );
+    console.log('');
+  }
   
   // Limpiar archivos PID stale de Turbo antes de iniciar
   const hadStalePids = cleanTurboStalePids();

@@ -41,7 +41,7 @@ pnpm dev:basic
 **URLs:**
 - Web: http://localhost:3000
 - API: http://localhost:3001
-- Analytics: http://localhost:3002
+- Analytics: http://localhost:3002 (configurable vía `ANALYTICS_PORT`)
 - N8N: http://localhost:5678
 
 ## Comandos Esenciales

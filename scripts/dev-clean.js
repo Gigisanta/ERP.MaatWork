@@ -12,10 +12,23 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const {
+  resolveAnalyticsPort,
+  buildAnalyticsServiceUrl
+} = require('./utils/analytics-port');
 
 const isWindows = process.platform === 'win32';
 const projectRoot = path.resolve(__dirname, '..');
 const isQuiet = process.argv.includes('--quiet') || process.env.CI === 'true';
+
+const analyticsPort = resolveAnalyticsPort();
+const analyticsUrl = buildAnalyticsServiceUrl(analyticsPort);
+
+process.env.ANALYTICS_PORT = String(analyticsPort);
+process.env.ANALYTICS_SERVICE_URL =
+  process.env.ANALYTICS_SERVICE_URL || analyticsUrl;
+process.env.PYTHON_SERVICE_URL =
+  process.env.PYTHON_SERVICE_URL || analyticsUrl;
 
 if (isWindows) {
   // Windows: Ejecutar PowerShell
@@ -34,7 +47,9 @@ if (isWindows) {
       // Esto es intencional - queremos que el usuario sepa que hay problemas
       if (error.status === 1 && !isQuiet) {
         console.error('\n❌ No se pudieron liberar todos los puertos.');
-        console.error('   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o 3002');
+        console.error(
+          `   Por favor, cierra manualmente los procesos que usan los puertos 3000, 3001 o ${analyticsPort}`
+        );
         console.error('   y vuelve a intentar.\n');
         process.exit(1);
       }

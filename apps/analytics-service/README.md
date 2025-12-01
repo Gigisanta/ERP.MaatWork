@@ -22,7 +22,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Servicio disponible en: http://localhost:3002
+Servicio disponible en: http://localhost:3002 (puedes ajustar `ANALYTICS_PORT`)
 Documentación API: http://localhost:3002/docs
 
 ## Endpoints
@@ -38,5 +38,5 @@ Documentación API: http://localhost:3002/docs
 
 En VPS con PM2:
 ```bash
-pm2 start "uvicorn main:app --host 0.0.0.0 --port 3002" --name cactus-analytics
+pm2 start "uvicorn main:app --host 0.0.0.0 --port ${ANALYTICS_PORT:-3002}" --name cactus-analytics
 ```

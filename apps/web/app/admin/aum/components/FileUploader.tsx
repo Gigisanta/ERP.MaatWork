@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useState, useRef } from 'react';
 import { uploadAumFile } from '@/lib/api';
 import type { ApiErrorWithMessage } from '@/types/aum';
 import { Button, Select, Spinner, Text } from '@cactus/ui';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 // AI_DECISION: File upload limits aligned with backend
 // Justificación: Client-side validation prevents unnecessary uploads and provides better UX
@@ -18,7 +18,7 @@ interface FileUploaderProps {
 
 /**
  * FileUploader - Component for uploading AUM files
- * 
+ *
  * Features:
  * - Hidden native file input with button trigger (better UX than styled input)
  * - Client-side validation for file type and size
@@ -26,7 +26,7 @@ interface FileUploaderProps {
  * - Clear button to reset selection
  * - Broker selector (currently only Balanz)
  * - Success/error states with auto-clear
- * 
+ *
  * @example
  * <FileUploader onUploadSuccess={() => loadRows()} />
  */
@@ -66,7 +66,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setError(null);
     setSuccess(false);
     const f = e.target.files?.[0] || null;
-    
+
     if (!f) {
       setFile(null);
       return;
@@ -78,7 +78,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       logger.warn('AUM file validation failed', {
         fileName: f.name,
         fileSize: f.size,
-        error: validationError
+        error: validationError,
       });
       setError(validationError);
       // Clear the input
@@ -110,43 +110,34 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setUploading(true);
     setError(null);
     setSuccess(false);
-    
+
     try {
       logger.info('Starting AUM file upload', {
         fileName: file.name,
         fileSize: file.size,
-        broker
+        broker,
       });
-      // Console log directo para debugging inmediato
-      console.log('[AUM Upload] Starting upload', { fileName: file.name, fileSize: file.size, broker });
 
       const resp = await uploadAumFile(file, broker);
-      
+
       logger.info('AUM file upload response received', {
         success: resp?.success,
         hasData: !!resp?.data,
         dataKeys: resp?.data ? Object.keys(resp.data) : [],
-        fullResponse: resp
+        ...(resp ? toLogContext({ fullResponse: resp }) : {}),
       });
-      // Console log directo para debugging inmediato
-      console.log('[AUM Upload] Response received', {
-        success: resp?.success,
-        hasData: !!resp?.data,
-        dataKeys: resp?.data ? Object.keys(resp.data) : [],
-        fullResponse: resp
-      });
-      
+
       // Verificar respuesta del servidor
       // El apiClient normaliza { ok: true, ... } a { success: true, data: { ok: true, fileId, ... } }
       if (resp?.success && resp.data) {
         // El backend retorna { ok: true, fileId, filename, totals, ... }
         // que se normaliza a resp.data = { ok: true, fileId, filename, totals, ... }
         const fileId = (resp.data as any).fileId;
-        
+
         if (!fileId) {
           logger.error('AUM file upload response missing fileId', {
             fileName: file.name,
-            responseData: resp.data
+            ...(resp.data ? toLogContext({ responseData: resp.data }) : {}),
           });
           setError('Error: El servidor no retornó un ID de archivo válido');
           return;
@@ -157,31 +148,29 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
-        
+
         logger.info('AUM file uploaded successfully', {
           fileId,
           fileName: file.name,
           fileSize: file.size,
           broker,
-          totals: (resp.data as any).totals
+          totals: (resp.data as any).totals,
         });
-        // Console log directo para debugging inmediato
-        console.log('[AUM Upload] Upload successful', { fileId, fileName: file.name, totals: (resp.data as any).totals });
-        
+
         if (onUploadSuccess) {
           logger.info('Calling onUploadSuccess callback', { fileId });
-          console.log('[AUM Upload] Calling onUploadSuccess callback', { fileId });
           onUploadSuccess(fileId);
         } else {
           logger.warn('onUploadSuccess callback not provided');
-          console.warn('[AUM Upload] onUploadSuccess callback not provided');
         }
-        
+
         setTimeout(() => setSuccess(false), 5000); // Mostrar éxito por más tiempo
       } else {
         // Respuesta sin éxito
-        const details = resp?.details 
-          ? (Array.isArray(resp.details) ? resp.details.join('; ') : resp.details)
+        const details = resp?.details
+          ? Array.isArray(resp.details)
+            ? resp.details.join('; ')
+            : resp.details
           : null;
         const errorMsg = resp?.error || details || 'Error desconocido al procesar archivo';
         logger.error('AUM file upload failed', {
@@ -190,20 +179,21 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           broker,
           error: resp?.error,
           details,
-          response: resp
+          ...(resp ? toLogContext({ response: resp }) : {}),
         });
         setError(errorMsg);
       }
     } catch (e: unknown) {
       const apiErr = e as ApiErrorWithMessage;
-      const errorMsg = apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
+      const errorMsg =
+        apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
       logger.error('AUM file upload error', {
         fileName: file.name,
         fileSize: file.size,
         broker,
         error: apiErr.message || apiErr.error,
         userMessage: apiErr.userMessage,
-        fullError: e
+        ...(e ? toLogContext({ fullError: e }) : {}),
       });
       setError(errorMsg);
     } finally {
@@ -232,7 +222,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {/* File selection button */}
       <Button
         size="sm"
-        variant={file ? "outline" : "primary"}
+        variant={file ? 'outline' : 'primary'}
         onClick={handleButtonClick}
         disabled={uploading}
         className="text-xs"
@@ -243,12 +233,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {/* File info display */}
       {file && (
         <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded border">
-          <span className="text-xs font-medium text-gray-700 truncate max-w-xs">
-            {file.name}
-          </span>
-          <span className="text-xs text-gray-500">
-            {formatFileSize(file.size)}
-          </span>
+          <span className="text-xs font-medium text-gray-700 truncate max-w-xs">{file.name}</span>
+          <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
           <button
             type="button"
             onClick={handleClearFile}
@@ -293,7 +279,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {success && (
         <div className="w-full bg-green-50 border border-green-200 rounded p-2">
           <Text size="sm" className="text-green-700">
-            ✓ Archivo subido exitosamente. Revisa la consola del navegador para ver detalles del procesamiento.
+            ✓ Archivo subido exitosamente. Revisa la consola del navegador para ver detalles del
+            procesamiento.
           </Text>
         </div>
       )}

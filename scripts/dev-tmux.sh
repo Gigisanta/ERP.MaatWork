@@ -6,6 +6,9 @@
 
 set -euo pipefail
 
+ANALYTICS_PORT="${ANALYTICS_PORT:-3002}"
+ANALYTICS_BASE_URL="http://localhost:${ANALYTICS_PORT}"
+
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -182,7 +185,7 @@ setup_panel "0.1" "Web" \
 # Panel 0.2: Analytics (abajo izquierda)
 echo -e "${GREEN}📊 Configurando panel Analytics...${NC}"
 setup_panel "0.2" "Analytics" \
-    "cd apps/analytics-service && echo -e '\033[0;36m[Analytics] Iniciando en puerto 3002...\033[0m' && python main.py 2>&1 || echo -e '\033[0;33m[Analytics] No disponible (opcional)\033[0m'" \
+    "cd apps/analytics-service && echo -e '\033[0;36m[Analytics] Iniciando en puerto ${ANALYTICS_PORT}...\033[0m' && python main.py 2>&1 || echo -e '\033[0;33m[Analytics] No disponible (opcional)\033[0m'" \
     "cyan"
 
 # Panel 0.3: DB Logs (abajo derecha)
@@ -226,8 +229,8 @@ fi
 echo ""
 
 # Health check Analytics (opcional)
-echo -e "${BLUE}🔍 Verificando Analytics Service (http://localhost:3002/health)...${NC}"
-if health_check "http://localhost:3002/health" "Analytics" 5 2; then
+echo -e "${BLUE}🔍 Verificando Analytics Service (${ANALYTICS_BASE_URL}/health)...${NC}"
+if health_check "${ANALYTICS_BASE_URL}/health" "Analytics" 5 2; then
     echo -e "${GREEN}  ✅ Analytics Service está funcionando${NC}"
 else
     echo -e "${YELLOW}  ⚠️  Analytics Service no disponible (opcional)${NC}"
@@ -242,7 +245,7 @@ echo -e "  • Sesión TMUX: ${GREEN}$SESSION_NAME${NC}"
 echo -e "  • Web App: ${CYAN}http://localhost:3000${NC}"
 echo -e "  • API: ${CYAN}http://localhost:3001${NC}"
 echo -e "  • API Health: ${CYAN}http://localhost:3001/health${NC}"
-echo -e "  • Analytics: ${CYAN}http://localhost:3002${NC} (opcional)"
+echo -e "  • Analytics: ${CYAN}${ANALYTICS_BASE_URL}${NC} (opcional)"
 echo ""
 echo -e "${BOLD}${YELLOW}⌨️  Comandos útiles:${NC}"
 echo -e "  • Conectar: ${GREEN}tmux attach -t $SESSION_NAME${NC}"

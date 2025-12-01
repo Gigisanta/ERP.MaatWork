@@ -6,15 +6,36 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import * as schema from './schema';
 
-// Obtener __dirname equivalente para módulos ES
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Obtener __dirname compatible con ES modules y CommonJS
+// AI_DECISION: Usar verificación condicional para detectar el tipo de módulo
+// Justificación: tsx ejecuta como ES modules (import.meta disponible), pero TypeScript compila a CommonJS (__dirname disponible)
+// Impacto: Funciona tanto cuando se ejecuta directamente con tsx como cuando se compila a CommonJS
+const moduleDir = (() => {
+  // Verificar si estamos en un módulo ES (tsx ejecuta directamente)
+  try {
+    // @ts-expect-error - import.meta solo existe en ES modules, pero TypeScript puede no reconocerlo dependiendo de la configuración
+    if (typeof import.meta !== 'undefined' && import.meta.url) {
+      // @ts-expect-error
+      return dirname(fileURLToPath(import.meta.url));
+    }
+  } catch {
+    // Si import.meta no está disponible, continuar
+  }
+  // Fallback para CommonJS (cuando se compila)
+  // @ts-expect-error - __dirname está disponible en CommonJS runtime
+  if (typeof __dirname !== 'undefined') {
+    // @ts-expect-error
+    return __dirname;
+  }
+  // Último recurso
+  return process.cwd();
+})();
 
 // Cargar .env desde el directorio del paquete db si no está disponible
 if (!process.env.DATABASE_URL) {
   // En desarrollo, buscar .env en src/../.env
   // En producción compilado, buscar .env en dist/../.env
-  const envPath = join(__dirname, '..', '.env');
+  const envPath = join(moduleDir, '..', '.env');
   config({ path: envPath });
 }
 
