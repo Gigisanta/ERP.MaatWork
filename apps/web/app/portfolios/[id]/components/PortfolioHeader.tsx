@@ -75,3 +75,9 @@ export function PortfolioHeader({ portfolio, onAddLine }: PortfolioHeaderProps) 
     </div>
   );
 }
+
+
+
+
+
+

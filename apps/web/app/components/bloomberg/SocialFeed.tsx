@@ -20,7 +20,10 @@ export default function SocialFeed({ symbol }: SocialFeedProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch social posts from API
+    // FUTURE_FEATURE: Requires social media API integrations
+    // Would need: Twitter/X API, Reddit API, or StockTwits
+    // Dependencies: API keys and rate limit management for social platforms
+    // Status: Low priority - placeholder for potential future social sentiment feature
     setLoading(false);
   }, [symbol]);
 

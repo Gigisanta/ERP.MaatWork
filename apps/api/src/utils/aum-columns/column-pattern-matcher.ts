@@ -168,3 +168,9 @@ export const MEP_PATTERNS = ['mep'];
 export const CABLE_PATTERNS = ['cable'];
 
 export const CV7000_PATTERNS = ['cv7000', 'cv 7000'];
+
+
+
+
+
+

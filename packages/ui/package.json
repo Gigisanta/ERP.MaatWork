@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "build": "tsc && pnpm run build:styles && pnpm run build:link-styles",
-    "build:styles": "copyfiles -u 2 src/styles/**/*.css dist/styles",
+    "build:styles": "node scripts/copy-styles.js",
     "build:link-styles": "node -e \"try { require('fs').symlinkSync('styles/index.css', 'dist/styles.css', 'file'); } catch(e) { require('fs').copyFileSync('dist/styles/index.css', 'dist/styles.css'); }\"",
     "dev": "echo 'UI package does not need dev mode'",
     "test": "vitest run",
@@ -52,6 +52,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -61,11 +62,12 @@
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^5.1.0",
     "@vitest/ui": "^4.0.6",
-    "copyfiles": "^2.4.1",
     "eslint": "^8.53.0",
-    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "jsdom": "^27.1.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
     "vitest": "^4.0.6"
   },
   "engines": {

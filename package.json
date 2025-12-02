@@ -12,6 +12,7 @@
     "dev:clean": "pnpm dev:kill && pnpm -F @cactus/web clean && pnpm dev",
     "dev:kill": "node scripts/dev-kill.js",
     "lint": "turbo run lint",
+    "lint:analytics": "cd apps/analytics-service && python -m flake8 . --max-line-length=88 --extend-ignore=E203,W503",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "typecheck": "turbo run typecheck",
@@ -25,8 +26,10 @@
     "test:coverage:combined": "node scripts/combined-coverage-report.js",
     "test:api": "pnpm -F @cactus/api test",
     "test:web": "pnpm -F @cactus/web test",
+    "test:analytics": "cd apps/analytics-service && python -m pytest tests/",
+    "test:analytics:coverage": "cd apps/analytics-service && python -m pytest tests/ --cov=. --cov-report=html",
     "test:integration": "pnpm -F @cactus/api test --config vitest.integration.config.ts",
-    "test:all": "pnpm test && pnpm e2e",
+    "test:all": "pnpm test && pnpm e2e && pnpm test:analytics",
     "test:visual": "playwright test --config playwright.visual.config.ts",
     "test:performance": "echo 'Run performance tests with: k6 run apps/api/src/__tests__/performance/load/*.js'",
     "clean": "turbo run clean",
@@ -46,17 +49,23 @@
     "verify:aum:csv": "node scripts/verify-aum-csv-only.js",
     "test:aum:full": "node scripts/test-aum-import-full.js",
     "verify:all": "node scripts/verify-all.js",
-    "verify:all:no-e2e": "SKIP_E2E=true node scripts/verify-all.js"
+    "verify:all:no-e2e": "SKIP_E2E=true node scripts/verify-all.js",
+    "audit:deps": "depcheck",
+    "audit:all": "pnpm audit && pnpm audit:deps && pnpm tsx scripts/audit-large-files.ts && pnpm tsx scripts/audit-code-duplication.ts && pnpm tsx scripts/audit-error-handling.ts && pnpm tsx scripts/audit-imports.ts",
+    "audit:large-files": "pnpm tsx scripts/audit-large-files.ts",
+    "audit:error-handling": "pnpm tsx scripts/audit-error-handling.ts",
+    "audit:imports": "pnpm tsx scripts/audit-imports.ts",
+    "audit:duplication": "pnpm tsx scripts/audit-code-duplication.ts",
+    "audit:types": "grep -r ':\\s*any\\b' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
+    "audit:barrels": "grep -r 'export \\* from' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
-    "jose": "^5.2.4",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "recharts": "^3.3.0",
-    "swr": "^2.3.6"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@lhci/cli": "^0.15.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
@@ -69,12 +78,12 @@
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
     "chalk": "^5.6.2",
+    "depcheck": "^1.4.7",
     "husky": "^9.0.11",
     "lint-staged": "^15.5.2",
-    "lucide-react": "^0.292.0",
-    "prettier": "^3.2.5",
     "playwright": "^1.48.0",
-    "rimraf": "^5.0.5",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.10",
     "turbo": "^2.1.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.6"
@@ -85,7 +94,10 @@
       "react-dom": "^19.2.0",
       "@types/react": "^19.2.2",
       "@types/react-dom": "^19.2.2",
-      "typescript": "^5.9.3"
+      "typescript": "^5.9.3",
+      "glob": ">=10.5.0",
+      "js-yaml": ">=4.1.1",
+      "tmp": ">=0.2.4"
     }
   },
   "lint-staged": {

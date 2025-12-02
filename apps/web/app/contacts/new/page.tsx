@@ -3,7 +3,7 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import { usePageTitle } from '../../components/PageTitleContext';
 import { createContact } from '@/lib/api';
 import { usePipelineStages, useAdvisors, useInvalidateContactsCache } from '@/lib/api-hooks';

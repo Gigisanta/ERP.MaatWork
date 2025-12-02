@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { apiCall, apiCallWithToken, getContactById, getContactByIdWithToken } from './api-server';
+import { apiCall, getContactById } from './api-server';
 import { config } from './config';
 
 // Mock Next.js cookies
@@ -208,62 +208,6 @@ describe('api-server', () => {
     });
   });
 
-  describe('apiCallWithToken', () => {
-    it('debería hacer request con Bearer token', async () => {
-      // Mock AbortController
-      const AbortControllerMock = class {
-        abort = vi.fn();
-        signal = { aborted: false } as AbortSignal;
-      };
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
-
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue({ success: true })
-      };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
-
-      await apiCallWithToken('/v1/test', {
-        token: 'bearer-token',
-        method: 'GET'
-      });
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/test',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': 'Bearer bearer-token'
-          })
-        })
-      );
-    });
-
-    it('debería manejar timeout', async () => {
-      const AbortControllerMock = class {
-        abort = vi.fn();
-        signal = { aborted: false } as AbortSignal;
-      };
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
-
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = vi.fn().mockImplementation((fn: () => void) => {
-        fn();
-        return 123 as unknown as NodeJS.Timeout;
-      }) as typeof setTimeout;
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('AbortError'));
-
-      await expect(
-        apiCallWithToken('/v1/test', {
-          token: 'test-token',
-          timeoutMs: 1000
-        })
-      ).rejects.toThrow();
-      
-      global.setTimeout = originalSetTimeout;
-    });
-  });
-
   describe('getContactById', () => {
     it('debería llamar apiCall con el endpoint correcto', async () => {
       const mockCookieStore = {
@@ -297,36 +241,5 @@ describe('api-server', () => {
     });
   });
 
-  describe('getContactByIdWithToken', () => {
-    it('debería llamar apiCallWithToken con el endpoint correcto', async () => {
-      // Mock AbortController
-      const AbortControllerMock = class {
-        abort = vi.fn();
-        signal = { aborted: false } as AbortSignal;
-      };
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
-
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          success: true,
-          data: { id: 'contact-123', firstName: 'John' }
-        })
-      };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
-
-      const result = await getContactByIdWithToken('contact-123', 'test-token');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3001/v1/contacts/contact-123',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': 'Bearer test-token'
-          })
-        })
-      );
-      expect(result.data).toEqual({ id: 'contact-123', firstName: 'John' });
-    });
-  });
 });
 

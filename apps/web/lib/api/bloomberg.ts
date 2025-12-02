@@ -59,6 +59,29 @@ export interface YieldCurve {
   spreads?: Record<string, number>;
 }
 
+export interface MacroSeries {
+  id: string;
+  name: string;
+  provider?: string;
+  country?: string;
+  category?: string;
+  unit?: string;
+  frequency?: string;
+  [key: string]: unknown;
+}
+
+export interface MacroSeriesListItem {
+  id: string;
+  name: string;
+  provider?: string;
+  country?: string;
+  category?: string;
+  unit?: string;
+  frequency?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
 // ==========================================================
 // API Methods
 // ==========================================================
@@ -93,13 +116,13 @@ export async function getMacroSeries(
   seriesId: string,
   from?: string,
   to?: string
-): Promise<ApiResponse<{ series: any; points: MacroSeriesPoint[] }>> {
+): Promise<ApiResponse<{ series: MacroSeries; points: MacroSeriesPoint[] }>> {
   const params = new URLSearchParams();
   if (from) params.append('from', from);
   if (to) params.append('to', to);
   
   const query = params.toString();
-  return apiClient.get<{ series: any; points: MacroSeriesPoint[] }>(
+  return apiClient.get<{ series: MacroSeries; points: MacroSeriesPoint[] }>(
     `/v1/macro/${seriesId}${query ? `?${query}` : ''}`
   );
 }
@@ -139,14 +162,14 @@ export async function getMacroSeriesList(
   provider?: string,
   country?: string,
   category?: string
-): Promise<ApiResponse<any[]>> {
+): Promise<ApiResponse<MacroSeriesListItem[]>> {
   const params = new URLSearchParams();
   if (provider) params.append('provider', provider);
   if (country) params.append('country', country);
   if (category) params.append('category', category);
   
   const query = params.toString();
-  return apiClient.get<any[]>(`/v1/macro/series${query ? `?${query}` : ''}`);
+  return apiClient.get<MacroSeriesListItem[]>(`/v1/macro/series${query ? `?${query}` : ''}`);
 }
 
 

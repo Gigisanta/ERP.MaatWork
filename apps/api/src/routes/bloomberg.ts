@@ -120,8 +120,15 @@ router.get(
       const high52w = yearData[0]?.high ? parseFloat(yearData[0].high) : parseFloat(price.high);
       const low52w = yearData[0]?.low ? parseFloat(yearData[0].low) : parseFloat(price.low);
 
-      // TODO: Add fundamental metrics (P/E, EV/EBITDA, etc.) from SEC/fundamentals data
-      // TODO: Add technical signals (SMA, RSI, etc.) from calculated indicators
+      // FUTURE_FEATURE: Fundamental metrics from SEC/fundamentals data
+      // - Requires: SEC EDGAR API integration or financial data provider (Alpha Vantage, etc.)
+      // - Metrics: P/E, EV/EBITDA, ROE, Revenue Growth, Profit Margins
+      // - Status: Awaiting data provider integration
+      
+      // FUTURE_FEATURE: Technical indicators calculated from price history
+      // - Can use: analytics-service (cactus_ingestors/utils/technical.py)
+      // - Indicators: SMA(20,50,200), EMA, RSI(14), MACD, Bollinger Bands
+      // - Status: Python calculations ready, needs API endpoint wrapper
 
       res.json({
         success: true,

@@ -17,7 +17,7 @@ export interface ConfirmDialogProps {
  * ConfirmDialog - Componente reutilizable para confirmaciones
  * 
  * Reemplaza confirm() nativo con Modal del design system
- * Siguiendo patrones de .cursorrules
+ * Siguiendo patrones de .cursor/rules/
  */
 export default function ConfirmDialog({
   open,

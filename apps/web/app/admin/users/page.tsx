@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateUserRole, updateUserStatus, deleteUser as deleteUserApi, approveUser, rejectUser } from '@/lib/api';
 import { useUsers } from '@/lib/api-hooks';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { UserRole, UserApiResponse } from '@/types';
 import {
   Card,

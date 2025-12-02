@@ -13,18 +13,14 @@ import * as schema from './schema';
 const moduleDir = (() => {
   // Verificar si estamos en un módulo ES (tsx ejecuta directamente)
   try {
-    // @ts-expect-error - import.meta solo existe en ES modules, pero TypeScript puede no reconocerlo dependiendo de la configuración
     if (typeof import.meta !== 'undefined' && import.meta.url) {
-      // @ts-expect-error
       return dirname(fileURLToPath(import.meta.url));
     }
   } catch {
     // Si import.meta no está disponible, continuar
   }
   // Fallback para CommonJS (cuando se compila)
-  // @ts-expect-error - __dirname está disponible en CommonJS runtime
   if (typeof __dirname !== 'undefined') {
-    // @ts-expect-error
     return __dirname;
   }
   // Último recurso
@@ -175,3 +171,4 @@ export function db(): NodePgDatabase<typeof schema> {
 
 // Re-export read replica functions
 export { readReplicaDb, hasReadReplica } from './read-replica';
+

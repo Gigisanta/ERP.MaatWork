@@ -7,11 +7,16 @@ import {
   updatePortfolio as updatePortfolioApi,
   deletePortfolio as deletePortfolioApi,
 } from '@/lib/api';
-import type { Portfolio, PortfolioLine } from '@/types';
+import type { Portfolio, PortfolioLine, CreatePortfolioRequest, UpdatePortfolioRequest } from '@/types';
 import { useEntityWithComponents } from './useEntityWithComponents';
 
 export function usePortfolios() {
-  const { entities: portfolios, isLoading, error, refetch, createEntity: createPortfolio, updateEntity: updatePortfolio, deleteEntity: deletePortfolio } = useEntityWithComponents<Portfolio & { lines?: PortfolioLine[] }, PortfolioLine>({
+  const { entities: portfolios, isLoading, error, refetch, createEntity: createPortfolio, updateEntity: updatePortfolio, deleteEntity: deletePortfolio } = useEntityWithComponents<
+    Portfolio & { lines?: PortfolioLine[] },
+    PortfolioLine,
+    CreatePortfolioRequest,
+    UpdatePortfolioRequest
+  >({
     fetchEntities: getPortfolios,
     fetchComponentsBatch: getPortfolioLinesBatch,
     createEntity: createPortfolioApi,

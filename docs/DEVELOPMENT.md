@@ -604,13 +604,94 @@ Este método siempre funciona porque no depende de pegar en la consola.
 
 ---
 
+## Gestión de Versiones con Changesets
+
+### Crear un Changeset
+
+Cuando hagas cambios que requieran una nueva versión, crea un changeset:
+
+```bash
+pnpm changeset
+```
+
+Esto te guiará para:
+1. Seleccionar el tipo de cambio (major, minor, patch)
+2. Seleccionar los paquetes afectados
+3. Escribir una descripción del cambio
+
+### Generar Changelog
+
+Antes de hacer release, genera el changelog:
+
+```bash
+pnpm changeset version
+```
+
+Esto actualizará `CHANGELOG.md` con los cambios pendientes.
+
+### Proceso de Release
+
+1. Crear changesets durante desarrollo: `pnpm changeset`
+2. Antes de release: `pnpm changeset version`
+3. Revisar `CHANGELOG.md`
+4. Commit y push
+5. Crear release tag
+
+### Ver Changesets Pendientes
+
+```bash
+# Ver cambios pendientes
+ls .changeset/
+
+# Ver changelog generado
+cat CHANGELOG.md
+```
+
+---
+
+## Scripts de Auditoría
+
+### Auditoría Completa
+
+Ejecutar todas las auditorías:
+
+```bash
+pnpm audit:all
+```
+
+Esto ejecuta:
+- `pnpm audit` - Verifica vulnerabilidades de seguridad
+- `pnpm audit:deps` - Detecta dependencias no usadas
+- `pnpm tsx scripts/audit-large-files.ts` - Identifica archivos/funciones grandes
+- `pnpm tsx scripts/audit-code-duplication.ts` - Detecta código duplicado
+
+### Auditorías Específicas
+
+```bash
+# Verificar uso de `any`
+pnpm audit:types
+
+# Verificar barrel exports
+pnpm audit:barrels
+
+# Verificar dependencias no usadas
+pnpm audit:deps
+```
+
+**Cuándo ejecutar:**
+- Antes de cada release
+- Semanalmente durante desarrollo
+- Después de refactorizaciones grandes
+
+---
+
 ## Referencias a Módulos
 
 Para información detallada sobre módulos específicos del sistema, consulta:
 
-- [Guías de Módulos](./MODULES.md) - Guías específicas por módulo y componente
+- [Guía de Arquitectura](./ARCHITECTURE.md) - Arquitectura y estructura de módulos principales
 
-Los módulos principales documentados incluyen:
+Los módulos principales incluyen:
 - Pipeline
 - Analytics
 - Auth (Autenticación y Autorización)
@@ -669,5 +750,4 @@ pnpm -F @cactus/db seed:all    # Seed completo
 - [Guía de Base de Datos](./DATABASE.md) - Optimización y configuración de BD
 - [Guía de Testing](./TESTING.md) - Estrategias y herramientas de testing
 - [Guía de Operaciones](./OPERATIONS.md) - Deploy y monitoreo en producción
-- [Guías de Módulos](./MODULES.md) - Guías específicas por módulo
 

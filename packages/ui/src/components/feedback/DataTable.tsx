@@ -33,6 +33,27 @@ export interface DataTableProps<T> {
 
 type SortDirection = 'asc' | 'desc' | null;
 
+/**
+ * DataTable component for displaying tabular data with sorting, selection, and virtualization support
+ * 
+ * @template T - Type of data items (must extend Record<string, unknown>)
+ * @param props - DataTable component props
+ * @returns DataTable component with optional sorting, selection, and virtualization
+ * 
+ * @example
+ * ```tsx
+ * <DataTable
+ *   data={users}
+ *   columns={[
+ *     { key: 'name', header: 'Name', sortable: true },
+ *     { key: 'email', header: 'Email' }
+ *   ]}
+ *   keyField="id"
+ *   selectable
+ *   onSelectionChange={(selected) => console.log(selected)}
+ * />
+ * ```
+ */
 export const DataTable = <T extends Record<string, unknown>>({
   data,
   columns,

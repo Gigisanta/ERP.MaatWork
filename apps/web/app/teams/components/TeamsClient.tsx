@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTeamAdvisors, createTeamInvitation, createTeam, respondToMembershipRequest } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import TeamMemberCard from '../components/TeamMemberCard';
 import {
   Card,
@@ -196,7 +196,7 @@ export default function TeamsClient({
     ...(canEdit ? [{
       key: 'actions',
       header: 'Acciones',
-      render: (request) => (
+      render: (request: MembershipRequest) => (
         <Stack direction="row" gap="sm">
           <Button
             variant="primary"

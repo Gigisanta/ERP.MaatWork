@@ -2,6 +2,7 @@ import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cac
 import { eq, and, or, sql, inArray, isNull, type SQL } from 'drizzle-orm';
 import { UserRole } from './types';
 import { getCachedAccessScope, setCachedAccessScope } from './cache';
+import { logger } from '../utils/logger';
 
 export interface AccessScope {
   userId: string;
@@ -28,20 +29,12 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
   // Check cache first
   const cached = getCachedAccessScope(userId, role);
   if (cached) {
-    // AI_DECISION: Log cache hit for monitoring (optional, can be removed if too verbose)
-    // Justificación: Permite monitorear efectividad del caché
-    // Impacto: Mejora visibilidad de cache hit rate
-    // Note: Using console.log here since we don't have logger context, can be enhanced later
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`[Cache Hit] getUserAccessScope(${userId}, ${role})`);
-    }
+    logger.debug({ userId, role }, 'Cache hit for getUserAccessScope');
     return cached;
   }
   
   // Cache miss - will query DB
-  if (process.env.NODE_ENV === 'development') {
-    console.debug(`[Cache Miss] getUserAccessScope(${userId}, ${role})`);
-  }
+  logger.debug({ userId, role }, 'Cache miss for getUserAccessScope');
 
   // Ensure user exists in database
   const user = await db().select().from(users).where(eq(users.id, userId)).limit(1);
@@ -78,11 +71,7 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
         // Include manager's own ID so they can see contacts they created
         accessibleAdvisorIds = [userId, ...teamMembers.map((m: { id: string }) => m.id)];
       } catch (error) {
-        // AI_DECISION: Mantener console.warn aquí por ser función de utilidad sin request context
-        // Justificación: getUserAccessScope no tiene acceso a req.log, y es llamado antes de handlers
-        // Impacto: Este warning es de configuración/setup, aceptable en console
-        // TODO: Considerar logger global si se vuelve problemático
-        console.warn(`Manager ${userId} has no team members or team setup issue:`, error);
+        logger.warn({ userId, err: error }, 'Manager has no team members or team setup issue');
         // Even without team members, manager should see their own contacts
         accessibleAdvisorIds = [userId];
       }
@@ -148,7 +137,7 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
   // Defensive check: ensure we always have at least one condition
   if (conditions.length === 0) {
     // This shouldn't happen in normal operation, but fail safe
-    console.warn(`buildContactAccessFilter: No access conditions for user ${userId} with role ${role}. accessibleAdvisorIds: ${JSON.stringify(accessibleAdvisorIds)}, canSeeUnassigned: ${canSeeUnassigned}`);
+    logger.warn({ userId, role, accessibleAdvisorIds, canSeeUnassigned }, 'buildContactAccessFilter: No access conditions - fail safe');
     return {
       whereClause: sql`1=0`, // No access
       description: 'no access conditions - fail safe'
@@ -202,7 +191,7 @@ export async function canAccessContact(
 
     return contact.length > 0;
   } catch (error) {
-    console.error('Error checking contact access:', error);
+    logger.error({ err: error }, 'Error checking contact access');
     return false; // Fail closed
   }
 }
@@ -333,7 +322,7 @@ export async function canAccessAumFile(userId: string, role: UserRole, fileId: s
 
     return false; // Unknown role or no access
   } catch (error) {
-    console.error('Error checking AUM file access:', error);
+    logger.error({ err: error }, 'Error checking AUM file access');
     return false; // Fail closed
   }
 }

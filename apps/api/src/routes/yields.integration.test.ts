@@ -22,7 +22,7 @@ vi.mock('@cactus/db', () => ({
 
 // Mock cache middleware
 vi.mock('../middleware/cache', () => ({
-  cache: vi.fn(() => (req: any, res: any, next: any) => next()),
+  cache: vi.fn(() => (_req: unknown, _res: unknown, next: () => void) => next()),
   REDIS_TTL: {
     YIELD_CURVE: 1800,
   },

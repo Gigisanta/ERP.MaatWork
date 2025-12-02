@@ -29,6 +29,32 @@ export interface IndexRecommendation {
 }
 
 /**
+ * PostgreSQL EXPLAIN plan node structure
+ * @see https://www.postgresql.org/docs/current/using-explain.html
+ */
+interface ExplainPlanNode {
+  'Node Type': string;
+  'Total Cost': number;
+  'Startup Cost'?: number;
+  'Plan Rows'?: number;
+  'Plan Width'?: number;
+  'Actual Rows'?: number;
+  'Actual Loops'?: number;
+  'Actual Total Time'?: number;
+  'Actual Startup Time'?: number;
+  'Relation Name'?: string;
+  'Alias'?: string;
+  'Index Name'?: string;
+  'Index Cond'?: string;
+  'Filter'?: string;
+  'Join Type'?: string;
+  'Hash Cond'?: string;
+  'Sort Key'?: string[];
+  Plans?: ExplainPlanNode[];
+  [key: string]: unknown;
+}
+
+/**
  * Ejecuta EXPLAIN ANALYZE en una query SQL
  */
 export async function explainQuery(query: string, params?: unknown[]): Promise<ExplainResult> {
@@ -83,7 +109,7 @@ export async function explainQuery(query: string, params?: unknown[]): Promise<E
 /**
  * Extrae el costo máximo del plan
  */
-function extractMaxCost(node: any): number {
+function extractMaxCost(node: ExplainPlanNode | null | undefined): number {
   if (!node) return 0;
   
   let maxCost = node['Total Cost'] || 0;
@@ -100,7 +126,7 @@ function extractMaxCost(node: any): number {
 /**
  * Cuenta tipos de scans en el plan
  */
-function countScanTypes(node: any): { sequentialScans: number; indexScans: number } {
+function countScanTypes(node: ExplainPlanNode | null | undefined): { sequentialScans: number; indexScans: number } {
   if (!node) return { sequentialScans: 0, indexScans: 0 };
   
   let sequentialScans = 0;
@@ -135,7 +161,7 @@ function generateRecommendations(analysis: {
   maxCost: number;
   sequentialScans: number;
   indexScans: number;
-  planInfo: any;
+  planInfo: ExplainPlanNode | null;
 }): string[] {
   const recommendations: string[] = [];
   

@@ -2,7 +2,7 @@
   "extends": ["next/core-web-vitals"],
   "rules": {
     "no-console": ["error", { "allow": ["error"] }],
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       {
@@ -10,6 +10,13 @@
         "varsIgnorePattern": "^_",
         "ignoreRestSiblings": true,
         "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ExportAllDeclaration",
+        "message": "Barrel exports forbidden - breaks tree-shaking. Use specific exports instead."
       }
     ]
   }

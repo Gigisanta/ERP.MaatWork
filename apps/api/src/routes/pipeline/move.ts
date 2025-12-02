@@ -7,6 +7,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, pipelineStages, contacts, pipelineStageHistory, automationConfigs } from '@cactus/db';
 import { eq, and, isNull, count, sql } from 'drizzle-orm';
+import type { InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { canAccessContact } from '../../auth/authorization';
 import { z } from 'zod';
@@ -101,7 +102,7 @@ router.post('/move',
         }
 
         // Actualizar contacto dentro de la transacción
-        const [updatedContact] = await tx
+        const updateResult = await tx
           .update(contacts)
           .set({
             pipelineStageId: toStageId,
@@ -110,6 +111,10 @@ router.post('/move',
           })
           .where(eq(contacts.id, contactId))
           .returning();
+        
+        // Type assertion needed because Drizzle's transaction type inference is complex
+        const updatedContacts = updateResult as InferSelectModel<typeof contacts>[];
+        const updatedContact = updatedContacts[0];
 
         if (!updatedContact) {
           throw new Error('Contact not found');

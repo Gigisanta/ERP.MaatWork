@@ -332,7 +332,7 @@ Este archivo complementa el script automatizado. Tareas que requieren intervenci
     ```
   ```
 
-- [ ] Actualizar `.cursorrules` si hay nuevos patrones establecidos
+- [ ] Actualizar `.cursor/rules/` si hay nuevos patrones establecidos
 
 ## 🧪 Testing
 

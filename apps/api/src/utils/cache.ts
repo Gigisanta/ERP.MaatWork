@@ -19,6 +19,7 @@
 
 import NodeCache from 'node-cache';
 import Redis from 'ioredis';
+import { logger } from './logger';
 
 // Initialize Redis if REDIS_URL is available
 let redisClient: Redis | null = null;
@@ -34,21 +35,21 @@ if (useRedis) {
     });
 
     redisClient.on('error', (err) => {
-      console.error('[Redis] Connection error:', err.message);
+      logger.error({ err: { message: err.message } }, 'Redis connection error');
       redisClient = null; // Fallback to NodeCache
     });
 
     redisClient.on('connect', () => {
-      console.log('[Redis] Connected successfully');
+      logger.info('Redis connected successfully');
     });
 
     // Connect asynchronously (non-blocking)
     redisClient.connect().catch((err) => {
-      console.warn('[Redis] Failed to connect, using NodeCache fallback:', err.message);
+      logger.warn({ err: { message: err.message } }, 'Redis failed to connect, using NodeCache fallback');
       redisClient = null;
     });
   } catch (err) {
-    console.warn('[Redis] Failed to initialize, using NodeCache fallback:', err instanceof Error ? err.message : String(err));
+    logger.warn({ err: err instanceof Error ? { message: err.message } : { message: String(err) } }, 'Redis failed to initialize, using NodeCache fallback');
     redisClient = null;
   }
 }
@@ -91,7 +92,7 @@ async function setInRedis(key: string, value: unknown, ttl?: number): Promise<vo
     }
   } catch (err) {
     // Silently fail, NodeCache is the source of truth
-    console.debug('[Redis] Set failed, using NodeCache only:', err instanceof Error ? err.message : String(err));
+    logger.debug({ err: err instanceof Error ? { message: err.message } : { message: String(err) } }, 'Redis set failed, using NodeCache only');
   }
 }
 

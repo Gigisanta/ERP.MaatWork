@@ -34,8 +34,14 @@ import { logger } from '../utils/logger';
 const mockCreateClient = vi.mocked(createClient);
 const mockLogger = vi.mocked(logger);
 
+interface MockRedisClient {
+  on: ReturnType<typeof vi.fn>;
+  connect: ReturnType<typeof vi.fn>;
+  quit: ReturnType<typeof vi.fn>;
+}
+
 describe('redis config', () => {
-  let mockRedisClient: any;
+  let mockRedisClient: MockRedisClient;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,7 +52,7 @@ describe('redis config', () => {
       quit: vi.fn().mockResolvedValue(undefined)
     };
 
-    mockCreateClient.mockReturnValue(mockRedisClient as any);
+    mockCreateClient.mockReturnValue(mockRedisClient as ReturnType<typeof createClient>);
   });
 
   describe('initializeRedis', () => {

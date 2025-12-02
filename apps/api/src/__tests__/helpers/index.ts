@@ -4,9 +4,42 @@
  * Central export for all test helpers
  */
 
-export * from './test-db';
-export * from './test-fixtures';
-export * from './test-server';
+// Test database helpers
+export {
+  getTestDb,
+  withTransaction,
+  cleanupTestDatabase,
+  resetTestDatabase,
+  isTestMode,
+  getTestDatabaseUrl
+} from './test-db';
+
+// Test fixtures
+export {
+  createTestContact,
+  createTestTag,
+  createTestTask,
+  createTestNote,
+  createTestTeam,
+  createTestPipelineStage,
+  createTestContacts,
+  cleanupTestFixtures
+} from './test-fixtures';
+
+// Test server helpers
+export {
+  createTestApp,
+  setupTestDatabase,
+  cleanupTestServer,
+  startTestServer,
+  stopTestServer,
+  getTestServerPort,
+  getTestServerUrl,
+  createAuthenticatedRequest,
+  createMockRequest,
+  createMockResponse,
+  createMockNext
+} from './test-server';
 // Export test-auth helpers with specific names to avoid conflicts
 export { 
   createMockAuthRequest

@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    // AI_DECISION: Use ESNext module for ES module support across the monorepo
+    // Justification: Packages use import.meta and other ES module features
+    // Impact: Enables proper type checking for ES module code
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
       "@cactus/db": ["packages/db/src/index.ts"],

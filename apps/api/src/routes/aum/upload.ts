@@ -8,14 +8,17 @@
 
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
-import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import { db, aumImportFiles, aumImportRows, teams, teamMembership, advisorAccountMapping, advisorAliases, brokerAccounts, contacts, users } from '@cactus/db';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, sql, inArray, type InferSelectModel } from 'drizzle-orm';
+
+// Type for AUM import row from Drizzle schema
+type AumImportRow = InferSelectModel<typeof aumImportRows>;
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { canAccessAumFile, getUserAccessScope } from '../../auth/authorization';
 import { validate } from '../../utils/validation';
 import { AUM_LIMITS } from '../../config/aum-limits';
+import { createAumUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../utils/file-upload';
 import { createErrorResponse } from '../../utils/error-response';
 import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../utils/aum-normalization';
 import { parseAumFile } from '../../services/aumParser';
@@ -40,29 +43,11 @@ import {
 const router = Router();
 
 // ==========================================================
-// File Upload Configuration
+// File Upload Configuration (using centralized utility)
 // ==========================================================
 
-const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
-
-const storage = multer.diskStorage({
-  destination: async (_req, _file, cb) => {
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-    } catch {}
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${extname(file.originalname)}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: AUM_LIMITS.MAX_FILE_SIZE
-  }
-});
+const uploadDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
+const upload = createAumUpload(AUM_LIMITS.MAX_FILE_SIZE, uploadDir);
 
 // Helper function to check if value looks like email
 function isEmailLike(value: string | null | undefined): boolean {
@@ -86,23 +71,8 @@ router.post('/uploads',
     // Middleware para manejar errores de multer antes de llegar al handler
     upload.single('file')(req, res, (err) => {
       if (err) {
-        req.log?.error?.({ err, filename: (req as any).file?.originalname }, 'Error en multer upload');
-        if (err instanceof multer.MulterError) {
-          if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({
-              error: 'Error al procesar el archivo',
-              details: `Archivo demasiado grande. Tamaño máximo: ${AUM_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB`
-            });
-          }
-          return res.status(400).json({
-            error: 'Error al procesar el archivo',
-            details: `Error de upload: ${err.message}`
-          });
-        }
-        return res.status(400).json({
-          error: 'Error al procesar el archivo',
-          details: err instanceof Error ? err.message : String(err)
-        });
+        req.log?.error?.({ err, filename: (req as { file?: Express.Multer.File }).file?.originalname }, 'Error en multer upload');
+        return handleMulterError(err, res, { maxFileSize: AUM_LIMITS.MAX_FILE_SIZE });
       }
       next();
     });
@@ -114,7 +84,7 @@ router.post('/uploads',
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const file = (req as any).file as Express.Multer.File | undefined;
+      const file = (req as { file?: Express.Multer.File }).file;
       if (!file) {
         req.log?.warn?.({ userId }, 'Upload request sin archivo');
         return res.status(400).json({ error: 'No file uploaded' });
@@ -825,7 +795,7 @@ router.get('/uploads/:fileId/export',
 
       // Fetch contact names for matched rows
       const contactIdSet = new Set<string>();
-      rows.forEach((r: any) => {
+      rows.forEach((r: AumImportRow) => {
         if (r.matchedContactId) contactIdSet.add(r.matchedContactId);
       });
       const contactIds = Array.from(contactIdSet);
@@ -848,7 +818,7 @@ router.get('/uploads/:fileId/export',
 
       const csvLines: string[] = [];
       csvLines.push(headers.join(','));
-      for (const r of rows as any[]) {
+      for (const r of rows) {
         const values = [
           r.accountNumber || '',
           r.holderName || '',

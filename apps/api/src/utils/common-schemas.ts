@@ -1,7 +1,40 @@
 /**
  * Common Zod schemas shared across all routes
  * 
- * Centralized schemas for consistency across the entire API
+ * Centralized schemas for consistency across the entire API.
+ * 
+ * ## When to use this file:
+ * - Use these schemas as building blocks for route-specific schemas
+ * - Import directly when you need standard validations (uuid, email, pagination)
+ * - These are the canonical schemas - prefer these over creating duplicates
+ * 
+ * ## Contents:
+ * - Basic types: `uuidSchema`, `emailSchema`, `urlSchema`, `dateSchema`
+ * - Pagination: `paginationQuerySchema`, `sortQuerySchema`
+ * - Common params: `idParamSchema`, `contactIdParamSchema`, `fileIdParamSchema`
+ * - Enums: `userRoleSchema`, `statusSchema`, `aumStatusSchema`
+ * 
+ * ## Related files:
+ * - `validation.ts` - Middleware for applying schemas to requests
+ *   Use for: The `validate()` middleware in route handlers
+ * 
+ * - `validation-common.ts` - Additional schema helpers and validators
+ *   Use for: Complex validations, factory functions for custom schemas
+ * 
+ * @example
+ * ```typescript
+ * import { uuidSchema, paginationQuerySchema, idParamSchema } from '../utils/common-schemas';
+ * import { validate } from '../utils/validation';
+ * 
+ * // Building route-specific schema
+ * const createItemSchema = z.object({
+ *   name: z.string().min(1),
+ *   ownerId: uuidSchema.optional()
+ * });
+ * 
+ * // Using in route
+ * router.get('/:id', validate({ params: idParamSchema, query: paginationQuerySchema }), handler);
+ * ```
  */
 
 import { z } from 'zod';

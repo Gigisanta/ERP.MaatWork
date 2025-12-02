@@ -9,7 +9,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { useAuth } from '../../../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { canImportFiles } from '@/lib/auth-helpers';
 import { useAumRows } from '@/lib/api-hooks';
 import { resetAumSystem } from '@/lib/api/aum';

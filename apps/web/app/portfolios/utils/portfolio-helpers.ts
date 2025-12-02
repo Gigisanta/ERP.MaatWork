@@ -4,7 +4,7 @@ import {
   addPortfolioLine,
   deletePortfolioLine,
 } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { PortfolioLine, Instrument } from '@/types';
 
 /**

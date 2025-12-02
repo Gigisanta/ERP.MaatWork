@@ -1,7 +1,33 @@
 /**
- * Utilidades compartidas de validación
- *
- * Extiende common-schemas.ts con helpers adicionales y funciones de validación reutilizables
+ * Additional validation helpers and schema factories
+ * 
+ * Extends common-schemas.ts with helper functions for creating custom schemas.
+ * 
+ * ## When to use this file:
+ * - Use when you need optional versions of basic schemas (`optionalEmailSchema`)
+ * - Use factory functions for parameterized schemas (`stringLengthSchema`, `enumSchema`)
+ * - Use for domain-specific validators (`phoneSchema`, `dniSchema`, `percentageSchema`)
+ * 
+ * ## Contents:
+ * - Optional schemas: `optionalEmailSchema`, `optionalUuidSchema`
+ * - Factory functions: `positiveNumberSchema()`, `stringLengthSchema()`, `enumSchema()`
+ * - Domain validators: `phoneSchema`, `dniSchema`, `percentageSchema`, `countryCodeSchema`
+ * - Array validators: `nonEmptyArraySchema()`
+ * 
+ * ## Related files:
+ * - `common-schemas.ts` - Basic reusable schemas (prefer these for standard validations)
+ * - `validation.ts` - Middleware for applying schemas to requests
+ * 
+ * @example
+ * ```typescript
+ * import { optionalEmailSchema, stringLengthSchema, percentageSchema } from '../utils/validation-common';
+ * 
+ * const updateProfileSchema = z.object({
+ *   email: optionalEmailSchema,
+ *   bio: stringLengthSchema(0, 500, 'bio'),
+ *   completionRate: percentageSchema
+ * });
+ * ```
  */
 
 import { z } from 'zod';
@@ -121,3 +147,8 @@ export function nonEmptyArraySchema<T extends z.ZodTypeAny>(
 export function oneOfSchema<T extends z.ZodTypeAny>(schemas: T[], fieldName: string = 'value') {
   return z.union(schemas as [T, T, ...T[]]);
 }
+
+
+
+
+

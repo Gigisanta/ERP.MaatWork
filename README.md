@@ -4,119 +4,44 @@ Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) 
 
 ## Inicio Rápido
 
-### Requisitos
-- Node.js >=22.0.0 <25.0.0
-- pnpm 9+
-- Python 3.10+ (opcional, para analytics-service)
-- TMUX (recomendado)
-- Docker (opcional, para PostgreSQL local)
-
-### Instalación
 ```bash
+# Instalar dependencias
 pnpm install
-```
 
-### Configuración Inicial
-```bash
-# 1. Iniciar PostgreSQL y N8N (Docker)
+# Iniciar servicios (requiere Docker para PostgreSQL)
 docker compose up -d
-
-# 2. Configurar variables de entorno
-cp apps/api/config-example.env apps/api/.env
-# Editar apps/api/.env con tus valores
-
-# 3. Instalar dependencias Python (opcional)
-pnpm -F @cactus/analytics-service install
-```
-
-### Desarrollo
-```bash
-# Opción 1: Con TMUX (recomendado - 4 paneles)
 pnpm dev
-
-# Opción 2: Sin TMUX
-pnpm dev:basic
 ```
 
-**URLs:**
+**URLs de desarrollo:**
 - Web: http://localhost:3000
 - API: http://localhost:3001
-- Analytics: http://localhost:3002 (configurable vía `ANALYTICS_PORT`)
+- Analytics: http://localhost:3002
 - N8N: http://localhost:5678
+
+Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started).
 
 ## Comandos Esenciales
 
-### Desarrollo
 ```bash
-pnpm dev              # Inicia todos los servicios (TMUX)
-pnpm dev:basic        # Inicia servicios sin TMUX
-pnpm dev:kill         # Detiene sesión TMUX
-```
-
-### Typecheck y Lint
-```bash
-pnpm typecheck        # Verificar tipos en todos los workspaces
-pnpm lint             # Ejecutar lint
-```
-
-### Build
-```bash
+pnpm dev              # Desarrollo (todos los servicios)
+pnpm typecheck        # Verificar tipos
 pnpm build            # Build completo
-pnpm -F @cactus/ui build    # Build solo UI
-pnpm -F @cactus/db build    # Build solo DB
+pnpm test             # Tests unitarios
+pnpm test:e2e         # Tests E2E
 ```
 
-### Tests
-```bash
-pnpm test             # Unit tests
-pnpm test:coverage    # Con cobertura
-pnpm test:e2e         # E2E tests (Playwright)
-```
+Ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#comandos-útiles) para comandos completos.
 
-### Base de Datos
-```bash
-pnpm -F @cactus/db generate    # Generar migración
-pnpm -F @cactus/db migrate     # Aplicar migraciones
-pnpm -F @cactus/db seed:all    # Seed completo
-```
-
-**⚠️ Importante:** Nunca usar `drizzle-kit push` en producción (es destructivo)
-
-## Estructura del Proyecto
-
-```
-CactusDashboard-epic-D/
-├── apps/
-│   ├── api/                 # API Express + TypeScript
-│   ├── web/                 # Frontend Next.js App Router
-│   └── analytics-service/   # Servicio Python de análisis
-├── packages/
-│   ├── db/                  # Drizzle ORM + PostgreSQL
-│   └── ui/                  # Design System + React Components
-├── data/                    # Archivos de datos de negocio
-├── docs/                     # Documentación técnica
-└── docker-compose.yml       # PostgreSQL y N8N
-```
 
 ## Documentación
 
-### Guías Principales
-- 📖 [Arquitectura](./docs/ARCHITECTURE.md) - Arquitectura detallada y decisiones técnicas
-- 🗄️ [Guía de Base de Datos](./docs/DATABASE.md) - Optimización, configuración, particionamiento, caché y mejores prácticas
-- 💻 [Guía de Desarrollo](./docs/DEVELOPMENT.md) - Getting Started, Code Standards y Debugging
-- 🧪 [Guía de Testing](./docs/TESTING.md) - Estrategias y herramientas de testing
-- 🚀 [Guía de Operaciones](./docs/OPERATIONS.md) - Deploy, monitoreo, troubleshooting y performance
-- 🧩 [Guías de Módulos](./docs/MODULES.md) - Guías específicas por módulo
-
-### Documentación Histórica
-- 📚 [Índice Completo](./docs/README.md) - Índice completo de documentación
-- 📦 [Historial de Optimizaciones](./docs/archive/OPTIMIZATION_HISTORY.md) - Historial de optimizaciones
-- ✅ [Historial de Testing](./docs/archive/TESTING_HISTORY.md) - Historial de implementación de tests
+Ver [documentación completa](./docs/README.md) para todas las guías técnicas.
 
 ## Características Principales
 
 ### Sistema de Etiquetas
-Categorización de contactos con etiquetas personalizables. Ver [documentación completa](./docs/MODULES.md#sistema-de-etiquetas).
+Categorización de contactos con etiquetas personalizables.
 
 ### N8N - Automatizaciones
 Servicio Docker para crear y gestionar automatizaciones de flujos de trabajo. Acceso en http://localhost:5678.
@@ -129,72 +54,7 @@ Sistema de diseño moderno y accesible con 40+ componentes reutilizables. Ver [p
 - **Frontend**: Sistema estructurado con correlación de requests
 - Ver logs: `pnpm -F @cactus/api run dev:pretty`
 
-## Deploy en Producción
-
-### Build y PM2
-```bash
-# 1. Build de la API
-pnpm -F @cactus/api build
-
-# 2. Iniciar con PM2
-pm2 start apps/api/ecosystem.config.js --env production
-
-# 3. Configurar rotación de logs
-pnpm -F @cactus/api run pm2:logrotate:install
-pnpm -F @cactus/api run pm2:logrotate:config
-```
-
-### Variables de Entorno Requeridas
-Crear `.env` en `apps/api` con:
-- `DATABASE_URL` - URL de PostgreSQL
-- `PORT` - Puerto del servidor (default: 3001)
-- `LOG_LEVEL` - Nivel de logging
-- `CORS_ORIGINS` - Orígenes permitidos (producción)
-- `JWT_SECRET` - Secret para JWT tokens
-- `CSP_ENABLED` - Habilitar CSP (opcional)
-
-## Solución de Problemas
-
-### TMUX no está instalado
-```bash
-# macOS
-brew install tmux
-
-# Ubuntu/Debian
-sudo apt-get install tmux
-```
-
-### Detener sesión TMUX
-```bash
-pnpm run dev:kill
-# o manualmente:
-tmux kill-session -t cactus-dev
-```
-
-### Errores de base de datos
-```bash
-# Verificar que PostgreSQL esté corriendo
-docker ps | grep postgres
-
-# Si no está corriendo
-docker compose up -d
-```
-
-### Servicio Analytics (Python) no inicia
-El servicio es opcional. Si no está disponible, el API usará fallback a base de datos.
-
-```bash
-# Verificar Python
-python3 --version
-
-# Instalar dependencias
-pnpm -F @cactus/analytics-service install
-
-# Iniciar servicio
-pnpm -F @cactus/analytics-service dev
-```
-
-Para más detalles, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#guía-de-debugging) y [Guía de Operaciones](./docs/OPERATIONS.md#troubleshooting).
+Para información de deploy y troubleshooting, ver [Guía de Operaciones](./docs/OPERATIONS.md).
 
 ## Repo Hygiene
 
@@ -204,7 +64,7 @@ Para más detalles, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#guía-de-deb
 
 ## Reglas del Proyecto
 
-Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas en [`.cursorrules`](./.cursorrules).
+Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas en [`.cursor/rules/`](./.cursor/rules/).
 
 **Principios clave:**
 - TypeScript estricto (`exactOptionalPropertyTypes: true`)

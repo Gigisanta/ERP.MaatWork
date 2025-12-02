@@ -854,6 +854,5 @@ psql $DATABASE_URL -f scripts/verify-indexes.sql
 
 ## Documentación Relacionada
 
-- [Historial de Optimizaciones](./archive/OPTIMIZATION_HISTORY.md) - Historial completo de optimizaciones
 - [Guía de Operaciones](./OPERATIONS.md) - Deploy y monitoreo en producción
 

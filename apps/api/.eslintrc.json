@@ -17,7 +17,7 @@
         "allow": ["error"]
       }
     ],
-    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-explicit-any": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       {
@@ -27,7 +27,14 @@
         "caughtErrorsIgnorePattern": "^_"
       }
     ],
-    "@typescript-eslint/no-unused-imports": "off"
+    "@typescript-eslint/no-unused-imports": "off",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "ExportAllDeclaration",
+        "message": "Barrel exports forbidden - breaks tree-shaking. Use specific exports instead."
+      }
+    ]
   },
   "overrides": [
     {

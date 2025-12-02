@@ -516,7 +516,7 @@ export class DailyValuationJob {
       }
 
     } catch (error) {
-      console.error(`Error calculando desvío para contacto ${contactId}:`, error);
+      logger.error({ err: error, contactId }, 'Error calculando desvío para contacto');
       // No lanzar error para no interrumpir el procesamiento de otros contactos
     }
   }

@@ -185,9 +185,9 @@ describe('ensureDefaultPipelineStages', () => {
         }),
       });
 
-      let setValues: any = null;
+      let setValues: Record<string, unknown> | null = null;
       const mockUpdate = vi.fn().mockReturnValue({
-        set: vi.fn().mockImplementation((values) => {
+        set: vi.fn().mockImplementation((values: Record<string, unknown>) => {
           setValues = values;
           return {
             where: vi.fn().mockResolvedValue([]),

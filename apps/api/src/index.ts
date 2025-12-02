@@ -202,7 +202,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const originalJson = res.json.bind(res);
   
   // Override json method to add ETag
-  res.json = function(data: any) {
+  res.json = function(data: unknown) {
     // Generate ETag from response data
     const etag = crypto
       .createHash('md5')

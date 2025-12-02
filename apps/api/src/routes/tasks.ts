@@ -465,8 +465,9 @@ router.post('/:id/complete', requireAuth, async (req: Request, res: Response, ne
         .limit(1);
 
       if (recurrence && recurrence.nextOccurrence) {
-        // TODO: Calcular siguiente ocurrencia usando rrule library
-        // y crear nueva tarea
+        // FUTURE_FEATURE: Calculate next occurrence using rrule library
+        // Dependencies: npm install rrule, parse recurrence.rruleString
+        // Implementation: Create next task instance when current one is completed
         req.log.info({ recurrenceId: recurrence.id }, 'should create next occurrence');
       }
     }

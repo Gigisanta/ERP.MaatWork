@@ -47,7 +47,8 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
         if (response.success && response.data) {
           setSeriesList(response.data);
           if (response.data.length > 0 && !selectedSeries) {
-            setSelectedSeries(response.data[0].series_id || response.data[0].seriesId);
+            const firstSeries = response.data[0];
+            setSelectedSeries(firstSeries.id || String(firstSeries.id));
           }
         } else {
           setError(response.error || 'Failed to fetch macro series');

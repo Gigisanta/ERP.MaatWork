@@ -246,14 +246,14 @@ describe('AUM Rows Routes', () => {
         }]
       });
 
-      const mockUpdate = vi.fn((table: any) => ({
+      const mockUpdate = vi.fn((_table: unknown) => ({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined)
         })
       }));
 
       let selectCallCount = 0;
-      const mockSelect = vi.fn((fields?: any) => {
+      const mockSelect = vi.fn((fields?: unknown) => {
         selectCallCount++;
         // First call: select file (no arguments)
         if (selectCallCount === 1 || !fields) {

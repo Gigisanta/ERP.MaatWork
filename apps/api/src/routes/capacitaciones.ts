@@ -1,7 +1,6 @@
 // REGLA CURSOR: Capacitaciones CRUD - mantener RBAC, validación Zod, logging estructurado
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import multer from 'multer';
-import { extname, join } from 'node:path';
 import { promises as fs } from 'node:fs';
 import { db, capacitaciones, users } from '@cactus/db';
 import { eq, and, ilike, or, desc, asc, sql } from 'drizzle-orm';
@@ -10,6 +9,8 @@ import { z } from 'zod';
 import { validate } from '../utils/validation';
 import { uuidSchema, idParamSchema, paginationQuerySchema, urlSchema, dateSchema } from '../utils/common-schemas';
 import { transactionWithLogging } from '../utils/db-transactions';
+import { createCsvUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../utils/file-upload';
+import { parseFechaDDMMYYYY } from '../utils/date-utils';
 
 const router = Router();
 
@@ -41,41 +42,6 @@ const listCapacitacionesQuerySchema = paginationQuerySchema.and(
 // ==========================================================
 // Helper Functions
 // ==========================================================
-
-/**
- * Parsea fecha en formato DD/MM/YYYY a Date o null
- */
-function parseFechaDDMMYYYY(fechaStr: string | null | undefined): Date | null {
-  if (!fechaStr || !fechaStr.trim()) {
-    return null;
-  }
-  
-  // Formato esperado: DD/MM/YYYY
-  const match = fechaStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) {
-    return null;
-  }
-  
-  const [, day, month, year] = match;
-  const dayNum = parseInt(day, 10);
-  const monthNum = parseInt(month, 10);
-  const yearNum = parseInt(year, 10);
-  
-  // Validar rango
-  if (monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) {
-    return null;
-  }
-  
-  // Crear fecha (mes es 0-indexed en JS)
-  const date = new Date(yearNum, monthNum - 1, dayNum);
-  
-  // Validar que la fecha es válida
-  if (date.getFullYear() !== yearNum || date.getMonth() !== monthNum - 1 || date.getDate() !== dayNum) {
-    return null;
-  }
-  
-  return date;
-}
 
 /**
  * Parsea archivo CSV de capacitaciones
@@ -182,37 +148,12 @@ async function parseCapacitacionesCSV(filePath: string): Promise<{
 }
 
 // ==========================================================
-// File Upload Configuration
+// File Upload Configuration (using centralized utility)
 // ==========================================================
 
-const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+const uploadDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-    } catch {}
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    cb(null, `capacitaciones-${uniqueSuffix}${extname(file.originalname)}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: MAX_FILE_SIZE },
-  fileFilter: (req, file, cb) => {
-    const ext = extname(file.originalname).toLowerCase();
-    if (ext === '.csv') {
-      cb(null, true);
-    } else {
-      cb(new Error('Solo se permiten archivos CSV'));
-    }
-  }
-});
+const upload = createCsvUpload(MAX_FILE_SIZE, uploadDir, 'capacitaciones');
 
 // ==========================================================
 // GET /capacitaciones - Listar capacitaciones
@@ -365,23 +306,8 @@ router.post(
   (req, res, next) => {
     upload.single('file')(req, res, (err) => {
       if (err) {
-        req.log?.error?.({ err, filename: (req as any).file?.originalname }, 'Error en multer upload');
-        if (err instanceof multer.MulterError) {
-          if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({
-              error: 'Error al procesar el archivo',
-              details: `Archivo demasiado grande. Tamaño máximo: ${MAX_FILE_SIZE / (1024 * 1024)}MB`
-            });
-          }
-          return res.status(400).json({
-            error: 'Error al procesar el archivo',
-            details: `Error de upload: ${err.message}`
-          });
-        }
-        return res.status(400).json({
-          error: 'Error al procesar el archivo',
-          details: err instanceof Error ? err.message : String(err)
-        });
+        req.log?.error?.({ err, filename: (req as { file?: Express.Multer.File }).file?.originalname }, 'Error en multer upload');
+        return handleMulterError(err, res, { maxFileSize: MAX_FILE_SIZE });
       }
       next();
     });

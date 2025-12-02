@@ -14,7 +14,7 @@ import {
 } from '@cactus/ui';
 import { useAuth } from '../auth/AuthContext';
 import { logger, toLogContext } from '@/lib/logger';
-import type { InstrumentSearchResult, Currency, AssetType } from '@/types';
+import type { InstrumentSearchResult, Currency, AssetType, ApiError, ApiResponseWithHint } from '@/types';
 
 interface AssetSearcherProps {
   onAssetSelect: (asset: InstrumentSearchResult) => void;
@@ -80,17 +80,21 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             setSearchResults([]);
             setError(null);
             // Guardar respuesta para mostrar hint si está disponible
-            if ((response as any).hint) {
-              setError((response as any).hint);
+            const responseWithHint = response as ApiResponseWithHint<InstrumentSearchResult[]>;
+            if (responseWithHint.hint) {
+              setError(responseWithHint.hint);
             }
           }
         } else {
           // Respuesta con error del backend
-          const errorMsg = (response as any).error || 'Error al buscar activos';
-          const details = (response as any).details || '';
+          const errorResponse = response as ApiResponseWithHint<InstrumentSearchResult[]>;
+          const errorMsg = errorResponse.error || 'Error al buscar activos';
+          const details = Array.isArray(errorResponse.details) 
+            ? errorResponse.details.join(', ') 
+            : errorResponse.details || '';
           
           // Detectar si es error de servicio no disponible (503)
-          if ((response as any).status === 503 || errorMsg.includes('temporarily unavailable')) {
+          if (errorResponse.status === 503 || errorMsg.includes('temporarily unavailable')) {
             setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
             // Intentar buscar en BD como fallback (ya debería estar hecho en backend)
             setSearchResults([]);
@@ -99,13 +103,20 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             setSearchResults([]);
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error searching instruments', toLogContext({ err, query: searchQuery }));
         
         // Detectar tipo de error específico
-        const errorStatus = err?.status || err?.response?.status;
+        const apiError = err as ApiError;
+        const errorStatus = apiError.status || apiError.response?.status;
         const errorMessage = err instanceof Error ? err.message : String(err);
-        const errorDetails = err?.details || err?.response?.data?.details || '';
+        const errorDetails = apiError.details 
+          ? (Array.isArray(apiError.details) ? apiError.details.join(', ') : apiError.details)
+          : apiError.response?.data?.details 
+            ? (Array.isArray(apiError.response.data.details) 
+              ? apiError.response.data.details.join(', ') 
+              : apiError.response.data.details)
+            : '';
         
         if (errorStatus === 503 || errorMessage.includes('temporarily unavailable') || errorMessage.includes('Service Unavailable')) {
           setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
@@ -192,12 +203,13 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
           validationFailed = true;
           errorMessage = `No se pudo validar el símbolo "${symbol}". Se agregará sin validar.`;
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error validating symbol', toLogContext({ err, symbol }));
         validationFailed = true;
         
         // Detectar tipo de error
-        const errorStatus = err?.status || err?.response?.status;
+        const apiError = err as ApiError;
+        const errorStatus = apiError.status || apiError.response?.status;
         const errorMsg = err instanceof Error ? err.message : String(err);
         
         if (errorStatus === 503 || errorMsg.includes('temporarily unavailable')) {

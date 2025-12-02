@@ -2,10 +2,11 @@
 HTTP utilities with retries, ETag/If-Modified-Since support
 """
 
-import requests
-import time
 import random
-from typing import Optional, Dict, Any
+import time
+from typing import Any, Dict, Optional
+
+import requests
 
 DEFAULT_HEADERS = {"User-Agent": "Mozilla/5.0 CactusBot/1.0"}
 
@@ -18,11 +19,11 @@ def http_get(
     backoff: float = 1.5,
     etag_cache: Optional[Dict[str, str]] = None,
     ims: Optional[str] = None,
-    timeout: int = 30
+    timeout: int = 30,
 ) -> requests.Response:
     """
     HTTP GET with retries, ETag/If-Modified-Since support
-    
+
     Args:
         url: URL to fetch
         params: Query parameters
@@ -32,7 +33,7 @@ def http_get(
         etag_cache: Dict to store/retrieve ETags (key: url, value: etag)
         ims: If-Modified-Since header value
         timeout: Request timeout in seconds
-        
+
     Returns:
         requests.Response object
     """
@@ -43,7 +44,7 @@ def http_get(
         hdrs["If-None-Match"] = etag_cache[url]
     if ims:
         hdrs["If-Modified-Since"] = ims
-        
+
     for i in range(retries):
         try:
             r = requests.get(url, params=params, headers=hdrs, timeout=timeout)
@@ -58,9 +59,5 @@ def http_get(
             if i == retries - 1:
                 raise
             time.sleep(backoff * (i + 1) + random.random())
-    
+
     raise requests.RequestException(f"Failed after {retries} retries")
-
-
-
-

@@ -133,6 +133,31 @@ export interface LoadingState {
   error?: string | null;
 }
 
+/**
+ * Error de API con información estructurada
+ */
+export interface ApiError {
+  message: string;
+  status?: number;
+  details?: string | string[];
+  code?: string;
+  response?: {
+    status?: number;
+    data?: {
+      details?: string | string[];
+      error?: string;
+    };
+  };
+}
+
+/**
+ * Respuesta de API que puede incluir hints o información adicional
+ */
+export interface ApiResponseWithHint<T = unknown> extends ApiResponse<T> {
+  hint?: string;
+  status?: number;
+}
+
 // ==========================================================
 // Tipos Compartidos entre Dominios
 // ==========================================================

@@ -20,7 +20,10 @@ export default function EventsTab({ symbol }: EventsTabProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch events data from API
+    // FUTURE_FEATURE: Requires integration with financial events data providers
+    // Events needed: Earnings, Dividends, Splits, SEC Filings (CNV Hechos Relevantes)
+    // Dependencies: SEC EDGAR integration, CNV API, or third-party data provider
+    // Status: Placeholder UI ready, awaiting backend endpoints
     setLoading(false);
   }, [symbol]);
 

@@ -37,7 +37,6 @@
     "db:full-reset": "node full-reset.js"
   },
   "dependencies": {
-    "@tanstack/react-virtual": "^3.11.4",
     "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.24.0",

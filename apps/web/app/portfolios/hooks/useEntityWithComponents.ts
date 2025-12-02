@@ -1,22 +1,33 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRequireAuth } from '../../auth/useRequireAuth';
-import { logger, toLogContext } from '../../../lib/logger';
+import { useRequireAuth } from '@/auth/useRequireAuth';
+import { logger, toLogContext } from '@/lib/logger';
+import type { AuthUser } from '@/auth/AuthContext';
 
-export interface UseEntityWithComponentsConfig<TEntity, TComponent> {
+export interface UseEntityWithComponentsConfig<
+  TEntity extends { id: string },
+  TComponent,
+  TCreateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+  TUpdateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>
+> {
   fetchEntities: () => Promise<{ success: boolean; data?: TEntity[]; error?: string }>;
   fetchComponentsBatch: (ids: string[]) => Promise<{ success: boolean; data?: Record<string, TComponent[]>; error?: string }>;
-  createEntity: (data: any) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
-  updateEntity: (id: string, data: any) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
+  createEntity: (data: TCreateData) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
+  updateEntity: (id: string, data: TUpdateData) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
   deleteEntity: (id: string) => Promise<{ success: boolean; error?: string }>;
   getEntityId: (entity: TEntity) => string;
-  canManage?: (user: any) => boolean;
+  canManage?: (user: AuthUser | null) => boolean;
   entityName: string;
 }
 
-export function useEntityWithComponents<TEntity extends { id: string }, TComponent>(
-  config: UseEntityWithComponentsConfig<TEntity, TComponent>
+export function useEntityWithComponents<
+  TEntity extends { id: string },
+  TComponent,
+  TCreateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+  TUpdateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>
+>(
+  config: UseEntityWithComponentsConfig<TEntity, TComponent, TCreateData, TUpdateData>
 ) {
   const { user, loading } = useRequireAuth();
   const [entities, setEntities] = useState<TEntity[]>([]);

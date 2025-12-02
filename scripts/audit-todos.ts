@@ -88,20 +88,34 @@ function searchInFile(filePath: string): TodoItem[] {
     const content = readFileSync(filePath, 'utf-8');
     const lines = content.split('\n');
     
-    const todoPattern = /(TODO|FIXME|BUG|XXX|HACK)[:\s]*(.*)/i;
+    // AI_DECISION: Usar regex con word boundaries para evitar falsos positivos
+    // Justificación: Evita detectar "BUG" en palabras como "debug", "debugConsole", etc.
+    // Impacto: Reporte más preciso, solo TODOs reales
+    // El patrón requiere:
+    // 1. Comentario (// o * o #) antes del keyword
+    // 2. Word boundary antes y después del keyword
+    // 3. Keyword seguido de : o espacio y contenido
+    const todoPattern = /(?:\/\/|\/\*|\*|#)\s*\b(TODO|FIXME|BUG|XXX|HACK)\b[:\s]+(.*)/i;
     
     lines.forEach((line, index) => {
       const match = line.match(todoPattern);
       if (match) {
-        const [, typeUpper, content] = match;
+        const [, typeUpper, todoContent] = match;
         const type = typeUpper.toUpperCase() as TodoItem['type'];
-        const priority = categorizeTodo(content, type);
+        
+        // Filtrar contenido vacío o muy corto (probablemente falso positivo)
+        const trimmedContent = todoContent.trim();
+        if (trimmedContent.length < 3) {
+          return; // Skip si el contenido es muy corto
+        }
+        
+        const priority = categorizeTodo(trimmedContent, type);
         
         todos.push({
           file: relative(process.cwd(), filePath),
           line: index + 1,
           type,
-          content: content.trim(),
+          content: trimmedContent,
           priority,
         });
       }

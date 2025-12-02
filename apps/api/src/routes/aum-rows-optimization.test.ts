@@ -25,12 +25,16 @@ type RouteShape = {
   methods: string[];
 };
 
-function extractRoutes(router: any): RouteShape[] {
+interface RouterLayer {
+  route?: { path: string; methods: Record<string, boolean> };
+}
+
+function extractRoutes(router: { stack?: RouterLayer[] }): RouteShape[] {
   return (router.stack || [])
-    .filter((layer: any) => layer.route)
-    .map((layer: any) => ({
-      path: layer.route.path,
-      methods: Object.keys(layer.route.methods || {}).filter(Boolean)
+    .filter((layer: RouterLayer) => layer.route)
+    .map((layer: RouterLayer) => ({
+      path: layer.route!.path,
+      methods: Object.keys(layer.route!.methods || {}).filter(Boolean)
     }));
 }
 

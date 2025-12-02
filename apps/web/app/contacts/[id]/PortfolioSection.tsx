@@ -19,9 +19,9 @@ import {
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import PortfolioAssignmentItem from './components/PortfolioAssignmentItem';
-import { usePortfolioAssignments } from '../../../lib/api-hooks';
+import { usePortfolioAssignments } from '@/lib/api-hooks';
 import { assignPortfolioToContact, removePortfolioAssignment, updatePortfolioAssignmentStatus } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 import type { PortfolioAssignment } from '@/types';
 

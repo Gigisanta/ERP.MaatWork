@@ -7,6 +7,12 @@
  * - Badge con contador de errores
  * - Exportación y limpieza de logs
  * - Alto rendimiento incluso con 1000+ logs
+ * 
+ * AI_DECISION: Consolidado sistema de debug (antes 4 archivos, ahora 2)
+ * Justificación: Eliminados DebugConsoleInline.tsx y console-helpers.ts (no usados)
+ * Impacto: Sistema más simple y mantenible
+ * 
+ * NOTA: Solo se carga en desarrollo (ver layout.tsx: isDevelopment && <DebugConsole />)
  */
 
 interface ErrorLog {

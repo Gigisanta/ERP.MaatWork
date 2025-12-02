@@ -1,0 +1,43 @@
+{
+  "name": "@cactus/types",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./contact": {
+      "types": "./dist/contact.d.ts",
+      "default": "./dist/contact.js"
+    },
+    "./team": {
+      "types": "./dist/team.d.ts",
+      "default": "./dist/team.js"
+    },
+    "./common": {
+      "types": "./dist/common.d.ts",
+      "default": "./dist/common.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "echo 'Types package does not need dev mode'",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.10",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22.0.0 <25.0.0"
+  }
+}
+
+

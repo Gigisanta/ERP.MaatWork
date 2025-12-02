@@ -832,7 +832,29 @@ router.get('/rows/monthly-history',
         LIMIT ${limit}
       `);
 
-      const snapshots = (snapshotsResult.rows || []).map((row: any) => ({
+      // Type for raw SQL result row
+      interface MonthlySnapshotRow {
+        id: string;
+        account_number: string | null;
+        id_cuenta: string | null;
+        report_month: number;
+        report_year: number;
+        file_id: string;
+        file_name: string;
+        file_created_at: Date;
+        aum_dollars: string | null;
+        bolsa_arg: string | null;
+        fondos_arg: string | null;
+        bolsa_bci: string | null;
+        pesos: string | null;
+        mep: string | null;
+        cable: string | null;
+        cv7000: string | null;
+        created_at: Date;
+        updated_at: Date;
+      }
+
+      const snapshots = ((snapshotsResult.rows || []) as MonthlySnapshotRow[]).map((row) => ({
         id: row.id,
         accountNumber: row.account_number,
         idCuenta: row.id_cuenta,
