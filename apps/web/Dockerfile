@@ -14,8 +14,9 @@ COPY turbo.json tsconfig.base.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/ui/package.json ./packages/ui/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (disable husky - no git in container)
+ENV HUSKY=0
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Stage 2: Builder
 FROM node:22-alpine AS builder

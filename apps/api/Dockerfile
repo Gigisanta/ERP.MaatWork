@@ -14,8 +14,9 @@ COPY turbo.json tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (disable husky - no git in container)
+ENV HUSKY=0
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY apps/api ./apps/api
@@ -44,8 +45,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Install production dependencies only (disable husky)
+ENV HUSKY=0
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy built files from builder
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
