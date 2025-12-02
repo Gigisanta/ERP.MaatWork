@@ -1,0 +1,234 @@
+###############################################################################
+# GitHub Actions Workflow - Deploy to MVP (EC2)
+#
+# Deployment manual a instancia EC2 con Docker Compose.
+# 
+# Flujo:
+# 1. Run tests (safety check)
+# 2. Build Docker images
+# 3. SSH a EC2
+# 4. Pull código
+# 5. Deploy con docker-compose
+# 6. Health check
+#
+# @trigger workflow_dispatch (manual)
+# @version 1.0.0
+###############################################################################
+
+name: Deploy to MVP (EC2)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - all
+          - api
+          - web
+          - analytics
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy to MVP
+    runs-on: ubuntu-latest
+    environment: mvp
+
+    steps:
+      # ==================== Checkout Code ====================
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ==================== Setup Node.js ====================
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.10.0
+
+      # ==================== Run Tests (Safety Check) ====================
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+
+      # ==================== Configure SSH ====================
+      
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_IP: ${{ secrets.EC2_IP }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
+
+      # ==================== Build Docker Images ====================
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        if: inputs.service == 'all' || inputs.service == 'api'
+        run: |
+          docker build -f apps/api/Dockerfile -t cactus-api:latest .
+          docker save cactus-api:latest | gzip > api-image.tar.gz
+
+      - name: Build Web image
+        if: inputs.service == 'all' || inputs.service == 'web'
+        run: |
+          docker build -f apps/web/Dockerfile -t cactus-web:latest .
+          docker save cactus-web:latest | gzip > web-image.tar.gz
+
+      - name: Build Analytics image
+        if: inputs.service == 'all' || inputs.service == 'analytics'
+        run: |
+          docker build -f apps/analytics-service/Dockerfile -t cactus-analytics:latest .
+          docker save cactus-analytics:latest | gzip > analytics-image.tar.gz
+
+      # ==================== Transfer to EC2 ====================
+      
+      - name: Transfer images to EC2
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+        run: |
+          # Transfer images that were built
+          if [ -f api-image.tar.gz ]; then
+            scp -o StrictHostKeyChecking=no api-image.tar.gz ec2-user@$EC2_IP:/tmp/
+          fi
+          
+          if [ -f web-image.tar.gz ]; then
+            scp -o StrictHostKeyChecking=no web-image.tar.gz ec2-user@$EC2_IP:/tmp/
+          fi
+          
+          if [ -f analytics-image.tar.gz ]; then
+            scp -o StrictHostKeyChecking=no analytics-image.tar.gz ec2-user@$EC2_IP:/tmp/
+          fi
+
+      # ==================== Deploy on EC2 ====================
+      
+      - name: Deploy to EC2
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+          SERVICE: ${{ inputs.service }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@$EC2_IP << 'ENDSSH'
+            set -e
+            
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to app directory
+            cd ~/cactus
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git pull origin main
+            
+            # Load Docker images
+            echo "📦 Loading Docker images..."
+            if [ -f /tmp/api-image.tar.gz ]; then
+              docker load < /tmp/api-image.tar.gz
+              rm /tmp/api-image.tar.gz
+            fi
+            
+            if [ -f /tmp/web-image.tar.gz ]; then
+              docker load < /tmp/web-image.tar.gz
+              rm /tmp/web-image.tar.gz
+            fi
+            
+            if [ -f /tmp/analytics-image.tar.gz ]; then
+              docker load < /tmp/analytics-image.tar.gz
+              rm /tmp/analytics-image.tar.gz
+            fi
+            
+            # Copy docker-compose and nginx config
+            cp infrastructure/mvp/docker/docker-compose.yml .
+            cp infrastructure/mvp/docker/nginx.conf .
+            
+            # Restart services
+            echo "🔄 Restarting services..."
+            if [ "$SERVICE" = "all" ]; then
+              docker-compose up -d
+            else
+              docker-compose up -d $SERVICE
+              docker-compose restart nginx  # Restart nginx to pick up changes
+            fi
+            
+            # Show status
+            docker-compose ps
+            
+            echo "✅ Deployment completed!"
+          ENDSSH
+
+      # ==================== Health Check ====================
+      
+      - name: Wait for services to stabilize
+        run: sleep 30
+
+      - name: Health check
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+        run: |
+          echo "🧪 Running health checks..."
+          
+          # API health
+          if curl -f -s -o /dev/null -w "%{http_code}" http://$EC2_IP/health | grep -q "200"; then
+            echo "✅ API health check passed"
+          else
+            echo "❌ API health check failed"
+            exit 1
+          fi
+          
+          # Web app
+          if curl -f -s -o /dev/null -w "%{http_code}" http://$EC2_IP | grep -q "200"; then
+            echo "✅ Web app check passed"
+          else
+            echo "❌ Web app check failed"
+            exit 1
+          fi
+
+      # ==================== Summary ====================
+      
+      - name: Deployment summary
+        if: success()
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+        run: |
+          echo "## 🎉 MVP Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Services" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web App**: http://$EC2_IP" >> $GITHUB_STEP_SUMMARY
+          echo "- **API**: http://$EC2_IP/api" >> $GITHUB_STEP_SUMMARY
+          echo "- **Analytics**: http://$EC2_IP/analytics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### SSH Access" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "ssh ec2-user@$EC2_IP" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "## ❌ MVP Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the logs above for details." >> $GITHUB_STEP_SUMMARY
