@@ -27,11 +27,13 @@ pkill -f "tsx watch"      >/dev/null 2>&1 || true
 pkill -f "node dist/"     >/dev/null 2>&1 || true
 pkill -f "analytics-service.*python" >/dev/null 2>&1 || true
 
-# Limpiar puertos típicos
+# Limpiar puertos de desarrollo local
+# IMPORTANTE: NO limpiar puertos Docker (5678 N8N, 5433 PostgreSQL)
+# porque en algunos sistemas matarlos rompe Docker Desktop
 kill_port 3000
 kill_port 3001
 kill_port "$ANALYTICS_PORT"
-kill_port 5678
+# kill_port 5678 - REMOVIDO: Puerto Docker N8N, no tocar
 
 echo "✅ Entorno limpio"
 

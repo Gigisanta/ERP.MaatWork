@@ -60,6 +60,12 @@ function calculatePreservedMatchedUserId(
 
 /**
  * Unset preferred flag on duplicate rows for the same account
+ *
+ * AI_DECISION: Cambiar criterio de OR a lógica más específica para evitar marcar filas incorrectamente
+ * Justificación: El criterio OR causaba que filas con identificadores diferentes fueran marcadas como
+ *   no preferred cuando el nuevo archivo consolidaba identificadores (ej: monthly tiene idCuenta+accountNumber
+ *   que en master estaban en filas separadas). Esto reducía el conteo de filas visibles.
+ * Impacto: Preserva el flag preferred en filas que no son verdaderos duplicados, evitando pérdida de datos
  */
 async function unsetPreferredOnDuplicates(
   existingRow: ExistingRow,
@@ -67,21 +73,39 @@ async function unsetPreferredOnDuplicates(
   broker: string
 ): Promise<void> {
   const dbi = db();
-  const conditions: SQL[] = [];
 
-  if (newRow.accountNumber) {
-    conditions.push(sql`r.account_number = ${newRow.accountNumber}`);
-  }
-  if (newRow.idCuenta) {
-    conditions.push(sql`r.id_cuenta = ${newRow.idCuenta}`);
-  }
+  // Solo proceder si tenemos al menos un identificador válido
+  const hasAccountNumber = newRow.accountNumber && newRow.accountNumber.trim().length > 0;
+  const hasIdCuenta = newRow.idCuenta && newRow.idCuenta.trim().length > 0;
 
-  if (conditions.length === 0) return;
+  if (!hasAccountNumber && !hasIdCuenta) return;
 
   try {
-    // AI_DECISION: Solo marcar como no preferred las filas que realmente son duplicados
-    // Justificación: No queremos marcar como no preferred filas que son únicas pero comparten algún identificador
-    // Impacto: Preserva el flag preferred en filas que no son realmente duplicados
+    // AI_DECISION: Usar criterios más específicos para deduplicación
+    // Si tenemos ambos identificadores, solo marcar filas que coincidan con AL MENOS uno,
+    // pero solo si la fila coincidente tiene el MISMO par de identificadores o uno de ellos es NULL/vacío.
+    // Esto evita marcar filas que son cuentas diferentes que solo comparten un identificador parcialmente.
+
+    let whereCondition: SQL;
+
+    if (hasAccountNumber && hasIdCuenta) {
+      // Si la nueva fila tiene ambos identificadores, solo marcar como no preferred las filas que:
+      // 1. Tienen exactamente el mismo accountNumber Y el mismo idCuenta, O
+      // 2. Tienen el mismo accountNumber Y no tienen idCuenta (NULL o vacío), O
+      // 3. Tienen el mismo idCuenta Y no tienen accountNumber (NULL o vacío)
+      whereCondition = sql`(
+        (r.account_number = ${newRow.accountNumber} AND r.id_cuenta = ${newRow.idCuenta})
+        OR (r.account_number = ${newRow.accountNumber} AND (r.id_cuenta IS NULL OR r.id_cuenta = ''))
+        OR (r.id_cuenta = ${newRow.idCuenta} AND (r.account_number IS NULL OR r.account_number = ''))
+      )`;
+    } else if (hasAccountNumber) {
+      // Solo tenemos accountNumber
+      whereCondition = sql`r.account_number = ${newRow.accountNumber}`;
+    } else {
+      // Solo tenemos idCuenta
+      whereCondition = sql`r.id_cuenta = ${newRow.idCuenta}`;
+    }
+
     await dbi.execute(sql`
       UPDATE aum_import_rows r
       SET is_preferred = false
@@ -90,7 +114,7 @@ async function unsetPreferredOnDuplicates(
         AND f.broker = ${broker}
         AND r.id != ${existingRow.id}
         AND r.is_preferred = true
-        AND (${sql.join(conditions, sql` OR `)})
+        AND ${whereCondition}
     `);
   } catch (dedupError) {
     logger.warn(

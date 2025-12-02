@@ -1,6 +1,6 @@
 /**
  * Mock helpers for @cactus/db
- * 
+ *
  * Provides factory functions to create complete mocks of Drizzle ORM query chains
  * for unit tests that don't require a real database connection.
  */
@@ -26,20 +26,20 @@ export function createMockQueryBuilder<T = unknown>(mockData: T[] = []) {
     // Support for other query methods
     insert: vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue(mockData)
-      })
+        returning: vi.fn().mockResolvedValue(mockData),
+      }),
     }),
     update: vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue(mockData)
-        })
-      })
+          returning: vi.fn().mockResolvedValue(mockData),
+        }),
+      }),
     }),
     delete: vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(undefined)
+      where: vi.fn().mockResolvedValue(undefined),
     }),
-    execute: vi.fn().mockResolvedValue(undefined)
+    execute: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -70,7 +70,7 @@ export function createMockDb(mockData: Record<string, unknown[]> = {}) {
       const builder = createMockQueryBuilder();
       return builder.delete(table);
     }),
-    execute: vi.fn().mockResolvedValue(undefined)
+    execute: vi.fn().mockResolvedValue(undefined),
   };
 
   // Support for db().select().from().where() pattern
@@ -80,11 +80,11 @@ export function createMockDb(mockData: Record<string, unknown[]> = {}) {
         limit: vi.fn().mockResolvedValue([]),
         innerJoin: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([])
-          })
-        })
-      })
-    })
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
+    }),
   });
 
   mockDbInstance.select = mockSelect;
@@ -107,19 +107,19 @@ export function createMockDbWithResponses(responses: {
       const mockFrom = vi.fn((table: unknown) => {
         const tableName = String(table);
         const tableData = responses.select?.[tableName] || [];
-        
+
         const mockWhere = vi.fn().mockReturnValue({
           limit: vi.fn().mockResolvedValue(tableData),
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(tableData)
-            })
-          })
+              where: vi.fn().mockResolvedValue(tableData),
+            }),
+          }),
         });
 
         return {
           where: mockWhere,
-          limit: vi.fn().mockResolvedValue(tableData)
+          limit: vi.fn().mockResolvedValue(tableData),
         };
       });
 
@@ -128,31 +128,31 @@ export function createMockDbWithResponses(responses: {
     insert: vi.fn((table: unknown) => {
       const tableName = String(table);
       const insertData = responses.insert?.[tableName] || [];
-      
+
       return {
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue(insertData)
-        })
+          returning: vi.fn().mockResolvedValue(insertData),
+        }),
       };
     }),
     update: vi.fn((table: unknown) => {
       const tableName = String(table);
       const updateData = responses.update?.[tableName] || [];
-      
+
       return {
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue(updateData)
-          })
-        })
+            returning: vi.fn().mockResolvedValue(updateData),
+          }),
+        }),
       };
     }),
     delete: vi.fn((table: unknown) => {
       return {
-        where: vi.fn().mockResolvedValue(undefined)
+        where: vi.fn().mockResolvedValue(undefined),
       };
     }),
-    execute: vi.fn().mockResolvedValue(undefined)
+    execute: vi.fn().mockResolvedValue(undefined),
   };
 
   return vi.fn(() => mockDbInstance as unknown as NodePgDatabase<Record<string, unknown>>);
@@ -164,7 +164,6 @@ export function createMockDbWithResponses(responses: {
  */
 export function createMockDbForQuery(tableName: string, data: unknown[]) {
   return createMockDbWithResponses({
-    select: { [tableName]: data }
+    select: { [tableName]: data },
   });
 }
-

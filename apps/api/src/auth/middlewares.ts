@@ -24,7 +24,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
     if (!token) return res.status(401).json({ message: 'Unauthorized' });
     const user = await verifyUserToken(token);
-    
+
     // AI_DECISION: Validar role contra DB para detectar cambios de role
     // Justificación: Si el role cambió en DB, el token debe ser invalidado o actualizado
     // Impacto: Previene que usuarios con roles cambiados mantengan permisos antiguos
@@ -33,27 +33,30 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
-    
+
     if (!dbUser) {
       req.log?.warn({ userId: user.id }, 'User from token not found in database');
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    
+
     if (!dbUser.isActive) {
       req.log?.warn({ userId: user.id }, 'User from token is inactive');
       return res.status(403).json({ message: 'User account is inactive' });
     }
-    
+
     // Si el role cambió en DB, usar el role de DB (más reciente)
     if (dbUser.role !== user.role) {
-      req.log?.warn({ 
-        userId: user.id, 
-        tokenRole: user.role, 
-        dbRole: dbUser.role 
-      }, 'Role mismatch between token and database, using DB role');
+      req.log?.warn(
+        {
+          userId: user.id,
+          tokenRole: user.role,
+          dbRole: dbUser.role,
+        },
+        'Role mismatch between token and database, using DB role'
+      );
       user.role = dbUser.role as UserRole;
     }
-    
+
     req.user = user;
     next();
   } catch (err) {
@@ -69,5 +72,3 @@ export function requireRole(roles: UserRole[]) {
     next();
   };
 }
-
-

@@ -1,6 +1,6 @@
 /**
  * Authentication helpers for tests
- * 
+ *
  * Provides utilities to create test users, tokens, and mock authentication
  */
 
@@ -14,35 +14,40 @@ import { hash } from 'bcryptjs';
 /**
  * Create a test user in the database
  */
-export async function createTestUser(overrides?: Partial<{
-  id: string;
-  email: string;
-  password: string;
-  role: 'admin' | 'manager' | 'advisor';
-  fullName: string;
-  active: boolean;
-}>): Promise<AuthUser & { password: string }> {
+export async function createTestUser(
+  overrides?: Partial<{
+    id: string;
+    email: string;
+    password: string;
+    role: 'admin' | 'manager' | 'advisor';
+    fullName: string;
+    active: boolean;
+  }>
+): Promise<AuthUser & { password: string }> {
   const testUser = {
     id: overrides?.id || `test-user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     email: overrides?.email || `test-${Date.now()}@example.com`,
     password: overrides?.password || 'test-password-123',
-    role: overrides?.role || 'advisor' as const,
+    role: overrides?.role || ('advisor' as const),
     fullName: overrides?.fullName || 'Test User',
     active: overrides?.active !== undefined ? overrides.active : true,
   };
 
   const hashedPassword = await hash(testUser.password, 10);
 
-  await db().insert(users).values({
-    id: testUser.id,
-    email: testUser.email,
-    passwordHash: hashedPassword,
-    role: testUser.role,
-    fullName: testUser.fullName,
-    isActive: testUser.active,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }).onConflictDoNothing();
+  await db()
+    .insert(users)
+    .values({
+      id: testUser.id,
+      email: testUser.email,
+      passwordHash: hashedPassword,
+      role: testUser.role,
+      fullName: testUser.fullName,
+      isActive: testUser.active,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing();
 
   return {
     id: testUser.id,
@@ -56,12 +61,14 @@ export async function createTestUser(overrides?: Partial<{
 /**
  * Create a test admin user
  */
-export async function createTestAdmin(overrides?: Partial<{
-  id: string;
-  email: string;
-  password: string;
-  fullName: string;
-}>): Promise<AuthUser & { password: string }> {
+export async function createTestAdmin(
+  overrides?: Partial<{
+    id: string;
+    email: string;
+    password: string;
+    fullName: string;
+  }>
+): Promise<AuthUser & { password: string }> {
   return createTestUser({
     ...overrides,
     role: 'admin',
@@ -71,12 +78,14 @@ export async function createTestAdmin(overrides?: Partial<{
 /**
  * Create a test manager user
  */
-export async function createTestManager(overrides?: Partial<{
-  id: string;
-  email: string;
-  password: string;
-  fullName: string;
-}>): Promise<AuthUser & { password: string }> {
+export async function createTestManager(
+  overrides?: Partial<{
+    id: string;
+    email: string;
+    password: string;
+    fullName: string;
+  }>
+): Promise<AuthUser & { password: string }> {
   return createTestUser({
     ...overrides,
     role: 'manager',
@@ -86,12 +95,14 @@ export async function createTestManager(overrides?: Partial<{
 /**
  * Create a test advisor user
  */
-export async function createTestAdvisor(overrides?: Partial<{
-  id: string;
-  email: string;
-  password: string;
-  fullName: string;
-}>): Promise<AuthUser & { password: string }> {
+export async function createTestAdvisor(
+  overrides?: Partial<{
+    id: string;
+    email: string;
+    password: string;
+    fullName: string;
+  }>
+): Promise<AuthUser & { password: string }> {
   return createTestUser({
     ...overrides,
     role: 'advisor',
@@ -122,7 +133,7 @@ export async function createTestUserWithToken(
 }> {
   const user = await createTestUser(overrides);
   const token = await createTestToken(user);
-  
+
   return { user, token };
 }
 
@@ -159,4 +170,3 @@ export function createMockAuthRequest(user: AuthUser): Partial<{
     },
   };
 }
-

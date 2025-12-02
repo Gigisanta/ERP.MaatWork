@@ -1,31 +1,25 @@
 /**
  * Tests para redis config
- * 
+ *
  * AI_DECISION: Tests unitarios para configuración Redis
  * Justificación: Validación crítica de cliente Redis y TTL
  * Impacto: Prevenir errores en caching
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  initializeRedis,
-  getRedisClient,
-  closeRedis,
-  buildCacheKey,
-  REDIS_TTL
-} from './redis';
+import { initializeRedis, getRedisClient, closeRedis, buildCacheKey, REDIS_TTL } from './redis';
 
 // Mock dependencies
 vi.mock('redis', () => ({
-  createClient: vi.fn()
+  createClient: vi.fn(),
 }));
 
 vi.mock('../utils/logger', () => ({
   logger: {
     error: vi.fn(),
     info: vi.fn(),
-    warn: vi.fn()
-  }
+    warn: vi.fn(),
+  },
 }));
 
 import { createClient } from 'redis';
@@ -49,7 +43,7 @@ describe('redis config', () => {
     mockRedisClient = {
       on: vi.fn(),
       connect: vi.fn().mockResolvedValue(undefined),
-      quit: vi.fn().mockResolvedValue(undefined)
+      quit: vi.fn().mockResolvedValue(undefined),
     };
 
     mockCreateClient.mockReturnValue(mockRedisClient as ReturnType<typeof createClient>);
@@ -69,7 +63,7 @@ describe('redis config', () => {
       // Limpiar singleton antes del test
       const { closeRedis } = await import('./redis');
       await closeRedis();
-      
+
       const client1 = await initializeRedis();
       const client2 = await initializeRedis();
 
@@ -81,7 +75,7 @@ describe('redis config', () => {
       // Reset singleton first
       const { closeRedis } = await import('./redis');
       await closeRedis();
-      
+
       // Setup mock to reject
       mockRedisClient.connect.mockRejectedValueOnce(new Error('Connection failed'));
 
@@ -102,7 +96,7 @@ describe('redis config', () => {
       // Cerrar conexión para limpiar singleton
       const { closeRedis } = await import('./redis');
       await closeRedis();
-      
+
       const client = getRedisClient();
 
       expect(client).toBeNull();
@@ -120,10 +114,10 @@ describe('redis config', () => {
     it('debería no hacer nada cuando cliente no está inicializado', async () => {
       // Cerrar conexión primero para limpiar singleton
       await closeRedis();
-      
+
       // Reset mock call count
       mockRedisClient.quit.mockClear();
-      
+
       // Intentar cerrar de nuevo (no debería llamar quit porque no hay cliente)
       await closeRedis();
 
@@ -155,7 +149,3 @@ describe('redis config', () => {
     });
   });
 });
-
-
-
-

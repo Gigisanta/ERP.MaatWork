@@ -1,6 +1,6 @@
 /**
  * Tests para JWT utilities
- * 
+ *
  * AI_DECISION: Tests unitarios para JWT signing y verification
  * Justificación: Seguridad crítica de autenticación
  * Impacto: Validar tokens correctos y prevenir tokens inválidos
@@ -15,7 +15,7 @@ describe('signUserToken', () => {
     id: 'user-123',
     email: 'test@example.com',
     role: 'advisor',
-    fullName: 'Test User'
+    fullName: 'Test User',
   };
 
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe('signUserToken', () => {
       const userWithoutName: AuthUser = {
         id: 'user-456',
         email: 'test2@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       const token = await signUserToken(userWithoutName);
@@ -85,7 +85,7 @@ describe('signUserToken', () => {
       const adminUser: AuthUser = {
         id: 'admin-123',
         email: 'admin@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       const token = await signUserToken(adminUser);
@@ -98,7 +98,7 @@ describe('signUserToken', () => {
       const managerUser: AuthUser = {
         id: 'manager-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       const token = await signUserToken(managerUser);
@@ -111,7 +111,7 @@ describe('signUserToken', () => {
       const advisorUser: AuthUser = {
         id: 'advisor-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       const token = await signUserToken(advisorUser);
@@ -127,7 +127,7 @@ describe('verifyUserToken', () => {
     id: 'user-123',
     email: 'test@example.com',
     role: 'advisor',
-    fullName: 'Test User'
+    fullName: 'Test User',
   };
 
   beforeEach(() => {
@@ -149,7 +149,7 @@ describe('verifyUserToken', () => {
       const userWithoutName: AuthUser = {
         id: 'user-456',
         email: 'test2@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       const token = await signUserToken(userWithoutName);
@@ -190,7 +190,7 @@ describe('verifyUserToken', () => {
       const token = await signUserToken(mockUser, '1s');
 
       // Esperar a que expire (esperar más de 1 segundo)
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       await expect(verifyUserToken(token)).rejects.toThrow();
     });
@@ -218,7 +218,7 @@ describe('verifyUserToken', () => {
       const adminUser: AuthUser = {
         id: 'admin-123',
         email: 'admin@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       const token = await signUserToken(adminUser);
@@ -259,7 +259,7 @@ describe('verifyUserToken', () => {
       // Este test requiere modificar el token manualmente
       // Por ahora, verificamos que el código valida issuer/audience
       const token = await signUserToken(mockUser);
-      
+
       // La verificación debería pasar con issuer/audience correctos
       const decoded = await verifyUserToken(token);
       expect(decoded).toBeDefined();
@@ -271,8 +271,10 @@ describe('verifyUserToken', () => {
       // Crear un token manualmente con role inválido
       // Esto requiere usar jose directamente para crear un token malformado
       const { SignJWT } = await import('jose');
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing');
-      
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing'
+      );
+
       const invalidToken = await new SignJWT({
         role: 'invalid-role',
         email: mockUser.email,
@@ -290,17 +292,17 @@ describe('verifyUserToken', () => {
 
     it('debería aceptar todos los roles válidos', async () => {
       const roles: Array<'admin' | 'manager' | 'advisor'> = ['admin', 'manager', 'advisor'];
-      
+
       for (const role of roles) {
         const user: AuthUser = {
           id: `user-${role}`,
           email: `${role}@example.com`,
           role,
         };
-        
+
         const token = await signUserToken(user);
         const decoded = await verifyUserToken(token);
-        
+
         expect(decoded.role).toBe(role);
       }
     });
@@ -310,8 +312,10 @@ describe('verifyUserToken', () => {
     it('debería manejar token sin email en payload', async () => {
       // Crear token sin email (edge case)
       const { SignJWT } = await import('jose');
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing');
-      
+      const secret = new TextEncoder().encode(
+        process.env.JWT_SECRET || 'test-secret-key-for-jwt-signing'
+      );
+
       const tokenWithoutEmail = await new SignJWT({
         role: mockUser.role,
         // Sin email
@@ -341,7 +345,7 @@ describe('verifyUserToken', () => {
 
     it('debería manejar diferentes formatos de expiración', async () => {
       const formats = ['1h', '1d', '7d', '30d', '1s'];
-      
+
       for (const expiresIn of formats) {
         const token = await signUserToken(mockUser, expiresIn);
         const decoded = await verifyUserToken(token);
@@ -355,7 +359,7 @@ describe('verifyUserToken', () => {
       const userWithEmptyEmail: AuthUser = {
         id: 'user-123',
         email: '',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       const token = await signUserToken(userWithEmptyEmail);
@@ -368,7 +372,7 @@ describe('verifyUserToken', () => {
       const userWithoutName: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       const token = await signUserToken(userWithoutName);
@@ -379,7 +383,7 @@ describe('verifyUserToken', () => {
 
     it('debería usar JWT_SECRET de environment o default', async () => {
       const originalSecret = process.env.JWT_SECRET;
-      
+
       // Test con secret de env
       process.env.JWT_SECRET = 'env-secret';
       const token1 = await signUserToken(mockUser);
@@ -397,14 +401,3 @@ describe('verifyUserToken', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-
-

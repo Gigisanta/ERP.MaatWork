@@ -2,6 +2,12 @@
  * AUM Upsert - Find Existing Row Orchestrator
  *
  * Orchestrates multiple search strategies to find existing AUM rows
+ *
+ * AI_DECISION: Siempre intentar búsqueda por holderName como último recurso
+ * Justificación: El archivo monthly puede tener más identificadores que el master.
+ *   Si no encontramos match por identificadores, necesitamos buscar por holderName
+ *   para encontrar filas del master que solo tenían holderName y enriquecerlas.
+ * Impacto: Evita duplicados cuando el monthly tiene más información que el master
  */
 
 import { findByIdCuenta } from './strategies/find-by-id-cuenta';
@@ -15,7 +21,10 @@ import type { AumRowInsert, ExistingRow } from './types';
  * 1. idCuenta (highest priority)
  * 2. Reverse lookup (id_cuenta = accountNumber)
  * 3. accountNumber (normalized)
- * 4. holderName ONLY (lowest priority, only when new row has no identifiers)
+ * 4. holderName (lowest priority - matches rows without identifiers)
+ *
+ * The holderName strategy now also handles the case where the new row has identifiers
+ * but the existing row doesn't (enrichment scenario).
  */
 export async function findExistingRow(
   row: AumRowInsert,
@@ -33,7 +42,10 @@ export async function findExistingRow(
   const byAccountNumber = await findByAccountNumber(row, broker);
   if (byAccountNumber) return byAccountNumber;
 
-  // Strategy 4: Search by holderName ONLY (lowest priority)
+  // Strategy 4: Search by holderName (lowest priority)
+  // This now handles both:
+  // - New rows that only have holderName
+  // - New rows with identifiers but matching existing rows that only have holderName (enrichment)
   const byHolderName = await findByHolderName(row, broker);
   if (byHolderName) return byHolderName;
 

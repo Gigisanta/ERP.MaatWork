@@ -1,6 +1,6 @@
 /**
  * Tests para auth middlewares
- * 
+ *
  * AI_DECISION: Tests unitarios para middlewares de autenticación
  * Justificación: Validación crítica de seguridad y RBAC
  * Impacto: Prevenir accesos no autorizados y errores de permisos
@@ -15,14 +15,14 @@ import { db } from '@cactus/db';
 
 // Mock JWT module
 vi.mock('./jwt', () => ({
-  verifyUserToken: vi.fn()
+  verifyUserToken: vi.fn(),
 }));
 
 // Mock database
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   users: {},
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 const mockVerifyUserToken = vi.mocked(verifyUserToken);
@@ -38,23 +38,25 @@ describe('requireAuth', () => {
       headers: {},
       cookies: {},
       log: {
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
-    
+
     // Setup default DB mock
-    const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+    const mockDbLimit = vi
+      .fn()
+      .mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
     const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
     const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
     const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
     mockDb.mockReturnValue({
-      select: mockDbSelect
+      select: mockDbSelect,
     } as any);
   });
 
@@ -63,21 +65,23 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token-123'
+        authorization: 'Bearer valid-token-123',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
       // Mock DB query: db().select().from(users).where().limit(1)
-      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
       const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
       const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
       const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
       mockDb.mockReturnValue({
-        select: mockDbSelect
+        select: mockDbSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -92,21 +96,23 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer token-with-spaces-and-special-chars-123'
+        authorization: 'Bearer token-with-spaces-and-special-chars-123',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
       // Mock DB query
-      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
       const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
       const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
       const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
       mockDb.mockReturnValue({
-        select: mockDbSelect
+        select: mockDbSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -121,21 +127,23 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       mockReq.cookies = {
-        token: 'cookie-token-123'
+        token: 'cookie-token-123',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
       // Mock DB query
-      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'manager', isActive: true }]);
+      const mockDbLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: 'user-123', role: 'manager', isActive: true }]);
       const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
       const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
       const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
       mockDb.mockReturnValue({
-        select: mockDbSelect
+        select: mockDbSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -149,24 +157,26 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer bearer-token'
+        authorization: 'Bearer bearer-token',
       };
       mockReq.cookies = {
-        token: 'cookie-token'
+        token: 'cookie-token',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
       // Mock DB query
-      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'admin', isActive: true }]);
+      const mockDbLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: 'user-123', role: 'admin', isActive: true }]);
       const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
       const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
       const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
       mockDb.mockReturnValue({
-        select: mockDbSelect
+        select: mockDbSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -181,22 +191,24 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        cookie: 'token=fallback-token-123; other=value'
+        cookie: 'token=fallback-token-123; other=value',
       };
       mockReq.cookies = {}; // Simular que cookie-parser no funcionó
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
       // Mock DB query
-      const mockDbLimit = vi.fn().mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
+      const mockDbLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: 'user-123', role: 'advisor', isActive: true }]);
       const mockDbWhere = vi.fn().mockReturnValue({ limit: mockDbLimit });
       const mockDbFrom = vi.fn().mockReturnValue({ where: mockDbWhere });
       const mockDbSelect = vi.fn().mockReturnValue({ from: mockDbFrom });
       mockDb.mockReturnValue({
-        select: mockDbSelect
+        select: mockDbSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -209,12 +221,12 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       const encodedToken = encodeURIComponent('token-with-special-chars');
       mockReq.headers = {
-        cookie: `token=${encodedToken}`
+        cookie: `token=${encodedToken}`,
       };
       mockReq.cookies = {};
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
@@ -240,7 +252,7 @@ describe('requireAuth', () => {
 
     it('debería retornar 401 cuando token es inválido', async () => {
       mockReq.headers = {
-        authorization: 'Bearer invalid-token'
+        authorization: 'Bearer invalid-token',
       };
       mockVerifyUserToken.mockRejectedValueOnce(new Error('Invalid token'));
 
@@ -254,7 +266,7 @@ describe('requireAuth', () => {
 
     it('debería retornar 401 cuando token está expirado', async () => {
       mockReq.headers = {
-        authorization: 'Bearer expired-token'
+        authorization: 'Bearer expired-token',
       };
       mockVerifyUserToken.mockRejectedValueOnce(new Error('Token expired'));
 
@@ -267,23 +279,20 @@ describe('requireAuth', () => {
     it('debería loguear error cuando falla verificación', async () => {
       const error = new Error('JWT verification failed');
       mockReq.headers = {
-        authorization: 'Bearer bad-token'
+        authorization: 'Bearer bad-token',
       };
       mockVerifyUserToken.mockRejectedValueOnce(error);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockReq.log?.warn).toHaveBeenCalledWith(
-        { err: error },
-        'auth verify failed'
-      );
+      expect(mockReq.log?.warn).toHaveBeenCalledWith({ err: error }, 'auth verify failed');
     });
   });
 
   describe('Edge cases', () => {
     it('debería manejar authorization header sin Bearer prefix', async () => {
       mockReq.headers = {
-        authorization: 'Basic base64-credentials'
+        authorization: 'Basic base64-credentials',
       };
       mockReq.cookies = {};
 
@@ -295,7 +304,7 @@ describe('requireAuth', () => {
 
     it('debería manejar cookie header vacío', async () => {
       mockReq.headers = {
-        cookie: ''
+        cookie: '',
       };
       mockReq.cookies = {};
 
@@ -310,11 +319,11 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token'
+        authorization: 'Bearer valid-token',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -322,18 +331,20 @@ describe('requireAuth', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'user-123',
-              role: 'advisor',
-              isActive: true
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'user-123',
+                role: 'advisor',
+                isActive: true,
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDb = vi.mocked(db);
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -346,11 +357,11 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token'
+        authorization: 'Bearer valid-token',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -358,14 +369,14 @@ describe('requireAuth', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockDb = vi.mocked(db);
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -379,11 +390,11 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token'
+        authorization: 'Bearer valid-token',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -391,18 +402,20 @@ describe('requireAuth', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'user-123',
-              role: 'advisor',
-              isActive: false
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'user-123',
+                role: 'advisor',
+                isActive: false,
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDb = vi.mocked(db);
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -416,11 +429,11 @@ describe('requireAuth', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor' // Role en token
+        role: 'advisor', // Role en token
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token'
+        authorization: 'Bearer valid-token',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -428,18 +441,20 @@ describe('requireAuth', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'user-123',
-              role: 'manager', // Role en DB (más reciente)
-              isActive: true
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'user-123',
+                role: 'manager', // Role en DB (más reciente)
+                isActive: true,
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDb = vi.mocked(db);
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
@@ -460,7 +475,7 @@ describe('requireRole', () => {
     mockReq = {};
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -471,7 +486,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'admin@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       mockReq.user = mockUser;
@@ -487,7 +502,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       mockReq.user = mockUser;
@@ -502,7 +517,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.user = mockUser;
@@ -519,7 +534,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.user = mockUser;
@@ -536,7 +551,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.user = mockUser;
@@ -575,7 +590,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'admin@example.com',
-        role: 'admin'
+        role: 'admin',
       };
 
       mockReq.user = mockUser;
@@ -590,7 +605,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       };
 
       mockReq.user = mockUser;
@@ -605,7 +620,7 @@ describe('requireRole', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
         email: 'advisor@example.com',
-        role: 'advisor'
+        role: 'advisor',
       };
 
       mockReq.user = mockUser;
@@ -617,14 +632,3 @@ describe('requireRole', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-
-

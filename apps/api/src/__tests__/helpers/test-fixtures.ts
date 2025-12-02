@@ -1,6 +1,6 @@
 /**
  * Test fixtures and factories
- * 
+ *
  * Provides factories to create test data for various entities
  */
 
@@ -21,15 +21,17 @@ import type { InferSelectModel } from 'drizzle-orm';
 /**
  * Create a test contact
  */
-export async function createTestContact(overrides?: Partial<{
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  assignedAdvisorId: string;
-  pipelineStageId: string;
-}>): Promise<InferSelectModel<typeof contacts>> {
+export async function createTestContact(
+  overrides?: Partial<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    assignedAdvisorId: string;
+    pipelineStageId: string;
+  }>
+): Promise<InferSelectModel<typeof contacts>> {
   const testContact = {
     id: overrides?.id || `test-contact-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     firstName: overrides?.firstName || 'Test',
@@ -42,10 +44,7 @@ export async function createTestContact(overrides?: Partial<{
     updatedAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(contacts)
-    .values(testContact)
-    .returning();
+  const [created] = await db().insert(contacts).values(testContact).returning();
 
   return created;
 }
@@ -53,12 +52,14 @@ export async function createTestContact(overrides?: Partial<{
 /**
  * Create a test tag
  */
-export async function createTestTag(overrides?: Partial<{
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-}>): Promise<InferSelectModel<typeof tags>> {
+export async function createTestTag(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+  }>
+): Promise<InferSelectModel<typeof tags>> {
   const testTag = {
     id: overrides?.id || `test-tag-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     name: overrides?.name || `Test Tag ${Date.now()}`,
@@ -68,10 +69,7 @@ export async function createTestTag(overrides?: Partial<{
     updatedAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(tags)
-    .values(testTag)
-    .returning();
+  const [created] = await db().insert(tags).values(testTag).returning();
 
   return created;
 }
@@ -79,17 +77,19 @@ export async function createTestTag(overrides?: Partial<{
 /**
  * Create a test task
  */
-export async function createTestTask(overrides?: Partial<{
-  id: string;
-  contactId: string;
-  title: string;
-  description: string;
-  dueDate: Date;
-  assignedToUserId: string;
-  createdByUserId: string;
-  status: string;
-  priority: string;
-}>): Promise<InferSelectModel<typeof tasks>> {
+export async function createTestTask(
+  overrides?: Partial<{
+    id: string;
+    contactId: string;
+    title: string;
+    description: string;
+    dueDate: Date;
+    assignedToUserId: string;
+    createdByUserId: string;
+    status: string;
+    priority: string;
+  }>
+): Promise<InferSelectModel<typeof tasks>> {
   const testTask = {
     id: overrides?.id || `test-task-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     contactId: overrides?.contactId || '',
@@ -106,10 +106,7 @@ export async function createTestTask(overrides?: Partial<{
     updatedAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(tasks)
-    .values(testTask)
-    .returning();
+  const [created] = await db().insert(tasks).values(testTask).returning();
 
   return created;
 }
@@ -117,14 +114,16 @@ export async function createTestTask(overrides?: Partial<{
 /**
  * Create a test note
  */
-export async function createTestNote(overrides?: Partial<{
-  id: string;
-  contactId: string;
-  content: string;
-  authorUserId: string;
-  source: string;
-  noteType: string;
-}>): Promise<InferSelectModel<typeof notes>> {
+export async function createTestNote(
+  overrides?: Partial<{
+    id: string;
+    contactId: string;
+    content: string;
+    authorUserId: string;
+    source: string;
+    noteType: string;
+  }>
+): Promise<InferSelectModel<typeof notes>> {
   const testNote = {
     id: overrides?.id || `test-note-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     contactId: overrides?.contactId || '',
@@ -135,10 +134,7 @@ export async function createTestNote(overrides?: Partial<{
     createdAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(notes)
-    .values(testNote)
-    .returning();
+  const [created] = await db().insert(notes).values(testNote).returning();
 
   return created;
 }
@@ -146,12 +142,14 @@ export async function createTestNote(overrides?: Partial<{
 /**
  * Create a test team
  */
-export async function createTestTeam(overrides?: Partial<{
-  id: string;
-  name: string;
-  managerUserId: string;
-  calendarUrl: string;
-}>): Promise<InferSelectModel<typeof teams>> {
+export async function createTestTeam(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    managerUserId: string;
+    calendarUrl: string;
+  }>
+): Promise<InferSelectModel<typeof teams>> {
   const testTeam = {
     id: overrides?.id || `test-team-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     name: overrides?.name || `Test Team ${Date.now()}`,
@@ -160,10 +158,7 @@ export async function createTestTeam(overrides?: Partial<{
     createdAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(teams)
-    .values(testTeam)
-    .returning();
+  const [created] = await db().insert(teams).values(testTeam).returning();
 
   return created;
 }
@@ -171,13 +166,15 @@ export async function createTestTeam(overrides?: Partial<{
 /**
  * Create a test pipeline stage
  */
-export async function createTestPipelineStage(overrides?: Partial<{
-  id: string;
-  name: string;
-  order: number;
-  color: string;
-  wipLimit: number;
-}>): Promise<InferSelectModel<typeof pipelineStages>> {
+export async function createTestPipelineStage(
+  overrides?: Partial<{
+    id: string;
+    name: string;
+    order: number;
+    color: string;
+    wipLimit: number;
+  }>
+): Promise<InferSelectModel<typeof pipelineStages>> {
   const testStage = {
     id: overrides?.id || `test-stage-${Date.now()}-${Math.random().toString(36).substring(7)}`,
     name: overrides?.name || `Test Stage ${Date.now()}`,
@@ -189,10 +186,7 @@ export async function createTestPipelineStage(overrides?: Partial<{
     updatedAt: new Date(),
   };
 
-  const [created] = await db()
-    .insert(pipelineStages)
-    .values(testStage)
-    .returning();
+  const [created] = await db().insert(pipelineStages).values(testStage).returning();
 
   return created;
 }
@@ -200,9 +194,11 @@ export async function createTestPipelineStage(overrides?: Partial<{
 /**
  * Create multiple test contacts
  */
-export async function createTestContacts(count: number): Promise<InferSelectModel<typeof contacts>[]> {
+export async function createTestContacts(
+  count: number
+): Promise<InferSelectModel<typeof contacts>[]> {
   const created: InferSelectModel<typeof contacts>[] = [];
-  
+
   for (let i = 0; i < count; i++) {
     const contact = await createTestContact({
       firstName: `Test${i}`,
@@ -211,7 +207,7 @@ export async function createTestContacts(count: number): Promise<InferSelectMode
     });
     created.push(contact);
   }
-  
+
   return created;
 }
 
@@ -231,35 +227,34 @@ export async function cleanupTestFixtures(ids: {
       await db().delete(contacts).where(eq(contacts.id, id));
     }
   }
-  
+
   if (ids.tags?.length) {
     for (const id of ids.tags) {
       await db().delete(tags).where(eq(tags.id, id));
     }
   }
-  
+
   if (ids.tasks?.length) {
     for (const id of ids.tasks) {
       await db().delete(tasks).where(eq(tasks.id, id));
     }
   }
-  
+
   if (ids.notes?.length) {
     for (const id of ids.notes) {
       await db().delete(notes).where(eq(notes.id, id));
     }
   }
-  
+
   if (ids.teams?.length) {
     for (const id of ids.teams) {
       await db().delete(teams).where(eq(teams.id, id));
     }
   }
-  
+
   if (ids.pipelineStages?.length) {
     for (const id of ids.pipelineStages) {
       await db().delete(pipelineStages).where(eq(pipelineStages.id, id));
     }
   }
 }
-

@@ -1,6 +1,6 @@
 /**
  * Performance Tests for Query Optimizations
- * 
+ *
  * Tests to validate query optimizations and prevent regressions
  */
 
@@ -21,7 +21,7 @@ describe('Query Optimization Tests', () => {
         .select({
           id: contacts.id,
           firstName: contacts.firstName,
-          total: sql<number>`COUNT(*) OVER()`.as('total')
+          total: sql<number>`COUNT(*) OVER()`.as('total'),
         })
         .from(contacts)
         .where(isNull(contacts.deletedAt))
@@ -52,13 +52,10 @@ describe('Query Optimization Tests', () => {
         .select({
           id: notes.id,
           content: notes.content,
-          total: sql<number>`count(*) OVER()`.as('total')
+          total: sql<number>`count(*) OVER()`.as('total'),
         })
         .from(notes)
-        .where(and(
-          eq(notes.contactId, contact.id),
-          isNull(notes.deletedAt)
-        ))
+        .where(and(eq(notes.contactId, contact.id), isNull(notes.deletedAt)))
         .limit(10)
         .offset(0);
 
@@ -74,7 +71,7 @@ describe('Query Optimization Tests', () => {
         .select({
           id: tasks.id,
           title: tasks.title,
-          total: sql<number>`COUNT(*) OVER()`.as('total')
+          total: sql<number>`COUNT(*) OVER()`.as('total'),
         })
         .from(tasks)
         .where(isNull(tasks.deletedAt))
@@ -103,13 +100,13 @@ describe('Query Optimization Tests', () => {
         return;
       }
 
-      const contactIds = contactList.map(c => c.id);
+      const contactIds = contactList.map((c) => c.id);
 
       // This simulates the batch query pattern
       const result = await db()
         .select({
           contactId: sql<string>`contact_id`.as('contactId'),
-          tagId: sql<string>`tag_id`.as('tagId')
+          tagId: sql<string>`tag_id`.as('tagId'),
         })
         .from(sql`contact_tags`)
         .where(sql`contact_id = ANY(${contactIds})`);
@@ -130,14 +127,14 @@ describe('Query Optimization Tests', () => {
         return;
       }
 
-      const contactIds = contactList.map(c => c.id);
+      const contactIds = contactList.map((c) => c.id);
 
       // This simulates the batch query pattern
       const result = await db()
         .select({
           id: notes.id,
           contactId: notes.contactId,
-          content: notes.content
+          content: notes.content,
         })
         .from(notes)
         .where(sql`${notes.contactId} = ANY(${contactIds})`)
@@ -154,10 +151,12 @@ describe('Query Optimization Tests', () => {
       const result = await db()
         .select()
         .from(contacts)
-        .where(and(
-          isNull(contacts.deletedAt),
-          eq(contacts.assignedAdvisorId, sql`(SELECT id FROM users LIMIT 1)`)
-        ))
+        .where(
+          and(
+            isNull(contacts.deletedAt),
+            eq(contacts.assignedAdvisorId, sql`(SELECT id FROM users LIMIT 1)`)
+          )
+        )
         .orderBy(desc(contacts.updatedAt))
         .limit(10);
 
@@ -169,10 +168,7 @@ describe('Query Optimization Tests', () => {
       const result = await db()
         .select()
         .from(tasks)
-        .where(and(
-          sql`${tasks.status} IN ('open', 'in_progress')`,
-          isNull(tasks.deletedAt)
-        ))
+        .where(and(sql`${tasks.status} IN ('open', 'in_progress')`, isNull(tasks.deletedAt)))
         .orderBy(desc(tasks.dueDate))
         .limit(10);
 
@@ -180,4 +176,3 @@ describe('Query Optimization Tests', () => {
     });
   });
 });
-

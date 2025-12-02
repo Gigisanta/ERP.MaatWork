@@ -1,6 +1,6 @@
 /**
  * Tests para script add-user.ts
- * 
+ *
  * AI_DECISION: Tests unitarios para script de agregar usuario
  * Justificación: Validar lógica de creación de usuario admin
  * Impacto: Prevenir errores en creación de usuarios iniciales
@@ -14,11 +14,11 @@ import { eq } from 'drizzle-orm';
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   users: {},
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 vi.mock('drizzle-orm', () => ({
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 describe('add-user script', () => {
@@ -33,33 +33,35 @@ describe('add-user script', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     mockLimit = vi.fn().mockResolvedValue([]);
     mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
     mockSelect = vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: mockWhere }) });
-    
-    mockReturning = vi.fn().mockResolvedValue([{
-      id: 'new-user-id',
-      email: 'giolivosantarelli@gmail.com',
-      fullName: 'Gio Santarelli',
-      role: 'admin',
-      isActive: true
-    }]);
+
+    mockReturning = vi.fn().mockResolvedValue([
+      {
+        id: 'new-user-id',
+        email: 'giolivosantarelli@gmail.com',
+        fullName: 'Gio Santarelli',
+        role: 'admin',
+        isActive: true,
+      },
+    ]);
     mockValues = vi.fn().mockReturnValue({ returning: mockReturning });
     mockInsert = vi.fn().mockReturnValue({ values: mockValues });
-    
+
     mockQuery = {
       users: {
-        findMany: vi.fn()
-      }
+        findMany: vi.fn(),
+      },
     };
-    
+
     mockDb = vi.fn().mockReturnValue({
       query: mockQuery,
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     });
-    
+
     (db as any).mockImplementation(mockDb);
   });
 
@@ -74,18 +76,21 @@ describe('add-user script', () => {
           where: eq(users.email, email),
           limit: 1,
         });
-        
+
         if (existingUsers.length > 0) {
           return { exists: true, user: existingUsers[0] };
         }
-        
-        const [newUser] = await db().insert(users).values({
-          email: email,
-          fullName: 'Gio Santarelli',
-          role: 'admin',
-          isActive: true,
-        }).returning();
-        
+
+        const [newUser] = await db()
+          .insert(users)
+          .values({
+            email: email,
+            fullName: 'Gio Santarelli',
+            role: 'admin',
+            isActive: true,
+          })
+          .returning();
+
         return { exists: false, user: newUser };
       };
 
@@ -113,9 +118,9 @@ describe('add-user script', () => {
         email: 'giolivosantarelli@gmail.com',
         fullName: 'Gio Santarelli',
         role: 'admin',
-        isActive: true
+        isActive: true,
       };
-      
+
       mockQuery.users.findMany.mockResolvedValue([existingUser]);
 
       const addUser = async () => {
@@ -124,11 +129,11 @@ describe('add-user script', () => {
           where: eq(users.email, email),
           limit: 1,
         });
-        
+
         if (existingUsers.length > 0) {
           return { exists: true, user: existingUsers[0] };
         }
-        
+
         return { exists: false };
       };
 
@@ -149,18 +154,21 @@ describe('add-user script', () => {
           where: eq(users.email, email),
           limit: 1,
         });
-        
+
         if (existingUsers.length > 0) {
           return { exists: true };
         }
-        
-        const [newUser] = await db().insert(users).values({
-          email: email,
-          fullName: 'Gio Santarelli',
-          role: 'admin',
-          isActive: true,
-        }).returning();
-        
+
+        const [newUser] = await db()
+          .insert(users)
+          .values({
+            email: email,
+            fullName: 'Gio Santarelli',
+            role: 'admin',
+            isActive: true,
+          })
+          .returning();
+
         return { exists: false, user: newUser };
       };
 
@@ -169,10 +177,9 @@ describe('add-user script', () => {
       expect(mockValues).toHaveBeenCalledWith(
         expect.objectContaining({
           role: 'admin',
-          isActive: true
+          isActive: true,
         })
       );
     });
   });
 });
-

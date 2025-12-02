@@ -1,15 +1,23 @@
 /**
  * Vitest config para unit tests
- * 
+ *
  * Arquitectura de testing:
  * - Unit tests: Vitest, al lado del archivo con .test.ts
  * - E2E tests: Playwright, en tests/e2e/ con .spec.ts
- * 
+ *
  * Coverage target: ≥80% (lines, functions, branches, statements)
  */
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@cactus/db': resolve(__dirname, '../../packages/db/src/index.ts'),
+      '@cactus/db/schema': resolve(__dirname, '../../packages/db/src/schema.ts'),
+      '@cactus/ui': resolve(__dirname, '../../packages/ui/src/index.ts'),
+    },
+  },
   test: {
     globals: true,
     environment: 'node',
@@ -17,7 +25,7 @@ export default defineConfig({
     exclude: [
       'node_modules/**',
       'dist/**',
-      'src/**/*.integration.test.ts' // Exclude integration tests from unit test runs
+      'src/**/*.integration.test.ts', // Exclude integration tests from unit test runs
     ],
     // Parallelization configuration
     threads: true,
@@ -37,15 +45,14 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/index.ts',
         'src/types/**',
-        'src/__tests__/**'
+        'src/__tests__/**',
       ],
       thresholds: {
         lines: 80,
         functions: 80,
         branches: 80,
-        statements: 80
-      }
-    }
-  }
+        statements: 80,
+      },
+    },
+  },
 });
-

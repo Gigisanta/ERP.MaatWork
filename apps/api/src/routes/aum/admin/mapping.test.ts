@@ -1,6 +1,6 @@
 /**
  * Tests para AUM Admin - Advisor Mapping Routes
- * 
+ *
  * AI_DECISION: Tests unitarios para upload de advisor mapping
  * Justificación: Validación crítica de mapeo asesor-cuenta
  * Impacto: Prevenir errores en mapeo de asesores
@@ -22,29 +22,34 @@ vi.mock('multer', () => {
       this.name = 'MulterError';
     }
   };
-  
-  const mockDiskStorage = vi.fn((options: { destination?: unknown; filename?: unknown }) => {
-    // Return an object that matches multer's storage interface
+
+  const mockDiskStorage = vi.fn((options?: { destination?: unknown; filename?: unknown }) => {
     return {
       _handleFile: vi.fn(),
       _removeFile: vi.fn(),
-      ...options
+      ...options,
     };
   });
-  
-  const mockMulter = vi.fn((options: unknown) => ({
+
+  const mockMemoryStorage = vi.fn(() => ({}));
+  const mockMulter = vi.fn((options?: unknown) => ({
     single: vi.fn(() => vi.fn()),
     array: vi.fn(() => vi.fn()),
     fields: vi.fn(() => vi.fn()),
     any: vi.fn(() => vi.fn()),
-    none: vi.fn(() => vi.fn())
+    none: vi.fn(() => vi.fn()),
   }));
-  
+
+  // Attach diskStorage to the default export
+  mockMulter.diskStorage = mockDiskStorage;
+  mockMulter.memoryStorage = mockMemoryStorage;
+  mockMulter.MulterError = MulterError;
+
   return {
     default: mockMulter,
     diskStorage: mockDiskStorage,
-    memoryStorage: vi.fn(() => ({})),
-    MulterError
+    memoryStorage: mockMemoryStorage,
+    MulterError,
   };
 });
 
@@ -53,34 +58,34 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   advisorAccountMapping: {},
   advisorAliases: {},
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 vi.mock('../../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../../config/aum-limits', () => ({
   AUM_LIMITS: {
-    MAX_FILE_SIZE: 25 * 1024 * 1024
-  }
+    MAX_FILE_SIZE: 25 * 1024 * 1024,
+  },
 }));
 
 vi.mock('../../../utils/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
-  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase())
+  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
 
 vi.mock('../../../services/aumParser', () => ({
-  parseAumFile: vi.fn()
+  parseAumFile: vi.fn(),
 }));
 
 vi.mock('node:fs', () => ({
   promises: {
     mkdir: vi.fn().mockResolvedValue(undefined),
-    unlink: vi.fn().mockResolvedValue(undefined)
-  }
+    unlink: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 import { db } from '@cactus/db';
@@ -111,7 +116,7 @@ describe('AUM Admin - Mapping Routes', () => {
     adminToken = await signUserToken({
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     });
   });
 
@@ -122,9 +127,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -133,13 +138,13 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No existing mapping
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No existing mapping
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
       let callCount = 0;
@@ -170,8 +175,8 @@ describe('AUM Admin - Mapping Routes', () => {
           inserted: 1,
           updated: 0,
           errors: 0,
-          total: 1
-        }
+          total: 1,
+        },
       });
     });
 
@@ -181,9 +186,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe Updated'
-          } as any
-        ]
+            advisorRaw: 'John Doe Updated',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -192,19 +197,21 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              accountNumber: '12345',
-              advisorName: 'John Doe',
-              advisorRaw: 'john doe'
-            }]) // Existing mapping
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                accountNumber: '12345',
+                advisorName: 'John Doe',
+                advisorRaw: 'john doe',
+              },
+            ]), // Existing mapping
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined)
-        })
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       });
 
       let callCount = 0;
@@ -232,7 +239,7 @@ describe('AUM Admin - Mapping Routes', () => {
         inserted: 0,
         updated: 1,
         errors: 0,
-        total: 1
+        total: 1,
       });
     });
 
@@ -242,9 +249,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -253,24 +260,26 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelectMapping = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No existing mapping
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No existing mapping
+          }),
+        }),
       });
 
       const mockSelectAlias = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              userId: 'user-123',
-              aliasNormalized: 'john doe'
-            }]) // Found advisor alias
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                userId: 'user-123',
+                aliasNormalized: 'john doe',
+              },
+            ]), // Found advisor alias
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
       let callCount = 0;
@@ -303,9 +312,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -321,7 +330,7 @@ describe('AUM Admin - Mapping Routes', () => {
         inserted: 0,
         updated: 0,
         errors: 1,
-        total: 1
+        total: 1,
       });
     });
 
@@ -331,7 +340,7 @@ describe('AUM Admin - Mapping Routes', () => {
         single: vi.fn(() => (req, res, next) => {
           (req as any).file = undefined;
           next();
-        })
+        }),
       } as any);
 
       const app = createTestApp();
@@ -341,7 +350,7 @@ describe('AUM Admin - Mapping Routes', () => {
         .expect(400);
 
       expect(res.body).toEqual({
-        error: 'No file uploaded'
+        error: 'No file uploaded',
       });
     });
 
@@ -349,7 +358,7 @@ describe('AUM Admin - Mapping Routes', () => {
       mockParseAumFile.mockResolvedValue({
         success: false,
         error: 'Invalid file format',
-        details: 'File format not supported'
+        details: 'File format not supported',
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -363,7 +372,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       expect(res.body).toEqual({
         error: 'Error al procesar el archivo',
-        details: 'Invalid file format'
+        details: 'Invalid file format',
       });
     });
 
@@ -374,7 +383,7 @@ describe('AUM Admin - Mapping Routes', () => {
       vi.mocked(multer).mockReturnValue({
         single: vi.fn(() => (req, res, next) => {
           next(error);
-        })
+        }),
       } as any);
 
       const app = createTestApp();
@@ -385,7 +394,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       expect(res.body).toEqual({
         error: 'Error al procesar el archivo',
-        details: expect.stringContaining('Archivo demasiado grande')
+        details: expect.stringContaining('Archivo demasiado grande'),
       });
     });
 
@@ -396,7 +405,7 @@ describe('AUM Admin - Mapping Routes', () => {
       vi.mocked(multer).mockReturnValue({
         single: vi.fn(() => (req, res, next) => {
           next(error);
-        })
+        }),
       } as any);
 
       const app = createTestApp();
@@ -407,7 +416,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       expect(res.body).toEqual({
         error: 'Error al procesar el archivo',
-        details: 'Error de upload: Other error'
+        details: 'Error de upload: Other error',
       });
     });
 
@@ -417,7 +426,7 @@ describe('AUM Admin - Mapping Routes', () => {
       vi.mocked(multer).mockReturnValue({
         single: vi.fn(() => (req, res, next) => {
           next(error);
-        })
+        }),
       } as any);
 
       const app = createTestApp();
@@ -428,7 +437,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       expect(res.body).toEqual({
         error: 'Error al procesar el archivo',
-        details: 'Generic error'
+        details: 'Generic error',
       });
     });
 
@@ -438,9 +447,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -449,13 +458,13 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockRejectedValue(new Error('Database error'))
+        values: vi.fn().mockRejectedValue(new Error('Database error')),
       });
 
       let callCount = 0;
@@ -486,9 +495,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -497,13 +506,13 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
       let callCount = 0;
@@ -533,9 +542,9 @@ describe('AUM Admin - Mapping Routes', () => {
         data: [
           {
             accountNumber: '12345',
-            advisorRaw: 'John Doe'
-          } as any
-        ]
+            advisorRaw: 'John Doe',
+          } as any,
+        ],
       });
 
       mockNormalizeAccountNumber.mockReturnValue('12345');
@@ -544,13 +553,13 @@ describe('AUM Admin - Mapping Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined)
+        values: vi.fn().mockResolvedValue(undefined),
       });
 
       let callCount = 0;
@@ -580,7 +589,7 @@ describe('AUM Admin - Mapping Routes', () => {
       // This test verifies handler works with valid user
       mockParseAumFile.mockResolvedValue({
         success: true,
-        data: []
+        data: [],
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -606,10 +615,8 @@ describe('AUM Admin - Mapping Routes', () => {
         .expect(500);
 
       expect(res.body).toEqual({
-        error: 'Unexpected error'
+        error: 'Unexpected error',
       });
     });
   });
 });
-
-

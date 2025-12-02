@@ -1,13 +1,23 @@
 /**
  * Tests para db-init.ts
- * 
+ *
  * AI_DECISION: Tests unitarios para módulo de inicialización de base de datos
  * Justificación: Validar lógica crítica de migraciones y seeding
  * Impacto: Prevenir errores en inicialización del sistema
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { db, pipelineStages, lookupTaskStatus, lookupPriority, lookupNotificationType, lookupAssetClass, teams, users, teamMembership } from '@cactus/db';
+import {
+  db,
+  pipelineStages,
+  lookupTaskStatus,
+  lookupPriority,
+  lookupNotificationType,
+  lookupAssetClass,
+  teams,
+  users,
+  teamMembership,
+} from '@cactus/db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { eq } from 'drizzle-orm';
@@ -25,20 +35,20 @@ vi.mock('@cactus/db', () => ({
   users: {},
   teamMembership: {},
   eq: vi.fn(),
-  sql: vi.fn((strings, ...values) => ({ strings, values }))
+  sql: vi.fn((strings, ...values) => ({ strings, values })),
 }));
 
 vi.mock('drizzle-orm/node-postgres/migrator', () => ({
-  migrate: vi.fn()
+  migrate: vi.fn(),
 }));
 
 vi.mock('drizzle-orm', () => ({
   sql: vi.fn((strings, ...values) => ({ strings, values })),
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 vi.mock('./utils/pipeline-stages', () => ({
-  ensureDefaultPipelineStages: vi.fn()
+  ensureDefaultPipelineStages: vi.fn(),
 }));
 
 vi.mock('pino', () => ({
@@ -46,8 +56,8 @@ vi.mock('pino', () => ({
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
-  }))
+    error: vi.fn(),
+  })),
 }));
 
 describe('db-init', () => {
@@ -66,26 +76,26 @@ describe('db-init', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     originalEnv = { ...process.env };
-    
+
     mockOnConflictDoNothing = vi.fn().mockResolvedValue(undefined);
     mockValues = vi.fn().mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockInsert = vi.fn().mockReturnValue({ values: mockValues });
-    
+
     mockReturning = vi.fn().mockResolvedValue([{ id: 'team-1', name: 'cactus' }]);
     mockLimit = vi.fn().mockResolvedValue([]);
     mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
     mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
     mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
-    
+
     mockExecute = vi.fn().mockResolvedValue({ rows: [{ count: '1' }] });
-    
+
     mockDb = vi.fn().mockReturnValue({
       execute: mockExecute,
       insert: mockInsert,
       select: mockSelect,
-      update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+      update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }),
     });
-    
+
     (db as any).mockImplementation(mockDb);
   });
 
@@ -96,21 +106,25 @@ describe('db-init', () => {
   describe('verifyDatabaseConnection', () => {
     it('debería lanzar error cuando DATABASE_URL no está configurado', async () => {
       delete process.env.DATABASE_URL;
-      
+
       const { initializeDatabase } = await import('./db-init');
-      
-      await expect(initializeDatabase()).rejects.toThrow('DATABASE_URL environment variable is not set');
+
+      await expect(initializeDatabase()).rejects.toThrow(
+        'DATABASE_URL environment variable is not set'
+      );
     });
 
     it('debería verificar conexión exitosamente cuando DATABASE_URL está configurado', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
       mockExecute.mockResolvedValue({ rows: [] });
-      
+
       // Simular verifyDatabaseConnection
       const verifyDatabaseConnection = async () => {
         const databaseUrl = process.env.DATABASE_URL;
         if (!databaseUrl) {
-          throw new Error('DATABASE_URL environment variable is not set. Please configure it in apps/api/.env');
+          throw new Error(
+            'DATABASE_URL environment variable is not set. Please configure it in apps/api/.env'
+          );
         }
         await db().execute(sql`SELECT 1`);
       };
@@ -124,7 +138,7 @@ describe('db-init', () => {
       const connectionError = new Error('Connection refused');
       (connectionError as any).code = 'ECONNREFUSED';
       mockExecute.mockRejectedValue(connectionError);
-      
+
       const verifyDatabaseConnection = async () => {
         const databaseUrl = process.env.DATABASE_URL;
         if (!databaseUrl) {
@@ -151,18 +165,18 @@ describe('db-init', () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
       mockExecute.mockResolvedValue({ rows: [{ count: '1' }] });
       (migrate as any).mockResolvedValue(undefined);
-      
+
       // Simular runMigrations
       const runMigrations = async () => {
         const autoMigrate = process.env.AUTO_MIGRATE === 'true';
         if (!autoMigrate) return;
-        
+
         const migrationCheck = await db().execute(sql`
           SELECT COUNT(*) as count 
           FROM information_schema.tables 
           WHERE table_schema = 'public' AND table_name = '__drizzle_migrations'
         `);
-        
+
         const hasMigrationTable = migrationCheck.rows[0]?.count > 0;
         if (hasMigrationTable) {
           await migrate(db(), { migrationsFolder: 'test-folder' });
@@ -170,13 +184,13 @@ describe('db-init', () => {
       };
 
       await runMigrations();
-      
+
       expect(mockExecute).toHaveBeenCalled();
     });
 
     it('debería no ejecutar migraciones cuando AUTO_MIGRATE=false', async () => {
       process.env.AUTO_MIGRATE = 'false';
-      
+
       const runMigrations = async () => {
         const autoMigrate = process.env.AUTO_MIGRATE === 'true';
         if (!autoMigrate) return;
@@ -184,7 +198,7 @@ describe('db-init', () => {
       };
 
       await runMigrations();
-      
+
       expect(migrate).not.toHaveBeenCalled();
     });
   });
@@ -193,13 +207,13 @@ describe('db-init', () => {
     it('debería llamar ensureDefaultPipelineStages', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
       process.env.NODE_ENV = 'development';
-      
+
       const seedPipelineStages = async () => {
         await ensureDefaultPipelineStages(false);
       };
 
       await seedPipelineStages();
-      
+
       expect(ensureDefaultPipelineStages).toHaveBeenCalledWith(false);
     });
   });
@@ -207,57 +221,51 @@ describe('db-init', () => {
   describe('seedLookupTables', () => {
     it('debería insertar task statuses', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-      
+
       const seedLookupTables = async () => {
         const dbInstance = db();
         const taskStatuses = [
           { id: 'open', label: 'Abierta' },
           { id: 'in_progress', label: 'En Progreso' },
           { id: 'completed', label: 'Completada' },
-          { id: 'cancelled', label: 'Cancelada' }
+          { id: 'cancelled', label: 'Cancelada' },
         ];
-        
+
         for (const status of taskStatuses) {
-          await dbInstance
-            .insert(lookupTaskStatus)
-            .values(status)
-            .onConflictDoNothing();
+          await dbInstance.insert(lookupTaskStatus).values(status).onConflictDoNothing();
         }
       };
 
       await seedLookupTables();
-      
+
       expect(mockInsert).toHaveBeenCalledTimes(4);
     });
 
     it('debería insertar priorities', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-      
+
       const seedLookupTables = async () => {
         const dbInstance = db();
         const priorities = [
           { id: 'low', label: 'Baja' },
           { id: 'medium', label: 'Media' },
           { id: 'high', label: 'Alta' },
-          { id: 'urgent', label: 'Urgente' }
+          { id: 'urgent', label: 'Urgente' },
         ];
-        
+
         for (const priority of priorities) {
-          await dbInstance
-            .insert(lookupPriority)
-            .values(priority)
-            .onConflictDoNothing();
+          await dbInstance.insert(lookupPriority).values(priority).onConflictDoNothing();
         }
       };
 
       await seedLookupTables();
-      
+
       expect(mockInsert).toHaveBeenCalledTimes(4);
     });
 
     it('debería insertar notification types', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-      
+
       const seedLookupTables = async () => {
         const dbInstance = db();
         const notificationTypes = [
@@ -265,25 +273,22 @@ describe('db-init', () => {
           { id: 'task_due', label: 'Tarea Vencida' },
           { id: 'sla_warning', label: 'Advertencia SLA' },
           { id: 'contact_moved', label: 'Contacto Movido' },
-          { id: 'note_mention', label: 'Mención en Nota' }
+          { id: 'note_mention', label: 'Mención en Nota' },
         ];
-        
+
         for (const type of notificationTypes) {
-          await dbInstance
-            .insert(lookupNotificationType)
-            .values(type)
-            .onConflictDoNothing();
+          await dbInstance.insert(lookupNotificationType).values(type).onConflictDoNothing();
         }
       };
 
       await seedLookupTables();
-      
+
       expect(mockInsert).toHaveBeenCalledTimes(5);
     });
 
     it('debería insertar asset classes', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-      
+
       const seedLookupTables = async () => {
         const dbInstance = db();
         const assetClasses = [
@@ -291,19 +296,16 @@ describe('db-init', () => {
           { id: 'fixed_income', label: 'Renta Fija' },
           { id: 'money_market', label: 'Mercado Monetario' },
           { id: 'alternative', label: 'Alternativos' },
-          { id: 'commodities', label: 'Commodities' }
+          { id: 'commodities', label: 'Commodities' },
         ];
-        
+
         for (const assetClass of assetClasses) {
-          await dbInstance
-            .insert(lookupAssetClass)
-            .values(assetClass)
-            .onConflictDoNothing();
+          await dbInstance.insert(lookupAssetClass).values(assetClass).onConflictDoNothing();
         }
       };
 
       await seedLookupTables();
-      
+
       expect(mockInsert).toHaveBeenCalledTimes(5);
     });
   });
@@ -314,27 +316,27 @@ describe('db-init', () => {
       mockLimit.mockResolvedValue([]);
       mockReturning.mockResolvedValue([{ id: 'team-1', name: 'cactus' }]);
       mockValues.mockReturnValue({ returning: mockReturning });
-      
+
       const seedCactusTeam = async () => {
         const dbi = db();
         const existing = await dbi.select().from(teams).where(eq(teams.name, 'cactus')).limit(1);
         if (existing.length > 0) {
           return;
         }
-        
+
         const manager = await dbi.select().from(users).where(eq(users.role, 'manager')).limit(1);
         const managerUserId = manager[0]?.id || null;
-        
+
         const [teamRow] = await dbi
           .insert(teams)
           .values({ name: 'cactus', managerUserId })
           .returning();
-        
+
         return teamRow;
       };
 
       const result = await seedCactusTeam();
-      
+
       expect(mockSelect).toHaveBeenCalled();
       expect(mockInsert).toHaveBeenCalledWith(teams);
       expect(result).toBeDefined();
@@ -343,7 +345,7 @@ describe('db-init', () => {
     it('debería no crear team si ya existe', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
       mockLimit.mockResolvedValue([{ id: 'existing-team', name: 'cactus' }]);
-      
+
       const seedCactusTeam = async () => {
         const dbi = db();
         const existing = await dbi.select().from(teams).where(eq(teams.name, 'cactus')).limit(1);
@@ -354,11 +356,10 @@ describe('db-init', () => {
       };
 
       const result = await seedCactusTeam();
-      
+
       expect(mockSelect).toHaveBeenCalled();
       expect(mockInsert).not.toHaveBeenCalled();
       expect(result).toBeNull();
     });
   });
 });
-

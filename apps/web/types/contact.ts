@@ -6,12 +6,17 @@ import type { TimestampedEntity } from './common';
 
 /**
  * Tag simplificado para contacto
+ *
+ * AI_DECISION: Incluir businessLine para compatibilidad con backend
+ * Justificación: El backend devuelve businessLine en las respuestas de tags
+ * Impacto: Permite que las etiquetas Zurich sean clickeables
  */
 export interface ContactTag {
   id: string;
   name: string;
   color: string | null;
   icon?: string | null;
+  businessLine?: string | null;
 }
 
 /**
@@ -58,7 +63,7 @@ export interface Contact extends TimestampedEntity {
 /**
  * Nombres de campos válidos para actualizar contacto
  */
-export type ContactFieldName = 
+export type ContactFieldName =
   | 'firstName'
   | 'lastName'
   | 'email'

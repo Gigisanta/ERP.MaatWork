@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import rowsRouter from './rows';
+import rowsRouter from './rows/index';
 import { signUserToken } from '../../auth/jwt';
 
 vi.mock('@cactus/db', () => ({
@@ -17,7 +17,7 @@ vi.mock('@cactus/db', () => ({
   advisorAliases: {},
   aumMonthlySnapshots: {},
   eq: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
@@ -25,11 +25,11 @@ vi.mock('../../auth/middlewares', () => ({
     req.user = {
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     };
     next();
   }),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
@@ -39,12 +39,12 @@ vi.mock('../../auth/authorization', () => ({
     accessibleAdvisorIds: [],
     canSeeUnassigned: true,
     canAssignToOthers: true,
-    canReassign: true
+    canReassign: true,
   }),
   buildContactAccessFilter: vi.fn().mockReturnValue({
     whereClause: { sql: '1=1' },
-    description: 'admin access'
-  })
+    description: 'admin access',
+  }),
 }));
 
 vi.mock('../../utils/validation', () => ({
@@ -57,17 +57,17 @@ vi.mock('../../utils/validation', () => ({
       req.query.offset = Number(req.query.offset) as any;
     }
     next();
-  })
+  }),
 }));
 
 vi.mock('../../services/aumMatcher', () => ({
   matchContactByAccountNumber: vi.fn(),
   matchContactByHolderName: vi.fn(),
-  matchAdvisor: vi.fn()
+  matchAdvisor: vi.fn(),
 }));
 
 vi.mock('../../utils/aum-normalization', () => ({
-  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase())
+  normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
 
 import { db } from '@cactus/db';
@@ -90,15 +90,16 @@ describe('AUM Rows Routes', () => {
     adminToken = await signUserToken({
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     });
   });
 
   describe('GET /admin/aum/rows/all', () => {
     it('debería retornar rows con paginación', async () => {
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ total: 10 }]
+          rows: [{ total: 10 }],
         })
         .mockResolvedValueOnce({
           rows: [
@@ -141,13 +142,13 @@ describe('AUM Rows Routes', () => {
               contact_last_name: null,
               user_name: null,
               user_email: null,
-              suggested_user_id: null
-            }
-          ]
+              suggested_user_id: null,
+            },
+          ],
         });
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as any);
 
       const app = createTestApp();
@@ -161,10 +162,10 @@ describe('AUM Rows Routes', () => {
       expect(res.body.rows.length).toBeGreaterThan(0);
       expect(res.body.rows[0]).toMatchObject({
         id: 'row-1',
-        accountNumber: '12345'
+        accountNumber: '12345',
       });
       expect(res.body.pagination).toMatchObject({
-        total: 10
+        total: 10,
       });
       expect(typeof res.body.pagination.limit).toBe('number');
       expect(typeof res.body.pagination.offset).toBe('number');
@@ -172,16 +173,17 @@ describe('AUM Rows Routes', () => {
     });
 
     it('debería filtrar por broker', async () => {
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ total: 5 }]
+          rows: [{ total: 5 }],
         })
         .mockResolvedValueOnce({
-          rows: []
+          rows: [],
         });
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as any);
 
       const app = createTestApp();
@@ -194,16 +196,17 @@ describe('AUM Rows Routes', () => {
     });
 
     it('debería filtrar por status', async () => {
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ total: 3 }]
+          rows: [{ total: 3 }],
         })
         .mockResolvedValueOnce({
-          rows: []
+          rows: [],
         });
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as any);
 
       const app = createTestApp();
@@ -221,35 +224,41 @@ describe('AUM Rows Routes', () => {
       const mockSelectFile = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-1'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-1',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockSelectRow = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              accountNumber: '12345'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                accountNumber: '12345',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockExecute = vi.fn().mockResolvedValue({
-        rows: [{
-          total_parsed: 10,
-          total_matched: 5,
-          total_unmatched: 5
-        }]
+        rows: [
+          {
+            total_parsed: 10,
+            total_matched: 5,
+            total_unmatched: 5,
+          },
+        ],
       });
 
       const mockUpdate = vi.fn((_table: unknown) => ({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined)
-        })
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       }));
 
       let selectCallCount = 0;
@@ -266,7 +275,7 @@ describe('AUM Rows Routes', () => {
       mockDb.mockReturnValue({
         select: mockSelect,
         execute: mockExecute,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       const app = createTestApp();
@@ -276,16 +285,13 @@ describe('AUM Rows Routes', () => {
         .send({
           rowId: 'row-1',
           matchedContactId: 'contact-1',
-          matchedUserId: 'user-1'
+          matchedUserId: 'user-1',
         })
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true
+        ok: true,
       });
     });
   });
 });
-
-
-

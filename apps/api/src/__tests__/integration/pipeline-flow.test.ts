@@ -1,6 +1,6 @@
 /**
  * Integration tests for pipeline flow
- * 
+ *
  * Tests moving contacts between pipeline stages with real database
  */
 
@@ -9,7 +9,11 @@ import { db } from '@cactus/db';
 import { contacts, pipelineStages, pipelineStageHistory } from '@cactus/db/schema';
 import { eq } from 'drizzle-orm';
 import { createTestUser, deleteTestUser } from '../../helpers/test-auth';
-import { createTestContact, createTestPipelineStage, cleanupTestFixtures } from '../../helpers/test-fixtures';
+import {
+  createTestContact,
+  createTestPipelineStage,
+  cleanupTestFixtures,
+} from '../../helpers/test-fixtures';
 
 describe('Pipeline Flow Integration Tests', () => {
   let testUserId: string | null = null;
@@ -183,4 +187,3 @@ describe('Pipeline Flow Integration Tests', () => {
     });
   });
 });
-

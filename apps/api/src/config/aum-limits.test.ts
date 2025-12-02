@@ -1,6 +1,6 @@
 /**
  * Tests para AUM_LIMITS constants
- * 
+ *
  * AI_DECISION: Tests unitarios para prevenir cambios accidentales
  * Justificación: Límites de AUM son críticos para seguridad (DoS prevention)
  * Impacto: Confianza en valores configurados correctamente
@@ -104,8 +104,7 @@ describe('AUM_LIMITS', () => {
 
     it('ALLOWED_MIME_TYPES debería incluir CSV y Excel', () => {
       expect(AUM_LIMITS.ALLOWED_MIME_TYPES).toContain('text/csv');
-      expect(AUM_LIMITS.ALLOWED_MIME_TYPES.some(type => type.includes('spreadsheet'))).toBe(true);
+      expect(AUM_LIMITS.ALLOWED_MIME_TYPES.some((type) => type.includes('spreadsheet'))).toBe(true);
     });
   });
 });
-

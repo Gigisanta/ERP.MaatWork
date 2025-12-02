@@ -21,7 +21,7 @@ const seedAdvisors: SeedAdvisor[] = [
   { username: 'TDanziger', password: 'TDanziger123', email: 'Tdanziger@grupoabax.com' },
   { username: 'PMolina', password: 'PMolina123', email: 'Pmolina@grupoabax.com' },
   { username: 'NIngilde', password: 'NIngilde123', email: 'Ningilde@grupoabax.com' },
-  { username: 'Fandreacchio', password: 'Fandreacchio123', email: 'Fandreacchio@grupoabax.com' }
+  { username: 'Fandreacchio', password: 'Fandreacchio123', email: 'Fandreacchio@grupoabax.com' },
 ];
 
 export async function upsertAdvisor({ username, password, email }: SeedAdvisor): Promise<void> {
@@ -30,7 +30,7 @@ export async function upsertAdvisor({ username, password, email }: SeedAdvisor):
 
   // Si ya existe por email, no duplicamos
   const existing = await db().query.users.findFirst({
-    where: eq(users.email, email)
+    where: eq(users.email, email),
   });
   if (existing) {
     console.log(`✓ Ya existe: ${email} (id=${existing.id})`);
@@ -48,7 +48,7 @@ export async function upsertAdvisor({ username, password, email }: SeedAdvisor):
       passwordHash,
       isActive: true,
       username,
-      usernameNormalized: normalized
+      usernameNormalized: normalized,
     })
     .returning();
 
@@ -70,6 +70,3 @@ async function main(): Promise<void> {
 main()
   .then(() => process.exit(0))
   .catch(() => process.exit(1));
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Configuración centralizada de timeouts
- * 
+ *
  * AI_DECISION: Reemplazar magic numbers con configuración dinámica
  * Justificación: Permite ajustar timeouts por entorno sin redeployar
  * Impacto: Mejor mantenibilidad y escalabilidad
@@ -11,16 +11,10 @@
  */
 export const TIMEOUTS = {
   // Timeout base para operaciones simples de portfolio
-  PORTFOLIO_PERFORMANCE: parseInt(
-    process.env.PORTFOLIO_PERFORMANCE_TIMEOUT || '60000',
-    10
-  ), // Default: 60s
+  PORTFOLIO_PERFORMANCE: parseInt(process.env.PORTFOLIO_PERFORMANCE_TIMEOUT || '60000', 10), // Default: 60s
 
   // Timeout base para comparaciones
-  PORTFOLIO_COMPARE_BASE: parseInt(
-    process.env.PORTFOLIO_COMPARE_BASE_TIMEOUT || '30000',
-    10
-  ), // Default: 30s
+  PORTFOLIO_COMPARE_BASE: parseInt(process.env.PORTFOLIO_COMPARE_BASE_TIMEOUT || '30000', 10), // Default: 30s
 
   // Timeout adicional por cada item en comparación
   PORTFOLIO_COMPARE_PER_ITEM: parseInt(
@@ -29,28 +23,16 @@ export const TIMEOUTS = {
   ), // Default: 5s por item
 
   // Timeout máximo absoluto para comparaciones
-  PORTFOLIO_COMPARE_MAX: parseInt(
-    process.env.PORTFOLIO_COMPARE_MAX_TIMEOUT || '120000',
-    10
-  ), // Default: 120s
+  PORTFOLIO_COMPARE_MAX: parseInt(process.env.PORTFOLIO_COMPARE_MAX_TIMEOUT || '120000', 10), // Default: 120s
 
   // Timeout para operaciones de fetch de Python service
-  PYTHON_SERVICE_DEFAULT: parseInt(
-    process.env.PYTHON_SERVICE_TIMEOUT || '30000',
-    10
-  ), // Default: 30s
+  PYTHON_SERVICE_DEFAULT: parseInt(process.env.PYTHON_SERVICE_TIMEOUT || '30000', 10), // Default: 30s
 
   // Timeout para búsqueda de instrumentos
-  INSTRUMENT_SEARCH: parseInt(
-    process.env.INSTRUMENT_SEARCH_TIMEOUT || '10000',
-    10
-  ), // Default: 10s
+  INSTRUMENT_SEARCH: parseInt(process.env.INSTRUMENT_SEARCH_TIMEOUT || '10000', 10), // Default: 10s
 
   // Timeout para backfill de precios
-  PRICE_BACKFILL: parseInt(
-    process.env.PRICE_BACKFILL_TIMEOUT || '300000',
-    10
-  ), // Default: 5 min
+  PRICE_BACKFILL: parseInt(process.env.PRICE_BACKFILL_TIMEOUT || '300000', 10), // Default: 5 min
 } as const;
 
 /**
@@ -114,7 +96,7 @@ export function validateTimeouts(): {
 
   return {
     valid: warnings.length === 0,
-    warnings
+    warnings,
   };
 }
 

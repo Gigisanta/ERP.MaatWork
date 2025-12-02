@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import uploadRouter from './upload';
+import uploadRouter from './upload/index';
 import { signUserToken } from '../../auth/jwt';
 
 vi.mock('@cactus/db', () => ({
@@ -81,12 +81,38 @@ vi.mock('../../config/aum-limits', () => ({
   },
 }));
 
-vi.mock('multer', () => ({
-  default: vi.fn(() => ({
+vi.mock('multer', () => {
+  const MulterError = class MulterError extends Error {
+    code: string;
+    constructor(message: string, code: string) {
+      super(message);
+      this.code = code;
+      this.name = 'MulterError';
+    }
+  };
+
+  const mockDiskStorage = vi.fn(() => ({}));
+  const mockMemoryStorage = vi.fn(() => ({}));
+  const mockMulter = vi.fn(() => ({
     single: vi.fn(() => (req, res, next) => next()),
-  })),
-  diskStorage: vi.fn(() => ({})),
-}));
+    array: vi.fn(() => vi.fn()),
+    fields: vi.fn(() => vi.fn()),
+    any: vi.fn(() => vi.fn()),
+    none: vi.fn(() => vi.fn()),
+  }));
+
+  // Attach diskStorage to the default export
+  mockMulter.diskStorage = mockDiskStorage;
+  mockMulter.memoryStorage = mockMemoryStorage;
+  mockMulter.MulterError = MulterError;
+
+  return {
+    default: mockMulter,
+    diskStorage: mockDiskStorage,
+    memoryStorage: mockMemoryStorage,
+    MulterError,
+  };
+});
 
 vi.mock('node:fs', () => ({
   promises: {

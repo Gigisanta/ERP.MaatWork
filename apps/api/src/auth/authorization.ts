@@ -20,7 +20,7 @@ export interface ContactAccessFilter {
 
 /**
  * Get the access scope for a user based on their role and team memberships
- * 
+ *
  * AI_DECISION: Add in-memory cache with TTL to reduce redundant DB queries
  * Justificación: getUserAccessScope se llama frecuentemente pero cambia raramente (solo cuando cambia team membership)
  * Impacto: Reduce queries redundantes a DB, mejora performance de endpoints que verifican acceso
@@ -32,7 +32,7 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
     logger.debug({ userId, role }, 'Cache hit for getUserAccessScope');
     return cached;
   }
-  
+
   // Cache miss - will query DB
   logger.debug({ userId, role }, 'Cache miss for getUserAccessScope');
 
@@ -98,7 +98,7 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
     accessibleAdvisorIds,
     canSeeUnassigned,
     canAssignToOthers,
-    canReassign
+    canReassign,
   };
 
   // Cache the result
@@ -117,13 +117,13 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
   if (role === 'admin') {
     return {
       whereClause: sql`1=1`, // No filter
-      description: 'admin access - no filters'
+      description: 'admin access - no filters',
     };
   }
 
   // Build conditions for assigned contacts
   const conditions = [];
-  
+
   // Add condition for accessible advisor IDs (defensive check for empty array)
   if (accessibleAdvisorIds && accessibleAdvisorIds.length > 0) {
     conditions.push(inArray(contacts.assignedAdvisorId, accessibleAdvisorIds));
@@ -137,10 +137,13 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
   // Defensive check: ensure we always have at least one condition
   if (conditions.length === 0) {
     // This shouldn't happen in normal operation, but fail safe
-    logger.warn({ userId, role, accessibleAdvisorIds, canSeeUnassigned }, 'buildContactAccessFilter: No access conditions - fail safe');
+    logger.warn(
+      { userId, role, accessibleAdvisorIds, canSeeUnassigned },
+      'buildContactAccessFilter: No access conditions - fail safe'
+    );
     return {
       whereClause: sql`1=0`, // No access
-      description: 'no access conditions - fail safe'
+      description: 'no access conditions - fail safe',
     };
   }
 
@@ -148,23 +151,23 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
   if (conditions.length === 1) {
     return {
       whereClause: conditions[0],
-      description: `${role} access - 1 condition`
+      description: `${role} access - 1 condition`,
     };
   }
 
   return {
     whereClause: or(...conditions)!,
-    description: `${role} access - ${conditions.length} condition(s)`
+    description: `${role} access - ${conditions.length} condition(s)`,
   };
 }
 
 /**
  * Check if a user can access a specific contact
- * 
+ *
  * AI_DECISION: Accept optional AccessScope parameter to avoid redundant getUserAccessScope calls
  * Justificación: Cuando AccessScope ya está calculado (ej: en GET /tasks), evita llamada redundante a getUserAccessScope
  * Impacto: Reduce queries N+1 eliminando llamadas redundantes a getUserAccessScope
- * 
+ *
  * @param userId - User ID
  * @param role - User role
  * @param contactId - Contact ID to check access for
@@ -172,16 +175,16 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
  * @returns Promise<boolean> - True if user can access the contact
  */
 export async function canAccessContact(
-  userId: string, 
-  role: UserRole, 
+  userId: string,
+  role: UserRole,
   contactId: string,
   accessScope?: AccessScope
 ): Promise<boolean> {
   try {
     // Use provided accessScope or fetch it if not provided
-    const scope = accessScope ?? await getUserAccessScope(userId, role);
+    const scope = accessScope ?? (await getUserAccessScope(userId, role));
     const filter = buildContactAccessFilter(scope);
-    
+
     // Query the contact with the access filter
     const contact = await db()
       .select({ id: sql<string>`id` })
@@ -199,9 +202,13 @@ export async function canAccessContact(
 /**
  * Check if a user can assign a contact to a specific advisor
  */
-export async function canAssignContactTo(userId: string, role: UserRole, targetAdvisorId: string | null): Promise<boolean> {
+export async function canAssignContactTo(
+  userId: string,
+  role: UserRole,
+  targetAdvisorId: string | null
+): Promise<boolean> {
   const accessScope = await getUserAccessScope(userId, role);
-  
+
   // Admin can assign to anyone
   if (role === 'admin') {
     return true;
@@ -223,13 +230,15 @@ export async function canAssignContactTo(userId: string, role: UserRole, targetA
 /**
  * Get team members for a manager (for dropdowns, etc.)
  */
-export async function getTeamMembers(managerId: string): Promise<Array<{ id: string; email: string; fullName: string; role: string }>> {
+export async function getTeamMembers(
+  managerId: string
+): Promise<Array<{ id: string; email: string; fullName: string; role: string }>> {
   const members = await db()
     .select({
       id: users.id,
       email: users.email,
       fullName: users.fullName,
-      role: teamMembership.role // Return team membership role (lead/member) instead of user system role
+      role: teamMembership.role, // Return team membership role (lead/member) instead of user system role
     })
     .from(users)
     .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
@@ -242,7 +251,10 @@ export async function getTeamMembers(managerId: string): Promise<Array<{ id: str
 /**
  * Get all teams where a user is a member or manager
  */
-export async function getUserTeams(userId: string, role: UserRole): Promise<Array<{ id: string; name: string; role: 'member' | 'manager' }>> {
+export async function getUserTeams(
+  userId: string,
+  role: UserRole
+): Promise<Array<{ id: string; name: string; role: 'member' | 'manager' }>> {
   // For managers, get teams they manage
   if (role === 'manager') {
     const managedTeams = await db()
@@ -250,16 +262,18 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
         id: teams.id,
         name: teams.name,
         managerUserId: teams.managerUserId,
-        createdAt: teams.createdAt
+        createdAt: teams.createdAt,
       })
       .from(teams)
       .where(eq(teams.managerUserId, userId));
 
-    return managedTeams.map((t: { id: string; name: string; managerUserId: string | null; createdAt: Date }) => ({
-      id: t.id,
-      name: t.name,
-      role: 'manager' as const
-    }));
+    return managedTeams.map(
+      (t: { id: string; name: string; managerUserId: string | null; createdAt: Date }) => ({
+        id: t.id,
+        name: t.name,
+        role: 'manager' as const,
+      })
+    );
   }
 
   // For advisors, get teams they are members of
@@ -267,7 +281,7 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
     .select({
       id: teams.id,
       name: teams.name,
-      isManager: eq(teams.managerUserId, userId)
+      isManager: eq(teams.managerUserId, userId),
     })
     .from(teams)
     .innerJoin(teamMembership, eq(teams.id, teamMembership.teamId))
@@ -276,7 +290,7 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
   return userTeams.map((t: { id: string; name: string; isManager: boolean }) => ({
     id: t.id,
     name: t.name,
-    role: t.isManager ? 'manager' as const : 'member' as const
+    role: t.isManager ? ('manager' as const) : ('member' as const),
   }));
 }
 
@@ -286,7 +300,11 @@ export async function getUserTeams(userId: string, role: UserRole): Promise<Arra
  * Justificación: Los usuarios solo deben poder ver archivos que tienen permiso según su rol
  * Impacto: Previene acceso no autorizado a importaciones de AUM
  */
-export async function canAccessAumFile(userId: string, role: UserRole, fileId: string): Promise<boolean> {
+export async function canAccessAumFile(
+  userId: string,
+  role: UserRole,
+  fileId: string
+): Promise<boolean> {
   try {
     // Admin can access all files
     if (role === 'admin') {

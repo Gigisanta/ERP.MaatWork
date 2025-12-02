@@ -1,6 +1,6 @@
 /**
  * Integration tests for portfolios CRUD operations
- * 
+ *
  * Tests portfolio creation, component management, and benchmark assignment
  */
 
@@ -36,26 +36,18 @@ describe('Portfolios CRUD Integration Tests', () => {
     if (createdPortfolioIds.length > 0) {
       for (const id of createdPortfolioIds) {
         // Delete template lines first (cascade should handle this, but being explicit)
-        await db()
-          .delete(portfolioTemplateLines)
-          .where(eq(portfolioTemplateLines.templateId, id));
+        await db().delete(portfolioTemplateLines).where(eq(portfolioTemplateLines.templateId, id));
 
-        await db()
-          .delete(portfolioTemplates)
-          .where(eq(portfolioTemplates.id, id));
+        await db().delete(portfolioTemplates).where(eq(portfolioTemplates.id, id));
       }
     }
 
     // Cleanup benchmarks
     if (createdBenchmarkIds.length > 0) {
       for (const id of createdBenchmarkIds) {
-        await db()
-          .delete(benchmarkComponents)
-          .where(eq(benchmarkComponents.benchmarkId, id));
+        await db().delete(benchmarkComponents).where(eq(benchmarkComponents.benchmarkId, id));
 
-        await db()
-          .delete(benchmarkDefinitions)
-          .where(eq(benchmarkDefinitions.id, id));
+        await db().delete(benchmarkDefinitions).where(eq(benchmarkDefinitions.id, id));
       }
     }
 
@@ -150,15 +142,13 @@ describe('Portfolios CRUD Integration Tests', () => {
 
       createdPortfolioIds.push(portfolio.id);
 
-      await db()
-        .insert(portfolioTemplateLines)
-        .values({
-          templateId: portfolio.id,
-          instrumentSymbol: 'BOND',
-          targetWeight: 1.0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+      await db().insert(portfolioTemplateLines).values({
+        templateId: portfolio.id,
+        instrumentSymbol: 'BOND',
+        targetWeight: 1.0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       // Read portfolio with components
       const [readPortfolio] = await db()
@@ -257,16 +247,14 @@ describe('Portfolios CRUD Integration Tests', () => {
       createdBenchmarkIds.push(benchmark.id);
 
       // Add benchmark components
-      await db()
-        .insert(benchmarkComponents)
-        .values({
-          benchmarkId: benchmark.id,
-          instrumentSymbol: 'SPY',
-          instrumentName: 'S&P 500 ETF',
-          targetWeight: 1.0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+      await db().insert(benchmarkComponents).values({
+        benchmarkId: benchmark.id,
+        instrumentSymbol: 'SPY',
+        instrumentName: 'S&P 500 ETF',
+        targetWeight: 1.0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       // Create portfolio
       const [portfolio] = await db()
@@ -319,9 +307,7 @@ describe('Portfolios CRUD Integration Tests', () => {
         .returning();
 
       // Delete portfolio (should cascade delete components)
-      await db()
-        .delete(portfolioTemplates)
-        .where(eq(portfolioTemplates.id, portfolio.id));
+      await db().delete(portfolioTemplates).where(eq(portfolioTemplates.id, portfolio.id));
 
       // Verify portfolio deleted
       const [deleted] = await db()
@@ -343,4 +329,3 @@ describe('Portfolios CRUD Integration Tests', () => {
     });
   });
 });
-

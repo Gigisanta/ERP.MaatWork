@@ -1,6 +1,6 @@
 /**
  * Integration tests for contacts CRUD operations
- * 
+ *
  * Tests complete CRUD flow with real database
  */
 
@@ -140,9 +140,7 @@ describe('Contacts CRUD Integration Tests', () => {
       });
 
       // Delete contact
-      await db()
-        .delete(contacts)
-        .where(eq(contacts.id, contact.id));
+      await db().delete(contacts).where(eq(contacts.id, contact.id));
 
       // Verify deletion
       const [deleted] = await db()
@@ -171,4 +169,3 @@ describe('Contacts CRUD Integration Tests', () => {
     });
   });
 });
-

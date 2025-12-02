@@ -29,8 +29,13 @@ process.env.ANALYTICS_SERVICE_URL = process.env.ANALYTICS_SERVICE_URL || analyti
 process.env.PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || analyticsUrl;
 
 // Ports configuration
+// AI_DECISION: Solo limpiamos puertos de desarrollo local (3000, 3001, analyticsPort)
+// Justificación: Puertos Docker (5678 N8N, 5433 PostgreSQL) NO deben tocarse porque
+// en Windows, matarlos rompe com.docker.backend.exe y Docker Desktop se cierra
+// Impacto: Docker permanece estable durante desarrollo
 const CRITICAL_PORTS = [3000, 3001, analyticsPort];
-const OPTIONAL_PORTS = [5678]; // N8N Docker service
+// IMPORTANTE: NO incluir puertos Docker aquí - rompe Docker Desktop en Windows
+const OPTIONAL_PORTS = []; // Removido 5678 (N8N Docker) - ver comentario arriba
 
 /**
  * Log message if not in quiet mode

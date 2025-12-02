@@ -272,7 +272,7 @@ router.get(
                   )
                   FROM ${contactTags} ct
                   INNER JOIN ${tags} t ON ct.tag_id = t.id
-                  WHERE ct.contact_id = ${contacts.id}
+                  WHERE ct.contact_id = "contacts"."id"
                 ),
                 '[]'::json
               )
@@ -305,7 +305,7 @@ router.get(
                     ORDER BY tk.created_at DESC
                   )
                   FROM ${tasks} tk
-                  WHERE tk.contact_id = ${contacts.id}
+                  WHERE tk.contact_id = "contacts"."id"
                     AND tk.deleted_at IS NULL
                   LIMIT 50
                 ),
@@ -334,7 +334,7 @@ router.get(
                     ORDER BY n.created_at DESC
                   )
                   FROM ${notes} n
-                  WHERE n.contact_id = ${contacts.id}
+                  WHERE n.contact_id = "contacts"."id"
                     AND n.deleted_at IS NULL
                   LIMIT 50
                 ),
@@ -362,7 +362,7 @@ router.get(
                     )
                   )
                   FROM ${brokerAccounts} ba
-                  WHERE ba.contact_id = ${contacts.id}
+                  WHERE ba.contact_id = "contacts"."id"
                     AND ba.deleted_at IS NULL
                 ),
                 '[]'::json
@@ -390,7 +390,7 @@ router.get(
                     ORDER BY cpa.created_at DESC
                   )
                   FROM ${clientPortfolioAssignments} cpa
-                  WHERE cpa.contact_id = ${contacts.id}
+                  WHERE cpa.contact_id = "contacts"."id"
                 ),
                 '[]'::json
               )

@@ -1,6 +1,6 @@
 /**
  * Tests para env config
- * 
+ *
  * AI_DECISION: Tests unitarios para configuración de variables de entorno
  * Justificación: Validación crítica de configuración
  * Impacto: Prevenir errores por configuración faltante
@@ -11,7 +11,7 @@ import { env } from './env';
 
 // Mock dependencies
 vi.mock('dotenv', () => ({
-  config: vi.fn(() => ({ error: null }))
+  config: vi.fn(() => ({ error: null })),
 }));
 
 describe('env config', () => {
@@ -42,7 +42,3 @@ describe('env config', () => {
     process.env.PORT = originalPort;
   });
 });
-
-
-
-

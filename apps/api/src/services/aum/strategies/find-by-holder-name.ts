@@ -1,9 +1,15 @@
 /**
- * AUM Upsert - Strategy 4: Find by holderName ONLY
+ * AUM Upsert - Strategy 4: Find by holderName
  *
- * AI_DECISION: Buscar por holderName solo cuando la nueva fila no tiene identificadores
- * Justificación: Si la nueva fila tiene accountNumber o idCuenta, debe buscar por esos identificadores primero
- * Impacto: Evita que filas únicas con accountNumber nuevo se actualicen incorrectamente por coincidencia de holderName
+ * AI_DECISION: Buscar por holderName en dos casos:
+ * 1. Cuando la nueva fila no tiene identificadores (solo holderName)
+ * 2. Cuando la nueva fila tiene identificadores pero existe una fila antigua sin identificadores
+ *
+ * Justificación: El archivo monthly puede tener más identificadores que el master.
+ *   Por ejemplo, master puede tener solo holderName="Juan" y monthly tiene holderName="Juan" + accountNumber=123.
+ *   Necesitamos encontrar la fila del master para actualizarla con los nuevos identificadores.
+ *
+ * Impacto: Mejor matching entre archivos con diferentes niveles de información
  */
 
 import { db } from '@cactus/db';
@@ -28,9 +34,12 @@ export function hasOnlyHolderName(row: AumRowInsert): boolean {
 }
 
 /**
- * Search by holderName ONLY - lowest priority strategy
- * Only used when the new row doesn't have accountNumber or idCuenta
- * Searches for existing rows that also only have holderName
+ * Search by holderName - lowest priority strategy
+ *
+ * Two modes:
+ * 1. If new row has only holderName: search for existing rows that also only have holderName
+ * 2. If new row has identifiers but no match found by other strategies: search for existing rows
+ *    that only have holderName (to consolidate rows where monthly has more info than master)
  */
 export async function findByHolderName(
   row: AumRowInsert,
@@ -38,13 +47,19 @@ export async function findByHolderName(
 ): Promise<ExistingRow | null> {
   const dbi = db();
 
-  if (!hasOnlyHolderName(row) || !row.holderName) {
+  if (!row.holderName || row.holderName.trim().length === 0) {
     return null;
   }
 
+  const hasIdCuenta = row.idCuenta && row.idCuenta.trim().length > 0;
+  const hasAccountNumber = row.accountNumber && row.accountNumber.trim().length > 0;
+  const hasIdentifiers = hasIdCuenta || hasAccountNumber;
+
   try {
-    // Search for rows that only have holderName (no accountNumber or idCuenta)
-    // This covers the case where CSV1 only had holderName and CSV2 also only has holderName
+    // AI_DECISION: Buscar filas existentes que solo tengan holderName (sin identificadores)
+    // Justificación: Si el master tenía solo holderName y el monthly tiene holderName + identificadores,
+    //   necesitamos encontrar la fila del master para actualizarla y enriquecerla con los nuevos identificadores.
+    // Impacto: Evita duplicados cuando el monthly tiene más información que el master
     const result = await dbi.execute(sql`
       SELECT r.id, r.file_id, r.account_number, r.holder_name, r.id_cuenta,
              r.matched_contact_id, r.matched_user_id, r.advisor_raw, r.match_status, 
@@ -62,6 +77,21 @@ export async function findByHolderName(
 
     if (result.rows && result.rows.length > 0) {
       const dbRow = result.rows[0] as AumRowDbResult;
+
+      // Si la nueva fila tiene identificadores y encontramos una fila sin identificadores,
+      // logueamos esto como enriquecimiento de datos
+      if (hasIdentifiers) {
+        logger.debug(
+          {
+            holderName: row.holderName,
+            newAccountNumber: row.accountNumber,
+            newIdCuenta: row.idCuenta,
+            existingRowId: dbRow.id,
+          },
+          'AUM findByHolderName: Found row without identifiers to enrich'
+        );
+      }
+
       return {
         id: dbRow.id,
         fileId: dbRow.file_id,
@@ -79,7 +109,7 @@ export async function findByHolderName(
   } catch (error) {
     logger.warn(
       { err: error, holderName: row.holderName, fileId: row.fileId },
-      'Error searching AUM row by holderName only'
+      'Error searching AUM row by holderName'
     );
   }
 

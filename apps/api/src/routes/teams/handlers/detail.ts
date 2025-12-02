@@ -87,19 +87,50 @@ export async function getTeamDetail(req: Request, res: Response, next: NextFunct
         ],
       };
     } else {
-      const result = await db().execute(sql`
-          SELECT 
-            member_count AS "memberCount",
-            client_count AS "clientCount",
-            portfolio_count AS "portfolioCount"
-          FROM mv_team_metrics_daily
-          WHERE team_id = ${id}
-        `);
-      basicMetricsResult = result;
+      // AI_DECISION: Try materialized view first, fallback to direct query if MV doesn't exist
+      // Justificación: Resilience - code works even if migration hasn't been applied
+      // Impacto: Graceful degradation with slightly slower queries when MV is missing
+      try {
+        const result = await db().execute(sql`
+            SELECT 
+              member_count AS "memberCount",
+              client_count AS "clientCount",
+              portfolio_count AS "portfolioCount"
+            FROM mv_team_metrics_daily
+            WHERE team_id = ${id}
+          `);
+        basicMetricsResult = result;
 
-      // Cache the result
-      if (result.rows.length > 0) {
-        teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
+        // Cache the result
+        if (result.rows.length > 0) {
+          teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
+        }
+      } catch (mvError) {
+        // Fallback: Calculate metrics directly if materialized view doesn't exist (code 42P01)
+        const pgError = mvError as { code?: string };
+        if (pgError.code === '42P01') {
+          req.log.warn('mv_team_metrics_daily not found, using fallback query');
+          const fallbackResult = await db().execute(sql`
+              SELECT 
+                COUNT(DISTINCT tm.user_id) AS "memberCount",
+                COUNT(DISTINCT CASE WHEN c.deleted_at IS NULL THEN c.id END) AS "clientCount",
+                COUNT(DISTINCT CASE WHEN cpa.status = 'active' THEN cpa.id END) AS "portfolioCount"
+              FROM teams t
+              LEFT JOIN team_membership tm ON t.id = tm.team_id
+              LEFT JOIN users u ON tm.user_id = u.id
+              LEFT JOIN contacts c ON c.assigned_advisor_id = u.id AND c.deleted_at IS NULL
+              LEFT JOIN client_portfolio_assignments cpa ON cpa.contact_id = c.id AND cpa.status = 'active'
+              WHERE t.id = ${id}
+              GROUP BY t.id
+            `);
+          basicMetricsResult = fallbackResult;
+
+          if (fallbackResult.rows.length > 0) {
+            teamMetricsCacheUtil.set(cacheKey, fallbackResult.rows[0]);
+          }
+        } else {
+          throw mvError;
+        }
       }
     }
 

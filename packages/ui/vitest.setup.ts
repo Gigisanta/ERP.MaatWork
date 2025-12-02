@@ -1,13 +1,11 @@
-import { expect, vi, afterEach, beforeAll, afterAll } from 'vitest';
+import { vi, afterEach, beforeAll, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
 // Extender tipos de vitest con jest-dom matchers
 declare module 'vitest' {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  interface Assertion<T = any> extends jest.Matchers<void, T> {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  interface AsymmetricMatchersContaining extends jest.Matchers<void, any> {}
+  interface Assertion<T = unknown> extends jest.Matchers<void, T> {}
+  interface AsymmetricMatchersContaining extends jest.Matchers<void, unknown> {}
 }
 
 // Cleanup after each test
@@ -20,26 +18,25 @@ const originalError = console.error;
 const originalWarn = console.warn;
 
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (
       typeof args[0] === 'string' &&
       (args[0].includes('ReactDOMTestUtils.act') ||
-       args[0].includes('Warning: An update to') ||
-       args[0].includes('wrapped in act') ||
-       args[0].includes('DialogContent') ||
-       args[0].includes('DialogTitle') ||
-       args[0].includes('error boundary'))
+        args[0].includes('Warning: An update to') ||
+        args[0].includes('wrapped in act') ||
+        args[0].includes('DialogContent') ||
+        args[0].includes('DialogTitle') ||
+        args[0].includes('error boundary'))
     ) {
       return;
     }
     originalError.call(console, ...args);
   };
 
-  console.warn = (...args: any[]) => {
+  console.warn = (...args: unknown[]) => {
     if (
       typeof args[0] === 'string' &&
-      (args[0].includes('DialogContent') ||
-       args[0].includes('DialogTitle'))
+      (args[0].includes('DialogContent') || args[0].includes('DialogTitle'))
     ) {
       return;
     }
@@ -69,7 +66,7 @@ global.IntersectionObserver = class IntersectionObserver {
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -80,4 +77,3 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 });
-
