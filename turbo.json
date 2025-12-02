@@ -5,23 +5,37 @@
       "dependsOn": ["^build"],
       "outputs": [
         "dist/**",
-        ".next/**"
+        ".next/**",
+        "!.next/cache/**"
       ],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
         "app/**/*.tsx",
+        "app/**/*.ts",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
+        "types/**/*.ts",
         "package.json",
-        "tsconfig.json"
+        "tsconfig.json",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
       ]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
-      "outputs": [],
+      "dependsOn": ["^build"],
+      "outputs": [
+        ".tsbuildinfo",
+        "tsconfig.tsbuildinfo"
+      ],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
         "app/**/*.tsx",
+        "app/**/*.ts",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
+        "types/**/*.ts",
         "package.json",
         "tsconfig.json"
       ]
@@ -43,71 +57,62 @@
     "dev": {
       "persistent": true,
       "cache": false,
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "app/**/*.tsx",
-        "app/**/*.ts",
-        "lib/**/*.ts",
-        "lib/**/*.tsx",
-        "components/**/*.tsx",
-        "components/**/*.ts",
-        "package.json",
-        "tsconfig.json",
-        "next.config.js",
-        "tailwind.config.js",
-        "postcss.config.js"
-      ]
+      "dependsOn": ["^build"]
     },
     "lint": {
+      "dependsOn": ["^build"],
+      "outputs": [],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
         ".eslintrc.*",
+        "eslint.config.*",
         "package.json"
       ]
     },
     "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
         "**/*.test.ts",
         "**/*.test.tsx",
         "vitest.config.*",
+        "vitest.setup.*",
         "package.json"
       ]
     },
     "test:watch": {
-      "persistent": true
+      "persistent": true,
+      "cache": false
     },
     "test:coverage": {
+      "dependsOn": ["^build"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
         "**/*.test.ts",
         "**/*.test.tsx",
         "vitest.config.*",
+        "vitest.setup.*",
         "package.json"
       ],
       "outputs": ["coverage/**"]
     },
     "clean": {
-      "cache": false
-    },
-    "storybook": {
-      "persistent": true
-    },
-    "build-storybook": {
-      "dependsOn": ["^build"],
-      "outputs": ["storybook-static/**"],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "src/**/*.stories.tsx",
-        "package.json"
-      ]
+      "cache": false,
+      "outputs": []
     }
   }
 }
-
-

@@ -20,9 +20,9 @@ import {
   Alert,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { useNotes } from '../../../lib/api-hooks';
+import { useNotes } from '@/lib/api-hooks';
 import { createNote, deleteNote } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 
 import type { Note } from '@/types';
 

@@ -5,6 +5,7 @@ import { Search, X } from 'lucide-react';
 import { Input, Text, Stack, Spinner } from '@cactus/ui';
 import { searchInstruments } from '@/lib/api';
 import type { InstrumentSearchResult } from '@/types';
+import { logger, toLogContext } from '@/lib/logger';
 
 interface BenchmarkSearcherProps {
   onBenchmarkSelect: (symbol: string) => void;
@@ -24,44 +25,41 @@ export function BenchmarkSearcher({
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const search = useCallback(
-    async (searchQuery: string) => {
-      if (searchQuery.length < 2) {
+  const search = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await searchInstruments(searchQuery);
+
+      if (response.success && response.data) {
+        // Filtrar resultados que parezcan índices (empiezan con ^ o son ETFs comunes)
+        const indexResults = response.data.filter(
+          (item) =>
+            item.symbol.startsWith('^') ||
+            item.symbol.toUpperCase().includes('INDEX') ||
+            item.type === 'INDEX' ||
+            item.name?.toUpperCase().includes('INDEX')
+        );
+        setSearchResults(indexResults.slice(0, 5)); // Limitar a 5 resultados
+        setShowResults(true);
+      } else {
         setSearchResults([]);
         setShowResults(false);
-        return;
       }
-
-      setLoading(true);
-
-      try {
-        const response = await searchInstruments(searchQuery);
-
-        if (response.success && response.data) {
-          // Filtrar resultados que parezcan índices (empiezan con ^ o son ETFs comunes)
-          const indexResults = response.data.filter(
-            (item) =>
-              item.symbol.startsWith('^') ||
-              item.symbol.toUpperCase().includes('INDEX') ||
-              item.type === 'INDEX' ||
-              item.name?.toUpperCase().includes('INDEX')
-          );
-          setSearchResults(indexResults.slice(0, 5)); // Limitar a 5 resultados
-          setShowResults(true);
-        } else {
-          setSearchResults([]);
-          setShowResults(false);
-        }
-      } catch (err) {
-        console.error('Error searching benchmarks:', err);
-        setSearchResults([]);
-        setShowResults(false);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+    } catch (err) {
+      logger.error('Error searching benchmarks', toLogContext({ error: err }));
+      setSearchResults([]);
+      setShowResults(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleInputChange = useCallback(
     (value: string) => {
@@ -125,9 +123,7 @@ export function BenchmarkSearcher({
               <X className="w-4 h-4" />
             </button>
           )}
-          {!loading && !query && (
-            <Search className="w-4 h-4 text-foreground-tertiary" />
-          )}
+          {!loading && !query && <Search className="w-4 h-4 text-foreground-tertiary" />}
         </div>
       </div>
 
@@ -164,4 +160,3 @@ export function BenchmarkSearcher({
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 /**
  * Tests para api-limits config
- * 
+ *
  * AI_DECISION: Tests unitarios para validación de límites
  * Justificación: Validación crítica de límites de API
  * Impacto: Prevenir errores en validación de límites
@@ -16,7 +16,7 @@ import {
   RETRY_LIMITS,
   ERROR_LIMITS,
   validatePageSize,
-  calculateOffset
+  calculateOffset,
 } from './api-limits';
 
 describe('PAGINATION_LIMITS', () => {
@@ -120,4 +120,3 @@ describe('calculateOffset', () => {
     expect(calculateOffset(1, 1000)).toBe(0);
   });
 });
-

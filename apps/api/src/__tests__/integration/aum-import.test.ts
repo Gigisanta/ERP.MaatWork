@@ -1,6 +1,6 @@
 /**
  * Integration tests for AUM import workflow
- * 
+ *
  * Tests complete AUM import flow: upload, parsing, matching, commit
  */
 
@@ -32,18 +32,14 @@ describe('AUM Import Integration Tests', () => {
     // Cleanup AUM rows
     if (createdRowIds.length > 0) {
       for (const id of createdRowIds) {
-        await db()
-          .delete(aumImportRows)
-          .where(eq(aumImportRows.id, id));
+        await db().delete(aumImportRows).where(eq(aumImportRows.id, id));
       }
     }
 
     // Cleanup AUM files
     if (createdFileIds.length > 0) {
       for (const id of createdFileIds) {
-        await db()
-          .delete(aumImportFiles)
-          .where(eq(aumImportFiles.id, id));
+        await db().delete(aumImportFiles).where(eq(aumImportFiles.id, id));
       }
     }
 
@@ -180,10 +176,10 @@ describe('AUM Import Integration Tests', () => {
           fileId: file.id,
           accountNumber: '99999',
           holderName: 'Financial Test',
-          aumDollars: 500000.50,
+          aumDollars: 500000.5,
           bolsaArg: 100000.25,
           fondosArg: 200000.75,
-          pesos: 200000.50,
+          pesos: 200000.5,
           rowIndex: 0,
           matchStatus: 'unmatched',
           createdAt: new Date(),
@@ -193,10 +189,10 @@ describe('AUM Import Integration Tests', () => {
 
       createdRowIds.push(row.id);
 
-      expect(row.aumDollars).toBe(500000.50);
+      expect(row.aumDollars).toBe(500000.5);
       expect(row.bolsaArg).toBe(100000.25);
       expect(row.fondosArg).toBe(200000.75);
-      expect(row.pesos).toBe(200000.50);
+      expect(row.pesos).toBe(200000.5);
     });
   });
 
@@ -378,4 +374,3 @@ describe('AUM Import Integration Tests', () => {
     });
   });
 });
-

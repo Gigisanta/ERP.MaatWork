@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../../auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
 import { canImportFiles } from '@/lib/auth-helpers';
 import { uploadAdvisorMapping } from '@/lib/api';
 import type { ApiErrorWithMessage } from '@/types/aum';

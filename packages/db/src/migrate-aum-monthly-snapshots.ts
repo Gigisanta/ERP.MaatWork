@@ -7,6 +7,12 @@
  * AI_DECISION: Script de migración para preservar datos históricos
  * Justificación: Migra datos existentes al nuevo esquema de snapshots mensuales
  * Impacto: Permite preservar historial de datos ya importados
+ * 
+ * NOTE: Las funciones detectAumFileType, extractReportPeriod y detectAumFileMetadata
+ * están duplicadas de apps/api/src/utils/aum-file-detection.ts.
+ * La versión canónica está en el API. Si necesitas modificar la lógica,
+ * actualiza primero apps/api/src/utils/aum-file-detection.ts y luego sincroniza aquí.
+ * Esta duplicación existe porque packages/db no puede depender de apps/api.
  */
 
 import { db, aumImportFiles, aumImportRows, aumMonthlySnapshots } from './index';
@@ -14,6 +20,7 @@ import { sql, eq } from 'drizzle-orm';
 
 /**
  * Detecta el tipo de archivo AUM basado en el nombre
+ * @see apps/api/src/utils/aum-file-detection.ts for canonical implementation
  */
 function detectAumFileType(filename: string): 'master' | 'monthly' {
   const normalized = filename.toLowerCase();
@@ -31,6 +38,7 @@ function detectAumFileType(filename: string): 'master' | 'monthly' {
 
 /**
  * Extrae mes y año del nombre del archivo o usa fecha actual
+ * @see apps/api/src/utils/aum-file-detection.ts for canonical implementation
  */
 function extractReportPeriod(
   filename: string,
@@ -86,6 +94,7 @@ function extractReportPeriod(
 
 /**
  * Detecta tipo de archivo y extrae período
+ * @see apps/api/src/utils/aum-file-detection.ts for canonical implementation
  */
 function detectAumFileMetadata(filename: string): {
   fileType: 'master' | 'monthly';

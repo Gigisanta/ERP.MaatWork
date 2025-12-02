@@ -1,6 +1,6 @@
 /**
  * Test server setup utilities
- * 
+ *
  * Provides utilities to create and manage Express server instances for testing
  */
 
@@ -19,16 +19,16 @@ let testApp: Express | null = null;
  */
 export function createTestApp(): Express {
   const app = express();
-  
+
   // Basic middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  
+
   // Health check endpoint
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok' });
   });
-  
+
   return app;
 }
 
@@ -38,7 +38,7 @@ export function createTestApp(): Express {
 export async function setupTestDatabase(): Promise<void> {
   // Set test environment
   process.env.NODE_ENV = 'test';
-  
+
   // Initialize database (run migrations, etc.)
   try {
     await initializeDatabase();
@@ -63,13 +63,13 @@ export async function cleanupTestServer(): Promise<void> {
 export async function startTestServer(app: Express, port?: number): Promise<Server> {
   return new Promise((resolve, reject) => {
     const serverPort = port || 0; // 0 = random available port
-    
+
     const server = app.listen(serverPort, () => {
       testServer = server;
       testApp = app;
       resolve(server);
     });
-    
+
     server.on('error', reject);
   });
 }
@@ -83,7 +83,7 @@ export async function stopTestServer(): Promise<void> {
       resolve();
       return;
     }
-    
+
     testServer.close((err) => {
       if (err) {
         reject(err);
@@ -103,12 +103,12 @@ export function getTestServerPort(): number | null {
   if (!testServer) {
     return null;
   }
-  
+
   const address = testServer.address();
   if (address && typeof address === 'object') {
     return address.port;
   }
-  
+
   return null;
 }
 
@@ -120,7 +120,7 @@ export function getTestServerUrl(): string | null {
   if (port === null) {
     return null;
   }
-  
+
   return `http://localhost:${port}`;
 }
 
@@ -180,7 +180,7 @@ export function createMockResponse(): Partial<Response> {
     setHeader: vi.fn().mockReturnThis(),
     getHeader: vi.fn(),
   };
-  
+
   return res as unknown as Partial<Response>;
 }
 
@@ -190,4 +190,3 @@ export function createMockResponse(): Partial<Response> {
 export function createMockNext(): NextFunction {
   return vi.fn() as unknown as NextFunction;
 }
-

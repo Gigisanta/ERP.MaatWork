@@ -1,6 +1,6 @@
 /**
  * Tests para script add-advisors.ts
- * 
+ *
  * AI_DECISION: Tests unitarios para script de carga de asesores
  * Justificación: Validar lógica de creación/actualización de usuarios advisor
  * Impacto: Prevenir errores en carga inicial de datos
@@ -18,18 +18,18 @@ vi.mock('@cactus/db', async () => {
     ...actual,
     db: vi.fn(),
     users: {},
-    eq: vi.fn()
+    eq: vi.fn(),
   };
 });
 
 vi.mock('bcrypt', () => ({
   default: {
-    hash: vi.fn()
-  }
+    hash: vi.fn(),
+  },
 }));
 
 vi.mock('drizzle-orm', () => ({
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 describe('add-advisors script', () => {
@@ -41,20 +41,20 @@ describe('add-advisors script', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     mockReturning = vi.fn().mockResolvedValue([{ id: 'user-1', email: 'test@test.com' }]);
     mockValues = vi.fn().mockReturnValue({ returning: mockReturning });
     mockInsert = vi.fn().mockReturnValue({ values: mockValues });
     mockQuery = {
       users: {
-        findFirst: vi.fn()
-      }
+        findFirst: vi.fn(),
+      },
     };
     mockDb = vi.fn().mockReturnValue({
       query: mockQuery,
-      insert: mockInsert
+      insert: mockInsert,
     });
-    
+
     (db as any).mockImplementation(mockDb);
   });
 
@@ -62,24 +62,26 @@ describe('add-advisors script', () => {
     it('debería crear nuevo advisor cuando no existe', async () => {
       // Importar función después de mocks
       const { upsertAdvisor } = await import('./add-advisors');
-      
+
       mockQuery.users.findFirst.mockResolvedValue(null);
       (bcrypt.hash as any).mockResolvedValue('hashed-password');
-      mockReturning.mockResolvedValue([{
-        id: 'new-user-id',
-        email: 'Mvicente@grupoabax.com'
-      }]);
+      mockReturning.mockResolvedValue([
+        {
+          id: 'new-user-id',
+          email: 'Mvicente@grupoabax.com',
+        },
+      ]);
 
       const advisor = {
         username: 'Mvicente',
         password: 'Mvicente123',
-        email: 'Mvicente@grupoabax.com'
+        email: 'Mvicente@grupoabax.com',
       };
 
       await upsertAdvisor(advisor);
 
       expect(mockQuery.users.findFirst).toHaveBeenCalledWith({
-        where: expect.any(Function)
+        where: expect.any(Function),
       });
       expect(bcrypt.hash).toHaveBeenCalledWith('Mvicente123', 10);
       expect(mockInsert).toHaveBeenCalledWith(users);
@@ -90,22 +92,22 @@ describe('add-advisors script', () => {
         passwordHash: 'hashed-password',
         isActive: true,
         username: 'Mvicente',
-        usernameNormalized: 'mvicente'
+        usernameNormalized: 'mvicente',
       });
     });
 
     it('debería no crear advisor cuando ya existe por email', async () => {
       const { upsertAdvisor } = await import('./add-advisors');
-      
+
       mockQuery.users.findFirst.mockResolvedValue({
         id: 'existing-id',
-        email: 'Mvicente@grupoabax.com'
+        email: 'Mvicente@grupoabax.com',
       });
 
       const advisor = {
         username: 'Mvicente',
         password: 'Mvicente123',
-        email: 'Mvicente@grupoabax.com'
+        email: 'Mvicente@grupoabax.com',
       };
 
       await upsertAdvisor(advisor);
@@ -116,21 +118,21 @@ describe('add-advisors script', () => {
 
     it('debería normalizar username a lowercase', async () => {
       const { upsertAdvisor } = await import('./add-advisors');
-      
+
       mockQuery.users.findFirst.mockResolvedValue(null);
       (bcrypt.hash as any).mockResolvedValue('hashed-password');
 
       const advisor = {
         username: 'MVICENTE',
         password: 'Mvicente123',
-        email: 'Mvicente@grupoabax.com'
+        email: 'Mvicente@grupoabax.com',
       };
 
       await upsertAdvisor(advisor);
 
       expect(mockValues).toHaveBeenCalledWith(
         expect.objectContaining({
-          usernameNormalized: 'mvicente'
+          usernameNormalized: 'mvicente',
         })
       );
     });
@@ -144,10 +146,14 @@ describe('add-advisors script', () => {
         { username: 'TDanziger', password: 'TDanziger123', email: 'Tdanziger@grupoabax.com' },
         { username: 'PMolina', password: 'PMolina123', email: 'Pmolina@grupoabax.com' },
         { username: 'NIngilde', password: 'NIngilde123', email: 'Ningilde@grupoabax.com' },
-        { username: 'Fandreacchio', password: 'Fandreacchio123', email: 'Fandreacchio@grupoabax.com' }
+        {
+          username: 'Fandreacchio',
+          password: 'Fandreacchio123',
+          email: 'Fandreacchio@grupoabax.com',
+        },
       ];
 
-      seedAdvisors.forEach(advisor => {
+      seedAdvisors.forEach((advisor) => {
         expect(advisor).toHaveProperty('username');
         expect(advisor).toHaveProperty('password');
         expect(advisor).toHaveProperty('email');
@@ -159,4 +165,3 @@ describe('add-advisors script', () => {
     });
   });
 });
-

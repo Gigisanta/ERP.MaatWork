@@ -56,10 +56,11 @@ async function runVerification(verification: typeof VERIFICATIONS[0]): Promise<V
       exitCode,
       output
     };
-  } catch (error: any) {
-    const exitCode = error.status || 1;
-    const output = error.stdout || '';
-    const stderr = error.stderr || '';
+  } catch (error: unknown) {
+    const execError = error as { status?: number; stdout?: Buffer | string; stderr?: Buffer | string };
+    const exitCode = execError.status || 1;
+    const output = execError.stdout?.toString() || '';
+    const stderr = execError.stderr?.toString() || '';
     
     const result: VerificationResult = {
       name: verification.name,

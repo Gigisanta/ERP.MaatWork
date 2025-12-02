@@ -1,6 +1,6 @@
 /**
  * Database helpers for integration tests
- * 
+ *
  * Provides setup/teardown utilities for tests that require a real database connection
  */
 
@@ -43,10 +43,10 @@ export async function withTransaction<T>(
   callback: (db: NodePgDatabase<typeof schema>) => Promise<T>
 ): Promise<T> {
   const testDb = getTestDb();
-  
+
   // Start transaction
   await testDb.execute(sql`BEGIN`);
-  
+
   try {
     const result = await callback(testDb);
     // Rollback to clean up
@@ -65,10 +65,10 @@ export async function withTransaction<T>(
  */
 export async function cleanupTestDatabase(): Promise<void> {
   const testDb = getTestDb();
-  
+
   // Disable foreign key checks temporarily
   await testDb.execute(sql`SET session_replication_role = 'replica'`);
-  
+
   // Truncate all tables (in reverse dependency order)
   const tables = [
     'aum_import_rows',
@@ -147,7 +147,7 @@ export async function cleanupTestDatabase(): Promise<void> {
  */
 export async function resetTestDatabase(): Promise<void> {
   await cleanupTestDatabase();
-  
+
   // Optionally run seeds for test data
   // This would require importing seed functions from @cactus/db
 }
@@ -166,4 +166,3 @@ export function isTestMode(): boolean {
 export function getTestDatabaseUrl(): string {
   return process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || '';
 }
-

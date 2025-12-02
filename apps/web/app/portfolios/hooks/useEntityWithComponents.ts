@@ -1,60 +1,107 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRequireAuth } from '../../auth/useRequireAuth';
-import { logger, toLogContext } from '../../../lib/logger';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRequireAuth } from '@/auth/useRequireAuth';
+import { logger, toLogContext } from '@/lib/logger';
+import type { AuthUser } from '@/auth/AuthContext';
 
-export interface UseEntityWithComponentsConfig<TEntity, TComponent> {
+export interface UseEntityWithComponentsConfig<
+  TEntity extends { id: string },
+  TComponent,
+  TCreateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+  TUpdateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+> {
   fetchEntities: () => Promise<{ success: boolean; data?: TEntity[]; error?: string }>;
-  fetchComponentsBatch: (ids: string[]) => Promise<{ success: boolean; data?: Record<string, TComponent[]>; error?: string }>;
-  createEntity: (data: any) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
-  updateEntity: (id: string, data: any) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
+  fetchComponentsBatch: (
+    ids: string[]
+  ) => Promise<{ success: boolean; data?: Record<string, TComponent[]>; error?: string }>;
+  createEntity: (
+    data: TCreateData
+  ) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
+  updateEntity: (
+    id: string,
+    data: TUpdateData
+  ) => Promise<{ success: boolean; data?: TEntity; error?: string }>;
   deleteEntity: (id: string) => Promise<{ success: boolean; error?: string }>;
   getEntityId: (entity: TEntity) => string;
-  canManage?: (user: any) => boolean;
+  canManage?: (user: AuthUser | null) => boolean;
   entityName: string;
 }
 
-export function useEntityWithComponents<TEntity extends { id: string }, TComponent>(
-  config: UseEntityWithComponentsConfig<TEntity, TComponent>
-) {
+/**
+ * Hook genérico para entidades con componentes anidados
+ *
+ * AI_DECISION: Usar refs para config functions para evitar loops infinitos
+ * Justificación: Las funciones del config se crean nuevas en cada render del componente padre,
+ *                lo que causaba que useCallback se re-creara constantemente, disparando
+ *                el useEffect en un loop infinito (~100+ requests en segundos)
+ * Impacto: Elimina el problema de performance/loop infinito en /portfolios
+ */
+export function useEntityWithComponents<
+  TEntity extends { id: string },
+  TComponent,
+  TCreateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+  TUpdateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,
+>(config: UseEntityWithComponentsConfig<TEntity, TComponent, TCreateData, TUpdateData>) {
   const { user, loading } = useRequireAuth();
   const [entities, setEntities] = useState<TEntity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Usar refs para las funciones del config para evitar re-renders infinitos
+  // Las funciones del config se actualizan en cada render pero no queremos
+  // que eso dispare re-fetches
+  const configRef = useRef(config);
+  configRef.current = config;
+
+  // Flag para evitar múltiples fetches simultáneos
+  const isFetchingRef = useRef(false);
+  // Flag para saber si ya hicimos el fetch inicial
+  const hasFetchedRef = useRef(false);
+
   const canManage = config.canManage ? config.canManage(user || null) : true;
 
   const fetchEntities = useCallback(async () => {
+    // Evitar múltiples fetches simultáneos
+    if (isFetchingRef.current) {
+      return;
+    }
+
     if (!user || loading || !canManage) {
       setEntities([]);
       return;
     }
 
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
 
     try {
-      const entitiesResponse = await config.fetchEntities();
+      const currentConfig = configRef.current;
+      const entitiesResponse = await currentConfig.fetchEntities();
 
       if (!entitiesResponse.success) {
-        logger.warn(`Error fetching ${config.entityName}`, { error: entitiesResponse.error });
+        logger.warn(`Error fetching ${currentConfig.entityName}`, {
+          error: entitiesResponse.error,
+        });
         setEntities([]);
         return;
       }
 
       if (entitiesResponse.data) {
-        const entityIds = entitiesResponse.data.map((entity: TEntity) => config.getEntityId(entity));
+        const entityIds = entitiesResponse.data.map((entity: TEntity) =>
+          currentConfig.getEntityId(entity)
+        );
 
         if (entityIds.length > 0) {
           try {
-            const componentsBatchResponse = await config.fetchComponentsBatch(entityIds);
+            const componentsBatchResponse = await currentConfig.fetchComponentsBatch(entityIds);
 
             if (componentsBatchResponse.success && componentsBatchResponse.data) {
               const componentsByEntity = componentsBatchResponse.data || {};
 
               const entitiesWithComponents = entitiesResponse.data.map((entity: TEntity) => {
-                const entityId = config.getEntityId(entity);
+                const entityId = currentConfig.getEntityId(entity);
                 const components = componentsByEntity[entityId] || [];
                 // Support both 'components' and 'lines' property names
                 return {
@@ -66,22 +113,32 @@ export function useEntityWithComponents<TEntity extends { id: string }, TCompone
 
               setEntities(entitiesWithComponents);
             } else {
-              logger.warn(`Error fetching ${config.entityName} components, using entities without components`, {
-                error: componentsBatchResponse.error,
-              });
-              setEntities(entitiesResponse.data.map((entity: TEntity) => ({ 
-                ...entity, 
-                components: [],
-                lines: [] // For Portfolio compatibility
-              })));
+              logger.warn(
+                `Error fetching ${currentConfig.entityName} components, using entities without components`,
+                {
+                  error: componentsBatchResponse.error,
+                }
+              );
+              setEntities(
+                entitiesResponse.data.map((entity: TEntity) => ({
+                  ...entity,
+                  components: [],
+                  lines: [], // For Portfolio compatibility
+                }))
+              );
             }
           } catch (err) {
-            logger.error(`Error fetching ${config.entityName} components batch`, toLogContext({ err, entityIds }));
-            setEntities(entitiesResponse.data.map((entity: TEntity) => ({ 
-              ...entity, 
-              components: [],
-              lines: [] // For Portfolio compatibility
-            })));
+            logger.error(
+              `Error fetching ${currentConfig.entityName} components batch`,
+              toLogContext({ err, entityIds })
+            );
+            setEntities(
+              entitiesResponse.data.map((entity: TEntity) => ({
+                ...entity,
+                components: [],
+                lines: [], // For Portfolio compatibility
+              }))
+            );
           }
         } else {
           setEntities([]);
@@ -90,60 +147,67 @@ export function useEntityWithComponents<TEntity extends { id: string }, TCompone
         setEntities([]);
       }
     } catch (err) {
-      logger.error(`Error fetching ${config.entityName}`, toLogContext({ err }));
+      const currentConfig = configRef.current;
+      logger.error(`Error fetching ${currentConfig.entityName}`, toLogContext({ err }));
       if (err instanceof Error) {
-        if (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed to fetch')) {
+        if (
+          err.message.includes('fetch') ||
+          err.message.includes('network') ||
+          err.message.includes('Failed to fetch')
+        ) {
           setError(`Error de conexión. Por favor verifica tu conexión a internet.`);
         } else if (err.message.includes('timeout')) {
           setError(`La solicitud tardó demasiado. Por favor intenta nuevamente.`);
         } else {
-          setError(`Error al cargar ${config.entityName}: ${err.message}`);
+          setError(`Error al cargar ${currentConfig.entityName}: ${err.message}`);
         }
       } else {
-        setError(`Error desconocido al cargar ${config.entityName}`);
+        setError(`Error desconocido al cargar ${configRef.current.entityName}`);
       }
       setEntities([]);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [user, loading, canManage, config]);
+  }, [user, loading, canManage]); // Solo dependencias estables, no config
 
   const createEntity = useCallback(
-    async (data: Parameters<typeof config.createEntity>[0]) => {
-      const response = await config.createEntity(data);
+    async (data: TCreateData) => {
+      const response = await configRef.current.createEntity(data);
       if (response.success) {
         await fetchEntities();
       }
       return response;
     },
-    [fetchEntities, config]
+    [fetchEntities]
   );
 
   const updateEntity = useCallback(
-    async (id: string, data: Parameters<typeof config.updateEntity>[1]) => {
-      const response = await config.updateEntity(id, data);
+    async (id: string, data: TUpdateData) => {
+      const response = await configRef.current.updateEntity(id, data);
       if (response.success) {
         await fetchEntities();
       }
       return response;
     },
-    [fetchEntities, config]
+    [fetchEntities]
   );
 
-  const deleteEntity = useCallback(
-    async (id: string) => {
-      const response = await config.deleteEntity(id);
-      if (response.success) {
-        setEntities((prev) => prev.filter((entity) => config.getEntityId(entity) !== id));
-      }
-      return response;
-    },
-    [config]
-  );
+  const deleteEntity = useCallback(async (id: string) => {
+    const response = await configRef.current.deleteEntity(id);
+    if (response.success) {
+      setEntities((prev) => prev.filter((entity) => configRef.current.getEntityId(entity) !== id));
+    }
+    return response;
+  }, []);
 
+  // Fetch inicial - solo una vez cuando el usuario está autenticado
   useEffect(() => {
-    fetchEntities();
-  }, [fetchEntities]);
+    if (user && !loading && canManage && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchEntities();
+    }
+  }, [user, loading, canManage, fetchEntities]);
 
   return {
     entities,
@@ -155,4 +219,3 @@ export function useEntityWithComponents<TEntity extends { id: string }, TCompone
     deleteEntity,
   };
 }
-

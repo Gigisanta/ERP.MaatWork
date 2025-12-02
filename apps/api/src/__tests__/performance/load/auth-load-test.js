@@ -1,6 +1,6 @@
 /**
  * Load test for authentication endpoints
- * 
+ *
  * Tests login, token refresh, and logout under load
  * Run with: k6 run load/auth-load-test.js
  */
@@ -16,14 +16,14 @@ const errorRate = new Rate('errors');
 export const options = {
   stages: [
     { duration: '30s', target: 10 }, // Ramp up to 10 users
-    { duration: '1m', target: 10 },  // Stay at 10 users
+    { duration: '1m', target: 10 }, // Stay at 10 users
     { duration: '30s', target: 20 }, // Ramp up to 20 users
-    { duration: '1m', target: 20 },  // Stay at 20 users
-    { duration: '30s', target: 0 },   // Ramp down
+    { duration: '1m', target: 20 }, // Stay at 20 users
+    { duration: '30s', target: 0 }, // Ramp down
   ],
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests should be below 500ms
-    http_req_failed: ['rate<0.01'],   // Error rate should be less than 1%
+    http_req_failed: ['rate<0.01'], // Error rate should be less than 1%
     errors: ['rate<0.01'],
   },
 };
@@ -53,15 +53,15 @@ export default function () {
   // If login successful, test token refresh
   if (loginRes.status === 200) {
     const token = loginRes.json().token || loginRes.cookies.token?.[0]?.value;
-    
+
     if (token) {
       const refreshRes = http.post(
         `${BASE_URL}/api/v1/auth/refresh`,
         {},
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Cookie': `token=${token}`,
+            Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
           },
         }
       );
@@ -75,4 +75,3 @@ export default function () {
 
   sleep(1); // Wait 1 second between iterations
 }
-

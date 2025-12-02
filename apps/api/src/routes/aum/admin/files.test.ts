@@ -37,9 +37,9 @@ vi.mock('../../../utils/validation', () => ({
   validate: vi.fn(() => (req, res, next) => {
     // Simulate Zod transformation for force query param
     if (req.query?.force === 'true') {
-      req.query.force = true as any;
+      (req.query as Record<string, unknown>).force = true;
     } else if (req.query?.force === 'false' || req.query?.force === undefined) {
-      req.query.force = false as any;
+      (req.query as Record<string, unknown>).force = false;
     }
     next();
   })
@@ -100,14 +100,14 @@ describe('AUM Admin - Files Routes', () => {
         })
       });
 
-      const mockDelete = vi.fn((table: any) => ({
+      const mockDelete = vi.fn((_table: unknown) => ({
         where: vi.fn().mockResolvedValue(undefined)
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
         delete: mockDelete
-      } as any);
+      } as unknown);
 
       mockFs.unlink.mockResolvedValue(undefined);
 
@@ -134,7 +134,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -162,7 +162,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -190,14 +190,14 @@ describe('AUM Admin - Files Routes', () => {
         })
       });
 
-      const mockDelete = vi.fn((table: any) => ({
+      const mockDelete = vi.fn((_table: unknown) => ({
         where: vi.fn().mockResolvedValue(undefined)
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
         delete: mockDelete
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -221,14 +221,14 @@ describe('AUM Admin - Files Routes', () => {
         })
       });
 
-      const mockDelete = vi.fn((table: any) => ({
+      const mockDelete = vi.fn((_table: unknown) => ({
         where: vi.fn().mockResolvedValue(undefined)
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
         delete: mockDelete
-      } as any);
+      } as unknown);
 
       mockFs.unlink.mockRejectedValue(new Error('File not found'));
 
@@ -253,7 +253,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -273,7 +273,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -293,7 +293,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -313,7 +313,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -363,7 +363,7 @@ describe('AUM Admin - Files Routes', () => {
       mockDb.mockReturnValue({
         select: mockSelect,
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -434,7 +434,7 @@ describe('AUM Admin - Files Routes', () => {
       mockDb.mockReturnValue({
         select: mockSelect,
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -466,7 +466,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -507,7 +507,7 @@ describe('AUM Admin - Files Routes', () => {
       mockDb.mockReturnValue({
         select: mockSelect,
         execute: vi.fn()
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -551,7 +551,7 @@ describe('AUM Admin - Files Routes', () => {
       mockDb.mockReturnValue({
         select: mockSelect,
         execute: mockExecute
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)
@@ -573,7 +573,7 @@ describe('AUM Admin - Files Routes', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect
-      } as any);
+      } as unknown);
 
       const app = createTestApp();
       const res = await request(app)

@@ -20,7 +20,10 @@ export default function TechnicalSignals({ symbol }: TechnicalSignalsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch technical indicators from API
+    // FUTURE_FEATURE: Requires price history and technical indicator calculations
+    // Indicators needed: SMA, EMA, RSI, MACD, Bollinger Bands
+    // Dependencies: Price history in DB, analytics-service (cactus_ingestors/utils/technical.py)
+    // Status: Placeholder UI ready, technical calculations ready in Python service
     setLoading(false);
   }, [symbol]);
 

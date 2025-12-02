@@ -1,6 +1,6 @@
 /**
  * Load test for contacts endpoints
- * 
+ *
  * Tests CRUD operations on contacts under load
  * Run with: k6 run load/contacts-load-test.js
  */
@@ -32,7 +32,7 @@ const AUTH_TOKEN = __ENV.AUTH_TOKEN || '';
 export default function () {
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${AUTH_TOKEN}`,
+    Authorization: `Bearer ${AUTH_TOKEN}`,
   };
 
   // Test GET /contacts
@@ -68,7 +68,7 @@ export default function () {
   // If creation successful, test GET /contacts/:id
   if (createRes.status === 201) {
     const contactId = createRes.json().data?.id;
-    
+
     if (contactId) {
       const getRes = http.get(`${BASE_URL}/api/v1/contacts/${contactId}`, {
         headers,
@@ -83,4 +83,3 @@ export default function () {
 
   sleep(1);
 }
-

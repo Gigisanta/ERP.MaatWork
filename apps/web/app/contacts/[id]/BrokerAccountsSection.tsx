@@ -22,9 +22,9 @@ import {
   Alert,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { useBrokerAccounts } from '../../../lib/api-hooks';
+import { useBrokerAccounts } from '@/lib/api-hooks';
 import { createBrokerAccount, deleteBrokerAccount } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { BrokerAccount } from '@/types';
 
 // AI_DECISION: Extracted to client island for CRUD operations isolation

@@ -26,7 +26,7 @@ export async function signUserToken(user: AuthUser, expiresIn: string = '7d'): P
   const token = await new SignJWT({
     role: user.role,
     email: user.email,
-    fullName: user.fullName
+    fullName: user.fullName,
   })
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setSubject(user.id)
@@ -41,7 +41,7 @@ export async function signUserToken(user: AuthUser, expiresIn: string = '7d'): P
 export async function verifyUserToken(token: string): Promise<AuthUser> {
   const { payload } = await jwtVerify(token, getSecretKey(), {
     issuer: JWT_ISSUER,
-    audience: JWT_AUDIENCE
+    audience: JWT_AUDIENCE,
   });
 
   const id = payload.sub as string | undefined;
@@ -56,7 +56,7 @@ export async function verifyUserToken(token: string): Promise<AuthUser> {
   const user: AuthUser = {
     id,
     email: (payload.email as string) || '',
-    role
+    role,
   };
   const name = payload.fullName as string | undefined;
   if (name !== undefined) {
@@ -64,5 +64,3 @@ export async function verifyUserToken(token: string): Promise<AuthUser> {
   }
   return user;
 }
-
-

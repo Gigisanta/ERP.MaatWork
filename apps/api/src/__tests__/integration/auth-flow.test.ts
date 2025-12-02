@@ -1,6 +1,6 @@
 /**
  * Integration tests for authentication flow
- * 
+ *
  * Tests the complete authentication flow with real database
  * Requires TEST_DATABASE_URL or DATABASE_URL to be set
  */
@@ -65,11 +65,7 @@ describe('Auth Flow Integration Tests', () => {
 
       // Try to verify with wrong password (this would be done in login endpoint)
       // For now, we verify that user exists and password hash is correct
-      const [dbUser] = await db()
-        .select()
-        .from(users)
-        .where(eq(users.id, testUser.id))
-        .limit(1);
+      const [dbUser] = await db().select().from(users).where(eq(users.id, testUser.id)).limit(1);
 
       expect(dbUser).toBeDefined();
       expect(dbUser?.passwordHash).toBeDefined();
@@ -132,10 +128,7 @@ describe('Auth Flow Integration Tests', () => {
       const token = await createTestToken(testUser);
 
       // Change role in database
-      await db()
-        .update(users)
-        .set({ role: 'manager' })
-        .where(eq(users.id, testUser.id));
+      await db().update(users).set({ role: 'manager' }).where(eq(users.id, testUser.id));
 
       // Token should still verify (role is in token)
       // But in actual middleware, DB role would take precedence
@@ -165,10 +158,7 @@ describe('Auth Flow Integration Tests', () => {
       const token = await createTestToken(testUser);
 
       // Deactivate user
-      await db()
-        .update(users)
-        .set({ isActive: false })
-        .where(eq(users.id, testUser.id));
+      await db().update(users).set({ isActive: false }).where(eq(users.id, testUser.id));
 
       // Token should still verify (token doesn't check active status)
       // But middleware would check isActive and reject
@@ -188,4 +178,3 @@ describe('Auth Flow Integration Tests', () => {
     });
   });
 });
-

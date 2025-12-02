@@ -85,18 +85,18 @@ describe('buildResponsiveClasses', () => {
 
   describe('validación de tipos', () => {
     it('debería rechazar arrays como objetos responsivos', () => {
-      const result = buildResponsiveClasses(['red', 'blue'] as any, toClass);
+      const result = buildResponsiveClasses(['red', 'blue'] as unknown as string, toClass);
       // Debería tratarlo como valor simple, no como objeto
       expect(result).toEqual([]);
     });
 
     it('debería rechazar null como objeto responsivo', () => {
-      const result = buildResponsiveClasses(null as any, toClass);
+      const result = buildResponsiveClasses(null as unknown as string, toClass);
       expect(result).toEqual([]);
     });
 
     it('debería rechazar objetos sin keys de breakpoint', () => {
-      const result = buildResponsiveClasses({ other: 'red' } as any, toClass);
+      const result = buildResponsiveClasses({ other: 'red' } as unknown as string, toClass);
       expect(result).toEqual([]);
     });
   });
@@ -120,4 +120,3 @@ describe('buildResponsiveClasses', () => {
     });
   });
 });
-

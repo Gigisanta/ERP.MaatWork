@@ -1,6 +1,6 @@
 /**
  * Mock helpers for authentication
- * 
+ *
  * Provides factory functions to create mocks for auth-related tests
  */
 
@@ -93,4 +93,3 @@ export function createMockManagerUser(overrides?: Partial<AuthUser>): AuthUser {
     ...overrides,
   });
 }
-

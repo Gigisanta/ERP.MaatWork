@@ -94,57 +94,6 @@ export async function apiCall<T>(
   return data;
 }
 
-/**
- * Cliente API para Server Components que acepta token explícito (legacy)
- * 
- * @deprecated Usar apiCall() en su lugar, que usa cookies automáticamente
- * Mantenido para compatibilidad con código existente
- */
-export async function apiCallWithToken<T>(
-  endpoint: string,
-  options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-    body?: unknown;
-    token: string;
-    headers?: Record<string, string>;
-    timeoutMs?: number;
-  }
-): Promise<ApiResponse<T>> {
-  const url = `${config.apiUrl}${endpoint}`;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${options.token}`,
-    ...options.headers,
-  };
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
-
-  const fetchOptions: RequestInit = {
-    method: options.method || 'GET',
-    headers,
-    cache: 'no-store',
-    signal: controller.signal,
-  };
-  if (options.body !== undefined) {
-    fetchOptions.body = JSON.stringify(options.body);
-  }
-  let response: Response;
-  try {
-    response = await fetch(url, fetchOptions);
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data;
-}
 
 /**
  * Helper para obtener contacto en Server Components
@@ -153,16 +102,6 @@ export async function getContactById(
   id: string
 ): Promise<ApiResponse<import('@/types/contact').Contact>> {
   return apiCall(`/v1/contacts/${id}`);
-}
-
-/**
- * @deprecated Usar getContactById() en su lugar
- */
-export async function getContactByIdWithToken(
-  id: string,
-  token: string
-): Promise<ApiResponse<import('@/types/contact').Contact>> {
-  return apiCallWithToken(`/v1/contacts/${id}`, { token });
 }
 
 /**

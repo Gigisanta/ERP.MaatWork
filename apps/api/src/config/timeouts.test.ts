@@ -1,6 +1,6 @@
 /**
  * Tests para configuración de timeouts
- * 
+ *
  * AI_DECISION: Tests completos para todas las funciones de timeouts
  * Justificación: Validación crítica de configuración de timeouts
  * Impacto: Prevenir timeouts incorrectos que causen fallos
@@ -97,7 +97,7 @@ describe('getPortfolioCompareTimeout', () => {
     const result1 = getPortfolioCompareTimeout(1, 0);
     const result2 = getPortfolioCompareTimeout(0, 1);
     const result3 = getPortfolioCompareTimeout(5, 5);
-    
+
     expect(result1).toBeGreaterThan(0);
     expect(result2).toBeGreaterThan(0);
     expect(result3).toBeGreaterThan(result1);
@@ -131,18 +131,18 @@ describe('validateTimeouts', () => {
 
   it('debería generar warnings cuando PORTFOLIO_PERFORMANCE es muy bajo', async () => {
     const originalEnv = process.env.PORTFOLIO_PERFORMANCE_TIMEOUT;
-    
+
     // Mock muy bajo timeout
     process.env.PORTFOLIO_PERFORMANCE_TIMEOUT = '3000';
-    
+
     // Re-import para que tome el nuevo valor
     vi.resetModules();
     const { validateTimeouts: validate } = await import('./timeouts');
     const result = validate();
-    
+
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings.some((w: string) => w.includes('PORTFOLIO_PERFORMANCE'))).toBe(true);
-    
+
     // Restore
     if (originalEnv) {
       process.env.PORTFOLIO_PERFORMANCE_TIMEOUT = originalEnv;
@@ -154,16 +154,16 @@ describe('validateTimeouts', () => {
 
   it('debería generar warnings cuando PORTFOLIO_COMPARE_BASE es muy bajo', async () => {
     const originalEnv = process.env.PORTFOLIO_COMPARE_BASE_TIMEOUT;
-    
+
     process.env.PORTFOLIO_COMPARE_BASE_TIMEOUT = '5000';
-    
+
     vi.resetModules();
     const { validateTimeouts: validate } = await import('./timeouts');
     const result = validate();
-    
+
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings.some((w: string) => w.includes('PORTFOLIO_COMPARE_BASE'))).toBe(true);
-    
+
     if (originalEnv) {
       process.env.PORTFOLIO_COMPARE_BASE_TIMEOUT = originalEnv;
     } else {
@@ -174,16 +174,16 @@ describe('validateTimeouts', () => {
 
   it('debería generar warnings cuando PORTFOLIO_COMPARE_MAX es muy alto', async () => {
     const originalEnv = process.env.PORTFOLIO_COMPARE_MAX_TIMEOUT;
-    
+
     process.env.PORTFOLIO_COMPARE_MAX_TIMEOUT = '400000';
-    
+
     vi.resetModules();
     const { validateTimeouts: validate } = await import('./timeouts');
     const result = validate();
-    
+
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings.some((w: string) => w.includes('PORTFOLIO_COMPARE_MAX'))).toBe(true);
-    
+
     if (originalEnv) {
       process.env.PORTFOLIO_COMPARE_MAX_TIMEOUT = originalEnv;
     } else {
@@ -194,16 +194,16 @@ describe('validateTimeouts', () => {
 
   it('debería generar warnings cuando PRICE_BACKFILL es muy alto', async () => {
     const originalEnv = process.env.PRICE_BACKFILL_TIMEOUT;
-    
+
     process.env.PRICE_BACKFILL_TIMEOUT = '700000';
-    
+
     vi.resetModules();
     const { validateTimeouts: validate } = await import('./timeouts');
     const result = validate();
-    
+
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(result.warnings.some((w: string) => w.includes('PRICE_BACKFILL'))).toBe(true);
-    
+
     if (originalEnv) {
       process.env.PRICE_BACKFILL_TIMEOUT = originalEnv;
     } else {
@@ -214,15 +214,15 @@ describe('validateTimeouts', () => {
 
   it('debería retornar valid: false cuando hay warnings', async () => {
     const originalEnv = process.env.PORTFOLIO_PERFORMANCE_TIMEOUT;
-    
+
     process.env.PORTFOLIO_PERFORMANCE_TIMEOUT = '3000';
-    
+
     vi.resetModules();
     const { validateTimeouts: validate } = await import('./timeouts');
     const result = validate();
-    
+
     expect(result.valid).toBe(false);
-    
+
     if (originalEnv) {
       process.env.PORTFOLIO_PERFORMANCE_TIMEOUT = originalEnv;
     } else {
@@ -274,4 +274,3 @@ describe('TIMEOUTS constants', () => {
     expect(TIMEOUTS.PRICE_BACKFILL).toBe(300000); // 5min default
   });
 });
-

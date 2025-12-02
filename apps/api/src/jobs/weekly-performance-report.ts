@@ -48,8 +48,19 @@ export class WeeklyPerformanceReportJob {
       // Calcular cache hit rate general
       const cacheHealth = getCacheHealth();
       const cacheStats = Object.values(cacheHealth);
-      const totalHits = cacheStats.reduce((sum: number, stats: any) => sum + (stats.hits || 0), 0);
-      const totalMisses = cacheStats.reduce((sum: number, stats: any) => sum + (stats.misses || 0), 0);
+      
+      // Type for cache stats from NodeCache
+      interface CacheStatsEntry {
+        hits: number;
+        misses: number;
+        keys: number;
+        ksize: number;
+        vsize: number;
+        hitRate: number;
+      }
+      
+      const totalHits = cacheStats.reduce((sum: number, stats: CacheStatsEntry) => sum + (stats.hits || 0), 0);
+      const totalMisses = cacheStats.reduce((sum: number, stats: CacheStatsEntry) => sum + (stats.misses || 0), 0);
       const overallCacheHitRate = totalHits + totalMisses > 0 
         ? (totalHits / (totalHits + totalMisses)) * 100 
         : 0;

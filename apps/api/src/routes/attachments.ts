@@ -7,61 +7,32 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { z } from 'zod';
+import { logger } from '../utils/logger';
+import { 
+  sanitizeFilename, 
+  validateExtensionVsMimeType, 
+  ensureUploadDir,
+  MIME_TYPES,
+  DEFAULT_UPLOAD_DIR
+} from '../utils/file-upload';
 
 const router = Router();
 
 // Configuración de almacenamiento con multer
-const uploadsDir = path.join(process.cwd(), 'uploads');
+const uploadsDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
 
 // Asegurar que el directorio de uploads existe
-(async () => {
-  try {
-    await fs.mkdir(uploadsDir, { recursive: true });
-  } catch (err) {
-    console.error('Error creando directorio uploads:', err);
-  }
-})();
+ensureUploadDir(uploadsDir).catch(err => {
+  logger.error({ err }, 'Error creando directorio uploads');
+});
 
-/**
- * Sanitizar nombre de archivo para prevenir path traversal y caracteres peligrosos
- * 
- * AI_DECISION: Sanitizar nombres de archivo para seguridad
- * Justificación: Previene path traversal attacks y caracteres problemáticos
- * Impacto: Mayor seguridad en uploads, nombres de archivo consistentes
- */
-function sanitizeFilename(filename: string): string {
-  // Eliminar path traversal y normalizar
-  let sanitized = path.basename(filename); // Elimina cualquier path
-  
-  // Remover caracteres peligrosos o problemáticos
-  sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
-  
-  // Remover espacios múltiples y reemplazar por guión bajo
-  sanitized = sanitized.replace(/\s+/g, '_');
-  
-  // Limitar longitud (máximo 200 caracteres para el nombre base)
-  const ext = path.extname(sanitized);
-  const basename = path.basename(sanitized, ext);
-  const maxBasenameLength = 200 - ext.length;
-  
-  if (basename.length > maxBasenameLength) {
-    sanitized = basename.substring(0, maxBasenameLength) + ext;
-  }
-  
-  // Si después de sanitizar está vacío, usar nombre por defecto
-  if (!sanitized || sanitized === ext) {
-    sanitized = `file${ext || '.bin'}`;
-  }
-  
-  return sanitized;
-}
-
+// Storage configuration for entity-based directories
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const { entity, entityId } = req.body;
     const entityDir = path.join(uploadsDir, entity || 'general', entityId || 'temp');
     try {
-      await fs.mkdir(entityDir, { recursive: true });
+      await ensureUploadDir(entityDir);
       cb(null, entityDir);
     } catch (err: unknown) {
       cb(err instanceof Error ? err : new Error(String(err)), entityDir);
@@ -76,81 +47,20 @@ const storage = multer.diskStorage({
   },
 });
 
-/**
- * Mapeo de extensiones a MIME types esperados
- */
-const EXTENSION_TO_MIME: Record<string, string[]> = {
-  '.jpg': ['image/jpeg'],
-  '.jpeg': ['image/jpeg'],
-  '.png': ['image/png'],
-  '.gif': ['image/gif'],
-  '.webp': ['image/webp'],
-  '.pdf': ['application/pdf'],
-  '.doc': ['application/msword'],
-  '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  '.xls': ['application/vnd.ms-excel'],
-  '.xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-  '.txt': ['text/plain'],
-  '.csv': ['text/csv'],
-  '.mp3': ['audio/mpeg'],
-  '.wav': ['audio/wav'],
-  '.ogg': ['audio/ogg'],
-  '.mp4': ['video/mp4'],
-  '.mov': ['video/quicktime'],
-};
-
-/**
- * Validar que la extensión del archivo coincida con el MIME type declarado
- * 
- * AI_DECISION: Validar extensión vs MIME type para prevenir ataques
- * Justificación: Previene uploads maliciosos donde extensión no coincide con contenido real
- * Impacto: Mayor seguridad, detecta posibles intentos de bypass
- */
-function validateExtensionVsMimeType(filename: string, mimeType: string): boolean {
-  const ext = path.extname(filename).toLowerCase();
-  const expectedMimes = EXTENSION_TO_MIME[ext];
-  
-  if (!expectedMimes) {
-    // Extensión no reconocida, rechazar
-    return false;
-  }
-  
-  return expectedMimes.includes(mimeType);
-}
-
-// Filtro de tipos de archivo permitidos
+// File filter using centralized MIME types and validation
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedMimeTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain',
-    'text/csv',
-    'audio/mpeg',
-    'audio/wav',
-    'audio/ogg',
-    'video/mp4',
-    'video/quicktime',
-  ];
-
   // Verificar MIME type permitido
-  if (!allowedMimeTypes.includes(file.mimetype)) {
+  if (!MIME_TYPES.ATTACHMENTS.includes(file.mimetype as typeof MIME_TYPES.ATTACHMENTS[number])) {
     return cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`));
   }
 
-  // AI_DECISION: Validar que extensión coincida con MIME type
-  // Justificación: Previene ataques donde extensión no coincide con contenido real
-  // Impacto: Mayor seguridad, detecta posibles intentos de bypass
+  // Validate extension vs MIME type for security
   if (!validateExtensionVsMimeType(file.originalname, file.mimetype)) {
-    return cb(new Error(
-      `Extensión de archivo no coincide con tipo MIME declarado. Extensión: ${path.extname(file.originalname)}, MIME: ${file.mimetype}`
-    ));
+    return cb(
+      new Error(
+        `Extensión de archivo no coincide con tipo MIME declarado. Extensión: ${path.extname(file.originalname)}, MIME: ${file.mimetype}`
+      )
+    );
   }
 
   cb(null, true);
@@ -189,14 +99,17 @@ router.post(
       if (entity === 'contact') {
         const userRole = req.user!.role;
         const hasAccess = await canAccessContact(userId, userRole, entityId);
-        
+
         if (!hasAccess) {
-          req.log.warn({ 
-            contactId: entityId, 
-            userId, 
-            userRole 
-          }, 'user attempted to upload attachment to inaccessible contact');
-          
+          req.log.warn(
+            {
+              contactId: entityId,
+              userId,
+              userRole,
+            },
+            'user attempted to upload attachment to inaccessible contact'
+          );
+
           // Limpiar archivos subidos
           for (const file of req.files) {
             await fs.unlink(file.path).catch(() => {});
@@ -269,45 +182,52 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
 });
 
 // GET /attachments/:id/download - Descargar archivo
-router.get('/:id/download', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const attachment = await db().query.attachments.findFirst({
-      where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
-    });
-
-    if (!attachment) {
-      return res.status(404).json({ message: 'Adjunto no encontrado' });
-    }
-
-    // Verificar que el archivo existe
+router.get(
+  '/:id/download',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await fs.access(attachment.filePath);
-    } catch {
-      req.log.error({ attachmentId: id, path: attachment.filePath }, 'Archivo no encontrado en disco');
-      return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
-    }
+      const { id } = req.params;
+      const attachment = await db().query.attachments.findFirst({
+        where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
+      });
 
-    // Establecer headers para descarga
-    res.setHeader('Content-Type', attachment.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${attachment.fileName}"`);
-    res.setHeader('Content-Length', attachment.fileSize.toString());
-
-    // Stream del archivo
-    const fileStream = (await import('fs')).createReadStream(attachment.filePath);
-    fileStream.pipe(res);
-
-    fileStream.on('error', (err) => {
-      req.log.error({ err, attachmentId: id }, 'Error al streamear archivo');
-      if (!res.headersSent) {
-        res.status(500).json({ message: 'Error al descargar archivo' });
+      if (!attachment) {
+        return res.status(404).json({ message: 'Adjunto no encontrado' });
       }
-    });
-  } catch (err) {
-    req.log.error({ err }, 'Error al descargar adjunto');
-    next(err);
+
+      // Verificar que el archivo existe
+      try {
+        await fs.access(attachment.filePath);
+      } catch {
+        req.log.error(
+          { attachmentId: id, path: attachment.filePath },
+          'Archivo no encontrado en disco'
+        );
+        return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+      }
+
+      // Establecer headers para descarga
+      res.setHeader('Content-Type', attachment.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${attachment.fileName}"`);
+      res.setHeader('Content-Length', attachment.fileSize.toString());
+
+      // Stream del archivo
+      const fileStream = (await import('fs')).createReadStream(attachment.filePath);
+      fileStream.pipe(res);
+
+      fileStream.on('error', (err) => {
+        req.log.error({ err, attachmentId: id }, 'Error al streamear archivo');
+        if (!res.headersSent) {
+          res.status(500).json({ message: 'Error al descargar archivo' });
+        }
+      });
+    } catch (err) {
+      req.log.error({ err }, 'Error al descargar adjunto');
+      next(err);
+    }
   }
-});
+);
 
 // GET /attachments/:id/preview - Vista previa (solo imágenes)
 router.get('/:id/preview', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
@@ -363,10 +283,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
     }
 
     // Soft delete
-    await db()
-      .update(attachments)
-      .set({ deletedAt: new Date() })
-      .where(eq(attachments.id, id));
+    await db().update(attachments).set({ deletedAt: new Date() }).where(eq(attachments.id, id));
 
     req.log.info({ attachmentId: id }, 'Adjunto eliminado (soft delete)');
 
@@ -392,11 +309,14 @@ router.get(
         // Verify user has access to this contact
         const hasAccess = await canAccessContact(userId, userRole, entityId);
         if (!hasAccess) {
-          req.log.warn({ 
-            contactId: entityId, 
-            userId, 
-            userRole 
-          }, 'user attempted to list attachments for inaccessible contact');
+          req.log.warn(
+            {
+              contactId: entityId,
+              userId,
+              userRole,
+            },
+            'user attempted to list attachments for inaccessible contact'
+          );
           return res.status(404).json({ message: 'Contacto no encontrado' });
         }
         whereClause = and(eq(attachments.contactId, entityId), isNull(attachments.deletedAt));
@@ -423,4 +343,3 @@ router.get(
 );
 
 export default router;
-

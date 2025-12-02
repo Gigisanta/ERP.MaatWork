@@ -1,23 +1,65 @@
-import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { deleteContact, createTag, updateTag, updateContactField as updateContactFieldApi, updateContactTags as updateContactTagsApi } from '@/lib/api';
-import { useToast } from '../../../lib/hooks/useToast';
-import type { Contact, Tag } from '@/types';
+/**
+ * Hook for contact actions (delete, update field, update tags)
+ *
+ * Handles optimistic updates and error handling
+ */
 
-export function useContactActions(
-  mutateContacts: () => void,
-  mutateTags: () => void
-) {
-  const router = useRouter();
+import { useState, useCallback } from 'react';
+import {
+  deleteContact,
+  updateContactField as updateContactFieldApi,
+  updateContactTags as updateContactTagsApi,
+} from '@/lib/api';
+import { useToast } from '@/lib/hooks/useToast';
+import type { Contact, Tag, ApiResponse, ContactFieldValue } from '@/types';
+
+export interface ContactActionsState {
+  showDeleteModal: boolean;
+  contactToDelete: Contact | null;
+  savingContactId: string | null;
+  editingField: { contactId: string; field: string } | null;
+}
+
+export interface ContactActionsActions {
+  setShowDeleteModal: (show: boolean) => void;
+  setContactToDelete: (contact: Contact | null) => void;
+  handleDeleteContact: () => Promise<void>;
+  updateContactField: (contactId: string, field: string, value: ContactFieldValue) => Promise<void>;
+  updateContactTags: (contactId: string, add: string[], remove: string[]) => Promise<void>;
+  handleStageChange: (contactId: string, stageId: string | null) => void;
+  handleTagsChange: (contactId: string, add: string[], remove: string[]) => void;
+  handleTextInputSave: (contactId: string, field: string, value: string) => void;
+}
+
+export interface UseContactActionsProps {
+  mutateContacts: (
+    data?:
+      | ApiResponse<unknown[]>
+      | ((current: ApiResponse<unknown[]> | undefined) => ApiResponse<unknown[]> | undefined),
+    shouldRevalidate?: boolean
+  ) => void;
+  allTags?: Tag[];
+}
+
+export function useContactActions({
+  mutateContacts,
+  allTags,
+}: UseContactActionsProps): ContactActionsState & ContactActionsActions {
   const { showToast } = useToast();
-  
-  const [savingContactId, setSavingContactId] = useState<string | null>(null);
-  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+
+  // Delete contact state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+
+  // Inline editing state
+  const [savingContactId, setSavingContactId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<{ contactId: string; field: string } | null>(
+    null
+  );
 
   const handleDeleteContact = useCallback(async () => {
     if (!contactToDelete) return;
-    
+
     try {
       await deleteContact(contactToDelete.id);
       mutateContacts();
@@ -25,107 +67,173 @@ export function useContactActions(
       setContactToDelete(null);
       showToast('Contacto eliminado', undefined, 'success');
     } catch (err) {
-      showToast('Error al eliminar contacto', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      showToast(
+        'Error al eliminar contacto',
+        err instanceof Error ? err.message : 'Error desconocido',
+        'error'
+      );
     }
   }, [contactToDelete, mutateContacts, showToast]);
 
-  const handleStageChange = useCallback(async (contactId: string, newStageId: string) => {
-    setSavingContactId(contactId);
-    try {
-      await updateContactFieldApi(contactId, 'pipelineStageId', newStageId);
-      mutateContacts();
-    } catch (err) {
-      showToast('Error al avanzar etapa', err instanceof Error ? err.message : 'Error desconocido', 'error');
-      throw err;
-    } finally {
-      setSavingContactId(null);
-    }
-  }, [mutateContacts, showToast]);
+  const updateContactField = useCallback(
+    async (contactId: string, field: string, value: ContactFieldValue) => {
+      setSavingContactId(contactId);
 
-  const handleTagsChange = useCallback(async (contactId: string, add: string[], remove: string[]) => {
-    setSavingContactId(contactId);
-    try {
-      await updateContactTagsApi(contactId, add, remove);
-      mutateContacts();
-    } catch (err) {
-      showToast('Error al actualizar etiquetas', err instanceof Error ? err.message : 'Error desconocido', 'error');
-      throw err;
-    } finally {
-      setSavingContactId(null);
-    }
-  }, [mutateContacts, showToast]);
+      // Optimistic update
+      const optimisticUpdate = (
+        currentData: ApiResponse<unknown[]> | undefined
+      ): ApiResponse<unknown[]> | undefined => {
+        if (!currentData || !Array.isArray(currentData.data)) return currentData;
+        const contacts = currentData.data as Contact[];
+        return {
+          ...currentData,
+          data: contacts.map((contact: Contact) =>
+            contact.id === contactId ? { ...contact, [field]: value } : contact
+          ),
+        };
+      };
 
-  const handleTextInputSave = useCallback(async (contactId: string, field: string, value: string) => {
-    setSavingContactId(contactId);
-    try {
-      await updateContactFieldApi(contactId, field, value);
-      mutateContacts();
-    } catch (err) {
-      showToast('Error al guardar', err instanceof Error ? err.message : 'Error desconocido', 'error');
-      throw err;
-    } finally {
-      setSavingContactId(null);
-    }
-  }, [mutateContacts, showToast]);
+      mutateContacts(optimisticUpdate, false);
 
-  const handleCreateTag = useCallback(async (
-    name: string,
-    color: string,
-    businessLine: 'inversiones' | 'zurich' | 'patrimonial' | null
-  ) => {
-    if (!name.trim()) return;
-    
-    try {
-      await createTag({
-        entityType: 'contact',
-        name: name.trim(),
-        color,
-        businessLine
-      });
-      mutateTags();
-      mutateContacts();
-      showToast('Etiqueta creada', undefined, 'success');
-    } catch (err) {
-      showToast('Error al crear etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
-      throw err;
-    }
-  }, [mutateTags, mutateContacts, showToast]);
+      try {
+        await updateContactFieldApi(contactId, field, value);
+        mutateContacts();
+        showToast('Campo actualizado', undefined, 'success');
+      } catch (err) {
+        mutateContacts();
+        showToast(
+          'Error al actualizar',
+          err instanceof Error ? err.message : 'Error desconocido',
+          'error'
+        );
+      } finally {
+        setSavingContactId(null);
+        setEditingField(null);
+      }
+    },
+    [mutateContacts, showToast]
+  );
 
-  const handleEditTag = useCallback(async (
-    tag: Tag,
-    name: string,
-    color: string,
-    businessLine: 'inversiones' | 'zurich' | 'patrimonial' | null
-  ) => {
-    if (!name.trim()) return;
-    
-    try {
-      await updateTag(tag.id, {
-        name: name.trim(),
-        color,
-        businessLine
-      });
-      mutateTags();
-      mutateContacts();
-      showToast('Etiqueta actualizada', undefined, 'success');
-    } catch (err) {
-      showToast('Error al editar etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
-      throw err;
-    }
-  }, [mutateTags, mutateContacts, showToast]);
+  // AI_DECISION: Optimistic update mejorado para etiquetas
+  // Justificación: Incluye todos los campos (icon, businessLine) y evita revalidación innecesaria
+  // Impacto: Elimina parpadeo al agregar/quitar etiquetas, mejor UX
+  const updateContactTags = useCallback(
+    async (contactId: string, add: string[], remove: string[]) => {
+      setSavingContactId(contactId);
+
+      // Optimistic update - incluir todos los campos de la etiqueta
+      const optimisticUpdate = (
+        currentData: ApiResponse<unknown[]> | undefined
+      ): ApiResponse<unknown[]> | undefined => {
+        if (!currentData || !Array.isArray(currentData.data)) return currentData;
+        const contacts = currentData.data as Contact[];
+        return {
+          ...currentData,
+          data: contacts.map((contact: Contact) => {
+            if (contact.id !== contactId) return contact;
+            const currentTags = contact.tags || [];
+            // Construir tags a agregar, filtrando nulls antes de spread
+            const tagsToAdd = add
+              .map((tagId) => {
+                const tag = Array.isArray(allTags) ? allTags.find((t) => t.id === tagId) : null;
+                if (!tag) return null;
+                // Incluir todos los campos necesarios para evitar inconsistencias
+                return {
+                  id: tag.id,
+                  name: tag.name,
+                  color: tag.color,
+                  icon: tag.icon ?? undefined,
+                  businessLine: tag.businessLine ?? undefined,
+                };
+              })
+              .filter((tag): tag is NonNullable<typeof tag> => tag !== null);
+
+            const newTags = [
+              ...currentTags.filter((tag) => !remove.includes(tag.id)),
+              ...tagsToAdd,
+            ];
+            return { ...contact, tags: newTags };
+          }),
+        };
+      };
+
+      mutateContacts(optimisticUpdate, false);
+
+      try {
+        const response = await updateContactTagsApi(contactId, add, remove);
+
+        // Actualizar el cache con los datos reales del servidor en lugar de forzar revalidación
+        // Esto evita el parpadeo causado por la revalidación
+        if (response.data) {
+          const serverTags = response.data;
+          const updateWithServerData = (
+            currentData: ApiResponse<unknown[]> | undefined
+          ): ApiResponse<unknown[]> | undefined => {
+            if (!currentData || !Array.isArray(currentData.data)) return currentData;
+            const contacts = currentData.data as Contact[];
+            return {
+              ...currentData,
+              data: contacts.map((contact: Contact) => {
+                if (contact.id !== contactId) return contact;
+                return { ...contact, tags: serverTags };
+              }),
+            };
+          };
+          mutateContacts(updateWithServerData, false);
+        }
+
+        showToast('Etiquetas actualizadas', undefined, 'success');
+      } catch (err) {
+        // En caso de error, forzar revalidación para obtener el estado real
+        mutateContacts();
+        showToast(
+          'Error al actualizar etiquetas',
+          err instanceof Error ? err.message : 'Error desconocido',
+          'error'
+        );
+      } finally {
+        setSavingContactId(null);
+        setEditingField(null);
+      }
+    },
+    [mutateContacts, showToast, allTags]
+  );
+
+  const handleStageChange = useCallback(
+    (contactId: string, stageId: string | null) => {
+      updateContactField(contactId, 'pipelineStageId', stageId);
+    },
+    [updateContactField]
+  );
+
+  const handleTagsChange = useCallback(
+    (contactId: string, add: string[], remove: string[]) => {
+      updateContactTags(contactId, add, remove);
+    },
+    [updateContactTags]
+  );
+
+  const handleTextInputSave = useCallback(
+    (contactId: string, field: string, value: string) => {
+      updateContactField(contactId, field, value);
+    },
+    [updateContactField]
+  );
 
   return {
-    savingContactId,
-    contactToDelete,
-    setContactToDelete,
+    // State
     showDeleteModal,
+    contactToDelete,
+    savingContactId,
+    editingField,
+    // Actions
     setShowDeleteModal,
+    setContactToDelete,
     handleDeleteContact,
+    updateContactField,
+    updateContactTags,
     handleStageChange,
     handleTagsChange,
     handleTextInputSave,
-    handleCreateTag,
-    handleEditTag,
   };
 }
-

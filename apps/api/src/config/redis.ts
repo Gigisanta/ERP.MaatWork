@@ -1,6 +1,6 @@
 /**
  * Redis client configuration for caching
- * 
+ *
  * AI_DECISION: Centralize Redis configuration with TTL presets per endpoint
  * Justificación: Consistent caching strategy across all Bloomberg endpoints, easy to adjust TTLs
  * Impacto: Better performance, reduced load on data sources, configurable cache duration
@@ -18,17 +18,17 @@ export const REDIS_TTL = {
   // High-frequency, real-time data (short TTL)
   ASSET_SNAPSHOT: 60, // 1 minute
   INTRADAY: 300, // 5 minutes
-  
+
   // Medium-frequency data
   OHLCV_DAILY: 600, // 10 minutes
   YIELD_CURVE: 600, // 10 minutes
   MACRO_SERIES: 1800, // 30 minutes
-  
+
   // Low-frequency data (long TTL)
   FILINGS: 3600, // 1 hour
   EVENTS: 3600, // 1 hour
   SOCIAL_POSTS: 1800, // 30 minutes
-  
+
   // Static/reference data (very long TTL)
   MACRO_SERIES_LIST: 86400, // 24 hours
   INSTRUMENTS: 3600, // 1 hour
@@ -43,7 +43,7 @@ export async function initializeRedis(): Promise<RedisClientType> {
   }
 
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  
+
   try {
     redisClient = createClient({
       url: redisUrl,
@@ -54,8 +54,8 @@ export async function initializeRedis(): Promise<RedisClientType> {
             return new Error('Redis reconnection failed');
           }
           return Math.min(retries * 100, 3000);
-        }
-      }
+        },
+      },
     });
 
     redisClient.on('error', (err) => {
@@ -103,7 +103,3 @@ export async function closeRedis(): Promise<void> {
 export function buildCacheKey(prefix: string, ...parts: (string | number)[]): string {
   return `bloomberg:${prefix}:${parts.join(':')}`;
 }
-
-
-
-

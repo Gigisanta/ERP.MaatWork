@@ -8,25 +8,26 @@ export interface BoxProps {
   children?: React.ReactNode;
   className?: string;
   display?: ResponsiveProp<'block' | 'inline' | 'inline-block' | 'flex' | 'grid' | 'none'>;
-  [key: string]: any;
+  // Allow all standard HTML attributes
+  [key: string]: unknown;
 }
 
 export function Box({ as: Component = 'div', className, display, children, ...props }: BoxProps) {
   return (
-    <Component 
+    <Component
       className={cn(
         buildResponsiveClasses(display, (d) =>
           d === 'block'
             ? 'block'
             : d === 'inline'
-            ? 'inline'
-            : d === 'inline-block'
-            ? 'inline-block'
-            : d === 'flex'
-            ? 'flex'
-            : d === 'grid'
-            ? 'grid'
-            : 'hidden'
+              ? 'inline'
+              : d === 'inline-block'
+                ? 'inline-block'
+                : d === 'flex'
+                  ? 'flex'
+                  : d === 'grid'
+                    ? 'grid'
+                    : 'hidden'
         ),
         className
       )}

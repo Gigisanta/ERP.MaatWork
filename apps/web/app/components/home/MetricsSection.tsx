@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Card,
   CardHeader,
@@ -16,10 +17,46 @@ import {
   GridItem
 } from '@cactus/ui';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
-import { GoalsComparisonChart } from './Charts/GoalsComparisonChart';
-import { BusinessLineChart } from './Charts/BusinessLineChart';
-import { TransitionTimesChart } from './Charts/TransitionTimesChart';
 import { MetricCard } from './MetricCard';
+
+// AI_DECISION: Dynamic import of chart components to reduce initial bundle size
+// Justificación: Recharts (~200KB) is heavy; lazy loading reduces First Load JS significantly
+// Impacto: Faster initial page load, charts load on demand when user scrolls to metrics section
+const GoalsComparisonChart = dynamic(
+  () => import('./Charts/GoalsComparisonChart').then(mod => ({ default: mod.GoalsComparisonChart })),
+  { 
+    loading: () => <ChartLoadingFallback />,
+    ssr: false 
+  }
+);
+
+const BusinessLineChart = dynamic(
+  () => import('./Charts/BusinessLineChart').then(mod => ({ default: mod.BusinessLineChart })),
+  { 
+    loading: () => <ChartLoadingFallback />,
+    ssr: false 
+  }
+);
+
+const TransitionTimesChart = dynamic(
+  () => import('./Charts/TransitionTimesChart').then(mod => ({ default: mod.TransitionTimesChart })),
+  { 
+    loading: () => <ChartLoadingFallback />,
+    ssr: false 
+  }
+);
+
+// Loading fallback for charts
+function ChartLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-[220px]">
+      <Stack direction="row" gap="sm" align="center">
+        <Spinner size="sm" />
+        <Text color="secondary" size="sm">Cargando gráfico...</Text>
+      </Stack>
+    </div>
+  );
+}
 
 interface MetricsSectionProps {
   metricsData: MonthlyMetrics | null;

@@ -1,43 +1,38 @@
 /**
  * Validation utilities and middleware for scalable Zod validation
  * 
- * NOTE: Common schemas have been consolidated in common-schemas.ts
- * Import base schemas from there instead of this file.
+ * This file contains Express middleware for request validation.
  * 
- * This file now only contains:
- * - Validation middleware factory (validate)
- * - Helper functions (validateField, safeParseRequest)
- * - Re-exports for backward compatibility (deprecated)
+ * ## When to use this file:
+ * - Use `validate()` middleware in route handlers to validate params, query, and body
+ * - Use `validateField()` for inline validation of single values
+ * - Use `safeParseRequest()` for non-throwing validation
+ * 
+ * ## Related files:
+ * - `common-schemas.ts` - Basic reusable Zod schemas (uuid, email, pagination, etc.)
+ *   Use for: Building route-specific schemas, common field validations
+ * 
+ * - `validation-common.ts` - Additional schema helpers and validators
+ *   Use for: Complex validations, optional fields, custom constraints
+ * 
+ * @example
+ * ```typescript
+ * // In a route file
+ * import { validate } from '../utils/validation';
+ * import { uuidSchema, paginationQuerySchema } from '../utils/common-schemas';
+ * import { optionalEmailSchema } from '../utils/validation-common';
+ * 
+ * const mySchema = z.object({
+ *   id: uuidSchema,
+ *   email: optionalEmailSchema
+ * });
+ * 
+ * router.get('/:id', validate({ params: idParamSchema, query: paginationQuerySchema }), handler);
+ * ```
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-
-// ==========================================================
-// Re-exports from common-schemas (for backward compatibility)
-// ==========================================================
-
-/**
- * @deprecated Import directly from '../utils/common-schemas' instead
- * These re-exports are kept for backward compatibility only
- */
-export { 
-  uuidSchema,
-  paginationQuerySchema as paginationSchema,
-  fileIdParamSchema,
-  brokerSchema
-} from './common-schemas';
-
-/**
- * @deprecated Import directly from '../utils/common-schemas' instead
- */
-export const rowIdParamSchema = z.object({
-  rowId: z.string().uuid('Invalid UUID format')
-});
-
-// Schemas deprecados removidos - usar common-schemas directamente
-// Si encuentras imports de estos schemas, actualizar a:
-// import { aumStatusSchema, matchStatusSchema } from '../utils/common-schemas';
 
 // ==========================================================
 // Validation Middleware Factory

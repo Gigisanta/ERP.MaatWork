@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, Icon, Badge } from '@cactus/ui';
-import { useSearchShortcut } from '../../../lib/hooks/useKeyboardShortcuts';
+import { useSearchShortcut } from '@/hooks/useKeyboardShortcuts';
 import FiltersDropdown from './FiltersDropdown';
 import type { PipelineStage, Tag } from '@/types';
 

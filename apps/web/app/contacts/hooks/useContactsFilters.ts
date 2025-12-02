@@ -1,85 +1,120 @@
-import { useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+/**
+ * Hook for managing contacts page filter state
+ * 
+ * Handles search, stage, tag filters and URL sync
+ */
+
+import { useState, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedValue } from '../../admin/aum/rows/hooks/useDebouncedState';
 import type { Contact, PipelineStage, Tag, Advisor } from '@/types';
 
-export function useContactsFilters(
-  contacts: Contact[],
-  pipelineStages: PipelineStage[],
-  allTags: Tag[],
-  advisors: Advisor[]
-) {
+export interface ContactsFiltersState {
+  searchTerm: string;
+  debouncedSearchTerm: string;
+  selectedStage: string;
+  selectedTags: string[];
+  viewMode: 'table' | 'kanban';
+  advisorIdFilter: string | null;
+  filteredAdvisor: Advisor | null;
+}
+
+export interface ContactsFiltersActions {
+  setSearchTerm: (term: string) => void;
+  setSelectedStage: (stage: string) => void;
+  handleTagToggle: (tagId: string) => void;
+  setSelectedTags: React.Dispatch<React.SetStateAction<string[]>>;
+  setViewMode: (mode: 'table' | 'kanban') => void;
+  clearAllFilters: () => void;
+  clearAdvisorFilter: () => void;
+}
+
+export interface UseContactsFiltersProps {
+  advisors?: Advisor[];
+}
+
+export function useContactsFilters({ advisors }: UseContactsFiltersProps): ContactsFiltersState & ContactsFiltersActions {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const advisorIdFilter = searchParams.get('advisorId');
-  
+
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebouncedValue(searchTerm, 300);
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+
   // Get advisor name for filter badge
-  const filteredAdvisor = advisorIdFilter && advisors && Array.isArray(advisors) 
-    ? (advisors as Advisor[]).find((a: Advisor) => a.id === advisorIdFilter) 
-    : null;
+  const filteredAdvisor = useMemo(() => {
+    if (!advisorIdFilter || !advisors || !Array.isArray(advisors)) return null;
+    return advisors.find((a: Advisor) => a.id === advisorIdFilter) ?? null;
+  }, [advisorIdFilter, advisors]);
 
-  // Filter contacts based on search term, stage, and tags
-  const filteredContacts = useMemo(() => {
-    if (!Array.isArray(contacts)) return [];
-    
-    return contacts.filter((contact: Contact) => {
-      // Search term filter
-      if (debouncedSearchTerm) {
-        const searchLower = debouncedSearchTerm.toLowerCase();
-        const matchesSearch = 
-          contact.fullName?.toLowerCase().includes(searchLower) ||
-          contact.email?.toLowerCase().includes(searchLower) ||
-          contact.phone?.toLowerCase().includes(searchLower);
-        if (!matchesSearch) return false;
-      }
-      
-      // Stage filter
-      if (selectedStage !== 'all') {
-        if (contact.pipelineStageId !== selectedStage) return false;
-      }
-      
-      // Tags filter
-      if (selectedTags.length > 0) {
-        const contactTagIds = contact.tags?.map(t => t.id) || [];
-        const hasAllSelectedTags = selectedTags.every(tagId => contactTagIds.includes(tagId));
-        if (!hasAllSelectedTags) return false;
-      }
-      
-      return true;
-    });
-  }, [contacts, debouncedSearchTerm, selectedStage, selectedTags]);
-
-  const handleTagToggle = (tagId: string) => {
+  const handleTagToggle = useCallback((tagId: string) => {
     setSelectedTags(prev => 
       prev.includes(tagId)
         ? prev.filter(id => id !== tagId)
         : [...prev, tagId]
     );
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSearchTerm('');
     setSelectedStage('all');
     setSelectedTags([]);
-  };
+    // Clear advisor filter from URL
+    if (advisorIdFilter) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('advisorId');
+      router.push(`/contacts?${newSearchParams.toString()}`);
+    }
+  }, [advisorIdFilter, searchParams, router]);
+
+  const clearAdvisorFilter = useCallback(() => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.delete('advisorId');
+    router.push(`/contacts?${newSearchParams.toString()}`);
+  }, [searchParams, router]);
 
   return {
+    // State
     searchTerm,
-    setSearchTerm,
     debouncedSearchTerm,
     selectedStage,
-    setSelectedStage,
     selectedTags,
-    setSelectedTags,
+    viewMode,
     advisorIdFilter,
     filteredAdvisor,
-    filteredContacts,
+    // Actions
+    setSearchTerm,
+    setSelectedStage,
     handleTagToggle,
+    setSelectedTags,
+    setViewMode,
     clearAllFilters,
+    clearAdvisorFilter
   };
 }
 
+/**
+ * Filter contacts based on search, stage and tags
+ */
+export function filterContacts(
+  contacts: Contact[] | undefined,
+  searchTerm: string,
+  selectedStage: string,
+  selectedTags: string[]
+): Contact[] {
+  if (!Array.isArray(contacts)) return [];
+  
+  return contacts.filter((contact: Contact) => {
+    const matchesSearch = contact.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         contact.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStage = selectedStage === 'all' || contact.pipelineStageId === selectedStage;
+    const matchesTags = selectedTags.length === 0 || 
+                       selectedTags.some(tagId => contact.tags?.some(tag => tag.id === tagId));
+    
+    return matchesSearch && matchesStage && matchesTags;
+  });
+}

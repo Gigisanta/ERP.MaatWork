@@ -20,8 +20,8 @@ import {
   addPortfolioLine,
   getPortfolioById,
 } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
-import type { Portfolio, PortfolioLine, AddPortfolioLineRequest } from '@/types';
+import { logger, toLogContext } from '@/lib/logger';
+import type { Portfolio, PortfolioLine, AddPortfolioLineRequest, RiskLevel } from '@/types';
 import { ensureInstrumentsExist, syncPortfolioLines } from '../utils/portfolio-helpers';
 import ConfirmDialogComponent from '../../components/ConfirmDialog';
 
@@ -148,7 +148,7 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
           const updateResponse = await updatePortfolio(editingPortfolio.id, {
             name: data.name,
             description: data.description,
-            riskLevel: data.riskLevel as any,
+            riskLevel: data.riskLevel as RiskLevel,
           });
 
           if (!updateResponse.success) {
@@ -168,7 +168,7 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
           const portfolioResponse = await createPortfolio({
             name: data.name,
             description: data.description,
-            riskLevel: data.riskLevel as any,
+            riskLevel: data.riskLevel as RiskLevel,
           });
 
           if (!portfolioResponse.success || !portfolioResponse.data) {

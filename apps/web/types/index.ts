@@ -17,7 +17,9 @@ export type {
   TimePeriod,
   ToastVariant,
   LoadingState,
-  ComponentBase
+  ComponentBase,
+  ApiError,
+  ApiResponseWithHint
 } from './common';
 
 // Auth types

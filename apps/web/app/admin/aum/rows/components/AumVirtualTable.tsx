@@ -16,6 +16,7 @@ import { AumTableRow } from './AumTableRow';
 import { AUM_ROWS_CONFIG, TOTAL_TABLE_WIDTH } from '../lib/aumRowsConstants';
 import { parseErrorMessage } from '../lib/aumRowsUtils';
 import { Text } from '@cactus/ui';
+import { logger } from '@/lib/logger';
 
 export interface AumVirtualTableProps {
   rows: AumRow[];
@@ -147,12 +148,10 @@ export function AumVirtualTable({
                 {virtualItems.map((virtualRow) => {
                   const row = rows[virtualRow.index];
                   if (!row) {
-                    console.warn(
-                      '[AumVirtualTable] Row missing at index',
-                      virtualRow.index,
-                      'total rows:',
-                      rows.length
-                    );
+                    logger.warn('Row missing at index in AumVirtualTable', {
+                      index: virtualRow.index,
+                      totalRows: rows.length,
+                    });
                     return null;
                   }
                   const rowKey = `${row.id}-${virtualRow.index}`;

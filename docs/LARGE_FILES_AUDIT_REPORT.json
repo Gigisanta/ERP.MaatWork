@@ -1,0 +1,1570 @@
+[
+  {
+    "file": "apps\\api\\src\\auth\\authorization.ts",
+    "type": "file",
+    "lineCount": 329,
+    "startLine": 1,
+    "endLine": 329,
+    "recommendation": "Archivo tiene 329 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\auth\\authorization.ts",
+    "type": "function",
+    "name": "getUserAccessScope",
+    "lineCount": 81,
+    "startLine": 28,
+    "endLine": 108,
+    "recommendation": "Función getUserAccessScope tiene 81 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\auth\\middlewares.ts",
+    "type": "function",
+    "name": "requireAuth",
+    "lineCount": 57,
+    "startLine": 7,
+    "endLine": 63,
+    "recommendation": "Función requireAuth tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\db-init.ts",
+    "type": "file",
+    "lineCount": 440,
+    "startLine": 1,
+    "endLine": 440,
+    "recommendation": "Archivo tiene 440 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\db-init.ts",
+    "type": "function",
+    "name": "runMigrations",
+    "lineCount": 100,
+    "startLine": 86,
+    "endLine": 185,
+    "recommendation": "Función runMigrations tiene 100 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\db-init.ts",
+    "type": "function",
+    "name": "seedLookupTables",
+    "lineCount": 98,
+    "startLine": 215,
+    "endLine": 312,
+    "recommendation": "Función seedLookupTables tiene 98 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\db-init.ts",
+    "type": "function",
+    "name": "initializeDatabase",
+    "lineCount": 70,
+    "startLine": 342,
+    "endLine": 411,
+    "recommendation": "Función initializeDatabase tiene 70 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\index.ts",
+    "type": "file",
+    "lineCount": 523,
+    "startLine": 1,
+    "endLine": 523,
+    "recommendation": "Archivo tiene 523 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\daily-valuation.ts",
+    "type": "file",
+    "lineCount": 599,
+    "startLine": 1,
+    "endLine": 599,
+    "recommendation": "Archivo tiene 599 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\daily-valuation.ts",
+    "type": "class",
+    "name": "DailyValuationJob",
+    "lineCount": 472,
+    "startLine": 52,
+    "endLine": 523,
+    "recommendation": "Clase DailyValuationJob tiene 472 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\daily-valuation.ts",
+    "type": "function",
+    "name": "runPriceBackfillJob",
+    "lineCount": 67,
+    "startLine": 532,
+    "endLine": 598,
+    "recommendation": "Función runPriceBackfillJob tiene 67 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\maintenance.ts",
+    "type": "file",
+    "lineCount": 341,
+    "startLine": 1,
+    "endLine": 341,
+    "recommendation": "Archivo tiene 341 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\maintenance.ts",
+    "type": "function",
+    "name": "createFuturePartitions",
+    "lineCount": 57,
+    "startLine": 97,
+    "endLine": 153,
+    "recommendation": "Función createFuturePartitions tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\maintenance.ts",
+    "type": "function",
+    "name": "runWeeklyMaintenance",
+    "lineCount": 103,
+    "startLine": 165,
+    "endLine": 267,
+    "recommendation": "Función runWeeklyMaintenance tiene 103 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\monitor-query-performance.ts",
+    "type": "class",
+    "name": "MonitorQueryPerformanceJob",
+    "lineCount": 205,
+    "startLine": 29,
+    "endLine": 233,
+    "recommendation": "Clase MonitorQueryPerformanceJob tiene 205 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\query-performance-alerts.ts",
+    "type": "class",
+    "name": "QueryPerformanceAlertsJob",
+    "lineCount": 199,
+    "startLine": 26,
+    "endLine": 224,
+    "recommendation": "Clase QueryPerformanceAlertsJob tiene 199 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\refresh-materialized-views.ts",
+    "type": "class",
+    "name": "RefreshMaterializedViewsJob",
+    "lineCount": 106,
+    "startLine": 18,
+    "endLine": 123,
+    "recommendation": "Clase RefreshMaterializedViewsJob tiene 106 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\scheduler.ts",
+    "type": "file",
+    "lineCount": 317,
+    "startLine": 1,
+    "endLine": 317,
+    "recommendation": "Archivo tiene 317 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\scheduler.ts",
+    "type": "class",
+    "name": "JobScheduler",
+    "lineCount": 281,
+    "startLine": 22,
+    "endLine": 302,
+    "recommendation": "Clase JobScheduler tiene 281 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\jobs\\weekly-performance-report.ts",
+    "type": "class",
+    "name": "WeeklyPerformanceReportJob",
+    "lineCount": 152,
+    "startLine": 33,
+    "endLine": 184,
+    "recommendation": "Clase WeeklyPerformanceReportJob tiene 152 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\analytics\\comparison.ts",
+    "type": "file",
+    "lineCount": 333,
+    "startLine": 1,
+    "endLine": 333,
+    "recommendation": "Archivo tiene 333 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\analytics\\dashboard.ts",
+    "type": "file",
+    "lineCount": 348,
+    "startLine": 1,
+    "endLine": 348,
+    "recommendation": "Archivo tiene 348 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\attachments.ts",
+    "type": "file",
+    "lineCount": 346,
+    "startLine": 1,
+    "endLine": 346,
+    "recommendation": "Archivo tiene 346 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\duplicates.ts",
+    "type": "function",
+    "name": "getDuplicates",
+    "lineCount": 81,
+    "startLine": 15,
+    "endLine": 95,
+    "recommendation": "Función getDuplicates tiene 81 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\list.ts",
+    "type": "file",
+    "lineCount": 308,
+    "startLine": 1,
+    "endLine": 308,
+    "recommendation": "Archivo tiene 308 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\list.ts",
+    "type": "function",
+    "name": "listAllRows",
+    "lineCount": 290,
+    "startLine": 17,
+    "endLine": 306,
+    "recommendation": "Función listAllRows tiene 290 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\list.ts",
+    "type": "function",
+    "name": "rows",
+    "lineCount": 61,
+    "startLine": 230,
+    "endLine": 290,
+    "recommendation": "Función rows tiene 61 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\match.ts",
+    "type": "function",
+    "name": "matchRow",
+    "lineCount": 96,
+    "startLine": 13,
+    "endLine": 108,
+    "recommendation": "Función matchRow tiene 96 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\monthly-history.ts",
+    "type": "function",
+    "name": "getMonthlyHistory",
+    "lineCount": 124,
+    "startLine": 16,
+    "endLine": 139,
+    "recommendation": "Función getMonthlyHistory tiene 124 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\rows\\handlers\\update-advisor.ts",
+    "type": "function",
+    "name": "updateAdvisor",
+    "lineCount": 96,
+    "startLine": 17,
+    "endLine": 112,
+    "recommendation": "Función updateAdvisor tiene 96 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\upload\\handlers\\export.ts",
+    "type": "function",
+    "name": "handleExport",
+    "lineCount": 79,
+    "startLine": 19,
+    "endLine": 97,
+    "recommendation": "Función handleExport tiene 79 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\upload\\handlers\\upload.ts",
+    "type": "file",
+    "lineCount": 503,
+    "startLine": 1,
+    "endLine": 503,
+    "recommendation": "Archivo tiene 503 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\aum\\upload\\validation.ts",
+    "type": "function",
+    "name": "validateParsedRows",
+    "lineCount": 64,
+    "startLine": 36,
+    "endLine": 99,
+    "recommendation": "Función validateParsedRows tiene 64 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\auth.ts",
+    "type": "file",
+    "lineCount": 458,
+    "startLine": 1,
+    "endLine": 458,
+    "recommendation": "Archivo tiene 458 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\batch.ts",
+    "type": "function",
+    "name": "handleBatchComponents",
+    "lineCount": 72,
+    "startLine": 21,
+    "endLine": 92,
+    "recommendation": "Función handleBatchComponents tiene 72 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\components.ts",
+    "type": "function",
+    "name": "handleAddComponent",
+    "lineCount": 89,
+    "startLine": 21,
+    "endLine": 109,
+    "recommendation": "Función handleAddComponent tiene 89 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\components.ts",
+    "type": "function",
+    "name": "handleUpdateComponent",
+    "lineCount": 97,
+    "startLine": 115,
+    "endLine": 211,
+    "recommendation": "Función handleUpdateComponent tiene 97 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\components.ts",
+    "type": "function",
+    "name": "handleDeleteComponent",
+    "lineCount": 51,
+    "startLine": 217,
+    "endLine": 267,
+    "recommendation": "Función handleDeleteComponent tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\crud.ts",
+    "type": "function",
+    "name": "handleCreateBenchmark",
+    "lineCount": 90,
+    "startLine": 20,
+    "endLine": 109,
+    "recommendation": "Función handleCreateBenchmark tiene 90 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\crud.ts",
+    "type": "function",
+    "name": "handleUpdateBenchmark",
+    "lineCount": 54,
+    "startLine": 115,
+    "endLine": 168,
+    "recommendation": "Función handleUpdateBenchmark tiene 54 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\get.ts",
+    "type": "function",
+    "name": "handleGetBenchmark",
+    "lineCount": 113,
+    "startLine": 21,
+    "endLine": 133,
+    "recommendation": "Función handleGetBenchmark tiene 113 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\benchmarks\\handlers\\list.ts",
+    "type": "function",
+    "name": "handleListBenchmarks",
+    "lineCount": 66,
+    "startLine": 21,
+    "endLine": 86,
+    "recommendation": "Función handleListBenchmarks tiene 66 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\broker-accounts.ts",
+    "type": "file",
+    "lineCount": 332,
+    "startLine": 1,
+    "endLine": 332,
+    "recommendation": "Archivo tiene 332 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\capacitaciones.ts",
+    "type": "file",
+    "lineCount": 547,
+    "startLine": 1,
+    "endLine": 547,
+    "recommendation": "Archivo tiene 547 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\contacts\\get.ts",
+    "type": "file",
+    "lineCount": 452,
+    "startLine": 1,
+    "endLine": 452,
+    "recommendation": "Archivo tiene 452 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\contacts\\list.ts",
+    "type": "file",
+    "lineCount": 423,
+    "startLine": 1,
+    "endLine": 423,
+    "recommendation": "Archivo tiene 423 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\contacts\\update.ts",
+    "type": "file",
+    "lineCount": 367,
+    "startLine": 1,
+    "endLine": 367,
+    "recommendation": "Archivo tiene 367 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\contacts\\webhook.ts",
+    "type": "file",
+    "lineCount": 392,
+    "startLine": 1,
+    "endLine": 392,
+    "recommendation": "Archivo tiene 392 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\instruments\\handlers\\crud.ts",
+    "type": "file",
+    "lineCount": 431,
+    "startLine": 1,
+    "endLine": 431,
+    "recommendation": "Archivo tiene 431 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\instruments\\handlers\\crud.ts",
+    "type": "function",
+    "name": "createInstrument",
+    "lineCount": 214,
+    "startLine": 23,
+    "endLine": 236,
+    "recommendation": "Función createInstrument tiene 214 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\instruments\\handlers\\search.ts",
+    "type": "function",
+    "name": "searchInstruments",
+    "lineCount": 204,
+    "startLine": 17,
+    "endLine": 220,
+    "recommendation": "Función searchInstruments tiene 204 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\instruments\\handlers\\validate.ts",
+    "type": "function",
+    "name": "validateSymbol",
+    "lineCount": 134,
+    "startLine": 21,
+    "endLine": 154,
+    "recommendation": "Función validateSymbol tiene 134 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\metrics\\contacts\\calculate-monthly.ts",
+    "type": "function",
+    "name": "calculateMonthlyMetrics",
+    "lineCount": 54,
+    "startLine": 38,
+    "endLine": 91,
+    "recommendation": "Función calculateMonthlyMetrics tiene 54 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\metrics\\contacts\\helpers.ts",
+    "type": "function",
+    "name": "getFirstTimeStageEntries",
+    "lineCount": 89,
+    "startLine": 38,
+    "endLine": 126,
+    "recommendation": "Función getFirstTimeStageEntries tiene 89 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\notes.ts",
+    "type": "file",
+    "lineCount": 387,
+    "startLine": 1,
+    "endLine": 387,
+    "recommendation": "Archivo tiene 387 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\notifications.ts",
+    "type": "file",
+    "lineCount": 446,
+    "startLine": 1,
+    "endLine": 446,
+    "recommendation": "Archivo tiene 446 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\pipeline\\metrics.ts",
+    "type": "file",
+    "lineCount": 342,
+    "startLine": 1,
+    "endLine": 342,
+    "recommendation": "Archivo tiene 342 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\portfolio\\handlers\\assignments.ts",
+    "type": "file",
+    "lineCount": 402,
+    "startLine": 1,
+    "endLine": 402,
+    "recommendation": "Archivo tiene 402 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\portfolio\\handlers\\assignments.ts",
+    "type": "function",
+    "name": "getContactPortfolio",
+    "lineCount": 154,
+    "startLine": 120,
+    "endLine": 273,
+    "recommendation": "Función getContactPortfolio tiene 154 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\portfolio\\handlers\\assignments.ts",
+    "type": "function",
+    "name": "updateAssignmentOverrides",
+    "lineCount": 52,
+    "startLine": 279,
+    "endLine": 330,
+    "recommendation": "Función updateAssignmentOverrides tiene 52 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\portfolio\\handlers\\templates.ts",
+    "type": "function",
+    "name": "getTemplateLinesBatch",
+    "lineCount": 86,
+    "startLine": 181,
+    "endLine": 266,
+    "recommendation": "Función getTemplateLinesBatch tiene 86 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tags\\handlers\\contact-tags.ts",
+    "type": "file",
+    "lineCount": 567,
+    "startLine": 1,
+    "endLine": 567,
+    "recommendation": "Archivo tiene 567 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\batch.ts",
+    "type": "function",
+    "name": "handleBatchTasks",
+    "lineCount": 102,
+    "startLine": 18,
+    "endLine": 119,
+    "recommendation": "Función handleBatchTasks tiene 102 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\bulk.ts",
+    "type": "function",
+    "name": "handleBulkAction",
+    "lineCount": 79,
+    "startLine": 16,
+    "endLine": 94,
+    "recommendation": "Función handleBulkAction tiene 79 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\crud.ts",
+    "type": "function",
+    "name": "handleCreateTask",
+    "lineCount": 59,
+    "startLine": 17,
+    "endLine": 75,
+    "recommendation": "Función handleCreateTask tiene 59 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\crud.ts",
+    "type": "function",
+    "name": "handleUpdateTask",
+    "lineCount": 76,
+    "startLine": 80,
+    "endLine": 155,
+    "recommendation": "Función handleUpdateTask tiene 76 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\crud.ts",
+    "type": "function",
+    "name": "handleDeleteTask",
+    "lineCount": 51,
+    "startLine": 160,
+    "endLine": 210,
+    "recommendation": "Función handleDeleteTask tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\get.ts",
+    "type": "function",
+    "name": "handleGetTask",
+    "lineCount": 57,
+    "startLine": 16,
+    "endLine": 72,
+    "recommendation": "Función handleGetTask tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\tasks\\handlers\\list.ts",
+    "type": "function",
+    "name": "handleListTasks",
+    "lineCount": 140,
+    "startLine": 17,
+    "endLine": 156,
+    "recommendation": "Función handleListTasks tiene 140 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\detail.ts",
+    "type": "function",
+    "name": "getTeamDetail",
+    "lineCount": 169,
+    "startLine": 22,
+    "endLine": 190,
+    "recommendation": "Función getTeamDetail tiene 169 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\invitations.ts",
+    "type": "function",
+    "name": "acceptInvitation",
+    "lineCount": 74,
+    "startLine": 54,
+    "endLine": 127,
+    "recommendation": "Función acceptInvitation tiene 74 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\invitations.ts",
+    "type": "function",
+    "name": "createInvitation",
+    "lineCount": 62,
+    "startLine": 162,
+    "endLine": 223,
+    "recommendation": "Función createInvitation tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\invitations.ts",
+    "type": "function",
+    "name": "listEligibleAdvisors",
+    "lineCount": 68,
+    "startLine": 228,
+    "endLine": 295,
+    "recommendation": "Función listEligibleAdvisors tiene 68 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\list.ts",
+    "type": "function",
+    "name": "listTeams",
+    "lineCount": 76,
+    "startLine": 17,
+    "endLine": 92,
+    "recommendation": "Función listTeams tiene 76 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\members.ts",
+    "type": "function",
+    "name": "getTeamMember",
+    "lineCount": 51,
+    "startLine": 65,
+    "endLine": 115,
+    "recommendation": "Función getTeamMember tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\members.ts",
+    "type": "function",
+    "name": "addTeamMember",
+    "lineCount": 62,
+    "startLine": 120,
+    "endLine": 181,
+    "recommendation": "Función addTeamMember tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\membership-requests.ts",
+    "type": "file",
+    "lineCount": 358,
+    "startLine": 1,
+    "endLine": 358,
+    "recommendation": "Archivo tiene 358 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\membership-requests.ts",
+    "type": "function",
+    "name": "approveAllRequests",
+    "lineCount": 75,
+    "startLine": 57,
+    "endLine": 131,
+    "recommendation": "Función approveAllRequests tiene 75 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\membership-requests.ts",
+    "type": "function",
+    "name": "approveRequest",
+    "lineCount": 116,
+    "startLine": 136,
+    "endLine": 251,
+    "recommendation": "Función approveRequest tiene 116 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\membership-requests.ts",
+    "type": "function",
+    "name": "rejectRequest",
+    "lineCount": 62,
+    "startLine": 256,
+    "endLine": 317,
+    "recommendation": "Función rejectRequest tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\metrics.ts",
+    "type": "function",
+    "name": "getTeamMetrics",
+    "lineCount": 139,
+    "startLine": 25,
+    "endLine": 163,
+    "recommendation": "Función getTeamMetrics tiene 139 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\teams\\handlers\\metrics.ts",
+    "type": "function",
+    "name": "getMemberMetrics",
+    "lineCount": 125,
+    "startLine": 168,
+    "endLine": 292,
+    "recommendation": "Función getMemberMetrics tiene 125 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\users.ts",
+    "type": "file",
+    "lineCount": 498,
+    "startLine": 1,
+    "endLine": 498,
+    "recommendation": "Archivo tiene 498 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\routes\\yields.ts",
+    "type": "file",
+    "lineCount": 327,
+    "startLine": 1,
+    "endLine": 327,
+    "recommendation": "Archivo tiene 327 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\scripts\\assign-unassigned-contacts.ts",
+    "type": "function",
+    "name": "assignUnassignedContacts",
+    "lineCount": 53,
+    "startLine": 19,
+    "endLine": 71,
+    "recommendation": "Función assignUnassignedContacts tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\scripts\\verify-aum-import.ts",
+    "type": "file",
+    "lineCount": 763,
+    "startLine": 1,
+    "endLine": 763,
+    "recommendation": "Archivo tiene 763 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\scripts\\verify-aum-import.ts",
+    "type": "function",
+    "name": "verifyImport",
+    "lineCount": 298,
+    "startLine": 250,
+    "endLine": 547,
+    "recommendation": "Función verifyImport tiene 298 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\scripts\\verify-contacts-assignment.ts",
+    "type": "function",
+    "name": "verifyContactsAssignment",
+    "lineCount": 127,
+    "startLine": 29,
+    "endLine": 155,
+    "recommendation": "Función verifyContactsAssignment tiene 127 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aum\\monthly-snapshots.ts",
+    "type": "function",
+    "name": "upsertSingleMonthlySnapshot",
+    "lineCount": 62,
+    "startLine": 45,
+    "endLine": 106,
+    "recommendation": "Función upsertSingleMonthlySnapshot tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aum\\monthly-snapshots.ts",
+    "type": "function",
+    "name": "upsertAumMonthlySnapshots",
+    "lineCount": 66,
+    "startLine": 130,
+    "endLine": 195,
+    "recommendation": "Función upsertAumMonthlySnapshots tiene 66 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aum\\update-row.ts",
+    "type": "function",
+    "name": "updateExistingRow",
+    "lineCount": 56,
+    "startLine": 113,
+    "endLine": 168,
+    "recommendation": "Función updateExistingRow tiene 56 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aum\\upsert.ts",
+    "type": "function",
+    "name": "upsertAumRows",
+    "lineCount": 77,
+    "startLine": 23,
+    "endLine": 99,
+    "recommendation": "Función upsertAumRows tiene 77 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aumMatcher.ts",
+    "type": "file",
+    "lineCount": 448,
+    "startLine": 1,
+    "endLine": 448,
+    "recommendation": "Archivo tiene 448 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aumParser.ts",
+    "type": "file",
+    "lineCount": 416,
+    "startLine": 1,
+    "endLine": 416,
+    "recommendation": "Archivo tiene 416 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aumParser.ts",
+    "type": "function",
+    "name": "parseExcelFile",
+    "lineCount": 85,
+    "startLine": 57,
+    "endLine": 141,
+    "recommendation": "Función parseExcelFile tiene 85 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\services\\aumParser.ts",
+    "type": "function",
+    "name": "parseCsvFile",
+    "lineCount": 68,
+    "startLine": 146,
+    "endLine": 213,
+    "recommendation": "Función parseCsvFile tiene 68 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-mapper.ts",
+    "type": "file",
+    "lineCount": 415,
+    "startLine": 1,
+    "endLine": 415,
+    "recommendation": "Archivo tiene 415 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-mapper.ts",
+    "type": "function",
+    "name": "mapAumColumns",
+    "lineCount": 374,
+    "startLine": 33,
+    "endLine": 406,
+    "recommendation": "Función mapAumColumns tiene 374 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-pattern-matcher.ts",
+    "type": "function",
+    "name": "findColumnByPatterns",
+    "lineCount": 64,
+    "startLine": 20,
+    "endLine": 83,
+    "recommendation": "Función findColumnByPatterns tiene 64 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-validator.ts",
+    "type": "file",
+    "lineCount": 308,
+    "startLine": 1,
+    "endLine": 308,
+    "recommendation": "Archivo tiene 308 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-validator.ts",
+    "type": "function",
+    "name": "safeToNumber",
+    "lineCount": 122,
+    "startLine": 70,
+    "endLine": 191,
+    "recommendation": "Función safeToNumber tiene 122 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\aum-columns\\column-validator.ts",
+    "type": "function",
+    "name": "validateColumnMapping",
+    "lineCount": 84,
+    "startLine": 216,
+    "endLine": 299,
+    "recommendation": "Función validateColumnMapping tiene 84 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\batch-loading.ts",
+    "type": "file",
+    "lineCount": 399,
+    "startLine": 1,
+    "endLine": 399,
+    "recommendation": "Archivo tiene 399 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\batch-loading.ts",
+    "type": "function",
+    "name": "batchLoadContactTags",
+    "lineCount": 52,
+    "startLine": 34,
+    "endLine": 85,
+    "recommendation": "Función batchLoadContactTags tiene 52 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\cache.ts",
+    "type": "file",
+    "lineCount": 439,
+    "startLine": 1,
+    "endLine": 439,
+    "recommendation": "Archivo tiene 439 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\cache.ts",
+    "type": "function",
+    "name": "createCacheWrapper",
+    "lineCount": 56,
+    "startLine": 100,
+    "endLine": 155,
+    "recommendation": "Función createCacheWrapper tiene 56 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\cache.ts",
+    "type": "function",
+    "name": "getCacheHealth",
+    "lineCount": 64,
+    "startLine": 375,
+    "endLine": 438,
+    "recommendation": "Función getCacheHealth tiene 64 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\circuit-breaker.ts",
+    "type": "class",
+    "name": "CircuitBreaker",
+    "lineCount": 174,
+    "startLine": 54,
+    "endLine": 227,
+    "recommendation": "Clase CircuitBreaker tiene 174 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\csv-aum-updater.ts",
+    "type": "file",
+    "lineCount": 584,
+    "startLine": 1,
+    "endLine": 584,
+    "recommendation": "Archivo tiene 584 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\csv-aum-updater.ts",
+    "type": "function",
+    "name": "loadAumCsv",
+    "lineCount": 61,
+    "startLine": 111,
+    "endLine": 171,
+    "recommendation": "Función loadAumCsv tiene 61 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\csv-aum-updater.ts",
+    "type": "function",
+    "name": "loadClusterReport",
+    "lineCount": 56,
+    "startLine": 176,
+    "endLine": 231,
+    "recommendation": "Función loadClusterReport tiene 56 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\db-logger.ts",
+    "type": "file",
+    "lineCount": 442,
+    "startLine": 1,
+    "endLine": 442,
+    "recommendation": "Archivo tiene 442 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\db-logger.ts",
+    "type": "function",
+    "name": "createDrizzleLogger",
+    "lineCount": 53,
+    "startLine": 241,
+    "endLine": 293,
+    "recommendation": "Función createDrizzleLogger tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\db-logger.ts",
+    "type": "function",
+    "name": "updateAggregatedMetrics",
+    "lineCount": 58,
+    "startLine": 357,
+    "endLine": 414,
+    "recommendation": "Función updateAggregatedMetrics tiene 58 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\explain-analyzer.ts",
+    "type": "function",
+    "name": "analyzeTableForIndexes",
+    "lineCount": 59,
+    "startLine": 208,
+    "endLine": 266,
+    "recommendation": "Función analyzeTableForIndexes tiene 59 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\file-upload.ts",
+    "type": "file",
+    "lineCount": 419,
+    "startLine": 1,
+    "endLine": 419,
+    "recommendation": "Archivo tiene 419 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\http-client.ts",
+    "type": "class",
+    "name": "HttpClient",
+    "lineCount": 166,
+    "startLine": 33,
+    "endLine": 198,
+    "recommendation": "Clase HttpClient tiene 166 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\pipeline-stages.ts",
+    "type": "function",
+    "name": "ensureDefaultPipelineStages",
+    "lineCount": 57,
+    "startLine": 99,
+    "endLine": 155,
+    "recommendation": "Función ensureDefaultPipelineStages tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\query-analysis.ts",
+    "type": "function",
+    "name": "explainAnalyze",
+    "lineCount": 59,
+    "startLine": 58,
+    "endLine": 116,
+    "recommendation": "Función explainAnalyze tiene 59 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\query-analysis.ts",
+    "type": "function",
+    "name": "formatPlanAsText",
+    "lineCount": 52,
+    "startLine": 139,
+    "endLine": 190,
+    "recommendation": "Función formatPlanAsText tiene 52 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\query-analyzer.ts",
+    "type": "function",
+    "name": "analyzeQueries",
+    "lineCount": 68,
+    "startLine": 29,
+    "endLine": 96,
+    "recommendation": "Función analyzeQueries tiene 68 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\query-analyzer.ts",
+    "type": "function",
+    "name": "generateTextReport",
+    "lineCount": 53,
+    "startLine": 101,
+    "endLine": 153,
+    "recommendation": "Función generateTextReport tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\api\\src\\utils\\rate-limiter.ts",
+    "type": "class",
+    "name": "RateLimiter",
+    "lineCount": 118,
+    "startLine": 37,
+    "endLine": 154,
+    "recommendation": "Clase RateLimiter tiene 118 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\api\\src\\__tests__\\helpers\\test-db.ts",
+    "type": "function",
+    "name": "cleanupTestDatabase",
+    "lineCount": 77,
+    "startLine": 66,
+    "endLine": 142,
+    "recommendation": "Función cleanupTestDatabase tiene 77 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\admin\\aum\\components\\FileUploader.tsx",
+    "type": "function",
+    "name": "handleUpload",
+    "lineCount": 95,
+    "startLine": 108,
+    "endLine": 202,
+    "recommendation": "Función handleUpload tiene 95 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\admin\\aum\\rows\\hooks\\useAumRowsState.ts",
+    "type": "function",
+    "name": "useAumRowsState",
+    "lineCount": 80,
+    "startLine": 42,
+    "endLine": 121,
+    "recommendation": "Función useAumRowsState tiene 80 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\admin\\users\\page.tsx",
+    "type": "file",
+    "lineCount": 367,
+    "startLine": 1,
+    "endLine": 367,
+    "recommendation": "Archivo tiene 367 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\analytics\\page.tsx",
+    "type": "file",
+    "lineCount": 310,
+    "startLine": 1,
+    "endLine": 310,
+    "recommendation": "Archivo tiene 310 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\auth\\useRequireAuth.ts",
+    "type": "function",
+    "name": "useRequireAuth",
+    "lineCount": 66,
+    "startLine": 9,
+    "endLine": 74,
+    "recommendation": "Función useRequireAuth tiene 66 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\capacitaciones\\CapacitacionesList.tsx",
+    "type": "file",
+    "lineCount": 363,
+    "startLine": 1,
+    "endLine": 363,
+    "recommendation": "Archivo tiene 363 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\components\\AssetSearcher.tsx",
+    "type": "file",
+    "lineCount": 348,
+    "startLine": 1,
+    "endLine": 348,
+    "recommendation": "Archivo tiene 348 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\components\\AssetSearcher.tsx",
+    "type": "function",
+    "name": "handleDirectSymbol",
+    "lineCount": 75,
+    "startLine": 170,
+    "endLine": 244,
+    "recommendation": "Función handleDirectSymbol tiene 75 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\components\\bloomberg\\OHLCVChart.tsx",
+    "type": "function",
+    "name": "fetchData",
+    "lineCount": 51,
+    "startLine": 56,
+    "endLine": 106,
+    "recommendation": "Función fetchData tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\components\\bloomberg\\PortfolioPerformanceMetrics.tsx",
+    "type": "function",
+    "name": "fetchPerformance",
+    "lineCount": 73,
+    "startLine": 45,
+    "endLine": 117,
+    "recommendation": "Función fetchPerformance tiene 73 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\components\\PerformanceChart.tsx",
+    "type": "file",
+    "lineCount": 373,
+    "startLine": 1,
+    "endLine": 373,
+    "recommendation": "Archivo tiene 373 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\components\\PortfolioComparator.tsx",
+    "type": "file",
+    "lineCount": 437,
+    "startLine": 1,
+    "endLine": 437,
+    "recommendation": "Archivo tiene 437 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\metrics\\MetricsCharts.tsx",
+    "type": "file",
+    "lineCount": 359,
+    "startLine": 1,
+    "endLine": 359,
+    "recommendation": "Archivo tiene 359 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\metrics\\MetricsView.tsx",
+    "type": "file",
+    "lineCount": 368,
+    "startLine": 1,
+    "endLine": 368,
+    "recommendation": "Archivo tiene 368 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\new\\page.tsx",
+    "type": "file",
+    "lineCount": 604,
+    "startLine": 1,
+    "endLine": 604,
+    "recommendation": "Archivo tiene 604 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\new\\page.tsx",
+    "type": "function",
+    "name": "handleSubmit",
+    "lineCount": 85,
+    "startLine": 119,
+    "endLine": 203,
+    "recommendation": "Función handleSubmit tiene 85 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\page.tsx",
+    "type": "file",
+    "lineCount": 512,
+    "startLine": 1,
+    "endLine": 512,
+    "recommendation": "Archivo tiene 512 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\[id]\\page.tsx",
+    "type": "file",
+    "lineCount": 333,
+    "startLine": 1,
+    "endLine": 333,
+    "recommendation": "Archivo tiene 333 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\[id]\\page.tsx",
+    "type": "function",
+    "name": "getContactData",
+    "lineCount": 58,
+    "startLine": 49,
+    "endLine": 106,
+    "recommendation": "Función getContactData tiene 58 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\[id]\\tags\\[tagId]\\TagDetailsForm.tsx",
+    "type": "function",
+    "name": "handleSubmit",
+    "lineCount": 86,
+    "startLine": 125,
+    "endLine": 210,
+    "recommendation": "Función handleSubmit tiene 86 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\contacts\\[id]\\TasksSection.tsx",
+    "type": "file",
+    "lineCount": 333,
+    "startLine": 1,
+    "endLine": 333,
+    "recommendation": "Archivo tiene 333 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\pipeline\\PipelineBoardClient.tsx",
+    "type": "file",
+    "lineCount": 414,
+    "startLine": 1,
+    "endLine": 414,
+    "recommendation": "Archivo tiene 414 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\plandecarrera\\page.tsx",
+    "type": "file",
+    "lineCount": 542,
+    "startLine": 1,
+    "endLine": 542,
+    "recommendation": "Archivo tiene 542 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\portfolios\\components\\BenchmarksSection.tsx",
+    "type": "file",
+    "lineCount": 368,
+    "startLine": 1,
+    "endLine": 368,
+    "recommendation": "Archivo tiene 368 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\portfolios\\[id]\\hooks\\usePortfolioData.ts",
+    "type": "function",
+    "name": "usePortfolioData",
+    "lineCount": 53,
+    "startLine": 12,
+    "endLine": 64,
+    "recommendation": "Función usePortfolioData tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\portfolios\\[id]\\hooks\\usePortfolioLineActions.ts",
+    "type": "function",
+    "name": "usePortfolioLineActions",
+    "lineCount": 149,
+    "startLine": 38,
+    "endLine": 186,
+    "recommendation": "Función usePortfolioLineActions tiene 149 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\profile\\page.tsx",
+    "type": "file",
+    "lineCount": 301,
+    "startLine": 1,
+    "endLine": 301,
+    "recommendation": "Archivo tiene 301 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\register\\page.tsx",
+    "type": "function",
+    "name": "handleSubmit",
+    "lineCount": 58,
+    "startLine": 71,
+    "endLine": 128,
+    "recommendation": "Función handleSubmit tiene 58 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\app\\teams\\components\\TeamsClient.tsx",
+    "type": "file",
+    "lineCount": 393,
+    "startLine": 1,
+    "endLine": 393,
+    "recommendation": "Archivo tiene 393 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\app\\teams\\[id]\\page.tsx",
+    "type": "file",
+    "lineCount": 516,
+    "startLine": 1,
+    "endLine": 516,
+    "recommendation": "Archivo tiene 516 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\api\\aum.ts",
+    "type": "file",
+    "lineCount": 306,
+    "startLine": 1,
+    "endLine": 306,
+    "recommendation": "Archivo tiene 306 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\api\\client.ts",
+    "type": "class",
+    "name": "ApiClient",
+    "lineCount": 221,
+    "startLine": 22,
+    "endLine": 242,
+    "recommendation": "Clase ApiClient tiene 221 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\web\\lib\\api-error.ts",
+    "type": "class",
+    "name": "ApiError",
+    "lineCount": 112,
+    "startLine": 9,
+    "endLine": 120,
+    "recommendation": "Clase ApiError tiene 112 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\web\\lib\\api-hooks.ts",
+    "type": "file",
+    "lineCount": 602,
+    "startLine": 1,
+    "endLine": 602,
+    "recommendation": "Archivo tiene 602 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\debug-console\\debug-console.ts",
+    "type": "file",
+    "lineCount": 381,
+    "startLine": 1,
+    "endLine": 381,
+    "recommendation": "Archivo tiene 381 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\debug-console\\debug-console.ts",
+    "type": "class",
+    "name": "DebugConsole",
+    "lineCount": 350,
+    "startLine": 30,
+    "endLine": 379,
+    "recommendation": "Clase DebugConsole tiene 350 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\web\\lib\\debug-console\\error-handlers.ts",
+    "type": "function",
+    "name": "setupConsoleErrorInterceptor",
+    "lineCount": 53,
+    "startLine": 71,
+    "endLine": 123,
+    "recommendation": "Función setupConsoleErrorInterceptor tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\lib\\debug-console\\index.ts",
+    "type": "function",
+    "name": "initDebugConsole",
+    "lineCount": 67,
+    "startLine": 31,
+    "endLine": 97,
+    "recommendation": "Función initDebugConsole tiene 67 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\lib\\debug-console\\ui\\panel-builder.ts",
+    "type": "file",
+    "lineCount": 422,
+    "startLine": 1,
+    "endLine": 422,
+    "recommendation": "Archivo tiene 422 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\logger.ts",
+    "type": "file",
+    "lineCount": 362,
+    "startLine": 1,
+    "endLine": 362,
+    "recommendation": "Archivo tiene 362 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  },
+  {
+    "file": "apps\\web\\lib\\logger.ts",
+    "type": "class",
+    "name": "ClientLogger",
+    "lineCount": 286,
+    "startLine": 70,
+    "endLine": 355,
+    "recommendation": "Clase ClientLogger tiene 286 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos."
+  },
+  {
+    "file": "apps\\web\\lib\\utils\\csv-export.ts",
+    "type": "function",
+    "name": "exportContactsToCSV",
+    "lineCount": 69,
+    "startLine": 123,
+    "endLine": 191,
+    "recommendation": "Función exportContactsToCSV tiene 69 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\lib\\utils\\webhook-export.ts",
+    "type": "function",
+    "name": "sendContactsToWebhook",
+    "lineCount": 80,
+    "startLine": 34,
+    "endLine": 113,
+    "recommendation": "Función sendContactsToWebhook tiene 80 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "apps\\web\\middleware.ts",
+    "type": "function",
+    "name": "middleware",
+    "lineCount": 82,
+    "startLine": 26,
+    "endLine": 107,
+    "recommendation": "Función middleware tiene 82 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\scripts\\partition-broker-transactions.ts",
+    "type": "function",
+    "name": "partitionBrokerTransactions",
+    "lineCount": 194,
+    "startLine": 25,
+    "endLine": 218,
+    "recommendation": "Función partitionBrokerTransactions tiene 194 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seed-all.ts",
+    "type": "function",
+    "name": "seedPipelineStages",
+    "lineCount": 101,
+    "startLine": 24,
+    "endLine": 124,
+    "recommendation": "Función seedPipelineStages tiene 101 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seed-all.ts",
+    "type": "function",
+    "name": "seedLookupTables",
+    "lineCount": 111,
+    "startLine": 129,
+    "endLine": 239,
+    "recommendation": "Función seedLookupTables tiene 111 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seed-benchmarks.ts",
+    "type": "function",
+    "name": "seedBenchmarks",
+    "lineCount": 232,
+    "startLine": 11,
+    "endLine": 242,
+    "recommendation": "Función seedBenchmarks tiene 232 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seed-pipeline-stages.ts",
+    "type": "function",
+    "name": "seedPipelineStages",
+    "lineCount": 101,
+    "startLine": 17,
+    "endLine": 117,
+    "recommendation": "Función seedPipelineStages tiene 101 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seed.ts",
+    "type": "function",
+    "name": "seed",
+    "lineCount": 72,
+    "startLine": 10,
+    "endLine": 81,
+    "recommendation": "Función seed tiene 72 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\contacts.ts",
+    "type": "function",
+    "name": "createContact",
+    "lineCount": 63,
+    "startLine": 60,
+    "endLine": 122,
+    "recommendation": "Función createContact tiene 63 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\portfolios.ts",
+    "type": "function",
+    "name": "seedPortfolios",
+    "lineCount": 67,
+    "startLine": 64,
+    "endLine": 130,
+    "recommendation": "Función seedPortfolios tiene 67 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\tags.ts",
+    "type": "function",
+    "name": "seedTags",
+    "lineCount": 60,
+    "startLine": 50,
+    "endLine": 109,
+    "recommendation": "Función seedTags tiene 60 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\tasks-notes.ts",
+    "type": "function",
+    "name": "seedTasks",
+    "lineCount": 57,
+    "startLine": 50,
+    "endLine": 106,
+    "recommendation": "Función seedTasks tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\teams.ts",
+    "type": "function",
+    "name": "seedTeams",
+    "lineCount": 83,
+    "startLine": 17,
+    "endLine": 99,
+    "recommendation": "Función seedTeams tiene 83 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\db\\src\\seeds\\users.ts",
+    "type": "function",
+    "name": "seedUsers",
+    "lineCount": 93,
+    "startLine": 15,
+    "endLine": 107,
+    "recommendation": "Función seedUsers tiene 93 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas."
+  },
+  {
+    "file": "packages\\ui\\src\\components\\feedback\\DataTable.tsx",
+    "type": "file",
+    "lineCount": 303,
+    "startLine": 1,
+    "endLine": 303,
+    "recommendation": "Archivo tiene 303 líneas (límite: 300). Considerar dividir en módulos más pequeños."
+  }
+]

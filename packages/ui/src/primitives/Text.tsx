@@ -8,20 +8,21 @@ export interface TextProps {
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
   color?: 'primary' | 'secondary' | 'muted';
-  [key: string]: any;
+  // Allow all standard HTML attributes
+  [key: string]: unknown;
 }
 
-export function Text({ 
-  as: Component = 'p', 
-  className, 
-  children, 
+export function Text({
+  as: Component = 'p',
+  className,
+  children,
   size = 'base',
   weight = 'normal',
   color = 'primary',
-  ...props 
+  ...props
 }: TextProps) {
   return (
-    <Component 
+    <Component
       className={cn(
         // Size classes
         {
@@ -45,7 +46,7 @@ export function Text({
           'text-text-muted': color === 'muted',
         },
         className
-      )} 
+      )}
       {...props}
     >
       {children}

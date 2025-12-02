@@ -9,6 +9,8 @@
 import { Logger } from 'pino';
 import { db } from '@cactus/db';
 import { loggedTransaction } from './db-logger';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type * as schema from '@cactus/db/schema';
 
 /**
  * Error codes de PostgreSQL que indican errores transitorios (retry-safe)
@@ -68,10 +70,12 @@ export interface TransactionOptions {
  * );
  * ```
  */
+type DatabaseTransaction = NodePgDatabase<typeof schema>;
+
 export async function transactionWithLogging<T>(
   logger: Logger,
   operation: string,
-  transactionFn: (tx: ReturnType<typeof db>) => Promise<T>,
+  transactionFn: (tx: DatabaseTransaction) => Promise<T>,
   options: TransactionOptions = {}
 ): Promise<T> {
   const {
@@ -97,7 +101,8 @@ export async function transactionWithLogging<T>(
             }, timeout);
           });
 
-          const transactionPromise = db().transaction(async (tx: any) => {
+          // Use properly typed transaction - DatabaseTransaction matches the type returned by db()
+          const transactionPromise = db().transaction(async (tx: DatabaseTransaction) => {
             return await transactionFn(tx);
           });
 

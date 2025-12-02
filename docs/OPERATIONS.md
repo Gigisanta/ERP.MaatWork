@@ -91,7 +91,7 @@ pnpm dev:kill
 **URLs de Desarrollo:**
 - Web: http://localhost:3000
 - API: http://localhost:3001
-- Analytics: http://localhost:3002
+- Analytics: http://localhost:3002 (ajusta `ANALYTICS_PORT` si el puerto está ocupado)
 - N8N: http://localhost:5678
 
 ### Verificar Salud
@@ -399,7 +399,7 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Soluciones:**
 1. Verificar `apps/analytics-service` está corriendo:
    ```bash
-   curl http://localhost:3002/health
+   curl http://localhost:3002/health  # Ajusta el puerto si sobrescribiste ANALYTICS_PORT
    ```
 2. Verificar conectividad entre API y analytics-service
 3. Los timeouts protegerán la API (15s normal, 5min backfill)

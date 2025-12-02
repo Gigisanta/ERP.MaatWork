@@ -1,217 +1,53 @@
 /**
- * Barrel export para todos los métodos de API
+ * API Module - Barrel Export
  * 
- * AI_DECISION: Usar exports específicos en lugar de export * para tree-shaking
- * Justificación: Next.js no puede tree-shake componentes no usados con export *
- * Impacto: Bundle size reducido ~30-50KB eliminando componentes no usados
+ * Exports all API functions and the ApiClient:
  * 
- * Uso:
- *   import { getPortfolios, searchInstruments, apiClient } from '@/lib/api';
+ * Client components (refactored from api-client.ts):
+ * - client.ts - Main ApiClient class
+ * - auth-manager.ts - Token refresh management
+ * - retry-handler.ts - Retry logic with exponential backoff
+ * - request-builder.ts - Header building, body serialization
+ * - types.ts - Shared types
+ * 
+ * Domain-specific API functions:
+ * - analytics.ts, aum.ts, automations.ts, benchmarks.ts, bloomberg.ts
+ * - broker-accounts.ts, capacitaciones.ts, career-plan.ts, contacts.ts
+ * - instruments.ts, metrics.ts, notes.ts, notifications.ts, pipeline.ts
+ * - portfolios.ts, settings.ts, tags.ts, tasks.ts, teams.ts, users.ts
  */
 
-// Re-export client
-export { apiClient, ApiError } from '../api-client';
-export type { ApiResponse } from '../api-client';
+// ApiClient and related
+export { ApiClient } from './client';
+export type { RequestOptions, RequestConfig } from './types';
 
-// Portfolio methods
-export {
-  getPortfolios,
-  getPortfolioById,
-  getPortfolioLines,
-  getPortfolioLinesBatch,
-  createPortfolio,
-  updatePortfolio,
-  deletePortfolio,
-  addPortfolioLine,
-  updatePortfolioLine,
-  deletePortfolioLine
-} from './portfolios';
+// Re-export commonly used items from api-error
+export { ApiError } from '../api-error';
+export type { ApiResponse } from '@/types';
 
-// Benchmark methods
-export {
-  getBenchmarks,
-  getBenchmarkById,
-  getBenchmarkComponentsBatch,
-  createBenchmark,
-  updateBenchmark,
-  deleteBenchmark,
-  addBenchmarkComponent,
-  updateBenchmarkComponent,
-  deleteBenchmarkComponent
-} from './benchmarks';
+// Singleton instance
+import { ApiClient } from './client';
+export const apiClient = new ApiClient();
 
-// Instrument methods
-export {
-  searchInstruments,
-  validateSymbol,
-  getInstruments,
-  getInstrumentById,
-  createInstrument,
-  updateInstrument,
-  deleteInstrument
-} from './instruments';
-
-// Analytics methods
-export {
-  getDashboardKPIs,
-  getPortfolioPerformance,
-  comparePortfolios
-} from './analytics';
-
-// AUM methods
-export {
-  getAumRows,
-  uploadAumFile,
-  getAumFilePreview,
-  getAumFileExportUrl,
-  matchAumRow,
-  getAumDuplicates,
-  commitAumFile,
-  uploadAdvisorMapping
-} from './aum';
-
-// Contacts methods
-export {
-  getContacts,
-  getContactById,
-  createContact,
-  updateContact,
-  deleteContact,
-  updateContactField,
-  assignPortfolioToContact,
-  removePortfolioAssignment,
-  updatePortfolioAssignmentStatus
-} from './contacts';
-
-// Tags methods
-export {
-  getTags,
-  createTag,
-  updateTag,
-  deleteTag,
-  updateContactTags
-} from './tags';
-
-// Pipeline methods
-export {
-  getPipelineStages,
-  moveContactToStage,
-  getPipelineBoard
-} from './pipeline';
-
-// Tasks methods
-export {
-  getTasks,
-  createTask,
-  updateTask,
-  deleteTask
-} from './tasks';
-
-// Notes methods
-export {
-  getNotes,
-  createNote,
-  updateNote,
-  deleteNote
-} from './notes';
-
-// Broker accounts methods
-export {
-  getBrokerAccounts,
-  createBrokerAccount,
-  deleteBrokerAccount
-} from './broker-accounts';
-
-// Users methods
-export {
-  getAdvisors,
-  getUsers,
-  getUserById,
-  getCurrentUser,
-  updateUserProfile,
-  changePassword,
-  getManagers,
-  updateUserRole,
-  updateUserStatus,
-  deleteUser,
-  getPendingUsers,
-  approveUser,
-  rejectUser
-} from './users';
-
-// Teams methods
-export {
-  getTeams,
-  getTeamById,
-  getTeamDetail,
-  getTeamMemberById,
-  createTeam,
-  updateTeam,
-  deleteTeam,
-  addTeamMember,
-  removeTeamMember,
-  getTeamAdvisors,
-  getTeamMembers,
-  createTeamInvitation,
-  getMembershipRequests,
-  respondToMembershipRequest,
-  getPendingInvitations,
-  respondToInvitation,
-  inviteTeamMember,
-  getAllTeamMembers,
-  getTeamMetrics,
-  getTeamMemberMetrics
-} from './teams';
-
-// Metrics methods
-export {
-  getContactsMetrics,
-  getMonthlyGoals,
-  saveMonthlyGoals
-} from './metrics';
-
-// Capacitaciones methods
-export {
-  getCapacitaciones,
-  getCapacitacionById,
-  createCapacitacion,
-  updateCapacitacion,
-  deleteCapacitacion,
-  importCapacitacionesCSV
-} from './capacitaciones';
-
-// Automations methods
-export {
-  getAutomationConfigs,
-  getAutomationConfigById,
-  getAutomationConfigByName,
-  createAutomationConfig,
-  updateAutomationConfig,
-  deleteAutomationConfig
-} from './automations';
-
-// Bloomberg methods
-export {
-  getAssetSnapshot,
-  getOHLCV,
-  getMacroSeries,
-  getYieldCurve,
-  getYieldSpreads,
-  getMacroSeriesList
-} from './bloomberg';
-
-// Export types from teams
-export type {
-  CreateTeamRequest,
-  AddTeamMemberRequest,
-  TeamDetailResponse
-} from './teams';
-
-// Export types from bloomberg
-export type {
-  AssetSnapshot,
-  OHLCVPoint,
-  MacroSeriesPoint,
-  YieldPoint,
-  YieldCurve
-} from './bloomberg';
+// Domain-specific API functions
+export * from './analytics';
+export * from './aum';
+export * from './aum-validation';
+export * from './automations';
+export * from './benchmarks';
+export * from './bloomberg';
+export * from './broker-accounts';
+export * from './capacitaciones';
+export * from './career-plan';
+export * from './contacts';
+export * from './instruments';
+export * from './metrics';
+export * from './notes';
+// notifications.ts is empty - no exports needed
+export * from './pipeline';
+export * from './portfolios';
+export * from './settings';
+export * from './tags';
+export * from './tasks';
+export * from './teams';
+export * from './users';

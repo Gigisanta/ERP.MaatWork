@@ -2,11 +2,19 @@ import React from 'react';
 import Icon, { type IconName } from '../Icon';
 import { cn } from '../../utils/cn';
 
+/**
+ * Props for the Alert component
+ */
 export interface AlertProps {
+  /** Visual variant of the alert */
   variant?: 'info' | 'success' | 'warning' | 'error';
+  /** Optional title displayed above the alert content */
   title?: string;
+  /** Alert content */
   children: React.ReactNode;
+  /** Whether to show the icon (default: true) */
   icon?: boolean;
+  /** Additional CSS classes */
   className?: string;
 }
 
@@ -33,6 +41,20 @@ const variantConfig = {
   }
 };
 
+/**
+ * Alert component for displaying informational, success, warning, or error messages
+ * 
+ * @param props - Alert component props
+ * @param ref - Forwarded ref to the alert container element
+ * @returns Alert component with appropriate styling and icon based on variant
+ * 
+ * @example
+ * ```tsx
+ * <Alert variant="error" title="Error">
+ *   Something went wrong
+ * </Alert>
+ * ```
+ */
 export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ variant = 'info', title, children, icon = true, className, ...props }, ref) => {
     const config = variantConfig[variant];
@@ -74,7 +96,13 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
 
 Alert.displayName = 'Alert';
 
-// Alert Title component
+/**
+ * Alert Title component - displays a title within an alert
+ * 
+ * @param props - Standard HTML heading attributes
+ * @param ref - Forwarded ref to the heading element
+ * @returns Styled heading element for alert titles
+ */
 export const AlertTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
@@ -88,7 +116,13 @@ export const AlertTitle = React.forwardRef<
 
 AlertTitle.displayName = 'AlertTitle';
 
-// Alert Description component
+/**
+ * Alert Description component - displays description text within an alert
+ * 
+ * @param props - Standard HTML div attributes
+ * @param ref - Forwarded ref to the div element
+ * @returns Styled div element for alert descriptions
+ */
 export const AlertDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>

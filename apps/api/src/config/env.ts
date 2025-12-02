@@ -13,26 +13,31 @@ const envPath = resolve(process.cwd(), '.env');
 const result = config({ path: envPath });
 
 if (result.error && existsSync(envPath)) {
-  // Si existe el archivo pero falló la carga, advertir
+  // AI_DECISION: Usar console.warn en lugar de logger
+  // Justificación: Este archivo se carga antes de que el logger esté disponible
+  // Impacto: Logging apropiado durante inicialización sin dependencias circulares
   console.warn(`Warning: Could not load .env file from ${envPath}: ${result.error.message}`);
 }
 
 // Validar variables requeridas
 const required = ['DATABASE_URL', 'PORT'];
 const requiredInProduction = ['JWT_SECRET'];
-const missing = required.filter(key => !process.env[key]);
+const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
   const message = `Missing required environment variables: ${missing.join(', ')}`;
   if ((process.env.NODE_ENV || 'development') === 'production') {
     throw new Error(message);
   } else {
+    // AI_DECISION: Usar console.warn en lugar de logger
+    // Justificación: Este archivo se carga antes de que el logger esté disponible
+    // Impacto: Logging apropiado durante inicialización sin dependencias circulares
     console.warn(message);
   }
 }
 
 if ((process.env.NODE_ENV || 'development') === 'production') {
-  const missingProd = requiredInProduction.filter(key => !process.env[key]);
+  const missingProd = requiredInProduction.filter((key) => !process.env[key]);
   if (missingProd.length > 0) {
     throw new Error(`Missing required production env vars: ${missingProd.join(', ')}`);
   }
@@ -51,6 +56,5 @@ export const env = {
   N8N_ENABLED: process.env.N8N_ENABLED !== 'false',
   N8N_WEBHOOK_BATCH_SIZE: parseInt(process.env.N8N_WEBHOOK_BATCH_SIZE || '100', 10),
   N8N_WEBHOOK_RATE_LIMIT: parseInt(process.env.N8N_WEBHOOK_RATE_LIMIT || '10', 10),
-  N8N_WEBHOOK_TIMEOUT: parseInt(process.env.N8N_WEBHOOK_TIMEOUT || '30000', 10)
+  N8N_WEBHOOK_TIMEOUT: parseInt(process.env.N8N_WEBHOOK_TIMEOUT || '30000', 10),
 };
-

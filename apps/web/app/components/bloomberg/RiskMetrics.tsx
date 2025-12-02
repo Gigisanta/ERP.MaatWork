@@ -20,7 +20,10 @@ export default function RiskMetrics({ symbol }: RiskMetricsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch risk metrics from API
+    // FUTURE_FEATURE: Requires historical price data and risk calculations
+    // Metrics needed: Sharpe ratio, Sortino ratio, Max Drawdown, Beta, Volatility
+    // Dependencies: Sufficient price history in DB, analytics-service calculations
+    // Status: Placeholder UI ready, risk calculations can use cactus_ingestors/utils/risk.py
     setLoading(false);
   }, [symbol]);
 

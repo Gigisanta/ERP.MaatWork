@@ -22,9 +22,9 @@ import {
   Alert,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { useTasks } from '../../../lib/api-hooks';
+import { useTasks } from '@/lib/api-hooks';
 import { createTask, deleteTask } from '@/lib/api';
-import { logger, toLogContext } from '../../../lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { Task } from '@/types';
 
 // AI_DECISION: Extracted to client island for task management isolation

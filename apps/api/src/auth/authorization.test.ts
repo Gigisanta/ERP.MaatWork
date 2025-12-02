@@ -1,6 +1,6 @@
 /**
  * Tests para authorization utilities
- * 
+ *
  * AI_DECISION: Tests unitarios para RBAC y control de acceso
  * Justificación: Validación crítica de seguridad y aislamiento de datos
  * Impacto: Prevenir accesos no autorizados y asegurar data isolation
@@ -16,7 +16,7 @@ import {
   canAssignContactTo,
   canAccessAumFile,
   getTeamMembers,
-  getUserTeams
+  getUserTeams,
 } from './authorization';
 import type { UserRole } from './types';
 import { createMockDbWithResponses } from '../__tests__/helpers/mock-db';
@@ -31,13 +31,16 @@ vi.mock('@cactus/db', async () => {
     teamMembership: { userId: 'teamMembership.userId', teamId: 'teamMembership.teamId' },
     teams: { id: 'teams.id', name: 'teams.name', managerUserId: 'teams.managerUserId' },
     contacts: { id: 'contacts.id', assignedAdvisorId: 'contacts.assignedAdvisorId' },
-    aumImportFiles: { id: 'aumImportFiles.id', uploadedByUserId: 'aumImportFiles.uploadedByUserId' },
+    aumImportFiles: {
+      id: 'aumImportFiles.id',
+      uploadedByUserId: 'aumImportFiles.uploadedByUserId',
+    },
     eq: vi.fn((col, val) => ({ type: 'eq', col, val })),
     sql: vi.fn((strings, ...values) => ({ type: 'sql', strings, values })),
     inArray: vi.fn((col, vals) => ({ type: 'inArray', col, vals })),
     isNull: vi.fn((col) => ({ type: 'isNull', col })),
     and: vi.fn((...conds) => ({ type: 'and', conds })),
-    or: vi.fn((...conds) => ({ type: 'or', conds }))
+    or: vi.fn((...conds) => ({ type: 'or', conds })),
   };
 });
 
@@ -54,13 +57,15 @@ describe('getUserAccessScope', () => {
       const role: UserRole = 'admin';
 
       // Mock user exists: db().select().from(users).where().limit(1)
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'admin@test.com', role: 'admin' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'admin@test.com', role: 'admin' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const scope = await getUserAccessScope(userId, role);
@@ -82,16 +87,17 @@ describe('getUserAccessScope', () => {
       const teamMemberId2 = 'member-2';
 
       // Mock user query: db().select().from(users).where().limit(1)
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
 
       // Mock team members query: db().select().from(users).innerJoin().innerJoin().where()
-      const mockTeamWhere = vi.fn().mockResolvedValue([
-        { id: teamMemberId1 },
-        { id: teamMemberId2 }
-      ]);
+      const mockTeamWhere = vi
+        .fn()
+        .mockResolvedValue([{ id: teamMemberId1 }, { id: teamMemberId2 }]);
       const mockTeamInnerJoin2 = vi.fn().mockReturnValue({ where: mockTeamWhere });
       const mockTeamInnerJoin1 = vi.fn().mockReturnValue({ innerJoin: mockTeamInnerJoin2 });
       const mockTeamFrom = vi.fn().mockReturnValue({ innerJoin: mockTeamInnerJoin1 });
@@ -107,7 +113,7 @@ describe('getUserAccessScope', () => {
             return mockUserSelect();
           }
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const scope = await getUserAccessScope(userId, role);
@@ -127,7 +133,9 @@ describe('getUserAccessScope', () => {
       const role: UserRole = 'manager';
 
       // Mock user query
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
@@ -151,7 +159,7 @@ describe('getUserAccessScope', () => {
             return mockUserSelect();
           }
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const scope = await getUserAccessScope(userId, role);
@@ -168,13 +176,15 @@ describe('getUserAccessScope', () => {
       const userId = 'advisor-123';
       const role: UserRole = 'advisor';
 
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const scope = await getUserAccessScope(userId, role);
@@ -200,10 +210,12 @@ describe('getUserAccessScope', () => {
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
-      await expect(getUserAccessScope(userId, role)).rejects.toThrow(`User ${userId} not found in database`);
+      await expect(getUserAccessScope(userId, role)).rejects.toThrow(
+        `User ${userId} not found in database`
+      );
     });
 
     it('debería lanzar error para rol desconocido', async () => {
@@ -211,13 +223,15 @@ describe('getUserAccessScope', () => {
       const role = 'unknown-role' as UserRole;
 
       // Mock user exists but role is unknown
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'user@test.com', role: 'unknown-role' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'user@test.com', role: 'unknown-role' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       await expect(getUserAccessScope(userId, role)).rejects.toThrow('Unknown role');
@@ -234,7 +248,7 @@ describe('buildContactAccessFilter', () => {
         accessibleAdvisorIds: [],
         canSeeUnassigned: true,
         canAssignToOthers: true,
-        canReassign: true
+        canReassign: true,
       };
 
       const filter = buildContactAccessFilter(accessScope);
@@ -252,7 +266,7 @@ describe('buildContactAccessFilter', () => {
         accessibleAdvisorIds: ['manager-123', 'member-1', 'member-2'],
         canSeeUnassigned: true,
         canAssignToOthers: true,
-        canReassign: true
+        canReassign: true,
       };
 
       const filter = buildContactAccessFilter(accessScope);
@@ -268,7 +282,7 @@ describe('buildContactAccessFilter', () => {
         accessibleAdvisorIds: ['manager-123'],
         canSeeUnassigned: true,
         canAssignToOthers: true,
-        canReassign: true
+        canReassign: true,
       };
 
       const filter = buildContactAccessFilter(accessScope);
@@ -285,7 +299,7 @@ describe('buildContactAccessFilter', () => {
         accessibleAdvisorIds: ['advisor-123'],
         canSeeUnassigned: false,
         canAssignToOthers: false,
-        canReassign: false
+        canReassign: false,
       };
 
       const filter = buildContactAccessFilter(accessScope);
@@ -303,7 +317,7 @@ describe('buildContactAccessFilter', () => {
         accessibleAdvisorIds: [], // Empty array
         canSeeUnassigned: false,
         canAssignToOthers: false,
-        canReassign: false
+        canReassign: false,
       };
 
       // Mock console.warn
@@ -337,14 +351,14 @@ describe('canAccessContact', () => {
       accessibleAdvisorIds: [],
       canSeeUnassigned: true,
       canAssignToOthers: true,
-      canReassign: true
+      canReassign: true,
     });
 
     vi.doMock('./authorization', async () => {
       const actual = await vi.importActual('./authorization');
       return {
         ...actual,
-        getUserAccessScope: mockGetAccessScope
+        getUserAccessScope: mockGetAccessScope,
       };
     });
 
@@ -352,13 +366,13 @@ describe('canAccessContact', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: contactId }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: contactId }]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const result = await canAccessContact(userId, role, contactId);
@@ -374,13 +388,13 @@ describe('canAccessContact', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No contact found
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No contact found
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const result = await canAccessContact(userId, role, contactId);
@@ -396,13 +410,13 @@ describe('canAccessContact', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockRejectedValue(new Error('DB error'))
-        })
-      })
+          limit: vi.fn().mockRejectedValue(new Error('DB error')),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const originalError = console.error;
@@ -430,13 +444,13 @@ describe('canAssignContactTo', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: userId }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: userId }]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAssignContactTo(userId, role, targetAdvisorId);
@@ -449,13 +463,15 @@ describe('canAssignContactTo', () => {
       const role: UserRole = 'admin';
 
       // Mock user query for getUserAccessScope
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'admin@test.com', role: 'admin' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'admin@test.com', role: 'admin' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAssignContactTo(userId, role, null);
@@ -471,7 +487,9 @@ describe('canAssignContactTo', () => {
       const teamMemberId = 'member-1';
 
       // Mock user query: db().select().from(users).where().limit(1)
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
@@ -491,7 +509,7 @@ describe('canAssignContactTo', () => {
             return mockUserSelect();
           }
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const result = await canAssignContactTo(userId, role, teamMemberId);
@@ -504,7 +522,9 @@ describe('canAssignContactTo', () => {
       const role: UserRole = 'manager';
 
       // Mock user query for getUserAccessScope
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
@@ -524,7 +544,7 @@ describe('canAssignContactTo', () => {
             return mockUserSelect();
           }
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const result = await canAssignContactTo(userId, role, null);
@@ -538,7 +558,9 @@ describe('canAssignContactTo', () => {
       const outsideAdvisorId = 'outside-advisor-123';
 
       // Mock user query
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
@@ -558,7 +580,7 @@ describe('canAssignContactTo', () => {
             return mockUserSelect();
           }
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const result = await canAssignContactTo(userId, role, outsideAdvisorId);
@@ -573,13 +595,15 @@ describe('canAssignContactTo', () => {
       const role: UserRole = 'advisor';
 
       // Mock user query for getUserAccessScope
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAssignContactTo(userId, role, userId);
@@ -593,13 +617,15 @@ describe('canAssignContactTo', () => {
       const otherAdvisorId = 'other-advisor-456';
 
       // Mock user query for getUserAccessScope
-      const mockLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
+      const mockLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'advisor@test.com', role: 'advisor' }]);
       const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
       const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
       const mockSelect = vi.fn().mockReturnValue({ from: mockFrom });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAssignContactTo(userId, role, otherAdvisorId);
@@ -614,13 +640,13 @@ describe('canAssignContactTo', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: userId }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: userId }]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAssignContactTo(userId, role, null);
@@ -656,13 +682,13 @@ describe('canAccessAumFile', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ uploadedByUserId: userId }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ uploadedByUserId: userId }]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAccessAumFile(userId, role, fileId);
@@ -679,13 +705,13 @@ describe('canAccessAumFile', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ uploadedByUserId: otherUserId }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ uploadedByUserId: otherUserId }]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAccessAumFile(userId, role, fileId);
@@ -707,7 +733,7 @@ describe('canAccessAumFile', () => {
       const mockFileSelect = vi.fn().mockReturnValue({ from: mockFileFrom });
 
       mockDb.mockReturnValue({
-        select: mockFileSelect
+        select: mockFileSelect,
       } as any);
 
       const result = await canAccessAumFile(userId, role, fileId);
@@ -728,7 +754,9 @@ describe('canAccessAumFile', () => {
       const mockFileSelect = vi.fn().mockReturnValue({ from: mockFileFrom });
 
       // Mock user query for getUserAccessScope: db().select().from(users).where().limit(1)
-      const mockUserLimit = vi.fn().mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
+      const mockUserLimit = vi
+        .fn()
+        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
       const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
       const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
       const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
@@ -754,7 +782,7 @@ describe('canAccessAumFile', () => {
           }
           // Third call: team members query
           return mockTeamSelect();
-        })
+        }),
       } as any);
 
       const result = await canAccessAumFile(userId, role, fileId);
@@ -772,13 +800,13 @@ describe('canAccessAumFile', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No file found
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No file found
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const result = await canAccessAumFile(userId, role, fileId);
@@ -794,13 +822,13 @@ describe('canAccessAumFile', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockRejectedValue(new Error('DB error'))
-          })
-        })
+            limit: vi.fn().mockRejectedValue(new Error('DB error')),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       const originalError = console.error;
@@ -933,9 +961,7 @@ describe('getUserTeams', () => {
     it('debería retornar role manager cuando es manager del equipo', async () => {
       const userId = 'advisor-123';
       const role: UserRole = 'advisor';
-      const userTeams = [
-        { id: 'team-1', name: 'Team One', isManager: true },
-      ];
+      const userTeams = [{ id: 'team-1', name: 'Team One', isManager: true }];
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
@@ -981,14 +1007,3 @@ describe('getUserTeams', () => {
     });
   });
 });
-
-
-
-
-
-
-
-
-
-
-

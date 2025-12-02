@@ -20,7 +20,10 @@ export default function FundamentalsTab({ symbol }: FundamentalsTabProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch fundamentals data from API
+    // FUTURE_FEATURE: Requires integration with fundamental data providers
+    // Metrics needed: P/E, EV/EBITDA, ROE, Revenue Growth, Margins
+    // Dependencies: SEC EDGAR XBRL parsing, or third-party fundamentals API (Alpha Vantage, Polygon)
+    // Status: Placeholder UI ready, awaiting backend endpoints
     setLoading(false);
   }, [symbol]);
 

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { themes, type Theme, type ThemeConfig } from './index';
+import { themes, type Theme } from './index';
 
 describe('tokens/index', () => {
   describe('Theme type', () => {
     it('debería aceptar todos los temas válidos', () => {
       const validThemes: Theme[] = ['light', 'dark', 'high-contrast'];
-      validThemes.forEach(theme => {
+      validThemes.forEach((theme) => {
         expect(typeof theme).toBe('string');
         expect(themes).toHaveProperty(theme);
       });
@@ -14,7 +14,7 @@ describe('tokens/index', () => {
 
   describe('ThemeConfig interface', () => {
     it('debería tener estructura correcta para cada tema', () => {
-      Object.values(themes).forEach(theme => {
+      Object.values(themes).forEach((theme) => {
         expect(theme).toHaveProperty('name');
         expect(theme).toHaveProperty('colors');
         expect(theme.colors).toHaveProperty('primary');
@@ -93,4 +93,3 @@ describe('tokens/index', () => {
     });
   });
 });
-

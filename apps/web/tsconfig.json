@@ -32,6 +32,9 @@
       "@/lib/api": ["./lib/api/index.ts"],
       "@/lib/api/*": ["./lib/api/*"],
       "@/components/*": ["./app/components/*"],
+      "@/hooks/*": ["./lib/hooks/*"],
+      "@/auth/*": ["./app/auth/*"],
+      "@/utils/*": ["./lib/utils/*"],
       "@cactus/ui": ["../../packages/ui/dist/index.d.ts"]
     },
     "baseUrl": "."

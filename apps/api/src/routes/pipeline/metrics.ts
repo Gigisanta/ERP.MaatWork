@@ -309,8 +309,8 @@ router.get('/metrics/export',
         stageName: stage.name,
         entered,
         exited,
-        averageTimeInDays: 0, // TODO: Calculate average time in stage
-        totalValue: 0 // TODO: Calculate total value if available
+        averageTimeInDays: 0, // FUTURE_FEATURE: Calculate from pipelineStageHistory timestamps
+        totalValue: 0 // FUTURE_FEATURE: Aggregate AUM/value if contacts have associated values
       };
     });
 
