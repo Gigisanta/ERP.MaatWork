@@ -32,14 +32,15 @@ export async function insertNewRow(row: AumRowInsert): Promise<boolean> {
       pesos: row.pesos,
       mep: row.mep,
       cable: row.cable,
-      cv7000: row.cv7000
+      cv7000: row.cv7000,
     });
 
     return true;
   } catch (error) {
-    logger.warn({ err: error, fileId: row.fileId, accountNumber: row.accountNumber }, 'Error inserting AUM row');
+    logger.warn(
+      { err: error, fileId: row.fileId, accountNumber: row.accountNumber },
+      'Error inserting AUM row'
+    );
     return false;
   }
 }
-
-

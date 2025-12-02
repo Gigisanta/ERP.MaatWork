@@ -1,6 +1,6 @@
 /**
  * AUM Upsert Service - Barrel Export
- * 
+ *
  * Modular AUM upsert service with:
  * - Multiple search strategies (idCuenta, accountNumber, holderName)
  * - Row update/insert logic with preservation rules
@@ -17,7 +17,7 @@ export type {
   ExistingRow,
   AumMonthlySnapshotInsert,
   MonthlySnapshotUpsertStats,
-  MonthlySnapshotUpsertResult
+  MonthlySnapshotUpsertResult,
 } from './types';
 
 // Main functions
@@ -37,7 +37,5 @@ export {
   findByReverseLookup,
   findByAccountNumber,
   findByHolderName,
-  hasOnlyHolderName
+  hasOnlyHolderName,
 } from './strategies';
-
-

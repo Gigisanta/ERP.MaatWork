@@ -23,9 +23,3 @@ export function normalizeColumnName(name: string): string {
     .replace(/[^\w\s]/g, '') // Eliminar caracteres especiales excepto letras, números y espacios
     .trim();
 }
-
-
-
-
-
-

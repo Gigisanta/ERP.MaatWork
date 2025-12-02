@@ -1,6 +1,6 @@
 /**
  * Contact Kanban View
- * 
+ *
  * Displays contacts in a kanban board grouped by pipeline stage
  */
 
@@ -26,17 +26,18 @@ export default function ContactKanbanView({ contacts, pipelineStages }: ContactK
             <CardHeader className="p-2 md:p-3 border-b border-neutral-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <div 
+                  <div
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: stage.color }}
                   />
-                  <CardTitle className="text-xs md:text-sm font-semibold" style={{ color: stage.color }}>
+                  <CardTitle
+                    className="text-xs md:text-sm font-semibold"
+                    style={{ color: stage.color }}
+                  >
                     {stage.name}
                   </CardTitle>
                 </div>
-                <Badge className="text-xs h-5 px-1.5">
-                  {stageContacts.length}
-                </Badge>
+                <Badge className="text-xs h-5 px-1.5">{stageContacts.length}</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-2 md:p-3">
@@ -47,14 +48,16 @@ export default function ContactKanbanView({ contacts, pipelineStages }: ContactK
                   </Text>
                 ) : (
                   stageContacts.map((contact: Contact) => (
-                    <div 
-                      key={contact.id} 
+                    <div
+                      key={contact.id}
                       className="p-2 bg-gray-50 rounded-md border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-shadow cursor-pointer"
                       onClick={() => router.push(`/contacts/${contact.id}`)}
                     >
                       <div className="flex items-start justify-between gap-1.5">
                         <div className="flex-1 min-w-0">
-                          <Text weight="medium" className="text-xs md:text-sm truncate">{contact.fullName}</Text>
+                          <Text weight="medium" className="text-xs md:text-sm truncate">
+                            {contact.fullName}
+                          </Text>
                           {contact.email && (
                             <Text size="xs" color="secondary" className="mt-0.5 truncate">
                               {contact.email}
@@ -63,9 +66,9 @@ export default function ContactKanbanView({ contacts, pipelineStages }: ContactK
                         </div>
                         {contact.tags && contact.tags.length > 0 && (
                           <div className="flex gap-0.5 ml-1 shrink-0">
-                            {contact.tags.slice(0, 2).map(tag => (
-                              <Badge 
-                                key={tag.id} 
+                            {contact.tags.slice(0, 2).map((tag) => (
+                              <Badge
+                                key={tag.id}
                                 className="text-[9px] px-1 py-0"
                                 style={{ backgroundColor: tag.color || '#6B7280', color: 'white' }}
                               >
@@ -91,5 +94,3 @@ export default function ContactKanbanView({ contacts, pipelineStages }: ContactK
     </div>
   );
 }
-
-

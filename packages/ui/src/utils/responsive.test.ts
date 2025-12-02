@@ -85,17 +85,20 @@ describe('buildResponsiveClasses', () => {
 
   describe('validación de tipos', () => {
     it('debería rechazar arrays como objetos responsivos', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = buildResponsiveClasses(['red', 'blue'] as any, toClass);
       // Debería tratarlo como valor simple, no como objeto
       expect(result).toEqual([]);
     });
 
     it('debería rechazar null como objeto responsivo', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = buildResponsiveClasses(null as any, toClass);
       expect(result).toEqual([]);
     });
 
     it('debería rechazar objetos sin keys de breakpoint', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = buildResponsiveClasses({ other: 'red' } as any, toClass);
       expect(result).toEqual([]);
     });
@@ -120,4 +123,3 @@ describe('buildResponsiveClasses', () => {
     });
   });
 });
-

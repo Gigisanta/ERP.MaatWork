@@ -1,6 +1,6 @@
 /**
  * Hook for managing tag CRUD operations
- * 
+ *
  * Handles creating, editing, deleting tags with modals
  */
 
@@ -49,7 +49,10 @@ export interface UseTagManagementProps {
   mutateContacts: () => void;
 }
 
-export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagementProps): TagManagementState & TagManagementActions {
+export function useTagManagement({
+  mutateTags,
+  mutateContacts,
+}: UseTagManagementProps): TagManagementState & TagManagementActions {
   const { showToast } = useToast();
 
   // Modal states
@@ -62,31 +65,35 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
   // New tag form
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#6B7280');
-  const [newTagBusinessLine, setNewTagBusinessLine] = useState<'inversiones' | 'zurich' | 'patrimonial' | null>(null);
+  const [newTagBusinessLine, setNewTagBusinessLine] = useState<
+    'inversiones' | 'zurich' | 'patrimonial' | null
+  >(null);
 
   // Edit tag form
   const [editedTagName, setEditedTagName] = useState('');
   const [editedTagColor, setEditedTagColor] = useState('#6B7280');
-  const [editedTagBusinessLine, setEditedTagBusinessLine] = useState<'inversiones' | 'zurich' | 'patrimonial' | null>(null);
+  const [editedTagBusinessLine, setEditedTagBusinessLine] = useState<
+    'inversiones' | 'zurich' | 'patrimonial' | null
+  >(null);
 
   // Auto-save for tag editing
   useEffect(() => {
     if (!tagToEdit) return;
     if (!editedTagName.trim()) return;
-    
+
     const timeoutId = setTimeout(async () => {
-      const hasChanges = 
+      const hasChanges =
         editedTagName.trim() !== tagToEdit.name ||
         editedTagColor !== tagToEdit.color ||
         editedTagBusinessLine !== (tagToEdit.businessLine ?? null);
-      
+
       if (hasChanges) {
         setIsAutoSavingTag(true);
         try {
           await updateTag(tagToEdit.id, {
             name: editedTagName.trim(),
             color: editedTagColor,
-            businessLine: editedTagBusinessLine
+            businessLine: editedTagBusinessLine,
           });
           mutateTags();
           mutateContacts();
@@ -94,13 +101,13 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
             ...tagToEdit,
             name: editedTagName.trim(),
             color: editedTagColor,
-            businessLine: editedTagBusinessLine
+            businessLine: editedTagBusinessLine,
           });
         } catch (err) {
           logger.error('Error al guardar automáticamente la etiqueta', {
             error: err instanceof Error ? err.message : String(err),
             tagId: tagToEdit.id,
-            tagName: editedTagName
+            tagName: editedTagName,
           });
         } finally {
           setIsAutoSavingTag(false);
@@ -113,13 +120,13 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
 
   const handleCreateTag = useCallback(async () => {
     if (!newTagName.trim()) return;
-    
+
     try {
       await createTag({
         entityType: 'contact',
         name: newTagName.trim(),
         color: newTagColor,
-        businessLine: newTagBusinessLine
+        businessLine: newTagBusinessLine,
       });
       mutateTags();
       setNewTagName('');
@@ -129,18 +136,22 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
       showToast('Etiqueta creada', undefined, 'success');
       mutateContacts();
     } catch (err) {
-      showToast('Error al crear etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      showToast(
+        'Error al crear etiqueta',
+        err instanceof Error ? err.message : 'Error desconocido',
+        'error'
+      );
     }
   }, [newTagName, newTagColor, newTagBusinessLine, mutateTags, mutateContacts, showToast]);
 
   const handleEditTag = useCallback(async () => {
     if (!tagToEdit || !editedTagName.trim()) return;
-    
+
     try {
       await updateTag(tagToEdit.id, {
         name: editedTagName.trim(),
         color: editedTagColor,
-        businessLine: editedTagBusinessLine
+        businessLine: editedTagBusinessLine,
       });
       mutateTags();
       showToast('Etiqueta actualizada', undefined, 'success');
@@ -148,9 +159,21 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
       setTagToEdit(null);
       mutateContacts();
     } catch (err) {
-      showToast('Error al editar etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      showToast(
+        'Error al editar etiqueta',
+        err instanceof Error ? err.message : 'Error desconocido',
+        'error'
+      );
     }
-  }, [tagToEdit, editedTagName, editedTagColor, editedTagBusinessLine, mutateTags, mutateContacts, showToast]);
+  }, [
+    tagToEdit,
+    editedTagName,
+    editedTagColor,
+    editedTagBusinessLine,
+    mutateTags,
+    mutateContacts,
+    showToast,
+  ]);
 
   const handleDeleteTag = useCallback((tagId: string, onConfirm: () => void) => {
     // Caller should handle confirm dialog
@@ -200,8 +223,6 @@ export function useTagManagement({ mutateTags, mutateContacts }: UseTagManagemen
     handleCreateTag,
     handleEditTag,
     handleDeleteTag,
-    resetCreateForm
+    resetCreateForm,
   };
 }
-
-

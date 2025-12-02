@@ -1,6 +1,6 @@
 /**
  * Contacts Validation Schemas
- * 
+ *
  * Zod schemas for validating contacts CRUD operations
  */
 import { z } from 'zod';
@@ -16,17 +16,17 @@ import { paginationQuerySchema } from '../../utils/common-schemas';
 export const listContactsQuerySchema = paginationQuerySchema.and(
   z.object({
     pipelineStageId: z.string().uuid().optional(),
-    assignedAdvisorId: z.string().uuid().optional()
+    assignedAdvisorId: z.string().uuid().optional(),
   })
 );
 
 export const contactDetailQuerySchema = z.object({
-  includeTimeline: z.enum(['true', 'false']).optional().default('true')
+  includeTimeline: z.enum(['true', 'false']).optional().default('true'),
 });
 
 export const batchContactsQuerySchema = z.object({
   contactIds: z.string().min(1),
-  includeTags: z.enum(['true', 'false']).optional().default('true')
+  includeTags: z.enum(['true', 'false']).optional().default('true'),
 });
 
 // ==========================================================
@@ -61,24 +61,51 @@ export const createContactSchema = z.object({
   requisitosPlanificacion: optionalLongText,
   prioridades: z.array(z.string().max(500)).optional().default([]),
   preocupaciones: z.array(z.string().max(500)).optional().default([]),
-  ingresos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
-  gastos: z.union([z.number(), z.string().regex(/^\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
-  excedente: z.union([z.number(), z.string().regex(/^-?\d+(\.\d{1,2})?$/).transform((val) => parseFloat(val))]).optional().nullable(),
-  customFields: z.record(z.unknown()).optional()
+  ingresos: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
+  gastos: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
+  excedente: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^-?\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
+  customFields: z.record(z.unknown()).optional(),
 });
 
 export const updateContactSchema = createContactSchema.partial();
 
 export const patchContactSchema = z.object({
-  fields: z.array(z.object({
-    field: z.string(),
-    value: z.unknown()
-  }))
+  fields: z.array(
+    z.object({
+      field: z.string(),
+      value: z.unknown(),
+    })
+  ),
 });
 
 // Type exports for use in route handlers
 export type CreateContactInput = z.infer<typeof createContactSchema>;
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;
 export type PatchContactInput = z.infer<typeof patchContactSchema>;
-
-

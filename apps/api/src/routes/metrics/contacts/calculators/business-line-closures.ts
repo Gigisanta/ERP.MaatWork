@@ -1,6 +1,6 @@
 /**
  * Business Line Closures Calculator
- * 
+ *
  * Calculates closures by business line (inversiones, zurich, patrimonial)
  */
 
@@ -12,7 +12,7 @@ import type { BusinessLineClosures } from '../types';
  * Calculate business line closures:
  * - Contacts that reached Cliente for the first time in the month
  * - With tags that have business line defined
- * 
+ *
  * NOTE: A contact can have multiple business line tags, in which case
  * it counts in all corresponding lines
  */
@@ -22,7 +22,7 @@ export async function calculateBusinessLineClosures(
   const businessLineClosures: BusinessLineClosures = {
     inversiones: 0,
     zurich: 0,
-    patrimonial: 0
+    patrimonial: 0,
   };
 
   if (clientContactIds.length === 0) {
@@ -33,21 +33,23 @@ export async function calculateBusinessLineClosures(
   const contactTagsWithBusinessLine = await db()
     .select({
       contactId: contactTags.contactId,
-      businessLine: tags.businessLine
+      businessLine: tags.businessLine,
     })
     .from(contactTags)
     .innerJoin(tags, eq(contactTags.tagId, tags.id))
-    .where(and(
-      inArray(contactTags.contactId, clientContactIds),
-      eq(tags.scope, 'contact'),
-      isNotNull(tags.businessLine),
-      inArray(tags.businessLine, ['inversiones', 'zurich', 'patrimonial'])
-    ));
+    .where(
+      and(
+        inArray(contactTags.contactId, clientContactIds),
+        eq(tags.scope, 'contact'),
+        isNotNull(tags.businessLine),
+        inArray(tags.businessLine, ['inversiones', 'zurich', 'patrimonial'])
+      )
+    );
 
   // Count unique contacts per business line using Set to avoid duplicates
   // If a contact has multiple tags of the same line, only count once
   const contactsByBusinessLine = new Map<string, Set<string>>();
-  
+
   for (const row of contactTagsWithBusinessLine) {
     // The SQL filter already guarantees businessLine is not null and has a valid value
     const businessLine = row.businessLine!;
@@ -63,5 +65,3 @@ export async function calculateBusinessLineClosures(
 
   return businessLineClosures;
 }
-
-

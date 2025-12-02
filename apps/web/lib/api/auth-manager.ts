@@ -1,8 +1,8 @@
 /**
  * Auth Manager
- * 
+ *
  * Handles token refresh for authentication
- * 
+ *
  * AI_DECISION: Implementar refresh token automático para 401
  * Justificación: Mejora UX, evita que usuarios sean deslogueados por tokens expirados
  * Impacto: Sesiones más largas sin interrupciones, mejor experiencia
@@ -29,7 +29,7 @@ export class AuthManager {
 
   /**
    * Attempt to refresh the auth token
-   * 
+   *
    * - Prevents multiple simultaneous refresh requests
    * - Returns true if refresh was successful, false otherwise
    */
@@ -45,7 +45,7 @@ export class AuthManager {
       try {
         const response = await this.fetchWithTimeout(`${this.config.baseUrl}/v1/auth/refresh`, {
           method: 'POST',
-          credentials: 'include'
+          credentials: 'include',
         });
 
         if (response.ok) {
@@ -68,13 +68,13 @@ export class AuthManager {
 
   /**
    * Handle 401 error by attempting token refresh
-   * 
+   *
    * - Attempts to refresh the token
    * - Throws ApiError if refresh fails
    */
   async handle401(): Promise<boolean> {
     const refreshed = await this.refreshToken();
-    
+
     if (!refreshed) {
       throw new ApiError(401, 'Session expired');
     }
@@ -82,5 +82,3 @@ export class AuthManager {
     return true;
   }
 }
-
-

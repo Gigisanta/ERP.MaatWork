@@ -1,6 +1,6 @@
 /**
  * Tag Management Modal
- * 
+ *
  * Modal for creating, editing, and deleting tags
  */
 
@@ -18,7 +18,7 @@ import {
   Select,
   Text,
   Spinner,
-  Icon
+  Icon,
 } from '@cactus/ui';
 import type { Tag } from '@/types';
 
@@ -78,7 +78,7 @@ export default function TagManagementModal({
   onEditTag,
   onOpenEditTag,
   onCancelEdit,
-  onDeleteTag
+  onDeleteTag,
 }: TagManagementModalProps) {
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
@@ -113,21 +113,23 @@ export default function TagManagementModal({
               <Select
                 label="Línea de negocio"
                 value={newTagBusinessLine ?? ''}
-                onValueChange={(value) => onNewTagBusinessLineChange(value === '' ? null : value as 'inversiones' | 'zurich' | 'patrimonial')}
+                onValueChange={(value) =>
+                  onNewTagBusinessLineChange(
+                    value === '' ? null : (value as 'inversiones' | 'zurich' | 'patrimonial')
+                  )
+                }
                 items={[
                   { value: '', label: 'Sin categoría' },
                   { value: 'inversiones', label: 'Inversiones' },
                   { value: 'zurich', label: 'Zurich' },
-                  { value: 'patrimonial', label: 'Patrimonial' }
+                  { value: 'patrimonial', label: 'Patrimonial' },
                 ]}
               />
               <ModalFooter>
                 <Button variant="secondary" onClick={onCancelCreating}>
                   Cancelar
                 </Button>
-                <Button onClick={onCreateTag}>
-                  Crear etiqueta
-                </Button>
+                <Button onClick={onCreateTag}>Crear etiqueta</Button>
               </ModalFooter>
             </>
           ) : tagToEdit ? (
@@ -136,7 +138,9 @@ export default function TagManagementModal({
               {isAutoSavingTag && (
                 <div className="flex items-center gap-2 text-sm text-text-secondary mb-2">
                   <Spinner size="sm" />
-                  <Text size="sm" color="secondary">Guardando automáticamente...</Text>
+                  <Text size="sm" color="secondary">
+                    Guardando automáticamente...
+                  </Text>
                 </div>
               )}
               <Input
@@ -159,12 +163,16 @@ export default function TagManagementModal({
               <Select
                 label="Línea de negocio"
                 value={editedTagBusinessLine ?? ''}
-                onValueChange={(value) => onEditedTagBusinessLineChange(value === '' ? null : value as 'inversiones' | 'zurich' | 'patrimonial')}
+                onValueChange={(value) =>
+                  onEditedTagBusinessLineChange(
+                    value === '' ? null : (value as 'inversiones' | 'zurich' | 'patrimonial')
+                  )
+                }
                 items={[
                   { value: '', label: 'Sin categoría' },
                   { value: 'inversiones', label: 'Inversiones' },
                   { value: 'zurich', label: 'Zurich' },
-                  { value: 'patrimonial', label: 'Patrimonial' }
+                  { value: 'patrimonial', label: 'Patrimonial' },
                 ]}
               />
               <ModalFooter>
@@ -194,13 +202,18 @@ export default function TagManagementModal({
                 ) : (
                   <div className="space-y-1.5">
                     {allTags.map((tag: Tag) => (
-                      <div key={tag.id} className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-surface-hover">
+                      <div
+                        key={tag.id}
+                        className="flex items-center justify-between p-2 border border-border rounded-md hover:bg-surface-hover"
+                      >
                         <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
+                          <div
+                            className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: tag.color || '#6B7280' }}
                           />
-                          <Text weight="medium" size="sm">{tag.name}</Text>
+                          <Text weight="medium" size="sm">
+                            {tag.name}
+                          </Text>
                         </div>
                         <div className="flex gap-1">
                           <Button
@@ -232,9 +245,7 @@ export default function TagManagementModal({
                   <Icon name="plus" size={16} className="mr-2" />
                   Nueva etiqueta
                 </Button>
-                <Button onClick={() => onOpenChange(false)}>
-                  Cerrar
-                </Button>
+                <Button onClick={() => onOpenChange(false)}>Cerrar</Button>
               </ModalFooter>
             </>
           )}
@@ -243,5 +254,3 @@ export default function TagManagementModal({
     </Modal>
   );
 }
-
-

@@ -124,3 +124,5 @@ export { capacitaciones } from './capacitaciones';
 export { automationConfigs } from './automations';
 
 
+
+

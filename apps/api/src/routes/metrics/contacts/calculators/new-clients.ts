@@ -1,6 +1,6 @@
 /**
  * New Clients Calculator
- * 
+ *
  * Calculates contacts that became clients in the month
  */
 
@@ -32,8 +32,6 @@ export function calculateNewClients(
 
   return {
     newClientsCount,
-    clientContactIds
+    clientContactIds,
   };
 }
-
-

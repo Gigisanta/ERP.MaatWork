@@ -1,6 +1,6 @@
 /**
  * Teams Member Management Handlers
- * 
+ *
  * GET /teams/:id/members - List team members
  * GET /teams/:id/members/:memberId - Get single member
  * POST /teams/:id/members - Add member
@@ -25,17 +25,21 @@ export async function getTeamMembers(req: Request, res: Response, next: NextFunc
     try {
       id = validateUuidParam(req.params.id, 'teamId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
     }
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
     // Verify user is a manager of this team
     const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
+    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
     if (!isManager && userRole !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only team managers can view team members.' });
+      return res
+        .status(403)
+        .json({ error: 'Access denied. Only team managers can view team members.' });
     }
 
     // Get members for this specific team by teamId
@@ -46,12 +50,12 @@ export async function getTeamMembers(req: Request, res: Response, next: NextFunc
         fullName: users.fullName,
         role: teamMembership.role,
         teamId: teamMembership.teamId,
-        userId: teamMembership.userId
+        userId: teamMembership.userId,
       })
       .from(users)
       .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
       .where(eq(teamMembership.teamId, id));
-    
+
     res.json({ success: true, data: members });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to get team members');
@@ -70,17 +74,21 @@ export async function getTeamMember(req: Request, res: Response, next: NextFunct
       id = validateUuidParam(req.params.id, 'teamId');
       memberId = validateUuidParam(req.params.memberId, 'memberId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid ID format' });
     }
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
     // Verify user is a manager of this team
     const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
+    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
     if (!isManager && userRole !== 'admin') {
-      return res.status(403).json({ error: 'Access denied. Only team managers can view team members.' });
+      return res
+        .status(403)
+        .json({ error: 'Access denied. Only team managers can view team members.' });
     }
 
     // Get specific member
@@ -91,16 +99,11 @@ export async function getTeamMember(req: Request, res: Response, next: NextFunct
         fullName: users.fullName,
         role: teamMembership.role,
         teamId: teamMembership.teamId,
-        userId: teamMembership.userId
+        userId: teamMembership.userId,
       })
       .from(users)
       .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
-      .where(
-        and(
-          eq(teamMembership.teamId, id),
-          eq(teamMembership.userId, memberId)
-        )
-      )
+      .where(and(eq(teamMembership.teamId, id), eq(teamMembership.userId, memberId)))
       .limit(1);
 
     if (!member) {
@@ -109,7 +112,10 @@ export async function getTeamMember(req: Request, res: Response, next: NextFunct
 
     res.json({ success: true, data: member });
   } catch (err) {
-    req.log.error({ err, teamId: req.params.id, memberId: req.params.memberId }, 'failed to get team member');
+    req.log.error(
+      { err, teamId: req.params.id, memberId: req.params.memberId },
+      'failed to get team member'
+    );
     next(err);
   }
 }
@@ -123,7 +129,9 @@ export async function addTeamMember(req: Request, res: Response, next: NextFunct
     try {
       id = validateUuidParam(req.params.id, 'teamId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
     }
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -132,19 +140,17 @@ export async function addTeamMember(req: Request, res: Response, next: NextFunct
     // Check if user can manage this team
     if (userRole !== 'admin') {
       const userTeams = await getUserTeams(userId, userRole);
-      const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
-      
+      const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+
       if (!isManager) {
-        return res.status(403).json({ error: 'Access denied. Only team managers can add members.' });
+        return res
+          .status(403)
+          .json({ error: 'Access denied. Only team managers can add members.' });
       }
     }
 
     // Check if user exists
-    const [user] = await db()
-      .select()
-      .from(users)
-      .where(eq(users.id, memberUserId))
-      .limit(1);
+    const [user] = await db().select().from(users).where(eq(users.id, memberUserId)).limit(1);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -156,14 +162,18 @@ export async function addTeamMember(req: Request, res: Response, next: NextFunct
       .values({
         teamId: id,
         userId: memberUserId,
-        role: 'member'
+        role: 'member',
       })
       .onConflictDoNothing();
 
     // AI_DECISION: Invalidate cache when team membership changes
     // Justificación: Access scope del manager cambia cuando se agrega miembro, caché debe invalidarse
     // Impacto: Asegura que cambios en team membership se reflejen inmediatamente
-    const [team] = await db().select({ managerUserId: teams.managerUserId }).from(teams).where(eq(teams.id, id)).limit(1);
+    const [team] = await db()
+      .select({ managerUserId: teams.managerUserId })
+      .from(teams)
+      .where(eq(teams.id, id))
+      .limit(1);
     if (team?.managerUserId) {
       invalidateAccessScope(team.managerUserId, 'manager');
     }
@@ -191,7 +201,9 @@ export async function removeTeamMember(req: Request, res: Response, next: NextFu
       id = validateUuidParam(req.params.id, 'teamId');
       memberUserId = validateUuidParam(req.params.userId, 'userId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid ID format' });
     }
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -199,24 +211,27 @@ export async function removeTeamMember(req: Request, res: Response, next: NextFu
     // Check if user can manage this team
     if (userRole !== 'admin') {
       const userTeams = await getUserTeams(userId, userRole);
-      const isManager = userTeams.some(t => t.id === id && t.role === 'manager');
-      
+      const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+
       if (!isManager) {
-        return res.status(403).json({ error: 'Access denied. Only team managers can remove members.' });
+        return res
+          .status(403)
+          .json({ error: 'Access denied. Only team managers can remove members.' });
       }
     }
 
     await db()
       .delete(teamMembership)
-      .where(and(
-        eq(teamMembership.teamId, id),
-        eq(teamMembership.userId, memberUserId)
-      ));
+      .where(and(eq(teamMembership.teamId, id), eq(teamMembership.userId, memberUserId)));
 
     // AI_DECISION: Invalidate cache when team membership changes
     // Justificación: Access scope del manager cambia cuando se elimina miembro, caché debe invalidarse
     // Impacto: Asegura que cambios en team membership se reflejen inmediatamente
-    const [team] = await db().select({ managerUserId: teams.managerUserId }).from(teams).where(eq(teams.id, id)).limit(1);
+    const [team] = await db()
+      .select({ managerUserId: teams.managerUserId })
+      .from(teams)
+      .where(eq(teams.id, id))
+      .limit(1);
     if (team?.managerUserId) {
       invalidateAccessScope(team.managerUserId, 'manager');
     }
@@ -229,5 +244,3 @@ export async function removeTeamMember(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
-
-

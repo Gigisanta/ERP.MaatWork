@@ -16,9 +16,3 @@ export interface MappedAumColumns {
   cable: number | null;
   cv7000: number | null;
 }
-
-
-
-
-
-

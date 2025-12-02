@@ -1,6 +1,6 @@
 /**
  * Delete Contact Modal
- * 
+ *
  * Confirmation modal for deleting a contact
  */
 
@@ -12,7 +12,7 @@ import {
   ModalDescription,
   ModalContent,
   ModalFooter,
-  Button
+  Button,
 } from '@cactus/ui';
 import type { Contact } from '@/types';
 
@@ -27,14 +27,15 @@ export default function DeleteContactModal({
   open,
   onOpenChange,
   contact,
-  onConfirm
+  onConfirm,
 }: DeleteContactModalProps) {
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalHeader>
         <ModalTitle>Confirmar eliminación</ModalTitle>
         <ModalDescription>
-          ¿Estás seguro de que quieres eliminar el contacto &quot;{contact?.fullName}&quot;? Esta acción no se puede deshacer.
+          ¿Estás seguro de que quieres eliminar el contacto &quot;{contact?.fullName}&quot;? Esta
+          acción no se puede deshacer.
         </ModalDescription>
       </ModalHeader>
       <ModalContent>
@@ -50,5 +51,3 @@ export default function DeleteContactModal({
     </Modal>
   );
 }
-
-

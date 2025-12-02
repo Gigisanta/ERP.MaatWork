@@ -1,6 +1,6 @@
 /**
  * New Contacts Calculator
- * 
+ *
  * Calculates contacts that were created AND entered "Contactado" stage in the month
  */
 
@@ -31,23 +31,24 @@ export async function calculateNewContacts(
     .map(([contactId]) => contactId);
 
   // Verify which of these contacts were created in the month (batch query)
-  const contactsCreatedInMonth = contactIdsEnteredContactadoInMonth.length > 0 
-    ? await db()
-        .select({ id: contacts.id })
-        .from(contacts)
-        .where(and(
-          inArray(contacts.id, contactIdsEnteredContactadoInMonth),
-          gte(contacts.createdAt, range.monthStart),
-          lte(contacts.createdAt, range.monthEnd),
-          isNull(contacts.deletedAt),
-          accessFilter.whereClause
-        )) 
-    : [];
+  const contactsCreatedInMonth =
+    contactIdsEnteredContactadoInMonth.length > 0
+      ? await db()
+          .select({ id: contacts.id })
+          .from(contacts)
+          .where(
+            and(
+              inArray(contacts.id, contactIdsEnteredContactadoInMonth),
+              gte(contacts.createdAt, range.monthStart),
+              lte(contacts.createdAt, range.monthEnd),
+              isNull(contacts.deletedAt),
+              accessFilter.whereClause
+            )
+          )
+      : [];
 
   return {
     newContactsCount: contactsCreatedInMonth.length,
-    contactIdsEnteredContactadoInMonth
+    contactIdsEnteredContactadoInMonth,
   };
 }
-
-

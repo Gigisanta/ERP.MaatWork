@@ -1,6 +1,6 @@
 /**
  * Teams Invitations Handlers
- * 
+ *
  * GET /teams/invitations/pending - List pending invitations for user
  * POST /teams/invitations/:id/accept - Accept invitation
  * POST /teams/invitations/:id/reject - Reject invitation
@@ -36,10 +36,12 @@ export async function listPendingInvitations(req: Request, res: Response, next: 
       })
       .from(teamMembershipRequests)
       .innerJoin(users, eq(teamMembershipRequests.managerId, users.id))
-      .where(and(
-        eq(teamMembershipRequests.userId, userId),
-        inArray(teamMembershipRequests.status, ['pending', 'invited'])
-      ));
+      .where(
+        and(
+          eq(teamMembershipRequests.userId, userId),
+          inArray(teamMembershipRequests.status, ['pending', 'invited'])
+        )
+      );
 
     return res.json({ success: true, data: rows });
   } catch (err) {
@@ -57,7 +59,9 @@ export async function acceptInvitation(req: Request, res: Response, next: NextFu
     try {
       id = validateUuidParam(req.params.id, 'invitationId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid invitation ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid invitation ID format' });
     }
     const userId = req.user!.id;
 
@@ -78,15 +82,16 @@ export async function acceptInvitation(req: Request, res: Response, next: NextFu
         teamManagerUserId: teams.managerUserId,
         teamCalendarUrl: teams.calendarUrl,
         teamCreatedAt: teams.createdAt,
-        teamUpdatedAt: teams.updatedAt
+        teamUpdatedAt: teams.updatedAt,
       })
       .from(teamMembershipRequests)
       .leftJoin(teams, eq(teams.managerUserId, teamMembershipRequests.managerId))
       .where(eq(teamMembershipRequests.id, id))
       .limit(1);
 
-    if (requestWithTeam.length === 0) return res.status(404).json({ error: 'Invitation not found' });
-    
+    if (requestWithTeam.length === 0)
+      return res.status(404).json({ error: 'Invitation not found' });
+
     const row = requestWithTeam[0];
     const request = {
       id: row.requestId,
@@ -95,26 +100,33 @@ export async function acceptInvitation(req: Request, res: Response, next: NextFu
       status: row.status,
       createdAt: row.createdAt,
       resolvedAt: row.resolvedAt,
-      resolvedByUserId: row.resolvedByUserId
+      resolvedByUserId: row.resolvedByUserId,
     };
 
-    if (request.status !== 'pending' && request.status !== 'invited') return res.status(400).json({ error: 'Invitation not pending' });
+    if (request.status !== 'pending' && request.status !== 'invited')
+      return res.status(400).json({ error: 'Invitation not pending' });
     if (request.userId !== userId) return res.status(403).json({ error: 'Not your invitation' });
 
     // Extract manager team from joined result
-    const managerTeam = row.teamId ? {
-      id: row.teamId,
-      name: row.teamName,
-      description: row.teamDescription,
-      managerUserId: row.teamManagerUserId,
-      calendarUrl: row.teamCalendarUrl,
-      createdAt: row.teamCreatedAt,
-      updatedAt: row.teamUpdatedAt
-    } : null;
+    const managerTeam = row.teamId
+      ? {
+          id: row.teamId,
+          name: row.teamName,
+          description: row.teamDescription,
+          managerUserId: row.teamManagerUserId,
+          calendarUrl: row.teamCalendarUrl,
+          createdAt: row.teamCreatedAt,
+          updatedAt: row.teamUpdatedAt,
+        }
+      : null;
     if (!managerTeam) return res.status(400).json({ error: 'Manager has no team' });
 
-    await db().insert(teamMembership).values({ teamId: managerTeam.id, userId, role: 'member' }).onConflictDoNothing();
-    await db().update(teamMembershipRequests)
+    await db()
+      .insert(teamMembership)
+      .values({ teamId: managerTeam.id, userId, role: 'member' })
+      .onConflictDoNothing();
+    await db()
+      .update(teamMembershipRequests)
       .set({ status: 'approved', resolvedAt: new Date(), resolvedByUserId: userId })
       .where(eq(teamMembershipRequests.id, id));
 
@@ -135,16 +147,24 @@ export async function rejectInvitation(req: Request, res: Response, next: NextFu
     try {
       id = validateUuidParam(req.params.id, 'invitationId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid invitation ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid invitation ID format' });
     }
     const userId = req.user!.id;
 
-    const [request] = await db().select().from(teamMembershipRequests).where(eq(teamMembershipRequests.id, id)).limit(1);
+    const [request] = await db()
+      .select()
+      .from(teamMembershipRequests)
+      .where(eq(teamMembershipRequests.id, id))
+      .limit(1);
     if (!request) return res.status(404).json({ error: 'Invitation not found' });
-    if (request.status !== 'pending' && request.status !== 'invited') return res.status(400).json({ error: 'Invitation not pending' });
+    if (request.status !== 'pending' && request.status !== 'invited')
+      return res.status(400).json({ error: 'Invitation not pending' });
     if (request.userId !== userId) return res.status(403).json({ error: 'Not your invitation' });
 
-    await db().update(teamMembershipRequests)
+    await db()
+      .update(teamMembershipRequests)
       .set({ status: 'rejected', resolvedAt: new Date(), resolvedByUserId: userId })
       .where(eq(teamMembershipRequests.id, id));
 
@@ -165,7 +185,9 @@ export async function createInvitation(req: Request, res: Response, next: NextFu
     try {
       id = validateUuidParam(req.params.id, 'teamId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
     }
     const currentUserId = req.user!.id;
     const currentRole = req.user!.role;
@@ -176,9 +198,11 @@ export async function createInvitation(req: Request, res: Response, next: NextFu
     // Only admin or manager of this team can invite
     if (currentRole !== 'admin') {
       const myTeams = await getUserTeams(currentUserId, currentRole);
-      const isManager = myTeams.some(t => t.id === id && t.role === 'manager');
+      const isManager = myTeams.some((t) => t.id === id && t.role === 'manager');
       if (!isManager) {
-        return res.status(403).json({ error: 'Access denied. Only team managers can invite users.' });
+        return res
+          .status(403)
+          .json({ error: 'Access denied. Only team managers can invite users.' });
       }
     }
 
@@ -231,53 +255,69 @@ export async function listEligibleAdvisors(req: Request, res: Response, next: Ne
     try {
       teamId = validateUuidParam(req.params.id, 'teamId');
     } catch (err) {
-      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
     }
     const userId = req.user!.id;
     const role = req.user!.role;
 
     if (role !== 'admin') {
       const myTeams = await getUserTeams(userId, role);
-      const isManager = myTeams.some(t => t.id === teamId && t.role === 'manager');
+      const isManager = myTeams.some((t) => t.id === teamId && t.role === 'manager');
       if (!isManager) return res.status(403).json({ error: 'Access denied' });
     }
 
     const dbi = db();
-    
+
     // AI_DECISION: Optimizar queries combinando y ejecutando en paralelo
     // Justificación: Reducir de 5 queries secuenciales a 2-3 queries en paralelo
     // Impacto: Reduce latencia significativamente al ejecutar queries independientes simultáneamente
-    
+
     // Get team info and members in parallel
     const [teamRow, teamMembers, allMembers] = await Promise.all([
       // Manager of this team
       dbi.select().from(teams).where(eq(teams.id, teamId)).limit(1),
       // Members of this team
-      dbi.select({ userId: teamMembership.userId }).from(teamMembership).where(eq(teamMembership.teamId, teamId)),
+      dbi
+        .select({ userId: teamMembership.userId })
+        .from(teamMembership)
+        .where(eq(teamMembership.teamId, teamId)),
       // Users that are in any team (enforce one-team policy)
-      dbi.select({ userId: teamMembership.userId }).from(teamMembership)
+      dbi.select({ userId: teamMembership.userId }).from(teamMembership),
     ]);
-    
+
     type TeamMemberWithUserId = {
       userId: string | null;
     };
-    const teamMemberIds = new Set<string>(teamMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id));
-    const anyTeamMemberIds = new Set<string>(allMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id));
+    const teamMemberIds = new Set<string>(
+      teamMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id)
+    );
+    const anyTeamMemberIds = new Set<string>(
+      allMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id)
+    );
     const managerId = teamRow[0]?.managerUserId as string | undefined;
 
     // Get pending invites and advisors in parallel
     const [pendingInvites, advisors] = await Promise.all([
       // Users with pending invite to this manager
-      managerId ? dbi
-        .select({ userId: teamMembershipRequests.userId })
-        .from(teamMembershipRequests)
-        .where(and(eq(teamMembershipRequests.managerId, managerId), eq(teamMembershipRequests.status, 'pending'))) : Promise.resolve([]),
+      managerId
+        ? dbi
+            .select({ userId: teamMembershipRequests.userId })
+            .from(teamMembershipRequests)
+            .where(
+              and(
+                eq(teamMembershipRequests.managerId, managerId),
+                eq(teamMembershipRequests.status, 'pending')
+              )
+            )
+        : Promise.resolve([]),
       // All advisors
       dbi
         .select({ id: users.id, email: users.email, fullName: users.fullName })
         .from(users)
         .where(eq(users.role, 'advisor'))
-        .limit(500)
+        .limit(500),
     ]);
 
     const pendingInviteIds = new Set<string>(pendingInvites.map((p: PendingInvite) => p.userId));
@@ -285,7 +325,10 @@ export async function listEligibleAdvisors(req: Request, res: Response, next: Ne
     type Advisor = {
       id: string;
     };
-    const eligible = advisors.filter((a: Advisor) => !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id));
+    const eligible = advisors.filter(
+      (a: Advisor) =>
+        !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id)
+    );
 
     return res.json({ success: true, data: eligible });
   } catch (err) {
@@ -293,5 +336,3 @@ export async function listEligibleAdvisors(req: Request, res: Response, next: Ne
     next(err);
   }
 }
-
-

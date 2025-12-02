@@ -19,17 +19,14 @@ if (!fs.existsSync(destDir)) {
 // Función para copiar archivos recursivamente
 function copyRecursive(src, dest) {
   const stat = fs.statSync(src);
-  
+
   if (stat.isDirectory()) {
     if (!fs.existsSync(dest)) {
       fs.mkdirSync(dest, { recursive: true });
     }
     const files = fs.readdirSync(src);
-    files.forEach(file => {
-      copyRecursive(
-        path.join(src, file),
-        path.join(dest, file)
-      );
+    files.forEach((file) => {
+      copyRecursive(path.join(src, file), path.join(dest, file));
     });
   } else {
     fs.copyFileSync(src, dest);
@@ -40,11 +37,11 @@ function copyRecursive(src, dest) {
 try {
   if (fs.existsSync(srcDir)) {
     const files = fs.readdirSync(srcDir);
-    files.forEach(file => {
+    files.forEach((file) => {
       const srcPath = path.join(srcDir, file);
       const destPath = path.join(destDir, file);
       const stat = fs.statSync(srcPath);
-      
+
       if (stat.isFile() && file.endsWith('.css')) {
         copyRecursive(srcPath, destPath);
         console.log(`Copied: ${file}`);
@@ -62,5 +59,3 @@ try {
   console.error('Error copying styles:', error);
   process.exit(1);
 }
-
-

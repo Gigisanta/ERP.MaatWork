@@ -26,7 +26,7 @@ export async function applyAdvisorAccountMapping(
       const mapping = result[0];
       return {
         advisorRaw: mapping.advisorRaw,
-        matchedUserId: mapping.matchedUserId
+        matchedUserId: mapping.matchedUserId,
       };
     }
   } catch (error) {
@@ -35,8 +35,6 @@ export async function applyAdvisorAccountMapping(
 
   return {
     advisorRaw: null,
-    matchedUserId: null
+    matchedUserId: null,
   };
 }
-
-

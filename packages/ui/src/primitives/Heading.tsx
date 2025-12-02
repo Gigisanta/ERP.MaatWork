@@ -6,20 +6,15 @@ export interface HeadingProps {
   children?: React.ReactNode;
   className?: string;
   level?: 1 | 2 | 3 | 4 | 5 | 6;
-  [key: string]: any;
+  // Allow all standard HTML attributes
+  [key: string]: unknown;
 }
 
-export function Heading({ 
-  as, 
-  className, 
-  children, 
-  level = 1,
-  ...props 
-}: HeadingProps) {
+export function Heading({ as, className, children, level = 1, ...props }: HeadingProps) {
   const Component = as || (`h${level}` as keyof React.JSX.IntrinsicElements);
-  
+
   return (
-    <Component 
+    <Component
       className={cn(
         {
           'text-4xl font-bold': level === 1,
@@ -30,7 +25,7 @@ export function Heading({
           'text-base font-medium': level === 6,
         },
         className
-      )} 
+      )}
       {...props}
     >
       {children}

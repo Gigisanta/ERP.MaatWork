@@ -1,6 +1,6 @@
 /**
  * Contact Metrics Routes
- * 
+ *
  * Modular structure for pipeline contact metrics calculations:
  * - types.ts - Shared types
  * - helpers.ts - Helper functions (getFirstTimeStageEntries, etc.)
@@ -27,8 +27,13 @@ const router = Router();
 // ==========================================================
 
 const metricsQuerySchema = z.object({
-  month: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(12)).optional(),
-  year: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(2000)).optional()
+  month: z
+    .string()
+    .regex(/^\d+$/)
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(12))
+    .optional(),
+  year: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(2000)).optional(),
 });
 
 // ==========================================================
@@ -38,13 +43,14 @@ const metricsQuerySchema = z.object({
 /**
  * GET /metrics/contacts - Get pipeline metrics
  */
-router.get('/contacts',
+router.get(
+  '/contacts',
   requireAuth,
   validate({ query: metricsQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { month, year } = req.query;
-      
+
       // Get user access scope for data isolation
       const userId = req.user!.id;
       const userRole = req.user!.role;
@@ -54,9 +60,15 @@ router.get('/contacts',
       // AI_DECISION: Optimizar queries de pipeline stages - batch query en lugar de 5 queries secuenciales
       // Justificación: Reduce de 5 queries a 1 query (80% reducción), mejora latencia del endpoint
       // Impacto: Mejora significativa en performance del endpoint de métricas
-      const stageNames = ['Contactado', 'Prospecto', 'Primera reunion', 'Segunda reunion', 'Cliente'];
+      const stageNames = [
+        'Contactado',
+        'Prospecto',
+        'Primera reunion',
+        'Segunda reunion',
+        'Cliente',
+      ];
       const stagesByName = await getPipelineStagesByNames(stageNames);
-      
+
       const contactadoStage = stagesByName.get('Contactado');
       const prospectoStage = stagesByName.get('Prospecto');
       const firstMeetingStage = stagesByName.get('Primera reunion');
@@ -64,12 +76,15 @@ router.get('/contacts',
       const clienteStage = stagesByName.get('Cliente');
 
       if (!contactadoStage || !firstMeetingStage || !secondMeetingStage || !clienteStage) {
-        req.log.error({
-          contactadoStage: !!contactadoStage,
-          firstMeetingStage: !!firstMeetingStage,
-          secondMeetingStage: !!secondMeetingStage,
-          clienteStage: !!clienteStage
-        }, 'Required pipeline stages not found');
+        req.log.error(
+          {
+            contactadoStage: !!contactadoStage,
+            firstMeetingStage: !!firstMeetingStage,
+            secondMeetingStage: !!secondMeetingStage,
+            clienteStage: !!clienteStage,
+          },
+          'Required pipeline stages not found'
+        );
         return res.status(500).json({ error: 'Pipeline stages not found' });
       }
 
@@ -78,16 +93,19 @@ router.get('/contacts',
         prospectoStageId: prospectoStage?.id,
         firstMeetingStageId: firstMeetingStage.id,
         secondMeetingStageId: secondMeetingStage.id,
-        clienteStageId: clienteStage.id
+        clienteStageId: clienteStage.id,
       };
 
-      req.log.debug({
-        contactadoStageId: stageIds.contactadoStageId,
-        prospectoStageId: stageIds.prospectoStageId,
-        firstMeetingStageId: stageIds.firstMeetingStageId,
-        secondMeetingStageId: stageIds.secondMeetingStageId,
-        clienteStageId: stageIds.clienteStageId
-      }, 'Pipeline stages loaded');
+      req.log.debug(
+        {
+          contactadoStageId: stageIds.contactadoStageId,
+          prospectoStageId: stageIds.prospectoStageId,
+          firstMeetingStageId: stageIds.firstMeetingStageId,
+          secondMeetingStageId: stageIds.secondMeetingStageId,
+          clienteStageId: stageIds.clienteStageId,
+        },
+        'Pipeline stages loaded'
+      );
 
       // Use current month/year if not specified
       const now = new Date();
@@ -99,23 +117,23 @@ router.get('/contacts',
         month: targetMonth,
         year: targetYear,
         stageIds,
-        accessFilter
+        accessFilter,
       });
 
-      req.log.info({ month: targetMonth, year: targetYear, metrics: currentMonthMetrics }, 'Monthly metrics calculated successfully');
+      req.log.info(
+        { month: targetMonth, year: targetYear, metrics: currentMonthMetrics },
+        'Monthly metrics calculated successfully'
+      );
 
       // Calculate history: all months with available data
       const allHistoryEntries = await db()
         .select({
           month: sql<number>`EXTRACT(MONTH FROM ${pipelineStageHistory.changedAt})::int`,
-          year: sql<number>`EXTRACT(YEAR FROM ${pipelineStageHistory.changedAt})::int`
+          year: sql<number>`EXTRACT(YEAR FROM ${pipelineStageHistory.changedAt})::int`,
         })
         .from(pipelineStageHistory)
         .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-        .where(and(
-          isNull(contacts.deletedAt),
-          accessFilter.whereClause
-        ))
+        .where(and(isNull(contacts.deletedAt), accessFilter.whereClause))
         .groupBy(
           sql`EXTRACT(MONTH FROM ${pipelineStageHistory.changedAt})`,
           sql`EXTRACT(YEAR FROM ${pipelineStageHistory.changedAt})`
@@ -129,13 +147,10 @@ router.get('/contacts',
       const contactCreationMonths = await db()
         .select({
           month: sql<number>`EXTRACT(MONTH FROM ${contacts.createdAt})::int`,
-          year: sql<number>`EXTRACT(YEAR FROM ${contacts.createdAt})::int`
+          year: sql<number>`EXTRACT(YEAR FROM ${contacts.createdAt})::int`,
         })
         .from(contacts)
-        .where(and(
-          isNull(contacts.deletedAt),
-          accessFilter.whereClause
-        ))
+        .where(and(isNull(contacts.deletedAt), accessFilter.whereClause))
         .groupBy(
           sql`EXTRACT(MONTH FROM ${contacts.createdAt})`,
           sql`EXTRACT(YEAR FROM ${contacts.createdAt})`
@@ -167,12 +182,12 @@ router.get('/contacts',
               month: histMonth,
               year: histYear,
               stageIds,
-              accessFilter
+              accessFilter,
             });
           }
           return null;
         });
-      
+
       const historyMetrics = (await Promise.all(monthPromises)).filter(
         (m): m is Awaited<ReturnType<typeof calculateMonthlyMetrics>> => m !== null
       );
@@ -181,15 +196,14 @@ router.get('/contacts',
         success: true,
         data: {
           currentMonth: currentMonthMetrics,
-          history: historyMetrics
-        }
+          history: historyMetrics,
+        },
       });
     } catch (err) {
       req.log.error({ err }, 'failed to get contacts metrics');
       next(err);
     }
-  });
+  }
+);
 
 export default router;
-
-

@@ -34,3 +34,5 @@ export const lookupNotificationType = pgTable('lookup_notification_type', {
 });
 
 
+
+

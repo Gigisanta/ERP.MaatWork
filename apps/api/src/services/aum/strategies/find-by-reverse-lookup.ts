@@ -51,14 +51,15 @@ export async function findByReverseLookup(
         advisorRaw: dbRow.advisor_raw,
         matchStatus: dbRow.match_status,
         isPreferred: dbRow.is_preferred ?? true,
-        isNormalized: dbRow.is_normalized ?? false
+        isNormalized: dbRow.is_normalized ?? false,
       };
     }
   } catch (error) {
-    logger.warn({ err: error, accountNumber: row.accountNumber, fileId: row.fileId }, 'Error in reverse lookup');
+    logger.warn(
+      { err: error, accountNumber: row.accountNumber, fileId: row.fileId },
+      'Error in reverse lookup'
+    );
   }
 
   return null;
 }
-
-

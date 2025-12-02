@@ -49,5 +49,3 @@ export interface CalculatorContext {
   month: number;
   year: number;
 }
-
-

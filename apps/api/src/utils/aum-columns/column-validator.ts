@@ -297,9 +297,3 @@ export function validateColumnMapping(
     },
   };
 }
-
-
-
-
-
-

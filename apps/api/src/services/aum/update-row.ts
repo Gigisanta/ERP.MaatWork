@@ -1,6 +1,6 @@
 /**
  * AUM Upsert - Update Existing Row Logic
- * 
+ *
  * AI_DECISION: Preservar datos de filas normalizadas durante actualizaciones
  * Justificación: Las filas normalizadas fueron completadas manualmente y deben preservarse
  * Impacto: Mantiene la integridad de asignaciones manuales de asesores
@@ -15,10 +15,9 @@ import type { AumRowInsert, ExistingRow } from './types';
  * Determine if advisorRaw should be considered valid (non-empty string)
  */
 function hasValidAdvisorRaw(value: string | null | undefined): boolean {
-  return value !== null &&
-    value !== undefined &&
-    typeof value === 'string' &&
-    value.trim().length > 0;
+  return (
+    value !== null && value !== undefined && typeof value === 'string' && value.trim().length > 0
+  );
 }
 
 /**
@@ -94,13 +93,16 @@ async function unsetPreferredOnDuplicates(
         AND (${sql.join(conditions, sql` OR `)})
     `);
   } catch (dedupError) {
-    logger.warn({ err: dedupError, rowId: existingRow.id, fileId: newRow.fileId }, 'Error unsetting preferred flag on duplicate rows');
+    logger.warn(
+      { err: dedupError, rowId: existingRow.id, fileId: newRow.fileId },
+      'Error unsetting preferred flag on duplicate rows'
+    );
   }
 }
 
 /**
  * Update an existing AUM row while preserving important data
- * 
+ *
  * @param existingRow - Existing row in the database
  * @param newRow - New row with updated data
  * @param broker - Broker for queries
@@ -117,19 +119,21 @@ export async function updateExistingRow(
   const preservedMatchedContactId = existingRow.matchedContactId || newRow.matchedContactId;
   const preservedAdvisorRaw = calculatePreservedAdvisorRaw(existingRow, newRow);
   const preservedMatchedUserId = calculatePreservedMatchedUserId(existingRow, newRow);
-  
+
   // Once normalized, always normalized
   const preservedIsNormalized = existingRow.isNormalized;
 
   // AI_DECISION: Preservar isPreferred de la fila existente si el nuevo row tiene conflictos
   // Justificación: Si una fila ya era preferred y el nuevo row tiene conflictos, no debería perder el flag preferred
   // Impacto: Mantiene las filas preferred visibles incluso después de actualizaciones con conflictos
-  const preservedIsPreferred = newRow.conflictDetected && existingRow.isPreferred
-    ? existingRow.isPreferred
-    : newRow.isPreferred;
+  const preservedIsPreferred =
+    newRow.conflictDetected && existingRow.isPreferred
+      ? existingRow.isPreferred
+      : newRow.isPreferred;
 
   try {
-    await dbi.update(aumImportRows)
+    await dbi
+      .update(aumImportRows)
       .set({
         fileId: newRow.fileId,
         holderName: newRow.holderName,
@@ -151,7 +155,7 @@ export async function updateExistingRow(
         cable: newRow.cable,
         cv7000: newRow.cv7000,
         raw: newRow.raw,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(aumImportRows.id, existingRow.id));
 
@@ -162,9 +166,10 @@ export async function updateExistingRow(
 
     return true;
   } catch (error) {
-    logger.warn({ err: error, rowId: existingRow.id, fileId: newRow.fileId }, 'Error updating AUM row');
+    logger.warn(
+      { err: error, rowId: existingRow.id, fileId: newRow.fileId },
+      'Error updating AUM row'
+    );
     return false;
   }
 }
-
-

@@ -2,7 +2,7 @@
 
 **Fecha:** 2025-12-02
 
-**Total de issues encontrados:** 149
+**Total de issues encontrados:** 181
 
 ## Límites Aplicados
 
@@ -12,219 +12,11 @@
 
 ## Resumen por Tipo
 
-- **Archivos largos:** 67
-- **Funciones largas:** 70
-- **Clases largas:** 12
-
-## Archivos con Issues (102 archivos)
-
-### packages\db\src\schema.ts
-
-**Archivo completo** - 1759 líneas
-
-Archivo tiene 1759 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\teams-legacy.ts
-
-**Archivo completo** - 1661 líneas
-
-Archivo tiene 1661 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### packages\db\src\seed-full.ts
-
-**Archivo completo** - 1552 líneas
-
-Archivo tiene 1552 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Función seedUsers** (líneas 206-298) - 93 líneas
-
-Función seedUsers tiene 93 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedTeams** (líneas 306-388) - 83 líneas
-
-Función seedTeams tiene 83 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedContacts** (líneas 397-556) - 160 líneas
-
-Función seedContacts tiene 160 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedTags** (líneas 564-673) - 110 líneas
-
-Función seedTags tiene 110 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedNotes** (líneas 758-820) - 63 líneas
-
-Función seedNotes tiene 63 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedBrokerData** (líneas 950-1084) - 135 líneas
-
-Función seedBrokerData tiene 135 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedActivityEvents** (líneas 1186-1286) - 101 líneas
-
-Función seedActivityEvents tiene 101 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedCapacitaciones** (líneas 1291-1360) - 70 líneas
-
-Función seedCapacitaciones tiene 70 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función seedSegments** (líneas 1368-1450) - 83 líneas
-
-Función seedSegments tiene 83 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-### apps\web\app\contacts\page.tsx
-
-**Archivo completo** - 1226 líneas
-
-Archivo tiene 1226 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\tags-legacy.ts
-
-**Archivo completo** - 1216 líneas
-
-Archivo tiene 1216 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\web\lib\debug-console.ts
-
-**Archivo completo** - 1069 líneas
-
-Archivo tiene 1069 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Función initDebugConsole** (líneas 1014-1068) - 55 líneas
-
-Función initDebugConsole tiene 55 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-### apps\web\app\profile\page.tsx
-
-**Archivo completo** - 984 líneas
-
-Archivo tiene 984 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\portfolio.ts
-
-**Archivo completo** - 914 líneas
-
-Archivo tiene 914 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\aum\rows.ts
-
-**Archivo completo** - 900 líneas
-
-Archivo tiene 900 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Función rows** (líneas 386-441) - 56 líneas
-
-Función rows tiene 56 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-### apps\api\src\routes\instruments.ts
-
-**Archivo completo** - 861 líneas
-
-Archivo tiene 861 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\aum\upload.ts
-
-**Archivo completo** - 851 líneas
-
-Archivo tiene 851 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\routes\benchmarks.ts
-
-**Archivo completo** - 825 líneas
-
-Archivo tiene 825 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\api\src\services\aumUpsert.ts
-
-**Archivo completo** - 808 líneas
-
-Archivo tiene 808 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Función findExistingRow** (líneas 119-291) - 173 líneas
-
-Función findExistingRow tiene 173 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función updateExistingRow** (líneas 309-423) - 115 líneas
-
-Función updateExistingRow tiene 115 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función upsertAumRows** (líneas 471-552) - 82 líneas
-
-Función upsertAumRows tiene 82 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función upsertSingleMonthlySnapshot** (líneas 625-702) - 78 líneas
-
-Función upsertSingleMonthlySnapshot tiene 78 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-**Función upsertAumMonthlySnapshots** (líneas 713-806) - 94 líneas
-
-Función upsertAumMonthlySnapshots tiene 94 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-### apps\api\src\routes\tasks.ts
-
-**Archivo completo** - 800 líneas
-
-Archivo tiene 800 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
+- **Archivos largos:** 61
+- **Funciones largas:** 107
+- **Clases largas:** 13
+
+## Archivos con Issues (133 archivos)
 
 ### apps\api\src\scripts\verify-aum-import.ts
 
@@ -237,20 +29,6 @@ Archivo tiene 763 líneas (límite: 300). Considerar dividir en módulos más pe
 **Función verifyImport** (líneas 250-547) - 298 líneas
 
 Función verifyImport tiene 298 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
-
----
-
-### apps\api\src\routes\metrics\contacts.ts
-
-**Archivo completo** - 661 líneas
-
-Archivo tiene 661 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Función calculateMonthlyMetrics** (líneas 202-575) - 374 líneas
-
-Función calculateMonthlyMetrics tiene 374 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -316,6 +94,14 @@ Función loadClusterReport tiene 56 líneas (límite: 50). Considerar extraer l�
 
 ---
 
+### apps\api\src\routes\tags\handlers\contact-tags.ts
+
+**Archivo completo** - 567 líneas
+
+Archivo tiene 567 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
 ### apps\api\src\routes\capacitaciones.ts
 
 **Archivo completo** - 547 líneas
@@ -348,6 +134,22 @@ Archivo tiene 516 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
+### apps\web\app\contacts\page.tsx
+
+**Archivo completo** - 512 líneas
+
+Archivo tiene 512 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+### apps\api\src\routes\aum\upload\handlers\upload.ts
+
+**Archivo completo** - 503 líneas
+
+Archivo tiene 503 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
 ### apps\api\src\routes\users.ts
 
 **Archivo completo** - 498 líneas
@@ -366,9 +168,9 @@ Archivo tiene 458 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ### apps\api\src\routes\contacts\get.ts
 
-**Archivo completo** - 449 líneas
+**Archivo completo** - 452 líneas
 
-Archivo tiene 449 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 452 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
@@ -462,11 +264,33 @@ Archivo tiene 437 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
+### apps\api\src\routes\instruments\handlers\crud.ts
+
+**Archivo completo** - 431 líneas
+
+Archivo tiene 431 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+**Función createInstrument** (líneas 23-236) - 214 líneas
+
+Función createInstrument tiene 214 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\routes\contacts\list.ts
 
-**Archivo completo** - 420 líneas
+**Archivo completo** - 423 líneas
 
-Archivo tiene 420 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 423 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+### apps\web\lib\debug-console\ui\panel-builder.ts
+
+**Archivo completo** - 422 líneas
+
+Archivo tiene 422 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
@@ -475,20 +299,6 @@ Archivo tiene 420 líneas (límite: 300). Considerar dividir en módulos más pe
 **Archivo completo** - 419 líneas
 
 Archivo tiene 419 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-### apps\web\lib\api-client.ts
-
-**Archivo completo** - 418 líneas
-
-Archivo tiene 418 líneas (límite: 300). Considerar dividir en módulos más pequeños.
-
----
-
-**Clase ApiClient** (líneas 25-409) - 385 líneas
-
-Clase ApiClient tiene 385 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos.
 
 ---
 
@@ -512,6 +322,20 @@ Función parseCsvFile tiene 68 líneas (límite: 50). Considerar extraer lógica
 
 ---
 
+### apps\api\src\utils\aum-columns\column-mapper.ts
+
+**Archivo completo** - 415 líneas
+
+Archivo tiene 415 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+**Función mapAumColumns** (líneas 33-406) - 374 líneas
+
+Función mapAumColumns tiene 374 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\web\app\pipeline\PipelineBoardClient.tsx
 
 **Archivo completo** - 414 líneas
@@ -520,17 +344,23 @@ Archivo tiene 414 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
-### apps\api\src\utils\aum-columns\column-mapper.ts
+### apps\api\src\routes\portfolio\handlers\assignments.ts
 
-**Archivo completo** - 412 líneas
+**Archivo completo** - 402 líneas
 
-Archivo tiene 412 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 402 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
-**Función mapAumColumns** (líneas 33-406) - 374 líneas
+**Función getContactPortfolio** (líneas 120-273) - 154 líneas
 
-Función mapAumColumns tiene 374 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+Función getContactPortfolio tiene 154 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función updateAssignmentOverrides** (líneas 279-330) - 52 líneas
+
+Función updateAssignmentOverrides tiene 52 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -572,6 +402,20 @@ Archivo tiene 387 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
+### apps\web\lib\debug-console\debug-console.ts
+
+**Archivo completo** - 381 líneas
+
+Archivo tiene 381 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+**Clase DebugConsole** (líneas 30-379) - 350 líneas
+
+Clase DebugConsole tiene 350 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos.
+
+---
+
 ### apps\web\app\components\PerformanceChart.tsx
 
 **Archivo completo** - 373 líneas
@@ -596,7 +440,7 @@ Archivo tiene 368 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
-### apps\web\app\admin\users\page.tsx
+### apps\api\src\routes\contacts\update.ts
 
 **Archivo completo** - 367 líneas
 
@@ -604,11 +448,11 @@ Archivo tiene 367 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
-### apps\api\src\routes\contacts\update.ts
+### apps\web\app\admin\users\page.tsx
 
-**Archivo completo** - 363 líneas
+**Archivo completo** - 367 líneas
 
-Archivo tiene 363 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 367 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
@@ -639,6 +483,32 @@ Clase ClientLogger tiene 286 líneas (límite: 100). Considerar dividir en clase
 **Archivo completo** - 359 líneas
 
 Archivo tiene 359 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+### apps\api\src\routes\teams\handlers\membership-requests.ts
+
+**Archivo completo** - 358 líneas
+
+Archivo tiene 358 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+**Función approveAllRequests** (líneas 57-131) - 75 líneas
+
+Función approveAllRequests tiene 75 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función approveRequest** (líneas 136-251) - 116 líneas
+
+Función approveRequest tiene 116 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función rejectRequest** (líneas 256-317) - 62 líneas
+
+Función rejectRequest tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -782,19 +652,31 @@ Archivo tiene 310 líneas (límite: 300). Considerar dividir en módulos más pe
 
 ---
 
-### apps\web\lib\api\aum.ts
+### apps\api\src\routes\aum\rows\handlers\list.ts
 
-**Archivo completo** - 306 líneas
+**Archivo completo** - 308 líneas
 
-Archivo tiene 306 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 308 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+**Función listAllRows** (líneas 17-306) - 290 líneas
+
+Función listAllRows tiene 290 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función rows** (líneas 230-290) - 61 líneas
+
+Función rows tiene 61 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
 ### apps\api\src\utils\aum-columns\column-validator.ts
 
-**Archivo completo** - 305 líneas
+**Archivo completo** - 308 líneas
 
-Archivo tiene 305 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+Archivo tiene 308 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
@@ -810,11 +692,27 @@ Función validateColumnMapping tiene 84 líneas (límite: 50). Considerar extrae
 
 ---
 
+### apps\web\lib\api\aum.ts
+
+**Archivo completo** - 306 líneas
+
+Archivo tiene 306 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
 ### packages\ui\src\components\feedback\DataTable.tsx
 
 **Archivo completo** - 303 líneas
 
 Archivo tiene 303 líneas (límite: 300). Considerar dividir en módulos más pequeños.
+
+---
+
+### apps\web\app\profile\page.tsx
+
+**Archivo completo** - 301 líneas
+
+Archivo tiene 301 líneas (límite: 300). Considerar dividir en módulos más pequeños.
 
 ---
 
@@ -826,11 +724,27 @@ Función seedBenchmarks tiene 232 líneas (límite: 50). Considerar extraer lóg
 
 ---
 
+### apps\web\lib\api\client.ts
+
+**Clase ApiClient** (líneas 22-242) - 221 líneas
+
+Clase ApiClient tiene 221 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos.
+
+---
+
 ### apps\api\src\jobs\monitor-query-performance.ts
 
 **Clase MonitorQueryPerformanceJob** (líneas 29-233) - 205 líneas
 
 Clase MonitorQueryPerformanceJob tiene 205 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos.
+
+---
+
+### apps\api\src\routes\instruments\handlers\search.ts
+
+**Función searchInstruments** (líneas 17-220) - 204 líneas
+
+Función searchInstruments tiene 204 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -858,6 +772,14 @@ Clase CircuitBreaker tiene 174 líneas (límite: 100). Considerar dividir en cla
 
 ---
 
+### apps\api\src\routes\teams\handlers\detail.ts
+
+**Función getTeamDetail** (líneas 22-190) - 169 líneas
+
+Función getTeamDetail tiene 169 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\utils\http-client.ts
 
 **Clase HttpClient** (líneas 33-198) - 166 líneas
@@ -882,6 +804,36 @@ Función usePortfolioLineActions tiene 149 líneas (límite: 50). Considerar ext
 
 ---
 
+### apps\api\src\routes\tasks\handlers\list.ts
+
+**Función handleListTasks** (líneas 17-156) - 140 líneas
+
+Función handleListTasks tiene 140 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\teams\handlers\metrics.ts
+
+**Función getTeamMetrics** (líneas 25-163) - 139 líneas
+
+Función getTeamMetrics tiene 139 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función getMemberMetrics** (líneas 168-292) - 125 líneas
+
+Función getMemberMetrics tiene 125 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\instruments\handlers\validate.ts
+
+**Función validateSymbol** (líneas 21-154) - 134 líneas
+
+Función validateSymbol tiene 134 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\scripts\verify-contacts-assignment.ts
 
 **Función verifyContactsAssignment** (líneas 29-155) - 127 líneas
@@ -890,11 +842,11 @@ Función verifyContactsAssignment tiene 127 líneas (límite: 50). Considerar ex
 
 ---
 
-### apps\web\app\contacts\hooks\useContactActions.ts
+### apps\api\src\routes\aum\rows\handlers\monthly-history.ts
 
-**Función useContactActions** (líneas 10-130) - 121 líneas
+**Función getMonthlyHistory** (líneas 16-139) - 124 líneas
 
-Función useContactActions tiene 121 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+Función getMonthlyHistory tiene 124 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -903,6 +855,14 @@ Función useContactActions tiene 121 líneas (límite: 50). Considerar extraer l
 **Clase RateLimiter** (líneas 37-154) - 118 líneas
 
 Clase RateLimiter tiene 118 líneas (límite: 100). Considerar dividir en clases más pequeñas o extraer métodos.
+
+---
+
+### apps\api\src\routes\benchmarks\handlers\get.ts
+
+**Función handleGetBenchmark** (líneas 21-133) - 113 líneas
+
+Función handleGetBenchmark tiene 113 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -936,11 +896,55 @@ Clase RefreshMaterializedViewsJob tiene 106 líneas (límite: 100). Considerar d
 
 ---
 
+### apps\api\src\routes\tasks\handlers\batch.ts
+
+**Función handleBatchTasks** (líneas 18-119) - 102 líneas
+
+Función handleBatchTasks tiene 102 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### packages\db\src\seed-pipeline-stages.ts
 
 **Función seedPipelineStages** (líneas 17-117) - 101 líneas
 
 Función seedPipelineStages tiene 101 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\benchmarks\handlers\components.ts
+
+**Función handleAddComponent** (líneas 21-109) - 89 líneas
+
+Función handleAddComponent tiene 89 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función handleUpdateComponent** (líneas 115-211) - 97 líneas
+
+Función handleUpdateComponent tiene 97 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función handleDeleteComponent** (líneas 217-267) - 51 líneas
+
+Función handleDeleteComponent tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\aum\rows\handlers\match.ts
+
+**Función matchRow** (líneas 13-108) - 96 líneas
+
+Función matchRow tiene 96 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\aum\rows\handlers\update-advisor.ts
+
+**Función updateAdvisor** (líneas 17-112) - 96 líneas
+
+Función updateAdvisor tiene 96 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -952,6 +956,44 @@ Función handleUpload tiene 95 líneas (límite: 50). Considerar extraer lógica
 
 ---
 
+### packages\db\src\seeds\users.ts
+
+**Función seedUsers** (líneas 15-107) - 93 líneas
+
+Función seedUsers tiene 93 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\benchmarks\handlers\crud.ts
+
+**Función handleCreateBenchmark** (líneas 20-109) - 90 líneas
+
+Función handleCreateBenchmark tiene 90 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función handleUpdateBenchmark** (líneas 115-168) - 54 líneas
+
+Función handleUpdateBenchmark tiene 54 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\metrics\contacts\helpers.ts
+
+**Función getFirstTimeStageEntries** (líneas 38-126) - 89 líneas
+
+Función getFirstTimeStageEntries tiene 89 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\portfolio\handlers\templates.ts
+
+**Función getTemplateLinesBatch** (líneas 181-266) - 86 líneas
+
+Función getTemplateLinesBatch tiene 86 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\web\app\contacts\[id]\tags\[tagId]\TagDetailsForm.tsx
 
 **Función handleSubmit** (líneas 125-210) - 86 líneas
@@ -960,11 +1002,27 @@ Función handleSubmit tiene 86 líneas (límite: 50). Considerar extraer lógica
 
 ---
 
+### packages\db\src\seeds\teams.ts
+
+**Función seedTeams** (líneas 17-99) - 83 líneas
+
+Función seedTeams tiene 83 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\web\middleware.ts
 
 **Función middleware** (líneas 26-107) - 82 líneas
 
 Función middleware tiene 82 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\aum\rows\handlers\duplicates.ts
+
+**Función getDuplicates** (líneas 15-95) - 81 líneas
+
+Función getDuplicates tiene 81 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -984,6 +1042,30 @@ Función sendContactsToWebhook tiene 80 líneas (límite: 50). Considerar extrae
 
 ---
 
+### apps\api\src\routes\aum\upload\handlers\export.ts
+
+**Función handleExport** (líneas 19-97) - 79 líneas
+
+Función handleExport tiene 79 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\tasks\handlers\bulk.ts
+
+**Función handleBulkAction** (líneas 16-94) - 79 líneas
+
+Función handleBulkAction tiene 79 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\services\aum\upsert.ts
+
+**Función upsertAumRows** (líneas 23-99) - 77 líneas
+
+Función upsertAumRows tiene 77 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\__tests__\helpers\test-db.ts
 
 **Función cleanupTestDatabase** (líneas 66-142) - 77 líneas
@@ -992,11 +1074,67 @@ Función cleanupTestDatabase tiene 77 líneas (límite: 50). Considerar extraer 
 
 ---
 
+### apps\api\src\routes\tasks\handlers\crud.ts
+
+**Función handleCreateTask** (líneas 17-75) - 59 líneas
+
+Función handleCreateTask tiene 59 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función handleUpdateTask** (líneas 80-155) - 76 líneas
+
+Función handleUpdateTask tiene 76 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función handleDeleteTask** (líneas 160-210) - 51 líneas
+
+Función handleDeleteTask tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\teams\handlers\list.ts
+
+**Función listTeams** (líneas 17-92) - 76 líneas
+
+Función listTeams tiene 76 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\teams\handlers\invitations.ts
+
+**Función acceptInvitation** (líneas 54-127) - 74 líneas
+
+Función acceptInvitation tiene 74 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función createInvitation** (líneas 162-223) - 62 líneas
+
+Función createInvitation tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función listEligibleAdvisors** (líneas 228-295) - 68 líneas
+
+Función listEligibleAdvisors tiene 68 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\web\app\components\bloomberg\PortfolioPerformanceMetrics.tsx
 
 **Función fetchPerformance** (líneas 45-117) - 73 líneas
 
 Función fetchPerformance tiene 73 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\benchmarks\handlers\batch.ts
+
+**Función handleBatchComponents** (líneas 21-92) - 72 líneas
+
+Función handleBatchComponents tiene 72 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -1030,6 +1168,44 @@ Función generateTextReport tiene 53 líneas (límite: 50). Considerar extraer l
 
 ---
 
+### apps\web\lib\debug-console\index.ts
+
+**Función initDebugConsole** (líneas 31-97) - 67 líneas
+
+Función initDebugConsole tiene 67 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### packages\db\src\seeds\portfolios.ts
+
+**Función seedPortfolios** (líneas 64-130) - 67 líneas
+
+Función seedPortfolios tiene 67 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\benchmarks\handlers\list.ts
+
+**Función handleListBenchmarks** (líneas 21-86) - 66 líneas
+
+Función handleListBenchmarks tiene 66 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\services\aum\monthly-snapshots.ts
+
+**Función upsertSingleMonthlySnapshot** (líneas 45-106) - 62 líneas
+
+Función upsertSingleMonthlySnapshot tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función upsertAumMonthlySnapshots** (líneas 130-195) - 66 líneas
+
+Función upsertAumMonthlySnapshots tiene 66 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\web\app\auth\useRequireAuth.ts
 
 **Función useRequireAuth** (líneas 9-74) - 66 líneas
@@ -1038,11 +1214,49 @@ Función useRequireAuth tiene 66 líneas (límite: 50). Considerar extraer lógi
 
 ---
 
+### apps\api\src\routes\aum\upload\validation.ts
+
+**Función validateParsedRows** (líneas 36-99) - 64 líneas
+
+Función validateParsedRows tiene 64 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\utils\aum-columns\column-pattern-matcher.ts
 
 **Función findColumnByPatterns** (líneas 20-83) - 64 líneas
 
 Función findColumnByPatterns tiene 64 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### packages\db\src\seeds\contacts.ts
+
+**Función createContact** (líneas 60-122) - 63 líneas
+
+Función createContact tiene 63 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\teams\handlers\members.ts
+
+**Función getTeamMember** (líneas 65-115) - 51 líneas
+
+Función getTeamMember tiene 51 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+**Función addTeamMember** (líneas 120-181) - 62 líneas
+
+Función addTeamMember tiene 62 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### packages\db\src\seeds\tags.ts
+
+**Función seedTags** (líneas 50-109) - 60 líneas
+
+Función seedTags tiene 60 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -1084,11 +1298,43 @@ Función requireAuth tiene 57 líneas (límite: 50). Considerar extraer lógica 
 
 ---
 
+### apps\api\src\routes\tasks\handlers\get.ts
+
+**Función handleGetTask** (líneas 16-72) - 57 líneas
+
+Función handleGetTask tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
 ### apps\api\src\utils\pipeline-stages.ts
 
 **Función ensureDefaultPipelineStages** (líneas 99-155) - 57 líneas
 
 Función ensureDefaultPipelineStages tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### packages\db\src\seeds\tasks-notes.ts
+
+**Función seedTasks** (líneas 50-106) - 57 líneas
+
+Función seedTasks tiene 57 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\services\aum\update-row.ts
+
+**Función updateExistingRow** (líneas 113-168) - 56 líneas
+
+Función updateExistingRow tiene 56 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\api\src\routes\metrics\contacts\calculate-monthly.ts
+
+**Función calculateMonthlyMetrics** (líneas 38-91) - 54 líneas
+
+Función calculateMonthlyMetrics tiene 54 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 
@@ -1105,6 +1351,14 @@ Función assignUnassignedContacts tiene 53 líneas (límite: 50). Considerar ext
 **Función usePortfolioData** (líneas 12-64) - 53 líneas
 
 Función usePortfolioData tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
+
+---
+
+### apps\web\lib\debug-console\error-handlers.ts
+
+**Función setupConsoleErrorInterceptor** (líneas 71-123) - 53 líneas
+
+Función setupConsoleErrorInterceptor tiene 53 líneas (límite: 50). Considerar extraer lógica a funciones más pequeñas.
 
 ---
 

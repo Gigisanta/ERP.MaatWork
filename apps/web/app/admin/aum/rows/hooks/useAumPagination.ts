@@ -52,9 +52,3 @@ export function useAumPagination() {
     resetPagination,
   };
 }
-
-
-
-
-
-

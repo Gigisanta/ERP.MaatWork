@@ -49,14 +49,15 @@ export async function findByIdCuenta(
         advisorRaw: dbRow.advisor_raw,
         matchStatus: dbRow.match_status,
         isPreferred: dbRow.is_preferred ?? true,
-        isNormalized: dbRow.is_normalized ?? false
+        isNormalized: dbRow.is_normalized ?? false,
       };
     }
   } catch (error) {
-    logger.warn({ err: error, idCuenta: row.idCuenta, fileId: row.fileId }, 'Error searching AUM row by idCuenta');
+    logger.warn(
+      { err: error, idCuenta: row.idCuenta, fileId: row.fileId },
+      'Error searching AUM row by idCuenta'
+    );
   }
 
   return null;
 }
-
-

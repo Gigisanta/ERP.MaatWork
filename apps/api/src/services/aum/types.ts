@@ -1,6 +1,6 @@
 /**
  * AUM Upsert Service - Shared Types
- * 
+ *
  * AI_DECISION: Centralizar tipos para mejor mantenibilidad
  * Justificación: Tipos compartidos entre múltiples módulos de AUM upsert
  * Impacto: Evita duplicación y facilita refactorizaciones futuras
@@ -101,5 +101,3 @@ export interface MonthlySnapshotUpsertResult {
   stats: MonthlySnapshotUpsertStats;
   error?: string;
 }
-
-

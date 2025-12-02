@@ -1,6 +1,6 @@
 /**
  * Monthly Metrics Calculator - Orchestrator
- * 
+ *
  * Orchestrates all metric calculators for a given month
  */
 
@@ -10,14 +10,9 @@ import {
   calculateMeetings,
   calculateNewClients,
   calculateBusinessLineClosures,
-  calculateTransitionTimes
+  calculateTransitionTimes,
 } from './calculators';
-import type { 
-  AccessFilter, 
-  PipelineStageIds, 
-  MonthlyMetrics,
-  CalculatorContext 
-} from './types';
+import type { AccessFilter, PipelineStageIds, MonthlyMetrics, CalculatorContext } from './types';
 
 export interface CalculateMonthlyMetricsParams {
   month: number;
@@ -28,7 +23,7 @@ export interface CalculateMonthlyMetricsParams {
 
 /**
  * Calculate all metrics for a given month
- * 
+ *
  * AI_DECISION: Paralelizar las 4 llamadas a getFirstTimeStageEntries ya que son independientes.
  * Cada llamada ejecuta 2 queries (entradas en rango + verificación anteriores), totalizando 8 queries.
  * Al paralelizarlas, reducimos la latencia total de suma de queries a máximo de queries paralelas.
@@ -48,16 +43,17 @@ export async function calculateMonthlyMetrics(
     range,
     accessFilter,
     month,
-    year
+    year,
   };
 
   // Parallelize stage entry queries (they are independent)
-  const [contactadoByContact, firstMeetingByContact, secondMeetingByContact, clientByContact] = await Promise.all([
-    getFirstTimeStageEntries(contactadoStageId, range, accessFilter),
-    getFirstTimeStageEntries(firstMeetingStageId, range, accessFilter),
-    getFirstTimeStageEntries(secondMeetingStageId, range, accessFilter),
-    getFirstTimeStageEntries(clienteStageId, range, accessFilter)
-  ]);
+  const [contactadoByContact, firstMeetingByContact, secondMeetingByContact, clientByContact] =
+    await Promise.all([
+      getFirstTimeStageEntries(contactadoStageId, range, accessFilter),
+      getFirstTimeStageEntries(firstMeetingStageId, range, accessFilter),
+      getFirstTimeStageEntries(secondMeetingStageId, range, accessFilter),
+      getFirstTimeStageEntries(clienteStageId, range, accessFilter),
+    ]);
 
   // Calculate new contacts
   const { newContactsCount } = await calculateNewContacts(ctx, contactadoByContact);
@@ -86,8 +82,6 @@ export async function calculateMonthlyMetrics(
     secondMeetings: secondMeetingsCount,
     newClients: newClientsCount,
     businessLineClosures,
-    transitionTimes
+    transitionTimes,
   };
 }
-
-

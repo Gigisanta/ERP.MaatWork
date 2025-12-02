@@ -1,6 +1,6 @@
 /**
  * Meetings Calculator
- * 
+ *
  * Calculates first and second meetings counts
  */
 
@@ -15,13 +15,13 @@ function countFirstTimeEntriesInMonth(
   range: MonthRange
 ): number {
   let count = 0;
-  
+
   for (const [_, firstEntryDate] of entriesByContact.entries()) {
     if (isDateInMonthRange(firstEntryDate, range)) {
       count++;
     }
   }
-  
+
   return count;
 }
 
@@ -41,8 +41,6 @@ export function calculateMeetings(
 ): MeetingsResult {
   return {
     firstMeetingsCount: countFirstTimeEntriesInMonth(firstMeetingByContact, range),
-    secondMeetingsCount: countFirstTimeEntriesInMonth(secondMeetingByContact, range)
+    secondMeetingsCount: countFirstTimeEntriesInMonth(secondMeetingByContact, range),
   };
 }
-
-

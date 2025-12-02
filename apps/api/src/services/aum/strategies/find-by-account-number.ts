@@ -1,6 +1,6 @@
 /**
  * AUM Upsert - Strategy 3: Find by accountNumber (normalized)
- * 
+ *
  * AI_DECISION: Buscar por accountNumber normalizado para mejor matching
  * Justificación: Asegura que se encuentren filas incluso si el formato del accountNumber cambió ligeramente
  * Impacto: Mejora la preservación de asesores cuando CSV2 tiene accountNumber pero CSV1 tenía formato diferente
@@ -55,14 +55,15 @@ export async function findByAccountNumber(
         advisorRaw: dbRow.advisor_raw,
         matchStatus: dbRow.match_status,
         isPreferred: dbRow.is_preferred ?? true,
-        isNormalized: dbRow.is_normalized ?? false
+        isNormalized: dbRow.is_normalized ?? false,
       };
     }
   } catch (error) {
-    logger.warn({ err: error, accountNumber: row.accountNumber, fileId: row.fileId }, 'Error searching AUM row by accountNumber');
+    logger.warn(
+      { err: error, accountNumber: row.accountNumber, fileId: row.fileId },
+      'Error searching AUM row by accountNumber'
+    );
   }
 
   return null;
 }
-
-

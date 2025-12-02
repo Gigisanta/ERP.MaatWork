@@ -1,6 +1,6 @@
 /**
  * AUM Upsert - Strategy 4: Find by holderName ONLY
- * 
+ *
  * AI_DECISION: Buscar por holderName solo cuando la nueva fila no tiene identificadores
  * Justificación: Si la nueva fila tiene accountNumber o idCuenta, debe buscar por esos identificadores primero
  * Impacto: Evita que filas únicas con accountNumber nuevo se actualicen incorrectamente por coincidencia de holderName
@@ -20,10 +20,10 @@ export function hasOnlyHolderName(row: AumRowInsert): boolean {
 
   return Boolean(
     row.holderName &&
-    row.holderName.trim().length > 0 &&
-    !hasIdCuenta &&
-    !hasAccountNumber &&
-    (!row.advisorRaw || row.advisorRaw.trim().length === 0)
+      row.holderName.trim().length > 0 &&
+      !hasIdCuenta &&
+      !hasAccountNumber &&
+      (!row.advisorRaw || row.advisorRaw.trim().length === 0)
   );
 }
 
@@ -73,14 +73,15 @@ export async function findByHolderName(
         advisorRaw: dbRow.advisor_raw,
         matchStatus: dbRow.match_status,
         isPreferred: dbRow.is_preferred ?? true,
-        isNormalized: dbRow.is_normalized ?? false
+        isNormalized: dbRow.is_normalized ?? false,
       };
     }
   } catch (error) {
-    logger.warn({ err: error, holderName: row.holderName, fileId: row.fileId }, 'Error searching AUM row by holderName only');
+    logger.warn(
+      { err: error, holderName: row.holderName, fileId: row.fileId },
+      'Error searching AUM row by holderName only'
+    );
   }
 
   return null;
 }
-
-
