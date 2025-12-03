@@ -8,11 +8,21 @@ import { dirname, resolve } from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Buscar .env en la raíz del monorepo (2 niveles arriba de packages/db)
+// Buscar .env en múltiples ubicaciones (en orden de prioridad):
+// 1. .env.local en la raíz del monorepo (desarrollo local)
+// 2. .env en la raíz del monorepo (desarrollo local)
+// 3. infrastructure/mvp/.env (producción MVP)
 const rootDir = resolve(__dirname, '../..');
-const envLocalPath = resolve(rootDir, '.env.local');
-const envPath = resolve(rootDir, '.env');
-config({ path: existsSync(envLocalPath) ? envLocalPath : envPath });
+const envPaths = [
+  resolve(rootDir, '.env.local'),
+  resolve(rootDir, '.env'),
+  resolve(rootDir, 'infrastructure/mvp/.env'),
+];
+
+const envPath = envPaths.find(p => existsSync(p));
+if (envPath) {
+  config({ path: envPath });
+}
 
 /**
  * Configuración de Drizzle Kit.
