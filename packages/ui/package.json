@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsc && pnpm run build:styles && pnpm run build:link-styles",
     "build:styles": "node scripts/copy-styles.js",
-    "build:link-styles": "node -e \"require('fs').copyFileSync('dist/styles/index.css', 'dist/styles.css'); console.log('Created dist/styles.css');\"",
+    "build:link-styles": "node -e \"try { require('fs').unlinkSync('dist/styles.css'); } catch(e) {} require('fs').copyFileSync('dist/styles/index.css', 'dist/styles.css'); console.log('Created dist/styles.css');\"",
     "dev": "echo 'UI package does not need dev mode'",
     "test": "vitest run",
     "test:watch": "vitest",
