@@ -4,64 +4,33 @@
 
 ### Prerrequisitos (una sola vez)
 
-#### 1. Instalar AWS CLI
+#### 1. Generar clave SSH
 
-**Windows:**
-```powershell
-winget install Amazon.AWSCLI
-```
-
-**Mac:**
 ```bash
-brew install awscli
+# Windows (PowerShell)
+ssh-keygen -t ed25519 -C "tu-nombre" -f $HOME\.ssh\cactus-dev
+
+# Mac/Linux
+ssh-keygen -t ed25519 -C "tu-nombre" -f ~/.ssh/cactus-dev
 ```
 
-**Linux:**
+#### 2. Enviar tu clave pública al admin
+
 ```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
+# Windows
+Get-Content $HOME\.ssh\cactus-dev.pub
+
+# Mac/Linux
+cat ~/.ssh/cactus-dev.pub
 ```
 
-#### 2. Instalar Session Manager Plugin
-
-**Windows:**
-Descargar e instalar: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe
-
-**Mac:**
-```bash
-brew install --cask session-manager-plugin
-```
-
-**Linux:**
-```bash
-curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-sudo dpkg -i session-manager-plugin.deb
-```
-
-#### 3. Configurar credenciales AWS
-
-Pide al admin las credenciales y ejecuta:
-```bash
-aws configure
-# AWS Access Key ID: [tu-access-key]
-# AWS Secret Access Key: [tu-secret-key]
-# Default region: sa-east-1
-# Default output format: json
-```
+Envía el output al admin para que lo agregue al servidor.
 
 ---
 
 ### Conectarse a la EC2
 
-#### Opción A: Comando directo (más simple)
-
-```bash
-# Conectar a desarrollo
-aws ssm start-session --target i-01fcf7ea379b96978 --region sa-east-1
-```
-
-#### Opción B: Usar el script incluido
+#### Opción A: Usar el script incluido
 
 **Windows (PowerShell):**
 ```powershell
@@ -73,34 +42,35 @@ aws ssm start-session --target i-01fcf7ea379b96978 --region sa-east-1
 ./infrastructure/scripts/connect-dev.sh
 ```
 
-#### Opción C: SSH nativo (para VS Code Remote, etc.)
+#### Opción B: SSH directo
+
+```bash
+ssh -i ~/.ssh/cactus-dev ec2-user@56.125.148.180
+```
+
+#### Opción C: Configurar SSH config (recomendado)
 
 Agrega esto a tu `~/.ssh/config`:
 
 ```
-# Cactus Development Server
 Host cactus-dev
-    HostName i-01fcf7ea379b96978
+    HostName 56.125.148.180
     User ec2-user
-    ProxyCommand aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters "portNumber=%p" --region sa-east-1
+    IdentityFile ~/.ssh/cactus-dev
 ```
 
-Luego puedes conectarte con:
+Luego conectate con:
 ```bash
 ssh cactus-dev
 ```
-
-O abrir VS Code Remote SSH → `cactus-dev`
 
 ---
 
 ### Comandos útiles una vez conectado
 
 ```bash
-# Cambiar a ec2-user
-sudo su - ec2-user
-
 # Ver estado de los servicios
+cd ~/abax/infrastructure/mvp
 docker-compose ps
 
 # Ver logs
@@ -112,6 +82,9 @@ docker-compose logs -f api
 # Reiniciar un servicio
 docker-compose restart api
 
+# Rebuild y restart
+docker-compose up -d --build api
+
 # Ver uso de recursos
 htop
 ```
@@ -120,23 +93,24 @@ htop
 
 ### Información del servidor
 
-| Ambiente | Instance ID | Región |
-|----------|-------------|--------|
-| DEV | `i-01fcf7ea379b96978` | sa-east-1 |
+| Ambiente | IP | User |
+|----------|-----|------|
+| DEV | `56.125.148.180` | `ec2-user` |
 
 ---
 
 ### Troubleshooting
 
-#### "SessionManagerPlugin is not found"
-Instala el plugin de Session Manager (ver prerrequisitos arriba).
+#### "Permission denied (publickey)"
+Tu clave SSH no está en el servidor. Pide al admin que la agregue.
 
-#### "Unable to start session"
+#### "Connection refused"
 1. Verifica que la instancia esté corriendo
-2. Verifica que tengas las credenciales correctas: `aws sts get-caller-identity`
+2. Verifica el Security Group (puerto 22 debe estar abierto)
 
-#### "Access denied"
-Contacta al admin para que te agregue los permisos necesarios.
+#### "Connection timed out"
+1. Verifica tu conexión a internet
+2. Verifica que la IP sea correcta
 
 ---
 
@@ -144,39 +118,27 @@ Contacta al admin para que te agregue los permisos necesarios.
 
 ### Agregar nuevo desarrollador
 
-1. Crear usuario IAM con políticas:
-   - `AmazonSSMFullAccess` (o política custom más restrictiva)
-   
-2. Compartir credenciales de forma segura
+1. Recibir la clave pública del desarrollador
 
-### Política IAM mínima para desarrolladores
+2. Conectar a la EC2:
+   ```bash
+   ssh -i ~/.ssh/cactus-dev ec2-user@56.125.148.180
+   ```
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:StartSession",
-                "ssm:TerminateSession",
-                "ssm:ResumeSession",
-                "ssm:DescribeSessions",
-                "ssm:GetConnectionStatus"
-            ],
-            "Resource": [
-                "arn:aws:ec2:sa-east-1:017734516842:instance/i-01fcf7ea379b96978",
-                "arn:aws:ssm:sa-east-1:017734516842:document/AWS-StartSSHSession"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:DescribeInstanceInformation"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
+3. Agregar la clave:
+   ```bash
+   echo "CLAVE_PUBLICA_DEL_DESARROLLADOR" >> ~/.ssh/authorized_keys
+   ```
+
+### Ver claves autorizadas
+
+```bash
+cat ~/.ssh/authorized_keys
 ```
 
+### Remover acceso
+
+```bash
+# Editar y eliminar la línea correspondiente
+nano ~/.ssh/authorized_keys
+```
