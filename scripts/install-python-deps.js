@@ -157,9 +157,12 @@ function main() {
   // Verificar Python
   const python = findPythonCommand();
   if (!python) {
-    console.log(error('❌ Python 3.10+ no está instalado o no está en PATH'));
-    console.log(error('   Instala Python desde https://www.python.org/downloads/'));
-    process.exit(1);
+    console.log(warning('⚠️  Python 3.10+ no está instalado o no está en PATH'));
+    console.log(warning('   El servicio de analytics no estará disponible'));
+    console.log(warning('   Para habilitarlo, instala Python desde https://www.python.org/downloads/'));
+    console.log('');
+    console.log(warning('   Continuando sin dependencias Python...'));
+    process.exit(0); // No bloquear pnpm install
   }
 
   console.log(success(`✅ Python encontrado: ${python.version}`));
