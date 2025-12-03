@@ -10,16 +10,13 @@ import ServiceWorkerRegistration from './components/ServiceWorkerRegistration';
 import { ToastProvider } from '../lib/hooks/useToast';
 import { Inter } from 'next/font/google';
 import dynamic from 'next/dynamic';
-import '@cactus/ui/styles.css';
+import '../../packages/ui/dist/styles.css';
 import './globals.css';
 
 // AI_DECISION: Only load DebugConsole in development to reduce production bundle
 // Justificación: DebugConsole adds ~2KB to bundle and creates client component overhead
 // Impacto: Smaller production bundle, faster initial load in production
-const DebugConsole = dynamic(
-  () => import('./components/DebugConsole'),
-  { ssr: false }
-);
+const DebugConsole = dynamic(() => import('./components/DebugConsole'), { ssr: false });
 
 // AI_DECISION: Use next/font/google for optimized font loading
 // Justificación: next/font automatically optimizes fonts, reduces FOUT, and improves performance
@@ -49,9 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <SidebarProvider>
                   <PageTitleProvider>
                     <NavigationNew />
-                    <AppLayout>
-                      {children}
-                    </AppLayout>
+                    <AppLayout>{children}</AppLayout>
                   </PageTitleProvider>
                 </SidebarProvider>
               </ToastProvider>
@@ -64,5 +59,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-
