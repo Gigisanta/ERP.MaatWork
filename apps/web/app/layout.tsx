@@ -10,7 +10,8 @@ import ServiceWorkerRegistration from './components/ServiceWorkerRegistration';
 import { ToastProvider } from '../lib/hooks/useToast';
 import { Inter } from 'next/font/google';
 import dynamic from 'next/dynamic';
-import '../../packages/ui/dist/styles.css';
+// Styles from @cactus/ui - copied to local styles folder during build
+import '../styles/ui-styles.css';
 import './globals.css';
 
 // AI_DECISION: Only load DebugConsole in development to reduce production bundle
