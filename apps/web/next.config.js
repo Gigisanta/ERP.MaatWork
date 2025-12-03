@@ -87,13 +87,18 @@ const nextConfig = {
     }
 
     // En producción, headers completos de seguridad
+    // AI_DECISION: CSP permite conexiones necesarias para Next.js RSC y API
+    // Justificación: Next.js requiere conexiones para prefetch, RSC payloads, y navegación
+    // Impacto: Elimina errores de CSP sin comprometer seguridad significativamente
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
     return [
       {
         source: '/(.*)',
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || ''} https://va.vercel-scripts.com https://vitals.vercel-insights.com wss:; frame-src 'self' https://calendar.google.com; font-src 'self' data:;`,
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ${apiUrl} https://va.vercel-scripts.com https://vitals.vercel-insights.com wss: ws:; frame-src 'self' https://calendar.google.com; font-src 'self' data:;`,
           },
           {
             key: 'X-Frame-Options',
