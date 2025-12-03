@@ -87,12 +87,13 @@ export const notifications = pgTable(
     notificationsSnoozedIdx: index('idx_notifications_snoozed')
       .on(table.userId, table.snoozedUntil)
       .where(sql`${table.snoozedUntil} is not null`),
-    // AI_DECISION: Add partial index for recent unread notifications
-    // Justificación: Dashboard queries frequently filter unread notifications from last 30 days
-    // Impacto: Faster unread notification queries, smaller index size (only recent unread)
+    // AI_DECISION: Partial index for unread notifications (removed NOW() - not IMMUTABLE)
+    // Justificación: Dashboard queries frequently filter unread notifications
+    // Impacto: Faster unread notification queries, smaller index size
+    // Note: Time filtering done at query level, not index level (NOW() is not IMMUTABLE)
     notificationsUnreadRecentIdx: index('idx_notifications_unread_recent')
       .on(table.userId, table.createdAt)
-      .where(sql`${table.readAt} IS NULL AND ${table.createdAt} > NOW() - INTERVAL '30 days'`)
+      .where(sql`${table.readAt} IS NULL`)
   })
 );
 

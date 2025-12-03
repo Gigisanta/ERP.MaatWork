@@ -150,7 +150,11 @@ export const pipelineStageHistory = pgTable(
   },
   (table) => ({
     pipelineHistoryIdx: index('idx_pipeline_history_contact').on(table.contactId, table.changedAt),
-    pipelineHistoryToStageIdx: index('idx_pipeline_history_to_stage').on(table.toStage, table.changedAt)
+    pipelineHistoryToStageIdx: index('idx_pipeline_history_to_stage').on(table.toStage, table.changedAt),
+    // AI_DECISION: Índice para métricas de pipeline que agrupan por from_stage
+    // Justificación: Queries de métricas agrupan por from_stage y filtran por fecha
+    // Impacto: Faster pipeline metrics queries
+    pipelineHistoryFromStageIdx: index('idx_pipeline_stage_history_from_stage_changed').on(table.fromStage, table.changedAt)
   })
 );
 
