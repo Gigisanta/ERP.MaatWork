@@ -1,8 +1,8 @@
+import { defineConfig } from 'drizzle-kit';
 import { config } from 'dotenv';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import type { Config } from 'drizzle-kit';
 
 // Obtener __dirname equivalente para módulos ES
 const __filename = fileURLToPath(import.meta.url);
@@ -21,7 +21,7 @@ config({ path: existsSync(envLocalPath) ? envLocalPath : envPath });
  * - dialect: base de datos objetivo (PostgreSQL).
  * - dbCredentials.url: cadena de conexión usada por generate/push.
  */
-export default {
+export default defineConfig({
   schema: './src/schema.ts',
   // Use canonical migrations directory (with meta/_journal.json)
   out: './migrations',
@@ -29,4 +29,4 @@ export default {
   dbCredentials: {
     url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/CRM'
   }
-} satisfies Config;
+});

@@ -81,7 +81,11 @@ export const clientPortfolioAssignments = pgTable(
       table.templateId,
       table.startDate
     ),
-    cpaActiveIdx: index('idx_cpa_active').on(table.contactId).where(sql`${table.status} = 'active'`)
+    cpaActiveIdx: index('idx_cpa_active').on(table.contactId).where(sql`${table.status} = 'active'`),
+    // AI_DECISION: Índice compuesto para conteos de portfolios por contacto y estado
+    // Justificación: Dashboard queries filtran portfolios activos por contacto
+    // Impacto: Faster dashboard portfolio counts
+    cpaContactStatusIdx: index('idx_client_portfolio_assignments_contact_status').on(table.contactId, table.status)
   })
 );
 

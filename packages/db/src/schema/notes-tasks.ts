@@ -208,12 +208,19 @@ export const tasks = pgTable(
       table.deletedAt,
       table.createdAt
     ),
-    // AI_DECISION: Add partial index for overdue tasks
-    // Justificación: Dashboard queries frequently filter overdue tasks (open/in_progress with due_date < today)
-    // Impacto: Faster overdue task queries, smaller index size (only overdue tasks)
+    // AI_DECISION: Partial index for open tasks (removed CURRENT_DATE - not IMMUTABLE)
+    // Justificación: Dashboard queries frequently filter open/in_progress tasks
+    // Impacto: Faster task queries, smaller index size
+    // Note: Date filtering done at query level, not index level (CURRENT_DATE is not IMMUTABLE)
     tasksOverdueIdx: index('idx_tasks_overdue')
       .on(table.assignedToUserId, table.dueDate)
-      .where(sql`${table.status} IN ('open', 'in_progress') AND ${table.dueDate} < CURRENT_DATE AND ${table.deletedAt} IS NULL`)
+      .where(sql`${table.status} IN ('open', 'in_progress') AND ${table.deletedAt} IS NULL`),
+    // AI_DECISION: Índice compuesto para métricas de dashboard
+    // Justificación: Dashboard queries agrupan tareas por usuario, estado y fecha de creación
+    // Impacto: Faster dashboard metrics loading
+    tasksAssignedStatusCreatedIdx: index('idx_tasks_assigned_status_created')
+      .on(table.assignedToUserId, table.status, table.createdAt)
+      .where(sql`${table.deletedAt} IS NULL`)
   })
 );
 

@@ -39,8 +39,8 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
-    "drizzle-kit": "^0.24.0",
-    "drizzle-orm": "^0.33.0",
+    "drizzle-kit": "^0.30.4",
+    "drizzle-orm": "^0.38.3",
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "pg": "^8.12.0",
