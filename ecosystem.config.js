@@ -3,8 +3,7 @@ module.exports = {
     {
       name: "cactus-api",
       cwd: "/home/ec2-user/abax/apps/api",
-      script: "node_modules/tsx/dist/cli.mjs",
-      args: "src/index.ts",
+      script: "dist/index.js",
       instances: 1,
       exec_mode: "fork",
       env: {

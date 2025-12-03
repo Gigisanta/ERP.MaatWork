@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "dev:pretty": "cross-env NODE_ENV=development tsx watch src/index.ts | pino-pretty",
-    "build": "tsc",
+    "build": "node scripts/build.mjs",
+    "build:tsc": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -59,6 +60,7 @@
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.6",
     "cross-env": "^7.0.3",
+    "esbuild": "^0.27.0",
     "eslint": "^8.53.0",
     "pino-pretty": "^10.2.3",
     "supertest": "^7.1.4",

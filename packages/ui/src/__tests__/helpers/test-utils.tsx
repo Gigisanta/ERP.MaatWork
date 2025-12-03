@@ -1,10 +1,10 @@
 /**
  * Test utilities for UI components
- * 
+ *
  * Provides wrappers and helpers specific to UI package components
  */
 
-import { render, type RenderOptions } from '@testing-library/react';
+import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { type ReactElement } from 'react';
 import { vi } from 'vitest';
 
@@ -12,10 +12,7 @@ import { vi } from 'vitest';
  * Custom render function for UI components
  * Includes theme provider and other UI-specific providers
  */
-export function renderUI(
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) {
+export function renderUI(ui: ReactElement, options?: Omit<RenderOptions, 'wrapper'>): RenderResult {
   return render(ui, {
     ...options,
     // Add UI-specific providers here if needed
@@ -47,11 +44,11 @@ export function createMockTheme() {
  */
 export function mockUseTheme(theme?: ReturnType<typeof createMockTheme>) {
   const mockTheme = theme || createMockTheme();
-  
+
   vi.mock('@/hooks/useTheme', () => ({
     useTheme: () => mockTheme,
   }));
-  
+
   return mockTheme;
 }
 
@@ -87,4 +84,3 @@ export function mockMatchMedia(matches = false) {
 export function setupUIMocks() {
   mockMatchMedia();
 }
-
