@@ -169,7 +169,7 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@cactus/ui': uiPath,
-      '@cactus/ui/styles.css': path.resolve(__dirname, '../../packages/ui/dist/styles/index.css'),
+      '@cactus/ui/styles.css': path.resolve(__dirname, '../../packages/ui/dist/styles.css'),
       '@cactus/db': dbPath,
       // Asegurar que @/ se resuelva correctamente para dynamic imports
       '@': path.resolve(__dirname, './'),
