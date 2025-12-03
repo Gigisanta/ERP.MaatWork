@@ -33,7 +33,9 @@ const nextConfig = {
     // Allow images from same origin and data URIs (for icons, etc.)
     remotePatterns: [],
     // Disable static image imports optimization warnings in development
-    unoptimized: process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true',
+    unoptimized:
+      process.env.NODE_ENV === 'development' &&
+      process.env.NEXT_PUBLIC_UNOPTIMIZED_IMAGES === 'true',
     // Image formats to use (WebP and AVIF are automatically used when supported)
     formats: ['image/avif', 'image/webp'],
     // Device sizes for responsive images
@@ -73,19 +75,17 @@ const nextConfig = {
   // Impacto: Menor overhead de procesamiento de headers, requests más rápidas
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    
+
     // En desarrollo, headers mínimos para reducir overhead
     if (isDevelopment) {
       return [
         {
           source: '/_next/static/:path*',
-          headers: [
-            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
-          ]
-        }
+          headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        },
       ];
     }
-    
+
     // En producción, headers completos de seguridad
     return [
       {
@@ -93,26 +93,24 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: `default-src 'self'; script-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || ''} https://va.vercel-scripts.com https://vitals.vercel-insights.com; frame-src 'self' https://calendar.google.com;`
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL || ''} https://va.vercel-scripts.com https://vitals.vercel-insights.com wss:; frame-src 'self' https://calendar.google.com; font-src 'self' data:;`,
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          }
+            value: 'SAMEORIGIN',
+          },
         ],
       },
       {
         source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
-        ]
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
         source: '/images/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }
-        ]
-      }
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
+        ],
+      },
     ];
   },
   // Webpack configuration
@@ -123,27 +121,27 @@ const nextConfig = {
     // AI_DECISION: Configuración simplificada para evitar problemas de resolución
     // Justificación: Configuración compleja está causando problemas de resolución de módulos
     // Impacto: Resuelve errores de truncamiento y resolución de módulos
-    
+
     // Habilitar symlinks para monorepo pnpm
     config.resolve.symlinks = true;
-    
+
     // AI_DECISION: Añadir alias para resolver workspace packages correctamente
     // Justificación: pnpm workspaces con hoisted no exponen exports de CSS correctamente
     // Impacto: Permite que webpack resuelva @cactus/ui y @cactus/db
     // Restablecer alias mínimos para workspaces; mantener fuera cualquier vendor splitting experimental
     const path = require('path');
-    
+
     // AI_DECISION: Usar node_modules en lugar de alias directo para evitar problemas de webpack
     // Justificación: Webpack tiene problemas resolviendo alias de workspace packages en dynamic imports
-    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" 
+    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')"
     // Al usar node_modules, webpack puede resolver correctamente el paquete desde su ubicación real
     const fs = require('fs');
-    
+
     // Verificar si el paquete está construido y dónde está ubicado
     const uiDistPath = path.resolve(__dirname, '../../packages/ui/dist/index.js');
     const uiNodeModulesPath = path.resolve(__dirname, 'node_modules/@cactus/ui');
     const uiSrcPath = path.resolve(__dirname, '../../packages/ui/src');
-    
+
     // AI_DECISION: Usar node_modules como primera opción para mejor compatibilidad con webpack
     // Justificación: pnpm workspace linkea paquetes a node_modules, webpack los resuelve mejor desde ahí
     // Impacto: Resuelve errores de resolución de módulos y problemas con dynamic imports
@@ -159,11 +157,12 @@ const nextConfig = {
       uiPath = uiSrcPath;
       console.warn('⚠️  @cactus/ui no está construido. Ejecuta: pnpm -F @cactus/ui build');
     }
-    
-    const dbPath = dev && fs.existsSync(path.resolve(__dirname, '../../packages/db/dist/index.js'))
-      ? path.resolve(__dirname, '../../packages/db/dist')
-      : path.resolve(__dirname, '../../packages/db/src');
-    
+
+    const dbPath =
+      dev && fs.existsSync(path.resolve(__dirname, '../../packages/db/dist/index.js'))
+        ? path.resolve(__dirname, '../../packages/db/dist')
+        : path.resolve(__dirname, '../../packages/db/src');
+
     // AI_DECISION: Asegurar resolución correcta de alias para dynamic imports
     // Justificación: Webpack puede tener problemas resolviendo alias @/ en módulos cargados dinámicamente
     // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en dynamic imports
@@ -175,7 +174,7 @@ const nextConfig = {
       // Asegurar que @/ se resuelva correctamente para dynamic imports
       '@': path.resolve(__dirname, './'),
     };
-    
+
     // AI_DECISION: Asegurar que webpack pueda resolver módulos desde node_modules
     // Justificación: Necesario para que webpack encuentre @cactus/ui desde su ubicación real
     // Impacto: Mejora la resolución de módulos workspace en monorepo
@@ -184,7 +183,7 @@ const nextConfig = {
     } else if (!config.resolve.modules.includes('node_modules')) {
       config.resolve.modules.push('node_modules');
     }
-    
+
     // AI_DECISION: Mejorar resolución de módulos para dynamic imports
     // Justificación: Dynamic imports necesitan resolución explícita de extensiones y módulos
     // Impacto: Previene errores de resolución en módulos cargados dinámicamente
@@ -196,7 +195,7 @@ const nextConfig = {
       '.json',
       ...(config.resolve.extensions || []),
     ];
-    
+
     // AI_DECISION: Evitar code splitting de @cactus/ui para resolver problemas de webpack
     // Justificación: Webpack tiene problemas resolviendo @cactus/ui cuando se hace code splitting en dynamic imports
     // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')"
@@ -211,7 +210,7 @@ const nextConfig = {
       if (!config.optimization.splitChunks.cacheGroups) {
         config.optimization.splitChunks.cacheGroups = {};
       }
-      
+
       // Forzar que @cactus/ui se mantenga en el bundle principal (no hacer code splitting)
       config.optimization.splitChunks.cacheGroups['@cactus-ui'] = {
         test: /[\\/]node_modules[\\/]@cactus[\\/]ui[\\/]/,
@@ -219,7 +218,7 @@ const nextConfig = {
         priority: 20,
         reuseExistingChunk: true,
       };
-      
+
       // AI_DECISION: Separar Recharts en chunk independiente para reducir tamaño de chunks principales
       // Justificación: Recharts agrega ~200KB al bundle, separarlo permite lazy loading y reduce chunk inicial
       // Impacto: Chunk principal más pequeño, mejor code splitting, carga bajo demanda de gráficos
@@ -231,7 +230,7 @@ const nextConfig = {
         enforce: true,
         reuseExistingChunk: true,
       };
-      
+
       // AI_DECISION: Separar componentes Bloomberg en chunk independiente
       // Justificación: Componentes Bloomberg son pesados y solo se usan en páginas específicas
       // Impacto: Mejor code splitting, carga bajo demanda de componentes Bloomberg
@@ -243,7 +242,7 @@ const nextConfig = {
         minChunks: 1,
         reuseExistingChunk: true,
       };
-      
+
       // AI_DECISION: Separar otros vendor chunks grandes para mejor code splitting
       // Justificación: Mejorar distribución de código en chunks más pequeños y manejables
       // Impacto: Chunks más pequeños, mejor caching, carga más eficiente
@@ -253,7 +252,9 @@ const nextConfig = {
           // Extraer el nombre del paquete de la ruta
           const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
           // Normalizar nombres de scoped packages
-          return packageName ? `vendor-${packageName.replace('@', '').replace('/', '-')}` : 'vendor';
+          return packageName
+            ? `vendor-${packageName.replace('@', '').replace('/', '-')}`
+            : 'vendor';
         },
         priority: 10,
         chunks: 'all',
@@ -261,7 +262,7 @@ const nextConfig = {
         reuseExistingChunk: true,
       };
     }
-    
+
     // AI_DECISION: Optimizar configuración de desarrollo para máximo rendimiento
     // Justificación: Habilitar cache filesystem reduce tiempo de compilación 30-50%
     // Impacto: Inicio más rápido, hot reload mejorado, menor uso de memoria
@@ -279,7 +280,7 @@ const nextConfig = {
         },
         cacheDirectory: path.resolve(__dirname, '.next/cache/webpack'),
       };
-      
+
       // AI_DECISION: Configurar watchOptions para detectar cambios en paquetes del workspace
       // Justificación: Next.js no vigila automáticamente cambios en paquetes del workspace (pnpm)
       // Impacto: Hot reload funciona correctamente cuando se modifican componentes en @cactus/ui
@@ -299,14 +300,14 @@ const nextConfig = {
         ],
         followSymlinks: true, // Seguir symlinks de pnpm workspace
       };
-      
+
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         net: false,
         tls: false,
       };
-      
+
       // AI_DECISION: Reducir logging de webpack para mejorar rendimiento
       // Justificación: Logging verbose agrega overhead significativo en desarrollo
       // Impacto: Menor uso de CPU/memoria, compilación más rápida
@@ -314,11 +315,9 @@ const nextConfig = {
         level: 'error', // Solo mostrar errores, no warnings/info
       };
     }
-    
+
     return config;
   },
 };
 
 module.exports = withBundleAnalyzer(nextConfig);
-
-
