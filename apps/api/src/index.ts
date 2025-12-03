@@ -237,7 +237,7 @@ app.use(
       return 'info';
     },
     redact: isProduction ? {
-      paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers.set-cookie'],
+      paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
       remove: true
     } : [],  // No redactar nada en desarrollo
     customProps: (req: Request) => ({
