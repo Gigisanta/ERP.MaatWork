@@ -33,10 +33,10 @@ if (envPath) {
  */
 export default defineConfig({
   schema: './src/schema.ts',
-  // Use canonical migrations directory (with meta/_journal.json)
   out: './migrations',
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/CRM'
   }
 });
+
