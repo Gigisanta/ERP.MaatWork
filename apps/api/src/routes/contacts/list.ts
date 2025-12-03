@@ -6,7 +6,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, contacts, contactTags, tags } from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
-import { requireAuth } from '../../auth/middlewares';
+import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope } from '../../auth/authorization';
 import { createDrizzleLogger } from '../../utils/db-logger';
 import { validate } from '../../utils/validation';
@@ -30,6 +30,7 @@ const router = Router();
 router.get(
   '/',
   requireAuth,
+  requireContactAccess, // Bloquear acceso a Owner
   validate({ query: listContactsQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     const startTime = Date.now();

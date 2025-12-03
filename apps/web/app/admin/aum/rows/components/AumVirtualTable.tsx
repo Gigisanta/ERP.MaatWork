@@ -77,104 +77,103 @@ export function AumVirtualTable({
       : 0;
 
   // Table with virtualization
+  // AI_DECISION: Contenedor con overflow-auto para virtualización
+  // Justificación: useVirtualizer necesita un contenedor con scroll para calcular items visibles
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
-      <div ref={parentRef} className={`relative flex-1 min-h-0 ${hasData ? 'overflow-auto' : ''}`}>
-        <table
-          className="table-fixed border-collapse w-full"
-          style={{
-            tableLayout: 'fixed',
-            width: `${TOTAL_TABLE_WIDTH}px`,
-            minWidth: `${TOTAL_TABLE_WIDTH}px`,
-          }}
-        >
-          <colgroup>
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACCOUNT}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ID_CUENTA}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.HOLDER}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ADVISOR}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.AUM_DOLLARS}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_ARG}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.FONDOS_ARG}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_BCI}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.PESOS}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.MEP}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CABLE}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CV7000}px` }} />
-            <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACTIONS}px` }} />
-          </colgroup>
-          <AumTableHeader />
-          <tbody>
-            {isLoading && (
-              <tr>
-                <td colSpan={13}>
-                  <div className="p-4" data-testid="aum-table-loading">
-                    <div className="space-y-3 animate-pulse">
-                      {[...Array(6)].map((_, i) => (
-                        <div key={i} className="flex gap-3">
-                          <div className="h-4 bg-gray-200 rounded w-32" />
-                          <div className="h-4 bg-gray-200 rounded w-24" />
-                          <div className="h-4 bg-gray-200 rounded w-48" />
-                          <div className="h-4 bg-gray-200 rounded w-40" />
-                          <div className="h-4 bg-gray-200 rounded w-28 ml-auto" />
-                        </div>
-                      ))}
-                    </div>
+    <div ref={parentRef} className="h-full w-full overflow-auto">
+      <table
+        className="table-fixed border-collapse w-full"
+        style={{
+          tableLayout: 'fixed',
+          width: `${TOTAL_TABLE_WIDTH}px`,
+          minWidth: `${TOTAL_TABLE_WIDTH}px`,
+        }}
+      >
+        <colgroup>
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACCOUNT}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ID_CUENTA}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.HOLDER}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ADVISOR}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.AUM_DOLLARS}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_ARG}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.FONDOS_ARG}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.BOLSA_BCI}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.PESOS}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.MEP}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CABLE}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.CV7000}px` }} />
+          <col style={{ width: `${AUM_ROWS_CONFIG.COLUMN_WIDTHS.ACTIONS}px` }} />
+        </colgroup>
+        <AumTableHeader />
+        <tbody>
+          {isLoading && (
+            <tr>
+              <td colSpan={13}>
+                <div className="p-4" data-testid="aum-table-loading">
+                  <div className="space-y-3 animate-pulse">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="h-4 bg-gray-200 rounded w-32" />
+                        <div className="h-4 bg-gray-200 rounded w-24" />
+                        <div className="h-4 bg-gray-200 rounded w-48" />
+                        <div className="h-4 bg-gray-200 rounded w-40" />
+                        <div className="h-4 bg-gray-200 rounded w-28 ml-auto" />
+                      </div>
+                    ))}
                   </div>
-                </td>
-              </tr>
-            )}
+                </div>
+              </td>
+            </tr>
+          )}
 
-            {!isLoading && !hasData && (
-              <tr>
-                <td colSpan={13}>
-                  <div className="p-8 text-center" data-testid="aum-table-empty">
-                    <Text size="sm" className="text-gray-500">
-                      No se encontraron filas. Intenta ajustar los filtros o cargar un archivo
-                      nuevo.
-                    </Text>
-                  </div>
-                </td>
-              </tr>
-            )}
+          {!isLoading && !hasData && (
+            <tr>
+              <td colSpan={13}>
+                <div className="p-8 text-center" data-testid="aum-table-empty">
+                  <Text size="sm" className="text-gray-500">
+                    No se encontraron filas. Intenta ajustar los filtros o cargar un archivo nuevo.
+                  </Text>
+                </div>
+              </td>
+            </tr>
+          )}
 
-            {!isLoading && hasData && (
-              <>
-                {paddingTop > 0 && (
-                  <tr style={{ height: `${paddingTop}px` }}>
-                    <td colSpan={13} />
-                  </tr>
-                )}
-                {virtualItems.map((virtualRow) => {
-                  const row = rows[virtualRow.index];
-                  if (!row) {
-                    logger.warn('Row missing at index in AumVirtualTable', {
-                      index: virtualRow.index,
-                      totalRows: rows.length,
-                    });
-                    return null;
-                  }
-                  const rowKey = `${row.id}-${virtualRow.index}`;
-                  return (
-                    <AumTableRow
-                      key={rowKey}
-                      row={row}
-                      onOpenAdvisorModal={onOpenAdvisorModal}
-                      onShowDuplicates={onShowDuplicates}
-                      {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
-                    />
-                  );
-                })}
-                {paddingBottom > 0 && (
-                  <tr style={{ height: `${paddingBottom}px` }}>
-                    <td colSpan={13} />
-                  </tr>
-                )}
-              </>
-            )}
-          </tbody>
-        </table>
-      </div>
+          {!isLoading && hasData && (
+            <>
+              {paddingTop > 0 && (
+                <tr style={{ height: `${paddingTop}px` }}>
+                  <td colSpan={13} />
+                </tr>
+              )}
+              {virtualItems.map((virtualRow) => {
+                const row = rows[virtualRow.index];
+                if (!row) {
+                  logger.warn('Row missing at index in AumVirtualTable', {
+                    index: virtualRow.index,
+                    totalRows: rows.length,
+                  });
+                  return null;
+                }
+                const rowKey = `${row.id}-${virtualRow.index}`;
+                return (
+                  <AumTableRow
+                    key={rowKey}
+                    row={row}
+                    onOpenAdvisorModal={onOpenAdvisorModal}
+                    onShowDuplicates={onShowDuplicates}
+                    {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
+                  />
+                );
+              })}
+              {paddingBottom > 0 && (
+                <tr style={{ height: `${paddingBottom}px` }}>
+                  <td colSpan={13} />
+                </tr>
+              )}
+            </>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

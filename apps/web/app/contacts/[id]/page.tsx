@@ -25,9 +25,10 @@ import type {
   BrokerAccount,
   PortfolioAssignment,
   Task,
-  Note
+  Note,
 } from '@/types';
 import ContactEditableField from './ContactEditableField';
+import ContactMarketTypeField from './ContactMarketTypeField';
 import BrokerAccountsSection from './BrokerAccountsSection';
 import PortfolioSection from './PortfolioSection';
 import TasksSection from './TasksSection';
@@ -60,7 +61,7 @@ async function getContactData(id: string) {
       advisors: Advisor[];
     }>(`/v1/contacts/${id}/detail`, {
       method: 'GET',
-      timeoutMs: Math.min(config.apiTimeout, 10000) // Slightly higher timeout for consolidated endpoint
+      timeoutMs: Math.min(config.apiTimeout, 10000), // Slightly higher timeout for consolidated endpoint
     });
 
     // Check if response has data property (API returns { data: {...} })
@@ -68,21 +69,13 @@ async function getContactData(id: string) {
       return null;
     }
 
-    const {
-      contact,
-      tags,
-      tasks,
-      notes,
-      brokerAccounts,
-      portfolioAssignments,
-      stages,
-      advisors
-    } = detailResponse.data;
+    const { contact, tags, tasks, notes, brokerAccounts, portfolioAssignments, stages, advisors } =
+      detailResponse.data;
 
     // Merge tags into contact object for compatibility
     const contactWithTags = {
       ...contact,
-      tags: tags || []
+      tags: tags || [],
     };
 
     return {
@@ -92,7 +85,7 @@ async function getContactData(id: string) {
       brokerAccounts: brokerAccounts || [],
       portfolioAssignments: portfolioAssignments || [],
       tasks: tasks || [],
-      notes: notes || []
+      notes: notes || [],
     };
   } catch (error) {
     // AI_DECISION: Usar console.error en Server Components
@@ -113,7 +106,7 @@ interface ContactDetailPageProps {
 
 export default async function ContactDetailPage({ params }: ContactDetailPageProps) {
   const { id } = params;
-  
+
   // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
   const data = await getContactData(id);
 
@@ -125,7 +118,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
   // Find related data
   const currentStage = stages.find((stage: PipelineStage) => stage.id === contact.pipelineStageId);
-  const assignedAdvisor = advisors.find((advisor: Advisor) => advisor.id === contact.assignedAdvisorId);
+  const assignedAdvisor = advisors.find(
+    (advisor: Advisor) => advisor.id === contact.assignedAdvisorId
+  );
 
   // Define breadcrumbs
   const breadcrumbs: BreadcrumbItem[] = [
@@ -139,21 +134,25 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
       <Stack direction="column" gap="md">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbs} />
-        
+
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {currentStage && (
-                <Badge style={{ backgroundColor: currentStage.color, color: 'white' }} className="text-xs">
+                <Badge
+                  style={{ backgroundColor: currentStage.color, color: 'white' }}
+                  className="text-xs"
+                >
                   {currentStage.name}
                 </Badge>
               )}
-              {contact.tags && contact.tags.map((tag) => (
-                <Badge key={tag.id} variant="default" className="text-xs">
-                  {tag.name}
-                </Badge>
-              ))}
+              {contact.tags &&
+                contact.tags.map((tag) => (
+                  <Badge key={tag.id} variant="default" className="text-xs">
+                    {tag.name}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
@@ -168,18 +167,20 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
               {/* Columna izquierda */}
               <div className="space-y-3">
-                <Heading size="sm" className="mb-1 text-sm">Datos Personales</Heading>
+                <Heading size="sm" className="mb-1 text-sm">
+                  Datos Personales
+                </Heading>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ContactEditableField 
-                    label="Email" 
-                    value={contact.email} 
+                  <ContactEditableField
+                    label="Email"
+                    value={contact.email}
                     field="email"
                     contactId={contact.id}
                     type="email"
                   />
-                  <ContactEditableField 
-                    label="Teléfono" 
-                    value={contact.phone} 
+                  <ContactEditableField
+                    label="Teléfono"
+                    value={contact.phone}
                     field="phone"
                     contactId={contact.id}
                     type="tel"
@@ -190,9 +191,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                     field="country"
                     contactId={contact.id}
                   />
-                  <ContactEditableField 
-                    label="DNI" 
-                    value={contact.dni} 
+                  <ContactEditableField
+                    label="DNI"
+                    value={contact.dni}
                     field="dni"
                     contactId={contact.id}
                   />
@@ -201,31 +202,35 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
 
               {/* Columna derecha */}
               <div className="space-y-3">
-                <Heading size="sm" className="mb-1 text-sm">Información Comercial</Heading>
+                <Heading size="sm" className="mb-1 text-sm">
+                  Información Comercial
+                </Heading>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-                  <ContactEditableField 
-                    label="Fuente" 
-                    value={contact.source} 
-                    field="source"
-                    contactId={contact.id}
-                    placeholder="Ej: Referido, Web, Evento..."
-                  />
-                  <ContactEditableField 
-                    label="Perfil de Riesgo" 
-                    value={contact.riskProfile} 
+                  <ContactMarketTypeField value={contact.source} contactId={contact.id} />
+                  <ContactEditableField
+                    label="Perfil de Riesgo"
+                    value={contact.riskProfile}
                     field="riskProfile"
                     contactId={contact.id}
                     placeholder="Ej: Conservador, Moderado, Agresivo..."
                   />
                   {assignedAdvisor && (
                     <div className="sm:col-span-2">
-                      <Text size="xs" weight="medium" color="secondary">Asesor Asignado</Text>
-                      <Text size="sm" className="mt-0.5">{assignedAdvisor.fullName}</Text>
+                      <Text size="xs" weight="medium" color="secondary">
+                        Asesor Asignado
+                      </Text>
+                      <Text size="sm" className="mt-0.5">
+                        {assignedAdvisor.fullName}
+                      </Text>
                     </div>
                   )}
                   <div className="sm:col-span-2">
-                    <Text size="xs" weight="medium" color="secondary">Próximo Paso</Text>
-                    <Text size="sm" className="mt-0.5">{contact.nextStep || 'Sin especificar'}</Text>
+                    <Text size="xs" weight="medium" color="secondary">
+                      Próximo Paso
+                    </Text>
+                    <Text size="sm" className="mt-0.5">
+                      {contact.nextStep || 'Sin especificar'}
+                    </Text>
                   </div>
                 </div>
               </div>
@@ -241,36 +246,36 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
           <CardContent>
             {/* Disposición en grilla para aprovechar mejor el espacio */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-              <ContactEditableField 
-                label="A qué se dedica" 
-                value={contact.queSeDedica} 
+              <ContactEditableField
+                label="A qué se dedica"
+                value={contact.queSeDedica}
                 field="queSeDedica"
                 contactId={contact.id}
                 type="textarea"
                 maxLength={2000}
                 placeholder="Describe a qué se dedica el contacto..."
               />
-              <ContactEditableField 
-                label="Familia" 
-                value={contact.familia} 
+              <ContactEditableField
+                label="Familia"
+                value={contact.familia}
                 field="familia"
                 contactId={contact.id}
                 type="textarea"
                 maxLength={2000}
                 placeholder="Información sobre la familia del contacto..."
               />
-              <ContactEditableField 
-                label="Expectativas" 
-                value={contact.expectativas} 
+              <ContactEditableField
+                label="Expectativas"
+                value={contact.expectativas}
                 field="expectativas"
                 contactId={contact.id}
                 type="textarea"
                 maxLength={2000}
                 placeholder="Expectativas del contacto..."
               />
-              <ContactEditableField 
-                label="Objetivos" 
-                value={contact.objetivos} 
+              <ContactEditableField
+                label="Objetivos"
+                value={contact.objetivos}
                 field="objetivos"
                 contactId={contact.id}
                 type="textarea"
@@ -278,9 +283,9 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
                 placeholder="Objetivos del contacto..."
               />
               <div className="md:col-span-2">
-                <ContactEditableField 
-                  label="¿Qué tendría que tener tu planificación para que avancemos?" 
-                  value={contact.requisitosPlanificacion} 
+                <ContactEditableField
+                  label="¿Qué tendría que tener tu planificación para que avancemos?"
+                  value={contact.requisitosPlanificacion}
                   field="requisitosPlanificacion"
                   contactId={contact.id}
                   type="textarea"
@@ -308,25 +313,16 @@ export default async function ContactDetailPage({ params }: ContactDetailPagePro
         />
 
         {/* Client Islands for Interactive Sections */}
-        <BrokerAccountsSection 
-          contactId={contact.id} 
-          initialBrokerAccounts={brokerAccounts}
-        />
-        
-        <PortfolioSection 
-          contactId={contact.id} 
+        <BrokerAccountsSection contactId={contact.id} initialBrokerAccounts={brokerAccounts} />
+
+        <PortfolioSection
+          contactId={contact.id}
           initialPortfolioAssignments={portfolioAssignments}
         />
-        
-        <TasksSection 
-          contactId={contact.id} 
-          initialTasks={tasks}
-        />
-        
-        <NotesSection 
-          contactId={contact.id} 
-          initialNotes={notes}
-        />
+
+        <TasksSection contactId={contact.id} initialTasks={tasks} />
+
+        <NotesSection contactId={contact.id} initialNotes={notes} />
       </Stack>
     </div>
   );

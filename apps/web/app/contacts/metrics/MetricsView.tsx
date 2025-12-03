@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
@@ -23,7 +23,7 @@ import {
   ModalHeader,
   ModalContent,
   ModalFooter,
-  ModalTitle
+  ModalTitle,
 } from '@cactus/ui';
 // AI_DECISION: Lazy load recharts components to reduce initial bundle size
 // Justificación: recharts is a heavy library (~50-80KB), loading it async reduces initial bundle significantly
@@ -32,15 +32,27 @@ const MetricsCharts = dynamic(() => import('./MetricsCharts'), {
   loading: () => (
     <div className="flex items-center justify-center p-8">
       <Spinner size="md" />
-      <Text color="secondary" className="ml-2">Cargando gráficos...</Text>
+      <Text color="secondary" className="ml-2">
+        Cargando gráficos...
+      </Text>
     </div>
   ),
-  ssr: false
+  ssr: false,
 });
 
 const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 export default function MetricsView() {
@@ -51,7 +63,7 @@ export default function MetricsView() {
   const [metrics, setMetrics] = useState<ContactsMetricsResponse | null>(null);
   const [goals, setGoals] = useState<MonthlyGoal | null>(null);
   const [goalsModalOpen, setGoalsModalOpen] = useState(false);
-  
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -60,7 +72,7 @@ export default function MetricsView() {
     newProspectsGoal: 0,
     firstMeetingsGoal: 0,
     secondMeetingsGoal: 0,
-    newClientsGoal: 0
+    newClientsGoal: 0,
   });
 
   useEffect(() => {
@@ -74,7 +86,7 @@ export default function MetricsView() {
 
       const [metricsResponse, goalsResponse] = await Promise.all([
         getContactsMetrics(selectedMonth, selectedYear),
-        getMonthlyGoals(selectedMonth, selectedYear)
+        getMonthlyGoals(selectedMonth, selectedYear),
       ]);
 
       if (metricsResponse.success && metricsResponse.data) {
@@ -90,14 +102,14 @@ export default function MetricsView() {
             newProspectsGoal: goalsResponse.data.newProspectsGoal,
             firstMeetingsGoal: goalsResponse.data.firstMeetingsGoal,
             secondMeetingsGoal: goalsResponse.data.secondMeetingsGoal,
-            newClientsGoal: goalsResponse.data.newClientsGoal
+            newClientsGoal: goalsResponse.data.newClientsGoal,
           });
         } else {
           setGoalForm({
             newProspectsGoal: 0,
             firstMeetingsGoal: 0,
             secondMeetingsGoal: 0,
-            newClientsGoal: 0
+            newClientsGoal: 0,
           });
         }
       }
@@ -116,7 +128,7 @@ export default function MetricsView() {
       const response = await saveMonthlyGoals({
         month: selectedMonth,
         year: selectedYear,
-        ...goalForm
+        ...goalForm,
       });
 
       if (response.success && response.data) {
@@ -126,7 +138,7 @@ export default function MetricsView() {
           newProspectsGoal: response.data.newProspectsGoal,
           firstMeetingsGoal: response.data.firstMeetingsGoal,
           secondMeetingsGoal: response.data.secondMeetingsGoal,
-          newClientsGoal: response.data.newClientsGoal
+          newClientsGoal: response.data.newClientsGoal,
         });
       } else {
         setError('Error al guardar objetivos');
@@ -179,12 +191,14 @@ export default function MetricsView() {
               onValueChange={(value) => setSelectedMonth(Number(value))}
               items={MONTH_NAMES.map((name, idx) => ({
                 value: (idx + 1).toString(),
-                label: name
+                label: name,
               }))}
               className="w-32"
             />
             <div className="w-24">
-              <Text size="sm" weight="medium" className="mb-1.5">Año</Text>
+              <Text size="sm" weight="medium" className="mb-1.5">
+                Año
+              </Text>
               <Input
                 type="number"
                 value={selectedYear}
@@ -241,6 +255,7 @@ export default function MetricsView() {
             goals={goals}
             businessLineClosures={currentMonth.businessLineClosures}
             transitionTimes={currentMonth.transitionTimes}
+            marketTypeConversion={currentMonth.marketTypeConversion}
           />
 
           {/* Link al historial */}
@@ -260,11 +275,7 @@ export default function MetricsView() {
       )}
 
       {/* Modal de edición de objetivos */}
-      <Modal
-        open={goalsModalOpen}
-        onOpenChange={setGoalsModalOpen}
-        size="md"
-      >
+      <Modal open={goalsModalOpen} onOpenChange={setGoalsModalOpen} size="md">
         <ModalHeader>
           <ModalTitle>Editar Objetivos Mensuales</ModalTitle>
           <Text size="sm" color="secondary">
@@ -277,21 +288,27 @@ export default function MetricsView() {
               type="number"
               label="Nuevos Contactos"
               value={goalForm.newProspectsGoal}
-              onChange={(e) => setGoalForm({ ...goalForm, newProspectsGoal: Number(e.target.value) })}
+              onChange={(e) =>
+                setGoalForm({ ...goalForm, newProspectsGoal: Number(e.target.value) })
+              }
               min={0}
             />
             <Input
               type="number"
               label="Primeras Reuniones"
               value={goalForm.firstMeetingsGoal}
-              onChange={(e) => setGoalForm({ ...goalForm, firstMeetingsGoal: Number(e.target.value) })}
+              onChange={(e) =>
+                setGoalForm({ ...goalForm, firstMeetingsGoal: Number(e.target.value) })
+              }
               min={0}
             />
             <Input
               type="number"
               label="Segundas Reuniones"
               value={goalForm.secondMeetingsGoal}
-              onChange={(e) => setGoalForm({ ...goalForm, secondMeetingsGoal: Number(e.target.value) })}
+              onChange={(e) =>
+                setGoalForm({ ...goalForm, secondMeetingsGoal: Number(e.target.value) })
+              }
               min={0}
             />
             <Input
@@ -313,7 +330,7 @@ export default function MetricsView() {
                   newProspectsGoal: goals.newProspectsGoal,
                   firstMeetingsGoal: goals.firstMeetingsGoal,
                   secondMeetingsGoal: goals.secondMeetingsGoal,
-                  newClientsGoal: goals.newClientsGoal
+                  newClientsGoal: goals.newClientsGoal,
                 });
               }
             }}
@@ -353,7 +370,11 @@ function MetricCard({ title, value, goal }: MetricCardProps) {
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
                 className={`h-2 rounded-full ${
-                  progress >= 100 ? 'bg-green-500' : progress >= 75 ? 'bg-blue-500' : 'bg-yellow-500'
+                  progress >= 100
+                    ? 'bg-green-500'
+                    : progress >= 75
+                      ? 'bg-blue-500'
+                      : 'bg-yellow-500'
                 }`}
                 style={{ width: `${Math.min(100, progress)}%` }}
               />
@@ -364,4 +385,3 @@ function MetricCard({ title, value, goal }: MetricCardProps) {
     </Card>
   );
 }
-

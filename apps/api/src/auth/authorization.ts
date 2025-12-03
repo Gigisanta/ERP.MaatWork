@@ -88,6 +88,26 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
       canReassign = false;
       break;
 
+    case 'owner':
+      // AI_DECISION: Owner ve todas las métricas pero NO puede modificar nada
+      // Justificación: Rol de dirección para visibilidad de negocio sin operaciones
+      // Impacto: Acceso global de lectura, sin capacidad de asignación o modificación
+      accessibleAdvisorIds = []; // Empty means see all (for metrics)
+      canSeeUnassigned = true;
+      canAssignToOthers = false; // Cannot assign
+      canReassign = false; // Cannot reassign
+      break;
+
+    case 'staff':
+      // AI_DECISION: Staff (Administrativo) puede ver y gestionar datos operativos
+      // Justificación: Rol de soporte para carga de datos, gestión de contactos, tareas administrativas
+      // Impacto: Acceso amplio de lectura/escritura pero sin administración de usuarios/sistema
+      accessibleAdvisorIds = []; // Ve todos los contactos (soporte operativo)
+      canSeeUnassigned = true;
+      canAssignToOthers = true; // Puede asignar contactos a asesores
+      canReassign = true; // Puede reasignar contactos
+      break;
+
     default:
       throw new Error(`Unknown role: ${role}`);
   }

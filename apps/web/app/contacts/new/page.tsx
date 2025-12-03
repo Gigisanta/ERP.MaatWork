@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -25,6 +25,7 @@ import {
   BreadcrumbItem,
   Spinner,
 } from '@cactus/ui';
+import MarketTypeSelector from '../components/MarketTypeSelector';
 
 interface FormData {
   firstName: string;
@@ -57,21 +58,25 @@ const initialFormData: FormData = {
   familia: '',
   expectativas: '',
   objetivos: '',
-  requisitosPlanificacion: ''
+  requisitosPlanificacion: '',
 };
 
 export default function NewContactPage() {
   const router = useRouter();
   const { user, loading } = useRequireAuth();
-  
+
   // Set page title in header
   usePageTitle('Nuevo Contacto');
-  
+
   // Use SWR hooks for data fetching with automatic caching and deduplication
-  const { stages: pipelineStages, isLoading: stagesLoading, error: stagesError } = usePipelineStages();
+  const {
+    stages: pipelineStages,
+    isLoading: stagesLoading,
+    error: stagesError,
+  } = usePipelineStages();
   const { advisors, isLoading: advisorsLoading, error: advisorsError } = useAdvisors();
   const invalidateContactsCache = useInvalidateContactsCache();
-  
+
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +84,7 @@ export default function NewContactPage() {
 
   // Derive loading state from SWR hooks
   const dataLoading = stagesLoading || advisorsLoading;
-  
+
   // Set error if SWR hooks have errors
   if (stagesError && !error) {
     logger.error('Error fetching pipeline stages', toLogContext({ err: stagesError }));
@@ -89,28 +94,28 @@ export default function NewContactPage() {
   }
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
   const validateForm = (): boolean => {
     const errors: Partial<Record<keyof FormData, string>> = {};
-    
+
     if (!formData.firstName.trim()) {
       errors.firstName = 'El nombre es requerido';
     }
     if (!formData.lastName.trim()) {
       errors.lastName = 'El apellido es requerido';
     }
-    
+
     setFieldErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       setError('Por favor corrige los errores en el formulario');
       return false;
     }
-    
+
     setFieldErrors({});
     setError(null);
     return true;
@@ -118,20 +123,20 @@ export default function NewContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !user) return;
-    
+
     try {
       setSubmitLoading(true);
       setError(null);
-      
+
       logger.info('Contact creation form submitted', {
         userId: user?.id,
         userRole: user?.role,
         hasFirstName: !!formData.firstName.trim(),
-        hasLastName: !!formData.lastName.trim()
+        hasLastName: !!formData.lastName.trim(),
       });
-      
+
       const response = await createContact({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -146,44 +151,44 @@ export default function NewContactPage() {
         familia: formData.familia.trim() || null,
         expectativas: formData.expectativas.trim() || null,
         objetivos: formData.objetivos.trim() || null,
-        requisitosPlanificacion: formData.requisitosPlanificacion.trim() || null
+        requisitosPlanificacion: formData.requisitosPlanificacion.trim() || null,
       });
-      
+
       logger.info('Contact creation API response received', {
         responseSuccess: response.success,
         hasData: !!response.data,
         hasError: !!response.error,
-        responseKeys: Object.keys(response)
+        responseKeys: Object.keys(response),
       });
-      
+
       if (response.success && response.data) {
         const createdContact = response.data;
-        
+
         // Justificación: Mejor observabilidad y correlación con logs de API
         // Impacto: Logs estructurados y rastreables en producción
         logger.info('Contact created successfully', {
           contactId: createdContact?.id,
           assignedAdvisorId: createdContact?.assignedAdvisorId,
           expectedAdvisorId: user?.id,
-          userRole: user?.role
+          userRole: user?.role,
         });
-        
+
         // Verify assignment for advisors
         if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
           logger.warn('Advisor mismatch on contact creation', {
             expected: user.id,
             actual: createdContact?.assignedAdvisorId,
-            contactId: createdContact?.id
+            contactId: createdContact?.id,
           });
         }
-        
+
         // Invalidate contacts cache and wait for revalidation to complete
         // This ensures fresh data is fetched before navigation
         await invalidateContactsCache();
-        
+
         setSuccess(true);
         setFormData(initialFormData);
-        
+
         // Navigate with refresh parameter to force revalidation on contacts page
         // This ensures the page updates immediately with the new contact
         router.replace('/contacts?refresh=true');
@@ -194,7 +199,7 @@ export default function NewContactPage() {
       logger.error('Contact creation failed', {
         error: err instanceof Error ? err.message : 'Unknown error',
         errorType: err?.constructor?.name,
-        userId: user?.id
+        userId: user?.id,
       });
       setError(err instanceof Error ? err.message : 'Error al crear contacto');
     } finally {
@@ -204,12 +209,12 @@ export default function NewContactPage() {
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { href: '/contacts', label: 'Contactos' },
-    { href: '/contacts/new', label: 'Nuevo Contacto' }
+    { href: '/contacts/new', label: 'Nuevo Contacto' },
   ];
 
   // Show loading state while auth or data is loading
   const isLoading = loading || dataLoading;
-  
+
   if (isLoading && !(pipelineStages as PipelineStage[]).length) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
@@ -228,7 +233,7 @@ export default function NewContactPage() {
         <div className="mb-4">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
-        
+
         {/* Header */}
         <div className="mb-5">
           <div className="flex justify-between items-start">
@@ -237,8 +242,8 @@ export default function NewContactPage() {
                 Agrega un nuevo contacto al sistema CRM
               </Text>
             </div>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => router.push('/contacts')}
               className="shrink-0"
               size="sm"
@@ -261,7 +266,7 @@ export default function NewContactPage() {
                   Datos básicos del contacto
                 </Text>
               </CardHeader>
-              
+
               <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-4">
                   {/* Alertas */}
@@ -275,7 +280,7 @@ export default function NewContactPage() {
                       El contacto ha sido creado exitosamente. Redirigiendo...
                     </Alert>
                   )}
-                  
+
                   {/* Sección: Datos Personales */}
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -285,7 +290,7 @@ export default function NewContactPage() {
                         onChange={(e) => {
                           handleInputChange('firstName', e.target.value);
                           if (fieldErrors.firstName) {
-                            setFieldErrors(prev => {
+                            setFieldErrors((prev) => {
                               const { firstName, ...rest } = prev;
                               return rest;
                             });
@@ -304,7 +309,7 @@ export default function NewContactPage() {
                         onChange={(e) => {
                           handleInputChange('lastName', e.target.value);
                           if (fieldErrors.lastName) {
-                            setFieldErrors(prev => {
+                            setFieldErrors((prev) => {
                               const { lastName, ...rest } = prev;
                               return rest;
                             });
@@ -317,7 +322,7 @@ export default function NewContactPage() {
                         error={fieldErrors.lastName}
                       />
                     </div>
-                    
+
                     <Input
                       label="Correo Electrónico"
                       type="email"
@@ -327,7 +332,7 @@ export default function NewContactPage() {
                       disabled={loading}
                       className="w-full"
                     />
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Input
                         label="Teléfono"
@@ -358,7 +363,7 @@ export default function NewContactPage() {
                         Datos para el seguimiento comercial
                       </Text>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <Select
                         label="Etapa del Pipeline"
@@ -367,7 +372,7 @@ export default function NewContactPage() {
                         disabled={isLoading || submitLoading}
                         items={(pipelineStages as PipelineStage[]).map((stage) => ({
                           value: stage.id,
-                          label: stage.name
+                          label: stage.name,
                         }))}
                         placeholder="Selecciona una etapa"
                         className="w-full bg-white border-gray-300 shadow-sm"
@@ -380,21 +385,18 @@ export default function NewContactPage() {
                         items={[
                           { value: 'low', label: 'Bajo' },
                           { value: 'mid', label: 'Medio' },
-                          { value: 'high', label: 'Alto' }
+                          { value: 'high', label: 'Alto' },
                         ]}
                         placeholder="Selecciona perfil"
                         className="w-full bg-white border-gray-300 shadow-sm"
                       />
                     </div>
-                    
+
                     <div className="mt-4">
-                      <Input
-                        label="Fuente de Contacto"
+                      <MarketTypeSelector
                         value={formData.source}
-                        onChange={(e) => handleInputChange('source', e.target.value)}
-                        placeholder="Ej: LinkedIn, Referido, Google Ads..."
+                        onChange={(value) => handleInputChange('source', value)}
                         disabled={isLoading || submitLoading}
-                        className="w-full"
                       />
                     </div>
                   </div>
@@ -409,11 +411,9 @@ export default function NewContactPage() {
                         Información adicional sobre el contacto
                       </Text>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notas
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Notas</label>
                       <textarea
                         value={formData.notes}
                         onChange={(e) => handleInputChange('notes', e.target.value)}
@@ -436,7 +436,7 @@ export default function NewContactPage() {
                         Información detallada sobre el contacto
                       </Text>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -452,7 +452,7 @@ export default function NewContactPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Familia
@@ -467,7 +467,7 @@ export default function NewContactPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Expectativas
@@ -482,7 +482,7 @@ export default function NewContactPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Objetivos
@@ -497,14 +497,16 @@ export default function NewContactPage() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           ¿Qué tendría que tener tu planificación para que avancemos?
                         </label>
                         <textarea
                           value={formData.requisitosPlanificacion}
-                          onChange={(e) => handleInputChange('requisitosPlanificacion', e.target.value)}
+                          onChange={(e) =>
+                            handleInputChange('requisitosPlanificacion', e.target.value)
+                          }
                           placeholder="Requisitos o condiciones para avanzar con la planificación..."
                           disabled={isLoading || submitLoading}
                           rows={3}
@@ -515,24 +517,20 @@ export default function NewContactPage() {
                     </div>
                   </div>
                 </CardContent>
-                
+
                 {/* Botones de Acción */}
                 <CardFooter className="bg-gray-50 px-4 py-3 border-t border-gray-200">
                   <div className="flex justify-end gap-2 w-full">
-                    <Button 
-                      type="button" 
-                      variant="secondary" 
+                    <Button
+                      type="button"
+                      variant="secondary"
                       onClick={() => router.push('/contacts')}
                       disabled={submitLoading}
                       size="sm"
                     >
                       Cancelar
                     </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={isLoading || submitLoading}
-                      size="sm"
-                    >
+                    <Button type="submit" disabled={isLoading || submitLoading} size="sm">
                       {submitLoading ? 'Creando...' : 'Crear Contacto'}
                     </Button>
                   </div>
@@ -558,7 +556,8 @@ export default function NewContactPage() {
                         Consejos
                       </Heading>
                       <Text size="xs" className="text-blue-800">
-                        Solo los campos Nombre y Apellido son obligatorios. Los demás campos son opcionales pero recomendados.
+                        Solo los campos Nombre y Apellido son obligatorios. Los demás campos son
+                        opcionales pero recomendados.
                       </Text>
                     </div>
                   </div>
@@ -577,8 +576,8 @@ export default function NewContactPage() {
                     <div className="space-y-1.5">
                       {(pipelineStages as PipelineStage[]).slice(0, 3).map((stage) => (
                         <div key={stage.id} className="flex items-center space-x-1.5">
-                          <div 
-                            className="w-2.5 h-2.5 rounded-full" 
+                          <div
+                            className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: stage.color }}
                           />
                           <Text size="xs" className="text-gray-600">

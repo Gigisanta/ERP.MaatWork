@@ -1,21 +1,21 @@
-"use client";
+'use client';
 import { useAuth } from '../auth/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getManagers } from '@/lib/api';
 import { logger, toLogContext } from '../../lib/logger';
-import { 
-  Card, 
-  CardContent, 
-  Heading, 
-  Text, 
-  Stack, 
-  Input, 
-  Button, 
+import {
+  Card,
+  CardContent,
+  Heading,
+  Text,
+  Stack,
+  Input,
+  Button,
   Alert,
   Select,
-  SelectItem
+  SelectItem,
 } from '@cactus/ui';
 
 interface Manager {
@@ -30,15 +30,15 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
+
   // Form data
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'advisor' | 'manager'>('advisor');
+  const [role, setRole] = useState<'advisor' | 'manager' | 'owner' | 'staff'>('advisor');
   const [requestedManagerId, setRequestedManagerId] = useState('');
-  
+
   // Managers list
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loadingManagers, setLoadingManagers] = useState(false);
@@ -54,7 +54,7 @@ export default function RegisterPage() {
     try {
       setLoadingManagers(true);
       const response = await getManagers();
-      
+
       if (response.success && response.data) {
         setManagers(response.data || []);
       } else {
@@ -70,7 +70,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email.trim()) {
       setError('El email es requerido');
       return;
@@ -104,18 +104,18 @@ export default function RegisterPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const registerData = {
         email,
         fullName,
         ...(username && { username }),
         password,
         role,
-        ...(role === 'advisor' && { requestedManagerId })
+        ...(role === 'advisor' && { requestedManagerId }),
       };
 
       await register(registerData);
-      
+
       setSuccess(true);
       setTimeout(() => {
         router.push('/login');
@@ -133,10 +133,18 @@ export default function RegisterPage() {
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <Stack direction="column" gap="md" className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mx-auto mb-2">
+                <span className="text-3xl">✓</span>
+              </div>
               <Heading level={2}>¡Registro exitoso!</Heading>
-              <Alert variant="success">
-                Tu cuenta ha sido creada. Serás redirigido al login...
+              <Alert variant="warning" title="Pendiente de aprobación">
+                Tu cuenta ha sido creada pero necesita ser aprobada por un administrador antes de
+                que puedas iniciar sesión.
               </Alert>
+              <Text size="sm" color="secondary">
+                Serás notificado cuando tu cuenta sea aprobada. Serás redirigido al login en unos
+                segundos...
+              </Text>
             </Stack>
           </CardContent>
         </Card>
@@ -203,18 +211,30 @@ export default function RegisterPage() {
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground-base mb-2">
-                    Rol
-                  </label>
+                  <label className="block text-sm font-medium text-foreground-base mb-2">Rol</label>
                   <Select
                     value={role}
-                    onValueChange={(value) => setRole(value as 'advisor' | 'manager')}
+                    onValueChange={(value) =>
+                      setRole(value as 'advisor' | 'manager' | 'owner' | 'staff')
+                    }
                     disabled={loading}
                     items={[
-                      { value: "advisor", label: "Asesor" },
-                      { value: "manager", label: "Manager" }
+                      { value: 'advisor', label: 'Asesor' },
+                      { value: 'manager', label: 'Manager' },
+                      { value: 'staff', label: 'Administrativo' },
+                      { value: 'owner', label: 'Dirección (solo lectura)' },
                     ]}
                   />
+                  {role === 'owner' && (
+                    <Text size="xs" color="secondary" className="mt-1">
+                      El rol Dirección tiene acceso de solo lectura a métricas de negocio
+                    </Text>
+                  )}
+                  {role === 'staff' && (
+                    <Text size="xs" color="secondary" className="mt-1">
+                      El rol Administrativo tiene acceso operativo (contactos, carga de datos)
+                    </Text>
+                  )}
                 </div>
 
                 {role === 'advisor' && (
@@ -226,20 +246,18 @@ export default function RegisterPage() {
                       value={requestedManagerId}
                       onValueChange={setRequestedManagerId}
                       disabled={loading || loadingManagers}
-                      placeholder={loadingManagers ? "Cargando managers..." : "Selecciona un manager"}
+                      placeholder={
+                        loadingManagers ? 'Cargando managers...' : 'Selecciona un manager'
+                      }
                       items={managers.map((manager) => ({
                         value: manager.id,
-                        label: `${manager.fullName} (${manager.email})`
+                        label: `${manager.fullName} (${manager.email})`,
                       }))}
                     />
                   </div>
                 )}
 
-                {error && (
-                  <Alert variant="error">
-                    {error}
-                  </Alert>
-                )}
+                {error && <Alert variant="error">{error}</Alert>}
 
                 <Button
                   type="submit"
@@ -254,7 +272,10 @@ export default function RegisterPage() {
             </form>
 
             <div className="text-center">
-              <Link href="/login" className="text-sm text-accent-base hover:text-accent-text transition-colors">
+              <Link
+                href="/login"
+                className="text-sm text-accent-base hover:text-accent-text transition-colors"
+              >
                 ¿Ya tienes cuenta? Inicia sesión
               </Link>
             </div>

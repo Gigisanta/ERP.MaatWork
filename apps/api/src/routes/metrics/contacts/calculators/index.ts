@@ -7,3 +7,4 @@ export { calculateMeetings, type MeetingsResult } from './meetings';
 export { calculateNewClients, type NewClientsResult } from './new-clients';
 export { calculateBusinessLineClosures } from './business-line-closures';
 export { calculateTransitionTimes } from './transition-times';
+export { calculateMarketTypeConversion } from './market-type-conversion';

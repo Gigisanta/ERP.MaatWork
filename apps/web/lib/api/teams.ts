@@ -4,15 +4,16 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { 
-  Team, 
-  TeamMember, 
-  TeamAdvisor, 
-  MembershipRequest, 
-  TeamInvitation, 
+import type {
+  Team,
+  TeamMember,
+  TeamAdvisor,
+  MembershipRequest,
+  TeamInvitation,
   TeamInvitationResponse,
   TeamMetrics,
-  TeamMemberMetrics
+  TeamMemberMetrics,
+  TeamMemberActivity,
 } from '@/types/team';
 
 // ==========================================================
@@ -175,9 +176,11 @@ export async function respondToInvitation(
 /**
  * Invitar miembro a equipo (alternativa endpoint)
  */
-export async function inviteTeamMember(
-  data: { teamId: string; userId?: string; email?: string }
-): Promise<ApiResponse<TeamInvitationResponse>> {
+export async function inviteTeamMember(data: {
+  teamId: string;
+  userId?: string;
+  email?: string;
+}): Promise<ApiResponse<TeamInvitationResponse>> {
   return apiClient.post<TeamInvitationResponse>('/v1/teams/invite-member', data);
 }
 
@@ -205,3 +208,24 @@ export async function getTeamMemberMetrics(
   return apiClient.get<TeamMemberMetrics>(`/v1/teams/${teamId}/members/${memberId}/metrics`);
 }
 
+/**
+ * Obtener resumen de actividad de todos los miembros del equipo
+ */
+export interface TeamMembersActivityResponse {
+  members: TeamMemberActivity[];
+  summary: {
+    totalMembers: number;
+    activeMembers: number;
+    moderateMembers: number;
+    inactiveMembers: number;
+    criticalMembers: number;
+    totalContactsCreatedThisMonth: number;
+    totalNotesLast30Days: number;
+  };
+}
+
+export async function getTeamMembersActivity(
+  teamId: string
+): Promise<ApiResponse<TeamMembersActivityResponse>> {
+  return apiClient.get<TeamMembersActivityResponse>(`/v1/teams/${teamId}/members-activity`);
+}

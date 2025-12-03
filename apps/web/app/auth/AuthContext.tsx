@@ -21,7 +21,7 @@ interface RegisterData {
   fullName: string;
   username?: string;
   password: string;
-  role: 'advisor' | 'manager';
+  role: 'advisor' | 'manager' | 'owner' | 'staff';
   requestedManagerId?: string;
 }
 

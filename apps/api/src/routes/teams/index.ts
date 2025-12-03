@@ -1,10 +1,10 @@
 /**
  * Teams Routes - Modular Router
- * 
+ *
  * AI_DECISION: Refactorización de teams-legacy.ts (1661 líneas) en módulos por funcionalidad
  * Justificación: Mejor organización, navegabilidad y mantenibilidad del código
  * Impacto: Código más testeable, handlers reutilizables, archivos <300 líneas
- * 
+ *
  * Estructura modular:
  * - schemas.ts                          # Validation schemas
  * - handlers/list.ts                    # GET /, GET /my-teams
@@ -28,16 +28,16 @@ import {
   approveAllRequests,
   approveRequest,
   rejectRequest,
-  deleteRequest
+  deleteRequest,
 } from './handlers/membership-requests';
 import {
   listPendingInvitations,
   acceptInvitation,
   rejectInvitation,
   createInvitation,
-  listEligibleAdvisors
+  listEligibleAdvisors,
 } from './handlers/invitations';
-import { getTeamMetrics, getMemberMetrics } from './handlers/metrics';
+import { getTeamMetrics, getMemberMetrics, getTeamMembersActivity } from './handlers/metrics';
 import { getTeamDetail } from './handlers/detail';
 
 const router = Router();
@@ -85,6 +85,7 @@ router.delete('/:id/members/:userId', requireAuth, removeTeamMember);
 // ==========================================================
 router.get('/:id/detail', requireAuth, getTeamDetail);
 router.get('/:id/metrics', requireAuth, getTeamMetrics);
+router.get('/:id/members-activity', requireAuth, getTeamMembersActivity);
 router.get('/:id/members/:memberId/metrics', requireAuth, getMemberMetrics);
 
 // ==========================================================
@@ -104,5 +105,5 @@ export {
   type CreateTeamInput,
   type UpdateTeamInput,
   type AddMemberInput,
-  type InviteMemberInput
+  type InviteMemberInput,
 } from './schemas';

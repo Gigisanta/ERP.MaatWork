@@ -70,7 +70,7 @@ export async function getManagers(): Promise<ApiResponse<UserApiResponse[]>> {
  */
 export async function updateUserRole(
   userId: string,
-  role: 'admin' | 'manager' | 'advisor'
+  role: 'admin' | 'manager' | 'advisor' | 'owner' | 'staff'
 ): Promise<ApiResponse<UserApiResponse>> {
   return apiClient.patch<UserApiResponse>(`/v1/users/${userId}/role`, { role });
 }
@@ -112,4 +112,3 @@ export async function approveUser(id: string): Promise<ApiResponse<UserApiRespon
 export async function rejectUser(id: string): Promise<ApiResponse<void>> {
   return apiClient.post<void>(`/v1/users/${id}/reject`, {});
 }
-

@@ -2,6 +2,7 @@
 SEC EDGAR fetcher for filings (10-K, 10-Q, 8-K, etc.)
 """
 
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -14,8 +15,11 @@ from ..utils.ratelimit import RateLimiter
 EDGAR_RATE_LIMITER = RateLimiter(max_calls=10, period=1.0)
 
 # Required User-Agent format for SEC EDGAR
+# SEC requires contact email in User-Agent for API access
+# Use EDGAR_CONTACT_EMAIL env var or default to generic company email
+EDGAR_CONTACT_EMAIL = os.getenv("EDGAR_CONTACT_EMAIL", "api@cactus.com")
 EDGAR_HEADERS = {
-    "User-Agent": "CactusBot/1.0 giolivo.santarelli@example.com",  # NOTE: Update email before production use
+    "User-Agent": f"CactusBot/1.0 {EDGAR_CONTACT_EMAIL}",
     "Accept": "application/json",
 }
 

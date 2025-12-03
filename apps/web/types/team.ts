@@ -120,4 +120,34 @@ export interface TeamMemberMetrics {
   portfolioCount: number;
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
+  // Métricas de actividad
+  lastLogin: string | null;
+  daysSinceLogin: number | null;
+  contactsCreatedThisMonth: number;
+  contactsCreatedLast30Days: number;
+  notesCreatedLast30Days: number;
+  tasksCompletedLast30Days: number;
+}
+
+/**
+ * Resumen de actividad de un miembro para lista de equipo
+ */
+export interface TeamMemberActivity {
+  id: string;
+  email: string;
+  fullName: string;
+  role: TeamMemberRole;
+  // Métricas de actividad
+  lastLogin: string | null;
+  daysSinceLogin: number | null;
+  isActive: boolean;
+  // Métricas de rendimiento
+  contactsCreatedThisMonth: number;
+  contactsCreatedLast30Days: number;
+  notesCreatedLast30Days: number;
+  tasksCompletedLast30Days: number;
+  clientCount: number;
+  totalAum: number;
+  // Status de actividad
+  activityStatus: 'active' | 'moderate' | 'inactive' | 'critical';
 }
