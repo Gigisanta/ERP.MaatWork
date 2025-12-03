@@ -100,19 +100,19 @@ CREATE OR REPLACE FUNCTION create_partitions_for_range(
   strategy TEXT DEFAULT 'monthly'
 ) RETURNS INTEGER AS $$
 DECLARE
-  current_date DATE;
+  loop_date DATE;
   partition_count INTEGER := 0;
   partition_name TEXT;
 BEGIN
-  current_date := start_date;
+  loop_date := start_date;
   
-  WHILE current_date <= end_date LOOP
+  WHILE loop_date <= end_date LOOP
     IF strategy = 'monthly' THEN
-      partition_name := create_monthly_partition(parent_table, current_date);
-      current_date := (DATE_TRUNC('month', current_date) + INTERVAL '1 month')::DATE;
+      partition_name := create_monthly_partition(parent_table, loop_date);
+      loop_date := (DATE_TRUNC('month', loop_date) + INTERVAL '1 month')::DATE;
     ELSIF strategy = 'quarterly' THEN
-      partition_name := create_quarterly_partition(parent_table, current_date);
-      current_date := (DATE_TRUNC('quarter', current_date) + INTERVAL '3 months')::DATE;
+      partition_name := create_quarterly_partition(parent_table, loop_date);
+      loop_date := (DATE_TRUNC('quarter', loop_date) + INTERVAL '3 months')::DATE;
     ELSE
       RAISE EXCEPTION 'Invalid strategy: %. Must be "monthly" or "quarterly"', strategy;
     END IF;
