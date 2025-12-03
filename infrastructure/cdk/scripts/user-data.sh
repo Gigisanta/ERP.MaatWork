@@ -50,17 +50,25 @@ ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
 docker --version
 docker-compose --version
 
-# ==================== Install Node.js y PM2 ====================
+# ==================== Install Node.js, pnpm y PM2 ====================
 
-echo "📦 Installing Node.js 22 and PM2..."
+echo "📦 Installing Node.js 22, pnpm and PM2..."
 curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
 yum install -y nodejs
+
+# Instalar pnpm globalmente (requerido para el monorepo)
+npm install -g pnpm@9.10.0
 
 # Instalar PM2 globalmente
 npm install -g pm2
 
 # Configurar PM2 para iniciar con el sistema
 pm2 startup systemd -u ec2-user --hp /home/ec2-user
+
+# Verificar instalaciones
+echo "Node.js version: $(node --version)"
+echo "pnpm version: $(pnpm --version)"
+echo "PM2 version: $(pm2 --version)"
 
 # ==================== Install Utilities ====================
 
@@ -382,12 +390,17 @@ echo "   1. Clone your repository:"
 echo "      git clone <repo-url> /home/ec2-user/cactus"
 echo ""
 echo "   2. Configure environment variables:"
+echo "      cp .env.example .env"
+echo "      # Edit .env with your DATABASE_URL, JWT_SECRET, etc."
 echo "      export LOGS_BUCKET=<your-logs-bucket-name>"
 echo ""
 echo "   3. Install dependencies and build:"
 echo "      cd /home/ec2-user/cactus && pnpm install && pnpm build"
 echo ""
-echo "   4. Start with PM2:"
+echo "   4. Run database migrations:"
+echo "      pnpm -F @cactus/db migrate"
+echo ""
+echo "   5. Start with PM2:"
 echo "      pm2 start /home/ec2-user/cactus/ecosystem.config.js"
 echo "      pm2 save"
 echo ""
