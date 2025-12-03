@@ -8,7 +8,8 @@ module.exports = {
       exec_mode: "fork",
       env: {
         NODE_ENV: "production",
-        PORT: 3001
+        PORT: 3001,
+        HOST: "127.0.0.1"  // Security: only listen on localhost, nginx handles external traffic
       },
       error_file: "/home/ec2-user/logs/api-error.log",
       out_file: "/home/ec2-user/logs/api-out.log",
@@ -19,7 +20,7 @@ module.exports = {
       name: "cactus-web",
       cwd: "/home/ec2-user/abax/apps/web",
       script: "node_modules/next/dist/bin/next",
-      args: "start -p 3000",
+      args: "start -p 3000 -H 127.0.0.1",  // Security: only listen on localhost
       instances: 1,
       exec_mode: "fork",
       env: {
@@ -35,7 +36,7 @@ module.exports = {
       name: "cactus-analytics",
       cwd: "/home/ec2-user/abax/apps/analytics-service",
       script: "venv/bin/uvicorn",
-      args: "main:app --host 0.0.0.0 --port 3002",
+      args: "main:app --host 127.0.0.1 --port 3002",  // Security: only listen on localhost
       instances: 1,
       exec_mode: "fork",
       interpreter: "none",

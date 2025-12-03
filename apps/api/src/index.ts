@@ -54,7 +54,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Justificación: Logging 'debug' es muy verboso y agrega overhead significativo en desarrollo
 // Impacto: Reduce uso de CPU/memoria, inicio más rápido, menos ruido en consola
 const loggerOptions: PinoLoggerOptions = {
-  level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'info') // 'info' en lugar de 'debug' para desarrollo
+  level: process.env.LOG_LEVEL || (isProduction ? 'warn' : 'info'), // 'info' en lugar de 'debug' para desarrollo
 };
 
 // Personalizar o deshabilitar hostname en los logs
@@ -64,7 +64,7 @@ if (process.env.LOG_HOSTNAME_DISABLE === 'true') {
 } else if (process.env.LOG_HOSTNAME) {
   // Usar hostname personalizado
   loggerOptions.base = {
-    hostname: process.env.LOG_HOSTNAME
+    hostname: process.env.LOG_HOSTNAME,
   };
 }
 // Si no se especifica nada, Pino usará el hostname del sistema por defecto
@@ -78,8 +78,8 @@ if (!isProduction) {
       ignore: 'pid,hostname',
       errorLikeObjectKeys: ['err', 'error'],
       messageFormat: '{levelLabel} {msg}',
-      errorProps: 'message,stack'
-    }
+      errorProps: 'message,stack',
+    },
   };
 }
 const logger = pino(loggerOptions);
@@ -91,26 +91,30 @@ app.set('etag', 'strong');
 // CORS MUST be first, before any other middleware including body parsers
 // CORS config - restrict origins for security
 const corsOptions: CorsOptions = {
-  origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:3000'],
-  credentials: true
+  origin: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : ['http://localhost:3000'],
+  credentials: true,
 };
 app.use(cors(corsOptions));
 
 // AI_DECISION: Add compression middleware for 60-70% payload size reduction
 // Justificación: API responses (especially contacts/pipeline) can be large JSON payloads
 // Impacto: Network transfer time reduction, especially important for mobile/slow connections
-app.use(compression({
-  level: 6, // Balanced compression level (1-9, 6 is good default)
-  threshold: 1024, // Only compress responses > 1KB
-  filter: (req, res) => {
-    // Don't compress if client doesn't support it
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    // Use compression for JSON responses
-    return compression.filter(req, res);
-  }
-}));
+app.use(
+  compression({
+    level: 6, // Balanced compression level (1-9, 6 is good default)
+    threshold: 1024, // Only compress responses > 1KB
+    filter: (req, res) => {
+      // Don't compress if client doesn't support it
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+      // Use compression for JSON responses
+      return compression.filter(req, res);
+    },
+  })
+);
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -130,7 +134,9 @@ const rateLimiters: RateLimiter[] = [];
 if (process.env.RATE_LIMIT_AUTH_ENABLED !== 'false') {
   const authLimiter = new RateLimiter({
     capacity: Number(process.env.RATE_LIMIT_AUTH_CAPACITY || RATE_LIMIT_PRESETS.auth.capacity),
-    refillPerSec: Number(process.env.RATE_LIMIT_AUTH_REFILL || RATE_LIMIT_PRESETS.auth.refillPerSec)
+    refillPerSec: Number(
+      process.env.RATE_LIMIT_AUTH_REFILL || RATE_LIMIT_PRESETS.auth.refillPerSec
+    ),
   });
   rateLimiters.push(authLimiter);
   app.use('/auth', authLimiter.middleware());
@@ -140,8 +146,12 @@ if (process.env.RATE_LIMIT_AUTH_ENABLED !== 'false') {
 // Rate limiting para uploads (muy restrictivo)
 if (process.env.RATE_LIMIT_UPLOADS_ENABLED !== 'false') {
   const uploadLimiter = new RateLimiter({
-    capacity: Number(process.env.RATE_LIMIT_UPLOADS_CAPACITY || RATE_LIMIT_PRESETS.uploads.capacity),
-    refillPerSec: Number(process.env.RATE_LIMIT_UPLOADS_REFILL || RATE_LIMIT_PRESETS.uploads.refillPerSec)
+    capacity: Number(
+      process.env.RATE_LIMIT_UPLOADS_CAPACITY || RATE_LIMIT_PRESETS.uploads.capacity
+    ),
+    refillPerSec: Number(
+      process.env.RATE_LIMIT_UPLOADS_REFILL || RATE_LIMIT_PRESETS.uploads.refillPerSec
+    ),
   });
   rateLimiters.push(uploadLimiter);
   app.use('/v1/admin/aum/uploads', uploadLimiter.middleware());
@@ -152,7 +162,9 @@ if (process.env.RATE_LIMIT_UPLOADS_ENABLED !== 'false') {
 if (process.env.RATE_LIMIT_GLOBAL_ENABLED === 'true') {
   const globalLimiter = new RateLimiter({
     capacity: Number(process.env.RATE_LIMIT_GLOBAL_CAPACITY || RATE_LIMIT_PRESETS.general.capacity),
-    refillPerSec: Number(process.env.RATE_LIMIT_GLOBAL_REFILL || RATE_LIMIT_PRESETS.general.refillPerSec)
+    refillPerSec: Number(
+      process.env.RATE_LIMIT_GLOBAL_REFILL || RATE_LIMIT_PRESETS.general.refillPerSec
+    ),
   });
   rateLimiters.push(globalLimiter);
   app.use(globalLimiter.middleware());
@@ -167,22 +179,22 @@ if (rateLimiters.length > 0) {
 // Request ID middleware - DEBE ir antes de pinoHttp
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Generar o extraer X-Request-ID del header
-  const requestId = req.headers['x-request-id'] as string || uuidv4();
-  
+  const requestId = (req.headers['x-request-id'] as string) || uuidv4();
+
   // Adjuntar al objeto req para uso posterior
   type RequestWithRequestId = Request & { requestId?: string };
   (req as RequestWithRequestId).requestId = requestId;
-  
+
   // Incluir en response headers para rastreo frontend
   res.setHeader('X-Request-ID', requestId);
-  
+
   next();
 });
 
 // Helmet config (disable CSP by default unless provided)
 const helmetOptions: HelmetOptions = {
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
 };
 if (process.env.CSP_ENABLED !== 'true') {
   helmetOptions.contentSecurityPolicy = false;
@@ -200,27 +212,24 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   // Save original json method
   const originalJson = res.json.bind(res);
-  
+
   // Override json method to add ETag
-  res.json = function(data: unknown) {
+  res.json = function (data: unknown) {
     // Generate ETag from response data
-    const etag = crypto
-      .createHash('md5')
-      .update(JSON.stringify(data))
-      .digest('hex');
-    
+    const etag = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+
     res.setHeader('ETag', `"${etag}"`);
-    
+
     // Check if client has matching ETag (304 Not Modified)
     const clientEtag = req.headers['if-none-match'];
     if (clientEtag === `"${etag}"`) {
       return res.status(304).end();
     }
-    
+
     // Return normal response with fresh data
     return originalJson(data);
   };
-  
+
   next();
 });
 
@@ -236,13 +245,15 @@ app.use(
       if (res.statusCode >= 500 || err) return 'error';
       return 'info';
     },
-    redact: isProduction ? {
-      paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
-      remove: true
-    } : [],  // No redactar nada en desarrollo
+    redact: isProduction
+      ? {
+          paths: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+          remove: true,
+        }
+      : [], // No redactar nada en desarrollo
     customProps: (req: Request) => ({
       requestId: req.requestId,
-      userId: req.user?.id
+      userId: req.user?.id,
     }),
     customSuccessMessage: (req: Request, res: Response) => {
       return `${req.method} ${req.url} ${res.statusCode}`;
@@ -256,13 +267,13 @@ app.use(
     serializers: {
       req: (req) => ({
         method: req.method,
-        url: req.url
+        url: req.url,
       }),
       res: (res) => ({
-        statusCode: res.statusCode
+        statusCode: res.statusCode,
       }),
-      err: pino.stdSerializers.err
-    }
+      err: pino.stdSerializers.err,
+    },
   })
 );
 
@@ -272,22 +283,24 @@ app.use(
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
   const route = req.route?.path || req.path || 'unknown';
-  
+
   // Track response finish
   res.on('finish', async () => {
     const duration = (Date.now() - startTime) / 1000; // Convert to seconds
     const status = res.statusCode.toString();
     const method = req.method;
-    
+
     try {
-      const { httpRequestDuration, httpRequestsTotal, httpErrorsTotal } = await import('./utils/metrics');
-      
+      const { httpRequestDuration, httpRequestsTotal, httpErrorsTotal } = await import(
+        './utils/metrics'
+      );
+
       // Record request duration
       httpRequestDuration.observe({ method, route, status }, duration);
-      
+
       // Increment request counter
       httpRequestsTotal.inc({ method, route, status });
-      
+
       // Track errors (4xx and 5xx)
       if (res.statusCode >= 400) {
         httpErrorsTotal.inc({ method, route, status });
@@ -297,7 +310,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
       req.log?.debug({ err: error }, 'Failed to record metrics');
     }
   });
-  
+
   next();
 });
 
@@ -308,14 +321,14 @@ app.use('/health', healthRouter);
 app.get('/metrics', async (req, res) => {
   try {
     const { getMetrics, memoryUsage } = await import('./utils/metrics');
-    
+
     // Update memory metrics
     const memUsage = process.memoryUsage();
     memoryUsage.set({ type: 'rss' }, memUsage.rss);
     memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
     memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
     memoryUsage.set({ type: 'external' }, (memUsage as any).external || 0);
-    
+
     // Return Prometheus format
     const metrics = await getMetrics();
     res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
@@ -336,7 +349,7 @@ app.get('/metrics/json', (req, res) => {
     rss: memory.rss,
     heapUsed: memory.heapUsed,
     external: (memory as any).external,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -347,7 +360,7 @@ if (!isProduction) {
       hasDatabaseUrl: !!process.env.DATABASE_URL,
       databaseUrlPrefix: process.env.DATABASE_URL?.substring(0, 30),
       nodeEnv: process.env.NODE_ENV,
-      port: process.env.PORT
+      port: process.env.PORT,
     });
   });
 
@@ -356,7 +369,9 @@ if (!isProduction) {
       const { db } = await import('@cactus/db');
       const { sql } = await import('drizzle-orm');
       const result = await db().execute(sql`SELECT 1 as test`);
-      const row = Array.isArray(result) ? (result as any)[0] : (result as any).rows?.[0] || { test: 1 };
+      const row = Array.isArray(result)
+        ? (result as any)[0]
+        : (result as any).rows?.[0] || { test: 1 };
       res.json({ ok: true, connected: true, testResult: row });
     } catch (error) {
       req.log.error({ err: error }, 'Error en test-db');
@@ -438,23 +453,26 @@ app.use('/v1/automations', automationsRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  req.log.error({
-    err,
-    requestId: req.requestId,
-    url: req.url,
-    method: req.method,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    userId: req.user?.id,
-    userRole: req.user?.role
-  }, 'Unhandled error in request');
-  
+  req.log.error(
+    {
+      err,
+      requestId: req.requestId,
+      url: req.url,
+      method: req.method,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      userId: req.user?.id,
+      userRole: req.user?.role,
+    },
+    'Unhandled error in request'
+  );
+
   res.status(500).json({
     error: 'Internal server error',
     requestId: req.requestId,
     message: !isProduction ? err.message : undefined,
-    stack: !isProduction ? err.stack : undefined
+    stack: !isProduction ? err.stack : undefined,
   });
 });
 
@@ -463,7 +481,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not found',
     message: `Route ${req.method} ${req.path} not found`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -485,21 +503,23 @@ async function startServer() {
     logger.info('🔧 Initializing database...');
     await initializeDatabase();
     logger.info('✅ Database initialization completed');
-    
+
     // Iniciar scheduler de jobs automáticos
     const scheduler = getScheduler();
     scheduler.start();
-    
-    const server = app.listen(port, () => {
-      logger.info({ port }, 'API listening');
+
+    // Security: bind to HOST (default 127.0.0.1 in production, 0.0.0.0 in dev)
+    const host = process.env.HOST || (isProduction ? '127.0.0.1' : '0.0.0.0');
+    const server = app.listen(port, host, () => {
+      logger.info({ port, host }, 'API listening');
     });
 
     const shutdown = (signal: string) => {
       logger.info({ signal }, 'Received shutdown signal');
-      
+
       // Detener scheduler antes de cerrar el servidor
       scheduler.stop();
-      
+
       server.close(() => {
         logger.info('HTTP server closed');
         process.exit(0);
