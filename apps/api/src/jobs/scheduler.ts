@@ -1,9 +1,9 @@
 /**
  * Sistema de Scheduling Centralizado
- * 
+ *
  * Proporciona un sistema centralizado para ejecutar jobs programados
  * usando node-cron. Todos los jobs automáticos deben registrarse aquí.
- * 
+ *
  * AI_DECISION: Sistema de scheduling centralizado con node-cron
  * Justificación: Necesitamos ejecutar jobs automáticos (mantenimiento, monitoreo) de forma confiable
  * Impacto: Automatización de tareas críticas, mejor mantenibilidad, jobs centralizados
@@ -25,8 +25,7 @@ export class JobScheduler {
 
   constructor() {
     // Deshabilitar scheduler en tests o si se especifica explícitamente
-    this.isEnabled = process.env.NODE_ENV !== 'test' && 
-                     process.env.DISABLE_SCHEDULER !== 'true';
+    this.isEnabled = process.env.NODE_ENV !== 'test' && process.env.DISABLE_SCHEDULER !== 'true';
   }
 
   /**
@@ -45,12 +44,12 @@ export class JobScheduler {
       logger.info('🔧 Ejecutando mantenimiento diario...');
       try {
         await runDailyMaintenance();
-        
+
         // Refresh de materialized views después del mantenimiento
         const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
         const refreshJob = new RefreshMaterializedViewsJob();
         await refreshJob.refreshAll();
-        
+
         logger.info('✅ Mantenimiento diario completado');
       } catch (error) {
         logger.error({ err: error }, '❌ Error en mantenimiento diario');
@@ -86,10 +85,10 @@ export class JobScheduler {
       try {
         // 1. Crear particiones futuras (próximos 3 meses)
         await this.createFuturePartitions();
-        
+
         // 2. Limpiar particiones antiguas (> 12 meses)
         await this.cleanupOldPartitions();
-        
+
         logger.info('✅ Mantenimiento de particiones completado');
       } catch (error) {
         logger.error({ err: error }, '❌ Error en mantenimiento de particiones');
@@ -104,28 +103,24 @@ export class JobScheduler {
    */
   stop(): void {
     logger.info('🛑 Deteniendo scheduler...');
-    
+
     for (const [name, task] of this.jobs.entries()) {
       task.stop();
       logger.info({ job: name }, 'Job detenido');
     }
-    
+
     this.jobs.clear();
     logger.info('✅ Scheduler detenido');
   }
 
   /**
    * Programar un job con cron
-   * 
+   *
    * @param name Nombre único del job
    * @param cronExpression Expresión cron (ej: '0 2 * * *' para 2:00 AM diario)
    * @param task Función async a ejecutar
    */
-  private scheduleJob(
-    name: string,
-    cronExpression: string,
-    task: () => Promise<void>
-  ): void {
+  private scheduleJob(name: string, cronExpression: string, task: () => Promise<void>): void {
     if (this.jobs.has(name)) {
       logger.warn({ job: name }, 'Job ya existe, omitiendo');
       return;
@@ -137,22 +132,26 @@ export class JobScheduler {
       return;
     }
 
-    const scheduledTask = cron.schedule(cronExpression, async () => {
-      const startTime = Date.now();
-      logger.info({ job: name }, `Ejecutando job: ${name}`);
-      
-      try {
-        await task();
-        const duration = Date.now() - startTime;
-        logger.info({ job: name, duration }, `Job completado: ${name}`);
-      } catch (error) {
-        const duration = Date.now() - startTime;
-        logger.error({ err: error, job: name, duration }, `Error ejecutando job: ${name}`);
-      }
-    }, {
-      scheduled: true,
-      timezone: 'America/Argentina/Buenos_Aires'
-    } as Parameters<typeof cron.schedule>[2]);
+    const scheduledTask = cron.schedule(
+      cronExpression,
+      async () => {
+        const startTime = Date.now();
+        logger.info({ job: name }, `Ejecutando job: ${name}`);
+
+        try {
+          await task();
+          const duration = Date.now() - startTime;
+          logger.info({ job: name, duration }, `Job completado: ${name}`);
+        } catch (error) {
+          const duration = Date.now() - startTime;
+          logger.error({ err: error, job: name, duration }, `Error ejecutando job: ${name}`);
+        }
+      },
+      {
+        scheduled: true,
+        timezone: 'America/Argentina/Buenos_Aires',
+      } as Parameters<typeof cron.schedule>[2]
+    );
 
     this.jobs.set(name, scheduledTask);
     logger.info({ job: name, cronExpression }, `Job programado: ${name}`);
@@ -160,7 +159,7 @@ export class JobScheduler {
 
   /**
    * Crear particiones futuras automáticamente
-   * 
+   *
    * Crea particiones para los próximos 3 meses para tablas particionadas
    */
   private async createFuturePartitions(): Promise<void> {
@@ -175,7 +174,7 @@ export class JobScheduler {
           WHERE proname = 'create_future_partitions'
         ) as exists
       `);
-      
+
       if (!(functionsExist.rows[0] as { exists: boolean }).exists) {
         logger.debug('Partitioning functions not available, skipping partition creation');
         return;
@@ -187,7 +186,7 @@ export class JobScheduler {
         { name: 'broker_transactions', strategy: 'monthly' },
         { name: 'broker_positions', strategy: 'monthly' },
         { name: 'activity_events', strategy: 'monthly' },
-        { name: 'aum_snapshots', strategy: 'monthly' }
+        { name: 'aum_snapshots', strategy: 'monthly' },
       ];
 
       for (const table of partitionedTables) {
@@ -202,16 +201,16 @@ export class JobScheduler {
                 AND c.relkind = 'p'
             ) as is_partitioned
           `);
-          
+
           if (!(isPartitioned.rows[0] as { is_partitioned: boolean }).is_partitioned) {
             logger.debug({ table: table.name }, 'Table is not partitioned, skipping');
             continue;
           }
-          
+
           // Crear particiones futuras (3 meses adelante)
-          await db().execute(sql.raw(
-            `SELECT create_future_partitions('${table.name}', 3, '${table.strategy}')`
-          ));
+          await db().execute(
+            sql.raw(`SELECT create_future_partitions('${table.name}', 3, '${table.strategy}')`)
+          );
           logger.info({ table: table.name }, 'Future partitions created');
         } catch (error) {
           logger.error({ err: error, table: table.name }, 'Error creating future partitions');
@@ -226,7 +225,7 @@ export class JobScheduler {
 
   /**
    * Limpiar particiones antiguas (más de 12 meses)
-   * 
+   *
    * Esta función elimina particiones de tablas que tienen más de 12 meses
    * para mantener el tamaño de la base de datos bajo control.
    */
@@ -262,7 +261,7 @@ export class JobScheduler {
       let cleanedCount = 0;
       for (const partition of oldPartitions.rows) {
         const tableName = (partition as { tablename: string }).tablename;
-        
+
         // Extraer año y mes del nombre de la partición
         const match = tableName.match(/_(\d{4})_(\d{2})$/);
         if (!match) continue;
@@ -292,11 +291,13 @@ export class JobScheduler {
 
   /**
    * Obtener estado de todos los jobs
+   * Note: node-cron ScheduledTask doesn't have getStatus(),
+   * so we track if the job is registered (exists in the map)
    */
   getStatus(): Array<{ name: string; running: boolean }> {
-    return Array.from(this.jobs.entries()).map(([name, task]) => ({
+    return Array.from(this.jobs.entries()).map(([name]) => ({
       name,
-      running: task.getStatus() === 'scheduled'
+      running: this.isEnabled, // If scheduler is enabled, job is running
     }));
   }
 }
@@ -313,4 +314,3 @@ export function getScheduler(): JobScheduler {
   }
   return schedulerInstance;
 }
-
