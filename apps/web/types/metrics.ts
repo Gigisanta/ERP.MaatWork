@@ -21,6 +21,7 @@ export interface MonthlyMetrics {
   newClients: number;
   businessLineClosures: BusinessLineClosures;
   transitionTimes: StageTransitionTime;
+  marketTypeConversion: MarketTypeConversion;
 }
 
 /**
@@ -39,6 +40,40 @@ export interface StageTransitionTime {
   prospectoToFirstMeeting: number | null; // Prospecto → Primera reunión
   firstToSecondMeeting: number | null; // Primera reunión → Segunda reunión
   secondMeetingToClient: number | null; // Segunda reunión → Cliente
+}
+
+/**
+ * Datos de conversión para un tipo de mercado específico
+ */
+export interface MarketTypeData {
+  contacts: number;
+  clients: number;
+  conversionRate: number;
+}
+
+/**
+ * Desglose de sub-tipos de mercado frío
+ */
+export interface ColdMarketBreakdown {
+  redesSociales: MarketTypeData;
+  llamadoFrio: MarketTypeData;
+}
+
+/**
+ * Datos extendidos para mercado frío con desglose
+ */
+export interface ColdMarketTypeData extends MarketTypeData {
+  breakdown: ColdMarketBreakdown;
+}
+
+/**
+ * Conversión de contactos a clientes por tipo de mercado
+ * Incluye desglose por sub-tipos de mercado frío
+ */
+export interface MarketTypeConversion {
+  natural: MarketTypeData;
+  referido: MarketTypeData;
+  frio: ColdMarketTypeData;
 }
 
 /**
@@ -73,4 +108,3 @@ export interface ContactsMetricsResponse {
   history: MonthlyMetrics[];
   goals?: MonthlyGoal | null;
 }
-

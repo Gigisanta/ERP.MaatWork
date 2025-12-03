@@ -12,6 +12,7 @@
  *   - handlers/match.ts: Matching manual
  *   - handlers/update-advisor.ts: Actualizar asesor
  *   - handlers/monthly-history.ts: Historial mensual
+ *   - handlers/advisor-summary.ts: Resumen por asesor
  */
 
 import { Router } from 'express';
@@ -25,6 +26,8 @@ import {
   aumMonthlyHistoryQuerySchema,
   aumUpdateAdvisorBodySchema,
   aumRowIdParamsSchema,
+  aumAdvisorSummaryQuerySchema,
+  aumAvailablePeriodsQuerySchema,
 } from '../../../utils/aum-validation';
 
 // Handlers
@@ -33,11 +36,28 @@ import { getDuplicates } from './handlers/duplicates';
 import { matchRow } from './handlers/match';
 import { updateAdvisor } from './handlers/update-advisor';
 import { getMonthlyHistory } from './handlers/monthly-history';
+import { getAdvisorSummary, getAvailablePeriods } from './handlers/advisor-summary';
 
 const router = Router();
 
 // GET /admin/aum/rows/all - Get all imported rows with pagination and filters
 router.get('/all', requireAuth, validate({ query: aumRowsAllQuerySchema }), listAllRows);
+
+// GET /admin/aum/rows/advisor-summary - Get AUM summary aggregated by advisor
+router.get(
+  '/advisor-summary',
+  requireAuth,
+  validate({ query: aumAdvisorSummaryQuerySchema }),
+  getAdvisorSummary
+);
+
+// GET /admin/aum/rows/available-periods - Get list of available report periods
+router.get(
+  '/available-periods',
+  requireAuth,
+  validate({ query: aumAvailablePeriodsQuerySchema }),
+  getAvailablePeriods
+);
 
 // GET /admin/aum/rows/duplicates/:accountNumber - Get all rows with same account number
 router.get(

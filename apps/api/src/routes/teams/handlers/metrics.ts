@@ -4,6 +4,7 @@
  * GET /teams/:id/detail - Get team with details and metrics
  * GET /teams/:id/metrics - Get team metrics
  * GET /teams/:id/members/:memberId/metrics - Get member metrics
+ * GET /teams/:id/members-activity - Get activity metrics for all team members
  */
 import type { Request, Response, NextFunction } from 'express';
 import { db, teamMembership, users } from '@cactus/db';
@@ -13,11 +14,40 @@ import {
   clientPortfolioAssignments,
   portfolioTemplates,
   portfolioMonitoringSnapshot,
+  notes,
+  tasks,
 } from '@cactus/db/schema';
-import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
+import { eq, and, sum, count, gte, sql, desc } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/cache';
 import { validateUuidParam } from '../../../utils/common-schemas';
+
+/**
+ * Calculate days since a date
+ */
+function calculateDaysSince(date: Date | null): number | null {
+  if (!date) return null;
+  const now = new Date();
+  const diffTime = now.getTime() - new Date(date).getTime();
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Determine activity status based on days since login
+ * - active: logged in within last 3 days
+ * - moderate: logged in within last 7 days
+ * - inactive: logged in within last 14 days
+ * - critical: more than 14 days without login
+ */
+function getActivityStatus(
+  daysSinceLogin: number | null
+): 'active' | 'moderate' | 'inactive' | 'critical' {
+  if (daysSinceLogin === null) return 'critical';
+  if (daysSinceLogin <= 3) return 'active';
+  if (daysSinceLogin <= 7) return 'moderate';
+  if (daysSinceLogin <= 14) return 'inactive';
+  return 'critical';
+}
 
 /**
  * GET /teams/:id/metrics - Obtener métricas del equipo
@@ -191,6 +221,10 @@ export async function getTeamMetrics(req: Request, res: Response, next: NextFunc
 
 /**
  * GET /teams/:id/members/:memberId/metrics - Obtener métricas del miembro
+ *
+ * AI_DECISION: Extender métricas con información de actividad del usuario
+ * Justificación: Managers necesitan visibilidad sobre la actividad de sus asesores
+ * Impacto: Mejor control y seguimiento del trabajo del equipo
  */
 export async function getMemberMetrics(req: Request, res: Response, next: NextFunction) {
   try {
@@ -230,80 +264,164 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
 
     const today = new Date();
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Get AUM total del asesor
-    const [aumResult] = await db()
-      .select({
-        totalAum: sum(aumSnapshots.aumTotal),
-      })
-      .from(aumSnapshots)
-      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-      .where(
-        and(
-          eq(contacts.assignedAdvisorId, memberId),
-          eq(aumSnapshots.date, today.toISOString().split('T')[0])
+    // Execute all queries in parallel for better performance
+    const [
+      userInfo,
+      aumResult,
+      clientCountResult,
+      portfolioCountResult,
+      deviationAlertsResult,
+      aumTrendResult,
+      contactsThisMonth,
+      contactsLast30Days,
+      notesLast30Days,
+      tasksCompletedLast30Days,
+    ] = await Promise.all([
+      // Get user info including lastLogin
+      db()
+        .select({
+          lastLogin: users.lastLogin,
+          isActive: users.isActive,
+        })
+        .from(users)
+        .where(eq(users.id, memberId))
+        .limit(1),
+
+      // Get AUM total del asesor
+      db()
+        .select({
+          totalAum: sum(aumSnapshots.aumTotal),
+        })
+        .from(aumSnapshots)
+        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            eq(aumSnapshots.date, today.toISOString().split('T')[0])
+          )
+        ),
+
+      // Get client count
+      db()
+        .select({ count: count() })
+        .from(contacts)
+        .where(and(eq(contacts.assignedAdvisorId, memberId), sql`${contacts.deletedAt} IS NULL`)),
+
+      // Get portfolios count
+      db()
+        .select({ count: count() })
+        .from(clientPortfolioAssignments)
+        .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            eq(clientPortfolioAssignments.status, 'active')
+          )
+        ),
+
+      // Get deviation alerts count
+      db()
+        .select({ count: count() })
+        .from(portfolioMonitoringSnapshot)
+        .innerJoin(contacts, eq(contacts.id, portfolioMonitoringSnapshot.contactId))
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            eq(portfolioMonitoringSnapshot.asOfDate, today.toISOString().split('T')[0]),
+            sql`${portfolioMonitoringSnapshot.totalDeviationPct} > 10`
+          )
+        ),
+
+      // Get AUM trend (last 30 days)
+      db()
+        .select({
+          date: aumSnapshots.date,
+          totalAum: sum(aumSnapshots.aumTotal),
+        })
+        .from(aumSnapshots)
+        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
+          )
         )
-      );
+        .groupBy(aumSnapshots.date)
+        .orderBy(aumSnapshots.date),
 
-    // Get client count
-    const [clientCountResult] = await db()
-      .select({ count: count() })
-      .from(contacts)
-      .where(and(eq(contacts.assignedAdvisorId, memberId), sql`${contacts.deletedAt} IS NULL`));
+      // Contacts created this month
+      db()
+        .select({ count: count() })
+        .from(contacts)
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            sql`${contacts.deletedAt} IS NULL`,
+            gte(contacts.createdAt, monthStart)
+          )
+        ),
 
-    // Get portfolios count
-    const [portfolioCountResult] = await db()
-      .select({ count: count() })
-      .from(clientPortfolioAssignments)
-      .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
-      .where(
-        and(
-          eq(contacts.assignedAdvisorId, memberId),
-          eq(clientPortfolioAssignments.status, 'active')
-        )
-      );
+      // Contacts created last 30 days
+      db()
+        .select({ count: count() })
+        .from(contacts)
+        .where(
+          and(
+            eq(contacts.assignedAdvisorId, memberId),
+            sql`${contacts.deletedAt} IS NULL`,
+            gte(contacts.createdAt, thirtyDaysAgo)
+          )
+        ),
 
-    // Get deviation alerts count
-    const [deviationAlertsResult] = await db()
-      .select({ count: count() })
-      .from(portfolioMonitoringSnapshot)
-      .innerJoin(contacts, eq(contacts.id, portfolioMonitoringSnapshot.contactId))
-      .where(
-        and(
-          eq(contacts.assignedAdvisorId, memberId),
-          eq(portfolioMonitoringSnapshot.asOfDate, today.toISOString().split('T')[0]),
-          sql`${portfolioMonitoringSnapshot.totalDeviationPct} > 10`
-        )
-      );
+      // Notes created last 30 days
+      db()
+        .select({ count: count() })
+        .from(notes)
+        .where(
+          and(
+            eq(notes.authorUserId, memberId),
+            sql`${notes.deletedAt} IS NULL`,
+            gte(notes.createdAt, thirtyDaysAgo)
+          )
+        ),
 
-    // Get AUM trend (last 30 days)
-    const aumTrendResult = await db()
-      .select({
-        date: aumSnapshots.date,
-        totalAum: sum(aumSnapshots.aumTotal),
-      })
-      .from(aumSnapshots)
-      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-      .where(
-        and(
-          eq(contacts.assignedAdvisorId, memberId),
-          gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
-        )
-      )
-      .groupBy(aumSnapshots.date)
-      .orderBy(aumSnapshots.date);
+      // Tasks completed last 30 days
+      db()
+        .select({ count: count() })
+        .from(tasks)
+        .where(
+          and(
+            eq(tasks.assignedToUserId, memberId),
+            eq(tasks.status, 'completed'),
+            sql`${tasks.deletedAt} IS NULL`,
+            gte(tasks.completedAt, thirtyDaysAgo)
+          )
+        ),
+    ]);
+
+    const lastLogin = userInfo[0]?.lastLogin || null;
+    const daysSinceLogin = calculateDaysSince(lastLogin);
 
     res.json({
       success: true,
       data: {
-        totalAum: aumResult?.totalAum ? Number(aumResult.totalAum) : 0,
-        clientCount: clientCountResult?.count || 0,
-        portfolioCount: portfolioCountResult?.count || 0,
-        deviationAlerts: deviationAlertsResult?.count || 0,
+        totalAum: aumResult[0]?.totalAum ? Number(aumResult[0].totalAum) : 0,
+        clientCount: clientCountResult[0]?.count || 0,
+        portfolioCount: portfolioCountResult[0]?.count || 0,
+        deviationAlerts: deviationAlertsResult[0]?.count || 0,
         aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
           date: r.date,
           value: r.totalAum ? Number(r.totalAum) : 0,
         })),
+        // Activity metrics
+        lastLogin: lastLogin ? lastLogin.toISOString() : null,
+        daysSinceLogin,
+        contactsCreatedThisMonth: contactsThisMonth[0]?.count || 0,
+        contactsCreatedLast30Days: contactsLast30Days[0]?.count || 0,
+        notesCreatedLast30Days: notesLast30Days[0]?.count || 0,
+        tasksCompletedLast30Days: tasksCompletedLast30Days[0]?.count || 0,
       },
     });
   } catch (err) {
@@ -311,6 +429,168 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
       { err, teamId: req.params.id, memberId: req.params.memberId },
       'failed to get member metrics'
     );
+    next(err);
+  }
+}
+
+/**
+ * GET /teams/:id/members-activity - Obtener resumen de actividad de todos los miembros
+ *
+ * AI_DECISION: Endpoint dedicado para control de actividad del equipo
+ * Justificación: Permite a managers ver rápidamente qué asesores están activos o inactivos
+ * Impacto: Vista consolidada de actividad, mejor gestión del equipo
+ */
+export async function getTeamMembersActivity(req: Request, res: Response, next: NextFunction) {
+  try {
+    let id: string;
+    try {
+      id = validateUuidParam(req.params.id, 'teamId');
+    } catch (err) {
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+    }
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Verify user is a manager of this team
+    const userTeams = await getUserTeams(userId, userRole);
+    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+
+    if (!isManager && userRole !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Access denied. Only team managers can view team activity.' });
+    }
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    // Get all team members with their activity metrics
+    const membersWithActivity = await db().execute(sql`
+      WITH member_metrics AS (
+        SELECT 
+          u.id,
+          u.email,
+          u.full_name,
+          u.last_login,
+          u.is_active,
+          tm.role as team_role,
+          -- Contacts created this month
+          (
+            SELECT COUNT(*) 
+            FROM contacts c 
+            WHERE c.assigned_advisor_id = u.id 
+              AND c.deleted_at IS NULL 
+              AND c.created_at >= ${monthStart}
+          ) as contacts_created_this_month,
+          -- Contacts created last 30 days
+          (
+            SELECT COUNT(*) 
+            FROM contacts c 
+            WHERE c.assigned_advisor_id = u.id 
+              AND c.deleted_at IS NULL 
+              AND c.created_at >= ${thirtyDaysAgo}
+          ) as contacts_created_last_30_days,
+          -- Notes created last 30 days
+          (
+            SELECT COUNT(*) 
+            FROM notes n 
+            WHERE n.author_user_id = u.id 
+              AND n.deleted_at IS NULL
+              AND n.created_at >= ${thirtyDaysAgo}
+          ) as notes_created_last_30_days,
+          -- Tasks completed last 30 days
+          (
+            SELECT COUNT(*) 
+            FROM tasks t 
+            WHERE t.assigned_to_user_id = u.id 
+              AND t.status = 'completed' 
+              AND t.deleted_at IS NULL
+              AND t.completed_at >= ${thirtyDaysAgo}
+          ) as tasks_completed_last_30_days,
+          -- Client count
+          (
+            SELECT COUNT(*) 
+            FROM contacts c 
+            WHERE c.assigned_advisor_id = u.id 
+              AND c.deleted_at IS NULL
+          ) as client_count,
+          -- Total AUM
+          (
+            SELECT COALESCE(SUM(aum.aum_total), 0)
+            FROM aum_snapshots aum
+            INNER JOIN contacts c ON c.id = aum.contact_id
+            WHERE c.assigned_advisor_id = u.id
+              AND aum.date = ${today.toISOString().split('T')[0]}
+          ) as total_aum
+        FROM users u
+        INNER JOIN team_membership tm ON tm.user_id = u.id
+        WHERE tm.team_id = ${id}
+      )
+      SELECT * FROM member_metrics
+      ORDER BY last_login DESC NULLS LAST
+    `);
+
+    const membersActivity = membersWithActivity.rows.map((member: Record<string, unknown>) => {
+      // Raw SQL returns dates as strings, convert to Date if present
+      const lastLoginRaw = member.last_login;
+      const lastLogin = lastLoginRaw ? new Date(lastLoginRaw as string) : null;
+      const daysSinceLogin = calculateDaysSince(lastLogin);
+
+      return {
+        id: member.id as string,
+        email: member.email as string,
+        fullName: member.full_name as string,
+        role: member.team_role as string,
+        lastLogin: lastLogin ? lastLogin.toISOString() : null,
+        daysSinceLogin,
+        isActive: member.is_active as boolean,
+        contactsCreatedThisMonth: Number(member.contacts_created_this_month) || 0,
+        contactsCreatedLast30Days: Number(member.contacts_created_last_30_days) || 0,
+        notesCreatedLast30Days: Number(member.notes_created_last_30_days) || 0,
+        tasksCompletedLast30Days: Number(member.tasks_completed_last_30_days) || 0,
+        clientCount: Number(member.client_count) || 0,
+        totalAum: Number(member.total_aum) || 0,
+        activityStatus: getActivityStatus(daysSinceLogin),
+      };
+    });
+
+    // Calculate summary stats
+    type MemberActivity = (typeof membersActivity)[number];
+    const summary = {
+      totalMembers: membersActivity.length,
+      activeMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'active')
+        .length,
+      moderateMembers: membersActivity.filter(
+        (m: MemberActivity) => m.activityStatus === 'moderate'
+      ).length,
+      inactiveMembers: membersActivity.filter(
+        (m: MemberActivity) => m.activityStatus === 'inactive'
+      ).length,
+      criticalMembers: membersActivity.filter(
+        (m: MemberActivity) => m.activityStatus === 'critical'
+      ).length,
+      totalContactsCreatedThisMonth: membersActivity.reduce(
+        (acc: number, m: MemberActivity) => acc + m.contactsCreatedThisMonth,
+        0
+      ),
+      totalNotesLast30Days: membersActivity.reduce(
+        (acc: number, m: MemberActivity) => acc + m.notesCreatedLast30Days,
+        0
+      ),
+    };
+
+    res.json({
+      success: true,
+      data: {
+        members: membersActivity,
+        summary,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id }, 'failed to get team members activity');
     next(err);
   }
 }

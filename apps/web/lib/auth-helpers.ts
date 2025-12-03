@@ -12,6 +12,13 @@ export function isAdmin(user: AuthUser | null): boolean {
 }
 
 /**
+ * Verifica si el usuario es owner (dueño de agencia)
+ */
+export function isOwner(user: AuthUser | null): boolean {
+  return user?.role === 'owner';
+}
+
+/**
  * Verifica si el usuario puede importar archivos (solo admin)
  */
 export function canImportFiles(user: AuthUser | null): boolean {
@@ -31,4 +38,35 @@ export function canEditSharedResources(user: AuthUser | null): boolean {
  */
 export function isManagerOrAdmin(user: AuthUser | null): boolean {
   return user?.role === 'manager' || user?.role === 'admin';
+}
+
+/**
+ * Verifica si el usuario puede modificar datos (todos excepto owner)
+ * Owner es rol de solo lectura
+ */
+export function canModifyData(user: AuthUser | null): boolean {
+  return user !== null && user.role !== 'owner';
+}
+
+/**
+ * Verifica si el usuario puede acceder a contactos individuales
+ * Owner no tiene acceso a contactos, solo a métricas agregadas
+ */
+export function canAccessContacts(user: AuthUser | null): boolean {
+  return user !== null && user.role !== 'owner';
+}
+
+/**
+ * Verifica si el usuario es staff (administrativo)
+ */
+export function isStaff(user: AuthUser | null): boolean {
+  return user?.role === 'staff';
+}
+
+/**
+ * Verifica si el usuario puede administrar el sistema (solo admin)
+ * Staff puede hacer operaciones pero NO administrar usuarios
+ */
+export function canAdminSystem(user: AuthUser | null): boolean {
+  return user?.role === 'admin';
 }

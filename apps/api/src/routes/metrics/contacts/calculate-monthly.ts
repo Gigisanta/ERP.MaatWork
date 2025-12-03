@@ -11,6 +11,7 @@ import {
   calculateNewClients,
   calculateBusinessLineClosures,
   calculateTransitionTimes,
+  calculateMarketTypeConversion,
 } from './calculators';
 import type { AccessFilter, PipelineStageIds, MonthlyMetrics, CalculatorContext } from './types';
 
@@ -74,6 +75,14 @@ export async function calculateMonthlyMetrics(
   // Calculate transition times
   const transitionTimes = await calculateTransitionTimes(ctx);
 
+  // Calculate market type conversion (contacts vs clients by natural/frio)
+  const marketTypeConversion = await calculateMarketTypeConversion(
+    range,
+    accessFilter,
+    clienteStageId,
+    contactadoStageId
+  );
+
   return {
     month,
     year,
@@ -83,5 +92,6 @@ export async function calculateMonthlyMetrics(
     newClients: newClientsCount,
     businessLineClosures,
     transitionTimes,
+    marketTypeConversion,
   };
 }

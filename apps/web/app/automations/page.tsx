@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useCallback } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
@@ -6,6 +6,7 @@ import { usePageTitle } from '../components/PageTitleContext';
 import { Button, Heading, Text, Stack, Icon, Spinner } from '@cactus/ui';
 import { config } from '@/lib/config';
 import WelcomeEmailCard from './components/WelcomeEmailCard';
+import SecondMeetingCard from './components/SecondMeetingCard';
 
 export default function AutomationsPage() {
   const { loading } = useRequireAuth();
@@ -44,8 +45,11 @@ export default function AutomationsPage() {
 
         {/* Sección Automatizaciones base */}
         <div>
-          <Heading level={2} className="text-xl mb-4">Automatizaciones base</Heading>
-          <div className="max-w-2xl">
+          <Heading level={2} className="text-xl mb-4">
+            Automatizaciones base
+          </Heading>
+          <div className="max-w-2xl space-y-4">
+            <SecondMeetingCard />
             <WelcomeEmailCard />
           </div>
         </div>
@@ -53,4 +57,3 @@ export default function AutomationsPage() {
     </div>
   );
 }
-

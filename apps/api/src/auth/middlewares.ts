@@ -72,3 +72,56 @@ export function requireRole(roles: UserRole[]) {
     next();
   };
 }
+
+/**
+ * AI_DECISION: Middleware para bloquear operaciones de escritura para rol Owner
+ * Justificación: Owner es un rol de solo lectura para métricas de negocio
+ * Impacto: Bloquea POST/PUT/PATCH/DELETE para usuarios con rol 'owner'
+ */
+export function requireWriteAccess(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+  if (req.user.role === 'owner') {
+    return res.status(403).json({
+      message: 'Acceso de solo lectura. El rol Owner no puede modificar datos.',
+      error: 'READ_ONLY_ACCESS',
+    });
+  }
+
+  next();
+}
+
+/**
+ * Middleware para bloquear acceso a contactos individuales para rol Owner
+ * Owner solo puede ver métricas agregadas, no contactos individuales
+ */
+export function requireContactAccess(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+  if (req.user.role === 'owner') {
+    return res.status(403).json({
+      message: 'El rol Owner no tiene acceso a contactos individuales. Use las métricas agregadas.',
+      error: 'NO_CONTACT_ACCESS',
+    });
+  }
+
+  next();
+}
+
+/**
+ * AI_DECISION: Middleware para restringir acceso a administración de sistema
+ * Solo admin tiene acceso a gestión de usuarios, configuración del sistema, etc.
+ * Staff puede hacer tareas operativas pero NO administrar usuarios
+ */
+export function requireSystemAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      message: 'Solo administradores pueden acceder a esta función.',
+      error: 'ADMIN_ONLY',
+    });
+  }
+
+  next();
+}

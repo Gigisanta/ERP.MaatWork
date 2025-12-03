@@ -70,6 +70,10 @@ export interface DashboardKPIs {
   globalAum?: number; // Usado por la API
   clientsWithoutPortfolio?: number;
   instrumentsWithoutPrice?: number;
+  // Owner específicos - Vista ejecutiva de toda la agencia
+  totalTeams?: number;
+  totalAdvisors?: number;
+  totalClients?: number;
 }
 
 /**
@@ -92,4 +96,3 @@ export interface DashboardData {
     value: number;
   }>;
 }
-

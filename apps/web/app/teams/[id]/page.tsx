@@ -1,18 +1,18 @@
-"use client";
+'use client';
 import { useRequireAuth } from '../../auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { 
+import {
   getTeamDetail,
-  getTeamAdvisors, 
+  getTeamAdvisors,
   createTeamInvitation,
   updateTeam,
   deleteTeam,
-  removeTeamMember
+  removeTeamMember,
 } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { Team, TeamMember, TeamMetrics } from '@/types';
-import { 
+import {
   Card,
   CardHeader,
   CardTitle,
@@ -35,8 +35,13 @@ import {
   Input,
   Alert,
   Toast,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import TeamActivityTable from '../components/TeamActivityTable';
 
 export default function TeamDetailsPage() {
   const { user, loading } = useRequireAuth();
@@ -55,22 +60,33 @@ export default function TeamDetailsPage() {
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [removeMemberConfirm, setRemoveMemberConfirm] = useState<{ open: boolean; memberId: string; memberName: string }>({
+  const [removeMemberConfirm, setRemoveMemberConfirm] = useState<{
+    open: boolean;
+    memberId: string;
+    memberName: string;
+  }>({
     open: false,
     memberId: '',
-    memberName: ''
+    memberName: '',
   });
 
   // Form states
   const [editTeamName, setEditTeamName] = useState('');
-  const [advisorCandidates, setAdvisorCandidates] = useState<Array<{ id: string; email: string; fullName: string }>>([]);
+  const [advisorCandidates, setAdvisorCandidates] = useState<
+    Array<{ id: string; email: string; fullName: string }>
+  >([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   // Toast state
-  const [toast, setToast] = useState<{ show: boolean; title: string; description?: string; variant: 'success' | 'error' }>({
+  const [toast, setToast] = useState<{
+    show: boolean;
+    title: string;
+    description?: string;
+    variant: 'success' | 'error';
+  }>({
     show: false,
     title: '',
-    variant: 'success'
+    variant: 'success',
   });
 
   useEffect(() => {
@@ -104,12 +120,16 @@ export default function TeamDetailsPage() {
     }
   };
 
-  const showToast = (title: string, description?: string, variant: 'success' | 'error' = 'success') => {
-    setToast({ 
-      show: true, 
-      title, 
+  const showToast = (
+    title: string,
+    description?: string,
+    variant: 'success' | 'error' = 'success'
+  ) => {
+    setToast({
+      show: true,
+      title,
       ...(description && { description }),
-      variant 
+      variant,
     });
     setTimeout(() => setToast({ show: false, title: '', variant: 'success' }), 5000);
   };
@@ -133,7 +153,7 @@ export default function TeamDetailsPage() {
       setInviteLoading(inviteeId);
       const res = await createTeamInvitation(teamId, { userId: inviteeId });
       if (res.success) {
-        setAdvisorCandidates(prev => prev.filter(a => a.id !== inviteeId));
+        setAdvisorCandidates((prev) => prev.filter((a) => a.id !== inviteeId));
         showToast('Invitación enviada', 'El asesor recibirá una notificación', 'success');
       } else {
         showToast('Error', 'No se pudo enviar la invitación', 'error');
@@ -158,7 +178,11 @@ export default function TeamDetailsPage() {
       if (res.success && res.data) {
         setTeam(res.data);
         setEditModalOpen(false);
-        showToast('Equipo actualizado', 'El nombre del equipo se ha actualizado correctamente', 'success');
+        showToast(
+          'Equipo actualizado',
+          'El nombre del equipo se ha actualizado correctamente',
+          'success'
+        );
         await fetchAll();
       } else {
         showToast('Error', 'No se pudo actualizar el equipo', 'error');
@@ -206,7 +230,10 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo remover el miembro', 'error');
       }
     } catch (err) {
-      logger.error('Error removing member', toLogContext({ err, teamId, memberId: removeMemberConfirm.memberId }));
+      logger.error(
+        'Error removing member',
+        toLogContext({ err, teamId, memberId: removeMemberConfirm.memberId })
+      );
       showToast('Error', 'No se pudo remover el miembro', 'error');
     } finally {
       setActionLoading(null);
@@ -218,17 +245,17 @@ export default function TeamDetailsPage() {
       style: 'currency',
       currency: 'ARS',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
   const getRiskLevelLabel = (riskLevel: string) => {
     const labels: Record<string, string> = {
-      'conservative': 'Conservador',
-      'moderate': 'Moderado',
-      'balanced': 'Balanceado',
-      'growth': 'Crecimiento',
-      'aggressive': 'Agresivo'
+      conservative: 'Conservador',
+      moderate: 'Moderado',
+      balanced: 'Balanceado',
+      growth: 'Crecimiento',
+      aggressive: 'Agresivo',
     };
     return labels[riskLevel] || riskLevel;
   };
@@ -247,11 +274,7 @@ export default function TeamDetailsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <Button 
-              variant="ghost" 
-              onClick={() => router.push('/teams')}
-              className="mb-2"
-            >
+            <Button variant="ghost" onClick={() => router.push('/teams')} className="mb-2">
               <Icon name="ChevronLeft" size={16} className="mr-2" />
               Volver
             </Button>
@@ -284,7 +307,9 @@ export default function TeamDetailsPage() {
           <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
             <Card>
               <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">AUM Total</Text>
+                <Text size="sm" color="secondary" className="mb-1">
+                  AUM Total
+                </Text>
                 <Text weight="bold" className="text-xl">
                   {formatCurrency(teamMetrics.teamAum)}
                 </Text>
@@ -292,7 +317,9 @@ export default function TeamDetailsPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">Miembros</Text>
+                <Text size="sm" color="secondary" className="mb-1">
+                  Miembros
+                </Text>
                 <Text weight="bold" className="text-xl">
                   {teamMetrics.memberCount}
                 </Text>
@@ -300,7 +327,9 @@ export default function TeamDetailsPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">Clientes</Text>
+                <Text size="sm" color="secondary" className="mb-1">
+                  Clientes
+                </Text>
                 <Text weight="bold" className="text-xl">
                   {teamMetrics.clientCount}
                 </Text>
@@ -308,7 +337,9 @@ export default function TeamDetailsPage() {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">Portfolios Activos</Text>
+                <Text size="sm" color="secondary" className="mb-1">
+                  Portfolios Activos
+                </Text>
                 <Text weight="bold" className="text-xl">
                   {teamMetrics.portfolioCount}
                 </Text>
@@ -336,81 +367,107 @@ export default function TeamDetailsPage() {
           </Card>
         )}
 
-        {/* Members Section */}
-        <div>
-          <Heading level={3} className="mb-4">Miembros del Equipo</Heading>
-          {members.length === 0 ? (
-            <Card>
-              <CardContent className="p-6">
-                <Text color="secondary" className="text-center">No hay miembros en este equipo.</Text>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {members.map((member) => (
-                <Card 
-                  key={member.id} 
-                  className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-all"
-                >
-                  <CardContent className="p-3">
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Text weight="medium" className="text-sm truncate">
-                            {member.fullName || member.email || member.user?.fullName || member.user?.email || 'Miembro'}
+        {/* Members & Activity Tabs */}
+        <Tabs defaultValue="activity" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="activity">
+              <Icon name="Activity" size={16} className="mr-2" />
+              Control de Actividad
+            </TabsTrigger>
+            <TabsTrigger value="members">
+              <Icon name="Users" size={16} className="mr-2" />
+              Miembros ({members.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="activity">
+            <TeamActivityTable teamId={teamId} teamName={team?.name} />
+          </TabsContent>
+
+          <TabsContent value="members">
+            {members.length === 0 ? (
+              <Card>
+                <CardContent className="p-6">
+                  <Text color="secondary" className="text-center">
+                    No hay miembros en este equipo.
+                  </Text>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {members.map((member) => (
+                  <Card
+                    key={member.id}
+                    className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-all"
+                  >
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Text weight="medium" className="text-sm truncate">
+                              {member.fullName ||
+                                member.email ||
+                                member.user?.fullName ||
+                                member.user?.email ||
+                                'Miembro'}
+                            </Text>
+                            <Badge variant="default" className="text-xs px-1.5 py-0.5">
+                              {member.role || member.user?.role || 'N/A'}
+                            </Badge>
+                          </div>
+                          <Text size="sm" color="secondary" className="truncate">
+                            {member.email || member.user?.email || 'N/A'}
                           </Text>
-                          <Badge variant="default" className="text-xs px-1.5 py-0.5">
-                            {member.role || member.user?.role || 'N/A'}
-                          </Badge>
                         </div>
-                        <Text size="sm" color="secondary" className="truncate">
-                          {member.email || member.user?.email || 'N/A'}
-                        </Text>
                       </div>
-                    </div>
-                    <Stack direction="row" gap="sm" className="mt-2">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => router.push(`/contacts?advisorId=${member.id}`)}
-                      >
-                        Ver CRM
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/teams/${teamId}/member/${member.id}`)}
-                      >
-                        <Icon name="User" size={16} />
-                      </Button>
-                      {member.role !== 'lead' && (
+                      <Stack direction="row" gap="sm" className="mt-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => router.push(`/contacts?advisorId=${member.id}`)}
+                        >
+                          Ver CRM
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setRemoveMemberConfirm({
-                            open: true,
-                            memberId: member.id,
-                            memberName: member.fullName || member.email || 'este miembro'
-                          })}
-                          className="text-red-600 hover:text-red-700"
+                          onClick={() => router.push(`/teams/${teamId}/member/${member.id}`)}
                         >
-                          <Icon name="trash-2" size={16} />
+                          <Icon name="User" size={16} />
                         </Button>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                        {member.role !== 'lead' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setRemoveMemberConfirm({
+                                open: true,
+                                memberId: member.id,
+                                memberName: member.fullName || member.email || 'este miembro',
+                              })
+                            }
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Icon name="trash-2" size={16} />
+                          </Button>
+                        )}
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Modal vincular asesores */}
         <Modal open={linkModalOpen} onOpenChange={setLinkModalOpen}>
           <ModalHeader>
             <ModalTitle>Vincular asesores a {team?.name}</ModalTitle>
-            <ModalDescription>Selecciona asesores para enviar invitación al equipo.</ModalDescription>
+            <ModalDescription>
+              Selecciona asesores para enviar invitación al equipo.
+            </ModalDescription>
           </ModalHeader>
           <ModalContent>
             <Stack direction="column" gap="sm">
@@ -418,14 +475,19 @@ export default function TeamDetailsPage() {
                 <Text color="secondary">No hay asesores disponibles para invitar.</Text>
               )}
               {advisorCandidates.map((a) => (
-                <div key={a.id} className="flex items-center justify-between border rounded-md px-3 py-2">
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between border rounded-md px-3 py-2"
+                >
                   <div>
                     <Text weight="medium">{a.fullName || a.email}</Text>
-                    <Text size="sm" color="secondary">{a.email}</Text>
+                    <Text size="sm" color="secondary">
+                      {a.email}
+                    </Text>
                   </div>
-                  <Button 
-                    size="sm" 
-                    disabled={inviteLoading === a.id} 
+                  <Button
+                    size="sm"
+                    disabled={inviteLoading === a.id}
                     onClick={() => inviteAdvisor(a.id)}
                   >
                     Invitar
@@ -434,7 +496,9 @@ export default function TeamDetailsPage() {
               ))}
             </Stack>
             <ModalFooter>
-              <Button variant="secondary" onClick={() => setLinkModalOpen(false)}>Cerrar</Button>
+              <Button variant="secondary" onClick={() => setLinkModalOpen(false)}>
+                Cerrar
+              </Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
@@ -450,14 +514,16 @@ export default function TeamDetailsPage() {
               <Input
                 label="Nombre del equipo"
                 value={editTeamName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditTeamName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEditTeamName(e.target.value)
+                }
                 placeholder="Ej: Equipo de Ventas Norte"
                 required
               />
             </Stack>
             <ModalFooter>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setEditModalOpen(false);
                   setEditTeamName(team?.name || '');
@@ -465,7 +531,7 @@ export default function TeamDetailsPage() {
               >
                 Cancelar
               </Button>
-              <Button 
+              <Button
                 onClick={handleEditTeam}
                 disabled={actionLoading === 'edit' || !editTeamName.trim()}
               >

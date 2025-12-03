@@ -1,11 +1,11 @@
-"use client";
+'use client';
 import { useAuth } from '../auth/AuthContext';
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Input, 
-  Button, 
+import {
+  Input,
+  Button,
   Alert,
   Checkbox,
   Card,
@@ -16,7 +16,7 @@ import {
   Text,
   Stack,
   Icon,
-  Spinner
+  Spinner,
 } from '@cactus/ui';
 
 function LoginPageContent() {
@@ -67,9 +67,9 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const errors: { identifier?: string; password?: string } = {};
-    
+
     if (!identifier.trim()) {
       errors.identifier = 'El email o usuario es requerido';
     }
@@ -77,28 +77,28 @@ function LoginPageContent() {
     if (!password.trim()) {
       errors.password = 'La contraseña es requerida';
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setError('Por favor completa todos los campos requeridos');
       return;
     }
-    
+
     setFieldErrors({});
     setError(null);
 
     try {
       setLoading(true);
       setError(null);
-      
+
       await login(identifier, password, rememberMe);
-      
+
       // Marcar que se hizo redirect para evitar que el useEffect lo haga de nuevo
       hasRedirectedRef.current = true;
-      
+
       // Obtener URL de redirección desde query params
       const redirectTo = searchParams.get('redirect') || '/';
-      
+
       // Redirigir inmediatamente usando replace para evitar loops
       router.replace(redirectTo);
     } catch (err) {
@@ -128,7 +128,7 @@ function LoginPageContent() {
               </Text>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             {/* Form */}
             <form onSubmit={handleSubmit}>
@@ -142,7 +142,7 @@ function LoginPageContent() {
                   onChange={(e) => {
                     setIdentifier(e.target.value);
                     if (fieldErrors.identifier) {
-                      setFieldErrors(prev => {
+                      setFieldErrors((prev) => {
                         const next = { ...prev };
                         delete next.identifier;
                         return next;
@@ -166,7 +166,7 @@ function LoginPageContent() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (fieldErrors.password) {
-                      setFieldErrors(prev => {
+                      setFieldErrors((prev) => {
                         const next = { ...prev };
                         delete next.password;
                         return next;
@@ -189,8 +189,8 @@ function LoginPageContent() {
                     onCheckedChange={(checked) => setRememberMe(checked as boolean)}
                     label="Recordarme"
                   />
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     className="text-primary hover:text-primary-hover hover:underline transition-colors"
                   >
                     ¿Olvidaste tu contraseña?
@@ -199,18 +199,16 @@ function LoginPageContent() {
 
                 {/* Error Alert */}
                 {error && (
-                  <Alert variant="error" title="Error">
+                  <Alert
+                    variant={error.includes('pendiente de aprobación') ? 'warning' : 'error'}
+                    title={error.includes('pendiente de aprobación') ? 'Cuenta pendiente' : 'Error'}
+                  >
                     {error}
                   </Alert>
                 )}
 
                 {/* Submit Button */}
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={loading}
-                  className="w-full"
-                >
+                <Button type="submit" variant="primary" disabled={loading} className="w-full">
                   {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </Button>
               </Stack>
@@ -219,18 +217,15 @@ function LoginPageContent() {
             {/* Secondary actions */}
             <div className="mt-4 pt-4 border-t border-slate-200 text-center space-y-3">
               <div>
-                <Link 
-                  href="/register" 
+                <Link
+                  href="/register"
                   className="text-sm text-text-secondary hover:text-primary hover:underline transition-colors"
                 >
                   ¿No tienes cuenta? Regístrate aquí
                 </Link>
               </div>
               <div>
-                <Link 
-                  href="/home" 
-                  className="text-xs text-slate-500 hover:text-slate-700"
-                >
+                <Link href="/home" className="text-xs text-slate-500 hover:text-slate-700">
                   ← Volver al inicio
                 </Link>
               </div>
@@ -244,11 +239,13 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   );

@@ -1,6 +1,6 @@
 /**
  * API methods para AUM (Assets Under Management)
- * 
+ *
  * AI_DECISION: Centralizar métodos de AUM siguiendo patrón de otros dominios + validación Zod
  * Justificación: Elimina fetch directo, mejor error handling, retry automático, runtime validation
  * Impacto: Código más mantenible, consistente y robusto contra cambios de API
@@ -15,13 +15,13 @@ import type {
   AumUploadResponse,
   AumMatchRequest,
   AumRowsResponse,
-  AumDuplicatesResponse
+  AumDuplicatesResponse,
 } from '@/types/aum';
 import {
   aumRowsResponseSchema,
   aumUploadResponseSchema,
   aumHistoryResponseSchema,
-  aumMatchRowResponseSchema
+  aumMatchRowResponseSchema,
 } from './aum-validation';
 
 // ==========================================================
@@ -55,7 +55,7 @@ export async function getAumRows(params?: {
 
   const endpoint = `/v1/admin/aum/rows/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await apiClient.get<AumRowsResponse>(endpoint);
-  
+
   // AI_DECISION: Validar respuesta en runtime con Zod
   // Justificación: Previene errores silenciosos por cambios en API, mejora debugging
   // Impacto: Mayor robustez, mensajes de error claros
@@ -64,13 +64,15 @@ export async function getAumRows(params?: {
     return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
   } catch (error) {
     console.error('[AUM API] Validation error:', error);
-    throw new Error(`API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
 /**
  * Subir archivo AUM con retry logic
- * 
+ *
  * AI_DECISION: Implementar retry con exponential backoff para FormData uploads
  * Justificación: FormData no tiene retry automático como apiClient, necesitamos manejarlo manualmente
  * Impacto: Mejor resiliencia ante errores de red temporales
@@ -107,7 +109,7 @@ export async function uploadAumFile(
       // Exponential backoff: 1s, 2s, 4s
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
     }
@@ -120,11 +122,13 @@ export async function uploadAumFile(
 /**
  * Obtener vista previa de archivo AUM
  */
-export async function getAumFilePreview(fileId: string): Promise<ApiResponse<{
-  ok: boolean;
-  file: AumFile;
-  rows: AumRow[];
-}>> {
+export async function getAumFilePreview(fileId: string): Promise<
+  ApiResponse<{
+    ok: boolean;
+    file: AumFile;
+    rows: AumRow[];
+  }>
+> {
   return apiClient.get<{ ok: boolean; file: AumFile; rows: AumRow[] }>(
     `/v1/admin/aum/uploads/${fileId}/preview`
   );
@@ -144,10 +148,7 @@ export async function matchAumRow(
   fileId: string,
   matchData: AumMatchRequest
 ): Promise<ApiResponse<void>> {
-  return apiClient.post<void>(
-    `/v1/admin/aum/uploads/${fileId}/match`,
-    matchData
-  );
+  return apiClient.post<void>(`/v1/admin/aum/uploads/${fileId}/match`, matchData);
 }
 
 /**
@@ -156,9 +157,7 @@ export async function matchAumRow(
 export async function getAumDuplicates(
   accountNumber: string
 ): Promise<ApiResponse<AumDuplicatesResponse>> {
-  return apiClient.get<AumDuplicatesResponse>(
-    `/v1/admin/aum/rows/duplicates/${accountNumber}`
-  );
+  return apiClient.get<AumDuplicatesResponse>(`/v1/admin/aum/rows/duplicates/${accountNumber}`);
 }
 
 /**
@@ -172,11 +171,13 @@ export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> 
 /**
  * Limpiar duplicados AUM manteniendo solo la fila más reciente por broker+accountNumber
  */
-export async function cleanupAumDuplicates(): Promise<ApiResponse<{
-  ok: boolean;
-  message: string;
-  deletedCount: number;
-}>> {
+export async function cleanupAumDuplicates(): Promise<
+  ApiResponse<{
+    ok: boolean;
+    message: string;
+    deletedCount: number;
+  }>
+> {
   return apiClient.post<{
     ok: boolean;
     message: string;
@@ -187,10 +188,12 @@ export async function cleanupAumDuplicates(): Promise<ApiResponse<{
 /**
  * Resetear completamente el sistema AUM (eliminar todo)
  */
-export async function resetAumSystem(): Promise<ApiResponse<{
-  ok: boolean;
-  message: string;
-}>> {
+export async function resetAumSystem(): Promise<
+  ApiResponse<{
+    ok: boolean;
+    message: string;
+  }>
+> {
   return apiClient.post<{
     ok: boolean;
     message: string;
@@ -199,13 +202,13 @@ export async function resetAumSystem(): Promise<ApiResponse<{
 
 /**
  * Actualizar asesor de una fila AUM y marcarla como normalizada
- * 
+ *
  * @param rowId - ID de la fila AUM a actualizar
  * @param advisorRaw - Nombre del asesor (fullName o email)
  * @param matchedUserId - ID del usuario asesor asignado
  * @returns Promise con la respuesta de la API
  * @throws Error si la actualización falla
- * 
+ *
  * AI_DECISION: Función dedicada para actualización de asesor
  * Justificación: Encapsula la lógica de actualización y permite mejor manejo de errores
  * Impacto: Mejor trazabilidad y manejo de errores consistente
@@ -219,27 +222,24 @@ export async function updateAumRowAdvisor(
   if (!rowId || rowId.trim().length === 0) {
     throw new Error('El ID de la fila es requerido');
   }
-  
+
   if (!advisorRaw || advisorRaw.trim().length === 0) {
     throw new Error('El nombre del asesor es requerido');
   }
-  
+
   if (!matchedUserId || matchedUserId.trim().length === 0) {
     throw new Error('El ID del usuario asesor es requerido');
   }
 
-  return apiClient.patch<void>(
-    `/v1/admin/aum/rows/${rowId}`,
-    { 
-      advisorRaw: advisorRaw.trim(), 
-      matchedUserId: matchedUserId.trim() 
-    }
-  );
+  return apiClient.patch<void>(`/v1/admin/aum/rows/${rowId}`, {
+    advisorRaw: advisorRaw.trim(),
+    matchedUserId: matchedUserId.trim(),
+  });
 }
 
 /**
  * Subir archivo de mapeo asesor-cuenta
- * 
+ *
  * AI_DECISION: Implementar retry con exponential backoff para FormData uploads
  * Justificación: FormData no tiene retry automático como apiClient, necesitamos manejarlo manualmente
  * Impacto: Mejor resiliencia ante errores de red temporales
@@ -247,16 +247,18 @@ export async function updateAumRowAdvisor(
 export async function uploadAdvisorMapping(
   file: File,
   maxRetries: number = 3
-): Promise<ApiResponse<{
-  ok: boolean;
-  message: string;
-  totals: {
-    inserted: number;
-    updated: number;
-    errors: number;
-    total: number;
-  };
-}>> {
+): Promise<
+  ApiResponse<{
+    ok: boolean;
+    message: string;
+    totals: {
+      inserted: number;
+      updated: number;
+      errors: number;
+      total: number;
+    };
+  }>
+> {
   let lastError: Error | unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -293,7 +295,7 @@ export async function uploadAdvisorMapping(
       // Exponential backoff: 1s, 2s, 4s
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
     }
@@ -303,3 +305,110 @@ export async function uploadAdvisorMapping(
   throw lastError;
 }
 
+// ==========================================================
+// Advisor Summary API Methods
+// ==========================================================
+
+/**
+ * Resumen de AUM por asesor
+ */
+export interface AdvisorSummaryItem {
+  advisorId: string | null;
+  advisorName: string;
+  advisorEmail: string | null;
+  isMatched: boolean;
+  clientCount: number;
+  aumDollars: number | null;
+  bolsaArg: number | null;
+  fondosArg: number | null;
+  bolsaBci: number | null;
+  pesos: number | null;
+  mep: number | null;
+  cable: number | null;
+  cv7000: number | null;
+}
+
+/**
+ * Totales de resumen AUM
+ */
+export interface AdvisorSummaryTotals {
+  clientCount: number;
+  aumDollars: number;
+  bolsaArg: number;
+  fondosArg: number;
+  bolsaBci: number;
+  pesos: number;
+  mep: number;
+  cable: number;
+  cv7000: number;
+}
+
+/**
+ * Response de resumen por asesor
+ */
+export interface AdvisorSummaryResponse {
+  ok: boolean;
+  summary: AdvisorSummaryItem[];
+  totals: AdvisorSummaryTotals;
+  filters: {
+    reportMonth: number | null;
+    reportYear: number | null;
+    broker: string | null;
+  };
+}
+
+/**
+ * Período disponible para filtro
+ */
+export interface AvailablePeriod {
+  month: number;
+  year: number;
+  fileCount: number;
+  label: string;
+}
+
+/**
+ * Response de períodos disponibles
+ */
+export interface AvailablePeriodsResponse {
+  ok: boolean;
+  periods: AvailablePeriod[];
+}
+
+/**
+ * Obtener resumen de AUM por asesor
+ *
+ * AI_DECISION: Endpoint dedicado para análisis de AUM por asesor
+ * Justificación: Permite visualizar distribución de AUM y performance de asesores
+ * Impacto: Habilita dashboard de seguimiento mensual de asesores
+ */
+export async function getAdvisorAumSummary(params?: {
+  reportMonth?: number;
+  reportYear?: number;
+  broker?: string;
+}): Promise<ApiResponse<AdvisorSummaryResponse>> {
+  const queryParams = new URLSearchParams();
+  if (params?.reportMonth) queryParams.append('reportMonth', String(params.reportMonth));
+  if (params?.reportYear) queryParams.append('reportYear', String(params.reportYear));
+  if (params?.broker) queryParams.append('broker', params.broker);
+
+  const endpoint = `/v1/admin/aum/rows/advisor-summary${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  return apiClient.get<AdvisorSummaryResponse>(endpoint);
+}
+
+/**
+ * Obtener períodos disponibles para filtro de AUM
+ *
+ * AI_DECISION: Endpoint para obtener meses con datos importados
+ * Justificación: Permite popular selector de mes/año con opciones válidas
+ * Impacto: Mejora UX al mostrar solo meses con datos disponibles
+ */
+export async function getAvailableAumPeriods(params?: {
+  broker?: string;
+}): Promise<ApiResponse<AvailablePeriodsResponse>> {
+  const queryParams = new URLSearchParams();
+  if (params?.broker) queryParams.append('broker', params.broker);
+
+  const endpoint = `/v1/admin/aum/rows/available-periods${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  return apiClient.get<AvailablePeriodsResponse>(endpoint);
+}

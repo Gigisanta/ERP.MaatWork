@@ -31,6 +31,40 @@ export interface TransitionTimes {
   secondMeetingToClient: number | null;
 }
 
+/**
+ * Conversion data for a specific market type
+ */
+export interface MarketTypeData {
+  contacts: number;
+  clients: number;
+  conversionRate: number;
+}
+
+/**
+ * Breakdown of cold market (frio) subtypes
+ */
+export interface ColdMarketBreakdown {
+  redesSociales: MarketTypeData;
+  llamadoFrio: MarketTypeData;
+}
+
+/**
+ * Extended market type data for cold market with breakdown
+ */
+export interface ColdMarketTypeData extends MarketTypeData {
+  breakdown: ColdMarketBreakdown;
+}
+
+/**
+ * Contacts vs Clients conversion by market type (natural/referido/frio)
+ * Includes breakdown by cold market subtypes
+ */
+export interface MarketTypeConversion {
+  natural: MarketTypeData;
+  referido: MarketTypeData;
+  frio: ColdMarketTypeData;
+}
+
 export interface MonthlyMetrics {
   month: number;
   year: number;
@@ -40,6 +74,7 @@ export interface MonthlyMetrics {
   newClients: number;
   businessLineClosures: BusinessLineClosures;
   transitionTimes: TransitionTimes;
+  marketTypeConversion: MarketTypeConversion;
 }
 
 export interface CalculatorContext {

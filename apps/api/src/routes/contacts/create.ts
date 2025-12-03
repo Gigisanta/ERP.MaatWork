@@ -6,7 +6,7 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import { db, contacts, pipelineStageHistory, users } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
-import { requireAuth } from '../../auth/middlewares';
+import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
 import { canAssignContactTo } from '../../auth/authorization';
 import { createDrizzleLogger } from '../../utils/db-logger';
 import { validate } from '../../utils/validation';
@@ -23,6 +23,7 @@ const router = Router();
 router.post(
   '/',
   requireAuth,
+  requireWriteAccess, // Bloquear Owner (solo lectura)
   validate({ body: createContactSchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     const startTime = Date.now();

@@ -19,7 +19,7 @@ import {
   clientPortfolioAssignments,
 } from '@cactus/db';
 import { eq, desc, and, isNull, sql, type InferSelectModel } from 'drizzle-orm';
-import { requireAuth } from '../../auth/middlewares';
+import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { createDrizzleLogger, createOperationName } from '../../utils/db-logger';
 import { validate } from '../../utils/validation';
@@ -35,6 +35,7 @@ const router = Router();
 router.get(
   '/:id',
   requireAuth,
+  requireContactAccess, // Bloquear acceso a Owner
   validate({
     params: idParamSchema,
     query: contactDetailQuerySchema,

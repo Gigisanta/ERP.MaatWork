@@ -1,6 +1,6 @@
 /**
  * Barrel export para todos los tipos
- * 
+ *
  * Uso:
  *   import type { Portfolio, Benchmark, ApiResponse } from '@/types';
  */
@@ -19,7 +19,7 @@ export type {
   LoadingState,
   ComponentBase,
   ApiError,
-  ApiResponseWithHint
+  ApiResponseWithHint,
 } from './common';
 
 // Auth types
@@ -31,7 +31,7 @@ export type {
   Advisor,
   AuthResponse,
   LoginCredentials,
-  RegisterData
+  RegisterData,
 } from './auth';
 
 // Instrument types
@@ -41,7 +41,7 @@ export type {
   InstrumentValidation,
   CreateInstrumentRequest,
   CreateInstrumentResponse,
-  PriceSnapshot
+  PriceSnapshot,
 } from './instrument';
 
 // Portfolio types
@@ -53,7 +53,7 @@ export type {
   AddPortfolioLineRequest,
   PortfolioWithLines,
   PortfolioComponent,
-  PortfolioFormData
+  PortfolioFormData,
 } from './portfolio';
 
 // Benchmark types
@@ -66,7 +66,7 @@ export type {
   UpdateBenchmarkRequest,
   AddBenchmarkComponentRequest,
   BenchmarkWithComponents,
-  BenchmarkFormData
+  BenchmarkFormData,
 } from './benchmark';
 
 // Analytics types
@@ -78,7 +78,7 @@ export type {
   CompareRequest,
   CompareResponse,
   DashboardKPIs,
-  DashboardData
+  DashboardData,
 } from './analytics';
 
 // Team types
@@ -91,7 +91,8 @@ export type {
   TeamInvitationResponse,
   TeamMetrics,
   TeamMemberMetrics,
-  AumTrendItem
+  TeamMemberActivity,
+  AumTrendItem,
 } from './team';
 
 // Contact types
@@ -101,15 +102,11 @@ export type {
   ContactFieldName,
   ContactFieldUpdate,
   CreateContactRequest,
-  UpdateContactRequest
+  UpdateContactRequest,
 } from './contact';
 
 // Pipeline types
-export type {
-  PipelineStage,
-  PipelineStageWithContacts,
-  PipelineBoard
-} from './pipeline';
+export type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from './pipeline';
 
 // Tag types
 export type {
@@ -118,28 +115,17 @@ export type {
   UpdateTagRequest,
   ContactTag,
   ContactTagWithDetails,
-  UpdateContactTagRequest
+  UpdateContactTagRequest,
 } from './tag';
 
 // Broker Account types
-export type {
-  BrokerAccount,
-  CreateBrokerAccountRequest
-} from './broker-account';
+export type { BrokerAccount, CreateBrokerAccountRequest } from './broker-account';
 
 // Task types
-export type {
-  Task,
-  CreateTaskRequest,
-  UpdateTaskRequest
-} from './task';
+export type { Task, CreateTaskRequest, UpdateTaskRequest } from './task';
 
 // Note types
-export type {
-  Note,
-  CreateNoteRequest,
-  UpdateNoteRequest
-} from './note';
+export type { Note, CreateNoteRequest, UpdateNoteRequest } from './note';
 
 // AUM types
 export type {
@@ -152,14 +138,14 @@ export type {
   AumMatchRequest,
   AumRowsResponse,
   AumDuplicatesResponse,
-  ApiErrorWithMessage
+  ApiErrorWithMessage,
 } from './aum';
 
 // Portfolio Assignment types
 export type {
   PortfolioAssignment,
   AssignPortfolioRequest,
-  AssignPortfolioResponse
+  AssignPortfolioResponse,
 } from './portfolio-assignment';
 
 // Metrics types
@@ -170,7 +156,7 @@ export type {
   StageTransitionTime,
   MonthlyGoal,
   SaveMonthlyGoalRequest,
-  ContactsMetricsResponse
+  ContactsMetricsResponse,
 } from './metrics';
 
 // Capacitaciones types
@@ -180,7 +166,7 @@ export type {
   UpdateCapacitacionRequest,
   ImportCapacitacionesResponse,
   ListCapacitacionesParams,
-  CapacitacionesListResponse
+  CapacitacionesListResponse,
 } from './capacitaciones';
 
 // Automation types
@@ -189,6 +175,5 @@ export type {
   TriggerConfig,
   AutomationConfigData,
   CreateAutomationConfigRequest,
-  UpdateAutomationConfigRequest
+  UpdateAutomationConfigRequest,
 } from './automation';
-

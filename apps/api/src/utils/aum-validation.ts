@@ -1,18 +1,18 @@
 /**
  * Centralized Zod validation schemas for AUM module
- * 
+ *
  * AI_DECISION: Consolidar todos los schemas Zod de AUM en un solo archivo
  * Justificación: Evita duplicación, facilita mantenimiento y asegura consistencia
  * Impacto: Mejor organización y reutilización de validaciones
  */
 
 import { z } from 'zod';
-import { 
-  uuidSchema, 
-  fileIdParamSchema, 
+import {
+  uuidSchema,
+  fileIdParamSchema,
   paginationQuerySchema,
   brokerSchema,
-  matchStatusSchema
+  matchStatusSchema,
 } from './common-schemas';
 
 // ==========================================================
@@ -22,7 +22,7 @@ import {
 export const aumFileIdParamsSchema = fileIdParamSchema;
 
 export const aumAccountNumberParamsSchema = z.object({
-  accountNumber: z.string().min(1).max(100)
+  accountNumber: z.string().min(1).max(100),
 });
 
 // ==========================================================
@@ -51,27 +51,29 @@ export const aumFileTypeSchema = z.enum(['master', 'monthly']);
 export const aumExportQuerySchema = z.object({}).optional();
 
 export const aumCommitQuerySchema = z.object({
-  broker: brokerSchema.optional()
+  broker: brokerSchema.optional(),
 });
 
 export const aumPreviewQuerySchema = z.object({
-  limit: z.string()
+  limit: z
+    .string()
     .regex(/^\d+$/, 'Limit must be a number')
     .transform(Number)
     .pipe(z.number().int().min(1).max(500))
     .optional()
-    .default('50')
+    .default('50'),
 });
 
 export const aumHistoryQuerySchema = z.intersection(
   paginationQuerySchema,
   z.object({
-    limit: z.string()
+    limit: z
+      .string()
       .regex(/^\d+$/, 'Limit must be a number')
       .transform(Number)
       .pipe(z.number().int().min(1).max(200))
       .optional()
-      .default('50')
+      .default('50'),
   })
 );
 
@@ -80,34 +82,37 @@ export const aumUploadQuerySchema = z.object({
   // AI_DECISION: Parámetros opcionales para identificar mes/año del reporte
   // Justificación: Permite especificar manualmente el período si no se puede detectar del nombre
   // Impacto: Mayor flexibilidad para importar archivos con nombres no estándar
-  reportMonth: z.string()
+  reportMonth: z
+    .string()
     .regex(/^\d+$/, 'Report month must be a number')
     .transform(Number)
     .pipe(reportMonthSchema)
     .optional(),
-  reportYear: z.string()
+  reportYear: z
+    .string()
     .regex(/^\d+$/, 'Report year must be a number')
     .transform(Number)
     .pipe(reportYearSchema)
     .optional(),
-  fileType: aumFileTypeSchema.optional()
+  fileType: aumFileTypeSchema.optional(),
 });
 
 export const aumPurgeQuerySchema = z.object({
   force: z
     .string()
     .transform((v) => v === 'true')
-    .optional()
+    .optional(),
 });
 
 export const aumPurgeAllQuerySchema = z.object({
-  broker: brokerSchema.optional()
+  broker: brokerSchema.optional(),
 });
 
 export const aumRowsAllQuerySchema = z.intersection(
   paginationQuerySchema,
   z.object({
-    limit: z.string()
+    limit: z
+      .string()
       .regex(/^\d+$/, 'Limit must be a number')
       .transform(Number)
       .pipe(z.number().int().min(1).max(200))
@@ -116,28 +121,32 @@ export const aumRowsAllQuerySchema = z.intersection(
     broker: brokerSchema.optional(),
     status: matchStatusSchema.optional(),
     fileId: uuidSchema.optional(),
-    preferredOnly: z.string()
+    preferredOnly: z
+      .string()
       .transform((v) => v === 'true')
       .optional()
       .default('true'),
     search: z.string().min(1).max(255).optional(),
-    onlyUpdated: z.string()
+    onlyUpdated: z
+      .string()
       .transform((v) => v === 'true')
       .optional()
       .default('false'),
     // AI_DECISION: Filtros opcionales por mes/año para queries históricas
     // Justificación: Permite filtrar filas por período mensual específico
     // Impacto: Habilita análisis temporal de datos AUM
-    reportMonth: z.string()
+    reportMonth: z
+      .string()
       .regex(/^\d+$/, 'Report month must be a number')
       .transform(Number)
       .pipe(reportMonthSchema)
       .optional(),
-    reportYear: z.string()
+    reportYear: z
+      .string()
       .regex(/^\d+$/, 'Report year must be a number')
       .transform(Number)
       .pipe(reportYearSchema)
-      .optional()
+      .optional(),
   })
 );
 
@@ -147,22 +156,55 @@ export const aumRowsAllQuerySchema = z.intersection(
 export const aumMonthlyHistoryQuerySchema = z.object({
   accountNumber: z.string().min(1).max(100).optional(),
   idCuenta: z.string().min(1).max(100).optional(),
-  reportMonth: z.string()
+  reportMonth: z
+    .string()
     .regex(/^\d+$/, 'Report month must be a number')
     .transform(Number)
     .pipe(reportMonthSchema)
     .optional(),
-  reportYear: z.string()
+  reportYear: z
+    .string()
     .regex(/^\d+$/, 'Report year must be a number')
     .transform(Number)
     .pipe(reportYearSchema)
     .optional(),
-  limit: z.string()
+  limit: z
+    .string()
     .regex(/^\d+$/, 'Limit must be a number')
     .transform(Number)
     .pipe(z.number().int().min(1).max(500))
     .optional()
-    .default('100')
+    .default('100'),
+});
+
+/**
+ * Schema para query de resumen por asesor
+ *
+ * AI_DECISION: Validación para endpoint de agregación por asesor
+ * Justificación: Permite filtrar resumen por período mensual y broker
+ * Impacto: Habilita análisis segmentado de AUM por asesor
+ */
+export const aumAdvisorSummaryQuerySchema = z.object({
+  reportMonth: z
+    .string()
+    .regex(/^\d+$/, 'Report month must be a number')
+    .transform(Number)
+    .pipe(reportMonthSchema)
+    .optional(),
+  reportYear: z
+    .string()
+    .regex(/^\d+$/, 'Report year must be a number')
+    .transform(Number)
+    .pipe(reportYearSchema)
+    .optional(),
+  broker: brokerSchema.optional(),
+});
+
+/**
+ * Schema para query de períodos disponibles
+ */
+export const aumAvailablePeriodsQuerySchema = z.object({
+  broker: brokerSchema.optional(),
 });
 
 // ==========================================================
@@ -172,35 +214,38 @@ export const aumMonthlyHistoryQuerySchema = z.object({
 export const aumMatchRowBodySchema = z.object({
   rowId: uuidSchema,
   matchedContactId: uuidSchema.optional().nullable(),
-  matchedUserId: uuidSchema.optional().nullable()
+  matchedUserId: uuidSchema.optional().nullable(),
 });
 
 /**
  * Schema para actualizar asesor de una fila AUM
- * 
+ *
  * AI_DECISION: Validación estricta de datos de entrada
  * Justificación: Previene datos inválidos y mejora la integridad de la base de datos
  * Impacto: Mejor validación y mensajes de error más claros
  */
 export const aumUpdateAdvisorBodySchema = z.object({
-  advisorRaw: z.string()
+  advisorRaw: z
+    .string()
     .min(1, 'El nombre del asesor es requerido')
     .max(200, 'El nombre del asesor no puede exceder 200 caracteres')
     .trim(),
-  matchedUserId: uuidSchema
+  matchedUserId: uuidSchema,
 });
 
 export const aumRowIdParamsSchema = z.object({
-  rowId: uuidSchema
+  rowId: uuidSchema,
 });
 
 export const aumConfirmChangesBodySchema = z.object({
-  changes: z.array(z.object({
-    rowId: uuidSchema,
-    oldValue: z.string().nullable(),
-    newValue: z.string().nullable(),
-    field: z.string()
-  }))
+  changes: z.array(
+    z.object({
+      rowId: uuidSchema,
+      oldValue: z.string().nullable(),
+      newValue: z.string().nullable(),
+      field: z.string(),
+    })
+  ),
 });
 
 // ==========================================================
@@ -229,7 +274,7 @@ export const aumRowSchema = z.object({
   cv7000: z.number().nullable(),
   raw: z.record(z.unknown()),
   createdAt: z.string(),
-  updatedAt: z.string()
+  updatedAt: z.string(),
 });
 
 export const aumFileSchema = z.object({
@@ -247,7 +292,7 @@ export const aumFileSchema = z.object({
   reportMonth: z.number().int().min(1).max(12).nullable(),
   reportYear: z.number().int().min(2000).max(2100).nullable(),
   createdAt: z.string(),
-  updatedAt: z.string()
+  updatedAt: z.string(),
 });
 
 /**
@@ -269,7 +314,7 @@ export const aumMonthlySnapshotSchema = z.object({
   cable: z.number().nullable(),
   cv7000: z.number().nullable(),
   createdAt: z.string(),
-  updatedAt: z.string()
+  updatedAt: z.string(),
 });
 
 // ==========================================================
@@ -282,4 +327,3 @@ export type AumRowValidated = z.infer<typeof aumRowSchema>;
 export type AumFileValidated = z.infer<typeof aumFileSchema>;
 export type AumMonthlyHistoryQuery = z.infer<typeof aumMonthlyHistoryQuerySchema>;
 export type AumMonthlySnapshotValidated = z.infer<typeof aumMonthlySnapshotSchema>;
-

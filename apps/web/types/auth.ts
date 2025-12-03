@@ -6,11 +6,14 @@ import type { TimestampedEntity } from './common';
 
 /**
  * Rol de usuario
- * AI_DECISION: Eliminar 'client' de UserRole - solo se usa en autenticación para advisor/manager/admin
- * Justificación: 'client' es un tipo de contacto, no un rol de usuario del sistema
- * Impacto: Tipos más consistentes entre frontend y backend
+ * AI_DECISION: Sistema de roles jerárquico
+ * - admin: OMNIPOTENTE - acceso total a todo el sistema
+ * - owner: Dirección - solo lectura de métricas globales
+ * - staff: Administrativo - soporte operativo (carga datos, gestión básica)
+ * - manager: Gerente de equipo
+ * - advisor: Asesor
  */
-export type UserRole = 'advisor' | 'manager' | 'admin';
+export type UserRole = 'advisor' | 'manager' | 'admin' | 'owner' | 'staff';
 
 /**
  * Usuario base - extiende TimestampedEntity
@@ -63,8 +66,9 @@ export interface LoginCredentials {
 
 /**
  * Datos de registro - extiende LoginCredentials
+ * AI_DECISION: Roles disponibles en registro público (admin solo por admin)
  */
 export interface RegisterData extends LoginCredentials {
   fullName: string;
-  role?: UserRole;
+  role?: 'advisor' | 'manager' | 'owner' | 'staff'; // Roles permitidos en registro
 }
