@@ -102,10 +102,13 @@ VENV_DIR="$ANALYTICS_DIR/venv"
 REQUIREMENTS_FILE="$ANALYTICS_DIR/requirements.txt"
 REQUIREMENTS_HASH_FILE="$VENV_DIR/.requirements.hash"
 
-# Crear venv si no existe
-if [ ! -d "$VENV_DIR" ]; then
+# Crear venv si no existe o está corrupto
+if [ ! -f "$VENV_DIR/bin/activate" ]; then
     log "   Creando virtual environment..."
+    rm -rf "$VENV_DIR" 2>/dev/null || true
     python3 -m venv "$VENV_DIR"
+    # Forzar reinstalación de dependencias
+    rm -f "$REQUIREMENTS_HASH_FILE" 2>/dev/null || true
     log_success "Virtual environment creado"
 fi
 
