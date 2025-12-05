@@ -197,14 +197,20 @@ show_test_summary() {
     local exit_code=$2
     
     # Extraer números
-    local passed=$(grep -oP '\d+(?= passed)' "$log_file" 2>/dev/null | tail -1 || echo "0")
-    local failed=$(grep -oP '\d+(?= failed)' "$log_file" 2>/dev/null | tail -1 || echo "0")
-    local skipped=$(grep -oP '\d+(?= skipped)' "$log_file" 2>/dev/null | tail -1 || echo "0")
+    local passed=$(grep -oP '\d+(?= passed)' "$log_file" 2>/dev/null | tail -1)
+    local failed=$(grep -oP '\d+(?= failed)' "$log_file" 2>/dev/null | tail -1)
+    local skipped=$(grep -oP '\d+(?= skipped)' "$log_file" 2>/dev/null | tail -1)
+    
+    # Asegurar valores por defecto si están vacíos
+    passed=${passed:-0}
+    failed=${failed:-0}
+    skipped=${skipped:-0}
+    
     local total=$((passed + failed))
     
     # Calcular porcentaje
     local percentage=0
-    if [ $total -gt 0 ]; then
+    if [ "$total" -gt 0 ]; then
         percentage=$((passed * 100 / total))
     fi
     
@@ -232,18 +238,18 @@ show_test_summary() {
     echo "   ├────────────────────────────────────────────────┤"
     echo -e "   │  ${GREEN}✓ Pasaron:${NC}   $passed tests                       │" | head -c 54 && echo "│"
     
-    if [ $failed -gt 0 ]; then
+    if [ "$failed" -gt 0 ]; then
         echo -e "   │  ${RED}✗ Fallaron:${NC}  $failed tests                       │" | head -c 54 && echo "│"
     fi
     
-    if [ $skipped -gt 0 ]; then
+    if [ "$skipped" -gt 0 ]; then
         echo -e "   │  ${YELLOW}○ Saltados:${NC}  $skipped tests                       │" | head -c 54 && echo "│"
     fi
     
     echo "   └────────────────────────────────────────────────┘"
     
     # Si hay tests fallidos, mostrar cuáles
-    if [ $failed -gt 0 ]; then
+    if [ "$failed" -gt 0 ]; then
         echo ""
         echo -e "   ${RED}Tests fallidos:${NC}"
         echo "   ─────────────────────────────────────────────"
