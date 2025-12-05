@@ -99,6 +99,8 @@ log "🐍 Configurando entorno Python para analytics..."
 
 ANALYTICS_DIR="$PROJECT_DIR/apps/analytics-service"
 VENV_DIR="$ANALYTICS_DIR/venv"
+REQUIREMENTS_FILE="$ANALYTICS_DIR/requirements.txt"
+REQUIREMENTS_HASH_FILE="$VENV_DIR/.requirements.hash"
 
 # Crear venv si no existe
 if [ ! -d "$VENV_DIR" ]; then
@@ -107,14 +109,27 @@ if [ ! -d "$VENV_DIR" ]; then
     log_success "Virtual environment creado"
 fi
 
-# Instalar/actualizar dependencias Python
-if [ -f "$ANALYTICS_DIR/requirements.txt" ]; then
-    log "   Instalando dependencias Python..."
-    source "$VENV_DIR/bin/activate"
-    pip install --upgrade pip -q
-    pip install -r "$ANALYTICS_DIR/requirements.txt" -q
-    deactivate
-    log_success "Dependencias Python instaladas"
+# Verificar si necesitamos instalar dependencias
+if [ -f "$REQUIREMENTS_FILE" ]; then
+    CURRENT_HASH=$(md5sum "$REQUIREMENTS_FILE" | cut -d' ' -f1)
+    STORED_HASH=""
+    
+    if [ -f "$REQUIREMENTS_HASH_FILE" ]; then
+        STORED_HASH=$(cat "$REQUIREMENTS_HASH_FILE")
+    fi
+    
+    if [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
+        log "   Detectados cambios en requirements.txt, instalando dependencias..."
+        source "$VENV_DIR/bin/activate"
+        pip install --upgrade pip -q
+        pip install -r "$REQUIREMENTS_FILE" -q
+        deactivate
+        # Guardar hash para próxima vez
+        echo "$CURRENT_HASH" > "$REQUIREMENTS_HASH_FILE"
+        log_success "Dependencias Python instaladas"
+    else
+        log_success "Dependencias Python sin cambios (saltando instalación)"
+    fi
 else
     log_warning "requirements.txt no encontrado en analytics-service"
 fi
