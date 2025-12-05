@@ -191,31 +191,107 @@ run_tests_with_progress() {
     return $?
 }
 
+# Función para mostrar resumen detallado de tests
+show_test_summary() {
+    local log_file=$1
+    local exit_code=$2
+    
+    # Extraer números
+    local passed=$(grep -oP '\d+(?= passed)' "$log_file" 2>/dev/null | tail -1 || echo "0")
+    local failed=$(grep -oP '\d+(?= failed)' "$log_file" 2>/dev/null | tail -1 || echo "0")
+    local skipped=$(grep -oP '\d+(?= skipped)' "$log_file" 2>/dev/null | tail -1 || echo "0")
+    local total=$((passed + failed))
+    
+    # Calcular porcentaje
+    local percentage=0
+    if [ $total -gt 0 ]; then
+        percentage=$((passed * 100 / total))
+    fi
+    
+    # Crear barra de progreso visual (40 caracteres)
+    local bar_width=40
+    local filled=$((percentage * bar_width / 100))
+    local empty=$((bar_width - filled))
+    local bar=""
+    
+    for ((j=0; j<filled; j++)); do bar+="█"; done
+    for ((j=0; j<empty; j++)); do bar+="░"; done
+    
+    echo ""
+    echo "   ┌────────────────────────────────────────────────┐"
+    echo "   │              📊 RESUMEN DE TESTS               │"
+    echo "   ├────────────────────────────────────────────────┤"
+    
+    # Barra de progreso con color según resultado
+    if [ $exit_code -eq 0 ]; then
+        echo -e "   │  ${GREEN}${bar}${NC} ${percentage}%  │"
+    else
+        echo -e "   │  ${RED}${bar}${NC} ${percentage}%  │"
+    fi
+    
+    echo "   ├────────────────────────────────────────────────┤"
+    echo -e "   │  ${GREEN}✓ Pasaron:${NC}   $passed tests                       │" | head -c 54 && echo "│"
+    
+    if [ $failed -gt 0 ]; then
+        echo -e "   │  ${RED}✗ Fallaron:${NC}  $failed tests                       │" | head -c 54 && echo "│"
+    fi
+    
+    if [ $skipped -gt 0 ]; then
+        echo -e "   │  ${YELLOW}○ Saltados:${NC}  $skipped tests                       │" | head -c 54 && echo "│"
+    fi
+    
+    echo "   └────────────────────────────────────────────────┘"
+    
+    # Si hay tests fallidos, mostrar cuáles
+    if [ $failed -gt 0 ]; then
+        echo ""
+        echo -e "   ${RED}Tests fallidos:${NC}"
+        echo "   ─────────────────────────────────────────────"
+        # Extraer nombres de tests fallidos del log de Vitest
+        grep -E "^[[:space:]]*(✗|×|FAIL)" "$log_file" 2>/dev/null | head -20 | while read -r line; do
+            echo -e "   ${RED}$line${NC}"
+        done
+        echo "   ─────────────────────────────────────────────"
+    fi
+    
+    # Mostrar algunos tests que pasaron (máximo 10)
+    if [ $passed -gt 0 ] && [ $exit_code -eq 0 ]; then
+        echo ""
+        echo -e "   ${GREEN}Tests completados:${NC}"
+        echo "   ─────────────────────────────────────────────"
+        # Extraer nombres de archivos de test
+        grep -oP '✓ [^\n]+|√ [^\n]+|PASS [^\n]+' "$log_file" 2>/dev/null | head -10 | while read -r line; do
+            echo -e "   ${GREEN}$line${NC}"
+        done
+        local remaining=$((passed - 10))
+        if [ $remaining -gt 0 ]; then
+            echo -e "   ${GREEN}... y $remaining tests más${NC}"
+        fi
+        echo "   ─────────────────────────────────────────────"
+    fi
+}
+
 # Ejecutar tests con progress
+TEST_EXIT_CODE=0
 if run_tests_with_progress; then
-    printf "\r                                              \r"
-    
-    # Extraer resumen de tests del log
-    PASSED=$(grep -oP '\d+(?= passed)' "$TEST_LOG" | tail -1 || echo "0")
-    FAILED=$(grep -oP '\d+(?= failed)' "$TEST_LOG" | tail -1 || echo "0")
-    TOTAL=$((PASSED + FAILED))
-    
-    echo -e "   ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "   ${GREEN}✓ Tests completados: $PASSED/$TOTAL pasaron${NC}"
-    echo -e "   ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    log_success "Todos los tests pasaron"
+    TEST_EXIT_CODE=0
 else
-    printf "\r                                              \r"
-    echo -e "   ${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "   ${RED}✗ Tests fallaron${NC}"
-    echo -e "   ${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    TEST_EXIT_CODE=1
+fi
+
+printf "\r                                              \r"
+
+# Mostrar resumen detallado
+show_test_summary "$TEST_LOG" $TEST_EXIT_CODE
+
+if [ $TEST_EXIT_CODE -eq 0 ]; then
+    echo ""
+    log_success "Todos los tests pasaron ✨"
+else
     echo ""
     log_error "Los tests fallaron. Abortando deploy."
     echo ""
-    echo "Output de tests:"
-    echo "─────────────────────────────────────────────"
-    cat "$TEST_LOG"
-    echo "─────────────────────────────────────────────"
+    echo "Para ver el log completo: cat /tmp/cactus-test-output.log"
     exit 1
 fi
 
