@@ -54,10 +54,11 @@ log "📁 Directorio: $(pwd)"
 log "🧹 Limpiando cambios locales de Git..."
 
 # Descartar todos los cambios locales
+# Excluir venv de analytics para no tener que reinstalar paquetes Python
 git reset --hard HEAD
-git clean -fd
+git clean -fd -e "apps/analytics-service/venv"
 
-log_success "Source control limpio"
+log_success "Source control limpio (venv de analytics preservado)"
 
 # =============================================================================
 # 3. CHECKOUT A MASTER
@@ -89,10 +90,37 @@ log "📦 Instalando dependencias..."
 
 pnpm install --frozen-lockfile
 
-log_success "Dependencias instaladas"
+log_success "Dependencias Node.js instaladas"
 
 # =============================================================================
-# 6. CARGAR VARIABLES DE ENTORNO
+# 6. CONFIGURAR ENTORNO PYTHON (Analytics Service)
+# =============================================================================
+log "🐍 Configurando entorno Python para analytics..."
+
+ANALYTICS_DIR="$PROJECT_DIR/apps/analytics-service"
+VENV_DIR="$ANALYTICS_DIR/venv"
+
+# Crear venv si no existe
+if [ ! -d "$VENV_DIR" ]; then
+    log "   Creando virtual environment..."
+    python3 -m venv "$VENV_DIR"
+    log_success "Virtual environment creado"
+fi
+
+# Instalar/actualizar dependencias Python
+if [ -f "$ANALYTICS_DIR/requirements.txt" ]; then
+    log "   Instalando dependencias Python..."
+    source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip -q
+    pip install -r "$ANALYTICS_DIR/requirements.txt" -q
+    deactivate
+    log_success "Dependencias Python instaladas"
+else
+    log_warning "requirements.txt no encontrado en analytics-service"
+fi
+
+# =============================================================================
+# 7. CARGAR VARIABLES DE ENTORNO
 # =============================================================================
 log "🔐 Cargando variables de entorno..."
 
@@ -113,19 +141,71 @@ log "   NODE_ENV=$NODE_ENV"
 log "   NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
 
 # =============================================================================
-# 7. EJECUTAR TESTS
+# 8. EJECUTAR TESTS
 # =============================================================================
 log "🧪 Ejecutando tests..."
 
-if pnpm test; then
+TEST_LOG="/tmp/cactus-test-output.log"
+
+# Función para mostrar spinner mientras los tests corren
+run_tests_with_progress() {
+    local pid
+    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+    local start_time=$(date +%s)
+    
+    # Ejecutar tests en background, capturando output
+    pnpm test > "$TEST_LOG" 2>&1 &
+    pid=$!
+    
+    # Mostrar spinner mientras los tests corren
+    printf "   "
+    while kill -0 $pid 2>/dev/null; do
+        local elapsed=$(($(date +%s) - start_time))
+        local mins=$((elapsed / 60))
+        local secs=$((elapsed % 60))
+        printf "\r   ${spin:i++%${#spin}:1} Tests ejecutándose... [%02d:%02d]" $mins $secs
+        sleep 0.1
+    done
+    
+    # Obtener exit code del proceso
+    wait $pid
+    return $?
+}
+
+# Ejecutar tests con progress
+if run_tests_with_progress; then
+    printf "\r                                              \r"
+    
+    # Extraer resumen de tests del log
+    PASSED=$(grep -oP '\d+(?= passed)' "$TEST_LOG" | tail -1 || echo "0")
+    FAILED=$(grep -oP '\d+(?= failed)' "$TEST_LOG" | tail -1 || echo "0")
+    TOTAL=$((PASSED + FAILED))
+    
+    echo -e "   ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "   ${GREEN}✓ Tests completados: $PASSED/$TOTAL pasaron${NC}"
+    echo -e "   ${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     log_success "Todos los tests pasaron"
 else
+    printf "\r                                              \r"
+    echo -e "   ${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "   ${RED}✗ Tests fallaron${NC}"
+    echo -e "   ${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
     log_error "Los tests fallaron. Abortando deploy."
+    echo ""
+    echo "Output de tests:"
+    echo "─────────────────────────────────────────────"
+    cat "$TEST_LOG"
+    echo "─────────────────────────────────────────────"
     exit 1
 fi
 
+# Limpiar log temporal
+rm -f "$TEST_LOG"
+
 # =============================================================================
-# 8. BUILD DE PAQUETES COMPARTIDOS
+# 9. BUILD DE PAQUETES COMPARTIDOS
 # =============================================================================
 log "🏗️  Construyendo paquetes compartidos..."
 
@@ -138,7 +218,7 @@ pnpm -F @cactus/ui build
 log_success "Paquetes compartidos construidos"
 
 # =============================================================================
-# 9. BUILD DE APLICACIONES
+# 10. BUILD DE APLICACIONES
 # =============================================================================
 log "🏗️  Construyendo aplicaciones..."
 
@@ -151,7 +231,7 @@ pnpm -F @cactus/web build
 log_success "Aplicaciones construidas"
 
 # =============================================================================
-# 10. REINICIAR SERVICIOS CON PM2
+# 11. REINICIAR SERVICIOS CON PM2
 # =============================================================================
 log "🔄 Reiniciando servicios con PM2..."
 
@@ -167,7 +247,7 @@ pm2 save
 log_success "Servicios reiniciados"
 
 # =============================================================================
-# 11. VERIFICACIÓN FINAL
+# 12. VERIFICACIÓN FINAL
 # =============================================================================
 log "🔍 Verificando estado de servicios..."
 
