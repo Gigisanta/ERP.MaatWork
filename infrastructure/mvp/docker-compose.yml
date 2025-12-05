@@ -1,9 +1,15 @@
 # =============================================================================
-# Docker Compose para Producción (MVP)
+# Docker Compose para Producción (MVP) - ALTERNATIVA
 # =============================================================================
+# ⚠️  NOTA: El método principal de deployment es PM2 (ver ecosystem.config.js)
+#     Este archivo es una ALTERNATIVA para quienes prefieran Docker.
+#
 # Ubicación: infrastructure/mvp/docker-compose.yml
 # Ejecutar desde la raíz del proyecto:
 #   docker-compose -f infrastructure/mvp/docker-compose.yml up -d --build
+#
+# Para el método recomendado (PM2), usa:
+#   ./deploy.sh
 # =============================================================================
 
 services:

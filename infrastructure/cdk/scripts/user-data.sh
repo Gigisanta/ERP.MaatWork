@@ -89,88 +89,24 @@ sysctl -p
 # ==================== Create Application Directory ====================
 
 echo "📁 Creating application directories..."
-mkdir -p /home/ec2-user/cactus
-mkdir -p /home/ec2-user/cactus/logs
-mkdir -p /home/ec2-user/cactus/logs/api
-mkdir -p /home/ec2-user/cactus/logs/web
-mkdir -p /home/ec2-user/cactus/logs/analytics
+# App directory (will be cloned from git)
+APP_DIR="/home/ec2-user/abax"
+mkdir -p $APP_DIR
+mkdir -p /home/ec2-user/logs
 mkdir -p /home/ec2-user/scripts
-chown -R ec2-user:ec2-user /home/ec2-user/cactus
+chown -R ec2-user:ec2-user $APP_DIR
+chown -R ec2-user:ec2-user /home/ec2-user/logs
 chown -R ec2-user:ec2-user /home/ec2-user/scripts
 
 # ==================== PM2 Ecosystem File ====================
+# NOTE: The ecosystem.config.js in the repo root is the source of truth.
+# This creates a reference version; the actual config comes from git clone.
 
-echo "📝 Creating PM2 ecosystem configuration..."
-cat > /home/ec2-user/cactus/ecosystem.config.js << 'EOFPM2'
-module.exports = {
-  apps: [
-    {
-      name: 'cactus-api',
-      cwd: '/home/ec2-user/cactus/apps/api',
-      script: 'dist/index.js',
-      instances: 1,
-      exec_mode: 'fork',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3001
-      },
-      // Logs con rotación
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/home/ec2-user/cactus/logs/api/error.log',
-      out_file: '/home/ec2-user/cactus/logs/api/out.log',
-      combine_logs: true,
-      max_size: '50M',
-      retain: 7,
-      // Restart policies
-      max_restarts: 10,
-      restart_delay: 5000,
-      exp_backoff_restart_delay: 100
-    },
-    {
-      name: 'cactus-web',
-      cwd: '/home/ec2-user/cactus/apps/web',
-      script: 'node_modules/.bin/next',
-      args: 'start -p 3000',
-      instances: 1,
-      exec_mode: 'fork',
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000
-      },
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/home/ec2-user/cactus/logs/web/error.log',
-      out_file: '/home/ec2-user/cactus/logs/web/out.log',
-      combine_logs: true,
-      max_size: '50M',
-      retain: 7,
-      max_restarts: 10,
-      restart_delay: 5000
-    },
-    {
-      name: 'cactus-analytics',
-      cwd: '/home/ec2-user/cactus/apps/analytics-service',
-      script: 'venv/bin/python',
-      args: '-m uvicorn main:app --host 0.0.0.0 --port 3002',
-      instances: 1,
-      exec_mode: 'fork',
-      env: {
-        ENVIRONMENT: 'production',
-        PORT: 3002
-      },
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: '/home/ec2-user/cactus/logs/analytics/error.log',
-      out_file: '/home/ec2-user/cactus/logs/analytics/out.log',
-      combine_logs: true,
-      max_size: '50M',
-      retain: 7,
-      max_restarts: 10,
-      restart_delay: 5000
-    }
-  ]
-};
-EOFPM2
-
-chown ec2-user:ec2-user /home/ec2-user/cactus/ecosystem.config.js
+echo "📝 PM2 ecosystem configuration will come from repo (ecosystem.config.js)"
+echo "   The repo's ecosystem.config.js uses:"
+echo "   - API: dist/index.js on 127.0.0.1:3001"
+echo "   - Web: next start on 127.0.0.1:3000"  
+echo "   - Analytics: uvicorn on 127.0.0.1:3002"
 
 # ==================== Script de Exportación de Logs a S3 ====================
 
@@ -184,7 +120,7 @@ cat > /home/ec2-user/scripts/export-logs-to-s3.sh << 'EOFEXPORT'
 
 set -e
 
-LOGS_DIR="/home/ec2-user/cactus/logs"
+LOGS_DIR="/home/ec2-user/logs"
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 DATE=$(date +%Y/%m/%d)
 HOUR=$(date +%H)
@@ -262,12 +198,12 @@ pm2 status
 
 echo ""
 echo "=== Log Files Size ==="
-du -sh /home/ec2-user/cactus/logs/*/ 2>/dev/null || echo "No logs yet"
+du -sh /home/ec2-user/logs/* 2>/dev/null || echo "No logs yet"
 
 echo ""
 echo "=== Recent Errors (last 20 lines) ==="
 for SERVICE in api web analytics; do
-    ERROR_LOG="/home/ec2-user/cactus/logs/$SERVICE/error.log"
+    ERROR_LOG="/home/ec2-user/logs/${SERVICE}-error.log"
     if [ -f "$ERROR_LOG" ] && [ -s "$ERROR_LOG" ]; then
         echo "--- $SERVICE errors ---"
         tail -20 "$ERROR_LOG"
@@ -294,7 +230,7 @@ cat > /etc/cron.d/cactus-logs << 'EOFCRON'
 0 * * * * ec2-user /home/ec2-user/scripts/export-logs-to-s3.sh >> /var/log/log-export.log 2>&1
 
 # Limpiar logs antiguos locales cada día a las 3 AM
-0 3 * * * ec2-user find /home/ec2-user/cactus/logs -name "*.log" -mtime +1 -delete
+0 3 * * * ec2-user find /home/ec2-user/logs -name "*.log" -mtime +1 -delete
 
 # Reiniciar PM2 para evitar memory leaks cada domingo a las 4 AM
 0 4 * * 0 ec2-user pm2 reload all
@@ -356,7 +292,7 @@ EOFCW
 
 echo "📜 Configuring local log rotation..."
 cat > /etc/logrotate.d/cactus << 'EOFLOGROTATE'
-/home/ec2-user/cactus/logs/*/*.log {
+/home/ec2-user/logs/*.log {
     daily
     rotate 2
     compress
@@ -387,22 +323,25 @@ echo "🚀 Instance ready for Cactus deployment!"
 echo ""
 echo "📋 Next steps:"
 echo "   1. Clone your repository:"
-echo "      git clone <repo-url> /home/ec2-user/cactus"
+echo "      git clone <repo-url> /home/ec2-user/abax"
 echo ""
 echo "   2. Configure environment variables:"
-echo "      cp .env.example .env"
+echo "      cp infrastructure/mvp/.env.example infrastructure/mvp/.env"
 echo "      # Edit .env with your DATABASE_URL, JWT_SECRET, etc."
-echo "      export LOGS_BUCKET=<your-logs-bucket-name>"
+echo "      source infrastructure/mvp/.env"
 echo ""
 echo "   3. Install dependencies and build:"
-echo "      cd /home/ec2-user/cactus && pnpm install && pnpm build"
+echo "      cd /home/ec2-user/abax && pnpm install && pnpm build"
 echo ""
 echo "   4. Run database migrations:"
-echo "      pnpm -F @cactus/db migrate"
+echo "      source infrastructure/mvp/.env && pnpm -F @cactus/db migrate"
 echo ""
 echo "   5. Start with PM2:"
-echo "      pm2 start /home/ec2-user/cactus/ecosystem.config.js"
+echo "      pm2 start ecosystem.config.js"
 echo "      pm2 save"
+echo ""
+echo "   6. Or use the deploy script:"
+echo "      chmod +x deploy.sh && ./deploy.sh"
 echo ""
 echo "📊 Monitoring:"
 echo "   - Check logs: /home/ec2-user/scripts/check-logs.sh"
