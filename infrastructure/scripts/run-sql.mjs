@@ -42,3 +42,7 @@ console.log('Users table exists:', check.length > 0);
 
 await sql.end();
 
+
+
+
+
