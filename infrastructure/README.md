@@ -18,11 +18,16 @@ Elastic IP
 ┌─────────────────────────────────────┐
 │   EC2 t3.small                      │
 │   ┌───────────────────────────────┐ │
-│   │   Docker Compose              │ │
-│   │   ├── nginx (80, 443)         │ │
-│   │   ├── api (3001)              │ │
-│   │   ├── web (3000)              │ │
-│   │   └── analytics (3002)        │ │
+│   │   Nginx (reverse proxy)       │ │
+│   │   ├── / → web (3000)          │ │
+│   │   ├── /api → api (3001)       │ │
+│   │   └── /analytics → (3002)     │ │
+│   └───────────────────────────────┘ │
+│   ┌───────────────────────────────┐ │
+│   │   PM2 (process manager)       │ │
+│   │   ├── cactus-api              │ │
+│   │   ├── cactus-web              │ │
+│   │   └── cactus-analytics        │ │
 │   └───────────────────────────────┘ │
 └─────────────────────────────────────┘
    ↓
@@ -147,17 +152,24 @@ infrastructure/
 │   │   │   ├── cactus-stack.ts    # Stack principal
 │   │   │   └── monitoring-stack.ts # Monitoring
 │   │   └── constructs/
-│   │       ├── mvp-compute.ts     # EC2 + Docker Compose
+│   │       ├── mvp-compute.ts     # EC2 + PM2
 │   │       └── advanced-compute.ts # ECS Fargate + ALB
 │   ├── scripts/
 │   │   └── user-data.sh           # Script inicialización EC2
 │   ├── cdk.json
 │   ├── package.json
 │   └── tsconfig.json
+├── mvp/
+│   ├── .env.example               # Variables de entorno (template)
+│   └── nginx.conf                 # Nginx reverse proxy config
 ├── scripts/
 │   ├── deploy.ps1                 # Script deployment Windows
 │   └── deploy.sh                  # Script deployment Unix
 └── README.md
+
+(raíz del repo)
+├── ecosystem.config.js            # PM2 process configuration
+└── deploy.sh                      # Script de deploy automático
 ```
 
 ## Configuraciones Disponibles
