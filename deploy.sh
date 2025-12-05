@@ -287,16 +287,17 @@ show_test_summary "$TEST_LOG" $TEST_EXIT_CODE
 if [ $TEST_EXIT_CODE -eq 0 ]; then
     echo ""
     log_success "Todos los tests pasaron ✨"
+    rm -f "$TEST_LOG"
 else
     echo ""
     log_error "Los tests fallaron. Abortando deploy."
     echo ""
-    echo "Para ver el log completo: cat /tmp/cactus-test-output.log"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Log guardado en: $TEST_LOG"
+    echo "Para ver detalles ejecuta localmente: pnpm test"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     exit 1
 fi
-
-# Limpiar log temporal
-rm -f "$TEST_LOG"
 
 # =============================================================================
 # 9. BUILD DE PAQUETES COMPARTIDOS
