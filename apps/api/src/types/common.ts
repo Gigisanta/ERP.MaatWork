@@ -1,56 +1,25 @@
 /**
  * Tipos comunes compartidos
- * Centralizados para evitar duplicidad según patrones de arquitectura
+ * 
+ * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
+ * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
+ * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
+ * 
+ * Tipos específicos del backend (PinoLoggerOptions, HelmetOptions, ErrorWithMessage) se mantienen aquí
+ * porque son específicos del backend y no se usan en frontend.
  */
 
 // ==========================================================
-// Tipos Base - Entidades comunes
+// Tipos Base - Re-exportados desde @cactus/types
 // ==========================================================
 
-/**
- * Entidad base con identificador único
- */
-export interface BaseEntity {
-  id: string;
-}
-
-/**
- * Entidad con timestamps estándar
- */
-export interface TimestampedEntity extends BaseEntity {
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-/**
- * Entidad con timestamps opcionales
- */
-export interface TimestampedEntityOptional extends BaseEntity {
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-}
-
-// ==========================================================
-// Utility Types - Patrones comunes
-// ==========================================================
-
-/**
- * Utility type para crear tipos de Request a partir de entidades
- * Omite campos automáticos y hace opcionales los campos opcionales
- */
-export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'> & {
-  [K in keyof T]?: T[K] extends string | number | boolean | null | undefined
-    ? T[K]
-    : T[K] extends Date
-    ? string | Date
-    : T[K];
-};
-
-/**
- * Utility type para actualizar entidades
- * Hace todos los campos opcionales excepto los que se deben mantener requeridos
- */
-export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+export type {
+  BaseEntity,
+  TimestampedEntity,
+  TimestampedEntityOptional,
+  CreateRequest,
+  UpdateRequest,
+} from '@cactus/types/common';
 
 // ==========================================================
 // Tipos de Error y Configuración
@@ -96,3 +65,21 @@ export type HelmetOptions = {
   contentSecurityPolicy?: boolean;
   [key: string]: unknown;
 };
+
+// ==========================================================
+// Extensiones de Tipos Globales
+// ==========================================================
+
+/**
+ * AI_DECISION: Extender Express.Request para incluir requestId y contactId tipados
+ * Justificación: Elimina necesidad de casts (req as any).requestId y (req as any).contactId en todo el código
+ * Impacto: Type safety mejorado, código más limpio, menos errores en runtime
+ */
+declare global {
+  namespace Express {
+    interface Request {
+      requestId?: string;
+      contactId?: string; // Establecido por requireContactAccess middleware
+    }
+  }
+}

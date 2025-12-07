@@ -19,7 +19,7 @@ describe('Alert Component', () => {
     it('should render with default variant (info)', () => {
       render(<Alert>Info alert</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass('border-accent-base', 'bg-accent-subtle');
+      expect(alert).toHaveClass('border-info', 'bg-info-subtle');
     });
 
     it('should have role alert', () => {
@@ -32,25 +32,25 @@ describe('Alert Component', () => {
     it('should apply info variant classes', () => {
       render(<Alert variant="info">Info</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass('border-accent-base', 'bg-accent-subtle', 'text-accent-text');
+      expect(alert).toHaveClass('border-info', 'bg-info-subtle', 'text-text');
     });
 
     it('should apply success variant classes', () => {
       render(<Alert variant="success">Success</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass('border-success-base', 'bg-success-subtle', 'text-success-text');
+      expect(alert).toHaveClass('border-success', 'bg-success-subtle', 'text-text');
     });
 
     it('should apply warning variant classes', () => {
       render(<Alert variant="warning">Warning</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass('border-warning-base', 'bg-warning-subtle', 'text-warning-text');
+      expect(alert).toHaveClass('border-warning', 'bg-warning-subtle', 'text-text');
     });
 
     it('should apply error variant classes', () => {
       render(<Alert variant="error">Error</Alert>);
       const alert = screen.getByRole('alert');
-      expect(alert).toHaveClass('border-error-base', 'bg-error-subtle', 'text-error-text');
+      expect(alert).toHaveClass('border-error', 'bg-error-subtle', 'text-text');
     });
   });
 
@@ -147,7 +147,7 @@ describe('AlertTitle Component', () => {
   it('should have title styling', () => {
     const { container } = render(<AlertTitle>Title</AlertTitle>);
     const title = container.querySelector('h5');
-    expect(title).toHaveClass('mb-1', 'font-medium', 'leading-none', 'tracking-tight');
+    expect(title).toHaveClass('mb-1', 'font-semibold', 'leading-none', 'tracking-tight');
   });
 
   it('should accept custom className', () => {

@@ -81,7 +81,7 @@ export default async function TeamsPage() {
   }
 
   return (
-    <div className="p-4 md:p-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <Stack direction="column" gap="lg">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -95,6 +95,6 @@ export default async function TeamsPage() {
           userId={user.id}
         />
       </Stack>
-    </div>
+    </main>
   );
 }

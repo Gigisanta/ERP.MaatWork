@@ -8,6 +8,7 @@ import type { TimestampedEntity, UpdateRequest, CreateRequest } from './common';
  * Capacitación base - extiende TimestampedEntity
  */
 export interface Capacitacion extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   titulo: string;
   tema: string;
   link: string;

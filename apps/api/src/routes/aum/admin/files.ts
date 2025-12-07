@@ -11,6 +11,8 @@ import { db, aumImportFiles, aumImportRows } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
+import { createErrorResponse } from '../../../utils/error-response';
+import { HttpError } from '../../../utils/route-handler';
 import { aumFileIdParamsSchema, aumPurgeQuerySchema } from '../../../utils/aum-validation';
 
 const router = Router();
@@ -32,7 +34,7 @@ router.delete('/uploads/:fileId',
       const userRole = req.user?.role as string;
 
       if (!userId || !userRole) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        throw new HttpError(401, 'Unauthorized');
       }
 
       const dbi = db();
@@ -40,14 +42,12 @@ router.delete('/uploads/:fileId',
       // Verify file exists
       const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
       if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+        throw new HttpError(404, 'File not found');
       }
 
       // Prevent deletion of committed files (safety measure)
       if (file.status === 'committed') {
-        return res.status(400).json({
-          error: 'Cannot delete committed import. Contact administrator if removal is necessary.'
-        });
+        throw new HttpError(400, 'Cannot delete committed import. Contact administrator if removal is necessary.');
       }
 
       // Delete associated rows first (CASCADE should handle this, but being explicit)
@@ -68,7 +68,13 @@ router.delete('/uploads/:fileId',
       return res.json({ ok: true, message: 'Archivo eliminado exitosamente' });
     } catch (error) {
       req.log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM file deletion failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error eliminando archivo AUM'
+        })
+      );
     }
   }
 );
@@ -106,7 +112,13 @@ router.delete('/uploads',
       return res.json({ ok: true, message: 'AUM uploads purgados (solo no committed)' });
     } catch (error) {
       req.log?.error?.({ err: error }, 'AUM purge failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error purgando archivos AUM'
+        })
+      );
     }
   }
 );
@@ -125,7 +137,7 @@ router.get('/verify/:fileId',
       const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
 
       if (!userId || !userRole) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        throw new HttpError(401, 'Unauthorized');
       }
 
       const dbi = db();
@@ -133,7 +145,7 @@ router.get('/verify/:fileId',
       // Get file
       const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
       if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+        throw new HttpError(404, 'File not found');
       }
 
       // Count rows in DB
@@ -207,7 +219,13 @@ router.get('/verify/:fileId',
       });
     } catch (error) {
       req.log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM verify failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error verificando archivo AUM'
+        })
+      );
     }
   }
 );

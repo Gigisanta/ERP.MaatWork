@@ -2,7 +2,7 @@
  * Tipos relacionados con métricas del pipeline de contactos
  */
 
-import type { TimestampedEntity } from './common';
+import type { TimestampedEntity } from '@cactus/types/common';
 
 /**
  * Líneas de negocio disponibles para categorizar etiquetas

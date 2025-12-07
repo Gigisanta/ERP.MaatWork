@@ -9,6 +9,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { db, tasks } from '@cactus/db';
 import { and, isNull, inArray } from 'drizzle-orm';
+import { HttpError } from '@/utils/route-handler';
 
 /**
  * POST /tasks/bulk - Acciones masivas sobre tareas
@@ -44,7 +45,7 @@ export async function handleBulkAction(req: Request, res: Response, next: NextFu
 
       case 'reassign':
         if (!params?.assignedToUserId) {
-          return res.status(400).json({ error: 'assignedToUserId required for reassign' });
+          throw new HttpError(400, 'assignedToUserId required for reassign');
         }
         const reassigned = await db()
           .update(tasks)
@@ -59,7 +60,7 @@ export async function handleBulkAction(req: Request, res: Response, next: NextFu
 
       case 'change_status':
         if (!params?.status) {
-          return res.status(400).json({ error: 'status required for change_status' });
+          throw new HttpError(400, 'status required for change_status');
         }
         const statusChanged = await db()
           .update(tasks)
@@ -73,7 +74,7 @@ export async function handleBulkAction(req: Request, res: Response, next: NextFu
         break;
 
       default:
-        return res.status(400).json({ error: 'Invalid action' });
+        throw new HttpError(400, 'Invalid action');
     }
 
     req.log.info({ action, affected, taskIds }, 'bulk action completed');
@@ -83,3 +84,10 @@ export async function handleBulkAction(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
+
+
+
+
+
+
+

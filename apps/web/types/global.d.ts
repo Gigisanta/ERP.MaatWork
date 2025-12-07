@@ -2,7 +2,7 @@
  * Global type declarations for the web app
  */
 
-import type { DebugConsole } from '../lib/debug-console';
+import type { DebugConsole } from '../lib/debug-console/index';
 
 declare global {
   interface Window {
@@ -19,3 +19,8 @@ declare global {
 }
 
 export {};
+
+
+
+
+

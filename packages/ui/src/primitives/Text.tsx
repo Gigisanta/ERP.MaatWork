@@ -7,30 +7,46 @@ export interface TextProps {
   className?: string;
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
-  color?: 'primary' | 'secondary' | 'muted';
+  color?: 'default' | 'secondary' | 'muted' | 'accent' | 'success' | 'warning' | 'error' | 'inverse';
+  /** Whether to use display font (Poppins) instead of body font (Open Sans) */
+  display?: boolean;
   // Allow all standard HTML attributes
   [key: string]: unknown;
 }
 
+/**
+ * Text component using Open Sans font (body font) by default.
+ * Can optionally use Poppins (display font) for emphasis.
+ * 
+ * @example
+ * ```tsx
+ * <Text>Regular body text</Text>
+ * <Text color="secondary" size="sm">Secondary small text</Text>
+ * <Text display weight="semibold">Display text with Poppins</Text>
+ * ```
+ */
 export function Text({
   as: Component = 'p',
   className,
   children,
   size = 'base',
   weight = 'normal',
-  color = 'primary',
+  color = 'default',
+  display = false,
   ...props
 }: TextProps) {
   return (
     <Component
       className={cn(
+        // Font family
+        display ? 'font-display' : 'font-body',
         // Size classes
         {
-          'text-xs': size === 'xs',
-          'text-sm': size === 'sm',
-          'text-base': size === 'base',
-          'text-lg': size === 'lg',
-          'text-xl': size === 'xl',
+          'text-xs leading-4': size === 'xs',
+          'text-sm leading-5': size === 'sm',
+          'text-base leading-6': size === 'base',
+          'text-lg leading-7': size === 'lg',
+          'text-xl leading-8': size === 'xl',
         },
         // Weight classes
         {
@@ -41,9 +57,14 @@ export function Text({
         },
         // Color classes
         {
-          'text-text': color === 'primary',
+          'text-text': color === 'default',
           'text-text-secondary': color === 'secondary',
           'text-text-muted': color === 'muted',
+          'text-accent': color === 'accent',
+          'text-success': color === 'success',
+          'text-warning': color === 'warning',
+          'text-error': color === 'error',
+          'text-text-inverse': color === 'inverse',
         },
         className
       )}

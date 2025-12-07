@@ -6,50 +6,43 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, Spinner, Stack, Text } from '@cactus/ui';
-
-// Simple Skeleton component using Tailwind
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
-}
+import { Card, CardContent, Stack } from '@cactus/ui';
+import { 
+  Skeleton, 
+  SkeletonPageHeader, 
+  SkeletonCard 
+} from '../components/SkeletonLoader';
 
 export default function AnalyticsLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="lg">
         {/* Header skeleton */}
-        <Card>
-          <CardContent>
-            <Skeleton className="h-8 w-48 py-4" />
-          </CardContent>
-        </Card>
+        <SkeletonPageHeader showBreadcrumb />
 
         {/* Chart skeleton */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent>
-            <Stack direction="column" gap="md" className="py-8">
-              <Skeleton className="h-6 w-64 mx-auto" />
-              <Skeleton className="h-64 w-full" />
-            </Stack>
+            <div className="space-y-4 py-4">
+              <Skeleton className="h-6 w-48 mx-auto" delay={50} />
+              <Skeleton className="h-64 w-full" delay={100} />
+            </div>
           </CardContent>
         </Card>
 
         {/* Metrics grid skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent>
-                <Stack direction="column" gap="sm" className="py-4">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-8 w-16" />
-                  <Skeleton className="h-3 w-32" />
-                </Stack>
-              </CardContent>
-            </Card>
+            <SkeletonCard 
+              key={i} 
+              showHeader={false}
+              contentLines={3}
+              delay={150 + i * 75}
+            />
           ))}
         </div>
       </Stack>
-    </div>
+    </main>
   );
 }
 

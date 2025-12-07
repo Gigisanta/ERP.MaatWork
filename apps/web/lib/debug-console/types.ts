@@ -46,3 +46,30 @@ export const LOG_COLORS: Record<ErrorLog['type'], string> = {
   info: '#3b82f6',
   log: '#6b7280',
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

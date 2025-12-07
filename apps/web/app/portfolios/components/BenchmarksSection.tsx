@@ -201,7 +201,7 @@ export function BenchmarksSection({
                               </Text>
                             )}
                           </div>
-                          <Badge variant={benchmark.isSystem ? 'brand' : 'success'}>
+                          <Badge variant={benchmark.isSystem ? 'secondary' : 'success'}>
                             {benchmark.isSystem ? 'Sistema' : 'Custom'}
                           </Badge>
                         </div>

@@ -5,7 +5,7 @@
 
 import { type InferSelectModel } from 'drizzle-orm';
 import { brokerPositions } from '@cactus/db/schema';
-import type { BaseEntity } from './common';
+import type { BaseEntity } from '@cactus/types/common';
 
 /**
  * BrokerPosition inferido del schema

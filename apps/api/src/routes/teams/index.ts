@@ -18,6 +18,9 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../../auth/middlewares';
+import { validate } from '../../utils/validation';
+import { createRouteHandler, createAsyncHandler } from '../../utils/route-handler';
+import { idParamSchema } from '../../utils/common-schemas';
 
 // Import handlers
 import { listTeams, getMyTeams } from './handlers/list';
@@ -39,6 +42,14 @@ import {
 } from './handlers/invitations';
 import { getTeamMetrics, getMemberMetrics, getTeamMembersActivity } from './handlers/metrics';
 import { getTeamDetail } from './handlers/detail';
+import {
+  createTeamSchema,
+  updateTeamSchema,
+  addMemberSchema,
+  createInvitationSchema,
+  teamMemberParamsSchema,
+  teamMemberDeleteParamsSchema,
+} from './schemas';
 
 const router = Router();
 
@@ -67,23 +78,67 @@ router.post('/invitations/:id/reject', requireAuth, rejectInvitation);
 // ==========================================================
 // Team CRUD Routes
 // ==========================================================
-router.get('/:id', requireAuth, getTeam);
-router.post('/', requireAuth, createTeam);
-router.put('/:id', requireAuth, updateTeam);
-router.delete('/:id', requireAuth, deleteTeam);
+router.get(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(getTeam)
+);
+router.post(
+  '/',
+  requireAuth,
+  validate({ body: createTeamSchema }),
+  createAsyncHandler(async (req, res) => {
+    const result = await createTeam(req);
+    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
+  })
+);
+router.put(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema, body: updateTeamSchema }),
+  createRouteHandler(updateTeam)
+);
+router.delete(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(deleteTeam)
+);
 
 // ==========================================================
 // Team Members Routes
 // ==========================================================
-router.get('/:id/members', requireAuth, getTeamMembers);
-router.get('/:id/members/:memberId', requireAuth, getTeamMember);
-router.post('/:id/members', requireAuth, addTeamMember);
-router.delete('/:id/members/:userId', requireAuth, removeTeamMember);
+router.get('/:id/members',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  getTeamMembers
+);
+router.get('/:id/members/:memberId',
+  requireAuth,
+  validate({ params: teamMemberParamsSchema }),
+  getTeamMember
+);
+router.post('/:id/members',
+  requireAuth,
+  validate({ params: idParamSchema, body: addMemberSchema }),
+  addTeamMember
+);
+router.delete('/:id/members/:userId',
+  requireAuth,
+  validate({ params: teamMemberDeleteParamsSchema }),
+  removeTeamMember
+);
 
 // ==========================================================
 // Team Detail and Metrics Routes
 // ==========================================================
-router.get('/:id/detail', requireAuth, getTeamDetail);
+router.get(
+  '/:id/detail',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(getTeamDetail)
+);
 router.get('/:id/metrics', requireAuth, getTeamMetrics);
 router.get('/:id/members-activity', requireAuth, getTeamMembersActivity);
 router.get('/:id/members/:memberId/metrics', requireAuth, getMemberMetrics);
@@ -91,7 +146,11 @@ router.get('/:id/members/:memberId/metrics', requireAuth, getMemberMetrics);
 // ==========================================================
 // Team Invitations Routes (manager perspective)
 // ==========================================================
-router.post('/:id/invitations', requireAuth, createInvitation);
+router.post('/:id/invitations',
+  requireAuth,
+  validate({ body: createInvitationSchema }),
+  createInvitation
+);
 router.get('/:id/advisors', requireAuth, listEligibleAdvisors);
 
 export default router;

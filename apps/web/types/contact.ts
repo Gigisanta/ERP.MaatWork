@@ -2,7 +2,7 @@
  * Tipos relacionados con contactos
  */
 
-import type { TimestampedEntity } from './common';
+import type { TimestampedEntity } from '@cactus/types/common';
 
 /**
  * Tag simplificado para contacto
@@ -28,6 +28,7 @@ export type ContactFieldValue = string | number | boolean | null | Date;
  * Contacto base - extiende TimestampedEntity
  */
 export interface Contact extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   firstName: string;
   lastName: string;
   fullName: string;

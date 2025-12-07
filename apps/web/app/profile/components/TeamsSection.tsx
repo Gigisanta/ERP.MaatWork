@@ -60,7 +60,7 @@ export function TeamsSection({
               <Text weight="medium" size="sm" className="text-text">
                 {team.name}
               </Text>
-              <Badge variant={team.role === 'manager' ? 'brand' : 'default'}>{team.role}</Badge>
+              <Badge variant={team.role === 'manager' ? 'secondary' : 'default'}>{team.role}</Badge>
             </div>
           ))
         )}

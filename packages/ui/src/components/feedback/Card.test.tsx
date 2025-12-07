@@ -34,19 +34,19 @@ describe('Card Component', () => {
     it('should apply outlined variant classes', () => {
       const { container } = render(<Card variant="outlined">Outlined</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('border', 'border-border', 'bg-surface');
+      expect(card).toHaveClass('border', 'border-border', 'bg-background');
     });
 
     it('should apply elevated variant classes', () => {
       const { container } = render(<Card variant="elevated">Elevated</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('shadow-md', 'bg-surface');
+      expect(card).toHaveClass('shadow-md', 'bg-background');
     });
 
     it('should apply interactive variant classes', () => {
       const { container } = render(<Card variant="interactive">Interactive</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('hover:shadow-md', 'cursor-pointer');
+      expect(card).toHaveClass('hover:shadow-lg', 'cursor-pointer');
     });
   });
 

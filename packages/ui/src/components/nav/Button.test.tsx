@@ -33,19 +33,19 @@ describe('Button Component', () => {
     it('should apply secondary variant classes', () => {
       render(<Button variant="secondary">Secondary</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-surface-hover', 'text-text');
+      expect(button).toHaveClass('bg-secondary', 'text-text-inverse');
     });
 
     it('should apply outline variant classes', () => {
       render(<Button variant="outline">Outline</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border', 'border-border', 'bg-background');
+      expect(button).toHaveClass('border', 'border-border', 'bg-transparent');
     });
 
     it('should apply ghost variant classes', () => {
       render(<Button variant="ghost">Ghost</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('text-text', 'hover:bg-surface');
+      expect(button).toHaveClass('text-text', 'hover:bg-primary-subtle');
     });
   });
 

@@ -17,7 +17,7 @@ export default function AumAdvisorSettingsPage() {
   const [newUserId, setNewUserId] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const advisorsOptions = useMemo(() => advisors.map(a => ({ value: a.id, label: a.fullName || a.email })), [advisors]);
+  const advisorsOptions = useMemo(() => advisors.map(a => ({ value: String(a.id), label: a.fullName || a.email })), [advisors]);
 
   const load = async () => {
     setLoading(true);

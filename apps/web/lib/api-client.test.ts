@@ -14,36 +14,36 @@ global.fetch = vi.fn() as typeof fetch;
 
 describe('ApiError', () => {
   it('debería crear error con status y mensaje', () => {
-    const error = new ApiError(404, 'Not found');
+    const error = new ApiError('Not found', 404);
     expect(error.status).toBe(404);
     expect(error.message).toBe('Not found');
     expect(error.name).toBe('ApiError');
   });
 
   it('debería detectar error de auth (401)', () => {
-    const error = new ApiError(401, 'Unauthorized');
+    const error = new ApiError('Unauthorized', 401);
     expect(error.isAuthError).toBe(true);
     expect(error.isForbiddenError).toBe(false);
     expect(error.isServerError).toBe(false);
   });
 
   it('debería detectar error forbidden (403)', () => {
-    const error = new ApiError(403, 'Forbidden');
+    const error = new ApiError('Forbidden', 403);
     expect(error.isForbiddenError).toBe(true);
     expect(error.isAuthError).toBe(false);
   });
 
   it('debería detectar error de validación (400, 422)', () => {
-    const error400 = new ApiError(400, 'Bad request');
-    const error422 = new ApiError(422, 'Unprocessable');
+    const error400 = new ApiError('Bad request', 400);
+    const error422 = new ApiError('Unprocessable', 422);
     
     expect(error400.isValidationError).toBe(true);
     expect(error422.isValidationError).toBe(true);
   });
 
   it('debería detectar error de servidor (5xx)', () => {
-    const error500 = new ApiError(500, 'Internal error');
-    const error503 = new ApiError(503, 'Service unavailable');
+    const error500 = new ApiError('Internal error', 500);
+    const error503 = new ApiError('Service unavailable', 503);
     
     expect(error500.isServerError).toBe(true);
     expect(error503.isServerError).toBe(true);
@@ -51,38 +51,38 @@ describe('ApiError', () => {
 
   describe('userMessage', () => {
     it('debería retornar mensaje amigable para 401', () => {
-      const error = new ApiError(401, 'Unauthorized');
+      const error = new ApiError('Unauthorized', 401);
       expect(error.userMessage).toContain('Sesión expirada');
     });
 
     it('debería retornar mensaje amigable para 403', () => {
-      const error = new ApiError(403, 'Forbidden');
+      const error = new ApiError('Forbidden', 403);
       expect(error.userMessage).toContain('permisos');
     });
 
     it('debería retornar mensaje amigable para 400', () => {
-      const error = new ApiError(400, 'Invalid data');
+      const error = new ApiError('Invalid data', 400);
       // Si hay mensaje custom, lo usa; si no, usa el default
       expect(error.userMessage).toBe('Invalid data');
       
       // Sin mensaje, usa default
-      const errorNoMsg = new ApiError(400, '');
+      const errorNoMsg = new ApiError('', 400);
       expect(errorNoMsg.userMessage).toContain('válidos');
     });
 
     it('debería retornar mensaje amigable para 500', () => {
-      const error = new ApiError(500, 'Server error');
+      const error = new ApiError('Server error', 500);
       expect(error.userMessage).toContain('servidor');
     });
 
     it('debería retornar mensaje custom si existe', () => {
-      const error = new ApiError(400, 'Custom message');
+      const error = new ApiError('Custom message', 400);
       expect(error.userMessage).toBe('Custom message');
     });
   });
 
   it('debería serializar a JSON correctamente', () => {
-    const error = new ApiError(404, 'Not found', {
+    const error = new ApiError('Not found', 404, {
       details: 'Resource not found'
     });
     

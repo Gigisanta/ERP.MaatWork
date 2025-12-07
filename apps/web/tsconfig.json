@@ -35,7 +35,9 @@
       "@/hooks/*": ["./lib/hooks/*"],
       "@/auth/*": ["./app/auth/*"],
       "@/utils/*": ["./lib/utils/*"],
-      "@cactus/ui": ["../../packages/ui/dist/index.d.ts"]
+      "@cactus/ui": ["../../packages/ui/dist/index.d.ts"],
+      "@cactus/types": ["../../packages/types/dist/index.d.ts"],
+      "@cactus/types/*": ["../../packages/types/dist/*"]
     },
     "baseUrl": "."
   },

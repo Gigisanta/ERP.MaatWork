@@ -59,3 +59,30 @@ router.put('/:id', requireAuth, requireRole(['manager', 'admin']), updateInstrum
 router.delete('/:id', requireAuth, requireRole(['admin']), deleteInstrument);
 
 export default router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

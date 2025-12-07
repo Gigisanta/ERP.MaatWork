@@ -9,6 +9,7 @@
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
 import { API_BASE_URL } from '../api-url';
+import { logger, toLogContext } from '../logger';
 import type {
   AumFile,
   AumRow,
@@ -63,7 +64,7 @@ export async function getAumRows(params?: {
     const validated = aumRowsResponseSchema.parse(response.data);
     return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
   } catch (error) {
-    console.error('[AUM API] Validation error:', error);
+    logger.error('AUM API validation error', toLogContext({ error }));
     throw new Error(
       `API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );

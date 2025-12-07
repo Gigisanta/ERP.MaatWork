@@ -13,6 +13,7 @@ import type { BusinessLine } from './metrics';
  * entityType → scope antes de enviar al backend.
  */
 export interface Tag extends TimestampedEntityOptional {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   color: string;
   icon?: string;

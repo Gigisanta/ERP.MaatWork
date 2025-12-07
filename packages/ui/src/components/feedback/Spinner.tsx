@@ -3,6 +3,8 @@ import { cn } from '../../utils/cn';
 
 export interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
+  /** Color variant for the spinner */
+  variant?: 'default' | 'secondary' | 'accent';
   className?: string;
 }
 
@@ -12,17 +14,35 @@ const sizeClasses = {
   lg: 'h-8 w-8'
 };
 
+const variantClasses = {
+  default: 'text-text-secondary',
+  secondary: 'text-secondary',
+  accent: 'text-accent',
+};
+
+/**
+ * Spinner component for loading states.
+ * 
+ * @example
+ * ```tsx
+ * <Spinner />
+ * <Spinner size="lg" variant="secondary" />
+ * <Spinner variant="accent" />
+ * ```
+ */
 export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
-  ({ size = 'md', className, ...props }, ref) => {
+  ({ size = 'md', variant = 'default', className, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
           'animate-spin rounded-full border-2 border-current border-t-transparent',
-          'text-text-secondary',
+          variantClasses[variant],
           sizeClasses[size],
           className
         )}
+        role="status"
+        aria-label="Loading"
         {...props}
       >
         <span className="sr-only">Loading...</span>
@@ -41,6 +61,16 @@ export interface LoadingOverlayProps {
   className?: string;
 }
 
+/**
+ * Loading overlay component that covers content while loading.
+ * 
+ * @example
+ * ```tsx
+ * <LoadingOverlay loading={isLoading} text="Saving changes...">
+ *   <Form>...</Form>
+ * </LoadingOverlay>
+ * ```
+ */
 export const LoadingOverlay = React.forwardRef<HTMLDivElement, LoadingOverlayProps>(
   ({ children, loading, text = 'Loading...', className, ...props }, ref) => {
     return (
@@ -51,11 +81,11 @@ export const LoadingOverlay = React.forwardRef<HTMLDivElement, LoadingOverlayPro
       >
         {children}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <div className="flex flex-col items-center space-y-2">
-              <Spinner size="lg" />
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+            <div className="flex flex-col items-center space-y-3">
+              <Spinner size="lg" variant="secondary" />
               {text && (
-                <p className="text-sm text-text-secondary">{text}</p>
+                <p className="text-sm text-text-secondary font-body">{text}</p>
               )}
             </div>
           </div>
@@ -66,8 +96,3 @@ export const LoadingOverlay = React.forwardRef<HTMLDivElement, LoadingOverlayPro
 );
 
 LoadingOverlay.displayName = 'LoadingOverlay';
-
-
-
-
-

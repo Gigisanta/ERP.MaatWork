@@ -1,31 +1,40 @@
 /**
  * Handler para listar todas las filas AUM
+ * 
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '../../../../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '@/utils/aum-normalization';
 import { getCacheKey, getCachedCount, setCachedCount } from '../cache';
 import { parseNumeric, QUERY_TIMEOUT_MS } from '../utils';
 import type { AumRowResult } from '../types';
+import type { AumRowsAllQuery } from '@/utils/aum-validation';
+import { createRouteHandler } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/all
  * Get all imported rows with pagination and filters
+ * 
+ * Query params están validados por middleware validate() con aumRowsAllQuerySchema
  */
-export async function listAllRows(req: Request, res: Response) {
-  try {
-    const limit = (req.query.limit as unknown as number) ?? 50;
-    const offset = (req.query.offset as unknown as number) ?? 0;
-    const broker = req.query.broker as string | undefined;
-    const status = req.query.status as 'matched' | 'ambiguous' | 'unmatched' | undefined;
-    const fileId = req.query.fileId as string | undefined;
-    const preferredOnly = (req.query.preferredOnly as unknown as boolean) ?? false;
-    const search = req.query.search as string | undefined;
-    const onlyUpdated = (req.query.onlyUpdated as unknown as boolean) ?? false;
-    const reportMonth = req.query.reportMonth as number | undefined;
-    const reportYear = req.query.reportYear as number | undefined;
+export const listAllRows = createRouteHandler(async (req: Request) => {
+  // req.query ya está validado y tipado por el middleware validate()
+  const query = req.query as unknown as AumRowsAllQuery;
+  const limit = query.limit ?? 50;
+  const offset = query.offset ?? 0;
+  const broker = query.broker;
+  const status = query.status;
+  const fileId = query.fileId;
+  const preferredOnly = query.preferredOnly ?? false;
+  const search = query.search;
+  const onlyUpdated = query.onlyUpdated ?? false;
+  const reportMonth = query.reportMonth;
+  const reportYear = query.reportYear;
 
     req.log?.info?.(
       {
@@ -289,18 +298,21 @@ export async function listAllRows(req: Request, res: Response) {
         : null,
     }));
 
-    return res.json({
-      ok: true,
-      rows,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: Number(offset) + rows.length < total,
-      },
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'failed to get all rows');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, rows, pagination } para compatibilidad con frontend
+  return {
+    ok: true,
+    rows,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: Number(offset) + rows.length < total,
+    },
+  };
+});
+
+
+
+
+

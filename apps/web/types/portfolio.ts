@@ -8,6 +8,7 @@ import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase, Ri
  * Portfolio base - extiende TimestampedEntity
  */
 export interface Portfolio extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   description?: string | null;
   riskLevel: RiskLevel;

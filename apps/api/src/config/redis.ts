@@ -32,6 +32,12 @@ export const REDIS_TTL = {
   // Static/reference data (very long TTL)
   MACRO_SERIES_LIST: 86400, // 24 hours
   INSTRUMENTS: 3600, // 1 hour
+
+  // CRM endpoints TTLs (Fase 1: Redis Caching)
+  CONTACTS: 60, // 1 minute - datos cambian frecuentemente pero se consultan mucho
+  PIPELINE: 30, // 30 seconds - datos muy dinámicos
+  BENCHMARKS: 300, // 5 minutes - datos relativamente estáticos
+  TAGS: 180, // 3 minutes - datos que cambian ocasionalmente
 } as const;
 
 /**
@@ -99,7 +105,16 @@ export async function closeRedis(): Promise<void> {
 
 /**
  * Cache key builder
+ * 
+ * AI_DECISION: Support both Bloomberg-specific and general caching prefixes
+ * Justificación: Bloomberg endpoints use "bloomberg:" prefix, but CRM endpoints need general prefix
+ * Impacto: Flexible cache key generation for different domains
  */
 export function buildCacheKey(prefix: string, ...parts: (string | number)[]): string {
-  return `bloomberg:${prefix}:${parts.join(':')}`;
+  // If prefix already includes a domain (e.g., "bloomberg:" or "crm:"), use as-is
+  if (prefix.includes(':')) {
+    return `${prefix}:${parts.join(':')}`;
+  }
+  // Default to general "crm:" prefix for CRM endpoints
+  return `crm:${prefix}:${parts.join(':')}`;
 }

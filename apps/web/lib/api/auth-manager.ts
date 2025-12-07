@@ -76,9 +76,14 @@ export class AuthManager {
     const refreshed = await this.refreshToken();
 
     if (!refreshed) {
-      throw new ApiError(401, 'Session expired');
+      throw new ApiError('Session expired', 401);
     }
 
     return true;
   }
 }
+
+
+
+
+

@@ -21,7 +21,9 @@ const TeamMemberCard = memo<TeamMemberCardProps>(({
 }) => {
   return (
     <div
-      className="rounded-md border border-border hover:border-border-hover hover:bg-surface-hover transition-all cursor-pointer p-2.5 bg-surface"
+      className="rounded-md border border-border hover:border-primary/30 hover:bg-surface-hover 
+                 transition-all duration-200 cursor-pointer p-2.5 bg-surface
+                 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
       onClick={() => {
         onNavigateToMember(teamId, member.id);
       }}

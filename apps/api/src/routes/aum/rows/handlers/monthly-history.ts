@@ -1,43 +1,50 @@
 /**
  * Handler para historial mensual de AUM
+ * 
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
 import { parseNumeric } from '../utils';
 import type { MonthlySnapshotRow } from '../types';
+import type { AumMonthlyHistoryQuery } from '@/utils/aum-validation';
+import { createRouteHandler, HttpError } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/monthly-history
  * Get monthly history for AUM accounts
  * Returns historical snapshots of financial values by month/year
+ * 
+ * Query params están validados por middleware validate() con aumMonthlyHistoryQuerySchema
  */
-export async function getMonthlyHistory(req: Request, res: Response) {
-  try {
-    const accountNumber = req.query.accountNumber as string | undefined;
-    const idCuenta = req.query.idCuenta as string | undefined;
-    const reportMonth = req.query.reportMonth as number | undefined;
-    const reportYear = req.query.reportYear as number | undefined;
-    const limit = (req.query.limit as unknown as number) ?? 100;
+export const getMonthlyHistory = createRouteHandler(async (req: Request) => {
+  // req.query ya está validado y tipado por el middleware validate()
+  const query = req.query as unknown as AumMonthlyHistoryQuery;
+  const accountNumber = query.accountNumber;
+  const idCuenta = query.idCuenta;
+  const reportMonth = query.reportMonth;
+  const reportYear = query.reportYear;
+  const limit = query.limit ?? 100;
 
-    req.log?.info?.(
-      {
-        accountNumber,
-        idCuenta,
-        reportMonth,
-        reportYear,
-        limit,
-      },
-      'AUM monthly history GET: Parámetros de query recibidos'
-    );
+  req.log?.info?.(
+    {
+      accountNumber,
+      idCuenta,
+      reportMonth,
+      reportYear,
+      limit,
+    },
+    'AUM monthly history GET: Parámetros de query recibidos'
+  );
 
-    // Validar que al menos uno de los identificadores esté presente
-    if (!accountNumber && !idCuenta) {
-      return res.status(400).json({
-        error: 'Debe proporcionar accountNumber o idCuenta',
-      });
-    }
+  // Validar que al menos uno de los identificadores esté presente
+  if (!accountNumber && !idCuenta) {
+    throw new HttpError(400, 'Debe proporcionar accountNumber o idCuenta');
+  }
 
     const dbi = db();
 
@@ -127,13 +134,11 @@ export async function getMonthlyHistory(req: Request, res: Response) {
       'AUM monthly history GET: Snapshots obtenidos'
     );
 
-    return res.status(200).json({
-      ok: true,
-      snapshots,
-      total: snapshots.length,
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'AUM monthly history GET failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, snapshots, total } para compatibilidad con frontend
+  return {
+    ok: true,
+    snapshots,
+    total: snapshots.length,
+  };
+});

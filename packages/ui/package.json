@@ -22,9 +22,10 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc && pnpm run build:styles && pnpm run build:link-styles",
+    "build": "tsc && pnpm run build:styles && pnpm run build:link-styles && pnpm run build:add-use-client",
     "build:styles": "node scripts/copy-styles.js",
     "build:link-styles": "node -e \"try { require('fs').unlinkSync('dist/styles.css'); } catch(e) {} require('fs').copyFileSync('dist/styles/index.css', 'dist/styles.css'); console.log('Created dist/styles.css');\"",
+    "build:add-use-client": "node scripts/add-use-client.js",
     "dev": "echo 'UI package does not need dev mode'",
     "test": "vitest run",
     "test:watch": "vitest",

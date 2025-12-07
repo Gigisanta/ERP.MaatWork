@@ -17,6 +17,27 @@ interface CacheOptions {
   skipCache?: (req: Request) => boolean;
 }
 
+// Cache statistics tracking
+interface CacheStats {
+  hits: number;
+  misses: number;
+}
+
+const cacheStats = new Map<string, CacheStats>();
+
+function getCacheStats(keyPrefix: string): CacheStats {
+  if (!cacheStats.has(keyPrefix)) {
+    cacheStats.set(keyPrefix, { hits: 0, misses: 0 });
+  }
+  return cacheStats.get(keyPrefix)!;
+}
+
+function getHitRate(keyPrefix: string): number {
+  const stats = getCacheStats(keyPrefix);
+  const total = stats.hits + stats.misses;
+  return total > 0 ? (stats.hits / total) * 100 : 0;
+}
+
 /**
  * Cache middleware factory
  */
@@ -42,13 +63,22 @@ export function cache(options: CacheOptions) {
       // Try to get from cache
       const cached = await redis.get(cacheKey);
       if (cached) {
-        logger.debug({ cacheKey }, 'Cache hit');
+        const stats = getCacheStats(options.keyPrefix);
+        stats.hits++;
+        const hitRate = getHitRate(options.keyPrefix);
+        
+        logger.debug({ cacheKey, hitRate: hitRate.toFixed(2) }, 'Cache hit');
         res.setHeader('X-Cache', 'HIT');
+        res.setHeader('X-Cache-Hit-Rate', `${hitRate.toFixed(2)}%`);
         res.json(JSON.parse(cached));
         return;
       }
 
       // Cache miss - override res.json to cache response
+      const stats = getCacheStats(options.keyPrefix);
+      stats.misses++;
+      const hitRate = getHitRate(options.keyPrefix);
+      
       const originalJson = res.json.bind(res);
       res.json = function(body: unknown) {
         // Cache the response
@@ -57,6 +87,7 @@ export function cache(options: CacheOptions) {
         });
         
         res.setHeader('X-Cache', 'MISS');
+        res.setHeader('X-Cache-Hit-Rate', `${hitRate.toFixed(2)}%`);
         return originalJson(body);
       };
 

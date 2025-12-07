@@ -124,11 +124,45 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
         ) : (
           <div className="relative w-full" style={{ minHeight: '400px' }}>
             {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-                <Stack direction="column" gap="md" align="center">
-                  <Spinner size="lg" />
-                  <Text size="sm" color="secondary">Cargando calendario...</Text>
-                </Stack>
+              <div className="absolute inset-0 z-10 bg-background rounded-lg overflow-hidden">
+                {/* Calendar skeleton with improved animation */}
+                <div className="p-4 space-y-4">
+                  {/* Header skeleton */}
+                  <div className="flex items-center justify-between">
+                    <div className="h-8 w-32 skeleton-wave rounded-md" />
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 skeleton-wave rounded-md" />
+                      <div className="h-8 w-8 skeleton-wave rounded-md" />
+                    </div>
+                  </div>
+                  {/* Days header */}
+                  <div className="grid grid-cols-7 gap-2">
+                    {[...Array(7)].map((_, i) => (
+                      <div key={i} className="h-6 skeleton-wave rounded" />
+                    ))}
+                  </div>
+                  {/* Calendar grid */}
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, rowIndex) => (
+                      <div key={rowIndex} className="grid grid-cols-7 gap-2">
+                        {[...Array(7)].map((_, colIndex) => (
+                          <div 
+                            key={colIndex} 
+                            className="h-12 skeleton-wave rounded"
+                            style={{ animationDelay: `${(rowIndex * 7 + colIndex) * 30}ms` }}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Loading text overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                  <Stack direction="column" gap="sm" align="center">
+                    <Spinner size="md" />
+                    <Text size="sm" color="secondary">Cargando calendario...</Text>
+                  </Stack>
+                </div>
               </div>
             )}
             <iframe

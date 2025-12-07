@@ -1,27 +1,77 @@
-import React from 'react';
-import { Stack, Card, CardHeader, CardTitle, CardContent, Heading, Text } from '@cactus/ui';
+/**
+ * Loading component for contact detail page
+ * 
+ * AI_DECISION: Consistent loading skeleton with wave animation
+ * Justificación: Better perceived performance during data fetch
+ * Impacto: Unified loading experience matching app design
+ */
+
+import { Stack, Card, CardHeader, CardTitle, CardContent } from '@cactus/ui';
+import { 
+  Skeleton, 
+  SkeletonText,
+  SkeletonAvatar 
+} from '../../components/SkeletonLoader';
 
 export default function Loading() {
   return (
-    <div className="p-4 md:p-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="lg">
-        <div>
-          <Heading size="xl">Cargando contacto…</Heading>
-          <Text className="mt-2" color="secondary">Por favor espera</Text>
+        {/* Header with avatar */}
+        <div className="flex items-center gap-4">
+          <SkeletonAvatar size="lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" delay={50} />
+          </div>
         </div>
+
+        {/* Info cards grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" delay={100} />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <SkeletonText lines={4} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" delay={150} />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <SkeletonText lines={4} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Activity section */}
         <Card>
           <CardHeader>
-            <CardTitle>Información del Contacto</CardTitle>
+            <Skeleton className="h-5 w-32" delay={200} />
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="h-24 bg-gray-100 rounded" />
-              <div className="h-24 bg-gray-100 rounded" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/50">
+                  <SkeletonAvatar size="sm" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" delay={250 + i * 50} />
+                    <Skeleton className="h-3 w-1/2" delay={275 + i * 50} />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </Stack>
-    </div>
+    </main>
   );
 }
 

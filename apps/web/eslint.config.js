@@ -17,7 +17,9 @@ export default [
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
         ignoreRestSiblings: true,
-        caughtErrorsIgnorePattern: '^_'
+        caughtErrorsIgnorePattern: '^_',
+        vars: 'all',
+        args: 'after-used'
       }],
       'no-restricted-syntax': [
         'error',

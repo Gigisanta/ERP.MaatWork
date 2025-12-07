@@ -5,6 +5,8 @@
 import type { Request, Response } from 'express';
 import { db, aumImportRows, aumImportFiles } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
+import { HttpError } from '@/utils/route-handler';
+import { createErrorResponse, getStatusCodeFromError } from '@/utils/error-response';
 
 /**
  * POST /admin/aum/uploads/:fileId/match
@@ -18,7 +20,7 @@ export async function matchRow(req: Request, res: Response) {
     const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
 
     if (!userId || !userRole) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      throw new HttpError(401, 'Unauthorized');
     }
 
     const dbi = db();
@@ -29,7 +31,7 @@ export async function matchRow(req: Request, res: Response) {
       .from(aumImportFiles)
       .where(eq(aumImportFiles.id, fileId))
       .limit(1);
-    if (!file) return res.status(404).json({ error: 'File not found' });
+    if (!file) throw new HttpError(404, 'File not found');
 
     // Support isPreferred from body if provided (for backward compatibility)
     const isPreferred = (req.body as { isPreferred?: boolean }).isPreferred;
@@ -103,6 +105,17 @@ export async function matchRow(req: Request, res: Response) {
     return res.json({ ok: true });
   } catch (error) {
     req.log?.error?.({ err: error, fileId: req.params.fileId }, 'failed to match row');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json(
+      createErrorResponse({
+        error,
+        requestId: req.requestId,
+        userMessage: 'Error haciendo match de fila AUM'
+      })
+    );
   }
 }
+
+
+
+
+

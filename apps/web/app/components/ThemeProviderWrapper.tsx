@@ -28,6 +28,14 @@ export default function ThemeProviderWrapper({
     if (typeof window !== 'undefined') {
       localStorage.setItem('cactus-theme', newTheme);
       document.documentElement.setAttribute('data-theme', newTheme);
+      // AI_DECISION: Add both data-theme attribute AND .dark class for CSS compatibility
+      // Justificación: CSS uses .dark class selector, while ThemeProvider used data-theme attribute
+      // Impacto: Dark mode styles now properly apply with both selectors
+      if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   };
 
@@ -45,6 +53,12 @@ export default function ThemeProviderWrapper({
 
     setThemeState(initialTheme);
     document.documentElement.setAttribute('data-theme', initialTheme);
+    // Apply dark class for CSS selector compatibility
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
@@ -52,6 +66,12 @@ export default function ThemeProviderWrapper({
         const newTheme = e.matches ? 'dark' : 'light';
         setThemeState(newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);
+        // Apply dark class for CSS selector compatibility
+        if (newTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
     };
 

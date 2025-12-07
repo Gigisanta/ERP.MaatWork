@@ -9,6 +9,7 @@ import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db
 import { analyzeQuery } from '../utils/query-analysis';
 import { z } from 'zod';
 import { validate } from '../utils/validation';
+import { createErrorResponse } from '../utils/error-response';
 
 const router = Router();
 
@@ -64,7 +65,13 @@ router.get('/queries',
       });
     } catch (error) {
       req.log.error({ err: error }, 'Error fetching query metrics');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error obteniendo métricas de queries'
+        })
+      );
     }
   }
 );
@@ -95,10 +102,13 @@ router.post('/queries/analyze',
       });
     } catch (error) {
       req.log.error({ err: error }, 'Error analyzing query');
-      res.status(500).json({ 
-        error: 'Error interno del servidor',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error analizando query'
+        })
+      );
     }
   }
 );

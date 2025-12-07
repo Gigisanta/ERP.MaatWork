@@ -192,8 +192,7 @@ export async function createInvitation(req: Request, res: Response, next: NextFu
     const currentUserId = req.user!.id;
     const currentRole = req.user!.role;
 
-    const bodySchema = z.object({ userId: z.string().uuid() });
-    const { userId } = bodySchema.parse(req.body);
+    const { userId } = req.body as { userId: string };
 
     // Only admin or manager of this team can invite
     if (currentRole !== 'admin') {
@@ -236,11 +235,8 @@ export async function createInvitation(req: Request, res: Response, next: NextFu
       .returning();
 
     req.log.info({ teamId: id, userId, managerId }, 'team invitation created');
-    return res.status(201).json({ data: reqRow || { created: false, reason: 'already_exists' } });
+    return res.status(201).json({ success: true, data: reqRow || { created: false, reason: 'already_exists' } });
   } catch (err) {
-    if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Validation error', details: err.errors });
-    }
     req.log.error({ err, teamId: req.params.id }, 'failed to create invitation');
     next(err);
   }
@@ -336,3 +332,8 @@ export async function listEligibleAdvisors(req: Request, res: Response, next: Ne
     next(err);
   }
 }
+
+
+
+
+

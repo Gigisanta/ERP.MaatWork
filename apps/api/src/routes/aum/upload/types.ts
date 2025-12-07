@@ -21,6 +21,11 @@ export interface ValidationStats {
   rowsWithFinancialData: number;
   rowsWithInvalidFinancialData: number;
   rowsMissingIdentifiers: number;
+  // AI_DECISION: Nuevos campos para detectar problemas adicionales en los datos
+  // Justificación: Permite identificar y reportar errores de formato que antes pasaban desapercibidos
+  // Impacto: Mayor robustez en la validación de datos AUM
+  rowsWithCorruptedAdvisor?: number;
+  rowsWithNegativeAum?: number;
 }
 
 // Totals from database query

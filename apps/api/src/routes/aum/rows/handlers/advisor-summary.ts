@@ -4,12 +4,18 @@
  * AI_DECISION: Endpoint dedicado para agregación de datos financieros por asesor
  * Justificación: Permite visualizar totales de AUM por asesor con filtro mensual
  * Impacto: Habilita análisis de performance de asesores y seguimiento mensual de AUM
+ * 
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
 import { parseNumeric } from '../utils';
+import type { AumAdvisorSummaryQuery, AumAvailablePeriodsQuery } from '@/utils/aum-validation';
+import { createRouteHandler } from '@/utils/route-handler';
 
 /**
  * Resultado de fila de resumen por asesor desde la base de datos
@@ -43,16 +49,14 @@ interface AvailablePeriodRow {
  * GET /admin/aum/rows/advisor-summary
  * Get AUM summary aggregated by advisor with monthly filter
  *
- * Query params:
- * - reportMonth: Filtro por mes (1-12)
- * - reportYear: Filtro por año (2020-2100)
- * - broker: Filtro por broker (opcional)
+ * Query params están validados por middleware validate() con aumAdvisorSummaryQuerySchema
  */
-export async function getAdvisorSummary(req: Request, res: Response) {
-  try {
-    const reportMonth = req.query.reportMonth as number | undefined;
-    const reportYear = req.query.reportYear as number | undefined;
-    const broker = req.query.broker as string | undefined;
+export const getAdvisorSummary = createRouteHandler(async (req: Request) => {
+  // req.query ya está validado y tipado por el middleware validate()
+  const query = req.query as unknown as AumAdvisorSummaryQuery;
+  const reportMonth = query.reportMonth;
+  const reportYear = query.reportYear;
+  const broker = query.broker;
 
     req.log?.info?.(
       {
@@ -173,29 +177,30 @@ export async function getAdvisorSummary(req: Request, res: Response) {
       'AUM advisor summary GET: Resumen obtenido'
     );
 
-    return res.status(200).json({
-      ok: true,
-      summary: advisorSummary,
-      totals,
-      filters: {
-        reportMonth: reportMonth ?? null,
-        reportYear: reportYear ?? null,
-        broker: broker ?? null,
-      },
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'AUM advisor summary GET failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, summary, totals, filters } para compatibilidad con frontend
+  return {
+    ok: true,
+    summary: advisorSummary,
+    totals,
+    filters: {
+      reportMonth: reportMonth ?? null,
+      reportYear: reportYear ?? null,
+      broker: broker ?? null,
+    },
+  };
+});
 
 /**
  * GET /admin/aum/rows/available-periods
  * Get list of available report periods (month/year combinations)
+ * 
+ * Query params están validados por middleware validate() con aumAvailablePeriodsQuerySchema
  */
-export async function getAvailablePeriods(req: Request, res: Response) {
-  try {
-    const broker = req.query.broker as string | undefined;
+export const getAvailablePeriods = createRouteHandler(async (req: Request) => {
+  // req.query ya está validado y tipado por el middleware validate()
+  const query = req.query as unknown as AumAvailablePeriodsQuery;
+  const broker = query.broker;
 
     const dbi = db();
 
@@ -240,15 +245,13 @@ export async function getAvailablePeriods(req: Request, res: Response) {
       'AUM available periods GET: Períodos obtenidos'
     );
 
-    return res.status(200).json({
-      ok: true,
-      periods,
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'AUM available periods GET failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, periods } para compatibilidad con frontend
+  return {
+    ok: true,
+    periods,
+  };
+});
 
 /**
  * Helper para obtener nombre del mes en español

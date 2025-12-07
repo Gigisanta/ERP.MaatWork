@@ -42,10 +42,18 @@ export function validateParsedRows(parsedRows: ParsedRow[]): ValidationResult {
     rowsWithFinancialData: 0,
     rowsWithInvalidFinancialData: 0,
     rowsMissingIdentifiers: 0,
+    rowsWithCorruptedAdvisor: 0,
+    rowsWithNegativeAum: 0,
   };
 
   const errors: string[] = [];
   const warnings: string[] = [];
+
+  // AI_DECISION: Patrón para detectar advisorRaw corrupto (nombre+numero sin espacio)
+  // Justificación: Detecta errores de formato como "Mateo Vicente8019.23" donde el número
+  // es un valor financiero que se corrió por error en el CSV
+  // Impacto: Permite identificar y reportar estos errores para corrección manual del CSV
+  const advisorWithNumberPattern = /^[A-Za-z\s]+\d+[\.,]\d+$/;
 
   for (let i = 0; i < parsedRows.length; i++) {
     const row = parsedRows[i];
@@ -62,6 +70,28 @@ export function validateParsedRows(parsedRows: ParsedRow[]): ValidationResult {
       if (i < 10) {
         // Solo reportar primeros 10 para no saturar logs
         warnings.push(`Fila ${i + 1}: Sin identificador (idCuenta o comitente)`);
+      }
+    }
+
+    // AI_DECISION: Detectar advisorRaw con formato corrupto (nombre+numero)
+    // Justificación: Este patrón indica que el CSV tiene un error de formato
+    // donde una coma faltante hizo que el número se pegue al nombre
+    // Impacto: Alerta temprana de datos corruptos que necesitan revisión
+    if (row.advisorRaw && advisorWithNumberPattern.test(row.advisorRaw)) {
+      stats.rowsWithCorruptedAdvisor = (stats.rowsWithCorruptedAdvisor ?? 0) + 1;
+      if ((stats.rowsWithCorruptedAdvisor ?? 0) <= 10) {
+        warnings.push(`Fila ${i + 1}: Asesor con formato corrupto: ${row.advisorRaw}`);
+      }
+    }
+
+    // AI_DECISION: Detectar AUM negativos
+    // Justificación: Los valores negativos pueden ser ajustes válidos pero deben señalarse
+    // para revisión ya que son inusuales en datos de AUM
+    // Impacto: Visibilidad de posibles errores o ajustes que requieren atención
+    if (row.aumDollars !== null && row.aumDollars !== undefined && row.aumDollars < 0) {
+      stats.rowsWithNegativeAum = (stats.rowsWithNegativeAum ?? 0) + 1;
+      if ((stats.rowsWithNegativeAum ?? 0) <= 10) {
+        warnings.push(`Fila ${i + 1}: AUM negativo: ${row.aumDollars}`);
       }
     }
 

@@ -153,16 +153,16 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center h-64">
           <Text>Cargando información del perfil...</Text>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="md">
         <div>
           <Heading level={2}>Mi Perfil</Heading>
@@ -295,6 +295,6 @@ export default function ProfilePage() {
         confirmLabel="Confirmar"
         cancelLabel="Cancelar"
       />
-    </div>
+    </main>
   );
 }

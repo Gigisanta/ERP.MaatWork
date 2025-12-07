@@ -9,6 +9,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { db, tasks, taskRecurrences } from '@cactus/db';
 import { eq, and, isNull } from 'drizzle-orm';
+import { HttpError } from '@/utils/route-handler';
 
 /**
  * GET /tasks/:id - Obtener tarea específica
@@ -53,7 +54,7 @@ export async function handleGetTask(req: Request, res: Response, next: NextFunct
       .limit(1);
 
     if (!result || result.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
+      throw new HttpError(404, 'Task not found');
     }
 
     const taskData = result[0];
@@ -70,3 +71,10 @@ export async function handleGetTask(req: Request, res: Response, next: NextFunct
     next(err);
   }
 }
+
+
+
+
+
+
+

@@ -33,8 +33,8 @@ export async function requireContactAccess(req: Request, res: Response, next: Ne
       return res.status(403).json({ error: 'No tienes acceso a este contacto' });
     }
     
-    // Guardar contactId en req para uso posterior
-    (req as any).contactId = contactId;
+    // Guardar contactId en req para uso posterior (contactId está tipado globalmente)
+    req.contactId = contactId;
     next();
   } catch (error) {
     req.log?.error({ err: error, contactId }, 'Error checking contact access');

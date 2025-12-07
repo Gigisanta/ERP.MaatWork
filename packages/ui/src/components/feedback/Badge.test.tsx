@@ -48,10 +48,22 @@ describe('Badge Component', () => {
       expect(badge).toHaveClass('bg-error-subtle', 'text-error');
     });
 
-    it('should apply brand variant classes', () => {
-      render(<Badge variant="brand">Brand</Badge>);
-      const badge = screen.getByText('Brand');
-      expect(badge).toHaveClass('bg-primary', 'text-text-inverse');
+    it('should apply primary variant classes', () => {
+      render(<Badge variant="primary">Primary</Badge>);
+      const badge = screen.getByText('Primary');
+      expect(badge).toHaveClass('bg-primary-subtle', 'text-primary');
+    });
+
+    it('should apply secondary variant classes', () => {
+      render(<Badge variant="secondary">Secondary</Badge>);
+      const badge = screen.getByText('Secondary');
+      expect(badge).toHaveClass('bg-secondary-subtle', 'text-secondary');
+    });
+
+    it('should apply accent variant classes', () => {
+      render(<Badge variant="accent">Accent</Badge>);
+      const badge = screen.getByText('Accent');
+      expect(badge).toHaveClass('bg-accent-subtle', 'text-accent-hover');
     });
   });
 

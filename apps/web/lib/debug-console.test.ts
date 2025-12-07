@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { DebugConsole, initDebugConsole, type ErrorLog } from './debug-console';
+import { DebugConsole, initDebugConsole, type ErrorLog } from './debug-console/index';
 
 describe('DebugConsole', () => {
   let mockDocument: {

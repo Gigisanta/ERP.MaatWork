@@ -111,14 +111,14 @@ export async function getContactsServer(params?: {
  * Get pipeline stages
  */
 export async function getPipelineStagesServer(): Promise<ApiResponse<import('@/types').PipelineStage[]>> {
-  return apiCall('/pipeline/stages');
+  return apiCall('/v1/pipeline/stages');
 }
 
 /**
  * Get advisors
  */
 export async function getAdvisorsServer(): Promise<ApiResponse<import('@/types').Advisor[]>> {
-  return apiCall('/users/advisors');
+  return apiCall('/v1/users/advisors');
 }
 
 /**

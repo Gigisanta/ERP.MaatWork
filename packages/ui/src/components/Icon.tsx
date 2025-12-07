@@ -17,14 +17,21 @@ export type IconName =
   | 'Info'
   | 'CheckCircle'
   | 'AlertCircle'
+  | 'AlertTriangle'
   | 'XCircle'
+  | 'WifiOff'
+  | 'Loader'
   | 'chevron-up'
   | 'chevron-down'
   | 'x'
   | 'info'
   | 'check-circle'
   | 'alert-circle'
+  | 'alert-triangle'
   | 'x-circle'
+  | 'wifi-off'
+  | 'loader'
+  | 'refresh-cw'
   | 'edit'
   | 'more-vertical'
   | 'trash-2'
@@ -46,7 +53,15 @@ export type IconName =
   | 'FileText'
   | 'Activity'
   | 'RefreshCw'
-  | 'Clock';
+  | 'Clock'
+  | 'eye'
+  | 'eye-off'
+  | 'Eye'
+  | 'EyeOff'
+  | 'Navigation'
+  | 'Zap'
+  | 'command'
+  | 'Command';
 
 interface IconProps {
   name: IconName;
@@ -73,14 +88,21 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     Info: 'ℹ️',
     CheckCircle: '✅',
     AlertCircle: '⚠️',
+    AlertTriangle: '⚠️',
     XCircle: '❌',
+    WifiOff: '📶',
+    Loader: '⏳',
     'chevron-up': '▲',
     'chevron-down': '▼',
     x: '✕',
     info: 'ℹ️',
     'check-circle': '✅',
     'alert-circle': '⚠️',
+    'alert-triangle': '⚠️',
     'x-circle': '❌',
+    'wifi-off': '📶',
+    'loader': '⏳',
+    'refresh-cw': '🔄',
     edit: '✏️',
     'more-vertical': '⋮',
     'trash-2': '🗑️',
@@ -103,6 +125,14 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     Activity: '📊',
     RefreshCw: '🔄',
     Clock: '🕐',
+    eye: '👁',
+    'eye-off': '🙈',
+    Eye: '👁',
+    EyeOff: '🙈',
+    Navigation: '🧭',
+    Zap: '⚡',
+    command: '⌘',
+    Command: '⌘',
   };
 
   const iconChar = iconMap[name] || '?';

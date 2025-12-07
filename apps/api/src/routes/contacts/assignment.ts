@@ -10,6 +10,7 @@ import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
 import { idParamSchema } from '../../utils/common-schemas';
+import { HttpError } from '../../utils/route-handler';
 import { z } from 'zod';
 
 const router = Router();
@@ -48,7 +49,7 @@ router.patch('/:id/next-step',
       .limit(1);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Contact not found' });
+      throw new HttpError(404, 'Contact not found');
     }
 
     // Actualizar solo el próximo paso

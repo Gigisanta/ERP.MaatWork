@@ -48,17 +48,17 @@ export function AumPagination({
   const endRow = Math.min(offset + limit, total);
 
   return (
-    <div className={`bg-white border-t border-gray-200 px-6 py-3 ${className}`}>
+    <div className={`bg-surface border-t border-border px-6 py-3 ${className}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Text size="sm" className="text-gray-700">
-            Mostrando <span className="font-medium">{startRow}</span> a{' '}
-            <span className="font-medium">{endRow}</span> de{' '}
-            <span className="font-medium">{total}</span> resultados
+          <Text size="sm" className="text-text-secondary">
+            Mostrando <span className="font-medium text-text">{startRow}</span> a{' '}
+            <span className="font-medium text-text">{endRow}</span> de{' '}
+            <span className="font-medium text-text">{total}</span> resultados
           </Text>
 
           {showSearchInfo && searchActive && (
-            <Text size="sm" className="text-blue-600">
+            <Text size="sm" className="text-primary">
               (búsqueda activa - resultados filtrados)
             </Text>
           )}
@@ -74,9 +74,9 @@ export function AumPagination({
             ← Anterior
           </Button>
 
-          <Text size="sm" className="text-gray-700 px-4">
-            Página <span className="font-medium">{currentPage}</span> de{' '}
-            <span className="font-medium">{totalPages || 1}</span>
+          <Text size="sm" className="text-text-secondary px-4">
+            Página <span className="font-medium text-text">{currentPage}</span> de{' '}
+            <span className="font-medium text-text">{totalPages || 1}</span>
           </Text>
 
           <Button
@@ -92,4 +92,3 @@ export function AumPagination({
     </div>
   );
 }
-

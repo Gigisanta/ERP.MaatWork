@@ -47,7 +47,7 @@ export function AdvisorSelector({
   // Impacto: Reduce re-renders innecesarios
   const selectItems: SelectItem[] = useMemo(() => {
     return (advisors as Advisor[]).map((advisor: Advisor) => ({
-      value: advisor.id,
+      value: String(advisor.id),
       label: advisor.fullName || advisor.email || 'Sin nombre'
     }));
   }, [advisors]);

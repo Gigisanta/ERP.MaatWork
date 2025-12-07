@@ -4,51 +4,57 @@
  * AI_DECISION: Extraer handler de upload a módulo separado
  * Justificación: El handler de upload es complejo y merece su propio archivo
  * Impacto: Código más organizado y mantenible
+ * 
+ * AI_DECISION: Migrado a createAsyncHandler para status 201 y manejo automático de errores
+ * Justificación: Necesita status 201 para creación de recursos, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
 import type { Request, Response } from 'express';
+import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 import { promises as fs } from 'node:fs';
 import { db, aumImportFiles, aumImportRows } from '@cactus/db';
 import { sql } from 'drizzle-orm';
-import { normalizeAccountNumber } from '../../../../utils/aum-normalization';
-import { parseAumFile } from '../../../../services/aumParser';
+import { normalizeAccountNumber } from '@/utils/aum-normalization';
+import { parseAumFile } from '@/services/aumParser';
 import {
   matchContactByAccountNumber,
   matchContactByHolderName,
   matchAdvisor,
-} from '../../../../services/aumMatcher';
+} from '@/services/aumMatcher';
 import {
   upsertAumRows,
   applyAdvisorAccountMapping,
   type AumRowInsert,
   upsertAumMonthlySnapshots,
   type AumMonthlySnapshotInsert,
-} from '../../../../services/aumUpsert';
+} from '@/services/aumUpsert';
 import {
   inheritAdvisorFromExisting,
   inheritMatchedUserIdFromExisting,
   shouldFlagConflict,
   type ExistingAumAccountSnapshot,
-} from '../../../../services/aumConflictResolution';
-import { detectAumFileMetadata } from '../../../../utils/aum-file-detection';
+} from '@/services/aumConflictResolution';
+import { detectAumFileMetadata } from '@/utils/aum-file-detection';
 import { validateParsedRows, calculateValidationPercentages } from '../validation';
 import type { TotalsRow } from '../types';
 
 /**
  * POST /admin/aum/uploads
  * Upload and parse AUM file
+ * 
+ * Query params están validados por middleware validate() con aumUploadQuerySchema
  */
-export async function handleUpload(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id as string | undefined;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+export const handleUpload = createAsyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id as string | undefined;
+  if (!userId) {
+    throw new HttpError(401, 'Unauthorized');
+  }
 
     const file = (req as { file?: Express.Multer.File }).file;
     if (!file) {
       req.log?.warn?.({ userId }, 'Upload request sin archivo');
-      return res.status(400).json({ error: 'No file uploaded' });
+      throw new HttpError(400, 'No file uploaded');
     }
 
     req.log?.info?.(
@@ -532,32 +538,35 @@ export async function handleUpload(req: Request, res: Response) {
       `Upload complete: ${upsertResult.stats.inserted} inserted, ${upsertResult.stats.updated} updated, ${matchedRows} matched, ${unmatchedRows} unmatched${snapshotsMsg}`
     );
 
-    return res.status(201).json({
-      ok: true,
-      fileId: fileRow.id,
-      filename: file.originalname,
-      fileType: fileMetadata.fileType,
-      reportMonth: fileMetadata.reportMonth,
-      reportYear: fileMetadata.reportYear,
-      totals: {
-        parsed: totalParsed,
-        matched: matchedRows,
-        ambiguous: ambiguousRows,
-        conflicts: conflictRows,
-        unmatched: unmatchedRows,
-        inserts: upsertResult.stats.inserted,
-        updates: upsertResult.stats.updated,
-        monthlySnapshots: monthlySnapshotsResult
-          ? {
-              inserted: monthlySnapshotsResult.stats.inserted,
-              updated: monthlySnapshotsResult.stats.updated,
-              errors: monthlySnapshotsResult.stats.errors,
-            }
-          : null,
-      },
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'AUM upload failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar respuesta con status 201 para creación de recursos
+  // Mantenemos formato { ok: true, ... } para compatibilidad con frontend
+  return res.status(201).json({
+    ok: true,
+    fileId: fileRow.id,
+    filename: file.originalname,
+    fileType: fileMetadata.fileType,
+    reportMonth: fileMetadata.reportMonth,
+    reportYear: fileMetadata.reportYear,
+    totals: {
+      parsed: totalParsed,
+      matched: matchedRows,
+      ambiguous: ambiguousRows,
+      conflicts: conflictRows,
+      unmatched: unmatchedRows,
+      inserts: upsertResult.stats.inserted,
+      updates: upsertResult.stats.updated,
+      monthlySnapshots: monthlySnapshotsResult
+        ? {
+            inserted: monthlySnapshotsResult.stats.inserted,
+            updated: monthlySnapshotsResult.stats.updated,
+            errors: monthlySnapshotsResult.stats.errors,
+          }
+        : null,
+    },
+  });
+});
+
+
+
+
+

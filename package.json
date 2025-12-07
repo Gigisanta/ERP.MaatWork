@@ -54,13 +54,10 @@
     "verify:all": "node scripts/verify-all.js",
     "verify:all:no-e2e": "SKIP_E2E=true node scripts/verify-all.js",
     "audit:deps": "depcheck",
-    "audit:all": "pnpm audit && pnpm audit:deps && pnpm tsx scripts/audit-large-files.ts && pnpm tsx scripts/audit-code-duplication.ts && pnpm tsx scripts/audit-error-handling.ts && pnpm tsx scripts/audit-imports.ts",
-    "audit:large-files": "pnpm tsx scripts/audit-large-files.ts",
-    "audit:error-handling": "pnpm tsx scripts/audit-error-handling.ts",
-    "audit:imports": "pnpm tsx scripts/audit-imports.ts",
-    "audit:duplication": "pnpm tsx scripts/audit-code-duplication.ts",
+    "audit:unused-exports": "ts-prune --project tsconfig.prune.json --ignore \"test|spec|d.ts\"",
     "audit:types": "grep -r ':\\s*any\\b' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
-    "audit:barrels": "grep -r 'export \\* from' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l"
+    "audit:barrels": "grep -r 'export \\* from' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
+    "clean:temp": "node -e \"const fs=require('fs');['.tmp_aum_cookies.txt'].forEach(f=>{try{fs.unlinkSync(f);console.log('Deleted:',f)}catch(e){}})\""
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",

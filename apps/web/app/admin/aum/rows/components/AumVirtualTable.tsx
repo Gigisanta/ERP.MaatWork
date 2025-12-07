@@ -58,9 +58,9 @@ export function AumVirtualTable({
     const errorMessage = parseErrorMessage(error);
 
     return (
-      <div className="bg-white border border-red-200 rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-surface border border-danger/30 rounded-lg shadow-sm overflow-hidden">
         <div className="p-4">
-          <Text size="sm" className="text-red-600">
+          <Text size="sm" className="text-danger">
             {errorMessage}
           </Text>
         </div>
@@ -70,17 +70,22 @@ export function AumVirtualTable({
 
   const hasData = rows.length > 0;
   const virtualItems = virtualizer.getVirtualItems();
-  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
-  const paddingBottom =
-    virtualItems.length > 0
-      ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
-      : 0;
+  const hasVirtualItems = virtualItems.length > 0;
+  const paddingTop = hasVirtualItems ? virtualItems[0].start : 0;
+  const paddingBottom = hasVirtualItems
+    ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+    : 0;
 
   // Table with virtualization
   // AI_DECISION: Contenedor con overflow-auto para virtualización
   // Justificación: useVirtualizer necesita un contenedor con scroll para calcular items visibles
+  // El contenedor DEBE tener altura fija o calculada para que el virtualizer funcione
   return (
-    <div ref={parentRef} className="h-full w-full overflow-auto">
+    <div
+      ref={parentRef}
+      className="w-full h-full overflow-auto"
+      data-testid="aum-table-scroll"
+    >
       <table
         className="table-fixed border-collapse w-full"
         style={{
@@ -138,7 +143,7 @@ export function AumVirtualTable({
             </tr>
           )}
 
-          {!isLoading && hasData && (
+          {!isLoading && hasData && hasVirtualItems && (
             <>
               {paddingTop > 0 && (
                 <tr style={{ height: `${paddingTop}px` }}>
@@ -172,6 +177,17 @@ export function AumVirtualTable({
               )}
             </>
           )}
+
+          {/* Fallback: render all rows if virtualizer has no items (e.g. container height issue) */}
+          {!isLoading && hasData && !hasVirtualItems && rows.map((row, index) => (
+            <AumTableRow
+              key={`fallback-${row.id}-${index}`}
+              row={row}
+              onOpenAdvisorModal={onOpenAdvisorModal}
+              onShowDuplicates={onShowDuplicates}
+              {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
+            />
+          ))}
         </tbody>
       </table>
     </div>

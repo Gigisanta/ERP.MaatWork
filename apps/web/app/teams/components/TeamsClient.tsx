@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTeamAdvisors, createTeamInvitation, createTeam, respondToMembershipRequest } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
@@ -28,7 +28,7 @@ import {
   Icon,
   type Column,
 } from '@cactus/ui';
-import type { Team, MembershipRequest } from '@/types';
+import type { Team, MembershipRequest, TeamAdvisor } from '@/types';
 
 interface TeamsClientProps {
   initialTeams: Team[];
@@ -56,6 +56,13 @@ export default function TeamsClient({
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
+  // Page transition animation state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+  
   // AI_DECISION: Determinar permisos de edición basado en rol
   // Justificación: Advisors solo pueden ver equipos, no editarlos
   // Impacto: Mejora seguridad y UX diferenciando permisos por rol
@@ -65,7 +72,7 @@ export default function TeamsClient({
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [linkModalOpen, setLinkModalOpen] = useState<null | { teamId: string; teamName: string }>(null);
-  const [advisorCandidates, setAdvisorCandidates] = useState<Array<{ id: string; email: string; fullName: string }>>([]);
+  const [advisorCandidates, setAdvisorCandidates] = useState<TeamAdvisor[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   // AI_DECISION: Use useCallback to stabilize navigation functions for memoized component
@@ -84,7 +91,7 @@ export default function TeamsClient({
       setLinkModalOpen({ teamId: team.id, teamName: team.name });
       const response = await getTeamAdvisors(team.id);
       if (response.success && response.data) {
-        setAdvisorCandidates(response.data || []);
+        setAdvisorCandidates((response.data || []) as TeamAdvisor[]);
       } else {
         setAdvisorCandidates([]);
       }
@@ -108,7 +115,7 @@ export default function TeamsClient({
     try {
       setInviteLoading(userId);
       await createTeamInvitation(linkModalOpen.teamId, { userId });
-      setAdvisorCandidates(prev => prev.filter(a => a.id !== userId));
+      setAdvisorCandidates(prev => prev.filter((a: TeamAdvisor) => String(a.id) !== userId));
     } catch (err) {
       logger.error('Error inviting advisor', toLogContext({ err, teamId: linkModalOpen.teamId, userId }));
     } finally {
@@ -220,7 +227,11 @@ export default function TeamsClient({
   ];
 
   return (
-    <>
+    <div
+      className={`transition-all duration-500 ease-out ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       {error && (
         <Alert variant="error" title="Error">
           {error}
@@ -229,12 +240,18 @@ export default function TeamsClient({
 
       {/* Teams Grid */}
       <Grid cols={1} gap="lg">
-        {teams.map((team) => (
-          <Card 
-            key={team.id} 
-            className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow cursor-pointer"
-            onClick={() => router.push(`/teams/${team.id}`)}
+        {teams.map((team, index) => (
+          <div
+            key={team.id}
+            className={`transition-all duration-500 ease-out ${
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: `${50 + index * 50}ms` }}
           >
+            <Card 
+              className="rounded-md border border-border hover:border-border-hover hover:shadow-md hover-lift transition-all cursor-pointer"
+              onClick={() => router.push(`/teams/${team.id}`)}
+            >
             <CardHeader className="p-4 pb-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -283,6 +300,7 @@ export default function TeamsClient({
               )}
             </CardContent>
           </Card>
+          </div>
         ))}
       </Grid>
 
@@ -370,13 +388,13 @@ export default function TeamsClient({
             {advisorCandidates.length === 0 && (
               <Text color="secondary">No hay asesores disponibles para invitar.</Text>
             )}
-            {advisorCandidates.map((a) => (
-              <div key={a.id} className="flex items-center justify-between border rounded-md px-3 py-2">
+            {advisorCandidates.map((a: TeamAdvisor) => (
+              <div key={String(a.id)} className="flex items-center justify-between border rounded-md px-3 py-2">
                 <div>
                   <Text weight="medium">{a.fullName || a.email}</Text>
                   <Text size="sm" color="secondary">{a.email}</Text>
                 </div>
-                <Button size="sm" disabled={inviteLoading === a.id} onClick={() => inviteAdvisor(a.id)}>Invitar</Button>
+                <Button size="sm" disabled={inviteLoading === String(a.id)} onClick={() => inviteAdvisor(String(a.id))}>Invitar</Button>
               </div>
             ))}
           </Stack>
@@ -386,7 +404,7 @@ export default function TeamsClient({
         </ModalContent>
       </Modal>
       )}
-    </>
+    </div>
   );
 }
 

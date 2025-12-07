@@ -7,6 +7,8 @@ import { Router, type Request, type Response, type NextFunction } from 'express'
 import { db, contacts } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
+import { invalidateCache } from '../../middleware/cache';
+import { HttpError } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -29,8 +31,12 @@ router.delete(
         .returning();
 
       if (!deleted) {
-        return res.status(404).json({ error: 'Contact not found' });
+        throw new HttpError(404, 'Contact not found');
       }
+
+      // Invalidate Redis cache for contacts and pipeline
+      await invalidateCache('crm:contacts:*');
+      await invalidateCache('crm:pipeline:*');
 
       req.log.info({ contactId: id }, 'contact deleted');
       res.json({ success: true, data: { id, deleted: true } });
@@ -42,3 +48,8 @@ router.delete(
 );
 
 export default router;
+
+
+
+
+

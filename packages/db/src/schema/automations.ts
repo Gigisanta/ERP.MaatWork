@@ -42,3 +42,30 @@ export const automationConfigs = pgTable(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

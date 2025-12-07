@@ -15,7 +15,7 @@ vi.mock('../../lib/debug-console', () => ({
   initDebugConsole: vi.fn()
 }));
 
-import { initDebugConsole } from '../../lib/debug-console';
+import { initDebugConsole } from '../../lib/debug-console/index';
 
 describe('DebugConsole', () => {
   const originalEnv = process.env.NODE_ENV;

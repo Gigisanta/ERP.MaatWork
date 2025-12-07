@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { usePageTitle } from '../../components/PageTitleContext';
 import { 
@@ -38,6 +38,13 @@ interface PortfoliosClientProps {
  */
 export default function PortfoliosClient({ initialPortfolios }: PortfoliosClientProps) {
   usePageTitle('Carteras');
+  
+  // Page transition animation state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Use SWR hook - it will use initialPortfolios as fallback
   const {
@@ -233,9 +240,18 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   }
 
   return (
-    <div className="space-y-4">
+    <div 
+      className={`space-y-4 transition-all duration-500 ease-out ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       {/* Header compacto */}
-      <div className="flex items-center justify-between">
+      <div 
+        className={`flex items-center justify-between transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        }`}
+        style={{ transitionDelay: '50ms' }}
+      >
         <Heading level={1}>Carteras</Heading>
         <Button onClick={handleCreatePortfolio} variant="primary" size="sm">
           <Plus className="w-4 h-4 mr-2" />
@@ -244,21 +260,35 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
       </div>
                           
       {/* Grid de Carteras Compacto */}
-      <PortfoliosGrid
-        portfolios={displayPortfolios}
-        onEdit={handleEditPortfolio}
-        onDelete={handleDeletePortfolio}
-        onCreateNew={handleCreatePortfolio}
-        onSelect={handleSelectPortfolio}
-      />
+      <div
+        className={`transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '100ms' }}
+      >
+        <PortfoliosGrid
+          portfolios={displayPortfolios}
+          onEdit={handleEditPortfolio}
+          onDelete={handleDeletePortfolio}
+          onCreateNew={handleCreatePortfolio}
+          onSelect={handleSelectPortfolio}
+        />
+      </div>
 
       {/* Dashboard Unificado: Gráfico + Bloomberg */}
-      <PortfolioDashboard
-        portfolios={displayPortfolios}
-        benchmarks={benchmarks}
-        selectedPortfolioId={selectedPortfolioId}
-        onPortfolioSelect={setSelectedPortfolioId}
-      />
+      <div
+        className={`transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '150ms' }}
+      >
+        <PortfolioDashboard
+          portfolios={displayPortfolios}
+          benchmarks={benchmarks}
+          selectedPortfolioId={selectedPortfolioId}
+          onPortfolioSelect={setSelectedPortfolioId}
+        />
+      </div>
 
       {/* Portfolio Form Drawer */}
       <PortfolioForm

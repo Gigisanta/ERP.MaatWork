@@ -46,6 +46,14 @@ const TransitionTimesChart = dynamic(
   }
 );
 
+const MarketTypeConversionChart = dynamic(
+  () => import('./Charts/MarketTypeConversionChart').then(mod => ({ default: mod.MarketTypeConversionChart })),
+  { 
+    loading: () => <ChartLoadingFallback />,
+    ssr: false 
+  }
+);
+
 // Loading fallback for charts
 function ChartLoadingFallback() {
   return (
@@ -65,7 +73,7 @@ interface MetricsSectionProps {
   error: string | null;
 }
 
-type ChartView = 'goals' | 'businessLines' | 'transitionTimes';
+type ChartView = 'goals' | 'businessLines' | 'transitionTimes' | 'marketConversion';
 
 // Mapeo de métricas a colores usando variables CSS del sistema de diseño
 // Nota: Para 'Segundas Reuniones' usamos un color naranja que no tiene variable equivalente
@@ -86,7 +94,8 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
   const chartItems = useMemo<SelectItem[]>(() => [
     { value: 'goals', label: 'Objetivos vs Actuales' },
     { value: 'businessLines', label: 'Cierres por Línea de Negocio' },
-    { value: 'transitionTimes', label: 'Tiempo Promedio entre Avances' }
+    { value: 'transitionTimes', label: 'Tiempo Promedio entre Avances' },
+    { value: 'marketConversion', label: 'Conversión por Tipo de Mercado' }
   ], []);
 
   if (loading) {
@@ -139,10 +148,13 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
           {chartView === 'transitionTimes' && (
             <TransitionTimesChart transitionTimes={metricsData.transitionTimes} />
           )}
+          {chartView === 'marketConversion' && (
+            <MarketTypeConversionChart marketTypeConversion={metricsData.marketTypeConversion} />
+          )}
         </CardContent>
       </Card>
 
-      {/* Grid de métricas individuales */}
+      {/* Grid de métricas individuales con animaciones staggered */}
       <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
         <GridItem>
           <MetricCard
@@ -150,6 +162,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
             actual={metricsData.newProspects}
             goal={goalsData?.newProspectsGoal ?? 0}
             color={METRIC_COLORS['Nuevos Contactos']}
+            index={0}
           />
         </GridItem>
         <GridItem>
@@ -158,6 +171,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
             actual={metricsData.firstMeetings}
             goal={goalsData?.firstMeetingsGoal ?? 0}
             color={METRIC_COLORS['Primeras Reuniones']}
+            index={1}
           />
         </GridItem>
         <GridItem>
@@ -166,6 +180,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
             actual={metricsData.secondMeetings}
             goal={goalsData?.secondMeetingsGoal ?? 0}
             color={METRIC_COLORS['Segundas Reuniones']}
+            index={2}
           />
         </GridItem>
         <GridItem>
@@ -174,6 +189,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
             actual={metricsData.newClients}
             goal={goalsData?.newClientsGoal ?? 0}
             color={METRIC_COLORS['Nuevos Clientes']}
+            index={3}
           />
         </GridItem>
       </Grid>

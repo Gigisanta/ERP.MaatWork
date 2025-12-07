@@ -312,6 +312,31 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
         } else {
           // No es numérico, asignar normalmente
           advisorRawValue = safeToString(rawValue);
+
+          // AI_DECISION: Detectar y corregir error de formato "Nombre+Numero" en advisorRaw
+          // Justificación: A veces el CSV tiene errores donde el asesor aparece como "Mateo Vicente8019.23"
+          // cuando debería ser solo "Mateo Vicente" (el número es un valor financiero que se corrió)
+          // Impacto: Corrige automáticamente el nombre del asesor para evitar asesores ficticios
+          if (advisorRawValue) {
+            const advisorWithNumberPattern = /^([A-Za-z\s]+?)(\d+[\.,]\d+)$/;
+            const errorMatch = advisorRawValue.match(advisorWithNumberPattern);
+
+            if (errorMatch) {
+              const nombreReal = errorMatch[1].trim();
+              const numeroExtraido = errorMatch[2];
+
+              logger.warn(
+                {
+                  originalValue: advisorRawValue,
+                  extractedName: nombreReal,
+                  extractedNumber: numeroExtraido,
+                },
+                'AUM Column Mapper: Detectado error de formato Asesor+Numero - se corrige automaticamente'
+              );
+
+              advisorRawValue = nombreReal;
+            }
+          }
         }
       }
     }

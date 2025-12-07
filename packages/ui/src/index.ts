@@ -2,6 +2,9 @@
 // Justificación: Next.js cannot tree-shake unused components with export * syntax
 // Impacto: First Load JS reduction ~30-50KB by eliminating unused UI components
 
+// Utils
+export { cn } from './utils/cn';
+
 // Icons - specific export
 export { default as Icon, type IconName } from './components/Icon';
 
@@ -55,6 +58,41 @@ export { Spinner, LoadingOverlay, type SpinnerProps, type LoadingOverlayProps } 
 export { Toast, ToastAction, ToastClose, type ToastProps, type ToastVariant } from './components/feedback/Toast';
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip';
 export { Drawer, type DrawerProps } from './components/feedback/Drawer';
+export { 
+  Skeleton, 
+  SkeletonGroup, 
+  SkeletonCard, 
+  SkeletonTable,
+  type SkeletonProps, 
+  type SkeletonVariant,
+  type SkeletonGroupProps,
+  type SkeletonCardProps,
+  type SkeletonTableProps
+} from './components/feedback/Skeleton';
+export { 
+  ProgressBar, 
+  ProgressBarWithStatus,
+  CircularProgress,
+  type ProgressBarProps, 
+  type ProgressBarVariant,
+  type ProgressBarSize,
+  type ProgressBarWithStatusProps,
+  type CircularProgressProps
+} from './components/feedback/ProgressBar';
+export { 
+  default as ErrorState,
+  InlineErrorState,
+  type ErrorStateProps,
+  type ErrorStateVariant,
+  type ErrorStateSize,
+  type InlineErrorStateProps
+} from './components/feedback/ErrorState';
+export {
+  AnimatedList,
+  AnimatedItem,
+  type AnimatedListProps,
+  type AnimatedItemProps
+} from './components/feedback/AnimatedList';
 
 // Theme Provider - specific export (Client Component)
 export { ThemeProvider, useTheme } from './hooks/useTheme';

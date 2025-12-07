@@ -25,10 +25,10 @@ import notificationsRouter from './routes/notifications';
 import attachmentsRouter from './routes/attachments';
 import notesRouter from './routes/notes';
 import teamsRouter from './routes/teams';
-import portfolioRouter from './routes/portfolio';
-import benchmarksRouter from './routes/benchmarks';
+import portfolioRouter from './routes/portfolio/index';
+import benchmarksRouter from './routes/benchmarks/index';
 import analyticsRouter from './routes/analytics';
-import instrumentsRouter from './routes/instruments';
+import instrumentsRouter from './routes/instruments/index';
 import logsRouter from './routes/logs';
 import brokerAccountsRouter from './routes/broker-accounts';
 import aumRouter from './routes/aum';
@@ -47,6 +47,7 @@ import cookieParser from 'cookie-parser';
 import { initializeDatabase } from './db-init';
 import bloombergRouter from './routes/bloomberg';
 import { getScheduler } from './jobs/scheduler';
+import { createAsyncHandler } from './utils/route-handler';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -139,7 +140,9 @@ if (process.env.RATE_LIMIT_AUTH_ENABLED !== 'false') {
     ),
   });
   rateLimiters.push(authLimiter);
-  app.use('/auth', authLimiter.middleware());
+  // AI_DECISION: Rate limiter solo en /v1/auth (rutas sin versión fueron eliminadas)
+  // Justificación: Todas las rutas de autenticación usan /v1/auth, no hay rutas en /auth
+  // Impacto: Rate limiting aplica solo a rutas versionadas
   app.use('/v1/auth', authLimiter.middleware());
 }
 
@@ -181,9 +184,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   // Generar o extraer X-Request-ID del header
   const requestId = (req.headers['x-request-id'] as string) || uuidv4();
 
-  // Adjuntar al objeto req para uso posterior
-  type RequestWithRequestId = Request & { requestId?: string };
-  (req as RequestWithRequestId).requestId = requestId;
+  // Adjuntar al objeto req para uso posterior (requestId está tipado globalmente)
+  req.requestId = requestId;
 
   // Incluir en response headers para rastreo frontend
   res.setHeader('X-Request-ID', requestId);
@@ -315,44 +317,58 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // Health check routes (public and admin)
+// AI_DECISION: /health sin versión es estándar para health checks
+// Justificación: Health checks no requieren versionado, es práctica común en la industria
+// Impacto: Endpoint estándar para monitoreo y load balancers
 app.use('/health', healthRouter);
 
-// Prometheus metrics endpoint
-app.get('/metrics', async (req, res) => {
-  try {
-    const { getMetrics, memoryUsage } = await import('./utils/metrics');
+// AI_DECISION: /metrics sin versión es estándar para Prometheus
+// Justificación: Endpoints de métricas Prometheus no requieren versionado, es práctica común en la industria
+// Impacto: Compatibilidad con herramientas de monitoreo estándar (Prometheus, Grafana)
+// Referencias: https://prometheus.io/docs/instrumenting/exposition_formats/
+// AI_DECISION: Usar createAsyncHandler para formato de respuesta Prometheus personalizado
+// Justificación: Necesita Content-Type específico y formato de texto plano, no JSON estándar
+// Impacto: Manejo de errores consistente mientras mantiene formato Prometheus requerido
+app.get('/metrics', createAsyncHandler(async (req, res) => {
+  const { getMetrics, memoryUsage } = await import('./utils/metrics');
 
-    // Update memory metrics
-    const memUsage = process.memoryUsage();
-    memoryUsage.set({ type: 'rss' }, memUsage.rss);
-    memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
-    memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
-    memoryUsage.set({ type: 'external' }, (memUsage as any).external || 0);
+  // Update memory metrics
+  const memUsage = process.memoryUsage() as typeof process.memoryUsage & { external?: number };
+  memoryUsage.set({ type: 'rss' }, memUsage.rss);
+  memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
+  memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
+  memoryUsage.set({ type: 'external' }, memUsage.external || 0);
 
-    // Return Prometheus format
-    const metrics = await getMetrics();
-    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
-    res.send(metrics);
-  } catch (error) {
-    req.log?.error({ err: error }, 'Error generating metrics');
-    res.status(500).send('# Error generating metrics\n');
-  }
-});
+  // Return Prometheus format
+  const metrics = await getMetrics();
+  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.send(metrics);
+}));
 
-// Legacy JSON metrics endpoint (for backwards compatibility)
-app.get('/metrics/json', (req, res) => {
-  const memory = process.memoryUsage();
-  res.json({
+// AI_DECISION: /metrics/json sin versión para compatibilidad hacia atrás
+// Justificación: Endpoint legacy para sistemas de monitoreo que esperan formato JSON
+// Impacto: Mantiene compatibilidad con sistemas existentes sin romper integraciones
+// Referencias: Endpoint legacy mantenido para transición gradual
+// AI_DECISION: Usar createAsyncHandler para formato de respuesta legacy personalizado
+// Justificación: Formato legacy específico que difiere del formato estándar { success, data }
+// Impacto: Manejo de errores consistente mientras mantiene formato legacy requerido
+app.get('/metrics/json', createAsyncHandler(async (req, res) => {
+  const memUsage = process.memoryUsage() as typeof process.memoryUsage & { external?: number };
+  return res.json({
     ok: true,
     pid: process.pid,
     uptimeSec: Math.round(process.uptime()),
-    rss: memory.rss,
-    heapUsed: memory.heapUsed,
-    external: (memory as any).external,
+    rss: memUsage.rss,
+    heapUsed: memUsage.heapUsed,
+    external: memUsage.external || 0,
     timestamp: new Date().toISOString(),
   });
-});
+}));
 
+// AI_DECISION: Endpoints /test-* sin versión y solo en desarrollo
+// Justificación: Endpoints de debugging/testing no requieren versionado y solo existen en desarrollo
+// Impacto: Facilita debugging local sin exponer endpoints en producción
+// Referencias: Protegidos con !isProduction check
 if (!isProduction) {
   app.get('/test-env', (req, res) => {
     res.json({
@@ -364,67 +380,44 @@ if (!isProduction) {
     });
   });
 
-  app.get('/test-db', async (req, res) => {
-    try {
-      const { db } = await import('@cactus/db');
-      const { sql } = await import('drizzle-orm');
-      const result = await db().execute(sql`SELECT 1 as test`);
-      const row = Array.isArray(result)
-        ? (result as any)[0]
-        : (result as any).rows?.[0] || { test: 1 };
-      res.json({ ok: true, connected: true, testResult: row });
-    } catch (error) {
-      req.log.error({ err: error }, 'Error en test-db');
-      res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-    }
-  });
+  // AI_DECISION: Usar createAsyncHandler para endpoints de test
+  // Justificación: Mantiene formato de respuesta específico pero con manejo de errores estándar
+  // Impacto: Consistencia en manejo de errores, mejor logging
+  const { createErrorResponse } = await import('./utils/error-response');
 
-  app.get('/test-cactus-db', async (req, res) => {
-    try {
-      const { db, users } = await import('@cactus/db');
-      if (!db || !users) {
-        return res.status(500).json({ error: 'Package @cactus/db not working correctly' });
-      }
-      const dbInstance = db();
-      const usersResult = await dbInstance.select().from(users).limit(1);
-      res.json({ ok: true, packageWorking: true, usersCount: usersResult.length });
-    } catch (error) {
-      req.log.error({ err: error }, 'Error en test-cactus-db');
-      res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+  app.get('/test-db', createAsyncHandler(async (req, res) => {
+    const { db } = await import('@cactus/db');
+    const { sql } = await import('drizzle-orm');
+    const result = await db().execute(sql`SELECT 1 as test`);
+    
+    // Type guard para resultado de drizzle
+    type DrizzleResult = { rows?: Array<{ test: number }> } | Array<{ test: number }>;
+    const drizzleResult = result as DrizzleResult;
+    
+    const row = Array.isArray(drizzleResult)
+      ? drizzleResult[0]
+      : drizzleResult.rows?.[0] || { test: 1 };
+    return res.json({ ok: true, connected: true, testResult: row });
+  }));
+
+  app.get('/test-cactus-db', createAsyncHandler(async (req, res) => {
+    const { db, users } = await import('@cactus/db');
+    if (!db || !users) {
+      return res.status(500).json(
+        createErrorResponse({
+          error: new Error('Package @cactus/db not working correctly'),
+          requestId: req.requestId,
+          userMessage: 'Database package not working correctly',
+        })
+      );
     }
-  });
+    const dbInstance = db();
+    const usersResult = await dbInstance.select().from(users).limit(1);
+    return res.json({ ok: true, packageWorking: true, usersCount: usersResult.length });
+  }));
 }
 
-app.use('/auth', authRouter);
-app.use('/users', usersRouter);
-app.use('/contacts', contactsRouter);
-app.use('/tasks', tasksRouter);
-app.use('/tags', tagsRouter);
-app.use('/pipeline', pipelineRouter);
-app.use('/notifications', notificationsRouter);
-app.use('/attachments', attachmentsRouter);
-app.use('/notes', notesRouter);
-app.use('/teams', teamsRouter);
-app.use('/portfolios', portfolioRouter);
-app.use('/benchmarks', benchmarksRouter);
-app.use('/analytics', analyticsRouter);
-app.use('/instruments', instrumentsRouter);
-app.use('/logs', logsRouter);
-app.use('/broker-accounts', brokerAccountsRouter);
-app.use('/admin/aum', aumRouter);
-app.use('/admin/settings/advisors', settingsAdvisorsRouter);
-app.use('/admin/metrics', adminMetricsRouter);
-app.use('/admin/maintenance', adminMaintenanceRouter);
-app.use('/admin', adminQueryMetricsRouter);
-app.use('/career-plan', careerPlanRouter);
-app.use('/metrics', metricsRouter);
-app.use('/capacitaciones', capacitacionesRouter);
-app.use('/automations', automationsRouter);
-app.use('/bloomberg', bloombergRouter);
-app.use('/v1/bloomberg', bloombergRouter);
-app.use('/v1/health', healthRouter);
-
-// Optional versioned API prefix (/v1) for future breaking changes
+// Versioned API routes - /v1 prefix is mandatory
 app.use('/v1/auth', authRouter);
 app.use('/v1/users', usersRouter);
 app.use('/v1/contacts', contactsRouter);
@@ -450,6 +443,7 @@ app.use('/v1/career-plan', careerPlanRouter);
 app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
 app.use('/v1/automations', automationsRouter);
+app.use('/v1/bloomberg', bloombergRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

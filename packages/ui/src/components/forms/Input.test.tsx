@@ -153,7 +153,7 @@ describe('Input Component', () => {
       render(<Input />);
       const input = screen.getByRole('textbox');
       
-      expect(input).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-primary');
+      expect(input).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-primary/30');
     });
 
     it('should associate label with input', () => {

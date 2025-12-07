@@ -101,3 +101,30 @@ export interface MonthlySnapshotUpsertResult {
   stats: MonthlySnapshotUpsertStats;
   error?: string;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

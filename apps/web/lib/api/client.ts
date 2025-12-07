@@ -62,7 +62,7 @@ export class ApiClient {
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError(504, 'Request timeout', {
+        throw new ApiError('Request timeout', 504, {
           details: `Request took longer than ${timeout}ms`,
         });
       }
@@ -140,7 +140,7 @@ export class ApiClient {
       }
     }
 
-    throw lastError || new ApiError(500, 'Request failed after retries');
+    throw lastError || new ApiError('Request failed after retries', 500);
   }
 
   /**

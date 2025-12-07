@@ -6,59 +6,51 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, CardHeader, Spinner, Stack, Text } from '@cactus/ui';
-
-// Simple Skeleton component using Tailwind
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
-}
+import { Card, CardContent, CardHeader, Stack } from '@cactus/ui';
+import { Skeleton, SkeletonCard } from '../components/SkeletonLoader';
 
 export default function PipelineLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="lg">
         {/* Header skeleton */}
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-48" />
-          </CardHeader>
-        </Card>
+        <div className="flex items-center justify-between mb-2">
+          <Skeleton className="h-8 w-48" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32 rounded-lg" delay={50} />
+          </div>
+        </div>
 
         {/* Pipeline columns skeleton */}
         <div className="flex gap-4 overflow-x-auto pb-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="min-w-[280px] flex-shrink-0">
               <CardHeader>
-                <Stack direction="row" gap="md" align="center" justify="between">
-                  <Skeleton className="h-6 w-32" />
-                  <Skeleton className="h-6 w-8 rounded-full" />
-                </Stack>
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-6 w-32" delay={i * 50} />
+                  <Skeleton className="h-6 w-8" rounded="full" delay={i * 50 + 25} />
+                </div>
               </CardHeader>
               <CardContent>
-                <Stack direction="column" gap="md" className="py-2">
+                <div className="space-y-3 py-2">
                   {/* Contact cards skeleton */}
                   {Array.from({ length: 3 }).map((_, j) => (
-                    <Card key={j}>
-                      <CardContent>
-                        <Stack direction="column" gap="sm" className="py-3">
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-2/3" />
-                          <Stack direction="row" gap="sm" className="mt-2">
-                            <Skeleton className="h-6 w-16 rounded-full" />
-                            <Skeleton className="h-6 w-20 rounded-full" />
-                          </Stack>
-                        </Stack>
-                      </CardContent>
-                    </Card>
+                    <SkeletonCard 
+                      key={j}
+                      showHeader={false}
+                      contentLines={2}
+                      showFooter
+                      delay={100 + i * 100 + j * 75}
+                      className="border-border/50"
+                    />
                   ))}
-                </Stack>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       </Stack>
-    </div>
+    </main>
   );
 }
 

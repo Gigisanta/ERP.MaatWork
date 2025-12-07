@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Eye, Edit, Trash2, PieChart } from 'lucide-react';
 import {
   Card,
@@ -31,6 +32,12 @@ export function PortfoliosGrid({
   onSelect,
 }: PortfoliosGridProps) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   const getRiskLevelVariant = (riskLevel: string) => {
     switch (riskLevel) {
@@ -74,12 +81,18 @@ export function PortfoliosGrid({
 
   return (
     <Grid cols={4} gap="md">
-      {portfolios.map((portfolio) => (
-        <Card
+      {portfolios.map((portfolio, index) => (
+        <div
           key={portfolio.id}
-          className="hover:shadow-md transition-all border border-border rounded-md hover:border-border-hover cursor-pointer"
-          onClick={() => onSelect?.(portfolio)}
+          className={`transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: `${index * 50}ms` }}
         >
+          <Card
+            className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-border rounded-md hover:border-primary/30 cursor-pointer hover-lift-glow"
+            onClick={() => onSelect?.(portfolio)}
+          >
           <CardContent className="p-3">
             <Stack direction="column" gap="xs">
               <div className="flex items-start justify-between gap-2">
@@ -135,6 +148,7 @@ export function PortfoliosGrid({
             </Stack>
           </CardContent>
         </Card>
+        </div>
       ))}
     </Grid>
   );

@@ -24,6 +24,22 @@ export interface SelectProps {
   required?: boolean;
 }
 
+/**
+ * Select component with brand styling.
+ * Uses Open Sans (body font) for text.
+ * Focus ring uses Secondary Purple color.
+ * 
+ * @example
+ * ```tsx
+ * <Select 
+ *   label="Country" 
+ *   items={[
+ *     { value: 'us', label: 'United States' },
+ *     { value: 'mx', label: 'Mexico' },
+ *   ]} 
+ * />
+ * ```
+ */
 export const Select = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   SelectProps
@@ -71,11 +87,11 @@ export const Select = React.forwardRef<
   const normalizedDefaultValue = defaultValue === '' ? undefined : defaultValue;
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
         <label 
           htmlFor={selectId}
-          className="block text-sm font-medium text-text"
+          className="block text-sm font-medium text-text font-body"
         >
           {label}
           {required && <span className="text-error ml-1" aria-label="required">*</span>}
@@ -92,24 +108,27 @@ export const Select = React.forwardRef<
         <SelectPrimitive.Trigger
           ref={ref}
           id={selectId}
-            className={cn(
-              'flex w-full items-center justify-between',
-              'px-3 py-2',
-              'bg-surface text-text',
-              'border rounded-md',
-              'text-sm',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
-              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-hover',
-              'transition-colors',
-              error ? 'border-error focus:border-error' : 'border-border focus:border-primary',
-              className
-            )}
+          className={cn(
+            'flex w-full items-center justify-between',
+            'px-3 py-2',
+            'bg-background text-text font-body',
+            'border rounded-md',
+            'text-sm',
+            // Focus styles - using Secondary Purple
+            'focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary',
+            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface',
+            'transition-all duration-150',
+            error 
+              ? 'border-error focus:border-error focus:ring-error/30' 
+              : 'border-border hover:border-border-hover',
+            className
+          )}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={cn(helperId, errorId)}
         >
           <SelectPrimitive.Value placeholder={placeholder} />
           <SelectPrimitive.Icon asChild>
-            <ChevronDown className="h-4 w-4 opacity-50" />
+            <ChevronDown className="h-4 w-4 text-text-muted" />
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
 
@@ -117,7 +136,7 @@ export const Select = React.forwardRef<
           <SelectPrimitive.Content
             className={cn(
               'relative z-[9999] max-h-96 min-w-[8rem] overflow-hidden rounded-md border',
-              'bg-surface shadow-lg border-border',
+              'bg-background shadow-lg border-border',
               'data-[state=open]:animate-in data-[state=closed]:animate-out',
               'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
               'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -127,22 +146,23 @@ export const Select = React.forwardRef<
             position="popper"
             sideOffset={4}
           >
-            <SelectPrimitive.Viewport className="p-1 bg-surface">
+            <SelectPrimitive.Viewport className="p-1 bg-background">
               {validItems.map((item) => (
                 <SelectPrimitive.Item
                   key={item.value}
                   value={item.value}
                   disabled={item.disabled}
                   className={cn(
-                    'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none',
-                    'bg-surface hover:bg-surface-hover focus:bg-surface-hover text-text',
+                    'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none font-body',
+                    'bg-background text-text',
+                    'hover:bg-secondary-subtle focus:bg-secondary-subtle',
                     'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-                    'data-[highlighted]:bg-surface-hover'
+                    'data-[highlighted]:bg-secondary-subtle data-[highlighted]:text-secondary'
                   )}
                 >
                   <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
                     <SelectPrimitive.ItemIndicator>
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="h-3.5 w-3.5 text-secondary" />
                     </SelectPrimitive.ItemIndicator>
                   </span>
                   <SelectPrimitive.ItemText>{item.label}</SelectPrimitive.ItemText>
@@ -154,13 +174,13 @@ export const Select = React.forwardRef<
       </SelectPrimitive.Root>
 
       {helperText && !error && (
-        <p id={helperId} className="text-sm text-text-secondary">
+        <p id={helperId} className="text-sm text-text-secondary font-body">
           {helperText}
         </p>
       )}
 
       {error && (
-        <p id={errorId} className="text-sm text-error" role="alert">
+        <p id={errorId} className="text-sm text-error font-body" role="alert">
           {error}
         </p>
       )}
@@ -169,8 +189,3 @@ export const Select = React.forwardRef<
 });
 
 Select.displayName = 'Select';
-
-
-
-
-

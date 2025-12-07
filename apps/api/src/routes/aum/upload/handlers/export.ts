@@ -4,43 +4,53 @@
  * AI_DECISION: Extraer handler de export a módulo separado
  * Justificación: Separar responsabilidades mejora mantenibilidad
  * Impacto: Código más organizado
+ * 
+ * AI_DECISION: Migrado a createAsyncHandler para headers personalizados y manejo automático de errores
+ * Justificación: Necesita headers Content-Type y Content-Disposition para CSV, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
 import type { Request, Response } from 'express';
 import { db, aumImportFiles, aumImportRows } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
-import { canAccessAumFile } from '../../../../auth/authorization';
+import { canAccessAumFile } from '@/auth/authorization';
 import type { AumImportRow, ContactResult } from '../types';
+import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/uploads/:fileId/export
  * Export rows from uploaded file as CSV
+ * 
+ * Params están validados por middleware validate() con aumFileIdParamsSchema
  */
-export async function handleExport(req: Request, res: Response) {
-  try {
-    const { fileId } = req.params;
-    const userId = req.user?.id as string;
-    const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
+export const handleExport = createAsyncHandler(async (req: Request, res: Response) => {
+  // req.params ya está validado y tipado por el middleware validate()
+  const { fileId } = req.params;
+  const userId = req.user?.id as string;
+  const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
 
-    if (!userId || !userRole) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+  if (!userId || !userRole) {
+    throw new HttpError(401, 'Unauthorized');
+  }
 
-    // Verify user has access to this file
-    const hasAccess = await canAccessAumFile(userId, userRole, fileId);
-    if (!hasAccess) {
-      return res.status(404).json({ error: 'File not found' });
-    }
+  // Verify user has access to this file
+  const hasAccess = await canAccessAumFile(userId, userRole, fileId);
+  if (!hasAccess) {
+    throw new HttpError(404, 'File not found');
+  }
 
-    const dbi = db();
-    const [file] = await dbi
-      .select()
-      .from(aumImportFiles)
-      .where(eq(aumImportFiles.id, fileId))
-      .limit(1);
-    if (!file) return res.status(404).json({ error: 'File not found' });
+  const dbi = db();
+  const [file] = await dbi
+    .select()
+    .from(aumImportFiles)
+    .where(eq(aumImportFiles.id, fileId))
+    .limit(1);
+  
+  if (!file) {
+    throw new HttpError(404, 'File not found');
+  }
 
-    const rows = await dbi.select().from(aumImportRows).where(eq(aumImportRows.fileId, fileId));
+  const rows = await dbi.select().from(aumImportRows).where(eq(aumImportRows.fileId, fileId));
 
     const headers = [
       'account_number',
@@ -94,12 +104,13 @@ export async function handleExport(req: Request, res: Response) {
       csvLines.push(escaped.join(','));
     }
 
-    const csv = csvLines.join('\n');
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename=aup_export_${fileId}.csv`);
-    return res.send(csv);
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'AUM export failed');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  const csv = csvLines.join('\n');
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=aup_export_${fileId}.csv`);
+  return res.send(csv);
+});
+
+
+
+
+

@@ -163,7 +163,7 @@ describe('api-hooks', () => {
 
       expect(result.current.stages).toEqual(mockData.data);
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/pipeline/stages`,
+        `${API_BASE_URL}/v1/pipeline/stages`,
         expect.any(Function),
         expect.objectContaining({
           dedupingInterval: 30000
@@ -204,7 +204,7 @@ describe('api-hooks', () => {
 
       expect(result.current.advisors).toEqual(mockData.data);
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/users/advisors`,
+        `${API_BASE_URL}/v1/users/advisors`,
         expect.any(Function),
         expect.objectContaining({
           dedupingInterval: 30000
@@ -300,7 +300,7 @@ describe('api-hooks', () => {
       renderHook(() => useBrokerAccounts('contact-123'));
 
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/broker-accounts?contactId=contact-123`,
+        `${API_BASE_URL}/v1/broker-accounts?contactId=contact-123`,
         expect.any(Function),
         expect.any(Object)
       );
@@ -338,7 +338,7 @@ describe('api-hooks', () => {
       renderHook(() => useTasks('contact-123'));
 
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/tasks?contactId=contact-123`,
+        `${API_BASE_URL}/v1/tasks?contactId=contact-123`,
         expect.any(Function),
         expect.any(Object)
       );
@@ -357,7 +357,7 @@ describe('api-hooks', () => {
       renderHook(() => useNotes('contact-123'));
 
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/notes?contactId=contact-123`,
+        `${API_BASE_URL}/v1/notes?contactId=contact-123`,
         expect.any(Function),
         expect.any(Object)
       );

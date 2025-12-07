@@ -9,6 +9,7 @@ import type { AssetType, Currency } from './common';
  * Instrumento base - extiende TimestampedEntity
  */
 export interface Instrument extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   symbol: string;
   name: string;
   type: AssetType;
@@ -59,6 +60,7 @@ export interface CreateInstrumentResponse {
  * Snapshot de precio
  */
 export interface PriceSnapshot extends BaseEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   instrumentId: string;
   symbol: string;
   closePrice: string | null;

@@ -7,7 +7,7 @@ import { cn } from '../../utils/cn';
  */
 export interface AlertProps {
   /** Visual variant of the alert */
-  variant?: 'info' | 'success' | 'warning' | 'error';
+  variant?: 'info' | 'success' | 'warning' | 'error' | 'secondary';
   /** Optional title displayed above the alert content */
   title?: string;
   /** Alert content */
@@ -21,37 +21,43 @@ export interface AlertProps {
 const variantConfig = {
   info: {
     icon: 'info' as IconName,
-    className: 'border-accent-base bg-accent-subtle text-accent-text',
-    iconClassName: 'text-accent-base'
+    className: 'border-info bg-info-subtle text-text',
+    iconClassName: 'text-info'
   },
   success: {
     icon: 'check-circle' as IconName,
-    className: 'border-success-base bg-success-subtle text-success-text',
-    iconClassName: 'text-success-base'
+    className: 'border-success bg-success-subtle text-text',
+    iconClassName: 'text-success'
   },
   warning: {
     icon: 'alert-circle' as IconName,
-    className: 'border-warning-base bg-warning-subtle text-warning-text',
-    iconClassName: 'text-warning-base'
+    className: 'border-warning bg-warning-subtle text-text',
+    iconClassName: 'text-warning'
   },
   error: {
     icon: 'x-circle' as IconName,
-    className: 'border-error-base bg-error-subtle text-error-text',
-    iconClassName: 'text-error-base'
+    className: 'border-error bg-error-subtle text-text',
+    iconClassName: 'text-error'
+  },
+  secondary: {
+    icon: 'info' as IconName,
+    className: 'border-secondary bg-secondary-subtle text-text',
+    iconClassName: 'text-secondary'
   }
 };
 
 /**
- * Alert component for displaying informational, success, warning, or error messages
- * 
- * @param props - Alert component props
- * @param ref - Forwarded ref to the alert container element
- * @returns Alert component with appropriate styling and icon based on variant
+ * Alert component for displaying informational, success, warning, or error messages.
+ * Uses Open Sans (body font) for content and Poppins (display font) for titles.
  * 
  * @example
  * ```tsx
  * <Alert variant="error" title="Error">
  *   Something went wrong
+ * </Alert>
+ * 
+ * <Alert variant="secondary" title="New Feature">
+ *   Check out our latest update!
  * </Alert>
  * ```
  */
@@ -64,7 +70,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         ref={ref}
         role="alert"
         className={cn(
-          'relative w-full rounded-lg border p-4',
+          'relative w-full rounded-lg border p-4 font-body',
           config.className,
           className
         )}
@@ -80,7 +86,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
           )}
           <div className="flex-1">
             {title && (
-              <h4 className="mb-1 text-sm font-medium leading-none">
+              <h4 className="mb-1 text-sm font-semibold leading-none font-display">
                 {title}
               </h4>
             )}
@@ -98,10 +104,6 @@ Alert.displayName = 'Alert';
 
 /**
  * Alert Title component - displays a title within an alert
- * 
- * @param props - Standard HTML heading attributes
- * @param ref - Forwarded ref to the heading element
- * @returns Styled heading element for alert titles
  */
 export const AlertTitle = React.forwardRef<
   HTMLHeadingElement,
@@ -109,7 +111,7 @@ export const AlertTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn('mb-1 font-medium leading-none tracking-tight', className)}
+    className={cn('mb-1 font-semibold leading-none tracking-tight font-display', className)}
     {...props}
   />
 ));
@@ -118,10 +120,6 @@ AlertTitle.displayName = 'AlertTitle';
 
 /**
  * Alert Description component - displays description text within an alert
- * 
- * @param props - Standard HTML div attributes
- * @param ref - Forwarded ref to the div element
- * @returns Styled div element for alert descriptions
  */
 export const AlertDescription = React.forwardRef<
   HTMLDivElement,
@@ -129,14 +127,9 @@ export const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('text-sm [&_p]:leading-relaxed', className)}
+    className={cn('text-sm [&_p]:leading-relaxed font-body', className)}
     {...props}
   />
 ));
 
 AlertDescription.displayName = 'AlertDescription';
-
-
-
-
-

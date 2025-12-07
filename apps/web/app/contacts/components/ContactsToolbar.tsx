@@ -7,7 +7,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Button, Input, Badge, Icon, Spinner } from '@cactus/ui';
+import { Button, Badge, Icon, Spinner } from '@cactus/ui';
+import SearchAutocomplete from './SearchAutocomplete';
 import type { PipelineStage, Tag, Advisor } from '@/types';
 
 // Lazy load FiltersDropdown
@@ -63,19 +64,18 @@ export default function ContactsToolbar({
   const hasActiveFilters = selectedStage !== 'all' || selectedTags.length > 0 || searchTerm || advisorIdFilter;
 
   return (
-    <div className="sticky top-0 z-10 bg-white border border-neutral-200 rounded-md shadow-sm">
+    <div className="sticky top-0 z-10 bg-surface border border-border rounded-md shadow-sm">
       <div className="p-2 md:p-3">
         <div className="flex flex-col gap-2">
           {/* First row: Controls */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Search input */}
-            <div className="relative w-[200px] shrink-0">
-              <Input
-                ref={searchInputRef}
+            {/* Search input with autocomplete */}
+            <div className="relative w-[220px] shrink-0">
+              <SearchAutocomplete
+                inputRef={searchInputRef}
                 placeholder="Buscar contactos... (Ctrl+K)"
                 value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                leftIcon="search"
+                onChange={onSearchChange}
                 size="sm"
                 className="w-full"
               />
@@ -93,13 +93,13 @@ export default function ContactsToolbar({
             />
 
             {/* View mode toggle */}
-            <div className="shrink-0 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50 p-0.5">
+            <div className="shrink-0 flex items-center border border-border rounded-md overflow-hidden bg-surface-hover p-0.5">
               <button
                 onClick={() => onViewModeChange('table')}
                 className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-all rounded ${
                   viewMode === 'table'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-surface text-primary shadow-sm'
+                    : 'text-text-secondary hover:text-text'
                 }`}
                 aria-pressed={viewMode === 'table'}
                 aria-label="Vista de tabla"
@@ -107,13 +107,13 @@ export default function ContactsToolbar({
                 <Icon name="list" size={14} />
                 <span className="hidden sm:inline">Tabla</span>
               </button>
-              <div className="w-px h-4 bg-gray-300 mx-0.5" aria-hidden="true" />
+              <div className="w-px h-4 bg-border mx-0.5" aria-hidden="true" />
               <button
                 onClick={() => onViewModeChange('kanban')}
                 className={`px-2 py-1 text-xs font-medium flex items-center gap-1 transition-all rounded ${
                   viewMode === 'kanban'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-surface text-primary shadow-sm'
+                    : 'text-text-secondary hover:text-text'
                 }`}
                 aria-pressed={viewMode === 'kanban'}
                 aria-label="Vista kanban"
@@ -154,7 +154,7 @@ export default function ContactsToolbar({
 
           {/* Second row: Active filter chips */}
           {hasActiveFilters && (
-            <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-gray-200">
+            <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-border">
               {advisorIdFilter && filteredAdvisor && (
                 <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs">
                   Asesor: {filteredAdvisor?.fullName || filteredAdvisor?.email || 'Desconocido'}

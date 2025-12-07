@@ -11,69 +11,69 @@ import { ApiError, createApiErrorFromResponse } from './api-error';
 
 describe('ApiError', () => {
   it('debería crear error con status y message', () => {
-    const error = new ApiError(404, 'Not found');
+    const error = new ApiError('Not found', 404);
     expect(error.status).toBe(404);
     expect(error.message).toBe('Not found');
     expect(error.name).toBe('ApiError');
   });
 
   it('debería usar statusText por defecto cuando no se proporciona', () => {
-    const error = new ApiError(404, 'Not found');
+    const error = new ApiError('Not found', 404);
     expect(error.statusText).toBe('Not Found');
   });
 
   it('debería usar statusText personalizado cuando se proporciona', () => {
-    const error = new ApiError(404, 'Not found', { statusText: 'Custom Status' });
+    const error = new ApiError('Not found', 404, { statusText: 'Custom Status' });
     expect(error.statusText).toBe('Custom Status');
   });
 
   it('debería incluir details cuando se proporcionan', () => {
-    const error = new ApiError(400, 'Validation error', {
+    const error = new ApiError('Validation error', 400, {
       details: ['Field 1 is required', 'Field 2 is invalid']
     });
     expect(error.details).toEqual(['Field 1 is required', 'Field 2 is invalid']);
   });
 
   it('debería determinar si es error de autenticación', () => {
-    const error = new ApiError(401, 'Unauthorized');
+    const error = new ApiError('Unauthorized', 401);
     expect(error.isAuthError).toBe(true);
   });
 
   it('debería determinar si es error de permisos', () => {
-    const error = new ApiError(403, 'Forbidden');
+    const error = new ApiError('Forbidden', 403);
     expect(error.isForbiddenError).toBe(true);
   });
 
   it('debería determinar si es error de validación', () => {
-    const error400 = new ApiError(400, 'Bad Request');
-    const error422 = new ApiError(422, 'Unprocessable Entity');
+    const error400 = new ApiError('Bad Request', 400);
+    const error422 = new ApiError('Unprocessable Entity', 422);
     expect(error400.isValidationError).toBe(true);
     expect(error422.isValidationError).toBe(true);
   });
 
   it('debería determinar si es error del servidor', () => {
-    const error500 = new ApiError(500, 'Internal Server Error');
-    const error502 = new ApiError(502, 'Bad Gateway');
+    const error500 = new ApiError('Internal Server Error', 500);
+    const error502 = new ApiError('Bad Gateway', 502);
     expect(error500.isServerError).toBe(true);
     expect(error502.isServerError).toBe(true);
   });
 
   it('debería generar mensaje amigable para usuario', () => {
-    const authError = new ApiError(401, 'Unauthorized');
+    const authError = new ApiError('Unauthorized', 401);
     expect(authError.userMessage).toBe('Sesión expirada. Por favor, inicia sesión nuevamente.');
 
-    const forbiddenError = new ApiError(403, 'Forbidden');
+    const forbiddenError = new ApiError('Forbidden', 403);
     expect(forbiddenError.userMessage).toBe('No tienes permisos para realizar esta acción.');
 
-    const validationError = new ApiError(400, 'Validation error');
+    const validationError = new ApiError('Validation error', 400);
     expect(validationError.userMessage).toBe('Validation error');
 
-    const serverError = new ApiError(500, 'Internal Server Error');
+    const serverError = new ApiError('Internal Server Error', 500);
     expect(serverError.userMessage).toBe('Error en el servidor. Por favor, intenta nuevamente más tarde.');
   });
 
   it('debería serializar a JSON correctamente', () => {
-    const error = new ApiError(404, 'Not found', {
+    const error = new ApiError('Not found', 404, {
       details: 'Resource not found',
       timestamp: '2024-01-01T00:00:00Z'
     });

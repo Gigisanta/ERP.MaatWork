@@ -55,10 +55,14 @@ export default async function AnalyticsPage() {
   }
 
   return (
-    <main className="p-4 max-w-[1400px] mx-auto">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-6">
-        <div className="flex gap-4 items-center">
-          <Link href="/home" className="text-info hover:underline">
+        <div className="flex flex-wrap items-center gap-4">
+          <Link 
+            href="/home" 
+            className="text-info hover:underline transition-colors text-sm"
+          >
             ← Volver al inicio
           </Link>
           <span className="text-text-muted">|</span>
@@ -68,8 +72,9 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Error state */}
       {error && (
-        <div className="p-4 bg-error-subtle border border-error-subtle rounded-lg text-error">
+        <div className="p-4 bg-error-subtle border border-error rounded-lg text-error mb-6">
           Error: {error}
         </div>
       )}

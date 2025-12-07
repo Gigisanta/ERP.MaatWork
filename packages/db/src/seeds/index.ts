@@ -3,22 +3,55 @@
  * 
  * Coordinates all seed modules to populate the database with test data.
  * Modular structure allows running individual seeds or the full suite.
+ * 
+ * AI_DECISION: Eliminar barrel exports (export *) para mejorar tree-shaking
+ * Justificación: Los barrel exports rompen tree-shaking y aumentan el bundle size
+ * Impacto: Mejor optimización de bundle, imports más explícitos
  */
 
-// Re-export all seed modules for individual use
-export * from './helpers';
-export * from './dependencies';
-export * from './users';
-export * from './teams';
-export * from './contacts';
-export * from './tags';
-export * from './tasks-notes';
-export * from './portfolios';
-export * from './broker-data';
-export * from './notifications';
-export * from './activity-events';
-export * from './capacitaciones';
-export * from './segments';
+// ==========================================================
+// Helper Functions
+// ==========================================================
+export {
+  getRandomElement,
+  getRandomElements,
+  getRandomDate,
+  getRandomDateOnly,
+  ARGENTINE_FIRST_NAMES,
+  ARGENTINE_LAST_NAMES,
+  generateRandomName,
+  generateRandomEmail,
+  generateRandomPhone,
+  generateRandomDNI,
+  hashPassword
+} from './helpers';
+
+// ==========================================================
+// Dependencies (Lookup Tables & Pipeline Stages)
+// ==========================================================
+export {
+  seedAssetClasses,
+  seedTaskStatuses,
+  seedPriorities,
+  seedNotificationTypes,
+  seedPipelineStages,
+  ensureDependencies
+} from './dependencies';
+
+// ==========================================================
+// Seed Functions
+// ==========================================================
+export { seedUsers } from './users';
+export { seedTeams } from './teams';
+export { seedContacts } from './contacts';
+export { seedTags } from './tags';
+export { seedTasks, seedNotes } from './tasks-notes';
+export { seedPortfolios } from './portfolios';
+export { seedBrokerData } from './broker-data';
+export { seedNotifications } from './notifications';
+export { seedActivityEvents } from './activity-events';
+export { seedCapacitaciones } from './capacitaciones';
+export { seedSegments } from './segments';
 
 // Import for orchestration
 import { ensureDependencies } from './dependencies';

@@ -77,10 +77,10 @@ function AumTableRowComponent({
   const showEditButton = !row.advisorRaw || !row.matchedUserId;
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50">
+    <tr className="border-b border-border hover:bg-surface-hover">
       {/* Comitente */}
       <td
-        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.ACCOUNT}px` }}
       >
         <div className="truncate" title={row.accountNumber || ''}>
@@ -90,7 +90,7 @@ function AumTableRowComponent({
 
       {/* ID Cuenta */}
       <td
-        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.ID_CUENTA}px` }}
       >
         <div className="truncate" title={row.idCuenta || ''}>
@@ -100,7 +100,7 @@ function AumTableRowComponent({
 
       {/* Holder Name */}
       <td
-        className="px-3 py-2 text-sm text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.HOLDER}px` }}
       >
         <div className="truncate" title={row.holderName || ''}>
@@ -110,7 +110,7 @@ function AumTableRowComponent({
 
       {/* Asesor */}
       <td
-        className="px-3 py-2 text-sm text-gray-900 overflow-hidden group relative"
+        className="px-3 py-2 text-sm text-text overflow-hidden group relative"
         style={{ width: `${COLUMN_WIDTHS.ADVISOR}px` }}
       >
         {isEditingAdvisor ? (
@@ -163,7 +163,7 @@ function AumTableRowComponent({
 
       {/* AUM USD */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.AUM_DOLLARS}px` }}
       >
         {formatNumber(row.aumDollars)}
@@ -171,7 +171,7 @@ function AumTableRowComponent({
 
       {/* Bolsa Arg */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.BOLSA_ARG}px` }}
       >
         {formatNumber(row.bolsaArg)}
@@ -179,7 +179,7 @@ function AumTableRowComponent({
 
       {/* Fondos Arg */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.FONDOS_ARG}px` }}
       >
         {formatNumber(row.fondosArg)}
@@ -187,7 +187,7 @@ function AumTableRowComponent({
 
       {/* Bolsa BCI */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.BOLSA_BCI}px` }}
       >
         {formatNumber(row.bolsaBci)}
@@ -195,7 +195,7 @@ function AumTableRowComponent({
 
       {/* Pesos */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.PESOS}px` }}
       >
         {formatNumber(row.pesos)}
@@ -203,7 +203,7 @@ function AumTableRowComponent({
 
       {/* MEP */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.MEP}px` }}
       >
         {formatNumber(row.mep)}
@@ -211,7 +211,7 @@ function AumTableRowComponent({
 
       {/* Cable */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.CABLE}px` }}
       >
         {formatNumber(row.cable)}
@@ -219,7 +219,7 @@ function AumTableRowComponent({
 
       {/* CV7000 */}
       <td
-        className="px-3 py-2 text-sm text-right text-gray-900 overflow-hidden"
+        className="px-3 py-2 text-sm text-right text-text overflow-hidden"
         style={{ width: `${COLUMN_WIDTHS.CV7000}px` }}
       >
         {formatNumber(row.cv7000)}

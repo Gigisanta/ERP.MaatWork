@@ -2,7 +2,7 @@
  * Tipos relacionados con teams/equipos
  */
 
-import type { TimestampedEntity } from './common';
+import type { TimestampedEntity } from '@cactus/types/common';
 import type { User } from './auth';
 
 /**
@@ -14,6 +14,8 @@ export type TeamMemberRole = 'member' | 'lead';
  * Equipo base - extiende TimestampedEntity
  */
 export interface Team extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
+  createdAt: string | Date; // Explicitly include createdAt from TimestampedEntity for TypeScript resolution
   name: string;
   managerUserId: string;
   calendarUrl?: string | null;
@@ -48,6 +50,8 @@ export type MembershipRequestStatus = 'pending' | 'accepted' | 'rejected';
  * Solicitud de membresía a equipo - extiende TimestampedEntity
  */
 export interface MembershipRequest extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
+  createdAt: string | Date; // Explicitly include createdAt from TimestampedEntity for TypeScript resolution
   teamId: string;
   userId: string;
   requestedBy: string;
@@ -65,6 +69,8 @@ export type TeamInvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expire
  * Invitación a equipo - extiende TimestampedEntity
  */
 export interface TeamInvitation extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
+  createdAt: string | Date; // Explicitly include createdAt from TimestampedEntity for TypeScript resolution
   teamId: string;
   invitedBy: string;
   invitedUserId?: string;

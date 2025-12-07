@@ -26,7 +26,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom/vitest"]
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "node"]
   },
   "include": ["src/**/*", "src/tailwind-preset.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
   "exclude": [

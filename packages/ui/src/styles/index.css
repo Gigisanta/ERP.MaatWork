@@ -1,55 +1,412 @@
-/* Estilos básicos para el paquete UI */
+/* =============================================================================
+   Maat Design System v2.0 - Base Styles
+   Typography: Poppins (Display) + Open Sans (Body)
+   Colors: Primary #5900FF (Purple), Secondary #000000 (Black), Accent #00E676
+   ============================================================================= */
+
+/* Import animation utilities */
+@import './animations.css';
+
+/* -----------------------------------------------------------------------------
+   CSS Custom Properties (Design Tokens)
+   ----------------------------------------------------------------------------- */
+:root {
+  /* Brand Colors - Primary (Purple - Action, Highlights) */
+  --color-primary: #5900ff;
+  --color-primary-hover: #4700cc;
+  --color-primary-active: #3600a3;
+  --color-primary-light: #771eff;
+  --color-primary-subtle: #f3e8ff;
+
+  /* Brand Colors - Secondary (Black - Professional, Base) */
+  --color-secondary: #000000;
+  --color-secondary-hover: #1e1e1e;
+  --color-secondary-light: #3c3c3c;
+  --color-secondary-subtle: #f5f5f5;
+
+  /* Brand Colors - Accent (Green) */
+  --color-accent: #00e676;
+  --color-accent-hover: #00c858;
+  --color-accent-light: #3cffb2;
+  --color-accent-subtle: #e8fff3;
+
+  /* Semantic Colors */
+  --color-success: #4caf50;
+  --color-success-hover: #43a047;
+  --color-success-subtle: #e8f5e9;
+
+  --color-warning: #ffc107;
+  --color-warning-hover: #ffb300;
+  --color-warning-subtle: #fff8e1;
+
+  --color-error: #f44336;
+  --color-error-hover: #e53935;
+  --color-error-subtle: #ffebee;
+
+  --color-info: #2196f3;
+  --color-info-hover: #1976d2;
+  --color-info-subtle: #e3f2fd;
+
+  /* Surface Colors */
+  --color-background: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-hover: #f5f5f5;
+
+  /* Border Colors */
+  --color-border: #e0e0e0;
+  --color-border-hover: #bdbdbd;
+
+  /* Text Colors */
+  --color-text: #000000;
+  --color-text-secondary: #424242;
+  --color-text-muted: #757575;
+  --color-text-inverse: #ffffff;
+
+  /* Chart Colors */
+  --color-chart-1: #5900ff;
+  --color-chart-2: #00e676;
+  --color-chart-3: #ffc107;
+  --color-chart-4: #f44336;
+  --color-chart-5: #2196f3;
+  --color-chart-6: #9c27b0;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-primary: 0 4px 14px 0 rgba(89, 0, 255, 0.25);
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 100ms;
+  --transition-base: 150ms;
+  --transition-slow: 300ms;
+}
+
+/* Dark Mode - Supports both .dark class and data-theme attribute */
+.dark,
+[data-theme="dark"] {
+  --color-primary: #771eff;
+  --color-primary-hover: #953cff;
+  --color-primary-active: #b77fff;
+  --color-primary-light: #c9a0ff;
+  --color-primary-subtle: #1a0033;
+
+  --color-secondary: #ffffff;
+  --color-secondary-hover: #e0e0e0;
+  --color-secondary-light: #bdbdbd;
+  --color-secondary-subtle: #2d2d2d;
+
+  --color-accent: #00e676;
+  --color-accent-hover: #3cffb2;
+  --color-accent-light: #88ffcc;
+  --color-accent-subtle: #002211;
+
+  --color-success: #66bb6a;
+  --color-success-hover: #81c784;
+  --color-success-subtle: #1b3d1c;
+
+  --color-warning: #ffca28;
+  --color-warning-hover: #ffd54f;
+  --color-warning-subtle: #3d3000;
+
+  --color-error: #ef5350;
+  --color-error-hover: #e57373;
+  --color-error-subtle: #3d1414;
+
+  --color-info: #42a5f5;
+  --color-info-hover: #64b5f6;
+  --color-info-subtle: #0d2137;
+
+  --color-background: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-hover: #1e1e1e;
+
+  --color-border: #2d2d2d;
+  --color-border-hover: #424242;
+
+  --color-text: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #757575;
+  --color-text-inverse: #000000;
+
+  --shadow-primary: 0 4px 14px 0 rgba(119, 30, 255, 0.35);
+}
+
+/* -----------------------------------------------------------------------------
+   Base Button Styles
+   ----------------------------------------------------------------------------- */
 .cactus-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: colors 0.2s;
-}
-
-.cactus-button-primary {
-  background-color: #2563eb;
-  color: white;
-}
-
-.cactus-button-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.cactus-button-secondary {
-  background-color: #e5e7eb;
-  color: #111827;
-}
-
-.cactus-button-secondary:hover {
-  background-color: #d1d5db;
-}
-
-.cactus-card {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  padding: 1.5rem;
-}
-
-.cactus-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
   outline: none;
 }
 
-.cactus-input:focus {
-  outline: 2px solid #3b82f6;
+.cactus-button:focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-color: transparent;
 }
 
+.cactus-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cactus-button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-primary);
+}
+
+.cactus-button-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  box-shadow: 0 6px 20px 0 rgba(89, 0, 255, 0.35);
+}
+
+.cactus-button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text-inverse);
+}
+
+.cactus-button-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover);
+}
+
+.cactus-button-accent {
+  background-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.cactus-button-accent:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+.cactus-button-outline {
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.cactus-button-outline:hover:not(:disabled) {
+  background-color: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cactus-button-ghost {
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+.cactus-button-ghost:hover:not(:disabled) {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+/* -----------------------------------------------------------------------------
+   Card Styles
+   ----------------------------------------------------------------------------- */
+.cactus-card {
+  background-color: var(--color-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+}
+
+.cactus-card-elevated {
+  box-shadow: var(--shadow-md);
+  border: none;
+}
+
+.cactus-card-interactive {
+  transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cactus-card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--color-primary-subtle);
+}
+
+/* -----------------------------------------------------------------------------
+   Input Styles
+   ----------------------------------------------------------------------------- */
+.cactus-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cactus-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.cactus-input:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.cactus-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.cactus-input:disabled {
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.cactus-input-error {
+  border-color: var(--color-error);
+}
+
+.cactus-input-error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px var(--color-error-subtle);
+}
+
+/* -----------------------------------------------------------------------------
+   Label Styles
+   ----------------------------------------------------------------------------- */
 .cactus-label {
   display: block;
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.25rem;
+  color: var(--color-text);
+  margin-bottom: 0.375rem;
+}
+
+.cactus-label-required::after {
+  content: ' *';
+  color: var(--color-error);
+}
+
+/* -----------------------------------------------------------------------------
+   Badge Styles
+   ----------------------------------------------------------------------------- */
+.cactus-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.cactus-badge-primary {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.cactus-badge-secondary {
+  background-color: var(--color-secondary-subtle);
+  color: var(--color-secondary);
+}
+
+.cactus-badge-accent {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent-hover);
+}
+
+.cactus-badge-success {
+  background-color: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.cactus-badge-warning {
+  background-color: var(--color-warning-subtle);
+  color: #b45309;
+}
+
+.cactus-badge-error {
+  background-color: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+/* -----------------------------------------------------------------------------
+   Utility Classes
+   ----------------------------------------------------------------------------- */
+.font-display {
+  font-family: var(--font-display), 'Poppins', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
+}
+
+/* Heading utilities with Poppins */
+.heading-display {
+  font-family: var(--font-display), 'Poppins', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.heading-display-xl {
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.heading-display-lg {
+  font-size: 2.25rem;
+  line-height: 1.2;
+}
+
+.heading-display-md {
+  font-size: 1.875rem;
+  line-height: 1.25;
+}
+
+.heading-display-sm {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.heading-display-xs {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+/* Text utilities with Open Sans */
+.text-body {
+  font-family: var(--font-body), 'Open Sans', system-ui, sans-serif;
+  color: var(--color-text);
+}
+
+.text-body-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-body-muted {
+  color: var(--color-text-muted);
 }

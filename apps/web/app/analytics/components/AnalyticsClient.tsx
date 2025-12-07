@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import type { DashboardData } from '@/types';
@@ -84,24 +85,37 @@ const formatNumber = (value: number): string => {
 export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps) {
   const { role, kpis, aumTrend, riskDistribution, topClients } = dashboardData;
 
+  // Animation state for page transitions
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Calcular totales de distribución de riesgo para porcentajes
   const totalRiskCount = riskDistribution?.reduce((acc, item) => acc + item.count, 0) || 0;
 
   return (
     <div className="flex flex-col gap-6">
       {/* Cards de KPIs principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div 
+        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '50ms' }}
+      >
         {/* KPIs para ADVISOR */}
         {role === 'advisor' && (
           <>
-            <div className="p-5 bg-info-subtle border border-info-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-info/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-info mb-2">AUM Total Clientes</h3>
               <div className="text-2xl font-bold text-info">
                 {formatCurrency(Number(kpis.totalAUM || kpis.totalAum || 0))}
               </div>
             </div>
 
-            <div className="p-5 bg-success-subtle border border-success-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-success/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-success mb-2">Clientes con Cartera</h3>
               <div className="text-2xl font-bold text-success">
                 {kpis.clientsWithPortfolio || kpis.portfolioCount || 0}
@@ -109,11 +123,11 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
             </div>
 
             <div
-              className={`p-5 rounded-xl text-center ${
+              className={`p-5 bg-surface border rounded-xl text-center transition-all ${
                 kpis.deviationAlerts && kpis.deviationAlerts > 0
-                  ? 'bg-error-subtle border border-error-subtle'
-                  : 'bg-success-subtle border border-success-subtle'
-              }`}
+                  ? 'border-error/30 hover:border-error/50'
+                  : 'border-border hover:border-success/30'
+              } hover:shadow-sm`}
             >
               <h3
                 className={`text-sm font-semibold mb-2 ${
@@ -136,7 +150,7 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
         {/* KPIs para MANAGER */}
         {role === 'manager' && (
           <>
-            <div className="p-5 bg-info-subtle border border-info-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-info/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-info mb-2">AUM Total Equipo</h3>
               <div className="text-2xl font-bold text-info">
                 {formatCurrency(Number(kpis.teamAUM || kpis.teamAum || 0))}
@@ -144,14 +158,14 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
             </div>
 
             {riskDistribution && riskDistribution.length > 0 && (
-              <div className="p-5 bg-warning-subtle border border-warning-subtle rounded-xl">
+              <div className="p-5 bg-surface border border-border rounded-xl hover:border-warning/30 hover:shadow-sm transition-all">
                 <h3 className="text-sm font-semibold text-warning mb-3 text-center">
                   Distribución de Riesgo
                 </h3>
                 <div className="flex flex-col gap-2">
                   {riskDistribution.map((item) => (
                     <div key={item.riskLevel} className="flex justify-between items-center">
-                      <span className="text-xs text-warning">
+                      <span className="text-xs text-text-secondary">
                         {getRiskLevelLabel(item.riskLevel)}
                       </span>
                       <span
@@ -174,26 +188,26 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
         {/* KPIs para ADMIN */}
         {role === 'admin' && (
           <>
-            <div className="p-5 bg-info-subtle border border-info-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-info/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-info mb-2">AUM Global</h3>
               <div className="text-2xl font-bold text-info">
                 {formatCurrency(Number(kpis.globalAum || kpis.totalAUM || 0))}
               </div>
             </div>
 
-            <div className="p-5 bg-success-subtle border border-success-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-success/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-success mb-2">Carteras Activas</h3>
               <div className="text-2xl font-bold text-success">{kpis.activeTemplates || 0}</div>
             </div>
 
-            <div className="p-5 bg-error-subtle border border-error-subtle rounded-xl text-center">
-              <h3 className="text-sm font-semibold text-error mb-2">Sin Cartera</h3>
-              <div className="text-2xl font-bold text-error">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-warning/30 hover:shadow-sm transition-all">
+              <h3 className="text-sm font-semibold text-warning mb-2">Sin Cartera</h3>
+              <div className="text-2xl font-bold text-warning">
                 {kpis.clientsWithoutPortfolio || 0}
               </div>
             </div>
 
-            <div className="p-5 bg-error-subtle border border-error-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-error/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-error mb-2">Sin Precio Actualizado</h3>
               <div className="text-2xl font-bold text-error">
                 {kpis.instrumentsWithoutPrice || 0}
@@ -205,33 +219,33 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
         {/* KPIs para OWNER - Vista ejecutiva completa de la agencia */}
         {role === 'owner' && (
           <>
-            <div className="p-5 bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/30 rounded-xl text-center shadow-sm">
-              <h3 className="text-sm font-semibold text-blue-600 mb-2">📊 AUM Global</h3>
-              <div className="text-2xl font-bold text-blue-700">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-info/30 hover:shadow-sm transition-all">
+              <h3 className="text-sm font-semibold text-info mb-2">📊 AUM Global</h3>
+              <div className="text-2xl font-bold text-info">
                 {formatCurrency(Number(kpis.globalAum || 0))}
               </div>
               <p className="text-xs text-text-muted mt-1">Total administrado</p>
             </div>
 
-            <div className="p-5 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/30 rounded-xl text-center shadow-sm">
-              <h3 className="text-sm font-semibold text-emerald-600 mb-2">👥 Total Clientes</h3>
-              <div className="text-2xl font-bold text-emerald-700">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-success/30 hover:shadow-sm transition-all">
+              <h3 className="text-sm font-semibold text-success mb-2">👥 Total Clientes</h3>
+              <div className="text-2xl font-bold text-success">
                 {formatNumber(kpis.totalClients || 0)}
               </div>
               <p className="text-xs text-text-muted mt-1">Activos en el sistema</p>
             </div>
 
-            <div className="p-5 bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/30 rounded-xl text-center shadow-sm">
-              <h3 className="text-sm font-semibold text-purple-600 mb-2">🎯 Asesores Activos</h3>
-              <div className="text-2xl font-bold text-purple-700">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-primary/30 hover:shadow-sm transition-all">
+              <h3 className="text-sm font-semibold text-primary mb-2">🎯 Asesores Activos</h3>
+              <div className="text-2xl font-bold text-primary">
                 {formatNumber(kpis.totalAdvisors || 0)}
               </div>
               <p className="text-xs text-text-muted mt-1">Operando actualmente</p>
             </div>
 
-            <div className="p-5 bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/30 rounded-xl text-center shadow-sm">
-              <h3 className="text-sm font-semibold text-orange-600 mb-2">🏢 Equipos</h3>
-              <div className="text-2xl font-bold text-orange-700">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-warning/30 hover:shadow-sm transition-all">
+              <h3 className="text-sm font-semibold text-warning mb-2">🏢 Equipos</h3>
+              <div className="text-2xl font-bold text-warning">
                 {formatNumber(kpis.totalTeams || 0)}
               </div>
               <p className="text-xs text-text-muted mt-1">Configurados</p>
@@ -242,28 +256,28 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
         {/* KPIs para STAFF */}
         {role === 'staff' && (
           <>
-            <div className="p-5 bg-info-subtle border border-info-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-info/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-info mb-2">AUM Global</h3>
               <div className="text-2xl font-bold text-info">
                 {formatCurrency(Number(kpis.globalAum || 0))}
               </div>
             </div>
 
-            <div className="p-5 bg-success-subtle border border-success-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-success/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-success mb-2">Total Clientes</h3>
               <div className="text-2xl font-bold text-success">
                 {formatNumber(kpis.totalClients || 0)}
               </div>
             </div>
 
-            <div className="p-5 bg-warning-subtle border border-warning-subtle rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:border-warning/30 hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-warning mb-2">Sin Cartera</h3>
               <div className="text-2xl font-bold text-warning">
                 {kpis.clientsWithoutPortfolio || 0}
               </div>
             </div>
 
-            <div className="p-5 bg-surface border border-border rounded-xl text-center">
+            <div className="p-5 bg-surface border border-border rounded-xl text-center hover:shadow-sm transition-all">
               <h3 className="text-sm font-semibold text-text-muted mb-2">Carteras Modelo</h3>
               <div className="text-2xl font-bold text-text">{kpis.activeTemplates || 0}</div>
             </div>
@@ -273,7 +287,12 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
 
       {/* Distribución de Riesgo para Owner - Vista visual */}
       {role === 'owner' && riskDistribution && riskDistribution.length > 0 && (
-        <div className="p-5 bg-surface border border-border rounded-xl shadow-sm">
+        <div 
+          className={`p-5 bg-surface border border-border rounded-xl shadow-sm transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '150ms' }}
+        >
           <h3 className="text-base font-semibold mb-4">
             Distribución de Perfiles de Riesgo - Toda la Agencia
           </h3>

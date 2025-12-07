@@ -1,20 +1,27 @@
 /**
  * Handler para obtener duplicados de filas AUM
+ * 
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '../../../../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '@/utils/aum-normalization';
 import type { AumRowResultDuplicate } from '../types';
+import { createRouteHandler } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/duplicates/:accountNumber
  * Get all rows with same account number
+ * 
+ * Params están validados por middleware validate() con aumAccountNumberParamsSchema
  */
-export async function getDuplicates(req: Request, res: Response) {
-  try {
-    const { accountNumber } = req.params;
+export const getDuplicates = createRouteHandler(async (req: Request) => {
+  // req.params ya está validado y tipado por el middleware validate()
+  const { accountNumber } = req.params;
     const dbi = db();
 
     const result = await dbi.execute(sql`
@@ -79,17 +86,17 @@ export async function getDuplicates(req: Request, res: Response) {
       })
     );
 
-    return res.json({
-      ok: true,
-      accountNumber,
-      rows,
-      hasConflicts: rows.some((r) => r.conflictDetected),
-    });
-  } catch (error) {
-    req.log?.error?.(
-      { err: error, accountNumber: req.params.accountNumber },
-      'failed to get duplicates'
-    );
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, accountNumber, rows, hasConflicts } para compatibilidad con frontend
+  return {
+    ok: true,
+    accountNumber,
+    rows,
+    hasConflicts: rows.some((r) => r.conflictDetected),
+  };
+});
+
+
+
+
+

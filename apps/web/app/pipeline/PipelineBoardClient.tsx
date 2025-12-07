@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { moveContactToStage } from '@/lib/api';
@@ -42,6 +42,15 @@ export default function PipelineBoardClient({ initialStages, initialError }: Pip
   const { stages, error, isLoading: dataLoading, mutate: mutateBoard } = usePipelineBoard(
     initialStages ? { data: initialStages, success: true } as ApiResponse<unknown[]> : undefined
   );
+  
+  // Animation state for page transitions
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+  
   const [draggingOverStageId, setDraggingOverStageId] = useState<string | null>(null);
   const [movingContactId, setMovingContactId] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
@@ -208,7 +217,7 @@ export default function PipelineBoardClient({ initialStages, initialError }: Pip
   }
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <Stack direction="column" gap="lg">
         {/* Alerts */}
         {displayError && (
@@ -238,21 +247,34 @@ export default function PipelineBoardClient({ initialStages, initialError }: Pip
               <EmptyState 
                 title="No hay etapas configuradas"
                 description="Configura las etapas del pipeline para comenzar a organizar tus contactos."
+                animated
+                floatingIcon
               />
             </CardContent>
           </Card>
         ) : (
-          <div className="flex gap-6 overflow-x-auto pb-4">
+          <div 
+            className={`flex gap-6 overflow-x-auto pb-4 transition-all duration-500 ease-out ${
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: '100ms' }}
+          >
             {Array.isArray(stages) && (stages as PipelineStage[])
               .sort((a: PipelineStage, b: PipelineStage) => a.order - b.order)
-              .map((stage: PipelineStage) => (
-                <Card 
+              .map((stage: PipelineStage, stageIndex: number) => (
+                <div
                   key={stage.id}
-                  className={`min-w-[280px] flex-shrink-0 ${
-                    draggingOverStageId === stage.id 
-                      ? 'ring-2 ring-accent-base bg-accent-subtle' 
-                      : ''
+                  className={`transition-all duration-500 ease-out ${
+                    mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
+                  style={{ transitionDelay: `${150 + stageIndex * 75}ms` }}
+                >
+                  <Card 
+                    className={`min-w-[280px] flex-shrink-0 hover-lift-glow ${
+                      draggingOverStageId === stage.id 
+                        ? 'ring-2 ring-accent-base bg-accent-subtle' 
+                        : ''
+                    }`}
                   onDragOver={(e) => handleDragOver(e, stage.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, stage.id)}
@@ -361,31 +383,39 @@ export default function PipelineBoardClient({ initialStages, initialError }: Pip
                     </Stack>
                   </CardContent>
                 </Card>
+                </div>
               ))}
           </div>
         )}
 
         {/* Stats */}
         {Array.isArray(stages) && stages.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Estadísticas del Pipeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {(stages as PipelineStage[]).map((stage: PipelineStage) => (
-                  <div key={stage.id} className="text-center">
-                    <Text size="lg" weight="bold" style={{ color: stage.color }}>
-                      {stage.currentCount}
-                    </Text>
-                    <Text size="sm" color="secondary">
-                      {stage.name}
-                    </Text>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div 
+            className={`transition-all duration-500 ease-out ${
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ transitionDelay: '300ms' }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Estadísticas del Pipeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {(stages as PipelineStage[]).map((stage: PipelineStage) => (
+                    <div key={stage.id} className="text-center">
+                      <Text size="lg" weight="bold" style={{ color: stage.color }}>
+                        {stage.currentCount}
+                      </Text>
+                      <Text size="sm" color="secondary">
+                        {stage.name}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </Stack>
       

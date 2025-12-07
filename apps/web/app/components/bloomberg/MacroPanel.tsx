@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Select, Spinner, Alert, Text, Stack, Heading, Tabs, TabsList, TabsTrigger, TabsContent } from '@cactus/ui';
 import { getMacroSeries, getMacroSeriesList } from '@/lib/api/bloomberg';
-import type { MacroSeriesPoint } from '@/lib/api/bloomberg';
+import type { MacroSeriesPoint, MacroSeriesListItem } from '@/lib/api/bloomberg';
 import {
   LineChart,
   Line,
@@ -30,7 +30,7 @@ interface MacroPanelProps {
 
 export default function MacroPanel({ className, height = 300 }: MacroPanelProps) {
   const [country, setCountry] = useState<'US' | 'AR'>('US');
-  const [seriesList, setSeriesList] = useState<any[]>([]);
+  const [seriesList, setSeriesList] = useState<MacroSeriesListItem[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [data, setData] = useState<MacroSeriesPoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +128,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
               value={selectedSeries || ''}
               onValueChange={(value) => setSelectedSeries(value)}
               items={seriesList.map(s => ({
-                value: s.series_id || s.seriesId || s.id || '',
+                value: String(s.series_id || s.seriesId || s.id || ''),
                 label: `${s.name} (${s.series_id || s.seriesId || s.id})`
               }))}
               placeholder="Select a macro series"
@@ -137,9 +137,9 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
             {selectedSeriesInfo && (
               <Stack direction="column" gap="xs">
                 <Heading level={4}>{selectedSeriesInfo.name}</Heading>
-                <Text size="sm" color="secondary">{selectedSeriesInfo.description || 'No description available'}</Text>
+                <Text size="sm" color="secondary">{String(selectedSeriesInfo.description || 'No description available')}</Text>
                 <Text size="xs" color="muted">
-                  Frequency: {selectedSeriesInfo.frequency} | Units: {selectedSeriesInfo.units || 'N/A'}
+                  Frequency: {String(selectedSeriesInfo.frequency || 'N/A')} | Units: {String(selectedSeriesInfo.units || 'N/A')}
                 </Text>
               </Stack>
             )}

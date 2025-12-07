@@ -3,7 +3,7 @@
  *
  * POST /contacts - Create new contact
  */
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { db, contacts, pipelineStageHistory, users } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
@@ -14,18 +14,24 @@ import { type Contact } from '../../types/contacts';
 import { getProspectoStageId } from '../../utils/pipeline-stages';
 import { contactsListCacheUtil } from '../../utils/cache';
 import { createContactSchema } from './schemas';
+import { invalidateCache } from '../../middleware/cache';
+import { createAsyncHandler } from '../../utils/route-handler';
 
 const router = Router();
 
 /**
  * POST /contacts - Create new contact
  */
+// AI_DECISION: Usar createAsyncHandler para manejar respuesta con campo adicional 'warning'
+// Justificación: createRouteHandler solo envuelve en { success: true, data: ... }, pero este endpoint
+// necesita retornar { success: true, data: ..., warning?: string } cuando hay advertencias de asignación
+// Impacto: Formato de respuesta consistente con otros endpoints pero con campo adicional opcional
 router.post(
   '/',
   requireAuth,
   requireWriteAccess, // Bloquear Owner (solo lectura)
   validate({ body: createContactSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
+  createAsyncHandler(async (req: Request, res: Response) => {
     const startTime = Date.now();
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -40,8 +46,7 @@ router.post(
       'Iniciando creación de contacto'
     );
 
-    try {
-      const validated = req.body;
+    const validated = req.body;
 
       // Auto-assign contacts to creator for ALL user roles
       let validatedAdvisorId = validated.assignedAdvisorId;
@@ -326,29 +331,19 @@ router.post(
         'Creación de contacto exitosa'
       );
 
+      // Invalidate caches
       contactsListCacheUtil.clear();
+      // Invalidate Redis cache for contacts and pipeline
+      await invalidateCache('crm:contacts:*');
+      await invalidateCache('crm:pipeline:*');
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         data: result,
         warning: advisorWarning,
+        requestId: req.requestId,
       });
-    } catch (err) {
-      const duration = Date.now() - startTime;
-
-      req.log.error(
-        {
-          err,
-          duration,
-          userId,
-          userRole,
-          action: 'create_contact',
-        },
-        'Error en creación de contacto'
-      );
-      next(err);
-    }
-  }
+  })
 );
 
 export default router;

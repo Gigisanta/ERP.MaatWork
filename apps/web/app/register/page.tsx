@@ -7,6 +7,7 @@ import { getManagers } from '@/lib/api';
 import { logger, toLogContext } from '../../lib/logger';
 import {
   Card,
+  CardHeader,
   CardContent,
   Heading,
   Text,
@@ -15,7 +16,7 @@ import {
   Button,
   Alert,
   Select,
-  SelectItem,
+  Spinner,
 } from '@cactus/ui';
 
 interface Manager {
@@ -30,6 +31,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Form data
   const [email, setEmail] = useState('');
@@ -42,6 +44,11 @@ export default function RegisterPage() {
   // Managers list
   const [managers, setManagers] = useState<Manager[]>([]);
   const [loadingManagers, setLoadingManagers] = useState(false);
+
+  // Trigger mount animation
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch managers when role is advisor
   useEffect(() => {
@@ -129,89 +136,190 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background-base">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8">
-            <Stack direction="column" gap="md" className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mx-auto mb-2">
-                <span className="text-3xl">✓</span>
-              </div>
-              <Heading level={2}>¡Registro exitoso!</Heading>
-              <Alert variant="warning" title="Pendiente de aprobación">
-                Tu cuenta ha sido creada pero necesita ser aprobada por un administrador antes de
-                que puedas iniciar sesión.
-              </Alert>
-              <Text size="sm" color="secondary">
-                Serás notificado cuando tu cuenta sea aprobada. Serás redirigido al login en unos
-                segundos...
-              </Text>
-            </Stack>
-          </CardContent>
-        </Card>
+      <div className="auth-page">
+        {/* Background elements */}
+        <div className="auth-gradient-bg" aria-hidden="true" />
+        <div className="auth-dot-pattern" aria-hidden="true" />
+
+        <div className="w-full max-w-md relative z-10">
+          <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
+            <CardContent className="p-8">
+              <Stack direction="column" gap="md" className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-subtle rounded-2xl mx-auto mb-2">
+                  <span className="text-3xl">✓</span>
+                </div>
+                <Heading level={2} className="text-secondary">¡Registro exitoso!</Heading>
+                <Alert variant="warning" title="Pendiente de aprobación">
+                  Tu cuenta ha sido creada pero necesita ser aprobada por un administrador antes de
+                  que puedas iniciar sesión.
+                </Alert>
+                <Text size="sm" color="secondary">
+                  Serás notificado cuando tu cuenta sea aprobada. Serás redirigido al login en unos
+                  segundos...
+                </Text>
+              </Stack>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background-base">
-      <Card className="w-full max-w-md">
-        <CardContent className="p-8">
-          <Stack direction="column" gap="lg">
+    <div className="auth-page">
+      {/* Animated gradient overlay */}
+      <div className="auth-gradient-bg" aria-hidden="true" />
+      
+      {/* Dot pattern overlay */}
+      <div className="auth-dot-pattern" aria-hidden="true" />
+
+      {/* Register card */}
+      <div 
+        className={`
+          w-full max-w-md relative z-10
+          transition-all duration-700 ease-out
+          ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+        `}
+      >
+        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
+          <CardHeader className="pb-2">
             <div className="text-center">
-              <Heading level={1} className="text-2xl font-bold">
-                🌵 CACTUS CRM
-              </Heading>
-              <Text size="sm" color="secondary" className="mt-2">
-                Crea tu cuenta para comenzar
-              </Text>
+              {/* Logo with animation */}
+              <div 
+                className={`
+                  inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4
+                  bg-primary shadow-lg shadow-primary/30
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'scale-100 rotate-0' : 'scale-50 -rotate-12'}
+                `}
+                style={{ transitionDelay: '200ms' }}
+              >
+                <span className="text-3xl">⚖️</span>
+              </div>
+              
+              {/* Title */}
+              <div 
+                className={`
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                `}
+                style={{ transitionDelay: '300ms' }}
+              >
+                <Heading level={1} className="text-secondary text-3xl tracking-tight">
+                  Maat
+                </Heading>
+              </div>
+              
+              <div 
+                className={`
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                `}
+                style={{ transitionDelay: '400ms' }}
+              >
+                <Text color="secondary" className="mt-2">
+                  Crea tu cuenta para comenzar
+                </Text>
+              </div>
             </div>
+          </CardHeader>
 
+          <CardContent className="pt-6">
             <form onSubmit={handleSubmit}>
-              <Stack direction="column" gap="md">
-                <Input
-                  label="Nombre de usuario"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="tu_usuario (a-z0-9._-, 3-20)"
-                  disabled={loading}
-                  autoFocus
-                />
+              <Stack direction="column" gap="lg">
+                {/* Username Input */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '450ms' }}
+                >
+                  <Input
+                    id="username"
+                    label="Nombre de usuario (opcional)"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="tu_usuario (a-z0-9._-, 3-20)"
+                    disabled={loading}
+                    autoFocus
+                  />
+                </div>
 
-                <Input
-                  label="Nombre completo"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Tu nombre completo"
-                  disabled={loading}
-                  required
-                />
+                {/* Full Name Input */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '500ms' }}
+                >
+                  <Input
+                    id="fullName"
+                    label="Nombre completo"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Tu nombre completo"
+                    disabled={loading}
+                    required
+                  />
+                </div>
 
-                <Input
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  disabled={loading}
-                  required
-                />
+                {/* Email Input */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '550ms' }}
+                >
+                  <Input
+                    id="email"
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    disabled={loading}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
 
-                <Input
-                  label="Contraseña"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  disabled={loading}
-                  required
-                  minLength={6}
-                  showPasswordToggle={true}
-                />
+                {/* Password Input */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '600ms' }}
+                >
+                  <Input
+                    id="password"
+                    label="Contraseña"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    disabled={loading}
+                    required
+                    minLength={6}
+                    showPasswordToggle={true}
+                    autoComplete="new-password"
+                  />
+                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground-base mb-2">Rol</label>
+                {/* Role Select */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '650ms' }}
+                >
+                  <label className="block text-sm font-medium text-text mb-2">Rol</label>
                   <Select
                     value={role}
                     onValueChange={(value) =>
@@ -237,9 +345,16 @@ export default function RegisterPage() {
                   )}
                 </div>
 
+                {/* Manager Select (only for advisors) */}
                 {role === 'advisor' && (
-                  <div>
-                    <label className="block text-sm font-medium text-foreground-base mb-2">
+                  <div 
+                    className={`
+                      transition-all duration-500 ease-out
+                      ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                    `}
+                    style={{ transitionDelay: '700ms' }}
+                  >
+                    <label className="block text-sm font-medium text-text mb-2">
                       Manager asignado
                     </label>
                     <Select
@@ -257,31 +372,91 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                {error && <Alert variant="error">{error}</Alert>}
+                {/* Error Alert */}
+                {error && (
+                  <div className="animate-fade-in">
+                    <Alert variant="error" title="Error de registro">
+                      {error}
+                    </Alert>
+                  </div>
+                )}
 
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={loading}
-                  className="w-full"
+                {/* Submit Button */}
+                <div 
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '750ms' }}
                 >
-                  {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-                </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={loading}
+                    className="w-full h-12 text-base font-semibold"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Spinner size="sm" variant="default" />
+                        Creando cuenta...
+                      </span>
+                    ) : (
+                      'Crear Cuenta'
+                    )}
+                  </Button>
+                </div>
               </Stack>
             </form>
 
-            <div className="text-center">
-              <Link
-                href="/login"
-                className="text-sm text-accent-base hover:text-accent-text transition-colors"
-              >
-                ¿Ya tienes cuenta? Inicia sesión
-              </Link>
+            {/* Divider */}
+            <div 
+              className={`
+                mt-8 pt-6 border-t border-border
+                transition-all duration-500 ease-out
+                ${mounted ? 'opacity-100' : 'opacity-0'}
+              `}
+              style={{ transitionDelay: '800ms' }}
+            >
+              {/* Login link */}
+              <div className="text-center space-y-4">
+                <div>
+                  <Text size="sm" color="secondary">
+                    ¿Ya tienes cuenta?{' '}
+                    <Link
+                      href="/login"
+                      className="text-primary hover:text-primary-hover font-semibold hover:underline transition-colors"
+                    >
+                      Inicia sesión
+                    </Link>
+                  </Text>
+                </div>
+                
+                <div>
+                  <Link 
+                    href="/home" 
+                    className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  >
+                    ← Volver al inicio
+                  </Link>
+                </div>
+              </div>
             </div>
-          </Stack>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Footer text */}
+        <div 
+          className={`
+            text-center mt-6 transition-all duration-500 ease-out
+            ${mounted ? 'opacity-100' : 'opacity-0'}
+          `}
+          style={{ transitionDelay: '900ms' }}
+        >
+          <Text size="xs" color="muted">
+            © 2024 Maat. Todos los derechos reservados.
+          </Text>
+        </div>
+      </div>
     </div>
   );
 }

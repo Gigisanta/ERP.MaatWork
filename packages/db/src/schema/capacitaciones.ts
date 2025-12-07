@@ -47,3 +47,30 @@ export const capacitaciones = pgTable(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

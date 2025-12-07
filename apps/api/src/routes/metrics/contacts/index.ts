@@ -85,7 +85,13 @@ router.get(
           },
           'Required pipeline stages not found'
         );
-        return res.status(500).json({ error: 'Pipeline stages not found' });
+        return res.status(500).json(
+          createErrorResponse({
+            error: new Error('Pipeline stages not found'),
+            requestId: req.requestId,
+            userMessage: 'Etapas de pipeline requeridas no encontradas'
+          })
+        );
       }
 
       const stageIds: PipelineStageIds = {
@@ -207,3 +213,8 @@ router.get(
 );
 
 export default router;
+
+
+
+
+

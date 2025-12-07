@@ -1,4 +1,5 @@
 pnpm exec lint-staged
 pnpm guard:artifacts
 pnpm typecheck --filter=@cactus/ui --filter=@cactus/db
+pnpm tsx scripts/pre-commit-checks.ts
 

@@ -7,6 +7,7 @@
 import { Router, type Request, type Response } from 'express';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { runDailyMaintenance, runWeeklyMaintenance, getMaintenanceStats } from '../jobs/maintenance';
+import { createErrorResponse } from '../utils/error-response';
 
 const router = Router();
 
@@ -27,7 +28,13 @@ router.get('/stats',
       });
     } catch (error) {
       req.log.error({ err: error }, 'Error fetching maintenance stats');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error obteniendo estadísticas de mantenimiento'
+        })
+      );
     }
   }
 );
@@ -50,7 +57,13 @@ router.post('/daily',
       });
     } catch (error) {
       req.log.error({ err: error }, 'Error running daily maintenance');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error ejecutando mantenimiento diario'
+        })
+      );
     }
   }
 );
@@ -73,7 +86,13 @@ router.post('/weekly',
       });
     } catch (error) {
       req.log.error({ err: error }, 'Error running weekly maintenance');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error ejecutando mantenimiento semanal'
+        })
+      );
     }
   }
 );

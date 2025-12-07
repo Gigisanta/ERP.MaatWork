@@ -8,6 +8,7 @@ import type { BaseEntity, CreateRequest } from './common';
  * Cuenta de broker - extiende BaseEntity (solo createdAt)
  */
 export interface BrokerAccount extends BaseEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   contactId: string;
   broker: string;
   accountNumber: string;

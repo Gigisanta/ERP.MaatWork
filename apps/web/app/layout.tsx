@@ -8,7 +8,7 @@ import { PageTitleProvider } from './components/PageTitleContext';
 import { ConditionalAnalytics } from './components/ConditionalAnalytics';
 import ServiceWorkerRegistration from './components/ServiceWorkerRegistration';
 import { ToastProvider } from '../lib/hooks/useToast';
-import { Inter } from 'next/font/google';
+import { Poppins, Open_Sans } from 'next/font/google';
 import dynamic from 'next/dynamic';
 // Styles from @cactus/ui - copied to local styles folder during build
 import '../styles/ui-styles.css';
@@ -19,14 +19,32 @@ import './globals.css';
 // Impacto: Smaller production bundle, faster initial load in production
 const DebugConsole = dynamic(() => import('./components/DebugConsole'), { ssr: false });
 
-// AI_DECISION: Use next/font/google for optimized font loading
-// Justificación: next/font automatically optimizes fonts, reduces FOUT, and improves performance
-// Impacto: Self-hosts fonts, eliminates external font requests, reduces layout shift
-const inter = Inter({
+// AI_DECISION: Keyboard shortcuts available globally with Cmd/Ctrl + ?
+// Justificación: Mejora la productividad de usuarios avanzados
+// Impacto: Modal de atajos accesible desde cualquier página
+const GlobalKeyboardShortcuts = dynamic(() => import('./components/GlobalKeyboardShortcuts'), { ssr: false });
+
+// AI_DECISION: Use Poppins for display/headings and Open Sans for body text
+// Justificación: Brand typography requires Poppins (contemporary, strong) for headings
+// and Open Sans (clean, readable) for body text - professional financial CRM aesthetic
+// Impacto: Consistent brand identity across the application
+
+// Poppins - Display font for headings and titles
+const poppins = Poppins({
   subsets: ['latin'],
-  display: 'swap', // Reduce FOUT by showing fallback font immediately
-  variable: '--font-inter', // CSS variable for use in globals.css
-  preload: true, // Preload font for faster initial render
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-display',
+  preload: true,
+});
+
+// Open Sans - Body font for text and UI elements
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-body',
+  preload: true,
 });
 
 // Check if we're in development mode
@@ -37,8 +55,8 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // Impacto: Server-side rendering for static content, client JS only where needed
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={inter.variable}>
-      <body className={`bg-background ${inter.className}`}>
+    <html lang="es" className={`${poppins.variable} ${openSans.variable}`}>
+      <body className={openSans.className}>
         {isDevelopment && <DebugConsole />}
         <ThemeProviderWrapper defaultTheme="light">
           <ErrorBoundary>
@@ -48,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <PageTitleProvider>
                     <NavigationNew />
                     <AppLayout>{children}</AppLayout>
+                    <GlobalKeyboardShortcuts />
                   </PageTitleProvider>
                 </SidebarProvider>
               </ToastProvider>

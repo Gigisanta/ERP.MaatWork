@@ -74,3 +74,30 @@ export const batchTasksQuerySchema = z.object({
   status: z.string().optional(),
   includeCompleted: z.enum(['true', 'false']).optional().default('false'),
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

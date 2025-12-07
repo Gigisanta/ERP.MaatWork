@@ -15,7 +15,13 @@
       "@cactus/db": ["../../packages/db/src/index.ts"],
       "@cactus/db/*": ["../../packages/db/src/*"],
       "@cactus/ui": ["../../packages/ui/src/index.ts"],
-      "@cactus/ui/*": ["../../packages/ui/src/*"]
+      "@cactus/ui/*": ["../../packages/ui/src/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/routes/*": ["src/routes/*"],
+      "@/services/*": ["src/services/*"],
+      "@/config/*": ["src/config/*"],
+      "@/types/*": ["src/types/*"],
+      "@/auth/*": ["src/auth/*"]
     },
     "types": ["node"],
     "typeRoots": ["../../node_modules/@types", "./node_modules/@types"]
@@ -23,5 +29,4 @@
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts", "node_modules", "dist"]
 }
-
 

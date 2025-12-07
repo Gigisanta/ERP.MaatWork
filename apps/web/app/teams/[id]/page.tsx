@@ -11,7 +11,7 @@ import {
   removeTeamMember,
 } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
-import type { Team, TeamMember, TeamMetrics } from '@/types';
+import type { Team, TeamMember, TeamMetrics, TeamAdvisor } from '@/types';
 import {
   Card,
   CardHeader,
@@ -72,9 +72,7 @@ export default function TeamDetailsPage() {
 
   // Form states
   const [editTeamName, setEditTeamName] = useState('');
-  const [advisorCandidates, setAdvisorCandidates] = useState<
-    Array<{ id: string; email: string; fullName: string }>
-  >([]);
+  const [advisorCandidates, setAdvisorCandidates] = useState<TeamAdvisor[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   // Toast state
@@ -139,7 +137,7 @@ export default function TeamDetailsPage() {
     try {
       const res = await getTeamAdvisors(teamId);
       if (res.success && res.data) {
-        setAdvisorCandidates(res.data || []);
+        setAdvisorCandidates((res.data || []) as TeamAdvisor[]);
       } else {
         setAdvisorCandidates([]);
       }
@@ -153,7 +151,7 @@ export default function TeamDetailsPage() {
       setInviteLoading(inviteeId);
       const res = await createTeamInvitation(teamId, { userId: inviteeId });
       if (res.success) {
-        setAdvisorCandidates((prev) => prev.filter((a) => a.id !== inviteeId));
+        setAdvisorCandidates((prev) => prev.filter((a: TeamAdvisor) => String(a.id) !== inviteeId));
         showToast('Invitación enviada', 'El asesor recibirá una notificación', 'success');
       } else {
         showToast('Error', 'No se pudo enviar la invitación', 'error');
@@ -474,9 +472,9 @@ export default function TeamDetailsPage() {
               {advisorCandidates.length === 0 && (
                 <Text color="secondary">No hay asesores disponibles para invitar.</Text>
               )}
-              {advisorCandidates.map((a) => (
+              {advisorCandidates.map((a: TeamAdvisor) => (
                 <div
-                  key={a.id}
+                  key={String(a.id)}
                   className="flex items-center justify-between border rounded-md px-3 py-2"
                 >
                   <div>
@@ -487,8 +485,8 @@ export default function TeamDetailsPage() {
                   </div>
                   <Button
                     size="sm"
-                    disabled={inviteLoading === a.id}
-                    onClick={() => inviteAdvisor(a.id)}
+                    disabled={inviteLoading === String(a.id)}
+                    onClick={() => inviteAdvisor(String(a.id))}
                   >
                     Invitar
                   </Button>

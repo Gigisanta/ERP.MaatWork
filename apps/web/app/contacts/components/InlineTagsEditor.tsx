@@ -138,8 +138,11 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(
         {!isSaving && (
           <DropdownMenu
             trigger={
-              <button className="text-gray-400 hover:text-primary transition-colors p-0.5">
-                <Icon name="plus" size={14} />
+              <button 
+                className="flex items-center justify-center w-5 h-5 rounded-full bg-surface-hover hover:bg-primary/10 hover:text-primary text-text-muted transition-all duration-200 border border-transparent hover:border-primary/20"
+                aria-label="Agregar etiqueta"
+              >
+                <Icon name="plus" size={12} />
               </button>
             }
           >

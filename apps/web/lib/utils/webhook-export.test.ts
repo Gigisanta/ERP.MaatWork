@@ -101,7 +101,7 @@ describe('webhook-export', () => {
     });
 
     it('debería manejar error 504 (timeout)', async () => {
-      const timeoutError = new ApiError(504, 'Gateway Timeout');
+      const timeoutError = new ApiError('Gateway Timeout', 504);
       vi.mocked(contactsApi.sendContactsToWebhook).mockRejectedValue(timeoutError);
       
       const result = await sendContactsToWebhook([mockContact], 'https://webhook.example.com');
@@ -111,7 +111,7 @@ describe('webhook-export', () => {
     });
 
     it('debería manejar error 502 (bad gateway)', async () => {
-      const badGatewayError = new ApiError(502, 'Bad Gateway');
+      const badGatewayError = new ApiError('Bad Gateway', 502);
       vi.mocked(contactsApi.sendContactsToWebhook).mockRejectedValue(badGatewayError);
       
       const result = await sendContactsToWebhook([mockContact], 'https://webhook.example.com');
@@ -121,7 +121,7 @@ describe('webhook-export', () => {
     });
 
     it('debería manejar error 429 (rate limit)', async () => {
-      const rateLimitError = new ApiError(429, 'Too Many Requests');
+      const rateLimitError = new ApiError('Too Many Requests', 429);
       vi.mocked(contactsApi.sendContactsToWebhook).mockRejectedValue(rateLimitError);
       
       const result = await sendContactsToWebhook([mockContact], 'https://webhook.example.com');
@@ -131,7 +131,7 @@ describe('webhook-export', () => {
     });
 
     it('debería manejar otros errores de ApiError', async () => {
-      const apiError = new ApiError(500, 'Internal Server Error');
+      const apiError = new ApiError('Internal Server Error', 500);
       vi.mocked(contactsApi.sendContactsToWebhook).mockRejectedValue(apiError);
       
       const result = await sendContactsToWebhook([mockContact], 'https://webhook.example.com');

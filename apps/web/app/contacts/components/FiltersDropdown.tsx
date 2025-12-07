@@ -63,7 +63,7 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
             <span className="text-sm">{triggerText}</span>
             {hasActiveFilters && (
               <Badge 
-                variant="brand" 
+                variant="secondary" 
                 className="ml-2 h-5 min-w-[20px] px-1.5 text-xs"
               >
                 {selectedTags.length + (selectedStage !== 'all' ? 1 : 0)}

@@ -5,7 +5,7 @@
 
 import { type InferSelectModel } from 'drizzle-orm';
 import { contacts, tags, contactTags, tasks } from '@cactus/db/schema';
-import type { BaseEntity } from './common';
+import type { BaseEntity } from '@cactus/types/common';
 
 /**
  * Contacto base inferido del schema

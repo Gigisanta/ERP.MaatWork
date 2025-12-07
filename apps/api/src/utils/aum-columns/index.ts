@@ -38,3 +38,30 @@ export { mapAumColumns } from './column-mapper';
 
 // Tipos
 export type { MappedAumColumns } from './types';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

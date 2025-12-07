@@ -57,21 +57,25 @@ export async function apiCall<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
 
-  // AI_DECISION: Use force-cache when revalidate is specified, otherwise no-store
-  // Justificación: Next.js revalidate requires cache to be enabled. Default to no-store for fresh data when no revalidate.
-  // Impacto: Enables proper caching with revalidation for optimized requests
-  const shouldCache = options.revalidate !== undefined && options.revalidate !== false;
-  const cacheStrategy: RequestCache = options.cache ?? (shouldCache ? 'force-cache' : 'no-store');
+  // AI_DECISION: Don't set cache when revalidate is specified
+  // Justificación: Next.js warns when both cache and revalidate are specified. When revalidate is used,
+  //                 Next.js handles caching automatically. Only set cache when revalidate is not specified.
+  // Impacto: Eliminates Next.js warnings and uses proper caching strategy
+  const hasRevalidate = options.revalidate !== undefined && options.revalidate !== false;
 
   const fetchOptions: RequestInit & { next?: { revalidate: number | false } } = {
     method: options.method || 'GET',
     headers,
-    cache: cacheStrategy,
     signal: controller.signal,
   };
   
-  // Next.js revalidate option
-  if (shouldCache && typeof options.revalidate === 'number') {
+  // Only set cache if revalidate is not specified (Next.js handles cache when revalidate is used)
+  if (!hasRevalidate) {
+    fetchOptions.cache = options.cache ?? 'no-store';
+  }
+  
+  // Next.js revalidate option (Next.js will handle cache automatically)
+  if (hasRevalidate && typeof options.revalidate === 'number') {
     fetchOptions.next = { revalidate: options.revalidate };
   }
   

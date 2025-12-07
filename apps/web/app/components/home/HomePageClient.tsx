@@ -73,7 +73,7 @@ function HomePageUnauthenticated({ onLoginClick }: HomePageUnauthenticatedProps)
       <div className="text-center py-12">
         <Card className="max-w-md mx-auto">
           <CardHeader>
-            <Heading level={1}>Cactus CRM</Heading>
+            <Heading level={1}>Maat</Heading>
           </CardHeader>
           <CardContent>
             <Stack direction="column" gap="md">

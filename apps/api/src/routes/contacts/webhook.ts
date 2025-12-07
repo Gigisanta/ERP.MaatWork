@@ -4,7 +4,7 @@
  * Handles webhook export operations
  */
 
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
 import { createUserRateLimiter } from '../../utils/rate-limiter';
@@ -12,6 +12,7 @@ import { getHttpClient } from '../../utils/http-client';
 import { env } from '../../config/env';
 import { RETRY_LIMITS, PAYLOAD_LIMITS, ERROR_LIMITS } from '../../config/api-limits';
 import { z } from 'zod';
+import { createAsyncHandler } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -143,7 +144,7 @@ router.post('/webhook',
   requireAuth,
   webhookRateLimiter.middleware(),
   validate({ body: webhookExportSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
+  createAsyncHandler(async (req: Request, res: Response) => {
     const startTime = Date.now();
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -152,12 +153,12 @@ router.post('/webhook',
     if (!env.N8N_ENABLED) {
       return res.status(503).json({
         success: false,
-        error: 'N8N webhook service is disabled'
+        error: 'N8N webhook service is disabled',
+        requestId: req.requestId,
       });
     }
 
-    try {
-      const { webhookUrl, contacts, metadata } = req.body;
+    const { webhookUrl, contacts, metadata } = req.body;
 
       // Validar tamaño de payload
       const payloadSize = JSON.stringify(contacts).length;
@@ -353,7 +354,8 @@ router.post('/webhook',
             failed,
             total: batches.length,
             errors: errors.slice(0, ERROR_LIMITS.MAX_ERRORS_IN_RESPONSE)
-          }
+          },
+          requestId: req.requestId,
         });
       }
 
@@ -371,21 +373,11 @@ router.post('/webhook',
           message: `Se enviaron ${contacts.length} contactos exitosamente al webhook${batches.length > 1 ? ` en ${batches.length} batches` : ''}`,
           batchesCount: batches.length,
           contactsCount: contacts.length
-        }
+        },
+        requestId: req.requestId,
       });
-    } catch (err) {
-      const duration = Date.now() - startTime;
-      req.log.error({
-        err,
-        userId,
-        userRole,
-        duration,
-        action: 'webhook_export'
-      }, 'Error en webhook export');
-      next(err);
-    }
-  }
-);
+  })
+  );
 
 export default router;
 

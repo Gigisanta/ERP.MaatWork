@@ -8,6 +8,7 @@ import type { TimestampedEntity, CreateRequest, UpdateRequest } from './common';
  * Nivel del plan de carrera comercial
  */
 export interface CareerPlanLevel extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   category: string; // Ej: "AGENTE F. JUNIOR"
   level: string; // Ej: "Nivel 1 Junior"
   levelNumber: number; // Orden numérico (1, 2, 3...)

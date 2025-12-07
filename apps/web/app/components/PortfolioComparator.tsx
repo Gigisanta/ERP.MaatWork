@@ -171,7 +171,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                           <Text weight="medium" className="truncate">
                             {portfolio.name}
                           </Text>
-                          <Badge variant="brand">Cartera</Badge>
+                          <Badge variant="secondary">Cartera</Badge>
                           {selectedPortfolios.includes(portfolio.id) && (
                             <CheckCircle className="w-4 h-4 text-success-500" />
                           )}
@@ -287,7 +287,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
               {selectedPortfolios.map(id => {
                 const portfolio = portfolios.find(p => p.id === id);
                 return (
-                  <Badge key={`portfolio-${id}`} variant="brand">
+                  <Badge key={`portfolio-${id}`} variant="secondary">
                     <Stack direction="row" gap="sm" align="center">
                       <Text size="sm">{portfolio?.name || `Portfolio ${id}`}</Text>
                       <Button
@@ -355,7 +355,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.type === 'portfolio' ? 'brand' : 'success'}>
+                      <Badge variant={typedItem.type === 'portfolio' ? 'secondary' : 'success'}>
                         {typedItem.type === 'portfolio' ? 'Cartera' : 'Benchmark'}
                       </Badge>
                     );

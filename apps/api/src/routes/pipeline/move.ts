@@ -22,6 +22,8 @@ import { z } from 'zod';
 import { validate } from '../../utils/validation';
 import { transactionWithLogging } from '../../utils/db-transactions';
 import { sendWebhook } from '../../utils/webhook-client';
+import { invalidateCache } from '../../middleware/cache';
+import { HttpError } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -63,7 +65,7 @@ router.post(
           },
           'user attempted to move inaccessible contact in pipeline'
         );
-        return res.status(404).json({ error: 'Contact not found' });
+        throw new HttpError(404, 'Contact not found');
       }
 
       // Obtener contacto actual
@@ -74,7 +76,7 @@ router.post(
         .limit(1);
 
       if (!contact) {
-        return res.status(404).json({ error: 'Contact not found' });
+        throw new HttpError(404, 'Contact not found');
       }
 
       // Obtener etapa destino
@@ -85,7 +87,7 @@ router.post(
         .limit(1);
 
       if (!toStage) {
-        return res.status(404).json({ error: 'Target stage not found' });
+        throw new HttpError(404, 'Target stage not found');
       }
 
       // AI_DECISION: Usar transacción para asegurar consistencia y prevenir race conditions
@@ -155,6 +157,10 @@ router.post(
       // Impacto: Ensures cache consistency, prevents stale data
       const { pipelineMetricsCacheUtil } = await import('../../utils/cache');
       pipelineMetricsCacheUtil.invalidateOnStageChange();
+      
+      // Invalidate Redis cache for pipeline and contacts
+      await invalidateCache('crm:pipeline:*');
+      await invalidateCache('crm:contacts:*');
 
       // Buscar automatización configurada para este cambio de etapa
       const [automationConfig] = await db()

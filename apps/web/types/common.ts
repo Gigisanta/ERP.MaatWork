@@ -1,60 +1,25 @@
 /**
  * Tipos comunes compartidos en toda la aplicación
  * 
- * AI_DECISION: Separar tipos por dominio en archivos pequeños
- * Justificación: Mejor mantenibilidad, imports más claros, evita archivos gigantes
- * Impacto: Código más organizado y escalable
+ * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
+ * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
+ * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
+ * 
+ * Tipos específicos del frontend (ApiResponse, Pagination, etc.) se mantienen aquí
+ * porque tienen estructura diferente a los del backend.
  */
 
 // ==========================================================
-// Tipos Base - Entidades comunes
+// Tipos Base - Re-exportados desde @cactus/types
 // ==========================================================
 
-/**
- * Entidad base con identificador único
- */
-export interface BaseEntity {
-  id: string;
-}
-
-/**
- * Entidad con timestamps estándar
- */
-export interface TimestampedEntity extends BaseEntity {
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Entidad con timestamps opcionales (para casos de creación)
- */
-export interface TimestampedEntityOptional extends BaseEntity {
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// ==========================================================
-// Utility Types - Patrones comunes
-// ==========================================================
-
-/**
- * Utility type para crear tipos de Request a partir de entidades
- * Omite campos automáticos (id, createdAt, updatedAt) y hace opcionales los campos opcionales
- */
-export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'> & {
-  // Hace opcionales todos los campos que son opcionales en el tipo original
-  [K in keyof T]?: T[K] extends string | number | boolean | null | undefined
-    ? T[K]
-    : T[K] extends Date
-    ? string | Date
-    : T[K];
-};
-
-/**
- * Utility type para actualizar entidades
- * Hace todos los campos opcionales excepto los que se deben mantener requeridos
- */
-export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+export type {
+  BaseEntity,
+  TimestampedEntity,
+  TimestampedEntityOptional,
+  CreateRequest,
+  UpdateRequest,
+} from '@cactus/types/common';
 
 /**
  * Tipo para respuestas de API con data genérica

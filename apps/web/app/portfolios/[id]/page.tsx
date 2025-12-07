@@ -131,14 +131,14 @@ export default function PortfolioDetailPage() {
                   <Text
                     size="xl"
                     weight="bold"
-                    color={portfolio.isValid ? 'primary' : 'secondary'}
+                    color={portfolio.isValid ? 'default' : 'secondary'}
                     className={portfolio.isValid ? '' : 'text-error'}
                   >
                     {(portfolio.totalWeight * 100).toFixed(2)}%
                   </Text>
                   <Text
                     size="xs"
-                    color={portfolio.isValid ? 'primary' : 'secondary'}
+                    color={portfolio.isValid ? 'default' : 'secondary'}
                     weight="medium"
                     className={portfolio.isValid ? '' : 'text-error'}
                   >

@@ -145,9 +145,9 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
 
   if (isSaving || isAdvancing) {
     return (
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-gray-200 bg-gray-50">
+      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border bg-surface-hover">
         <Spinner size="sm" />
-        <span className="text-xs text-gray-600">
+        <span className="text-xs text-text-secondary">
           {isAdvancing ? 'Avanzando...' : 'Guardando...'}
         </span>
       </div>
@@ -156,7 +156,7 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
 
   return (
     <div 
-      className="inline-flex items-center rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+      className="inline-flex items-center rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
       style={{ borderLeftColor: stageColor, borderLeftWidth: '2px' }}
     >
       {/* Badge de etapa actual - clickeable para abrir dropdown */}
@@ -205,14 +205,14 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(({
 
       {/* Separador vertical */}
       {nextStage && (
-        <div className="h-5 w-px bg-gray-200" />
+        <div className="h-5 w-px bg-border" />
       )}
 
       {/* Botón Avanzar */}
       {nextStage && (
         <button
           onClick={handleAdvance}
-          className="flex items-center justify-center px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-150"
+          className="flex items-center justify-center px-2 py-1 text-text-secondary hover:text-text hover:bg-surface-hover transition-colors duration-150"
           title={`Avanzar a ${nextStage.name}`}
           type="button"
         >

@@ -302,7 +302,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
               <Stack direction="column" gap="sm">
                 <Text size="sm" weight="medium" color="secondary">Mejor Rendimiento</Text>
                 <Stack direction="column" gap="xs">
-                  <Text size="lg" weight="semibold" color="primary">
+                  <Text size="lg" weight="semibold" color="default">
                     {performanceData.length > 0 ? (
                       performanceData.reduce((best, current) => 
                         current.totalReturn > best.totalReturn ? current : best

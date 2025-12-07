@@ -1,11 +1,56 @@
 "use client";
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import Icon from '../Icon';
 import { cn } from '../../utils/cn';
 import { Checkbox } from '../forms/Checkbox';
 import EmptyState from './EmptyState';
 import { Spinner } from './Spinner';
+
+// AI_DECISION: Hook para detectar scroll y mostrar indicadores
+// Justificación: Mejora la UX indicando cuando hay más contenido para ver
+// Impacto: Usuarios saben que pueden scrollear para ver más filas/columnas
+function useScrollIndicators(ref: React.RefObject<HTMLElement>) {
+  const [scrollState, setScrollState] = useState({
+    canScrollUp: false,
+    canScrollDown: false,
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const updateScrollState = () => {
+      const { scrollTop, scrollHeight, clientHeight, scrollLeft, scrollWidth, clientWidth } = element;
+      
+      setScrollState({
+        canScrollUp: scrollTop > 0,
+        canScrollDown: scrollTop + clientHeight < scrollHeight - 1,
+        canScrollLeft: scrollLeft > 0,
+        canScrollRight: scrollLeft + clientWidth < scrollWidth - 1,
+      });
+    };
+
+    // Initial check
+    updateScrollState();
+
+    // Listen to scroll events
+    element.addEventListener('scroll', updateScrollState, { passive: true });
+    
+    // Listen to resize events
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(element);
+
+    return () => {
+      element.removeEventListener('scroll', updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, [ref]);
+
+  return scrollState;
+}
 
 export interface Column<T> {
   key: keyof T | string;
@@ -77,6 +122,11 @@ export const DataTable = <T extends Record<string, unknown>>({
   // Justificación: Rendering all rows at once causes performance issues with 100+ items
   // Impacto: Reduces initial render time by 80-90%, improves scroll performance to 60fps
   const parentRef = useRef<HTMLDivElement>(null);
+  
+  // AI_DECISION: Track scroll state for visual indicators
+  // Justificación: Show shadows when there's more content to scroll
+  // Impacto: Better UX, users know they can scroll for more content
+  const scrollState = useScrollIndicators(parentRef as React.RefObject<HTMLElement>);
 
   // Handle sorting
   const handleSort = (columnKey: string) => {
@@ -223,10 +273,28 @@ export const DataTable = <T extends Record<string, unknown>>({
   const isVirtualized = shouldVirtualize;
 
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-border', className)} {...props}>
-      <div className="overflow-x-auto" ref={isVirtualized ? parentRef : undefined} style={isVirtualized ? { height: `${virtualizedHeight}px`, overflow: 'auto' } : undefined}>
+    <div className={cn('overflow-hidden rounded-lg border border-border relative', className)} {...props}>
+      {/* Scroll indicators */}
+      {isVirtualized && scrollState.canScrollUp && (
+        <div className="absolute top-[42px] left-0 right-0 h-4 bg-gradient-to-b from-gray-900/10 to-transparent pointer-events-none z-20" />
+      )}
+      {isVirtualized && scrollState.canScrollDown && (
+        <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-gray-900/10 to-transparent pointer-events-none z-20" />
+      )}
+      {scrollState.canScrollLeft && (
+        <div className="absolute top-0 bottom-0 left-0 w-4 bg-gradient-to-r from-gray-900/10 to-transparent pointer-events-none z-20" />
+      )}
+      {scrollState.canScrollRight && (
+        <div className="absolute top-0 bottom-0 right-0 w-4 bg-gradient-to-l from-gray-900/10 to-transparent pointer-events-none z-20" />
+      )}
+      
+      <div 
+        className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400" 
+        ref={parentRef} 
+        style={isVirtualized ? { height: `${virtualizedHeight}px`, overflow: 'auto' } : undefined}
+      >
         <table className="w-full">
-          <thead className="bg-surface" style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}>
+          <thead className="bg-surface shadow-sm" style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}>
             <tr>
               {selectable && (
                 <th className="w-12 px-4 py-3">

@@ -259,22 +259,25 @@ Los siguientes scripts están deprecados y serán removidos:
 ### Comandos de Auditoría
 
 ```bash
-# Auditar archivos grandes
-npx tsx scripts/audit-large-files.ts
+# Verificar dependencias no usadas
+pnpm audit:deps
 
-# Auditar console logs
-npx tsx scripts/audit-console-logs.ts
+# Verificar exports no usados
+pnpm audit:unused-exports
 
-# Auditar manejo de errores
-npx tsx scripts/audit-error-handling.ts
+# Verificar uso de `any`
+pnpm audit:types
 
-# Auditar código duplicado
-npx tsx scripts/audit-code-duplication.ts
+# Verificar barrel exports
+pnpm audit:barrels
 ```
 
-### Reportes Generados
+### Herramientas de Análisis
 
-Los scripts de auditoría generan reportes que pueden ejecutarse según necesidad. Los reportes históricos se mantienen solo temporalmente para análisis.
+Para análisis más detallados, se pueden usar herramientas externas como:
+- `ts-prune` - Detecta exports no usados
+- `depcheck` - Detecta dependencias no usadas
+- `grep` - Búsqueda de patrones específicos en el código
 
 ---
 

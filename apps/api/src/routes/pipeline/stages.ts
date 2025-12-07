@@ -12,6 +12,7 @@ import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authori
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
 import { idParamSchema } from '../../utils/common-schemas';
+import { createRouteHandler, createAsyncHandler, HttpError } from '../../utils/route-handler';
 import { pipelineStagesCache } from '../../utils/cache';
 
 const router = Router();
@@ -39,8 +40,10 @@ const updateStageSchema = createStageSchema.partial();
 /**
  * GET /pipeline/stages - Listar etapas del pipeline
  */
-router.get('/stages', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
+router.get(
+  '/stages',
+  requireAuth,
+  createRouteHandler(async (req: Request) => {
     // AI_DECISION: Garantizar etapas por defecto antes de consultar
     // Justificación: Asegura que siempre existan las 7 etapas requeridas, incluso si el seed falló
     // Impacto: Frontend siempre recibe etapas válidas, mejor UX y confiabilidad
@@ -60,7 +63,7 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     
     if (cached) {
       req.log.debug({ cacheKey }, 'pipeline stages served from cache');
-      return res.json({ success: true, data: cached });
+      return cached;
     }
 
     const accessFilter = buildContactAccessFilter(accessScope);
@@ -108,22 +111,19 @@ router.get('/stages', requireAuth, async (req: Request, res: Response, next: Nex
     // Cache the result
     pipelineStagesCache.set(cacheKey, stagesWithCounts);
 
-    res.json({ success: true, data: stagesWithCounts });
-  } catch (err) {
-    req.log.error({ err }, 'failed to list pipeline stages');
-    next(err);
-  }
-});
+    return stagesWithCounts;
+  })
+);
 
 /**
  * POST /pipeline/stages - Crear nueva etapa
  */
-router.post('/stages', 
-  requireAuth, 
+router.post(
+  '/stages',
+  requireAuth,
   requireRole(['manager', 'admin']),
   validate({ body: createStageSchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  createAsyncHandler(async (req: Request, res: Response) => {
     const validated = req.body;
 
     const [newStage] = await db()
@@ -135,25 +135,22 @@ router.post('/stages',
     pipelineStagesCache.clear();
     
     req.log.info({ stageId: newStage.id }, 'pipeline stage created');
-    res.status(201).json({ data: newStage });
-  } catch (err) {
-    req.log.error({ err }, 'failed to create pipeline stage');
-    next(err);
-  }
-});
+    return res.status(201).json({ success: true, data: newStage, requestId: req.requestId });
+  })
+);
 
 /**
  * PUT /pipeline/stages/:id - Actualizar etapa
  */
-router.put('/stages/:id', 
-  requireAuth, 
+router.put(
+  '/stages/:id',
+  requireAuth,
   requireRole(['manager', 'admin']),
-  validate({ 
+  validate({
     params: idParamSchema,
-    body: updateStageSchema 
+    body: updateStageSchema
   }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  createRouteHandler(async (req: Request) => {
     const { id } = req.params;
     const validated = req.body;
 
@@ -167,19 +164,16 @@ router.put('/stages/:id',
       .returning();
 
     if (!updated) {
-      return res.status(404).json({ error: 'Stage not found' });
+      throw new HttpError(404, 'Stage not found');
     }
 
     // Invalidate cache when stage is updated
     pipelineStagesCache.clear();
     
     req.log.info({ stageId: id }, 'pipeline stage updated');
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    req.log.error({ err, stageId: req.params.id }, 'failed to update pipeline stage');
-    next(err);
-  }
-});
+    return updated;
+  })
+);
 
 export default router;
 

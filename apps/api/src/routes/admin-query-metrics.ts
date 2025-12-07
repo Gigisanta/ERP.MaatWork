@@ -9,6 +9,7 @@ import { requireAuth, requireRole } from '../auth/middlewares';
 import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
 import { analyzeQueries, generateTextReport, type QueryAnalysisReport } from '../utils/query-analyzer';
 import { getCacheHealth } from '../utils/cache';
+import { createErrorResponse } from '../utils/error-response';
 
 const router = Router();
 
@@ -44,7 +45,13 @@ router.get('/query-metrics',
       });
     } catch (error) {
       req.log.error({ error }, 'Error fetching query metrics');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error obteniendo métricas de queries'
+        })
+      );
     }
   }
 );
@@ -74,7 +81,13 @@ router.get('/query-analysis',
       }
     } catch (error) {
       req.log.error({ error }, 'Error generating query analysis');
-      res.status(500).json({ error: 'Error interno del servidor' });
+      return res.status(500).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error generando análisis de queries'
+        })
+      );
     }
   }
 );

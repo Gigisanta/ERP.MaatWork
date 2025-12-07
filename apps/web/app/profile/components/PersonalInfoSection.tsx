@@ -100,7 +100,7 @@ export function PersonalInfoSection({
             Rol
           </Text>
           <div>
-            <Badge variant={userInfo?.role === 'admin' ? 'brand' : 'default'}>
+            <Badge variant={userInfo?.role === 'admin' ? 'secondary' : 'default'}>
               {userInfo?.role || 'No disponible'}
             </Badge>
           </div>
@@ -127,3 +127,7 @@ export function PersonalInfoSection({
     </>
   );
 }
+
+
+
+

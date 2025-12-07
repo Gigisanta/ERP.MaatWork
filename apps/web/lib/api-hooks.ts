@@ -8,6 +8,7 @@ import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
 import type { ApiResponse } from './api-client';
 import type { AumRow, UserApiResponse } from '@/types';
+import { logger } from './logger';
 
 // Generic fetcher function using centralized fetchJson (handles cookies, timeout, logging)
 // AI_DECISION: Normalizar respuestas del backend que usan { ok: boolean } a formato ApiResponse
@@ -44,9 +45,20 @@ const swrConfig = {
   shouldRetryOnError: false, // Disable automatic retries to prevent cascading errors
 };
 
+// AI_DECISION: Longer deduping interval for static/semi-static data
+// Justificación: Benchmarks, tags, and pipeline stages change infrequently
+// Impacto: Further reduces API calls for data that rarely changes
 const swrConfigLonger = {
   ...swrConfig,
   dedupingInterval: 30000, // 30s for data that changes less frequently
+};
+
+// AI_DECISION: Very long deduping for truly static data
+// Justificación: Some data like benchmarks list changes very rarely
+// Impacto: Maximum cache efficiency for static reference data
+const swrConfigStatic = {
+  ...swrConfig,
+  dedupingInterval: 60000, // 60s for truly static data
 };
 
 // Hook for contacts list
@@ -81,8 +93,11 @@ export function useContacts(assignedAdvisorId?: string | null) {
 export function usePipelineStages() {
   const { user } = useAuth();
 
+  // AI_DECISION: Use longer deduping for pipeline stages (semi-static data)
+  // Justificación: Pipeline stages change infrequently, longer deduping reduces API calls
+  // Impacto: Better cache efficiency for pipeline data
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
-    user ? `${API_BASE_URL}/pipeline/stages` : null,
+    user ? `${API_BASE_URL}/v1/pipeline/stages` : null,
     fetcher,
     swrConfigLonger
   );
@@ -100,7 +115,7 @@ export function useAdvisors() {
   const { user } = useAuth();
 
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
-    user ? `${API_BASE_URL}/users/advisors` : null,
+    user ? `${API_BASE_URL}/v1/users/advisors` : null,
     fetcher,
     swrConfigLonger
   );
@@ -199,7 +214,7 @@ export function useBrokerAccounts(contactId: string) {
   const { user } = useAuth();
 
   const { data, error, isLoading, mutate } = useSWR(
-    user && contactId ? `${API_BASE_URL}/broker-accounts?contactId=${contactId}` : null,
+    user && contactId ? `${API_BASE_URL}/v1/broker-accounts?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
@@ -235,7 +250,7 @@ export function useTasks(contactId: string) {
   const { user } = useAuth();
 
   const { data, error, isLoading, mutate } = useSWR(
-    user && contactId ? `${API_BASE_URL}/tasks?contactId=${contactId}` : null,
+    user && contactId ? `${API_BASE_URL}/v1/tasks?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
@@ -253,7 +268,7 @@ export function useNotes(contactId: string) {
   const { user } = useAuth();
 
   const { data, error, isLoading, mutate } = useSWR(
-    user && contactId ? `${API_BASE_URL}/notes?contactId=${contactId}` : null,
+    user && contactId ? `${API_BASE_URL}/v1/notes?contactId=${contactId}` : null,
     fetcher,
     swrConfig
   );
@@ -382,7 +397,7 @@ export function useAumRows(params?: {
   // Debug logging para entender la estructura de respuesta
   if (process.env.NODE_ENV !== 'production') {
     const firstRow = responseData?.rows?.[0];
-    console.log('[useAumRows] Response structure:', {
+    logger.debug('[useAumRows] Response structure', {
       hasData: !!data,
       hasDataData: !!data?.data,
       dataKeys: data ? Object.keys(data) : [],
@@ -428,7 +443,7 @@ export function useAumRows(params?: {
   if (rows.length === 0 && data && typeof data === 'object') {
     if ('rows' in data && Array.isArray((data as any).rows)) {
       rows = (data as any).rows as AumRow[];
-      console.warn('[useAumRows] Using fallback: extracted rows directly from data');
+      logger.warn('[useAumRows] Using fallback: extracted rows directly from data');
     }
   }
 
@@ -437,7 +452,7 @@ export function useAumRows(params?: {
   // Log final para debugging
   if (process.env.NODE_ENV !== 'production' && rows.length > 0) {
     const sampleRow = rows[0];
-    console.log('[useAumRows] Extracted data:', {
+    logger.debug('[useAumRows] Extracted data', {
       rowsCount: rows.length,
       totalRows,
       pagination,
@@ -486,8 +501,7 @@ export function useInvalidateContactsCache() {
 
       return (
         keyStr.includes(`${API_BASE_URL}/v1/contacts`) ||
-        keyStr.includes(`${API_BASE_URL}/v1/pipeline/board`) ||
-        keyStr.includes(`${API_BASE_URL}/contacts`)
+        keyStr.includes(`${API_BASE_URL}/v1/pipeline/board`)
       );
     };
 
@@ -585,8 +599,7 @@ export function useInvalidateCapacitacionesCache() {
             : '';
 
       return (
-        keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`) ||
-        keyStr.includes(`${API_BASE_URL}/capacitaciones`)
+        keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`)
       );
     };
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadAumFile } from '@/lib/api';
 import type { ApiErrorWithMessage } from '@/types/aum';
-import { Button, Select, Spinner, Text } from '@cactus/ui';
+import { Button, Select, Spinner, Text, ProgressBar } from '@cactus/ui';
 import { logger, toLogContext } from '@/lib/logger';
 
 // AI_DECISION: File upload limits aligned with backend
@@ -36,7 +36,61 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // AI_DECISION: Simular progreso durante upload para mejor UX
+  // Justificación: La API no soporta progress events, pero mostramos feedback visual
+  // Impacto: Usuario ve que algo está pasando durante uploads largos
+  const startProgressSimulation = useCallback(() => {
+    setUploadProgress(0);
+    setUploadStatus('Preparando archivo...');
+    
+    let progress = 0;
+    progressIntervalRef.current = setInterval(() => {
+      // Simular progreso más rápido al inicio, más lento al final
+      const increment = progress < 30 ? 5 : progress < 60 ? 3 : progress < 85 ? 1 : 0.5;
+      progress = Math.min(progress + increment, 90); // Never reach 100 until complete
+      setUploadProgress(progress);
+      
+      // Update status message based on progress
+      if (progress < 30) {
+        setUploadStatus('Subiendo archivo...');
+      } else if (progress < 60) {
+        setUploadStatus('Procesando datos...');
+      } else if (progress < 85) {
+        setUploadStatus('Normalizando filas...');
+      } else {
+        setUploadStatus('Finalizando...');
+      }
+    }, 200);
+  }, []);
+
+  const stopProgressSimulation = useCallback((isSuccess: boolean) => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    
+    if (isSuccess) {
+      setUploadProgress(100);
+      setUploadStatus('¡Completado!');
+    } else {
+      setUploadProgress(0);
+      setUploadStatus('');
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Validates file before setting state
@@ -110,6 +164,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     setUploading(true);
     setError(null);
     setSuccess(false);
+    startProgressSimulation();
 
     try {
       logger.info('Starting AUM file upload', {
@@ -143,6 +198,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           return;
         }
 
+        stopProgressSimulation(true);
         setSuccess(true);
         setFile(null);
         if (fileInputRef.current) {
@@ -181,9 +237,11 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           details,
           ...(resp ? toLogContext({ response: resp }) : {}),
         });
+        stopProgressSimulation(false);
         setError(errorMsg);
       }
     } catch (e: unknown) {
+      stopProgressSimulation(false);
       const apiErr = e as ApiErrorWithMessage;
       const errorMsg =
         apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
@@ -274,6 +332,20 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           'Subir'
         )}
       </Button>
+
+      {/* Progress bar during upload */}
+      {uploading && (
+        <div className="w-full">
+          <ProgressBar 
+            value={uploadProgress} 
+            showLabel
+            label={uploadStatus}
+            variant={uploadProgress === 100 ? 'success' : 'default'}
+            size="md"
+            animated
+          />
+        </div>
+      )}
 
       {/* Success display */}
       {success && (

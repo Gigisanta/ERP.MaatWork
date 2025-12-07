@@ -16,8 +16,11 @@
 export type {
   BaseEntity,
   TimestampedEntity,
+  TimestampedEntityOptional,
   SoftDeletableEntity,
   VersionedEntity,
+  CreateRequest,
+  UpdateRequest,
   ApiResponse,
   PaginatedResponse,
   UserRole,

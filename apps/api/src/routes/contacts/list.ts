@@ -3,7 +3,7 @@
  *
  * GET /contacts - List contacts with filters and pagination
  */
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { db, contacts, contactTags, tags } from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireContactAccess } from '../../auth/middlewares';
@@ -18,6 +18,11 @@ import {
 } from '../../types/contacts';
 import { contactsListCacheUtil, normalizeCacheKey } from '../../utils/cache';
 import { listContactsQuerySchema } from './schemas';
+import { cache } from '../../middleware/cache';
+import { REDIS_TTL } from '../../config/redis';
+import { buildCacheKey } from '../../config/redis';
+import { formatPaginatedResponse } from '../../utils/pagination';
+import { createAsyncHandler } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -25,14 +30,27 @@ const router = Router();
  * GET /contacts - List contacts with filters
  *
  * Supports pagination, filtering by pipelineStageId and assignedAdvisorId.
- * Results are cached for performance.
+ * Results are cached for performance using Redis.
  */
 router.get(
   '/',
   requireAuth,
   requireContactAccess, // Bloquear acceso a Owner
   validate({ query: listContactsQuerySchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
+  cache({
+    ttl: REDIS_TTL.CONTACTS,
+    keyPrefix: 'contacts',
+    keyBuilder: (req) => {
+      const userId = req.user!.id;
+      const { limit = '50', offset = '0', pipelineStageId, assignedAdvisorId } = req.query;
+      const limitStr = typeof limit === 'string' ? limit : String(limit);
+      const offsetStr = typeof offset === 'string' ? offset : String(offset);
+      const pipelineStageIdStr = typeof pipelineStageId === 'string' ? pipelineStageId : 'all';
+      const assignedAdvisorIdStr = typeof assignedAdvisorId === 'string' ? assignedAdvisorId : 'all';
+      return buildCacheKey('contacts', userId, limitStr, offsetStr, pipelineStageIdStr, assignedAdvisorIdStr);
+    },
+  }),
+  createAsyncHandler(async (req: Request, res: Response) => {
     const startTime = Date.now();
     const userId = req.user!.id;
     const userRole = req.user!.role;
@@ -47,8 +65,7 @@ router.get(
       'Iniciando listado de contactos'
     );
 
-    try {
-      const { limit = '50', offset = '0', pipelineStageId, assignedAdvisorId } = req.query;
+    const { limit = '50', offset = '0', pipelineStageId, assignedAdvisorId } = req.query;
 
       // Get user access scope for data isolation
       req.log.info({ userId, userRole }, 'Getting user access scope');
@@ -113,12 +130,16 @@ router.get(
               'User attempted to filter by advisor they do not have access to'
             );
 
+            const limitNum = parseInt(limit as string) || 50;
+            const offsetNum = parseInt(offset as string) || 0;
+            const paginatedResponse = formatPaginatedResponse([], 0, {
+              limit: limitNum,
+              offset: offsetNum,
+            });
             return res.json({
-              data: [],
-              meta: {
-                limit: parseInt(limit as string),
-                offset: parseInt(offset as string),
-              },
+              success: true,
+              ...paginatedResponse,
+              requestId: req.requestId,
             });
           }
         }
@@ -252,13 +273,16 @@ router.get(
           'Listado de contactos exitoso - filtrado por advisor'
         );
 
+        const limitNum = parseInt(limit as string) || 50;
+        const offsetNum = parseInt(offset as string) || 0;
+        const paginatedResponse = formatPaginatedResponse(itemsWithTags, total, {
+          limit: limitNum,
+          offset: offsetNum,
+        });
         return res.json({
-          data: itemsWithTags,
-          meta: {
-            limit: parseInt(limit as string),
-            offset: parseInt(offset as string),
-            total,
-          },
+          success: true,
+          ...paginatedResponse,
+          requestId: req.requestId,
         });
       }
 
@@ -283,7 +307,7 @@ router.get(
         }
       }
 
-      // Cache handling
+      // Redis cache is handled by middleware, but we keep NodeCache as fallback
       const limitNum =
         typeof limit === 'string' ? parseInt(limit) : typeof limit === 'number' ? limit : 20;
       const offsetNum =
@@ -300,10 +324,14 @@ router.get(
         offsetNum
       );
 
+      // Fallback to NodeCache if Redis cache missed (middleware already tried Redis)
       const cachedResult = contactsListCacheUtil.get(cacheKey);
       if (cachedResult) {
-        req.log.info({ cacheKey }, 'Serving contacts list from cache');
-        return res.json(cachedResult);
+        req.log.info({ cacheKey }, 'Serving contacts list from NodeCache fallback');
+        return res.json({
+          ...cachedResult,
+          requestId: req.requestId,
+        });
       }
 
       const dbLogger = createDrizzleLogger(req.log);
@@ -413,37 +441,24 @@ router.get(
         'Listado de contactos exitoso'
       );
 
+      const paginatedResponse = formatPaginatedResponse(itemsWithTags, total, {
+        limit: limitNum,
+        offset: offsetNum,
+      });
+      
       const response = {
-        data: itemsWithTags,
-        meta: {
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-          total,
-        },
+        success: true,
+        ...paginatedResponse,
+        requestId: req.requestId,
       };
 
       // Cache first page only
-      if (parseInt(offset as string) === 0) {
+      if (offsetNum === 0) {
         contactsListCacheUtil.set(cacheKey, response);
       }
 
-      res.json(response);
-    } catch (err) {
-      const duration = Date.now() - startTime;
-      req.log.error(
-        {
-          err,
-          duration,
-          userId,
-          userRole,
-          action: 'list_contacts',
-          query: req.query,
-        },
-        'Error en listado de contactos'
-      );
-      next(err);
-    }
-  }
+      return res.json(response);
+  })
 );
 
 export default router;

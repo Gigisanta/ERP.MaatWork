@@ -19,9 +19,9 @@ export function AumTableHeader({ className = '' }: AumTableHeaderProps) {
 
   return (
     <thead
-      className={`bg-gray-50 sticky top-0 z-20 shadow-sm border-b border-gray-200 ${className}`}
+      className={`bg-surface-hover sticky top-0 z-20 shadow-sm border-b border-border ${className}`}
     >
-      <tr className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+      <tr className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
         <th
           className="px-3 py-3 text-left overflow-hidden"
           style={{ width: `${COLUMN_WIDTHS.ACCOUNT}px` }}

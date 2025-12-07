@@ -11,6 +11,9 @@ import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
+import { cache } from '../../middleware/cache';
+import { REDIS_TTL } from '../../config/redis';
+import { buildCacheKey } from '../../config/redis';
 
 const router = Router();
 
@@ -35,6 +38,17 @@ const boardQuerySchema = z.object({
 router.get('/board', 
   requireAuth,
   validate({ query: boardQuerySchema }),
+  cache({
+    ttl: REDIS_TTL.PIPELINE,
+    keyPrefix: 'pipeline:board',
+    keyBuilder: (req) => {
+      const userId = req.user!.id;
+      const { assignedAdvisorId, assignedTeamId } = req.query;
+      const assignedAdvisorIdStr = typeof assignedAdvisorId === 'string' ? assignedAdvisorId : 'all';
+      const assignedTeamIdStr = typeof assignedTeamId === 'string' ? assignedTeamId : 'all';
+      return buildCacheKey('pipeline:board', userId, assignedAdvisorIdStr, assignedTeamIdStr);
+    },
+  }),
   async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { assignedAdvisorId, assignedTeamId } = req.query;

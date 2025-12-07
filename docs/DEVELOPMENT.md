@@ -138,8 +138,8 @@ logger.error('Error occurred', toLogContext({ error: err }));
 
 **Verificación:**
 ```bash
-# Ejecutar auditoría de console.log
-pnpm tsx scripts/audit-console-logs.ts
+# Usar grep para buscar console.log en código de producción
+grep -r "console\\.log" apps/ --exclude-dir=node_modules --exclude-dir=.next
 ```
 
 ### Refactorización de Código Largo
@@ -240,8 +240,8 @@ export default function PortfolioDetailPage() {
 
 **Verificación:**
 ```bash
-# Ejecutar auditoría de archivos grandes
-pnpm tsx scripts/audit-large-files.ts
+# Usar find para identificar archivos grandes
+find apps/ packages/ -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn | head -20
 ```
 
 ### Reglas Críticas TypeScript
@@ -662,8 +662,6 @@ pnpm audit:all
 Esto ejecuta:
 - `pnpm audit` - Verifica vulnerabilidades de seguridad
 - `pnpm audit:deps` - Detecta dependencias no usadas
-- `pnpm tsx scripts/audit-large-files.ts` - Identifica archivos/funciones grandes
-- `pnpm tsx scripts/audit-code-duplication.ts` - Detecta código duplicado
 
 ### Auditorías Específicas
 

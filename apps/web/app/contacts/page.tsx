@@ -7,7 +7,7 @@
  * and components (ContactsToolbar, ContactKanbanView, TagManagementModal, DeleteContactModal)
  */
 
-import React, { useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -57,6 +57,9 @@ import {
   Alert,
   Spinner,
   Icon,
+  ProgressBar,
+  Modal,
+  ModalContent,
   type Column,
 } from '@cactus/ui';
 import { useViewport } from '../(shared)/useViewport';
@@ -73,6 +76,13 @@ export default function ContactsPage() {
   
   // Set page title in header
   usePageTitle('Contactos');
+  
+  // Page transition animation state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Data fetching with SWR
   const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts(searchParams.get('advisorId') || undefined);
@@ -131,6 +141,19 @@ export default function ContactsPage() {
     onConfirm: () => {}
   });
 
+  // AI_DECISION: Estado para mostrar progreso durante exportación CSV
+  // Justificación: Proporciona feedback visual durante exportaciones de muchos contactos
+  // Impacto: Mejor UX, usuario sabe que la exportación está en progreso
+  const [exportState, setExportState] = React.useState<{
+    isExporting: boolean;
+    progress: number;
+    status: string;
+  }>({
+    isExporting: false,
+    progress: 0,
+    status: '',
+  });
+
   const handleDeleteTag = useCallback((tagId: string) => {
     setConfirmDialog({
       open: true,
@@ -150,21 +173,53 @@ export default function ContactsPage() {
     });
   }, [mutateTags, mutateContacts, showToast]);
 
-  // CSV export handler
-  const handleExportCSV = useCallback(() => {
+  // CSV export handler with progress indication
+  const handleExportCSV = useCallback(async () => {
     try {
       if (!filteredContacts || filteredContacts.length === 0) {
         showToast('No hay contactos para exportar', 'No hay contactos filtrados disponibles', 'warning');
         return;
       }
+      
+      // Show progress for large exports
+      const isLargeExport = filteredContacts.length > 100;
+      if (isLargeExport) {
+        setExportState({
+          isExporting: true,
+          progress: 0,
+          status: 'Preparando exportación...',
+        });
+      }
+
       const stages = Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : [];
+      
+      // Simulate progress for UX (actual export is synchronous)
+      if (isLargeExport) {
+        setExportState(prev => ({ ...prev, progress: 30, status: 'Generando CSV...' }));
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const csvContent = exportContactsToCSV(filteredContacts, stages);
+      
+      if (isLargeExport) {
+        setExportState(prev => ({ ...prev, progress: 70, status: 'Preparando descarga...' }));
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
       downloadCSV(csvContent, `contactos_${dateStr}_${timeStr}`);
+      
+      if (isLargeExport) {
+        setExportState(prev => ({ ...prev, progress: 100, status: '¡Completado!' }));
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setExportState({ isExporting: false, progress: 0, status: '' });
+      }
+      
       showToast('Exportación exitosa', `Se exportaron ${filteredContacts.length} contactos`, 'success');
     } catch (err) {
+      setExportState({ isExporting: false, progress: 0, status: '' });
       logger.error('Error al exportar CSV', { error: err instanceof Error ? err.message : String(err) });
       showToast('Error al exportar', err instanceof Error ? err.message : 'Error desconocido', 'error');
     }
@@ -269,7 +324,11 @@ export default function ContactsPage() {
   const hasActiveFilters = filters.selectedStage !== 'all' || filters.selectedTags.length > 0 || !!filters.searchTerm || !!filters.advisorIdFilter;
 
   return (
-    <div className="p-3 md:p-4">
+    <div 
+      className={`p-3 md:p-4 transition-all duration-500 ease-out ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       <Stack direction="column" gap="md">
         {combinedError && (
           <Alert variant="error" title="Error">
@@ -278,7 +337,13 @@ export default function ContactsPage() {
         )}
 
         {/* Toolbar */}
-        <ContactsToolbar
+        <div
+          className={`transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+          }`}
+          style={{ transitionDelay: '50ms' }}
+        >
+          <ContactsToolbar
           searchInputRef={searchInputRef}
           searchTerm={filters.searchTerm}
           onSearchChange={filters.setSearchTerm}
@@ -294,69 +359,77 @@ export default function ContactsPage() {
           advisorIdFilter={filters.advisorIdFilter}
           filteredAdvisor={filters.filteredAdvisor}
           onClearAdvisorFilter={filters.clearAdvisorFilter}
-          onClearAllFilters={filters.clearAllFilters}
-        />
+            onClearAllFilters={filters.clearAllFilters}
+          />
+        </div>
 
         {/* Table or Kanban view */}
-        {filters.viewMode === 'table' ? (
-          <Card className="rounded-md border border-neutral-200" padding="sm">
-            <CardHeader className="p-2 md:p-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm md:text-base">
-                  Contactos ({filteredContacts.length})
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleExportCSV}
-                  title="Descargar contactos como CSV"
-                  disabled={filteredContacts.length === 0}
-                  className="h-7 px-2 text-xs"
-                >
-                  <Icon name="download" size={14} className="mr-1" />
-                  <span className="hidden sm:inline">Descargar CSV</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-2 md:p-3 pt-0">
-              {isMd ? (
-                // Mobile view
-                <MobileContactList
-                  contacts={filteredContacts}
-                  pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
-                  allTags={Array.isArray(allTags) ? allTags as Tag[] : []}
-                  savingContactId={contactActions.savingContactId}
-                  onStageChange={contactActions.handleStageChange}
-                  onTagsChange={contactActions.handleTagsChange}
-                  onTextInputSave={contactActions.handleTextInputSave}
-                  onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-                  mutateContacts={mutateContacts}
-                  showToast={showToast}
-                  hasActiveFilters={hasActiveFilters}
-                  onClearFilters={filters.clearAllFilters}
-                />
-              ) : (
-                <DataTable
-                  data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
-                  columns={columns as unknown as Column<Record<string, unknown>>[]}
-                  keyField="id"
-                  emptyMessage={
-                    hasActiveFilters
-                      ? "No se encontraron contactos con los filtros aplicados."
-                      : "Comienza agregando tu primer contacto al sistema."
-                  }
-                  virtualized={true}
-                  virtualizedHeight={600}
-                />
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <ContactKanbanView
-            contacts={filteredContacts}
-            pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
-          />
-        )}
+        <div
+          className={`transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '100ms' }}
+        >
+          {filters.viewMode === 'table' ? (
+            <Card className="rounded-md border border-border" padding="sm">
+              <CardHeader className="p-2 md:p-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm md:text-base">
+                    Contactos ({filteredContacts.length})
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    title="Descargar contactos como CSV"
+                    disabled={filteredContacts.length === 0}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <Icon name="download" size={14} className="mr-1" />
+                    <span className="hidden sm:inline">Descargar CSV</span>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-2 md:p-3 pt-0">
+                {isMd ? (
+                  // Mobile view
+                  <MobileContactList
+                    contacts={filteredContacts}
+                    pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
+                    allTags={Array.isArray(allTags) ? allTags as Tag[] : []}
+                    savingContactId={contactActions.savingContactId}
+                    onStageChange={contactActions.handleStageChange}
+                    onTagsChange={contactActions.handleTagsChange}
+                    onTextInputSave={contactActions.handleTextInputSave}
+                    onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
+                    mutateContacts={mutateContacts}
+                    showToast={showToast}
+                    hasActiveFilters={hasActiveFilters}
+                    onClearFilters={filters.clearAllFilters}
+                  />
+                ) : (
+                  <DataTable
+                    data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
+                    columns={columns as unknown as Column<Record<string, unknown>>[]}
+                    keyField="id"
+                    emptyMessage={
+                      hasActiveFilters
+                        ? "No se encontraron contactos con los filtros aplicados."
+                        : "Comienza agregando tu primer contacto al sistema."
+                    }
+                    virtualized={true}
+                    virtualizedHeight={600}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <ContactKanbanView
+              contacts={filteredContacts}
+              pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
+            />
+          )}
+        </div>
 
         {/* Modals */}
         <DeleteContactModal
@@ -404,6 +477,29 @@ export default function ContactsPage() {
           confirmLabel="Confirmar"
           cancelLabel="Cancelar"
         />
+
+        {/* Export Progress Modal */}
+        <Modal open={exportState.isExporting} onOpenChange={() => {}}>
+          <ModalContent className="max-w-sm">
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <Icon name="download" size={32} className="text-primary mx-auto" />
+              </div>
+              <Text weight="medium" size="lg" className="mb-2">
+                Exportando Contactos
+              </Text>
+              <Text size="sm" color="secondary" className="mb-4">
+                {exportState.status}
+              </Text>
+              <ProgressBar 
+                value={exportState.progress} 
+                variant={exportState.progress === 100 ? 'success' : 'default'}
+                size="md"
+                animated
+              />
+            </div>
+          </ModalContent>
+        </Modal>
       </Stack>
     </div>
   );
@@ -466,7 +562,7 @@ function MobileContactList({
   return (
     <div className="space-y-1.5">
       {contacts.map((contact) => (
-        <div key={contact.id} className="p-2 rounded-md border border-gray-200 bg-white">
+        <div key={contact.id} className="p-2 rounded-md border border-border bg-surface">
           <div className="flex items-center justify-between">
             <div>
               <Text weight="medium" className="text-sm">{contact.fullName}</Text>

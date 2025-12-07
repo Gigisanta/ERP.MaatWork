@@ -3,7 +3,7 @@
  *
  * GET /teams/:id/detail - Get team with members and metrics combined
  */
-import type { Request, Response, NextFunction } from 'express';
+import type { Request } from 'express';
 import { db, teams, teamMembership, users } from '@cactus/db';
 import {
   contacts,
@@ -14,40 +14,30 @@ import {
 import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/cache';
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { HttpError } from '../../../utils/route-handler';
 
 /**
  * GET /teams/:id/detail - Obtener equipo con miembros y métricas combinados
  */
-export async function getTeamDetail(req: Request, res: Response, next: NextFunction) {
-  try {
-    let id: string;
-    try {
-      id = validateUuidParam(req.params.id, 'teamId');
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
-    }
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+export async function getTeamDetail(req: Request) {
+  const id = req.params.id;
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
 
-    // Verify user is a manager of this team
-    const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+  // Verify user is a manager of this team
+  const userTeams = await getUserTeams(userId, userRole);
+  const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
-    if (!isManager && userRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Access denied. Only team managers can view team details.' });
-    }
+  if (!isManager && userRole !== 'admin') {
+    throw new HttpError(403, 'Access denied. Only team managers can view team details.');
+  }
 
-    // Get team details
-    const [team] = await db().select().from(teams).where(eq(teams.id, id)).limit(1);
+  // Get team details
+  const [team] = await db().select().from(teams).where(eq(teams.id, id)).limit(1);
 
-    if (!team) {
-      return res.status(404).json({ error: 'Team not found' });
-    }
+  if (!team) {
+    throw new HttpError(404, 'Team not found');
+  }
 
     // Get team members
     const teamMembers = await db()
@@ -183,39 +173,32 @@ export async function getTeamDetail(req: Request, res: Response, next: NextFunct
         .orderBy(aumSnapshots.date),
     ]);
 
-    res.json({
-      success: true,
-      data: {
-        team: {
-          ...team,
-          members: teamMembers,
-        },
-        metrics: {
-          teamAum: aumResult?.totalAum ? Number(aumResult.totalAum) : 0,
-          memberCount: basicMetricsResult?.rows?.[0]?.memberCount
-            ? Number(basicMetricsResult.rows[0].memberCount)
-            : 0,
-          clientCount: basicMetricsResult?.rows?.[0]?.clientCount
-            ? Number(basicMetricsResult.rows[0].clientCount)
-            : 0,
-          portfolioCount: basicMetricsResult?.rows?.[0]?.portfolioCount
-            ? Number(basicMetricsResult.rows[0].portfolioCount)
-            : 0,
-          riskDistribution: riskDistributionResult.map(
-            (r: { riskLevel: string | null; count: bigint | number }) => ({
-              riskLevel: r.riskLevel,
-              count: Number(r.count),
-            })
-          ),
-          aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
-            date: r.date,
-            value: r.totalAum ? Number(r.totalAum) : 0,
-          })),
-        },
-      },
-    });
-  } catch (err) {
-    req.log.error({ err, teamId: req.params.id }, 'failed to get team detail');
-    next(err);
-  }
+  return {
+    team: {
+      ...team,
+      members: teamMembers,
+    },
+    metrics: {
+      teamAum: aumResult?.totalAum ? Number(aumResult.totalAum) : 0,
+      memberCount: basicMetricsResult?.rows?.[0]?.memberCount
+        ? Number(basicMetricsResult.rows[0].memberCount)
+        : 0,
+      clientCount: basicMetricsResult?.rows?.[0]?.clientCount
+        ? Number(basicMetricsResult.rows[0].clientCount)
+        : 0,
+      portfolioCount: basicMetricsResult?.rows?.[0]?.portfolioCount
+        ? Number(basicMetricsResult.rows[0].portfolioCount)
+        : 0,
+      riskDistribution: riskDistributionResult.map(
+        (r: { riskLevel: string | null; count: bigint | number }) => ({
+          riskLevel: r.riskLevel,
+          count: Number(r.count),
+        })
+      ),
+      aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
+        date: r.date,
+        value: r.totalAum ? Number(r.totalAum) : 0,
+      })),
+    },
+  };
 }

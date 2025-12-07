@@ -15,6 +15,7 @@ import { idParamSchema } from '../../utils/common-schemas';
 import { type ContactUpdateFields } from '../../types/contacts';
 import { contactsListCacheUtil } from '../../utils/cache';
 import { updateContactSchema, patchContactSchema } from './schemas';
+import { invalidateCache } from '../../middleware/cache';
 
 const router = Router();
 
@@ -196,7 +197,13 @@ router.put(
         }
       );
 
+      // Invalidate caches
       contactsListCacheUtil.clear();
+      // Invalidate Redis cache for contacts and pipeline (if stage changed)
+      await invalidateCache('crm:contacts:*');
+      if (pipelineStageChanged) {
+        await invalidateCache('crm:pipeline:*');
+      }
 
       req.log.info({ contactId: id, changedFields }, 'contact updated');
       res.json({
@@ -384,7 +391,13 @@ router.patch(
         );
       }
 
+      // Invalidate caches
       contactsListCacheUtil.clear();
+      // Invalidate Redis cache for contacts and pipeline (if stage changed)
+      await invalidateCache('crm:contacts:*');
+      if (pipelineStageChanged) {
+        await invalidateCache('crm:pipeline:*');
+      }
 
       req.log.info(
         { contactId: id, fields: fields.map((f: { field: string; value: unknown }) => f.field) },

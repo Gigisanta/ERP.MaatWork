@@ -13,6 +13,10 @@ import { getCurrentUser, getContactsMetricsServer, getMonthlyGoalsServer, getTea
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 import { Card, CardContent, Spinner, Stack, Text, Alert } from '@cactus/ui';
 
+// AI_DECISION: Force dynamic rendering for home page
+// Justificación: Page requires authentication, can't be pre-rendered at build time
+export const dynamic = 'force-dynamic';
+
 /**
  * Loading component for home page
  */
@@ -38,14 +42,15 @@ async function getHomePageData() {
   try {
     // Fetch all data in parallel
     const [userResponse, metricsResponse, goalsResponse, teamsResponse] = await Promise.all([
-      getCurrentUser().catch(() => ({ user: null })),
+      getCurrentUser().catch(() => ({ success: false, data: null })),
       getContactsMetricsServer().catch(() => ({ success: false, data: null })),
       getMonthlyGoalsServer().catch(() => ({ success: false, data: null })),
       getTeamsServer().catch(() => ({ success: false, data: null })),
     ]);
 
-    // Endpoint /v1/auth/me returns { user } directly, not { success, data: { user } }
-    const user = userResponse && 'user' in userResponse && userResponse.user ? userResponse.user : null;
+    // getCurrentUser() returns ApiResponse<{ user: {...} }> = { success: true, data: { user: {...} } }
+    // Handle both success case and error case (from catch)
+    const user = userResponse.success && userResponse.data?.user ? userResponse.data.user : null;
     
     // If user is authenticated, fetch metrics and goals
     let metricsData: MonthlyMetrics | null = null;

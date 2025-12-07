@@ -121,7 +121,7 @@ export function calculateTotalPages(total: number, limit: number): number {
  * @param params - Parámetros de paginación usados
  * @returns Objeto con datos y metadatos de paginación
  */
-export function formatPaginationResponse<T>(
+export function formatPaginatedResponse<T>(
   data: T[],
   total: number,
   params: PaginationParams
@@ -157,3 +157,13 @@ export function applyPagination<T extends { limit: (n: number) => T; offset: (n:
 ): T {
   return query.limit(params.limit).offset(params.offset);
 }
+
+
+
+
+
+
+
+
+
+

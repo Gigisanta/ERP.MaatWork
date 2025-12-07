@@ -6,44 +6,28 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, Spinner, Stack, Text } from '@cactus/ui';
-
-// Simple Skeleton component using Tailwind
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
-}
+import { Stack } from '@cactus/ui';
+import { 
+  SkeletonPageHeader, 
+  SkeletonGrid 
+} from '../components/SkeletonLoader';
 
 export default function PortfoliosLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="lg">
         {/* Header skeleton */}
-        <Card>
-          <CardContent>
-            <Stack direction="row" gap="md" align="center" justify="between" className="py-4">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-10 w-40" />
-            </Stack>
-          </CardContent>
-        </Card>
+        <SkeletonPageHeader showActions />
 
         {/* Grid skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent>
-                <Stack direction="column" gap="md" className="py-4">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-10 w-full mt-4" />
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <SkeletonGrid 
+          items={6} 
+          columns={3} 
+          showCardHeader 
+          contentLines={3} 
+        />
       </Stack>
-    </div>
+    </main>
   );
 }
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface DrawerProps {
@@ -11,6 +11,13 @@ export interface DrawerProps {
   children?: React.ReactNode;
 }
 
+/**
+ * Drawer component with improved mobile UX
+ * 
+ * AI_DECISION: Enhanced drawer for better mobile experience
+ * Justificación: Better touch targets, safe area support, and smoother animations
+ * Impacto: Works well on all devices including those with notches
+ */
 export function Drawer({
   open,
   onOpenChange,
@@ -21,39 +28,105 @@ export function Drawer({
 }: DrawerProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
   // Close on ESC
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onOpenChange(false);
+      if (e.key === 'Escape') handleClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onOpenChange]);
+  }, [open, handleClose]);
 
-  // Basic focus management: focus panel when opens
+  // Lock body scroll when drawer is open
   useEffect(() => {
-    if (open) panelRef.current?.focus();
+    if (open) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
   }, [open]);
+
+  // Focus management
+  useEffect(() => {
+    if (open) {
+      // Small delay to ensure panel is rendered
+      const timeout = setTimeout(() => {
+        panelRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [open]);
+
+  // Handle swipe to close (touch devices)
+  useEffect(() => {
+    if (!open) return;
+    
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    let startX = 0;
+    let currentX = 0;
+    const threshold = 100; // Minimum swipe distance to close
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      currentX = startX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      currentX = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+      const deltaX = currentX - startX;
+      // Close if swiped left (for left drawer) or right (for right drawer)
+      if (side === 'left' && deltaX < -threshold) {
+        handleClose();
+      } else if (side === 'right' && deltaX > threshold) {
+        handleClose();
+      }
+      startX = 0;
+      currentX = 0;
+    };
+
+    panel.addEventListener('touchstart', handleTouchStart, { passive: true });
+    panel.addEventListener('touchmove', handleTouchMove, { passive: true });
+    panel.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      panel.removeEventListener('touchstart', handleTouchStart);
+      panel.removeEventListener('touchmove', handleTouchMove);
+      panel.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [open, side, handleClose]);
 
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50',
+        'fixed inset-0 z-50 lg:hidden',
         open ? 'pointer-events-auto' : 'pointer-events-none'
       )}
       aria-hidden={!open}
     >
-      {/* Backdrop */}
+      {/* Backdrop with blur effect */}
       <div
         className={cn(
-          'absolute inset-0 bg-black/40 transition-opacity',
+          'absolute inset-0 bg-black/50 backdrop-blur-sm',
+          'transition-opacity duration-300 ease-out',
           open ? 'opacity-100' : 'opacity-0'
         )}
-        onClick={() => onOpenChange(false)}
+        onClick={handleClose}
+        aria-label="Cerrar menú"
       />
 
-      {/* Panel */}
+      {/* Panel with safe area support */}
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -61,21 +134,32 @@ export function Drawer({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          'absolute top-0 h-full bg-surface border-border border shadow-lg outline-none',
-          'transition-transform duration-300 ease-out',
-          side === 'left' ? 'left-0' : 'right-0',
+          'absolute top-0 h-full bg-surface shadow-2xl outline-none',
+          // Smooth spring-like animation
+          'transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
+          // Position
+          side === 'left' ? 'left-0 rounded-r-2xl' : 'right-0 rounded-l-2xl',
+          // Transform
           open
             ? 'translate-x-0'
             : side === 'left'
             ? '-translate-x-full'
             : 'translate-x-full',
-          // Default width only if className doesn't specify width
-          !className || (!className.includes('w-') && !className.includes('max-w-') && !className.includes('min-w-'))
-            ? 'w-72'
-            : null,
+          // Responsive width - adapts to screen size
+          'w-[min(85vw,320px)]',
+          // Safe area insets for notched devices
+          side === 'left' ? 'pl-[env(safe-area-inset-left,0px)]' : 'pr-[env(safe-area-inset-right,0px)]',
+          'pt-[env(safe-area-inset-top,0px)]',
+          'pb-[env(safe-area-inset-bottom,0px)]',
           className
         )}
       >
+        {/* Visual indicator for swipe to close */}
+        <div className={cn(
+          'absolute top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-border opacity-50',
+          side === 'left' ? 'right-1.5' : 'left-1.5'
+        )} />
+        
         {children}
       </div>
     </div>
