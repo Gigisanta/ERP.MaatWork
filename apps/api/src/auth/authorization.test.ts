@@ -309,6 +309,46 @@ describe('buildContactAccessFilter', () => {
     });
   });
 
+  describe('Staff filter', () => {
+    it('debería retornar filter sin restricciones para staff (igual que admin)', () => {
+      const accessScope = {
+        userId: 'staff-123',
+        role: 'staff' as UserRole,
+        accessibleAdvisorIds: [],
+        canSeeUnassigned: true,
+        canAssignToOthers: true,
+        canReassign: true,
+      };
+
+      const filter = buildContactAccessFilter(accessScope);
+
+      expect(filter.description).toContain('staff');
+      expect(filter.description).toContain('no filters');
+      // Staff should have same access as admin (no restrictions)
+      expect(filter.whereClause).toBeDefined();
+    });
+  });
+
+  describe('Owner filter', () => {
+    it('debería retornar filter sin restricciones para owner (igual que admin)', () => {
+      const accessScope = {
+        userId: 'owner-123',
+        role: 'owner' as UserRole,
+        accessibleAdvisorIds: [],
+        canSeeUnassigned: true,
+        canAssignToOthers: false,
+        canReassign: false,
+      };
+
+      const filter = buildContactAccessFilter(accessScope);
+
+      expect(filter.description).toContain('owner');
+      expect(filter.description).toContain('no filters');
+      // Owner should have same access as admin for viewing (no restrictions)
+      expect(filter.whereClause).toBeDefined();
+    });
+  });
+
   describe('Edge cases', () => {
     it('debería manejar caso sin condiciones (fail safe)', () => {
       const accessScope = {

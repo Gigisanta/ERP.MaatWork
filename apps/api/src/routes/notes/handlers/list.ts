@@ -63,14 +63,17 @@ export const handleListNotes = createRouteHandler(async (req: Request) => {
   // Extract total from first item (all items have same total value)
   const totalCount =
     notesList.length > 0
-      ? Number((notesList[0] as typeof notesList[0] & { total: number }).total)
+      ? Number((notesList[0] as (typeof notesList)[0] & { total: number }).total)
       : 0;
 
   // Remove total from items
-  type NoteWithTotal = typeof notesList[0] & { total: number };
+  type NoteWithTotal = (typeof notesList)[0] & { total: number };
   const notesListWithoutTotal = notesList.map(({ total: _total, ...note }: NoteWithTotal) => note);
 
-  req.log.info({ contactId, count: notesListWithoutTotal.length, total: totalCount }, 'notes fetched');
+  req.log.info(
+    { contactId, count: notesListWithoutTotal.length, total: totalCount },
+    'notes fetched'
+  );
 
   return formatPaginatedResponse(notesListWithoutTotal, totalCount, {
     limit: limitNum,
@@ -140,32 +143,11 @@ export const handleBatchNotes = createRouteHandler(async (req: Request) => {
     {
       requested: validation.ids.length,
       accessible: accessibleContactIds.length,
-      withNotes: Object.keys(notesByContactId).filter((id) => notesByContactId[id].length > 0).length,
+      withNotes: Object.keys(notesByContactId).filter((id) => notesByContactId[id].length > 0)
+        .length,
     },
     'notes batch fetched'
   );
 
   return notesByContactId;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

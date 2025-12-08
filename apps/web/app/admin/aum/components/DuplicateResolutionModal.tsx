@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getAumDuplicates, matchAumRow } from '@/lib/api';
 import type { AumRow, ApiErrorWithMessage } from '@/types/aum';
 import { Button, Modal, Spinner, Text } from '@cactus/ui';
@@ -11,7 +11,11 @@ interface DuplicateResolutionModalProps {
   onResolved?: () => void;
 }
 
-export default function DuplicateResolutionModal({ accountNumber, onClose, onResolved }: DuplicateResolutionModalProps) {
+export default function DuplicateResolutionModal({
+  accountNumber,
+  onClose,
+  onResolved,
+}: DuplicateResolutionModalProps) {
   const [rows, setRows] = useState<AumRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -20,7 +24,7 @@ export default function DuplicateResolutionModal({ accountNumber, onClose, onRes
 
   const preferredRowId = useMemo(() => rows.find((r) => r.isPreferred)?.id ?? null, [rows]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -36,11 +40,11 @@ export default function DuplicateResolutionModal({ accountNumber, onClose, onRes
     } finally {
       setLoading(false);
     }
-  };
+  }, [accountNumber]);
 
   useEffect(() => {
     void load();
-  }, [accountNumber]);
+  }, [load]);
 
   const handleResolve = async () => {
     if (!selectedRowId) return;
@@ -66,7 +70,13 @@ export default function DuplicateResolutionModal({ accountNumber, onClose, onRes
   };
 
   return (
-    <Modal open onOpenChange={(open) => { if (!open) onClose(); }} title={`Duplicados para ${accountNumber}`}>
+    <Modal
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={`Duplicados para ${accountNumber}`}
+    >
       {loading ? (
         <div className="py-6 flex items-center justify-center text-gray-600">
           <Spinner size="sm" className="mr-2" /> Cargando...
@@ -74,7 +84,9 @@ export default function DuplicateResolutionModal({ accountNumber, onClose, onRes
       ) : (
         <div className="space-y-4">
           {rows.length === 0 ? (
-            <Text size="sm" className="text-gray-600">No hay duplicados para esta cuenta.</Text>
+            <Text size="sm" className="text-gray-600">
+              No hay duplicados para esta cuenta.
+            </Text>
           ) : (
             <>
               <div className="space-y-2">
@@ -87,19 +99,35 @@ export default function DuplicateResolutionModal({ accountNumber, onClose, onRes
                       onChange={() => setSelectedRowId(r.id)}
                     />
                     <span>
-                      {new Date(r.rowCreatedAt).toLocaleString()} • {r.holderName ?? ''} • {r.advisorRaw ?? ''} • {r.matchStatus}
+                      {new Date(r.rowCreatedAt).toLocaleString()} • {r.holderName ?? ''} •{' '}
+                      {r.advisorRaw ?? ''} • {r.matchStatus}
                       {r.file ? ` • ${r.file.originalFilename} (${r.file.broker})` : ''}
                     </span>
                   </label>
                 ))}
               </div>
               {error && (
-                <Text size="sm" className="text-error">{error}</Text>
+                <Text size="sm" className="text-error">
+                  {error}
+                </Text>
               )}
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={onClose} size="sm">Cancelar</Button>
-                <Button variant="primary" size="sm" disabled={!selectedRowId || saving} onClick={handleResolve}>
-                  {saving ? <><Spinner size="sm" className="mr-1" /> Guardando...</> : 'Guardar preferida'}
+                <Button variant="ghost" onClick={onClose} size="sm">
+                  Cancelar
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!selectedRowId || saving}
+                  onClick={handleResolve}
+                >
+                  {saving ? (
+                    <>
+                      <Spinner size="sm" className="mr-1" /> Guardando...
+                    </>
+                  ) : (
+                    'Guardar preferida'
+                  )}
                 </Button>
               </div>
             </>

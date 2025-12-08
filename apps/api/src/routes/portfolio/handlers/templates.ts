@@ -157,7 +157,8 @@ export async function getTemplateLinesBatch(req: Request) {
   });
 
   if (!validation.valid) {
-    throw new HttpError(400, `Invalid batch request: ${validation.errors.join(', ')}`);
+    const errorMessage = validation.errors?.join(', ') || 'Invalid batch request';
+    throw new HttpError(400, `Invalid batch request: ${errorMessage}`);
   }
 
   const templateIds = validation.ids;

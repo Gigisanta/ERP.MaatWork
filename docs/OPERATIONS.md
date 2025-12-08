@@ -24,7 +24,6 @@ Esta guía consolida toda la información sobre deploy, configuración, monitore
 - PostgreSQL 16 (o `docker compose up -d`)
 - Python 3.10+ (opcional, para analytics-service)
 - PM2 en VPS (producción)
-- TMUX (recomendado para desarrollo)
 
 ### Instalación Inicial
 
@@ -78,13 +77,13 @@ NEXT_PUBLIC_DEBUG=true
 ### Iniciar Servicios
 
 ```bash
-# Opción 1: Con TMUX (recomendado - 4 paneles)
+# Iniciar todos los servicios (consola única con logs coloreados)
 pnpm dev
 
-# Opción 2: Sin TMUX
+# Modo básico (sin consola unificada)
 pnpm dev:basic
 
-# Detener sesión TMUX
+# Detener todos los servicios
 pnpm dev:kill
 ```
 
@@ -100,8 +99,7 @@ pnpm dev:kill
 # Verificar API
 curl http://localhost:3001/health
 
-# Verificar servicios en TMUX
-# Presionar Ctrl+B luego D para ver paneles
+# Verificar servicios en consola (logs en vivo)
 ```
 
 ---
@@ -414,31 +412,20 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 2. Revisar `onConflict*` en código de seeds
 3. Limpiar datos antes de re-ejecutar seeds si es necesario
 
-#### TMUX no está instalado
+#### Servicios no se detienen correctamente
 
-**Síntomas:** Error al ejecutar `pnpm dev`
-
-**Soluciones:**
-```bash
-# macOS
-brew install tmux
-
-# Ubuntu/Debian
-sudo apt-get install tmux
-
-# O usar modo básico sin TMUX
-pnpm dev:basic
-```
-
-#### Detener sesión TMUX
-
-**Síntomas:** Necesitas detener la sesión TMUX
+**Síntomas:** Procesos quedan corriendo después de Ctrl+C
 
 **Soluciones:**
 ```bash
-pnpm run dev:kill
-# o manualmente:
-tmux kill-session -t cactus-dev
+# Detener todos los servicios
+pnpm dev:kill
+
+# O manualmente matar procesos
+pkill -f "tsx watch src/index.ts"
+pkill -f "next dev"
+pkill -f "python.*main.py"
+pkill -f "uvicorn.*main:app"
 ```
 
 #### Servicio Analytics (Python) no inicia

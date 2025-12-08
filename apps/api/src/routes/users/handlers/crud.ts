@@ -137,7 +137,11 @@ export const handleDeleteUser = createRouteHandler(async (req: Request) => {
     const activeAdmins = Number(adminCount?.count || 0);
     if (activeAdmins <= 1) {
       req.log.warn({ userId: id }, 'attempted to delete last active admin');
-      throw new HttpError(400, 'No se puede eliminar el último administrador activo del sistema', 'LAST_ADMIN_DELETE_NOT_ALLOWED');
+      throw new HttpError(
+        400,
+        'No se puede eliminar el último administrador activo del sistema',
+        'LAST_ADMIN_DELETE_NOT_ALLOWED'
+      );
     }
   }
 
@@ -158,25 +162,3 @@ export const handleDeleteUser = createRouteHandler(async (req: Request) => {
     message: `Usuario ${userToDelete.fullName} eliminado exitosamente`,
   };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

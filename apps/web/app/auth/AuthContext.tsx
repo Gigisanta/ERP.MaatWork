@@ -6,14 +6,16 @@ import React from 'react';
 import { logger } from '../../lib/logger';
 import { fetchWithLogging, postJson, fetchJson } from '../../lib/fetch-client';
 import { config } from '../../lib/config';
-import type { UserRole } from '@/types';
+import type { UserRole, UserApiResponse } from '@/types';
 
-export interface AuthUser {
+export interface AuthUser extends Partial<UserApiResponse> {
   id: string;
   email: string;
   role: UserRole;
   fullName?: string;
   isActive?: boolean;
+  phone?: string | null;
+  lastLogin?: string | null;
 }
 
 interface RegisterData {
@@ -35,9 +37,14 @@ interface AuthContextValue {
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [initialized, setInitialized] = React.useState(false);
+interface AuthProviderProps {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}
+
+export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
+  const [user, setUser] = React.useState<AuthUser | null>(initialUser);
+  const [initialized, setInitialized] = React.useState(Boolean(initialUser));
   const hasCheckedSession = React.useRef(false);
 
   React.useEffect(() => {
@@ -45,31 +52,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (hasCheckedSession.current) {
       return;
     }
+    // Si ya tenemos usuario del servidor, marcar como inicializado y evitar fetch extra
+    if (initialUser) {
+      hasCheckedSession.current = true;
+      setInitialized(true);
+      return;
+    }
+
     hasCheckedSession.current = true;
 
     logger.debug('Verificando sesión con cookie');
 
-    // Verificar sesión directamente con /auth/me usando cookies
-    fetchWithLogging(`${config.apiUrl}/v1/auth/me`, {
+    // Verificar sesión directamente con /users/me usando cookies
+    fetchWithLogging(`${config.apiUrl}/v1/users/me`, {
       credentials: 'include',
     })
       .then(async (r) => {
-        logger.debug('Respuesta de /auth/me recibida', { status: r.status });
+        logger.debug('Respuesta de /users/me recibida', { status: r.status });
         if (r.ok) {
           const data = await r.json();
-          if (data?.user) {
-            logger.info('Usuario autenticado', { userId: data.user.id });
-            setUser(data.user);
-            logger.updateUser(data.user.id, data.user.role);
+          const userPayload: AuthUser | null = data?.data ?? data?.user ?? null;
+          if (userPayload) {
+            logger.info('Usuario autenticado', { userId: userPayload.id });
+            setUser(userPayload);
+            logger.updateUser(userPayload.id, userPayload.role);
           }
+        } else if (r.status === 401) {
+          // Token inválido o expirado - limpiar estado local
+          logger.warn('Sesión inválida o expirada, limpiando estado');
+          setUser(null);
+          logger.updateUser(null, null);
+
+          // Intentar limpiar cookie llamando al endpoint de logout
+          postJson(`${config.apiUrl}/v1/auth/logout`, {}).catch(() => {
+            // Ignorar errores al limpiar cookie
+          });
         }
         setInitialized(true);
       })
       .catch((err) => {
         logger.warn('No hay sesión activa', { error: err });
+        setUser(null);
+        logger.updateUser(null, null);
         setInitialized(true);
       });
-  }, []);
+  }, [initialUser]);
 
   const login = React.useCallback(
     async (identifier: string, password: string, rememberMe?: boolean) => {

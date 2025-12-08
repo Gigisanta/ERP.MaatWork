@@ -26,9 +26,7 @@ export const updateNoteSchema = z.object({
 // Query Schemas
 // ==========================================================
 
-export const listNotesQuerySchema = paginationQuerySchema.and(
-  z.object({ contactId: uuidSchema })
-);
+export const listNotesQuerySchema = paginationQuerySchema.and(z.object({ contactId: uuidSchema }));
 
 export const batchNotesQuerySchema = z.object({
   contactIds: z.string().min(1),
@@ -48,25 +46,3 @@ export { idParamSchema };
 
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -37,19 +37,9 @@ const router = Router();
 // List Routes (must come before /:id routes)
 // ==========================================================
 
-router.get(
-  '/',
-  requireAuth,
-  validate({ query: listNotesQuerySchema }),
-  handleListNotes
-);
+router.get('/', requireAuth, validate({ query: listNotesQuerySchema }), handleListNotes);
 
-router.get(
-  '/batch',
-  requireAuth,
-  validate({ query: batchNotesQuerySchema }),
-  handleBatchNotes
-);
+router.get('/batch', requireAuth, validate({ query: batchNotesQuerySchema }), handleBatchNotes);
 
 // ==========================================================
 // CRUD Routes
@@ -80,25 +70,3 @@ export {
   type CreateNoteInput,
   type UpdateNoteInput,
 } from './schemas';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

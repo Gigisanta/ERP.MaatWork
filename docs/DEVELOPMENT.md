@@ -15,15 +15,40 @@ Esta guía proporciona información esencial para desarrolladores que trabajan e
 
 ## Getting Started
 
+> **¿Es tu primera vez?** Consulta la [Guía de Onboarding](./ONBOARDING.md) para una guía paso a paso detallada.
+
 ### Requisitos
 
 - Node.js >=22.0.0 <25.0.0
 - pnpm >=9.0.0
+- Docker Desktop (requerido para PostgreSQL y N8N)
 - Python 3.10+ (opcional, para analytics-service)
-- TMUX (recomendado)
-- Docker (opcional, para PostgreSQL local)
 
-### Instalación
+### Instalación Rápida (Recomendada)
+
+El script de setup automatiza toda la configuración inicial:
+
+```bash
+# 1. Instalar dependencias
+pnpm install
+
+# 2. Ejecutar setup automático (configura todo)
+pnpm setup
+
+# 3. Iniciar desarrollo
+pnpm dev
+```
+
+El comando `pnpm setup` ejecuta automáticamente:
+- ✅ Verificación de prerequisitos
+- ✅ Configuración de variables de entorno (crea `.env`)
+- ✅ Inicio de servicios Docker (PostgreSQL y N8N)
+- ✅ Ejecución de migraciones de base de datos
+- ✅ Creación de usuario admin inicial
+
+### Instalación Manual (Alternativa)
+
+Si prefieres configurar manualmente:
 
 ```bash
 # 1. Instalar dependencias
@@ -36,28 +61,42 @@ docker compose up -d
 cp apps/api/config-example.env apps/api/.env
 # Editar apps/api/.env con tus valores
 
-# 4. Instalar dependencias Python (opcional)
+# 4. Ejecutar migraciones
+pnpm -F @cactus/db migrate
+
+# 5. Crear usuario admin (opcional)
+tsx scripts/create-admin-user.js
+
+# 6. Instalar dependencias Python (opcional)
 pnpm -F @cactus/analytics-service install
 ```
 
 ### Desarrollo
 
 ```bash
-# Opción 1: Con TMUX (recomendado - 4 paneles)
+# Iniciar todos los servicios (consola única con logs coloreados)
 pnpm dev
 
-# Opción 2: Sin TMUX
+# Modo básico (sin consola unificada)
 pnpm dev:basic
 
-# Detener sesión TMUX
+# Detener todos los servicios
 pnpm dev:kill
+
+# Omitir validaciones pre-inicio (más rápido)
+pnpm dev:fast
 ```
 
-**URLs:**
+**URLs de desarrollo:**
 - Web: http://localhost:3000
 - API: http://localhost:3001
 - Analytics: http://localhost:3002 (configurable vía `ANALYTICS_PORT`)
 - N8N: http://localhost:5678
+
+**Usuario por defecto (después del setup):**
+- Email: `admin@cactus.local`
+- Rol: `admin` (acceso completo)
+- Contraseña: No requerida en desarrollo
 
 ---
 
@@ -702,9 +741,9 @@ Los módulos principales incluyen:
 ### Desarrollo
 
 ```bash
-pnpm dev              # Inicia todos los servicios (TMUX)
-pnpm dev:basic        # Inicia servicios sin TMUX
-pnpm dev:kill         # Detiene sesión TMUX
+pnpm dev              # Inicia todos los servicios (consola única con logs coloreados)
+pnpm dev:basic        # Inicia servicios sin consola unificada
+pnpm dev:kill         # Detiene todos los servicios
 ```
 
 ### Typecheck y Lint

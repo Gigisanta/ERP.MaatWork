@@ -20,5 +20,3 @@ export type ResponsiveProp<T> =
       xl?: T;
       '2xl'?: T;
     };
-
-

@@ -33,34 +33,3 @@ export const lookupNotificationType = pgTable('lookup_notification_type', {
   label: text('label').notNull()
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

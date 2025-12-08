@@ -3,12 +3,12 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mapAumColumns, validateColumnMapping } from './aum-column-mapper';
+import { mapAumColumns, validateColumnMapping } from './aum-columns';
 
 describe('aum-column-mapper parsing improvements', () => {
   describe('safeToNumber - formato europeo vs US', () => {
     // Los tests se hacen indirectamente a través de mapAumColumns
-    
+
     it('debe convertir formato europeo correctamente (coma decimal, punto miles)', () => {
       const record = {
         idCuenta: '123',
@@ -16,11 +16,11 @@ describe('aum-column-mapper parsing improvements', () => {
         Descripcion: 'Test Client',
         'AUM en Dolares': '4.971,15',
         'Bolsa Arg': '2.089,69',
-        pesos: '29.684,67'
+        pesos: '29.684,67',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBe(4971.15);
       expect(mapped.bolsaArg).toBe(2089.69);
       expect(mapped.pesos).toBe(29684.67);
@@ -33,11 +33,11 @@ describe('aum-column-mapper parsing improvements', () => {
         Descripcion: 'Test Client',
         'AUM en Dolares': '4,971.15',
         'Bolsa Arg': '2,089.69',
-        pesos: '29684.67'
+        pesos: '29684.67',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBe(4971.15);
       expect(mapped.bolsaArg).toBe(2089.69);
       expect(mapped.pesos).toBe(29684.67);
@@ -48,11 +48,11 @@ describe('aum-column-mapper parsing improvements', () => {
         idCuenta: '123',
         comitente: '456',
         Descripcion: 'Test Client',
-        'AUM en Dolares': '971,15'
+        'AUM en Dolares': '971,15',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBe(971.15);
     });
 
@@ -61,11 +61,11 @@ describe('aum-column-mapper parsing improvements', () => {
         idCuenta: '123',
         comitente: '456',
         Descripcion: 'Test Client',
-        'AUM en Dolares': '971.15'
+        'AUM en Dolares': '971.15',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBe(971.15);
     });
 
@@ -75,11 +75,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         'AUM en Dolares': '4971',
-        'Bolsa Arg': '2089'
+        'Bolsa Arg': '2089',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBe(4971);
       expect(mapped.bolsaArg).toBe(2089);
     });
@@ -92,11 +92,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         'AUM en Dolares': '',
-        'Bolsa Arg': null
+        'Bolsa Arg': null,
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBeNull();
       expect(mapped.bolsaArg).toBeNull();
     });
@@ -107,11 +107,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         'AUM en Dolares': '--',
-        'Bolsa Arg': '--'
+        'Bolsa Arg': '--',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBeNull();
       expect(mapped.bolsaArg).toBeNull();
     });
@@ -122,11 +122,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         'AUM en Dolares': '-',
-        'Bolsa Arg': '-'
+        'Bolsa Arg': '-',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBeNull();
       expect(mapped.bolsaArg).toBeNull();
     });
@@ -137,11 +137,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         'AUM en Dolares': '   ',
-        'Bolsa Arg': ' 4971.15 '
+        'Bolsa Arg': ' 4971.15 ',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.aumDollars).toBeNull();
       expect(mapped.bolsaArg).toBe(4971.15);
     });
@@ -155,11 +155,11 @@ describe('aum-column-mapper parsing improvements', () => {
         'Bolsa Arg': '0,00',
         'Fondos Arg': '0.00',
         'Bolsa BCI': '0,0',
-        pesos: '0.0'
+        pesos: '0.0',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       // AI_DECISION: Los valores cero deben parsearse como 0, no null
       // Justificación: Los valores cero son datos válidos y deben distinguirse de valores ausentes
       // Impacto: Los valores cero se mostrarán como "0,00" en lugar de "--"
@@ -179,11 +179,11 @@ describe('aum-column-mapper parsing improvements', () => {
         comitente: '456',
         Descripcion: 'Test Client',
         Asesor: 'Test Advisor',
-        'AUM en Dolares': '1000'
+        'AUM en Dolares': '1000',
       });
-      
+
       const validation = validateColumnMapping(availableColumns, mapped);
-      
+
       expect(validation.fileType).toBe('master');
       expect(validation.isValid).toBe(true);
       expect(validation.errors.length).toBe(0);
@@ -199,15 +199,15 @@ describe('aum-column-mapper parsing improvements', () => {
         idCuenta: '123',
         comitente: '456',
         Asesor: 'Test Advisor',
-        'AUM en Dolares': '1000'
+        'AUM en Dolares': '1000',
       });
-      
+
       const validation = validateColumnMapping(availableColumns, mapped);
-      
+
       expect(validation.fileType).toBe('master');
       expect(validation.isValid).toBe(false);
       expect(validation.errors.length).toBeGreaterThan(0);
-      expect(validation.errors.some(e => e.includes('Descripcion'))).toBe(true);
+      expect(validation.errors.some((e) => e.includes('Descripcion'))).toBe(true);
     });
   });
 
@@ -218,11 +218,11 @@ describe('aum-column-mapper parsing improvements', () => {
         idCuenta: '123',
         comitente: '456',
         cuenta: 'Test Client',
-        'AUM en Dolares': '1000'
+        'AUM en Dolares': '1000',
       });
-      
+
       const validation = validateColumnMapping(availableColumns, mapped);
-      
+
       expect(validation.fileType).toBe('monthly');
       expect(validation.isValid).toBe(true);
       expect(validation.errors.length).toBe(0);
@@ -237,15 +237,15 @@ describe('aum-column-mapper parsing improvements', () => {
       const mapped = mapAumColumns({
         idCuenta: '123',
         comitente: '456',
-        'AUM en Dolares': '1000'
+        'AUM en Dolares': '1000',
       });
-      
+
       const validation = validateColumnMapping(availableColumns, mapped);
-      
+
       expect(validation.fileType).toBe('monthly');
       expect(validation.isValid).toBe(false);
       expect(validation.errors.length).toBeGreaterThan(0);
-      expect(validation.errors.some(e => e.includes('cuenta'))).toBe(true);
+      expect(validation.errors.some((e) => e.includes('cuenta'))).toBe(true);
     });
   });
 
@@ -264,11 +264,11 @@ describe('aum-column-mapper parsing improvements', () => {
         mep: '',
         cable: '',
         cv7000: '',
-        cv10000: ''
+        cv10000: '',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.idCuenta).toBe('15356');
       expect(mapped.accountNumber).toBe('76551');
       expect(mapped.holderName).toBe('MARITANO FEDERICO NICOLAS');
@@ -288,11 +288,11 @@ describe('aum-column-mapper parsing improvements', () => {
         pesos: '',
         mep: '',
         cable: '',
-        cv7000: ''
+        cv7000: '',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.idCuenta).toBe('15356');
       expect(mapped.accountNumber).toBe('76551');
       expect(mapped.holderName).toBe('MARITANO FEDERICO NICOLAS');
@@ -312,11 +312,11 @@ describe('aum-column-mapper parsing improvements', () => {
         pesos: '29.684,67',
         mep: '9,81',
         cable: '',
-        cv7000: ''
+        cv7000: '',
       };
-      
+
       const mapped = mapAumColumns(record);
-      
+
       expect(mapped.idCuenta).toBe('1492080');
       expect(mapped.holderName).toBe('PIZZI PAULA Y/O MILLAURO AGUSTIN');
       expect(mapped.aumDollars).toBe(551.76);
@@ -328,4 +328,3 @@ describe('aum-column-mapper parsing improvements', () => {
     });
   });
 });
-

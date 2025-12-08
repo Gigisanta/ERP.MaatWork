@@ -46,6 +46,7 @@ export type {
   TeamMemberRole,
   Team,
   TeamMember,
+  TeamWithMembers,
   TeamAdvisor,
   MembershipRequestStatus,
   MembershipRequest,

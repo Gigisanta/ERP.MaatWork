@@ -42,6 +42,13 @@ export interface TeamMember {
 }
 
 /**
+ * Team with resolved member list
+ */
+export interface TeamWithMembers extends Team {
+  members: TeamMember[];
+}
+
+/**
  * Team advisor candidate
  */
 export interface TeamAdvisor {
@@ -129,35 +136,4 @@ export interface TeamMemberMetrics {
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

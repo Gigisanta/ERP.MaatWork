@@ -41,6 +41,7 @@ import { useProfileData, useProfileActions, useAliases } from './hooks';
 // Componentes especializados
 import {
   PersonalInfoSection,
+  ThemeSelectorSection,
   AliasesSection,
   TeamsSection,
   InvitationsSection,
@@ -196,6 +197,9 @@ export default function ProfilePage() {
 
                 {/* Separador visual */}
                 <div className="border-t border-border my-3" />
+
+                {/* Selector de Tema */}
+                <ThemeSelectorSection />
 
                 {/* Secciones integradas en Grid */}
                 <Grid cols={{ base: 1, md: 2 }} gap="sm">

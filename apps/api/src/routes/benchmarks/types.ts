@@ -40,30 +40,3 @@ export interface BenchmarkComponentBatch {
 export interface ComponentWithWeight {
   weight: string;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

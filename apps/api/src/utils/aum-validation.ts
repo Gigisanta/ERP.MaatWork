@@ -327,3 +327,6 @@ export type AumRowValidated = z.infer<typeof aumRowSchema>;
 export type AumFileValidated = z.infer<typeof aumFileSchema>;
 export type AumMonthlyHistoryQuery = z.infer<typeof aumMonthlyHistoryQuerySchema>;
 export type AumMonthlySnapshotValidated = z.infer<typeof aumMonthlySnapshotSchema>;
+export type AumHistoryQuery = z.infer<typeof aumHistoryQuerySchema>;
+export type AumAdvisorSummaryQuery = z.infer<typeof aumAdvisorSummaryQuerySchema>;
+export type AumAvailablePeriodsQuery = z.infer<typeof aumAvailablePeriodsQuerySchema>;

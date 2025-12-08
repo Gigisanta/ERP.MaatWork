@@ -108,26 +108,26 @@ export async function getContactPortfolio(req: Request) {
 
   const operationName = createOperationName('get_contact_portfolio', contactId);
 
-    type PortfolioResult = {
-      rows: Array<{
-        assignment: {
-          id: string;
-          templateId: string;
-          status: string;
-          startDate: string;
-          endDate: string | null;
-          notes: string | null;
-          templateName: string;
-          templateDescription: string | null;
-          riskLevel: string;
-        };
-        template_lines: unknown;
-        overrides: unknown;
-      }>;
-    };
+  type PortfolioResult = {
+    rows: Array<{
+      assignment: {
+        id: string;
+        templateId: string;
+        status: string;
+        startDate: string;
+        endDate: string | null;
+        notes: string | null;
+        templateName: string;
+        templateDescription: string | null;
+        riskLevel: string;
+      };
+      template_lines: unknown;
+      overrides: unknown;
+    }>;
+  };
 
-    const result = (await dbLogger.select(operationName, () =>
-      db().execute(sql`
+  const result = (await dbLogger.select(operationName, () =>
+    db().execute(sql`
         WITH assignment_data AS (
           SELECT 
             cpa.id,
@@ -201,42 +201,42 @@ export async function getContactPortfolio(req: Request) {
         LEFT JOIN template_lines_data tld ON ad.template_id = tld.template_id
         LEFT JOIN overrides_data od ON ad.id = od.assignment_id
       `)
-    )) as PortfolioResult;
+  )) as PortfolioResult;
 
-    if (!result.rows || result.rows.length === 0) {
-      return null;
-    }
+  if (!result.rows || result.rows.length === 0) {
+    return null;
+  }
 
-    const row = result.rows[0] as {
-      assignment: {
-        id: string;
-        templateId: string;
-        status: string;
-        startDate: string;
-        endDate: string | null;
-        notes: string | null;
-        templateName: string;
-        templateDescription: string | null;
-        riskLevel: string | null;
-      };
-      template_lines: Array<{
-        id: string;
-        targetType: string;
-        assetClass: string | null;
-        instrumentId: string | null;
-        targetWeight: string;
-        instrumentName: string | null;
-        instrumentSymbol: string | null;
-        assetClassName: string | null;
-      }>;
-      overrides: Array<{
-        id: string;
-        targetType: string;
-        assetClass: string | null;
-        instrumentId: string | null;
-        targetWeight: string;
-      }>;
+  const row = result.rows[0] as {
+    assignment: {
+      id: string;
+      templateId: string;
+      status: string;
+      startDate: string;
+      endDate: string | null;
+      notes: string | null;
+      templateName: string;
+      templateDescription: string | null;
+      riskLevel: string | null;
     };
+    template_lines: Array<{
+      id: string;
+      targetType: string;
+      assetClass: string | null;
+      instrumentId: string | null;
+      targetWeight: string;
+      instrumentName: string | null;
+      instrumentSymbol: string | null;
+      assetClassName: string | null;
+    }>;
+    overrides: Array<{
+      id: string;
+      targetType: string;
+      assetClass: string | null;
+      instrumentId: string | null;
+      targetWeight: string;
+    }>;
+  };
 
   return {
     assignment: row.assignment,
@@ -347,8 +347,3 @@ export async function deleteAssignment(req: Request) {
 
   return { message: 'Asignación eliminada correctamente' };
 }
-
-
-
-
-

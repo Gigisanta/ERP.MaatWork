@@ -135,34 +135,3 @@ export const portfolioMonitoringDetails = pgTable('portfolio_monitoring_details'
   deviationPct: numeric('deviation_pct', { precision: 7, scale: 4 }).notNull()
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -2,14 +2,36 @@
 
 Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@cactus/db` (Drizzle + PostgreSQL) y `@cactus/ui` (Design System + React Components).
 
-## Inicio Rápido
+## Primera Instalación
+
+Si es la primera vez que clonas el repositorio, ejecuta el script de setup automático:
 
 ```bash
-# Instalar dependencias
+# 1. Instalar dependencias
 pnpm install
 
-# Iniciar servicios (requiere Docker para PostgreSQL)
-docker compose up -d
+# 2. Ejecutar setup inicial (configura todo automáticamente)
+pnpm setup
+
+# 3. Iniciar desarrollo
+pnpm dev
+```
+
+El script de setup (`pnpm setup`) automáticamente:
+- ✅ Verifica prerequisitos (Node.js, pnpm, Docker)
+- ✅ Configura variables de entorno (crea `.env` desde `config-example.env`)
+- ✅ Inicia servicios Docker (PostgreSQL y N8N)
+- ✅ Ejecuta migraciones de base de datos
+- ✅ Crea usuario admin inicial (`admin@cactus.local`)
+
+**Nota:** Si encuentras errores 401 o problemas de autenticación después de clonar:
+- Limpia las cookies del navegador para `localhost`
+- O usa modo incógnito para evitar tokens viejos
+
+## Inicio Rápido (Después del Setup)
+
+```bash
+# Iniciar servicios de desarrollo
 pnpm dev
 ```
 
@@ -19,7 +41,7 @@ pnpm dev
 - Analytics: http://localhost:3002
 - N8N: http://localhost:5678
 
-Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started).
+Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started) o [Guía de Onboarding](./docs/ONBOARDING.md).
 
 ## Comandos Esenciales
 

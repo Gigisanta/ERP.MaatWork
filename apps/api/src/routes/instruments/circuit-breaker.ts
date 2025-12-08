@@ -13,30 +13,3 @@ export const pythonServiceCircuitBreaker = new CircuitBreaker({
   timeout: 15000, // Timeout de 15 segundos por request
   successThreshold: 2, // Cerrar después de 2 éxitos en half-open
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

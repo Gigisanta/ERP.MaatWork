@@ -25,14 +25,8 @@ if (isWindows) {
     process.exit(0);
   }
 } else {
-  // Unix/Linux/macOS: Matar sesión tmux y procesos
+  // Unix/Linux/macOS: Matar procesos de desarrollo
   try {
-    // Matar sesión tmux si existe
-    execSync('tmux kill-session -t cactus-dev 2>/dev/null || true', {
-      stdio: 'ignore',
-      cwd: projectRoot
-    });
-    
     // Matar procesos comunes
     execSync('pkill -f "tsx watch src/index.ts" 2>/dev/null || true', {
       stdio: 'ignore',
@@ -43,6 +37,14 @@ if (isWindows) {
       cwd: projectRoot
     });
     execSync('pkill -f "python.*main.py" 2>/dev/null || true', {
+      stdio: 'ignore',
+      cwd: projectRoot
+    });
+    execSync('pkill -f "uvicorn.*main:app" 2>/dev/null || true', {
+      stdio: 'ignore',
+      cwd: projectRoot
+    });
+    execSync('pkill -f "dev-unified.js" 2>/dev/null || true', {
       stdio: 'ignore',
       cwd: projectRoot
     });

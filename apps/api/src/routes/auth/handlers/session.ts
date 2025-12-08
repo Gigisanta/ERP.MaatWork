@@ -110,25 +110,3 @@ export const handleLogout = createAsyncHandler(async (req: Request, res: Respons
   req.log.info({ userId: req.user!.id }, 'User logged out');
   return res.json({ success: true, requestId: req.requestId });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

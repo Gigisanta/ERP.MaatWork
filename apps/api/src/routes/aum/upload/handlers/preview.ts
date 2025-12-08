@@ -4,7 +4,7 @@
  * AI_DECISION: Extraer handler de preview a módulo separado
  * Justificación: Separar responsabilidades mejora mantenibilidad
  * Impacto: Código más organizado
- * 
+ *
  * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
  * Justificación: Consistencia con otros handlers, manejo de errores centralizado
  * Impacto: Código más limpio, mejor logging de errores, requestId automático
@@ -19,7 +19,7 @@ import { createRouteHandler, HttpError } from '@/utils/route-handler';
 /**
  * GET /admin/aum/uploads/:fileId/preview
  * Preview rows from uploaded file
- * 
+ *
  * Params están validados por middleware validate() con aumFileIdParamsSchema
  */
 export const handlePreview = createRouteHandler(async (req: Request) => {
@@ -46,7 +46,7 @@ export const handlePreview = createRouteHandler(async (req: Request) => {
     .from(aumImportFiles)
     .where(eq(aumImportFiles.id, fileId))
     .limit(1);
-  
+
   if (!file) {
     throw new HttpError(404, 'File not found');
   }
@@ -76,8 +76,3 @@ export const handlePreview = createRouteHandler(async (req: Request) => {
     rows,
   };
 });
-
-
-
-
-

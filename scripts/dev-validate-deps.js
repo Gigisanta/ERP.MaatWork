@@ -178,32 +178,6 @@ function checkPostgreSQL() {
   return false;
 }
 
-/**
- * Verificar tmux (solo en Unix)
- */
-function checkTmux() {
-  if (isWindows) {
-    // Windows no usa tmux
-    return true;
-  }
-  
-  console.log(info('🖥️  Verificando tmux...'));
-  
-  const result = execCommand('tmux -V');
-  
-  if (result.success) {
-    console.log(success(`  ✅ tmux instalado: ${result.output}`));
-    return true;
-  } else {
-    console.log(warning('  ⚠️  tmux no está instalado (opcional pero recomendado)'));
-    console.log(warning('     Instala tmux para mejor experiencia de desarrollo:'));
-    console.log(warning('       macOS:   brew install tmux'));
-    console.log(warning('       Ubuntu:  sudo apt-get install tmux'));
-    console.log(warning('       Arch:    sudo pacman -S tmux'));
-    hasWarnings = true;
-    return false;
-  }
-}
 
 /**
  * Verificar Python y dependencias (opcional pero recomendado)
@@ -318,7 +292,6 @@ function main() {
   // Validaciones opcionales (solo en modo completo)
   const optionalChecks = fastMode ? [] : [
     checkDocker,
-    checkTmux,
     checkPython
   ];
   
@@ -349,5 +322,5 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { main, checkNodeVersion, checkPnpm, checkDocker, checkPostgreSQL, checkTmux, checkPython };
+module.exports = { main, checkNodeVersion, checkPnpm, checkDocker, checkPostgreSQL, checkPython };
 

@@ -15,6 +15,7 @@ alwaysApply: false
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
+import { createRouteHandler, createAsyncHandler } from '../utils/route-handler';
 import { z } from 'zod';
 
 const router = Router();
@@ -32,12 +33,25 @@ const createSchema = z.object({
 // Routes
 // ==========================================================
 
+// ✅ Usar createRouteHandler para la mayoría de casos
 router.post('/',
   requireAuth,
   validate({ body: createSchema }),  // ✅ Middleware validate()
-  async (req, res) => {
+  createRouteHandler(async (req) => {
     // req.body ya está validado y tipado
-  }
+    const result = await createItem(req.body);
+    return result; // Se envuelve automáticamente en { success: true, data: result }
+  })
+);
+
+// ✅ Usar createAsyncHandler SOLO cuando necesitas control directo de res (ej: status 201, cookies)
+router.post('/special',
+  requireAuth,
+  validate({ body: createSchema }),
+  createAsyncHandler(async (req, res) => {
+    const result = await createItem(req.body);
+    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
+  })
 );
 ```
 
@@ -83,17 +97,18 @@ router.delete('/admin-only',
 
 ```typescript
 // Usar req.log (pino) - NO console.log
-router.post('/endpoint', async (req, res) => {
-  req.log.info({ action: 'create_item' }, 'Creating item');
-  
-  try {
-    // ...
+// createRouteHandler maneja errores automáticamente, solo loguear info
+router.post('/endpoint',
+  requireAuth,
+  validate({ body: createSchema }),
+  createRouteHandler(async (req) => {
+    req.log.info({ action: 'create_item' }, 'Creating item');
+    
+    const result = await createItem(req.body);
     req.log.info({ itemId: result.id }, 'Item created successfully');
-  } catch (error) {
-    req.log.error({ err: error }, 'Failed to create item');
-    throw error;
-  }
-});
+    return result; // Errores se manejan automáticamente por createRouteHandler
+  })
+);
 ```
 
 ## Cliente API Centralizado (Frontend)
@@ -106,24 +121,44 @@ router.post('/endpoint', async (req, res) => {
 
 ## Manejo de Errores
 
-**Usar `createErrorResponse()` para respuestas consistentes:**
+**Usar `createRouteHandler` o `createAsyncHandler` para manejo automático de errores:**
 
 ```typescript
+import { createRouteHandler, HttpError } from '../utils/route-handler';
+
+// ✅ RECOMENDADO: createRouteHandler maneja errores automáticamente
+router.post('/endpoint',
+  requireAuth,
+  validate({ body: createSchema }),
+  createRouteHandler(async (req) => {
+    const item = await getItem(req.params.id);
+    if (!item) {
+      throw new HttpError(404, 'Item not found'); // Se maneja automáticamente
+    }
+    return item; // Respuesta exitosa automática
+  })
+);
+
+// ✅ Para casos especiales, usar createAsyncHandler con manejo manual
+import { createAsyncHandler } from '../utils/route-handler';
 import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
 
-router.post('/endpoint', async (req, res) => {
-  try {
-    // ...
-  } catch (error) {
-    const statusCode = getStatusCodeFromError(error);
-    const response = createErrorResponse({
-      error,
-      requestId: req.requestId,
-      userMessage: 'Failed to process request'
-    });
-    return res.status(statusCode).json(response);
-  }
-});
+router.post('/special',
+  requireAuth,
+  createAsyncHandler(async (req, res) => {
+    try {
+      // ... lógica especial
+    } catch (error) {
+      const statusCode = getStatusCodeFromError(error);
+      const response = createErrorResponse({
+        error,
+        requestId: req.requestId,
+        userMessage: 'Failed to process request'
+      });
+      return res.status(statusCode).json(response);
+    }
+  })
+);
 ```
 
 ## Transacciones de Base de Datos
@@ -156,3 +191,6 @@ await transactionWithLogging(
 4. ❌ Queries N+1 en loops (usar batch queries)
 5. ❌ Timeouts hardcodeados (usar config centralizada)
 6. ❌ Manejar `ZodError` manualmente (usar middleware `validate()`)
+7. ❌ Try/catch manual en handlers cuando `createRouteHandler` lo maneja automáticamente
+8. ❌ `res.json()` manual cuando se puede usar `createRouteHandler` (retorna datos directamente)
+9. ❌ Usar `createAsyncHandler` cuando `createRouteHandler` es suficiente

@@ -22,7 +22,7 @@ export interface ContactAccessFilter {
  * Get the access scope for a user based on their role and team memberships
  *
  * AI_DECISION: Add in-memory cache with TTL to reduce redundant DB queries
- * Justificación: getUserAccessScope se llama frecuentemente pero cambia raramente (solo cuando cambia team membership)
+ * Justificaci?n: getUserAccessScope se llama frecuentemente pero cambia raramente (solo cuando cambia team membership)
  * Impacto: Reduce queries redundantes a DB, mejora performance de endpoints que verifican acceso
  */
 export async function getUserAccessScope(userId: string, role: UserRole): Promise<AccessScope> {
@@ -58,8 +58,8 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
 
     case 'manager':
       // AI_DECISION: Managers see their own contacts + team members' contacts + unassigned
-      // Justificación: Managers deben poder ver los contactos que crean (auto-asignados a su ID)
-      // Impacto: Managers pueden ver y gestionar sus propios contactos además de los de su equipo
+      // Justificaci?n: Managers deben poder ver los contactos que crean (auto-asignados a su ID)
+      // Impacto: Managers pueden ver y gestionar sus propios contactos adem?s de los de su equipo
       try {
         const teamMembers = await db()
           .select({ id: users.id })
@@ -89,9 +89,9 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
       break;
 
     case 'owner':
-      // AI_DECISION: Owner ve todas las métricas pero NO puede modificar nada
-      // Justificación: Rol de dirección para visibilidad de negocio sin operaciones
-      // Impacto: Acceso global de lectura, sin capacidad de asignación o modificación
+      // AI_DECISION: Owner ve todas las m?tricas pero NO puede modificar nada
+      // Justificaci?n: Rol de direcci?n para visibilidad de negocio sin operaciones
+      // Impacto: Acceso global de lectura, sin capacidad de asignaci?n o modificaci?n
       accessibleAdvisorIds = []; // Empty means see all (for metrics)
       canSeeUnassigned = true;
       canAssignToOthers = false; // Cannot assign
@@ -100,8 +100,8 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
 
     case 'staff':
       // AI_DECISION: Staff (Administrativo) puede ver y gestionar datos operativos
-      // Justificación: Rol de soporte para carga de datos, gestión de contactos, tareas administrativas
-      // Impacto: Acceso amplio de lectura/escritura pero sin administración de usuarios/sistema
+      // Justificaci?n: Rol de soporte para carga de datos, gesti?n de contactos, tareas administrativas
+      // Impacto: Acceso amplio de lectura/escritura pero sin administraci?n de usuarios/sistema
       accessibleAdvisorIds = []; // Ve todos los contactos (soporte operativo)
       canSeeUnassigned = true;
       canAssignToOthers = true; // Puede asignar contactos a asesores
@@ -133,11 +133,14 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
 export function buildContactAccessFilter(accessScope: AccessScope): ContactAccessFilter {
   const { userId, role, accessibleAdvisorIds, canSeeUnassigned } = accessScope;
 
-  // Admin sees everything
-  if (role === 'admin') {
+  // Admin, staff, and owner see everything
+  // AI_DECISION: Staff and owner should have same access as admin for contact visibility
+  // Justificaci?n: Staff (administrativo) y owner (direcci?n) necesitan ver todos los contactos para operaciones y m?tricas
+  // Impacto: Corrige bug donde staff/owner solo ve?an contactos sin asignar en lugar de todos los contactos
+  if (role === 'admin' || role === 'staff' || role === 'owner') {
     return {
       whereClause: sql`1=1`, // No filter
-      description: 'admin access - no filters',
+      description: `${role} access - no filters`,
     };
   }
 
@@ -185,7 +188,7 @@ export function buildContactAccessFilter(accessScope: AccessScope): ContactAcces
  * Check if a user can access a specific contact
  *
  * AI_DECISION: Accept optional AccessScope parameter to avoid redundant getUserAccessScope calls
- * Justificación: Cuando AccessScope ya está calculado (ej: en GET /tasks), evita llamada redundante a getUserAccessScope
+ * Justificaci?n: Cuando AccessScope ya est? calculado (ej: en GET /tasks), evita llamada redundante a getUserAccessScope
  * Impacto: Reduce queries N+1 eliminando llamadas redundantes a getUserAccessScope
  *
  * @param userId - User ID
@@ -317,7 +320,7 @@ export async function getUserTeams(
 /**
  * Check if a user can access a specific AUM import file
  * AI_DECISION: Implement access control for AUM files based on user role
- * Justificación: Los usuarios solo deben poder ver archivos que tienen permiso según su rol
+ * Justificaci?n: Los usuarios solo deben poder ver archivos que tienen permiso seg?n su rol
  * Impacto: Previene acceso no autorizado a importaciones de AUM
  */
 export async function canAccessAumFile(

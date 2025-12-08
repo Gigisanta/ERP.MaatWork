@@ -9,11 +9,11 @@
 const uiPreset = {
   theme: {
     screens: {
-      xs: '475px',   // Small phones in landscape, large phones
-      sm: '640px',   // Tablets in portrait
-      md: '768px',   // Tablets in landscape
-      lg: '1024px',  // Small laptops
-      xl: '1280px',  // Desktops
+      xs: '475px', // Small phones in landscape, large phones
+      sm: '640px', // Tablets in portrait
+      md: '768px', // Tablets in landscape
+      lg: '1024px', // Small laptops
+      xl: '1280px', // Desktops
       '2xl': '1536px', // Large desktops
     },
     extend: {
@@ -119,7 +119,7 @@ const uiPreset = {
         lg: 'var(--shadow-lg)',
         xl: 'var(--shadow-xl)',
         primary: 'var(--shadow-primary)',
-        'primary-lg': '0 10px 25px -3px rgba(89, 0, 255, 0.3)',
+        'primary-lg': 'var(--shadow-primary-lg)',
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
@@ -180,18 +180,18 @@ const uiPreset = {
         'slide-in-left': 'slideInFromLeft 0.4s ease-out forwards',
         'slide-in-right': 'slideInFromRight 0.4s ease-out forwards',
         // Continuous animations
-        'shimmer': 'shimmer 1.5s ease-in-out infinite',
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
         'skeleton-wave': 'skeletonWave 1.8s ease-in-out infinite',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
-        'float': 'float 3s ease-in-out infinite',
+        float: 'float 3s ease-in-out infinite',
         'purple-glow': 'purpleGlow 2s ease-in-out infinite',
-        'spin': 'spin 1s linear infinite',
-        'bounce': 'bounce 1s infinite',
+        spin: 'spin 1s linear infinite',
+        bounce: 'bounce 1s infinite',
         // Interactive animations
-        'ripple': 'ripple 0.6s ease-out',
+        ripple: 'ripple 0.6s ease-out',
         'subtle-pop': 'subtlePop 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-        'shake': 'shake 0.5s ease-in-out',
-        'expand': 'expandFromCenter 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+        shake: 'shake 0.5s ease-in-out',
+        expand: 'expandFromCenter 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
         // Page transitions
         'page-enter': 'fadeInUp 0.4s ease-out forwards',
         'reveal-up': 'revealUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
@@ -287,8 +287,14 @@ const uiPreset = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         bounce: {
-          '0%, 100%': { transform: 'translateY(0)', animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)' },
-          '50%': { transform: 'translateY(-10%)', animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)' },
+          '0%, 100%': {
+            transform: 'translateY(0)',
+            animationTimingFunction: 'cubic-bezier(0, 0, 0.2, 1)',
+          },
+          '50%': {
+            transform: 'translateY(-10%)',
+            animationTimingFunction: 'cubic-bezier(0.8, 0, 1, 1)',
+          },
         },
         spin: {
           '0%': { transform: 'rotate(0deg)' },

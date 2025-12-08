@@ -165,7 +165,8 @@ export default function SecondMeetingCard() {
       <CardHeader>
         <CardTitle>Webhook Segunda Reunión</CardTitle>
         <Text size="sm" color="secondary">
-          Configura el webhook que se activará cuando un contacto cambie a estado "Segunda reunion"
+          Configura el webhook que se activará cuando un contacto cambie a estado &quot;Segunda
+          reunion&quot;
         </Text>
       </CardHeader>
       <CardContent>
@@ -189,8 +190,8 @@ export default function SecondMeetingCard() {
               </Text>
             </label>
             <Text size="xs" color="secondary">
-              Cuando está habilitada, se enviará un webhook al cambiar un contacto a estado "Segunda
-              reunion"
+              Cuando está habilitada, se enviará un webhook al cambiar un contacto a estado
+              &quot;Segunda reunion&quot;
             </Text>
           </div>
 
@@ -229,30 +230,3 @@ export default function SecondMeetingCard() {
     </Card>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

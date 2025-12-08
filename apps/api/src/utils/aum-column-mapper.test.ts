@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  normalizeColumnName,
-  findColumnByPatterns,
-  mapAumColumns
-} from './aum-column-mapper';
+import { normalizeColumnName, findColumnByPatterns, mapAumColumns } from './aum-columns';
 
 describe('aum-column-mapper', () => {
   describe('normalizeColumnName', () => {
@@ -40,35 +36,35 @@ describe('aum-column-mapper', () => {
     it('finds exact match first', () => {
       const columns = ['Cuenta Comitente', 'Titular', 'Asesor'];
       const patterns = ['cuenta comitente', 'comitente', 'cuenta'];
-      
+
       expect(findColumnByPatterns(columns, patterns)).toBe('Cuenta Comitente');
     });
 
     it('finds partial match when exact not found', () => {
       const columns = ['Numero de Cuenta', 'Titular Nombre', 'Asesor Asignado'];
       const patterns = ['cuenta', 'comitente'];
-      
+
       expect(findColumnByPatterns(columns, patterns)).toBe('Numero de Cuenta');
     });
 
     it('returns null when no match found', () => {
       const columns = ['Columna1', 'Columna2'];
       const patterns = ['cuenta', 'comitente'];
-      
+
       expect(findColumnByPatterns(columns, patterns)).toBeNull();
     });
 
     it('is case-insensitive', () => {
       const columns = ['CUENTA', 'TITULAR', 'ASESOR'];
       const patterns = ['cuenta', 'titular'];
-      
+
       expect(findColumnByPatterns(columns, patterns)).toBe('CUENTA');
     });
 
     it('handles columns with special characters', () => {
       const columns = ['Cuenta-Comitente', 'Titular_Nombre', 'N° Cuenta'];
       const patterns = ['cuenta comitente', 'titular nombre', 'n cuenta'];
-      
+
       expect(findColumnByPatterns(columns, patterns)).toBe('Cuenta-Comitente');
       expect(findColumnByPatterns(['Titular_Nombre'], ['titular nombre'])).toBe('Titular_Nombre');
       // N° Cuenta normaliza a "n cuenta", que coincide con el patrón "n cuenta"
@@ -78,7 +74,7 @@ describe('aum-column-mapper', () => {
     it('prioritizes first exact match', () => {
       const columns = ['Cuenta', 'Cuenta Comitente', 'Numero de Cuenta'];
       const patterns = ['cuenta', 'cuenta comitente'];
-      
+
       // Should find 'Cuenta' first (exact match with first pattern)
       expect(findColumnByPatterns(columns, patterns)).toBe('Cuenta');
     });
@@ -88,8 +84,8 @@ describe('aum-column-mapper', () => {
     it('maps standard column names', () => {
       const record = {
         'Cuenta comitente': '12345',
-        'Titular': 'Juan Perez',
-        'Asesor': 'Carlos Gomez'
+        Titular: 'Juan Perez',
+        Asesor: 'Carlos Gomez',
       };
 
       const result = mapAumColumns(record);
@@ -101,9 +97,9 @@ describe('aum-column-mapper', () => {
 
     it('maps alternative column names', () => {
       const record = {
-        'comitente': '67890',
-        'Descripcion': 'Maria Rodriguez',
-        'asesor': 'Ana Lopez'
+        comitente: '67890',
+        Descripcion: 'Maria Rodriguez',
+        asesor: 'Ana Lopez',
       };
 
       const result = mapAumColumns(record);
@@ -115,9 +111,9 @@ describe('aum-column-mapper', () => {
 
     it('maps with case variations', () => {
       const record = {
-        'CUENTA': '11111',
-        'titular': 'Pedro Martinez',
-        'ASESOR': 'Luis Fernandez'
+        CUENTA: '11111',
+        titular: 'Pedro Martinez',
+        ASESOR: 'Luis Fernandez',
       };
 
       const result = mapAumColumns(record);
@@ -131,7 +127,7 @@ describe('aum-column-mapper', () => {
       const record = {
         'Numero de Cuenta': '22222',
         'Nombre del Titular': 'Laura Sanchez',
-        'Asesor-Asignado': 'Roberto Diaz'
+        'Asesor-Asignado': 'Roberto Diaz',
       };
 
       const result = mapAumColumns(record);
@@ -146,7 +142,7 @@ describe('aum-column-mapper', () => {
         { col: 'Cuenta', value: '33333' },
         { col: 'Nro Cuenta', value: '44444' },
         { col: 'Account Number', value: '55555' },
-        { col: 'numero_cuenta', value: '66666' }
+        { col: 'numero_cuenta', value: '66666' },
       ];
 
       for (const testCase of testCases) {
@@ -161,7 +157,7 @@ describe('aum-column-mapper', () => {
         { col: 'Cliente', value: 'Cliente 1' },
         { col: 'Nombre Cliente', value: 'Cliente 2' },
         { col: 'Razon Social', value: 'Cliente 3' },
-        { col: 'Holder Name', value: 'Cliente 4' }
+        { col: 'Holder Name', value: 'Cliente 4' },
       ];
 
       for (const testCase of testCases) {
@@ -176,7 +172,7 @@ describe('aum-column-mapper', () => {
         { col: 'Advisor', value: 'Advisor 1' },
         { col: 'Agente', value: 'Advisor 2' },
         { col: 'Ejecutivo', value: 'Advisor 3' },
-        { col: 'Asesor_Asignado', value: 'Advisor 4' }
+        { col: 'Asesor_Asignado', value: 'Advisor 4' },
       ];
 
       for (const testCase of testCases) {
@@ -188,7 +184,7 @@ describe('aum-column-mapper', () => {
 
     it('handles missing columns gracefully', () => {
       const record = {
-        'OtherColumn': 'some value'
+        OtherColumn: 'some value',
       };
 
       const result = mapAumColumns(record);
@@ -201,8 +197,8 @@ describe('aum-column-mapper', () => {
     it('handles empty string values', () => {
       const record = {
         'Cuenta comitente': '',
-        'Titular': '   ',
-        'Asesor': null
+        Titular: '   ',
+        Asesor: null,
       };
 
       const result = mapAumColumns(record);
@@ -215,8 +211,8 @@ describe('aum-column-mapper', () => {
     it('handles null and undefined values', () => {
       const record = {
         'Cuenta comitente': null,
-        'Titular': undefined,
-        'Asesor': 'Valid Advisor'
+        Titular: undefined,
+        Asesor: 'Valid Advisor',
       };
 
       const result = mapAumColumns(record);
@@ -229,8 +225,8 @@ describe('aum-column-mapper', () => {
     it('trims string values', () => {
       const record = {
         'Cuenta comitente': '  12345  ',
-        'Titular': '  Juan Perez  ',
-        'Asesor': '  Carlos Gomez  '
+        Titular: '  Juan Perez  ',
+        Asesor: '  Carlos Gomez  ',
       };
 
       const result = mapAumColumns(record);
@@ -243,11 +239,11 @@ describe('aum-column-mapper', () => {
     it('handles columns with additional data', () => {
       const record = {
         'Cuenta comitente': '12345',
-        'Titular': 'Juan Perez',
-        'Asesor': 'Carlos Gomez',
-        'ExtraColumn1': 'extra1',
-        'ExtraColumn2': 'extra2',
-        'Fecha': '2024-01-01'
+        Titular: 'Juan Perez',
+        Asesor: 'Carlos Gomez',
+        ExtraColumn1: 'extra1',
+        ExtraColumn2: 'extra2',
+        Fecha: '2024-01-01',
       };
 
       const result = mapAumColumns(record);
@@ -261,8 +257,8 @@ describe('aum-column-mapper', () => {
     it('converts non-string values to string', () => {
       const record = {
         'Cuenta comitente': 12345,
-        'Titular': 'Juan Perez',
-        'Asesor': 42
+        Titular: 'Juan Perez',
+        Asesor: 42,
       };
 
       const result = mapAumColumns(record);
@@ -277,8 +273,8 @@ describe('aum-column-mapper', () => {
     it('handles Date objects from Excel', () => {
       const record = {
         'Cuenta comitente': '12345',
-        'Titular': 'Juan Perez',
-        'Fecha': new Date('2024-01-15')
+        Titular: 'Juan Perez',
+        Fecha: new Date('2024-01-15'),
       };
 
       const result = mapAumColumns(record);
@@ -291,8 +287,8 @@ describe('aum-column-mapper', () => {
     it('handles null and undefined values', () => {
       const record = {
         'Cuenta comitente': null,
-        'Titular': undefined,
-        'Asesor': 'Carlos Gomez'
+        Titular: undefined,
+        Asesor: 'Carlos Gomez',
       };
 
       const result = mapAumColumns(record);
@@ -305,8 +301,8 @@ describe('aum-column-mapper', () => {
     it('handles large numbers without scientific notation', () => {
       const record = {
         'Cuenta comitente': 123456789012345,
-        'Titular': 'Juan Perez',
-        'Asesor': 'Carlos Gomez'
+        Titular: 'Juan Perez',
+        Asesor: 'Carlos Gomez',
       };
 
       const result = mapAumColumns(record);
@@ -319,8 +315,8 @@ describe('aum-column-mapper', () => {
     it('handles NaN and Infinity gracefully', () => {
       const record = {
         'Cuenta comitente': NaN,
-        'Titular': Infinity,
-        'Asesor': 'Carlos Gomez'
+        Titular: Infinity,
+        Asesor: 'Carlos Gomez',
       };
 
       const result = mapAumColumns(record);
@@ -336,17 +332,17 @@ describe('aum-column-mapper', () => {
         {
           record: {
             'Cuenta comitente': '12345',
-            'Titular': 'Juan Perez',
-            'Asesor': 'Carlos Gomez'
-          }
+            Titular: 'Juan Perez',
+            Asesor: 'Carlos Gomez',
+          },
         },
         {
           record: {
-            'comitente': '67890',
-            'Descripcion': 'Maria Rodriguez',
-            'asesor': 'Ana Lopez'
-          }
-        }
+            comitente: '67890',
+            Descripcion: 'Maria Rodriguez',
+            asesor: 'Ana Lopez',
+          },
+        },
       ];
 
       for (const testCase of testCases) {
@@ -363,15 +359,15 @@ describe('aum-column-mapper', () => {
         { col: 'id_cuenta', value: '15470' },
         { col: 'id cuenta', value: '23661' },
         { col: 'ID CUENTA', value: '30488' },
-        { col: 'idCuenta', value: '30646' }
+        { col: 'idCuenta', value: '30646' },
       ];
 
       for (const testCase of testCases) {
-        const record = { 
+        const record = {
           [testCase.col]: testCase.value,
-          'comitente': '76551',
-          'Descripcion': 'Test Name',
-          'Asesor': 'Test Advisor'
+          comitente: '76551',
+          Descripcion: 'Test Name',
+          Asesor: 'Test Advisor',
         };
         const result = mapAumColumns(record);
         expect(result.idCuenta).toBe(testCase.value);
@@ -380,10 +376,10 @@ describe('aum-column-mapper', () => {
 
     it('maps idCuenta, comitente, and Descripcion from Balanz CSV format', () => {
       const record = {
-        'idCuenta': '15356',
-        'comitente': '76551',
-        'Descripcion': 'MARITANO FEDERICO NICOLAS',
-        'Asesor': 'Nicanor Zappia'
+        idCuenta: '15356',
+        comitente: '76551',
+        Descripcion: 'MARITANO FEDERICO NICOLAS',
+        Asesor: 'Nicanor Zappia',
       };
 
       const result = mapAumColumns(record);
@@ -395,4 +391,3 @@ describe('aum-column-mapper', () => {
     });
   });
 });
-

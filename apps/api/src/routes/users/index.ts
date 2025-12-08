@@ -39,21 +39,10 @@ import {
   handleListManagers,
   handleListAdvisors,
 } from './handlers/list';
-import {
-  handleCreateUser,
-  handleGetUser,
-  handleDeleteUser,
-} from './handlers/crud';
-import {
-  handleUpdateUserStatus,
-  handleApproveUser,
-  handleRejectUser,
-} from './handlers/status';
+import { handleCreateUser, handleGetUser, handleDeleteUser } from './handlers/crud';
+import { handleUpdateUserStatus, handleApproveUser, handleRejectUser } from './handlers/status';
 import { handleUpdateUserRole } from './handlers/role';
-import {
-  handleGetCurrentUser,
-  handleUpdateCurrentUserProfile,
-} from './handlers/profile';
+import { handleGetCurrentUser, handleUpdateCurrentUserProfile } from './handlers/profile';
 import { handleChangePassword } from './handlers/password';
 
 const router = Router();
@@ -108,7 +97,13 @@ router.post(
   handleCreateUser
 );
 
-router.get('/:id', requireAuth, requireRole(['manager', 'admin']), validate({ params: idParamSchema }), handleGetUser);
+router.get(
+  '/:id',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  validate({ params: idParamSchema }),
+  handleGetUser
+);
 
 router.delete(
   '/:id',
@@ -130,9 +125,21 @@ router.patch(
   handleUpdateUserStatus
 );
 
-router.post('/:id/approve', requireAuth, requireRole(['admin']), validate({ params: idParamSchema }), handleApproveUser);
+router.post(
+  '/:id/approve',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema }),
+  handleApproveUser
+);
 
-router.post('/:id/reject', requireAuth, requireRole(['admin']), validate({ params: idParamSchema }), handleRejectUser);
+router.post(
+  '/:id/reject',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema }),
+  handleRejectUser
+);
 
 // ==========================================================
 // Role Routes
@@ -165,25 +172,3 @@ export {
   type ChangePasswordInput,
   type CreateUserWithPasswordInput,
 } from './schemas';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

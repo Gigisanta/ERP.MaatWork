@@ -123,34 +123,3 @@ export { capacitaciones } from './capacitaciones';
 // Automatizaciones
 export { automationConfigs } from './automations';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

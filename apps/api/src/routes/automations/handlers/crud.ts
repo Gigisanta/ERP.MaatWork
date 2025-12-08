@@ -19,10 +19,7 @@ import { z } from 'zod';
  * GET /automations - List automation configs
  */
 export const handleListAutomations = createRouteHandler(async (req: Request) => {
-  const items = await db()
-    .select()
-    .from(automationConfigs)
-    .orderBy(automationConfigs.displayName);
+  const items = await db().select().from(automationConfigs).orderBy(automationConfigs.displayName);
 
   return items;
 });
@@ -154,25 +151,3 @@ export const handleDeleteAutomation = createRouteHandler(async (req: Request) =>
 
   return { success: true };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

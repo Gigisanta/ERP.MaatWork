@@ -18,11 +18,7 @@ import { loginSchema, registerSchema } from './schemas';
 // Import handlers
 import { handleLogin } from './handlers/login';
 import { handleRegister } from './handlers/register';
-import {
-  handleGetCurrentUser,
-  handleRefreshToken,
-  handleLogout,
-} from './handlers/session';
+import { handleGetCurrentUser, handleRefreshToken, handleLogout } from './handlers/session';
 
 const router = Router();
 
@@ -47,31 +43,4 @@ router.post('/logout', requireAuth, handleLogout);
 export default router;
 
 // Re-export schemas for external use
-export {
-  loginSchema,
-  registerSchema,
-  type LoginInput,
-  type RegisterInput,
-} from './schemas';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export { loginSchema, registerSchema, type LoginInput, type RegisterInput } from './schemas';

@@ -77,25 +77,3 @@ export const handleUpdateCurrentUserProfile = createRouteHandler(async (req: Req
 
   return updatedUser;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,7 +1,17 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Spinner, Alert, Text, Stack, Button } from '@cactus/ui';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Spinner,
+  Alert,
+  Text,
+  Stack,
+  Button,
+} from '@cactus/ui';
 import Link from 'next/link';
 
 interface CalendarWidgetProps {
@@ -17,25 +27,25 @@ interface CalendarWidgetProps {
 function normalizeCalendarUrl(url: string): string {
   try {
     const urlObj = new URL(url);
-    
+
     // Si ya es una URL de embed, agregar/actualizar el parámetro mode=week
     if (urlObj.pathname.includes('/embed')) {
       urlObj.searchParams.set('mode', 'week');
       return urlObj.toString();
     }
-    
+
     // Si tiene parámetro cid, convertir a embed con vista semanal
     const cid = urlObj.searchParams.get('cid');
     if (cid) {
       return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(cid)}&mode=week`;
     }
-    
+
     // Si tiene parámetro src, asegurar que sea embed con vista semanal
     const src = urlObj.searchParams.get('src');
     if (src) {
       return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(src)}&mode=week`;
     }
-    
+
     // Si no se puede convertir, devolver la URL original
     return url;
   } catch {
@@ -56,7 +66,7 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
 
     // Set a timeout to detect if iframe fails to load
     const timeout = setTimeout(() => {
-      setLoading(prev => {
+      setLoading((prev) => {
         if (prev) {
           // Still loading after timeout, but don't set error - let iframe try
           return false;
@@ -75,7 +85,9 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
 
   const handleIframeError = () => {
     setLoading(false);
-    setError('No se pudo cargar el calendario. Verifica que la URL sea correcta y que el calendario esté compartido públicamente.');
+    setError(
+      'No se pudo cargar el calendario. Verifica que la URL sea correcta y que el calendario esté compartido públicamente.'
+    );
   };
 
   // Detectar errores 403 mediante mensaje de error en el iframe
@@ -84,7 +96,9 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
       // Google Calendar puede enviar mensajes de error
       if (event.origin.includes('google.com') && event.data?.type === 'error') {
         setLoading(false);
-        setError('Error 403: El calendario no está configurado como público o la URL no es correcta. Ve a tu perfil para configurar la URL correcta.');
+        setError(
+          'Error 403: El calendario no está configurado como público o la URL no es correcta. Ve a tu perfil para configurar la URL correcta.'
+        );
       }
     };
 
@@ -103,15 +117,25 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
             <Stack direction="column" gap="md">
               <div>
                 <Text weight="medium">Error al cargar el calendario</Text>
-                <Text size="sm" color="secondary" className="mt-2 block">{error}</Text>
+                <Text size="sm" color="secondary" className="mt-2 block">
+                  {error}
+                </Text>
               </div>
               <div>
-                <Text size="sm" weight="medium" className="mb-2 block">Solución:</Text>
+                <Text size="sm" weight="medium" className="mb-2 block">
+                  Solución:
+                </Text>
                 <Text size="sm" color="secondary" className="mb-3 block">
-                  1. Ve a Google Calendar → Configuración del calendario<br />
-                  2. En "Compartir este calendario", marca "Hacer público este calendario"<br />
-                  3. En "Integrar calendario", copia la URL de "Código para incrustar"<br />
-                  4. La URL debe tener el formato: https://calendar.google.com/calendar/embed?src=...
+                  1. Ve a Google Calendar → Configuración del calendario
+                  <br />
+                  2. En &quot;Compartir este calendario&quot;, marca &quot;Hacer público este
+                  calendario&quot;
+                  <br />
+                  3. En &quot;Integrar calendario&quot;, copia la URL de &quot;Código para
+                  incrustar&quot;
+                  <br />
+                  4. La URL debe tener el formato:
+                  https://calendar.google.com/calendar/embed?src=...
                 </Text>
                 <Link href="/profile">
                   <Button variant="outline" size="sm">
@@ -146,8 +170,8 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
                     {[...Array(5)].map((_, rowIndex) => (
                       <div key={rowIndex} className="grid grid-cols-7 gap-2">
                         {[...Array(7)].map((_, colIndex) => (
-                          <div 
-                            key={colIndex} 
+                          <div
+                            key={colIndex}
                             className="h-12 skeleton-wave rounded"
                             style={{ animationDelay: `${(rowIndex * 7 + colIndex) * 30}ms` }}
                           />
@@ -160,7 +184,9 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
                 <div className="absolute inset-0 flex items-center justify-center bg-background/50">
                   <Stack direction="column" gap="sm" align="center">
                     <Spinner size="md" />
-                    <Text size="sm" color="secondary">Cargando calendario...</Text>
+                    <Text size="sm" color="secondary">
+                      Cargando calendario...
+                    </Text>
                   </Stack>
                 </div>
               </div>
@@ -177,7 +203,7 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
               style={{
                 border: 'none',
                 borderRadius: '8px',
-                minHeight: '400px'
+                minHeight: '400px',
               }}
               title="Calendario del Equipo"
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
@@ -188,4 +214,3 @@ export default function CalendarWidget({ calendarUrl, className }: CalendarWidge
     </Card>
   );
 }
-

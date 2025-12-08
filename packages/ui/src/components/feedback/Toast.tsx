@@ -16,79 +16,75 @@ export interface ToastProps {
 }
 
 const variantConfig: Record<ToastVariant, { icon: IconName; className: string }> = {
-  info: { 
-    icon: 'info', 
-    className: 'border-info bg-info-subtle text-text' 
+  info: {
+    icon: 'info',
+    className: 'border-info bg-info-subtle text-text',
   },
-  success: { 
-    icon: 'check-circle', 
-    className: 'border-success bg-success-subtle text-text' 
+  success: {
+    icon: 'check-circle',
+    className: 'border-success bg-success-subtle text-text',
   },
-  warning: { 
-    icon: 'alert-circle', 
-    className: 'border-warning bg-warning-subtle text-text' 
+  warning: {
+    icon: 'alert-circle',
+    className: 'border-warning bg-warning-subtle text-text',
   },
-  error: { 
-    icon: 'x-circle', 
-    className: 'border-error bg-error-subtle text-text' 
-  }
+  error: {
+    icon: 'x-circle',
+    className: 'border-error bg-error-subtle text-text',
+  },
 };
 
-export const Toast = React.forwardRef<
-  React.ElementRef<typeof ToastPrimitive.Root>,
-  ToastProps
->(({ 
-  title, 
-  description, 
-  variant = 'info', 
-  duration = 5000, 
-  open, 
-  onOpenChange,
-  children,
-  ...props 
-}, ref) => {
-  const config = variantConfig[variant];
+export const Toast = React.forwardRef<React.ElementRef<typeof ToastPrimitive.Root>, ToastProps>(
+  (
+    {
+      title,
+      description,
+      variant = 'info',
+      duration = 5000,
+      open,
+      onOpenChange,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const config = variantConfig[variant];
 
-  return (
-    <ToastPrimitive.Provider swipeDirection="right">
-      <ToastPrimitive.Root
-        ref={ref}
-        className={cn(
-          'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
-          'data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
-          config.className
-        )}
-        open={open}
-        onOpenChange={onOpenChange}
-        duration={duration}
-        {...props}
-      >
-        <div className="flex items-start space-x-3">
-          <Icon 
-            name={config.icon} 
-            size={16} 
-            className="flex-shrink-0 mt-0.5"
-          />
-          <div className="flex-1">
-            <ToastPrimitive.Title className="text-sm font-semibold">
-              {title}
-            </ToastPrimitive.Title>
-            {description && (
-              <ToastPrimitive.Description className="mt-1 text-sm opacity-90">
-                {description}
-              </ToastPrimitive.Description>
-            )}
+    return (
+      <ToastPrimitive.Provider swipeDirection="right">
+        <ToastPrimitive.Root
+          ref={ref}
+          className={cn(
+            'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
+            'data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
+            config.className
+          )}
+          open={open}
+          onOpenChange={onOpenChange}
+          duration={duration}
+          {...props}
+        >
+          <div className="flex items-start space-x-3">
+            <Icon name={config.icon} size={16} className="flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <ToastPrimitive.Title className="text-sm font-semibold">{title}</ToastPrimitive.Title>
+              {description && (
+                <ToastPrimitive.Description className="mt-1 text-sm opacity-90">
+                  {description}
+                </ToastPrimitive.Description>
+              )}
+            </div>
           </div>
-        </div>
-        <ToastPrimitive.Close className="absolute right-2 top-2 rounded-md p-1 text-text-secondary opacity-0 transition-opacity hover:text-text focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100">
-          <Icon name="x" size={16} />
-        </ToastPrimitive.Close>
-        {children}
-      </ToastPrimitive.Root>
-      <ToastPrimitive.Viewport className="pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
-    </ToastPrimitive.Provider>
-  );
-});
+          <ToastPrimitive.Close className="absolute right-2 top-2 rounded-md p-1 text-text-secondary opacity-0 transition-opacity hover:text-text focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100">
+            <Icon name="x" size={16} />
+          </ToastPrimitive.Close>
+          {children}
+        </ToastPrimitive.Root>
+        <ToastPrimitive.Viewport className="pointer-events-none fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]" />
+      </ToastPrimitive.Provider>
+    );
+  }
+);
 
 Toast.displayName = ToastPrimitive.Root.displayName;
 
@@ -125,8 +121,3 @@ export const ToastClose = React.forwardRef<
 ));
 
 ToastClose.displayName = ToastPrimitive.Close.displayName;
-
-
-
-
-

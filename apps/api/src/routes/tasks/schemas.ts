@@ -59,10 +59,19 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = createTaskSchema.omit({ contactId: true }).partial();
 
+// AI_DECISION: Params específicos por tipo de acción para type safety
+// Justificación: Evita usar z.any() y proporciona validación específica según la acción
+// Impacto: Mejor type safety y validación en tiempo de ejecución
 export const bulkActionSchema = z.object({
   taskIds: z.array(z.string().uuid()).min(1),
   action: z.enum(['complete', 'delete', 'reassign', 'change_status']),
-  params: z.record(z.any()).optional(),
+  params: z
+    .union([
+      z.object({ assignedToUserId: z.string().uuid() }),
+      z.object({ status: z.string() }),
+      z.undefined(),
+    ])
+    .optional(),
 });
 
 export const taskIdParamsSchema = z.object({ id: uuidSchema });
@@ -74,30 +83,3 @@ export const batchTasksQuerySchema = z.object({
   status: z.string().optional(),
   includeCompleted: z.enum(['true', 'false']).optional().default('false'),
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -106,13 +106,3 @@ export type RiskProfile = 'low' | 'mid' | 'high';
 export type ActiveStatus = 'active' | 'inactive';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
-
-
-
-
-
-
-
-
-
-

@@ -3,7 +3,7 @@
  * Centralizados para evitar duplicidad según patrones de arquitectura
  */
 
-import type { BaseEntity } from '@cactus/types/common';
+import type { BaseEntity } from '@cactus/types';
 
 /**
  * Base para attachment - extiende BaseEntity

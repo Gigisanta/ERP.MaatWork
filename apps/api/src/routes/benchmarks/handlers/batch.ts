@@ -71,7 +71,10 @@ export const handleBatchComponents = createRouteHandler(async (req: Request) => 
       componentsByBenchmark[comp.benchmarkId].push({
         id: comp.componentId,
         instrumentId: comp.instrumentId,
-        weight: comp.weight,
+        // AI_DECISION: Convertir weight de string a number (numeric de PostgreSQL retorna string)
+        // Justificación: Drizzle retorna numeric como string, necesitamos convertir a number para el tipo
+        // Impacto: Cumple con el tipo esperado por BenchmarkComponentBatch
+        weight: typeof comp.weight === 'string' ? parseFloat(comp.weight) : comp.weight,
         instrumentSymbol: comp.instrumentSymbol,
         instrumentName: comp.instrumentName,
         active: comp.active,
@@ -81,8 +84,3 @@ export const handleBatchComponents = createRouteHandler(async (req: Request) => 
 
   return componentsByBenchmark;
 });
-
-
-
-
-

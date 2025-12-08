@@ -59,5 +59,3 @@ export function buildResponsiveClasses<T>(
   }
   return classes;
 }
-
-

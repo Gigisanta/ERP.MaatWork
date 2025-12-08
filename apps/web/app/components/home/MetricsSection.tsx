@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useMemo, Suspense } from 'react';
 import dynamic from 'next/dynamic';
@@ -14,43 +14,50 @@ import {
   Select,
   type SelectItem,
   Grid,
-  GridItem
+  GridItem,
 } from '@cactus/ui';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 import { MetricCard } from './MetricCard';
+// AI_DECISION: Import GoalsComparisonChart statically to avoid webpack module resolution issues
+// Justificación: Dynamic import of GoalsComparisonChart causes webpack to fail resolving recharts Cell component
+// Impacto: Adds ~50KB to initial bundle, but fixes "Cannot read properties of undefined (reading 'call')" error
+// Note: Other charts still use dynamic import to minimize bundle size impact
+import { GoalsComparisonChart } from './Charts/GoalsComparisonChart';
 
 // AI_DECISION: Dynamic import of chart components to reduce initial bundle size
 // Justificación: Recharts (~200KB) is heavy; lazy loading reduces First Load JS significantly
 // Impacto: Faster initial page load, charts load on demand when user scrolls to metrics section
-const GoalsComparisonChart = dynamic(
-  () => import('./Charts/GoalsComparisonChart').then(mod => ({ default: mod.GoalsComparisonChart })),
-  { 
-    loading: () => <ChartLoadingFallback />,
-    ssr: false 
-  }
-);
 
 const BusinessLineChart = dynamic(
-  () => import('./Charts/BusinessLineChart').then(mod => ({ default: mod.BusinessLineChart })),
-  { 
+  async () => {
+    const mod = await import('./Charts/BusinessLineChart');
+    return { default: mod.BusinessLineChart };
+  },
+  {
     loading: () => <ChartLoadingFallback />,
-    ssr: false 
+    ssr: false,
   }
 );
 
 const TransitionTimesChart = dynamic(
-  () => import('./Charts/TransitionTimesChart').then(mod => ({ default: mod.TransitionTimesChart })),
-  { 
+  async () => {
+    const mod = await import('./Charts/TransitionTimesChart');
+    return { default: mod.TransitionTimesChart };
+  },
+  {
     loading: () => <ChartLoadingFallback />,
-    ssr: false 
+    ssr: false,
   }
 );
 
 const MarketTypeConversionChart = dynamic(
-  () => import('./Charts/MarketTypeConversionChart').then(mod => ({ default: mod.MarketTypeConversionChart })),
-  { 
+  async () => {
+    const mod = await import('./Charts/MarketTypeConversionChart');
+    return { default: mod.MarketTypeConversionChart };
+  },
+  {
     loading: () => <ChartLoadingFallback />,
-    ssr: false 
+    ssr: false,
   }
 );
 
@@ -60,7 +67,9 @@ function ChartLoadingFallback() {
     <div className="flex items-center justify-center h-[220px]">
       <Stack direction="row" gap="sm" align="center">
         <Spinner size="sm" />
-        <Text color="secondary" size="sm">Cargando gráfico...</Text>
+        <Text color="secondary" size="sm">
+          Cargando gráfico...
+        </Text>
       </Stack>
     </div>
   );
@@ -91,12 +100,15 @@ const METRIC_COLORS = {
 export function MetricsSection({ metricsData, goalsData, loading, error }: MetricsSectionProps) {
   const [chartView, setChartView] = useState<ChartView>('goals');
 
-  const chartItems = useMemo<SelectItem[]>(() => [
-    { value: 'goals', label: 'Objetivos vs Actuales' },
-    { value: 'businessLines', label: 'Cierres por Línea de Negocio' },
-    { value: 'transitionTimes', label: 'Tiempo Promedio entre Avances' },
-    { value: 'marketConversion', label: 'Conversión por Tipo de Mercado' }
-  ], []);
+  const chartItems = useMemo<SelectItem[]>(
+    () => [
+      { value: 'goals', label: 'Objetivos vs Actuales' },
+      { value: 'businessLines', label: 'Cierres por Línea de Negocio' },
+      { value: 'transitionTimes', label: 'Tiempo Promedio entre Avances' },
+      { value: 'marketConversion', label: 'Conversión por Tipo de Mercado' },
+    ],
+    []
+  );
 
   if (loading) {
     return (
@@ -196,4 +208,3 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
     </Stack>
   );
 }
-

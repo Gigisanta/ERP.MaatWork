@@ -191,7 +191,7 @@ export default function FacturacionPage() {
 
           {/* Alerta Error - Destacada */}
           <Alert variant="error" title="Error común [Cod. 1008b]">
-            Si aparece "No es posible generar el comprobante en este momento",{' '}
+            Si aparece &quot;No es posible generar el comprobante en este momento&quot;,{' '}
             <strong>probá con otro navegador</strong> (Chrome, Firefox, Edge).
           </Alert>
 
@@ -202,9 +202,7 @@ export default function FacturacionPage() {
               <CardHeader className="bg-slate-800 px-6 py-4 rounded-t-lg">
                 <Stack direction="row" gap="sm" align="center">
                   <Icon name="Users" size={20} className="text-white" />
-                  <CardTitle className="text-white">
-                    CUITs - Responsables Inscriptos
-                  </CardTitle>
+                  <CardTitle className="text-white">CUITs - Responsables Inscriptos</CardTitle>
                 </Stack>
               </CardHeader>
               <CardContent className="p-4">
@@ -248,9 +246,7 @@ export default function FacturacionPage() {
               <CardHeader className="bg-slate-800 px-6 py-4 rounded-t-lg">
                 <Stack direction="row" gap="sm" align="center">
                   <Icon name="Briefcase" size={20} className="text-white" />
-                  <CardTitle className="text-white">
-                    Destinos de Facturación
-                  </CardTitle>
+                  <CardTitle className="text-white">Destinos de Facturación</CardTitle>
                 </Stack>
               </CardHeader>
               <CardContent className="p-4">
@@ -264,19 +260,12 @@ export default function FacturacionPage() {
                           : 'border-emerald-200 bg-emerald-50'
                       }`}
                     >
-                      <Stack
-                        direction="row"
-                        justify="between"
-                        align="center"
-                        className="mb-1"
-                      >
+                      <Stack direction="row" justify="between" align="center" className="mb-1">
                         <Text
                           weight="bold"
                           size="lg"
                           className={
-                            destino.color === 'blue'
-                              ? 'text-blue-800'
-                              : 'text-emerald-800'
+                            destino.color === 'blue' ? 'text-blue-800' : 'text-emerald-800'
                           }
                         >
                           {destino.nombre}
@@ -298,10 +287,7 @@ export default function FacturacionPage() {
           </Grid>
 
           {/* Datos Rápidos - Horizontal */}
-          <Card
-            variant="elevated"
-            className="bg-gradient-to-r from-indigo-600 to-indigo-700"
-          >
+          <Card variant="elevated" className="bg-gradient-to-r from-indigo-600 to-indigo-700">
             <CardContent>
               <Stack gap="md">
                 <Stack direction="row" gap="sm" align="center">
@@ -312,10 +298,7 @@ export default function FacturacionPage() {
                 </Stack>
                 <Grid cols={{ base: 2, sm: 3, lg: 6 }} gap="sm">
                   {datosRapidos.map((dato) => (
-                    <div
-                      key={dato.label}
-                      className="bg-white/10 backdrop-blur rounded-lg p-3"
-                    >
+                    <div key={dato.label} className="bg-white/10 backdrop-blur rounded-lg p-3">
                       <Text
                         size="xs"
                         weight="medium"
@@ -323,11 +306,7 @@ export default function FacturacionPage() {
                       >
                         {dato.label}
                       </Text>
-                      <Text
-                        size="sm"
-                        weight="semibold"
-                        className="text-white mt-0.5"
-                      >
+                      <Text size="sm" weight="semibold" className="text-white mt-0.5">
                         {dato.value}
                       </Text>
                     </div>
@@ -359,9 +338,7 @@ export default function FacturacionPage() {
                     {/* Número */}
                     <div
                       className={`absolute -top-3 -left-2 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${
-                        paso.destacado
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-700 text-white'
+                        paso.destacado ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-white'
                       }`}
                     >
                       {paso.numero}
@@ -370,9 +347,7 @@ export default function FacturacionPage() {
                     <div className="pt-2">
                       <Text
                         weight="semibold"
-                        className={`mb-1 ${
-                          paso.destacado ? 'text-indigo-900' : 'text-slate-800'
-                        }`}
+                        className={`mb-1 ${paso.destacado ? 'text-indigo-900' : 'text-slate-800'}`}
                       >
                         {paso.titulo}
                       </Text>
@@ -381,11 +356,7 @@ export default function FacturacionPage() {
                       </Text>
 
                       {paso.alerta && (
-                        <Alert
-                          variant="warning"
-                          icon={false}
-                          className="mb-2 p-2"
-                        >
+                        <Alert variant="warning" icon={false} className="mb-2 p-2">
                           <Text size="xs" weight="medium">
                             ⚠️ {paso.alerta}
                           </Text>

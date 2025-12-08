@@ -12,7 +12,7 @@ export default async function CapacitacionesPage() {
   // Check authentication via cookies (middleware handles redirect, but we verify here too)
   const cookieStore = await cookies();
   const tokenCookie = cookieStore.get('token');
-  
+
   if (!tokenCookie) {
     redirect('/login');
   }
@@ -20,7 +20,7 @@ export default async function CapacitacionesPage() {
   // Fetch data server-side
   let initialData: CapacitacionesListResponse | null = null;
   let error: string | null = null;
-  
+
   try {
     const response = await getCapacitaciones({ limit: 50 });
     if (!response.success || !response.data) {
@@ -40,18 +40,3 @@ export default async function CapacitacionesPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

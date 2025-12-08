@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import { Drawer, Sidebar } from '@cactus/ui';
 import NavigationNew from './NavigationNew';
@@ -33,11 +33,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Drawer */}
         <Drawer open={sidebarOpen} onOpenChange={setSidebarOpen} side="left">
-          <Sidebar
-            sections={sections}
-            isOpen={sidebarOpen}
-            onOpenChange={setSidebarOpen}
-          />
+          <Sidebar sections={sections} isOpen={sidebarOpen} onOpenChange={setSidebarOpen} />
         </Drawer>
 
         <main className="flex-1 bg-background">{children}</main>
@@ -45,5 +41,3 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-

@@ -4,7 +4,7 @@
  * GET /rules - List tag rules
  * POST /rules - Create tag rule
  * POST /rules/:id/evaluate - Evaluate and apply rule
- * 
+ *
  * AI_DECISION: Migrado a createRouteHandler/createAsyncHandler para manejo autom?tico de errores
  * Justificaci?n: Consistencia con otros handlers, manejo autom?tico de errores y formato de respuesta
  * Impacto: C?digo m?s limpio, menos duplicaci?n, mejor manejo de errores
@@ -91,7 +91,7 @@ router.post(
     const matchedContactIds: string[] = [];
 
     req.log.info({ ruleId: id, matched: matchedContactIds.length }, 'rule evaluated');
-    
+
     return {
       ruleId: id,
       matched: matchedContactIds.length,
@@ -101,9 +101,3 @@ router.post(
 );
 
 export default router;
-
-
-
-
-
-

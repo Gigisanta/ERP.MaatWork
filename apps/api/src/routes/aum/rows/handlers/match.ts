@@ -109,13 +109,8 @@ export async function matchRow(req: Request, res: Response) {
       createErrorResponse({
         error,
         requestId: req.requestId,
-        userMessage: 'Error haciendo match de fila AUM'
+        userMessage: 'Error haciendo match de fila AUM',
       })
     );
   }
 }
-
-
-
-
-

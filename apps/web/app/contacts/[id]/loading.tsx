@@ -1,17 +1,13 @@
 /**
  * Loading component for contact detail page
- * 
+ *
  * AI_DECISION: Consistent loading skeleton with wave animation
  * Justificación: Better perceived performance during data fetch
  * Impacto: Unified loading experience matching app design
  */
 
 import { Stack, Card, CardHeader, CardTitle, CardContent } from '@cactus/ui';
-import { 
-  Skeleton, 
-  SkeletonText,
-  SkeletonAvatar 
-} from '../../components/SkeletonLoader';
+import { Skeleton, SkeletonText, SkeletonAvatar } from '../../components/SkeletonLoader';
 
 export default function Loading() {
   return (
@@ -59,7 +55,10 @@ export default function Loading() {
           <CardContent>
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/50">
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-lg border border-border/50"
+                >
                   <SkeletonAvatar size="sm" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" delay={250 + i * 50} />
@@ -74,5 +73,3 @@ export default function Loading() {
     </main>
   );
 }
-
-

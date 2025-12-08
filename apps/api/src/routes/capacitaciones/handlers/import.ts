@@ -21,7 +21,10 @@ const upload = createCsvUpload(MAX_FILE_SIZE, uploadDir, 'capacitaciones');
 const multerMiddleware = (req: Request, res: Response, next: NextFunction) => {
   upload.single('file')(req, res, (err) => {
     if (err) {
-      req.log?.error?.({ err, filename: (req as { file?: Express.Multer.File }).file?.originalname }, 'Error en multer upload');
+      req.log?.error?.(
+        { err, filename: (req as { file?: Express.Multer.File }).file?.originalname },
+        'Error en multer upload'
+      );
       return handleMulterError(err, res, { maxFileSize: MAX_FILE_SIZE });
     }
     next();
@@ -36,7 +39,10 @@ export const handleImportCapacitaciones = [
       throw new HttpError(401, 'Unauthorized');
     }
 
-    const file = (req as any).file as Express.Multer.File | undefined;
+    // AI_DECISION: Acceso a req.file después de multer middleware
+    // Justificación: Multer agrega la propiedad 'file' al Request, pero TypeScript no la conoce por defecto
+    // Impacto: Type safety mejorado usando type assertion específica en lugar de 'any'
+    const file = (req as Request & { file?: Express.Multer.File }).file;
     if (!file) {
       req.log?.warn?.({ userId }, 'Upload request sin archivo');
       throw new HttpError(400, 'No file uploaded');
@@ -59,7 +65,11 @@ export const handleImportCapacitaciones = [
       parseResult = await parseCapacitacionesCSV(file.path);
     } catch (accessError) {
       req.log?.error?.({ err: accessError, filePath: file.path }, 'Archivo no accesible');
-      throw new HttpError(400, 'Error al procesar el archivo', 'El archivo subido no está disponible o fue eliminado');
+      throw new HttpError(
+        400,
+        'Error al procesar el archivo',
+        'El archivo subido no está disponible o fue eliminado'
+      );
     }
 
     const { data: parsedData, errors: parseErrors } = parseResult;
@@ -103,7 +113,10 @@ export const handleImportCapacitaciones = [
           inserted = parsedData.length;
         } catch (error) {
           // Si batch insert falla, intentar inserts individuales como fallback
-          req.log.warn({ error, batchSize: parsedData.length }, 'Batch insert failed, falling back to individual inserts');
+          req.log.warn(
+            { error, batchSize: parsedData.length },
+            'Batch insert failed, falling back to individual inserts'
+          );
           for (const item of parsedData) {
             try {
               await tx.insert(capacitaciones).values({
@@ -157,25 +170,3 @@ export const handleImportCapacitaciones = [
     });
   }),
 ];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

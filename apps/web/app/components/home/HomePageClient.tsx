@@ -1,6 +1,6 @@
 /**
  * HomePageClient - Client Island for home page interactivity
- * 
+ *
  * AI_DECISION: Extract client-side interactivity to separate component
  * Justificación: Allows home page to be Server Component while maintaining interactivity
  * Impacto: Reduces initial bundle size, improves FCP/LCP
@@ -27,7 +27,7 @@ const CalendarWidget = dynamic(() => import('../CalendarWidget'), {
       </CardContent>
     </Card>
   ),
-  ssr: false
+  ssr: false,
 });
 import { MetricsSection } from './MetricsSection';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
@@ -36,9 +36,17 @@ interface HomePageClientProps {
   metricsData: MonthlyMetrics | null;
   goalsData: MonthlyGoal | null;
   teamCalendarUrl: string | null;
+  metricsError: string | null;
+  metricsLoading?: boolean;
 }
 
-export function HomePageClient({ metricsData, goalsData, teamCalendarUrl }: HomePageClientProps) {
+export function HomePageClient({
+  metricsData,
+  goalsData,
+  teamCalendarUrl,
+  metricsError,
+  metricsLoading = false,
+}: HomePageClientProps) {
   return (
     <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
       <Stack direction="column" gap="xl">
@@ -54,8 +62,8 @@ export function HomePageClient({ metricsData, goalsData, teamCalendarUrl }: Home
           <MetricsSection
             metricsData={metricsData}
             goalsData={goalsData}
-            loading={false}
-            error={null}
+            loading={metricsLoading}
+            error={metricsError}
           />
         </section>
       </Stack>
@@ -97,6 +105,6 @@ function HomePageUnauthenticated({ onLoginClick }: HomePageUnauthenticatedProps)
  */
 export function HomePageUnauthenticatedClient() {
   const router = useRouter();
-  
+
   return <HomePageUnauthenticated onLoginClick={() => router.push('/login')} />;
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Script de verificación completa de importación AUM
- * 
+ *
  * Compara el CSV original con la base de datos para verificar:
  * - ✅ Conteo de filas (CSV vs DB)
  * - ✅ Filas faltantes en la base de datos
@@ -9,12 +9,12 @@
  * - ✅ Discrepancias en campos básicos (idCuenta, comitente, Descripcion, Asesor)
  * - ✅ Discrepancias en campos financieros (AUM USD, Bolsa Arg, Fondos Arg, Bolsa BCI, Pesos, MEP, Cable, CV7000)
  * - ✅ Filas con solo Descripcion (sin idCuenta ni comitente)
- * 
+ *
  * Uso:
  *   pnpm -F @cactus/api verify-aum-import
  *   pnpm -F @cactus/api verify-aum-import --file "nombre-archivo.csv"
  *   pnpm -F @cactus/api verify-aum-import --file-id "uuid-del-archivo"
- * 
+ *
  * Configuración:
  *   Edita las constantes CSV_FILE y BROKER al inicio del archivo, o usa argumentos de línea de comandos.
  */
@@ -26,7 +26,7 @@ import { config } from 'dotenv';
 import { db } from '@cactus/db';
 import { sql, eq, desc } from 'drizzle-orm';
 import { aumImportFiles, aumImportRows } from '@cactus/db/schema';
-import { mapAumColumns } from '../utils/aum-column-mapper';
+import { mapAumColumns } from '../utils/aum-columns';
 
 // Cargar .env
 const projectRoot = join(__dirname, '..', '..', '..', '..');
@@ -44,7 +44,7 @@ const DEFAULT_BROKER = 'balanz';
 function parseArgs(): { csvFile?: string; fileId?: string; broker?: string } {
   const args = process.argv.slice(2);
   const result: { csvFile?: string; fileId?: string; broker?: string } = {};
-  
+
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--file' && args[i + 1]) {
       result.csvFile = args[i + 1];
@@ -57,7 +57,7 @@ function parseArgs(): { csvFile?: string; fileId?: string; broker?: string } {
       i++;
     }
   }
-  
+
   return result;
 }
 
@@ -152,15 +152,21 @@ function numericValuesMatch(
   tolerance: number = 0.01
 ): boolean {
   // Ambos null/undefined = match
-  if ((csvValue === null || csvValue === undefined) && (dbValue === null || dbValue === undefined || dbValue === '')) {
+  if (
+    (csvValue === null || csvValue === undefined) &&
+    (dbValue === null || dbValue === undefined || dbValue === '')
+  ) {
     return true;
   }
-  
+
   // Uno null y el otro no = mismatch
-  if ((csvValue === null || csvValue === undefined) !== (dbValue === null || dbValue === undefined || dbValue === '')) {
+  if (
+    (csvValue === null || csvValue === undefined) !==
+    (dbValue === null || dbValue === undefined || dbValue === '')
+  ) {
     return false;
   }
-  
+
   // Convertir DB value (string) a número
   let dbNum: number | null = null;
   if (dbValue !== null && dbValue !== undefined && dbValue.trim() !== '') {
@@ -169,24 +175,24 @@ function numericValuesMatch(
       dbNum = parsed;
     }
   }
-  
+
   // Si CSV es null pero DB tiene número (o viceversa) = mismatch
   if ((csvValue === null || csvValue === undefined) !== (dbNum === null)) {
     return false;
   }
-  
+
   // Ambos tienen valores, comparar con tolerancia
   if (csvValue !== null && csvValue !== undefined && dbNum !== null) {
     const diff = Math.abs(csvValue - dbNum);
     return diff <= tolerance;
   }
-  
+
   // Ambos son null = match (ya manejado arriba, pero por seguridad)
   return true;
 }
 
 function hasAnyData(row: CsvRow): boolean {
-  return Object.values(row).some(v => v && String(v).trim().length > 0);
+  return Object.values(row).some((v) => v && String(v).trim().length > 0);
 }
 
 function hasOnlyDescripcion(row: CsvRow): boolean {
@@ -196,42 +202,39 @@ function hasOnlyDescripcion(row: CsvRow): boolean {
   return !hasIdCuenta && !hasComitente && hasDescripcion;
 }
 
-function findMatchingDbRow(
-  csvRow: CsvRow,
-  dbRows: DbRow[]
-): DbRow | null {
+function findMatchingDbRow(csvRow: CsvRow, dbRows: DbRow[]): DbRow | null {
   const idCuenta = csvRow.idCuenta?.trim();
   const comitente = csvRow.comitente?.trim();
   const descripcion = csvRow.Descripcion?.trim();
 
   // Prioridad 1: Buscar por idCuenta
   if (idCuenta) {
-    const match = dbRows.find(r => valuesMatch(r.id_cuenta, idCuenta));
+    const match = dbRows.find((r) => valuesMatch(r.id_cuenta, idCuenta));
     if (match) return match;
   }
 
   // Prioridad 2: Buscar por account_number (comitente)
   if (comitente) {
-    const match = dbRows.find(r => valuesMatch(r.account_number, comitente));
+    const match = dbRows.find((r) => valuesMatch(r.account_number, comitente));
     if (match) return match;
   }
 
   // Prioridad 3: Buscar por holderName + advisorRaw
   if (descripcion && csvRow.Asesor?.trim()) {
     const advisor = csvRow.Asesor.trim();
-    const match = dbRows.find(r => 
-      valuesMatch(r.holder_name, descripcion) &&
-      valuesMatch(r.advisor_raw, advisor)
+    const match = dbRows.find(
+      (r) => valuesMatch(r.holder_name, descripcion) && valuesMatch(r.advisor_raw, advisor)
     );
     if (match) return match;
   }
 
   // Prioridad 4: Buscar solo por holderName (para filas con solo Descripcion)
   if (descripcion && !idCuenta && !comitente) {
-    const match = dbRows.find(r => 
-      valuesMatch(r.holder_name, descripcion) &&
-      (!r.id_cuenta || r.id_cuenta.trim() === '') &&
-      (!r.account_number || r.account_number.trim() === '')
+    const match = dbRows.find(
+      (r) =>
+        valuesMatch(r.holder_name, descripcion) &&
+        (!r.id_cuenta || r.id_cuenta.trim() === '') &&
+        (!r.account_number || r.account_number.trim() === '')
     );
     if (match) return match;
   }
@@ -262,34 +265,36 @@ async function verifyImport(
   console.log('1. Parseando CSV...');
   const csvPath = join(projectRoot, csvFile);
   console.log(`   Buscando CSV en: ${csvPath}`);
-  
+
   let csvContent: string;
   try {
     csvContent = readFileSync(csvPath, 'utf-8');
   } catch (error) {
-    throw new Error(`No se pudo leer el archivo CSV: ${csvPath}\nError: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `No se pudo leer el archivo CSV: ${csvPath}\nError: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
-  
+
   const csvRecordsRaw = parse(csvContent, {
     columns: true,
     skip_empty_lines: false,
     trim: true,
-    relax_column_count: true
+    relax_column_count: true,
   }) as Record<string, unknown>[];
 
   // Mapear columnas del CSV usando mapAumColumns para obtener valores financieros
   const csvRecords: CsvRow[] = csvRecordsRaw.map((record: Record<string, unknown>) => {
     const mapped = mapAumColumns(record);
     const result: CsvRow = {
-      ...(record as Record<string, string | number | null | undefined>)
+      ...(record as Record<string, string | number | null | undefined>),
     };
-    
+
     // Asignar valores solo si no son null/undefined (para exactOptionalPropertyTypes)
     if (mapped.idCuenta) result.idCuenta = mapped.idCuenta;
     if (mapped.accountNumber) result.comitente = mapped.accountNumber;
     if (mapped.holderName) result.Descripcion = mapped.holderName;
     if (mapped.advisorRaw) result.Asesor = mapped.advisorRaw;
-    
+
     // Campos financieros pueden ser null, así que siempre asignarlos
     result.aumDollars = mapped.aumDollars;
     result.bolsaArg = mapped.bolsaArg;
@@ -299,7 +304,7 @@ async function verifyImport(
     result.mep = mapped.mep;
     result.cable = mapped.cable;
     result.cv7000 = mapped.cv7000;
-    
+
     return result;
   });
 
@@ -313,7 +318,7 @@ async function verifyImport(
   // 2. Buscar archivo en base de datos
   console.log('\n2. Buscando archivo en base de datos...');
   const dbi = db();
-  
+
   let file;
   if (fileId) {
     const files = await dbi
@@ -321,7 +326,7 @@ async function verifyImport(
       .from(aumImportFiles)
       .where(eq(aumImportFiles.id, fileId))
       .limit(1);
-    
+
     if (files.length === 0) {
       throw new Error(`No se encontró el archivo con ID "${fileId}" en la base de datos`);
     }
@@ -333,11 +338,11 @@ async function verifyImport(
       .where(eq(aumImportFiles.originalFilename, csvFile))
       .orderBy(desc(aumImportFiles.createdAt))
       .limit(5);
-    
+
     if (files.length === 0) {
       throw new Error(`No se encontró el archivo "${csvFile}" en la base de datos`);
     }
-    
+
     file = files[0];
     if (files.length > 1) {
       console.log(`\n   ℹ️  Se encontraron ${files.length} importaciones de este archivo.`);
@@ -345,7 +350,7 @@ async function verifyImport(
       console.log(`      Si quieres verificar otra, usa: --file-id "${files[1]?.id}"`);
     }
   }
-  
+
   console.log(`   ✅ Archivo encontrado:`);
   console.log(`      ID: ${file.id}`);
   console.log(`      Status: ${file.status}`);
@@ -379,10 +384,12 @@ async function verifyImport(
   `);
 
   const dbRows: DbRow[] = (dbRowsResult.rows || []) as DbRow[];
-  const dbOnlyHolderNameRows = dbRows.filter(r => 
-    (!r.id_cuenta || r.id_cuenta.trim() === '') &&
-    (!r.account_number || r.account_number.trim() === '') &&
-    r.holder_name && r.holder_name.trim().length > 0
+  const dbOnlyHolderNameRows = dbRows.filter(
+    (r) =>
+      (!r.id_cuenta || r.id_cuenta.trim() === '') &&
+      (!r.account_number || r.account_number.trim() === '') &&
+      r.holder_name &&
+      r.holder_name.trim().length > 0
   );
 
   console.log(`   Total filas en DB: ${dbRows.length}`);
@@ -390,34 +397,40 @@ async function verifyImport(
 
   // 4. Comparar y encontrar discrepancias
   console.log('\n4. Comparando CSV con base de datos...');
-  
+
   const missingInDb: CsvRow[] = [];
   const mappingErrors: Array<{ csvRow: CsvRow; dbRow: DbRow | null; error: string }> = [];
-  const valueMismatches: Array<{ csvRow: CsvRow; dbRow: DbRow; field: string; csvValue: string | null; dbValue: string | null }> = [];
+  const valueMismatches: Array<{
+    csvRow: CsvRow;
+    dbRow: DbRow;
+    field: string;
+    csvValue: string | null;
+    dbValue: string | null;
+  }> = [];
   const matchedDbRowIds = new Set<string>();
-  
+
   // Estadísticas de campos financieros
   const financialFieldsStats = new Map<string, number>();
   const fieldNames: Record<string, string> = {
-    'aum_dollars': 'AUM USD',
-    'bolsa_arg': 'Bolsa Arg',
-    'fondos_arg': 'Fondos Arg',
-    'bolsa_bci': 'Bolsa BCI',
-    'pesos': 'Pesos',
-    'mep': 'MEP',
-    'cable': 'Cable',
-    'cv7000': 'CV7000'
+    aum_dollars: 'AUM USD',
+    bolsa_arg: 'Bolsa Arg',
+    fondos_arg: 'Fondos Arg',
+    bolsa_bci: 'Bolsa BCI',
+    pesos: 'Pesos',
+    mep: 'MEP',
+    cable: 'Cable',
+    cv7000: 'CV7000',
   };
 
   for (const csvRow of csvValidRows) {
     const dbRow = findMatchingDbRow(csvRow, dbRows);
-    
+
     if (!dbRow) {
       missingInDb.push(csvRow);
       mappingErrors.push({
         csvRow,
         dbRow: null,
-        error: 'No se encontró fila correspondiente en la base de datos'
+        error: 'No se encontró fila correspondiente en la base de datos',
       });
       continue;
     }
@@ -437,7 +450,7 @@ async function verifyImport(
         dbRow,
         field: 'idCuenta',
         csvValue: idCuenta,
-        dbValue: dbRow.id_cuenta
+        dbValue: dbRow.id_cuenta,
       });
     }
 
@@ -448,7 +461,7 @@ async function verifyImport(
         dbRow,
         field: 'account_number',
         csvValue: comitente,
-        dbValue: dbRow.account_number
+        dbValue: dbRow.account_number,
       });
     }
 
@@ -459,7 +472,7 @@ async function verifyImport(
         dbRow,
         field: 'holder_name',
         csvValue: descripcion,
-        dbValue: dbRow.holder_name
+        dbValue: dbRow.holder_name,
       });
     }
 
@@ -470,7 +483,7 @@ async function verifyImport(
         dbRow,
         field: 'advisor_raw',
         csvValue: asesor,
-        dbValue: dbRow.advisor_raw
+        dbValue: dbRow.advisor_raw,
       });
     }
 
@@ -483,23 +496,24 @@ async function verifyImport(
       { csvKey: 'pesos', dbKey: 'pesos', name: 'Pesos' },
       { csvKey: 'mep', dbKey: 'mep', name: 'MEP' },
       { csvKey: 'cable', dbKey: 'cable', name: 'Cable' },
-      { csvKey: 'cv7000', dbKey: 'cv7000', name: 'CV7000' }
+      { csvKey: 'cv7000', dbKey: 'cv7000', name: 'CV7000' },
     ];
 
     for (const field of financialFields) {
       const csvValue = csvRow[field.csvKey] as number | null | undefined;
       const dbValue = dbRow[field.dbKey];
-      
+
       if (!numericValuesMatch(csvValue, dbValue)) {
-        const csvValueStr: string | null = csvValue !== null && csvValue !== undefined ? String(csvValue) : null;
+        const csvValueStr: string | null =
+          csvValue !== null && csvValue !== undefined ? String(csvValue) : null;
         valueMismatches.push({
           csvRow,
           dbRow,
           field: field.dbKey,
           csvValue: csvValueStr,
-          dbValue: dbValue ?? null
+          dbValue: dbValue ?? null,
         });
-        
+
         // Actualizar estadísticas
         const current = financialFieldsStats.get(field.dbKey) || 0;
         financialFieldsStats.set(field.dbKey, current + 1);
@@ -508,7 +522,7 @@ async function verifyImport(
   }
 
   // 5. Encontrar filas en DB que no están en CSV
-  const missingInCsv: DbRow[] = dbRows.filter(r => !matchedDbRowIds.has(r.id));
+  const missingInCsv: DbRow[] = dbRows.filter((r) => !matchedDbRowIds.has(r.id));
 
   // 6. Verificar filas con solo Descripcion
   const missingOnlyDescripcion: CsvRow[] = [];
@@ -520,11 +534,13 @@ async function verifyImport(
   }
 
   // Construir estadísticas de campos financieros
-  const financialFieldsStatsArray = Array.from(financialFieldsStats.entries()).map(([field, count]) => ({
-    field,
-    name: fieldNames[field] || field,
-    discrepancies: count
-  }));
+  const financialFieldsStatsArray = Array.from(financialFieldsStats.entries()).map(
+    ([field, count]) => ({
+      field,
+      name: fieldNames[field] || field,
+      discrepancies: count,
+    })
+  );
 
   const result: VerificationResult = {
     csvTotalRows: csvRecords.length,
@@ -538,9 +554,9 @@ async function verifyImport(
     onlyDescripcionRows: {
       csv: csvOnlyDescripcionRows.length,
       db: dbOnlyHolderNameRows.length,
-      missing: missingOnlyDescripcion
+      missing: missingOnlyDescripcion,
     },
-    financialFieldsStats: financialFieldsStatsArray
+    financialFieldsStats: financialFieldsStatsArray,
   };
 
   return result;
@@ -552,14 +568,14 @@ async function verifyImport(
 
 function printReport(result: VerificationResult): void {
   const fieldNames: Record<string, string> = {
-    'aum_dollars': 'AUM USD',
-    'bolsa_arg': 'Bolsa Arg',
-    'fondos_arg': 'Fondos Arg',
-    'bolsa_bci': 'Bolsa BCI',
-    'pesos': 'Pesos',
-    'mep': 'MEP',
-    'cable': 'Cable',
-    'cv7000': 'CV7000'
+    aum_dollars: 'AUM USD',
+    bolsa_arg: 'Bolsa Arg',
+    fondos_arg: 'Fondos Arg',
+    bolsa_bci: 'Bolsa BCI',
+    pesos: 'Pesos',
+    mep: 'MEP',
+    cable: 'Cable',
+    cv7000: 'CV7000',
   };
 
   console.log('\n' + '='.repeat(80));
@@ -571,7 +587,7 @@ function printReport(result: VerificationResult): void {
   console.log(`   CSV filas válidas: ${result.csvValidRows}`);
   console.log(`   DB filas cargadas: ${result.dbTotalRows}`);
   console.log(`   Diferencia: ${result.discrepancy}`);
-  
+
   if (result.discrepancy === 0) {
     console.log('   ✅ Los conteos coinciden');
   } else if (result.discrepancy > 0) {
@@ -585,7 +601,7 @@ function printReport(result: VerificationResult): void {
   console.log(`   CSV: ${result.onlyDescripcionRows.csv}`);
   console.log(`   DB: ${result.onlyDescripcionRows.db}`);
   console.log(`   Faltantes: ${result.onlyDescripcionRows.missing.length}`);
-  
+
   if (result.onlyDescripcionRows.missing.length > 0) {
     console.log('\n   Filas faltantes:');
     result.onlyDescripcionRows.missing.slice(0, 10).forEach((row, i) => {
@@ -604,7 +620,9 @@ function printReport(result: VerificationResult): void {
       const idCuenta = row.idCuenta?.trim() || 'N/A';
       const comitente = row.comitente?.trim() || 'N/A';
       const descripcion = row.Descripcion?.trim() || 'N/A';
-      console.log(`   ${i + 1}. idCuenta: ${idCuenta}, comitente: ${comitente}, Descripcion: "${descripcion}"`);
+      console.log(
+        `   ${i + 1}. idCuenta: ${idCuenta}, comitente: ${comitente}, Descripcion: "${descripcion}"`
+      );
     });
     if (result.missingInDb.length > 10) {
       console.log(`   ... y ${result.missingInDb.length - 10} más`);
@@ -619,7 +637,9 @@ function printReport(result: VerificationResult): void {
       const idCuenta = row.id_cuenta || 'N/A';
       const accountNumber = row.account_number || 'N/A';
       const holderName = row.holder_name || 'N/A';
-      console.log(`   ${i + 1}. idCuenta: ${idCuenta}, account_number: ${accountNumber}, holder_name: "${holderName}"`);
+      console.log(
+        `   ${i + 1}. idCuenta: ${idCuenta}, account_number: ${accountNumber}, holder_name: "${holderName}"`
+      );
     });
     if (result.missingInCsv.length > 10) {
       console.log(`   ... y ${result.missingInCsv.length - 10} más`);
@@ -643,12 +663,14 @@ function printReport(result: VerificationResult): void {
   if (result.valueMismatches.length > 0) {
     console.log('\n⚠️  DISCREPANCIAS DE VALORES:');
     console.log(`   Total: ${result.valueMismatches.length}`);
-    
+
     // Separar discrepancias de campos básicos y financieros
     const basicFields = ['idCuenta', 'account_number', 'holder_name', 'advisor_raw'];
-    const basicMismatches = result.valueMismatches.filter(m => basicFields.includes(m.field));
-    const financialMismatches = result.valueMismatches.filter(m => !basicFields.includes(m.field));
-    
+    const basicMismatches = result.valueMismatches.filter((m) => basicFields.includes(m.field));
+    const financialMismatches = result.valueMismatches.filter(
+      (m) => !basicFields.includes(m.field)
+    );
+
     // Mostrar discrepancias de campos básicos
     if (basicMismatches.length > 0) {
       console.log(`\n   📋 Campos básicos (${basicMismatches.length}):`);
@@ -656,7 +678,9 @@ function printReport(result: VerificationResult): void {
         const descripcion = mismatch.csvRow.Descripcion?.trim() || 'N/A';
         const idCuenta = mismatch.csvRow.idCuenta?.trim() || 'N/A';
         const comitente = mismatch.csvRow.comitente?.trim() || 'N/A';
-        console.log(`   ${i + 1}. "${descripcion}" (idCuenta: ${idCuenta}, comitente: ${comitente}) - Campo: ${mismatch.field}`);
+        console.log(
+          `   ${i + 1}. "${descripcion}" (idCuenta: ${idCuenta}, comitente: ${comitente}) - Campo: ${mismatch.field}`
+        );
         console.log(`      CSV: "${mismatch.csvValue}"`);
         console.log(`      DB:  "${mismatch.dbValue}"`);
       });
@@ -664,26 +688,28 @@ function printReport(result: VerificationResult): void {
         console.log(`   ... y ${basicMismatches.length - 10} más`);
       }
     }
-    
+
     // Mostrar discrepancias de campos financieros
     if (financialMismatches.length > 0) {
       console.log(`\n   💰 Campos financieros (${financialMismatches.length}):`);
-      
+
       // Estadísticas por campo financiero
       if (result.financialFieldsStats.length > 0) {
         console.log(`   Estadísticas por campo:`);
-        result.financialFieldsStats.forEach(stat => {
+        result.financialFieldsStats.forEach((stat) => {
           console.log(`      - ${stat.name}: ${stat.discrepancies} discrepancias`);
         });
       }
-      
+
       console.log(`\n   Ejemplos de discrepancias:`);
       financialMismatches.slice(0, 15).forEach((mismatch, i) => {
         const descripcion = mismatch.csvRow.Descripcion?.trim() || 'N/A';
         const idCuenta = mismatch.csvRow.idCuenta?.trim() || 'N/A';
         const comitente = mismatch.csvRow.comitente?.trim() || 'N/A';
         const fieldName = fieldNames[mismatch.field] || mismatch.field;
-        console.log(`   ${i + 1}. "${descripcion}" (idCuenta: ${idCuenta}, comitente: ${comitente}) - Campo: ${fieldName}`);
+        console.log(
+          `   ${i + 1}. "${descripcion}" (idCuenta: ${idCuenta}, comitente: ${comitente}) - Campo: ${fieldName}`
+        );
         console.log(`      CSV: ${mismatch.csvValue !== null ? mismatch.csvValue : 'null'}`);
         console.log(`      DB:  ${mismatch.dbValue !== null ? mismatch.dbValue : 'null'}`);
       });
@@ -697,11 +723,9 @@ function printReport(result: VerificationResult): void {
   console.log('\n' + '='.repeat(80));
   console.log('RESUMEN FINAL');
   console.log('='.repeat(80));
-  
-  const totalIssues = 
-    result.missingInDb.length +
-    result.missingInCsv.length +
-    result.valueMismatches.length;
+
+  const totalIssues =
+    result.missingInDb.length + result.missingInCsv.length + result.valueMismatches.length;
 
   if (totalIssues === 0 && result.discrepancy === 0) {
     console.log('\n✅ VERIFICACIÓN EXITOSA');
@@ -714,7 +738,7 @@ function printReport(result: VerificationResult): void {
     console.log(`   - Filas en DB no en CSV: ${result.missingInCsv.length}`);
     console.log(`   - Discrepancias de valores: ${result.valueMismatches.length}`);
   }
-  
+
   console.log('');
 }
 
@@ -731,13 +755,11 @@ async function main() {
 
     const result = await verifyImport(csvFile, broker, fileId);
     printReport(result);
-    
+
     // Exit code basado en resultados
-    const totalIssues = 
-      result.missingInDb.length +
-      result.missingInCsv.length +
-      result.valueMismatches.length;
-    
+    const totalIssues =
+      result.missingInDb.length + result.missingInCsv.length + result.valueMismatches.length;
+
     if (totalIssues === 0 && result.discrepancy === 0) {
       process.exit(0);
     } else {

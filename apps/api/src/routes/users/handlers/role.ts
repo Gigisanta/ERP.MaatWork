@@ -16,11 +16,7 @@ export const handleUpdateUserRole = createRouteHandler(async (req: Request) => {
   const { id } = req.params;
   const { role } = req.body as { role: 'admin' | 'manager' | 'advisor' | 'owner' | 'staff' };
 
-  const [updatedUser] = await db()
-    .update(users)
-    .set({ role })
-    .where(eq(users.id, id))
-    .returning();
+  const [updatedUser] = await db().update(users).set({ role }).where(eq(users.id, id)).returning();
 
   if (!updatedUser) {
     throw new HttpError(404, 'User not found');
@@ -30,25 +26,3 @@ export const handleUpdateUserRole = createRouteHandler(async (req: Request) => {
 
   return updatedUser;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

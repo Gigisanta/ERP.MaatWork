@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../utils/cn';
 import Button from './Button';
@@ -43,11 +43,11 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
  * Sidebar navigation component with brand styling.
  * Active items use Primary Purple background.
  * Focus rings use Primary Purple color.
- * 
+ *
  * AI_DECISION: Improved responsive behavior and touch targets
  * Justificación: Better UX on mobile with larger touch targets and smoother scrolling
  * Impacto: Sidebar works well on all screen sizes with proper accessibility
- * 
+ *
  * @example
  * ```tsx
  * <Sidebar
@@ -65,23 +65,26 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
  * ```
  */
 export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  ({ 
-    sections,
-    logo,
-    collapsed: controlledCollapsed,
-    onCollapse,
-    defaultCollapsed = false,
-    currentPath = '',
-    isOpen,
-    onOpenChange,
-    LinkComponent,
-    className,
-    ...props 
-  }, ref) => {
+  (
+    {
+      sections,
+      logo,
+      collapsed: controlledCollapsed,
+      onCollapse,
+      defaultCollapsed = false,
+      currentPath = '',
+      isOpen,
+      onOpenChange,
+      LinkComponent,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
-    
+
     const collapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
-    
+
     const handleToggle = useCallback(() => {
       const newCollapsed = !collapsed;
       if (controlledCollapsed === undefined) {
@@ -117,13 +120,13 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <div
         ref={ref}
         className={cn(
-          'relative flex flex-col h-full bg-surface',
+          'relative flex flex-col h-full bg-transparent',
           // Border only on desktop
           !isMobileMode && 'border-r border-border',
           'transition-all duration-300 ease-in-out',
           'overflow-x-hidden',
           // Width based on collapsed state (desktop) or full width (mobile)
-          isMobileMode ? 'w-full' : (collapsed ? 'w-16' : 'w-52'),
+          isMobileMode ? 'w-full' : collapsed ? 'w-16' : 'w-52',
           className
         )}
         data-open={isOpen === undefined ? undefined : isOpen}
@@ -149,7 +152,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         )}
 
         {/* Navigation */}
-        <nav 
+        <nav
           className={cn(
             'flex-1 overflow-y-auto overflow-x-hidden',
             // Better scrolling on mobile
@@ -157,16 +160,16 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
             // Responsive padding
             isMobileMode ? 'py-4 px-3' : 'py-3 px-2',
             'space-y-3'
-          )} 
+          )}
           role="navigation"
           aria-label="Navegación principal"
         >
           {sections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-1">
               {section.title && !collapsed && (
-                <Text 
-                  size="xs" 
-                  weight="semibold" 
+                <Text
+                  size="xs"
+                  weight="semibold"
                   className={cn(
                     'text-text-muted uppercase tracking-wider',
                     isMobileMode ? 'px-3 mb-2' : 'px-2 mb-1'
@@ -209,9 +212,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
               )}
             >
               <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={16} />
-              {!collapsed && (
-                <span className="ml-2 text-sm font-medium font-body">Colapsar</span>
-              )}
+              {!collapsed && <span className="ml-2 text-sm font-medium font-body">Colapsar</span>}
             </button>
           </div>
         )}
@@ -260,13 +261,13 @@ const SidebarItemComponent = React.forwardRef<HTMLAnchorElement, SidebarItemComp
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
           'min-w-0 max-w-full',
           // Size based on mode
-          collapsed 
+          collapsed
             ? 'justify-center w-12 h-11'
             : isMobileMode
-              // Mobile: larger touch targets
-              ? 'gap-3 px-4 py-3.5 w-full min-h-[52px]'
-              // Desktop: compact
-              : 'gap-2 px-3 py-2 w-full',
+              ? // Mobile: larger touch targets
+                'gap-3 px-4 py-3.5 w-full min-h-[52px]'
+              : // Desktop: compact
+                'gap-2 px-3 py-2 w-full',
           // Active/hover states
           isActive
             ? 'bg-primary text-text-inverse shadow-md'
@@ -276,49 +277,46 @@ const SidebarItemComponent = React.forwardRef<HTMLAnchorElement, SidebarItemComp
         onClick={handleClick}
       >
         {item.icon && (
-          <Icon 
-            name={item.icon} 
-            size={collapsed ? 22 : (isMobileMode ? 22 : 18)}
-            className="flex-shrink-0" 
+          <Icon
+            name={item.icon}
+            size={collapsed ? 22 : isMobileMode ? 22 : 18}
+            className="flex-shrink-0"
           />
         )}
-        
+
         {!collapsed && (
           <>
-            <span className={cn(
-              'truncate flex-1 font-body',
-              isMobileMode ? 'text-base' : 'text-sm'
-            )}>
+            <span
+              className={cn('truncate flex-1 font-body', isMobileMode ? 'text-base' : 'text-sm')}
+            >
               {item.label}
             </span>
             {item.badge && (
-              <span className={cn(
-                'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium min-w-[20px] h-[20px] font-body',
-                isActive
-                  ? 'bg-text-inverse/30 text-text-inverse'
-                  : 'bg-primary text-text-inverse'
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium min-w-[20px] h-[20px] font-body',
+                  isActive ? 'bg-text-inverse/30 text-text-inverse' : 'bg-primary text-text-inverse'
+                )}
+              >
                 {item.badge}
               </span>
             )}
           </>
         )}
-        
+
         {item.badge && collapsed && (
-          <span className={cn(
-            'absolute -top-1 -right-1 z-10',
-            'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px] font-body',
-            isActive
-              ? 'bg-text-inverse/30 text-text-inverse'
-              : 'bg-primary text-text-inverse'
-          )}>
+          <span
+            className={cn(
+              'absolute -top-1 -right-1 z-10',
+              'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px] font-body',
+              isActive ? 'bg-text-inverse/30 text-text-inverse' : 'bg-primary text-text-inverse'
+            )}
+          >
             {item.badge}
           </span>
         )}
-        
-        {collapsed && item.badge && (
-          <VisuallyHidden>Badge: {item.badge}</VisuallyHidden>
-        )}
+
+        {collapsed && item.badge && <VisuallyHidden>Badge: {item.badge}</VisuallyHidden>}
       </Link>
     );
 

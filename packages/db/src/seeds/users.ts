@@ -106,34 +106,3 @@ export async function seedUsers() {
   return { adminUser, managerUsers, advisorUsers };
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

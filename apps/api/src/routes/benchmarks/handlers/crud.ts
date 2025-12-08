@@ -152,8 +152,3 @@ export const handleDeleteBenchmark = createRouteHandler(async (req: Request) => 
   req.log.info({ benchmarkId }, 'benchmark deleted');
   return { message: 'Benchmark eliminado correctamente' };
 });
-
-
-
-
-

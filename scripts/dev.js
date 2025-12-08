@@ -354,14 +354,34 @@ async function runValidations(skipCache = false) {
       if (err.status === 1) {
         validationResult = 'error';
         console.log(warning('\n⚠️  Hay problemas con las variables de entorno'));
-        console.log(warning('   El sistema puede no funcionar correctamente\n'));
+        console.log(warning('   El sistema puede no funcionar correctamente'));
+        console.log(warning('   Ejecuta: pnpm setup para configurar el proyecto\n'));
       }
     }
     console.log('');
     
+    // Verificar que .env existe (verificación adicional)
+    const envPath = path.join(projectRoot, 'apps', 'api', '.env');
+    if (!fs.existsSync(envPath)) {
+      console.log(warning('⚠️  Archivo apps/api/.env no encontrado'));
+      console.log(warning('   Ejecuta: pnpm setup para configurar el proyecto'));
+      console.log(warning('   O copia manualmente: cp apps/api/config-example.env apps/api/.env\n'));
+      validationResult = 'warning';
+    }
+    
+    // Advertencia sobre tokens viejos (solo informativo)
+    console.log(info('3️⃣  Verificando configuración...'));
+    console.log(info('   💡 Si encuentras errores 401 o problemas de autenticación:'));
+    console.log(info('      - Limpia las cookies del navegador para localhost'));
+    console.log(info('      - O usa modo incógnito para evitar tokens viejos\n'));
+    
     if (validationResult === 'success') {
       console.log(success('✅ Validaciones completadas\n'));
       setValidationCache('success');
+    } else if (validationResult === 'error') {
+      console.log(error('❌ Validaciones fallaron - corrige los errores antes de continuar\n'));
+      setValidationCache('error');
+      // No salir aquí, permitir que el usuario decida si continuar
     } else {
       console.log(warning('⚠️  Validaciones completadas con advertencias\n'));
       setValidationCache('warning');
@@ -415,7 +435,7 @@ async function main() {
   }
   
   if (isWindows) {
-    // Windows: Usar turbo run dev (sin tmux)
+    // Windows: Usar turbo run dev (sin consola unificada)
     console.log(bold('🚀 Iniciando servicios...\n'));
     
     try {
@@ -433,23 +453,13 @@ async function main() {
       process.exit(1);
     }
   } else {
-    // Unix/Linux/macOS: Intentar usar tmux si está disponible
-    const bashScript = path.join(projectRoot, 'scripts', 'dev-tmux.sh');
+    // Unix/Linux/macOS: Usar script unificado con consola única y logs coloreados
+    const unifiedScript = path.join(projectRoot, 'scripts', 'dev-unified.js');
     
-    // Verificar si tmux está instalado
-    let hasTmux = false;
-    try {
-      execSync('command -v tmux', { stdio: 'ignore' });
-      hasTmux = true;
-    } catch (err) {
-      hasTmux = false;
-    }
-    
-    if (hasTmux && fs.existsSync(bashScript)) {
-      // Usar tmux script
+    if (fs.existsSync(unifiedScript)) {
       console.log(bold('🚀 Iniciando servicios...\n'));
       try {
-        execSync(`bash "${bashScript}"`, {
+        execSync(`node "${unifiedScript}"`, {
           stdio: 'inherit',
           cwd: projectRoot
         });
@@ -462,13 +472,8 @@ async function main() {
         process.exit(1);
       }
     } else {
-      // Fallback a turbo run dev (sin tmux)
-      console.log(warning('⚠️  TMUX no está instalado. Usando modo básico (turbo run dev)...'));
-      console.log('');
-      console.log(info('💡 Para mejor experiencia, instala TMUX:'));
-      console.log(info('   • macOS:   brew install tmux'));
-      console.log(info('   • Ubuntu:  sudo apt-get install tmux'));
-      console.log(info('   • Arch:    sudo pacman -S tmux'));
+      // Fallback a turbo run dev si el script no existe
+      console.log(warning('⚠️  Script unificado no encontrado. Usando modo básico (turbo run dev)...'));
       console.log('');
       
       try {

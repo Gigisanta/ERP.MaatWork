@@ -2,14 +2,24 @@
 
 /**
  * OHLCVChart - Multi-timeframe OHLCV chart with technical indicators
- * 
+ *
  * AI_DECISION: Client component for interactive charts
  * Justificación: Charts need client-side rendering and interactivity
  * Impacto: Rich data visualization with technical analysis
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Select, Spinner, Alert, Text, Stack } from '@cactus/ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Select,
+  Spinner,
+  Alert,
+  Text,
+  Stack,
+} from '@cactus/ui';
 import { getOHLCV } from '@/lib/api/bloomberg';
 import type { OHLCVPoint } from '@/lib/api/bloomberg';
 import {
@@ -23,7 +33,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
 } from 'recharts';
 
 interface OHLCVChartProps {
@@ -41,7 +51,7 @@ const TIMEFRAME_OPTIONS: { value: Timeframe; label: string }[] = [
   { value: '3m', label: '3 Months' },
   { value: '6m', label: '6 Months' },
   { value: '1y', label: '1 Year' },
-  { value: 'all', label: 'All' }
+  { value: 'all', label: 'All' },
 ];
 
 export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVChartProps) {
@@ -56,12 +66,12 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Calculate date range based on timeframe
         const to = new Date();
         const from = new Date();
-        
+
         switch (timeframe) {
           case '1d':
             from.setDate(from.getDate() - 1);
@@ -85,14 +95,14 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
             // Don't set from date
             break;
         }
-        
+
         const response = await getOHLCV(
           symbol,
           '1d',
           timeframe !== 'all' ? from.toISOString().split('T')[0] : undefined,
           to.toISOString().split('T')[0]
         );
-        
+
         if (response.success && response.data) {
           setData(response.data);
         } else {
@@ -111,7 +121,7 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
   // Calculate moving average
   const calculateMA = (period: number): number[] => {
     if (data.length < period) return [];
-    
+
     const ma: number[] = [];
     for (let i = 0; i < data.length; i++) {
       if (i < period - 1) {
@@ -129,7 +139,7 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
     date: new Date(point.date).toLocaleDateString(),
     close: point.close,
     volume: point.volume,
-    ma: maData[index] || null
+    ma: maData[index] || null,
   }));
 
   if (loading) {
@@ -180,22 +190,19 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
         <ResponsiveContainer width="100%" height={height}>
           <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="date" 
+            <XAxis
+              dataKey="date"
               tick={{ fontSize: 12 }}
               angle={-45}
               textAnchor="end"
               height={80}
             />
-            <YAxis 
-              tick={{ fontSize: 12 }}
-              domain={['auto', 'auto']}
-            />
-            <Tooltip 
+            <YAxis tick={{ fontSize: 12 }} domain={['auto', 'auto']} />
+            <Tooltip
               contentStyle={{
                 backgroundColor: 'var(--color-surface)',
                 border: '1px solid var(--color-border)',
-                borderRadius: '8px'
+                borderRadius: '8px',
               }}
             />
             <Legend />
@@ -207,7 +214,7 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
               fillOpacity={0.2}
               name="Close Price"
             />
-            {showMA && maData.some(v => !isNaN(v)) && (
+            {showMA && maData.some((v) => !isNaN(v)) && (
               <Line
                 type="monotone"
                 dataKey="ma"
@@ -223,6 +230,3 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
     </Card>
   );
 }
-
-
-

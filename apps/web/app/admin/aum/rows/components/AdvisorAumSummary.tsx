@@ -10,12 +10,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
-import { Text, Badge } from '@cactus/ui';
+import { Text } from '@cactus/ui';
 import {
   getAdvisorAumSummary,
   getAvailableAumPeriods,
   type AdvisorSummaryItem,
-  type AvailablePeriod,
 } from '@/lib/api/aum';
 import { formatNumber } from '../lib/aumRowsUtils';
 

@@ -5,8 +5,3 @@ export { Text, type TextProps } from './Text';
 export { Heading, type HeadingProps } from './Heading';
 export { VisuallyHidden, type VisuallyHiddenProps } from './VisuallyHidden';
 export { FocusRing, type FocusRingProps } from './FocusRing';
-
-
-
-
-

@@ -1,8 +1,10 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 
 export function useViewport() {
-  const [width, setWidth] = useState<number>(typeof window === 'undefined' ? 1920 : window.innerWidth);
+  const [width, setWidth] = useState<number>(
+    typeof window === 'undefined' ? 1920 : window.innerWidth
+  );
   useEffect(() => {
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', onResize);
@@ -16,5 +18,3 @@ export function useViewport() {
     isLg: width >= 1024,
   } as const;
 }
-
-

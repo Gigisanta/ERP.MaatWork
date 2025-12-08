@@ -9,17 +9,10 @@ export interface TooltipProps {
   delayDuration?: number;
 }
 
-export const Tooltip = ({ 
-  content, 
-  children, 
-  side = 'top', 
-  delayDuration = 200 
-}: TooltipProps) => (
+export const Tooltip = ({ content, children, side = 'top', delayDuration = 200 }: TooltipProps) => (
   <TooltipPrimitive.Provider delayDuration={delayDuration}>
     <TooltipPrimitive.Root>
-      <TooltipPrimitive.Trigger asChild>
-        {children}
-      </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           side={side}
@@ -43,8 +36,3 @@ export const Tooltip = ({
 );
 
 Tooltip.displayName = 'Tooltip';
-
-
-
-
-

@@ -160,15 +160,19 @@ router.post(
       }));
     } else {
       // Log individual
+      // AI_DECISION: Type guard explícito para satisfacer exactOptionalPropertyTypes
+      // Justificación: TypeScript necesita verificación explícita del tipo cuando es una unión
+      // Impacto: Cumple con las reglas estrictas de TypeScript
+      const individualLog = validated as z.infer<typeof ClientLogSchema>;
       logsToProcess = [
         {
           id: crypto.randomUUID(),
-          message: validated.message,
-          context: validated.context || {},
-          level: validated.level,
-          userId: validated.userId || null,
-          userRole: validated.userRole || null,
-          createdAt: new Date(validated.timestamp),
+          message: individualLog.message,
+          context: individualLog.context || {},
+          level: individualLog.level,
+          userId: individualLog.userId || null,
+          userRole: individualLog.userRole || null,
+          createdAt: new Date(individualLog.timestamp),
         },
       ];
     }

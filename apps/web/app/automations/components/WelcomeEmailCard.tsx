@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -11,12 +11,12 @@ import {
   Text,
   Stack,
   Alert,
-  Spinner
+  Spinner,
 } from '@cactus/ui';
 import {
   getAutomationConfigByName,
   createAutomationConfig,
-  updateAutomationConfig
+  updateAutomationConfig,
 } from '@/lib/api/automations';
 import type { AutomationConfig, UpdateAutomationConfigRequest } from '@/types/automation';
 import { useToast } from '@/lib/hooks/useToast';
@@ -40,9 +40,9 @@ export default function WelcomeEmailCard() {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await getAutomationConfigByName(AUTOMATION_NAME);
-        
+
         if (response.success && response.data) {
           setConfig(response.data);
           setWebhookUrl(response.data.webhookUrl || '');
@@ -62,7 +62,7 @@ export default function WelcomeEmailCard() {
           // Otro tipo de error
           logger.error('Error loading automation config', {
             error: err instanceof Error ? err.message : String(err),
-            status: err instanceof ApiError ? err.status : undefined
+            status: err instanceof ApiError ? err.status : undefined,
           });
           setError('Error al cargar la configuración');
         }
@@ -87,13 +87,13 @@ export default function WelcomeEmailCard() {
 
       const updateData: UpdateAutomationConfigRequest = {
         webhookUrl: webhookUrl || null,
-        enabled
+        enabled,
       };
 
       if (config) {
         // Actualizar configuración existente
         const response = await updateAutomationConfig(config.id, updateData);
-        
+
         if (response.success && response.data) {
           setConfig(response.data);
           setWebhookUrl(response.data.webhookUrl || '');
@@ -111,9 +111,9 @@ export default function WelcomeEmailCard() {
           triggerConfig: { stageName: 'Cliente' },
           webhookUrl: webhookUrl || null,
           enabled,
-          config: {}
+          config: {},
         });
-        
+
         if (response.success && response.data) {
           setConfig(response.data);
           setWebhookUrl(response.data.webhookUrl || '');
@@ -125,10 +125,14 @@ export default function WelcomeEmailCard() {
       }
     } catch (err) {
       logger.error('Error saving automation config', {
-        error: err instanceof Error ? err.message : String(err)
+        error: err instanceof Error ? err.message : String(err),
       });
       setError(err instanceof Error ? err.message : 'Error al guardar la configuración');
-      showToast('Error al guardar', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      showToast(
+        'Error al guardar',
+        err instanceof Error ? err.message : 'Error desconocido',
+        'error'
+      );
     } finally {
       setSaving(false);
     }
@@ -161,7 +165,8 @@ export default function WelcomeEmailCard() {
       <CardHeader>
         <CardTitle>Mail de bienvenida</CardTitle>
         <Text size="sm" color="secondary">
-          Configura el webhook que se activará cuando un contacto cambie a estado "Cliente"
+          Configura el webhook que se activará cuando un contacto cambie a estado
+          &quot;Cliente&quot;
         </Text>
       </CardHeader>
       <CardContent>
@@ -178,12 +183,15 @@ export default function WelcomeEmailCard() {
                 type="checkbox"
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                className="w-4 h-4 rounded border-border text-primary focus:ring-primary bg-background"
               />
-              <Text size="sm" weight="medium">Habilitar automatización</Text>
+              <Text size="sm" weight="medium">
+                Habilitar automatización
+              </Text>
             </label>
             <Text size="xs" color="secondary">
-              Cuando está habilitada, se enviará un webhook al cambiar un contacto a estado "Cliente"
+              Cuando está habilitada, se enviará un webhook al cambiar un contacto a estado
+              &quot;Cliente&quot;
             </Text>
           </div>
 
@@ -222,4 +230,3 @@ export default function WelcomeEmailCard() {
     </Card>
   );
 }
-

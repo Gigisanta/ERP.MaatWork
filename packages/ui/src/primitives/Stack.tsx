@@ -12,22 +12,30 @@ export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
-export function Stack({ 
-  className, 
-  children, 
+export function Stack({
+  className,
+  children,
   direction = 'column',
   gap = 'md',
   align = 'stretch',
   justify = 'start',
-  ...props 
+  ...props
 }: StackProps) {
   return (
-    <div 
+    <div
       className={cn(
         'flex',
         buildResponsiveClasses(direction, (d) => (d === 'row' ? 'flex-row' : 'flex-col')),
         buildResponsiveClasses(gap, (g) =>
-          g === 'xs' ? 'gap-1' : g === 'sm' ? 'gap-2' : g === 'md' ? 'gap-4' : g === 'lg' ? 'gap-6' : 'gap-8'
+          g === 'xs'
+            ? 'gap-1'
+            : g === 'sm'
+              ? 'gap-2'
+              : g === 'md'
+                ? 'gap-4'
+                : g === 'lg'
+                  ? 'gap-6'
+                  : 'gap-8'
         ),
         {
           'items-start': align === 'start',
@@ -44,12 +52,10 @@ export function Stack({
           'justify-evenly': justify === 'evenly',
         },
         className
-      )} 
+      )}
       {...props}
     >
       {children}
     </div>
   );
 }
-
-

@@ -83,12 +83,7 @@ router.get('/instruments/available', requireAuth, handleAvailableInstruments);
  * GET /benchmarks/:id
  * Obtener benchmark específico con sus componentes
  */
-router.get(
-  '/:id',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  handleGetBenchmark
-);
+router.get('/:id', requireAuth, validate({ params: idParamSchema }), handleGetBenchmark);
 
 /**
  * POST /benchmarks
@@ -172,8 +167,3 @@ router.delete(
 );
 
 export default router;
-
-
-
-
-

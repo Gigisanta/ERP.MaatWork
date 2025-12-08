@@ -91,25 +91,3 @@ export {
   type CreateCapacitacionInput,
   type UpdateCapacitacionInput,
 } from './schemas';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

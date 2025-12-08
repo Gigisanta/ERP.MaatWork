@@ -16,6 +16,7 @@ import { requireAuth } from '../../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../../utils/validation';
+import { createErrorResponse } from '../../../utils/error-response';
 import { getPipelineStagesByNames } from './helpers';
 import { calculateMonthlyMetrics } from './calculate-monthly';
 import type { PipelineStageIds } from './types';
@@ -89,7 +90,7 @@ router.get(
           createErrorResponse({
             error: new Error('Pipeline stages not found'),
             requestId: req.requestId,
-            userMessage: 'Etapas de pipeline requeridas no encontradas'
+            userMessage: 'Etapas de pipeline requeridas no encontradas',
           })
         );
       }
@@ -213,8 +214,3 @@ router.get(
 );
 
 export default router;
-
-
-
-
-

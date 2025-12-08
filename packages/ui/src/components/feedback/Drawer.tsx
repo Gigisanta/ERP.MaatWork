@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useRef, useCallback } from 'react';
 import { cn } from '../../utils/cn';
 
@@ -13,7 +13,7 @@ export interface DrawerProps {
 
 /**
  * Drawer component with improved mobile UX
- * 
+ *
  * AI_DECISION: Enhanced drawer for better mobile experience
  * Justificación: Better touch targets, safe area support, and smoother animations
  * Impacto: Works well on all devices including those with notches
@@ -67,7 +67,7 @@ export function Drawer({
   // Handle swipe to close (touch devices)
   useEffect(() => {
     if (!open) return;
-    
+
     const panel = panelRef.current;
     if (!panel) return;
 
@@ -140,30 +140,28 @@ export function Drawer({
           // Position
           side === 'left' ? 'left-0 rounded-r-2xl' : 'right-0 rounded-l-2xl',
           // Transform
-          open
-            ? 'translate-x-0'
-            : side === 'left'
-            ? '-translate-x-full'
-            : 'translate-x-full',
+          open ? 'translate-x-0' : side === 'left' ? '-translate-x-full' : 'translate-x-full',
           // Responsive width - adapts to screen size
           'w-[min(85vw,320px)]',
           // Safe area insets for notched devices
-          side === 'left' ? 'pl-[env(safe-area-inset-left,0px)]' : 'pr-[env(safe-area-inset-right,0px)]',
+          side === 'left'
+            ? 'pl-[env(safe-area-inset-left,0px)]'
+            : 'pr-[env(safe-area-inset-right,0px)]',
           'pt-[env(safe-area-inset-top,0px)]',
           'pb-[env(safe-area-inset-bottom,0px)]',
           className
         )}
       >
         {/* Visual indicator for swipe to close */}
-        <div className={cn(
-          'absolute top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-border opacity-50',
-          side === 'left' ? 'right-1.5' : 'left-1.5'
-        )} />
-        
+        <div
+          className={cn(
+            'absolute top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-border opacity-50',
+            side === 'left' ? 'right-1.5' : 'left-1.5'
+          )}
+        />
+
         {children}
       </div>
     </div>
   );
 }
-
-

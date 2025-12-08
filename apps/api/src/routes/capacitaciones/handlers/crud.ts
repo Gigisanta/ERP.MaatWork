@@ -103,7 +103,11 @@ export const handleUpdateCapacitacion = createRouteHandler(async (req: Request) 
     updateData.fecha = validated.fecha ? new Date(validated.fecha) : null;
   }
 
-  const [updated] = await db().update(capacitaciones).set(updateData).where(eq(capacitaciones.id, id)).returning();
+  const [updated] = await db()
+    .update(capacitaciones)
+    .set(updateData)
+    .where(eq(capacitaciones.id, id))
+    .returning();
 
   req.log?.info?.({ capacitacionId: id }, 'capacitacion updated');
 
@@ -132,25 +136,3 @@ export const handleDeleteCapacitacion = createRouteHandler(async (req: Request) 
 
   return { id, deleted: true };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,6 @@
 /**
  * Home Page - Server Component
- * 
+ *
  * AI_DECISION: Convert to Server Component with Client Islands pattern
  * Justificación: Server-side data fetching reduces First Load JS by ~400KB
  * Impacto: Static content rendered server-side, interactivity isolated to client islands
@@ -8,7 +8,12 @@
 
 import { Suspense } from 'react';
 import { HomePageClient, HomePageUnauthenticatedClient } from './components/home/HomePageClient';
-import { getCurrentUser, getContactsMetricsServer, getMonthlyGoalsServer, getTeamsServer } from '@/lib/api-server-helpers';
+import {
+  getCurrentUser,
+  getContactsMetricsServer,
+  getMonthlyGoalsServer,
+  getTeamsServer,
+} from '@/lib/api-server-helpers';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 import { Card, CardContent, Spinner, Stack, Text } from '@cactus/ui';
 
@@ -43,25 +48,28 @@ async function getHomePageData() {
       getTeamsServer().catch(() => ({ success: false, data: null })),
     ]);
 
-    const user = userResponse.success && userResponse.data?.user ? userResponse.data.user : null;
-    
+    const user = userResponse.success && userResponse.data ? userResponse.data : null;
+
     // If user is authenticated, fetch metrics and goals
     let metricsData: MonthlyMetrics | null = null;
     let goalsData: MonthlyGoal | null = null;
     let teamCalendarUrl: string | null = null;
+    let metricsError: string | null = null;
 
     if (user) {
       if (metricsResponse.success && metricsResponse.data) {
         metricsData = metricsResponse.data.currentMonth;
+      } else {
+        metricsError = 'No pudimos cargar las métricas del mes.';
       }
-      
+
       if (goalsResponse.success && goalsResponse.data) {
         goalsData = goalsResponse.data;
       }
 
       // Get team calendar URL
       if (teamsResponse.success && teamsResponse.data) {
-        const teamWithCalendar = teamsResponse.data.find(team => team.calendarUrl);
+        const teamWithCalendar = teamsResponse.data.find((team) => team.calendarUrl);
         teamCalendarUrl = teamWithCalendar?.calendarUrl || null;
       }
     }
@@ -71,6 +79,7 @@ async function getHomePageData() {
       metricsData,
       goalsData,
       teamCalendarUrl,
+      metricsError,
     };
   } catch (error) {
     // Return null user on error (will show unauthenticated state)
@@ -79,6 +88,7 @@ async function getHomePageData() {
       metricsData: null,
       goalsData: null,
       teamCalendarUrl: null,
+      metricsError: 'No pudimos cargar las métricas del mes.',
     };
   }
 }
@@ -87,7 +97,7 @@ async function getHomePageData() {
  * Home page component
  */
 export default async function HomePage() {
-  const { user, metricsData, goalsData, teamCalendarUrl } = await getHomePageData();
+  const { user, metricsData, goalsData, teamCalendarUrl, metricsError } = await getHomePageData();
 
   // If no user, show unauthenticated state
   if (!user) {
@@ -105,6 +115,7 @@ export default async function HomePage() {
         metricsData={metricsData}
         goalsData={goalsData}
         teamCalendarUrl={teamCalendarUrl}
+        metricsError={metricsError}
       />
     </Suspense>
   );

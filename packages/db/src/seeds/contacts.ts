@@ -189,34 +189,3 @@ export async function seedContacts(
   return createdContacts;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Service Worker Registration Component
- * 
+ *
  * AI_DECISION: Register service worker only in client-side
  * Justificación: Service workers are browser APIs, must be registered in client components
  * Impacto: Enables offline caching, improves performance with cached assets
@@ -19,8 +20,8 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('Service Worker registered:', registration.scope);
-          
+          logger.info('Service Worker registered', { scope: registration.scope });
+
           // Check for updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
@@ -28,18 +29,17 @@ export default function ServiceWorkerRegistration() {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   // New service worker available, prompt user to refresh
-                  console.log('New service worker available');
+                  logger.info('New service worker available');
                 }
               });
             }
           });
         })
         .catch((error) => {
-          console.error('Service Worker registration failed:', error);
+          logger.error('Service Worker registration failed', { error });
         });
     }
   }, []);
 
   return null;
 }
-

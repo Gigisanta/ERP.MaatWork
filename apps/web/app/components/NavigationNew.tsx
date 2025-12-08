@@ -231,7 +231,11 @@ function getAdminSections(): SidebarSection[] {
         { label: 'Usuarios y Cuentas', href: '/admin/users', icon: 'Users' as const },
         { label: 'AUM y Brokers', href: '/admin/aum', icon: 'BarChart2' as const },
         { label: 'Performance', href: '/admin/performance', icon: 'TrendingUp' as const },
-        { label: 'Configuración AUM', href: '/admin/settings/aum-advisors', icon: 'Settings' as const },
+        {
+          label: 'Configuración AUM',
+          href: '/admin/settings/aum-advisors',
+          icon: 'Settings' as const,
+        },
       ],
     },
     {
@@ -303,11 +307,22 @@ function getStaffSections(): SidebarSection[] {
   ];
 }
 
+function NavigationSkeleton() {
+  return (
+    <>
+      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top h-[3.5rem] flex items-center px-4">
+        <span className="text-secondary text-sm">Cargando navegación...</span>
+      </div>
+      <aside className="hidden lg:flex fixed left-0 top-[3rem] sm:top-[3.5rem] h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] z-30 w-52 border-r border-border" />
+    </>
+  );
+}
+
 export default function NavigationNew({ onToggleSidebar, sidebarOpen }: NavigationNewProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useSidebar();
   const open = sidebarOpen ?? internalOpen;
-  const { user, logout } = useAuth();
+  const { user, logout, initialized } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -342,6 +357,10 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     router.push('/login');
   }, [logout, router]);
 
+  if (!initialized) {
+    return <NavigationSkeleton />;
+  }
+
   if (!user) {
     return null;
   }
@@ -352,7 +371,9 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   const logo = (
     <div className="flex items-center gap-2 min-w-0 w-full">
       {/* Logo icon - always visible */}
-      <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">⚖️</span>
+      <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
+        ⚖️
+      </span>
       {/* Logo text - hidden on very small screens */}
       <span className="text-lg sm:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
         Maat
@@ -433,11 +454,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
       </aside>
 
       {/* Mobile Drawer - Solo visible en pantallas < lg */}
-      <Drawer
-        open={open}
-        onOpenChange={handleDrawerClose}
-        side="left"
-      >
+      <Drawer open={open} onOpenChange={handleDrawerClose} side="left">
         <Sidebar
           sections={sidebarSections}
           logo={null}

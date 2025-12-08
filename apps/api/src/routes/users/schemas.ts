@@ -68,25 +68,3 @@ export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type CreateUserWithPasswordInput = z.infer<typeof createUserWithPasswordSchema>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -75,16 +75,8 @@ export async function deleteTemplateLine(req: Request) {
   await db()
     .delete(portfolioTemplateLines)
     .where(
-      and(
-        eq(portfolioTemplateLines.id, lineId),
-        eq(portfolioTemplateLines.templateId, templateId)
-      )
+      and(eq(portfolioTemplateLines.id, lineId), eq(portfolioTemplateLines.templateId, templateId))
     );
 
   return { message: 'Línea eliminada correctamente' };
 }
-
-
-
-
-

@@ -141,12 +141,7 @@ router.delete(
 // ==========================================================
 
 // GET /portfolios/assignments - Listar asignaciones
-router.get(
-  '/assignments',
-  requireAuth,
-  requireContactAccess,
-  createRouteHandler(listAssignments)
-);
+router.get('/assignments', requireAuth, requireContactAccess, createRouteHandler(listAssignments));
 
 // POST /portfolios/assignments - Crear asignación
 // AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
@@ -195,9 +190,3 @@ router.delete(
 );
 
 export default router;
-
-
-
-
-
-

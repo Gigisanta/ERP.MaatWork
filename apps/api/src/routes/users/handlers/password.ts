@@ -64,25 +64,3 @@ export const handleChangePassword = createRouteHandler(async (req: Request) => {
     message: 'Contraseña actualizada exitosamente',
   };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

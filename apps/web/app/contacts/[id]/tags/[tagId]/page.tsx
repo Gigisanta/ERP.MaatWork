@@ -17,10 +17,7 @@ import {
   Alert,
   type BreadcrumbItem,
 } from '@cactus/ui';
-import type {
-  Contact,
-  ContactTagWithDetails,
-} from '@/types';
+import type { Contact, ContactTagWithDetails } from '@/types';
 import TagDetailsForm from './TagDetailsForm';
 
 // Server-side data fetching
@@ -34,12 +31,12 @@ async function getContactTagData(contactId: string, tagId: string) {
     const [contactResponse, contactTagResponse] = await Promise.all([
       apiCall<Contact>(`/v1/contacts/${contactId}`, {
         method: 'GET',
-        timeoutMs: Math.min(config.apiTimeout, 8000)
+        timeoutMs: Math.min(config.apiTimeout, 8000),
       }),
       apiCall<ContactTagWithDetails>(`/v1/tags/contacts/${contactId}/tags/${tagId}`, {
         method: 'GET',
-        timeoutMs: Math.min(config.apiTimeout, 8000)
-      })
+        timeoutMs: Math.min(config.apiTimeout, 8000),
+      }),
     ]);
 
     if (!contactResponse?.data || !contactTagResponse?.data) {
@@ -48,7 +45,7 @@ async function getContactTagData(contactId: string, tagId: string) {
 
     return {
       contact: contactResponse.data,
-      contactTag: contactTagResponse.data
+      contactTag: contactTagResponse.data,
     };
   } catch (error) {
     // AI_DECISION: Usar console.error en Server Components
@@ -70,7 +67,7 @@ interface ContactTagDetailPageProps {
 
 export default async function ContactTagDetailPage({ params }: ContactTagDetailPageProps) {
   const { id: contactId, tagId } = params;
-  
+
   // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
   const data = await getContactTagData(contactId, tagId);
 
@@ -85,7 +82,7 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
     return (
       <div className="p-3 md:p-4">
         <Alert variant="error">
-          Esta página solo está disponible para etiquetas con línea de negocio "Zurich".
+          Esta página solo está disponible para etiquetas con línea de negocio &quot;Zurich&quot;.
         </Alert>
       </div>
     );
@@ -103,7 +100,7 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
       <Stack direction="column" gap="md">
         {/* Breadcrumbs */}
         <Breadcrumbs items={breadcrumbs} />
-        
+
         {/* Header */}
         <div>
           <Heading level={1}>{contactTag.tag.name}</Heading>
@@ -114,8 +111,8 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
 
         {/* Badge de etiqueta */}
         <div>
-          <Badge 
-            style={{ backgroundColor: contactTag.tag.color ?? '#6B7280', color: 'white' }} 
+          <Badge
+            style={{ backgroundColor: contactTag.tag.color ?? '#6B7280', color: 'white' }}
             className="text-sm px-2.5 py-1"
           >
             {contactTag.tag.name}
@@ -132,8 +129,12 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
               contactId={contactId}
               tagId={tagId}
               initialData={{
-                ...(contactTag.monthlyPremium !== undefined && { monthlyPremium: contactTag.monthlyPremium }),
-                ...(contactTag.policyNumber !== undefined && { policyNumber: contactTag.policyNumber })
+                ...(contactTag.monthlyPremium !== undefined && {
+                  monthlyPremium: contactTag.monthlyPremium,
+                }),
+                ...(contactTag.policyNumber !== undefined && {
+                  policyNumber: contactTag.policyNumber,
+                }),
               }}
             />
           </CardContent>
@@ -142,4 +143,3 @@ export default async function ContactTagDetailPage({ params }: ContactTagDetailP
     </div>
   );
 }
-

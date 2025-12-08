@@ -8,10 +8,13 @@ export interface FocusRingProps {
 
 export function FocusRing({ children, className }: FocusRingProps) {
   return (
-    <div className={cn('focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2', className)}>
+    <div
+      className={cn(
+        'focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2',
+        className
+      )}
+    >
       {children}
     </div>
   );
 }
-
-

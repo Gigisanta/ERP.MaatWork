@@ -1,10 +1,10 @@
 /**
  * Tipos comunes compartidos
- * 
+ *
  * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
  * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
- * 
+ *
  * Tipos específicos del backend (PinoLoggerOptions, HelmetOptions, ErrorWithMessage) se mantienen aquí
  * porque son específicos del backend y no se usan en frontend.
  */
@@ -19,7 +19,7 @@ export type {
   TimestampedEntityOptional,
   CreateRequest,
   UpdateRequest,
-} from '@cactus/types/common';
+} from '@cactus/types';
 
 // ==========================================================
 // Tipos de Error y Configuración

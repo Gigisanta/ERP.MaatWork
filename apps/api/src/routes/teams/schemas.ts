@@ -64,8 +64,3 @@ export type UpdateTeamInput = z.infer<typeof updateTeamSchema>;
 export type AddMemberInput = z.infer<typeof addMemberSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
-
-
-
-
-

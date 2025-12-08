@@ -49,7 +49,7 @@ export const handleListCapacitaciones = createRouteHandler(async (req: Request) 
     .limit(limit)
     .offset(offset);
 
-  type CapacitacionWithTotal = typeof result[0] & { total: number };
+  type CapacitacionWithTotal = (typeof result)[0] & { total: number };
   const data = result.map(({ total: _total, ...row }: CapacitacionWithTotal) => row);
   const total: number = result.length > 0 ? Number(result[0]?.total) : 0;
 
@@ -57,25 +57,3 @@ export const handleListCapacitaciones = createRouteHandler(async (req: Request) 
 
   return formatPaginatedResponse(data, total, pagination);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

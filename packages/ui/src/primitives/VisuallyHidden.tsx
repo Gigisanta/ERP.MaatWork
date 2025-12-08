@@ -5,11 +5,5 @@ export interface VisuallyHiddenProps {
 }
 
 export function VisuallyHidden({ children }: VisuallyHiddenProps) {
-  return (
-    <span className="sr-only">
-      {children}
-    </span>
-  );
+  return <span className="sr-only">{children}</span>;
 }
-
-

@@ -34,8 +34,3 @@ export const handleAvailableInstruments = createRouteHandler(async (req: Request
 
   return instrumentsList;
 });
-
-
-
-
-

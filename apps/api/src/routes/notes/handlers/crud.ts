@@ -54,7 +54,10 @@ export const handleCreateNote = createAsyncHandler(async (req: Request, res: Res
   // Verificar que el usuario tenga acceso al contacto
   const hasAccess = await canAccessContact(userId, userRole, validated.contactId);
   if (!hasAccess) {
-    req.log.warn({ contactId: validated.contactId, userId }, 'user attempted to create note for inaccessible contact');
+    req.log.warn(
+      { contactId: validated.contactId, userId },
+      'user attempted to create note for inaccessible contact'
+    );
     throw new HttpError(403, 'Access denied to this contact');
   }
 
@@ -140,25 +143,3 @@ export const handleDeleteNote = createRouteHandler(async (req: Request) => {
 
   return { id, deleted: true };
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

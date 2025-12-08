@@ -47,14 +47,14 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const startProgressSimulation = useCallback(() => {
     setUploadProgress(0);
     setUploadStatus('Preparando archivo...');
-    
+
     let progress = 0;
     progressIntervalRef.current = setInterval(() => {
       // Simular progreso más rápido al inicio, más lento al final
       const increment = progress < 30 ? 5 : progress < 60 ? 3 : progress < 85 ? 1 : 0.5;
       progress = Math.min(progress + increment, 90); // Never reach 100 until complete
       setUploadProgress(progress);
-      
+
       // Update status message based on progress
       if (progress < 30) {
         setUploadStatus('Subiendo archivo...');
@@ -73,7 +73,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
-    
+
     if (isSuccess) {
       setUploadProgress(100);
       setUploadStatus('¡Completado!');
@@ -187,7 +187,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       if (resp?.success && resp.data) {
         // El backend retorna { ok: true, fileId, filename, totals, ... }
         // que se normaliza a resp.data = { ok: true, fileId, filename, totals, ... }
-        const fileId = (resp.data as any).fileId;
+        const { fileId, totals } = resp.data;
 
         if (!fileId) {
           logger.error('AUM file upload response missing fileId', {
@@ -210,7 +210,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           fileName: file.name,
           fileSize: file.size,
           broker,
-          totals: (resp.data as any).totals,
+          ...toLogContext({ totals }),
         });
 
         if (onUploadSuccess) {
@@ -336,8 +336,8 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {/* Progress bar during upload */}
       {uploading && (
         <div className="w-full">
-          <ProgressBar 
-            value={uploadProgress} 
+          <ProgressBar
+            value={uploadProgress}
             showLabel
             label={uploadStatus}
             variant={uploadProgress === 100 ? 'success' : 'default'}

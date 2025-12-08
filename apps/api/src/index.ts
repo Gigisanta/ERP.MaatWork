@@ -329,21 +329,27 @@ app.use('/health', healthRouter);
 // AI_DECISION: Usar createAsyncHandler para formato de respuesta Prometheus personalizado
 // Justificación: Necesita Content-Type específico y formato de texto plano, no JSON estándar
 // Impacto: Manejo de errores consistente mientras mantiene formato Prometheus requerido
-app.get('/metrics', createAsyncHandler(async (req, res) => {
-  const { getMetrics, memoryUsage } = await import('./utils/metrics');
+app.get(
+  '/metrics',
+  createAsyncHandler(async (req, res) => {
+    const { getMetrics, memoryUsage } = await import('./utils/metrics');
 
-  // Update memory metrics
-  const memUsage = process.memoryUsage() as typeof process.memoryUsage & { external?: number };
-  memoryUsage.set({ type: 'rss' }, memUsage.rss);
-  memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
-  memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
-  memoryUsage.set({ type: 'external' }, memUsage.external || 0);
+    // Update memory metrics
+    // AI_DECISION: Usar process.memoryUsage() directamente sin cast problemático
+    // Justificación: process.memoryUsage() retorna MemoryUsage con propiedades numéricas, no funciones
+    // Impacto: Corrige errores de TypeScript relacionados con tipos de memoria
+    const memUsage = process.memoryUsage();
+    memoryUsage.set({ type: 'rss' }, memUsage.rss);
+    memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
+    memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
+    memoryUsage.set({ type: 'external' }, memUsage.external || 0);
 
-  // Return Prometheus format
-  const metrics = await getMetrics();
-  res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
-  res.send(metrics);
-}));
+    // Return Prometheus format
+    const metrics = await getMetrics();
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(metrics);
+  })
+);
 
 // AI_DECISION: /metrics/json sin versión para compatibilidad hacia atrás
 // Justificación: Endpoint legacy para sistemas de monitoreo que esperan formato JSON
@@ -352,18 +358,24 @@ app.get('/metrics', createAsyncHandler(async (req, res) => {
 // AI_DECISION: Usar createAsyncHandler para formato de respuesta legacy personalizado
 // Justificación: Formato legacy específico que difiere del formato estándar { success, data }
 // Impacto: Manejo de errores consistente mientras mantiene formato legacy requerido
-app.get('/metrics/json', createAsyncHandler(async (req, res) => {
-  const memUsage = process.memoryUsage() as typeof process.memoryUsage & { external?: number };
-  return res.json({
-    ok: true,
-    pid: process.pid,
-    uptimeSec: Math.round(process.uptime()),
-    rss: memUsage.rss,
-    heapUsed: memUsage.heapUsed,
-    external: memUsage.external || 0,
-    timestamp: new Date().toISOString(),
-  });
-}));
+app.get(
+  '/metrics/json',
+  createAsyncHandler(async (req, res) => {
+    // AI_DECISION: Usar process.memoryUsage() directamente sin cast problemático
+    // Justificación: process.memoryUsage() retorna MemoryUsage con propiedades numéricas, no funciones
+    // Impacto: Corrige errores de TypeScript relacionados con tipos de memoria
+    const memUsage = process.memoryUsage();
+    return res.json({
+      ok: true,
+      pid: process.pid,
+      uptimeSec: Math.round(process.uptime()),
+      rss: memUsage.rss,
+      heapUsed: memUsage.heapUsed,
+      external: memUsage.external || 0,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
 
 // AI_DECISION: Endpoints /test-* sin versión y solo en desarrollo
 // Justificación: Endpoints de debugging/testing no requieren versionado y solo existen en desarrollo
@@ -385,36 +397,42 @@ if (!isProduction) {
   // Impacto: Consistencia en manejo de errores, mejor logging
   const { createErrorResponse } = await import('./utils/error-response');
 
-  app.get('/test-db', createAsyncHandler(async (req, res) => {
-    const { db } = await import('@cactus/db');
-    const { sql } = await import('drizzle-orm');
-    const result = await db().execute(sql`SELECT 1 as test`);
-    
-    // Type guard para resultado de drizzle
-    type DrizzleResult = { rows?: Array<{ test: number }> } | Array<{ test: number }>;
-    const drizzleResult = result as DrizzleResult;
-    
-    const row = Array.isArray(drizzleResult)
-      ? drizzleResult[0]
-      : drizzleResult.rows?.[0] || { test: 1 };
-    return res.json({ ok: true, connected: true, testResult: row });
-  }));
+  app.get(
+    '/test-db',
+    createAsyncHandler(async (req, res) => {
+      const { db } = await import('@cactus/db');
+      const { sql } = await import('drizzle-orm');
+      const result = await db().execute(sql`SELECT 1 as test`);
 
-  app.get('/test-cactus-db', createAsyncHandler(async (req, res) => {
-    const { db, users } = await import('@cactus/db');
-    if (!db || !users) {
-      return res.status(500).json(
-        createErrorResponse({
-          error: new Error('Package @cactus/db not working correctly'),
-          requestId: req.requestId,
-          userMessage: 'Database package not working correctly',
-        })
-      );
-    }
-    const dbInstance = db();
-    const usersResult = await dbInstance.select().from(users).limit(1);
-    return res.json({ ok: true, packageWorking: true, usersCount: usersResult.length });
-  }));
+      // Type guard para resultado de drizzle
+      type DrizzleResult = { rows?: Array<{ test: number }> } | Array<{ test: number }>;
+      const drizzleResult = result as DrizzleResult;
+
+      const row = Array.isArray(drizzleResult)
+        ? drizzleResult[0]
+        : drizzleResult.rows?.[0] || { test: 1 };
+      return res.json({ ok: true, connected: true, testResult: row });
+    })
+  );
+
+  app.get(
+    '/test-cactus-db',
+    createAsyncHandler(async (req, res) => {
+      const { db, users } = await import('@cactus/db');
+      if (!db || !users) {
+        return res.status(500).json(
+          createErrorResponse({
+            error: new Error('Package @cactus/db not working correctly'),
+            requestId: req.requestId,
+            userMessage: 'Database package not working correctly',
+          })
+        );
+      }
+      const dbInstance = db();
+      const usersResult = await dbInstance.select().from(users).limit(1);
+      return res.json({ ok: true, packageWorking: true, usersCount: usersResult.length });
+    })
+  );
 }
 
 // Versioned API routes - /v1 prefix is mandatory

@@ -35,10 +35,7 @@ import { createErrorResponse, getStatusCodeFromError } from './error-response';
  * Tipo para handlers que retornan datos directamente
  * El resultado se envuelve automaticamente en { success: true, data: result }
  */
-export type RouteHandlerFn<T = unknown> = (
-  req: Request,
-  res: Response
-) => Promise<T>;
+export type RouteHandlerFn<T = unknown> = (req: Request, res: Response) => Promise<T>;
 
 /**
  * Tipo para handlers que manejan res directamente
@@ -103,11 +100,18 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
       }
 
       // Enviar respuesta exitosa estandarizada
+      // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
+      // Justificación: Con exactOptionalPropertyTypes: true, debemos construir el objeto condicionalmente
+      // Impacto: Cumple con las reglas estrictas de TypeScript
       const response: SuccessResponse<T> = {
         success: true,
         data: result,
-        requestId: req.requestId,
       };
+
+      // Solo incluir requestId si está definido
+      if (req.requestId !== undefined) {
+        response.requestId = req.requestId;
+      }
 
       res.json(response);
     } catch (error) {
@@ -124,12 +128,22 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
       );
 
       // Determinar codigo de estado y generar respuesta de error
+      // AI_DECISION: Construir objeto condicionalmente para exactOptionalPropertyTypes
+      // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
+      // Impacto: Cumple con las reglas estrictas de TypeScript
       const statusCode = getStatusCodeFromError(error);
-      const errorResponse = createErrorResponse({
+      const errorOptions: {
+        error: unknown;
+        requestId?: string;
+        userMessage: string;
+      } = {
         error,
-        requestId: req.requestId,
         userMessage: getDefaultUserMessage(statusCode),
-      });
+      };
+      if (req.requestId !== undefined) {
+        errorOptions.requestId = req.requestId;
+      }
+      const errorResponse = createErrorResponse(errorOptions);
 
       res.status(statusCode).json(errorResponse);
     }
@@ -141,9 +155,9 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  * Solo agrega try/catch y logging, sin modificar el formato de respuesta
  *
  * **Cuándo usar createAsyncHandler:**
- * 
+ *
  * Usa `createAsyncHandler` SOLO cuando necesites control directo sobre `res`:
- * 
+ *
  * 1. **Cookies (httpOnly, secure, etc.)**
  *    ```typescript
  *    // Login/refresh tokens necesitan establecer cookies
@@ -152,7 +166,7 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  *      return res.json({ success: true, user });
  *    })
  *    ```
- * 
+ *
  * 2. **Headers personalizados**
  *    ```typescript
  *    // Export endpoints necesitan Content-Type específico
@@ -161,7 +175,7 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  *      res.send(csvData);
  *    })
  *    ```
- * 
+ *
  * 3. **Streaming responses**
  *    ```typescript
  *    // File downloads o streaming
@@ -170,7 +184,7 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  *      stream.pipe(res);
  *    })
  *    ```
- * 
+ *
  * 4. **Respuestas con formato legacy/no estándar**
  *    ```typescript
  *    // Health checks con formato específico
@@ -178,18 +192,18 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  *      return res.json({ status: 'healthy', timestamp: ... });
  *    })
  *    ```
- * 
+ *
  * **Cuándo NO usar createAsyncHandler:**
- * 
+ *
  * Si solo retornas datos JSON estándar, usa `createRouteHandler`:
- * 
+ *
  * ```typescript
  * // ❌ INCORRECTO - No necesitas control directo de res
  * createAsyncHandler(async (req, res) => {
  *   const data = await getData();
  *   return res.json({ success: true, data });
  * })
- * 
+ *
  * // ✅ CORRECTO - createRouteHandler envuelve automáticamente
  * createRouteHandler(async (req) => {
  *   return await getData(); // Se envuelve en { success: true, data: ... }
@@ -210,7 +224,7 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
  *   })
  * );
  * ```
- * 
+ *
  * @example
  * ```typescript
  * // Caso legítimo: export con headers personalizados
@@ -248,12 +262,22 @@ export function createAsyncHandler(handler: AsyncHandlerFn) {
       }
 
       // Determinar codigo de estado y generar respuesta de error
+      // AI_DECISION: Construir objeto condicionalmente para exactOptionalPropertyTypes
+      // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
+      // Impacto: Cumple con las reglas estrictas de TypeScript
       const statusCode = getStatusCodeFromError(error);
-      const errorResponse = createErrorResponse({
+      const errorOptions: {
+        error: unknown;
+        requestId?: string;
+        userMessage: string;
+      } = {
         error,
-        requestId: req.requestId,
         userMessage: getDefaultUserMessage(statusCode),
-      });
+      };
+      if (req.requestId !== undefined) {
+        errorOptions.requestId = req.requestId;
+      }
+      const errorResponse = createErrorResponse(errorOptions);
 
       res.status(statusCode).json(errorResponse);
     }
@@ -297,15 +321,20 @@ export function isHttpError(error: unknown, statusCode: number): boolean {
  * ```typescript
  * throw new HttpError(404, 'Contact not found');
  * throw new HttpError(403, 'You do not have permission to access this resource');
+ * throw new HttpError(400, 'Invalid request', { field: 'email', code: 'INVALID_EMAIL' });
  * ```
  */
 export class HttpError extends Error {
+  public readonly details?: unknown;
+
   constructor(
     public readonly statusCode: number,
-    message: string
+    message: string,
+    details?: unknown
   ) {
     super(message);
     this.name = 'HttpError';
+    this.details = details;
   }
 }
 

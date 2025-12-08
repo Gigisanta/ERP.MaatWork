@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { importCapacitacionesCSV } from '@/lib/api';
@@ -62,7 +62,12 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
       } else {
         // Mostrar error con detalles si están disponibles
         const errorMessage = response.error || 'Error al importar el archivo';
-        const details = (response as any).details;
+        const details =
+          typeof response.details === 'string'
+            ? response.details
+            : Array.isArray(response.details)
+              ? response.details.join('; ')
+              : null;
         setError(details ? `${errorMessage}: ${details}` : errorMessage);
       }
     } catch (err: unknown) {
@@ -70,8 +75,15 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (err && typeof err === 'object' && 'error' in err) {
-        errorMessage = String((err as any).error);
-        const details = (err as any).details;
+        const errorPayload = err as { error?: unknown; details?: unknown };
+        errorMessage =
+          typeof errorPayload.error === 'string' ? errorPayload.error : String(errorPayload.error);
+        const details =
+          typeof errorPayload.details === 'string'
+            ? errorPayload.details
+            : Array.isArray(errorPayload.details)
+              ? errorPayload.details.join('; ')
+              : null;
         if (details) {
           errorMessage = `${errorMessage}: ${details}`;
         }
@@ -92,11 +104,7 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
       </ModalHeader>
       <ModalContent>
         <Stack direction="column" gap="md">
-          {error && (
-            <Alert variant="error">
-              {error}
-            </Alert>
-          )}
+          {error && <Alert variant="error">{error}</Alert>}
 
           {result && (
             <Alert variant={result.totalErrors > 0 ? 'warning' : 'success'}>
@@ -104,18 +112,19 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
                 Importación completada
               </Text>
               <Text size="sm">
-                Procesadas: {result.totalProcessed} | Importadas: {result.totalImported} | Errores: {result.totalErrors}
+                Procesadas: {result.totalProcessed} | Importadas: {result.totalImported} | Errores:{' '}
+                {result.totalErrors}
               </Text>
               {result.errors && result.errors.length > 0 && (
                 <div className="mt-2">
-                  <Text size="sm" weight="medium">Errores:</Text>
+                  <Text size="sm" weight="medium">
+                    Errores:
+                  </Text>
                   <ul className="list-disc list-inside mt-1 text-sm max-h-40 overflow-y-auto">
                     {result.errors.slice(0, 10).map((err, idx) => (
                       <li key={idx}>{err}</li>
                     ))}
-                    {result.errors.length > 10 && (
-                      <li>... y {result.errors.length - 10} más</li>
-                    )}
+                    {result.errors.length > 10 && <li>... y {result.errors.length - 10} más</li>}
                   </ul>
                 </div>
               )}
@@ -171,4 +180,3 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
     </Modal>
   );
 }
-

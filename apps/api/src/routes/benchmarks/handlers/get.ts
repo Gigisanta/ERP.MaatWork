@@ -101,9 +101,7 @@ export const handleGetBenchmark = createRouteHandler(async (req: Request) => {
 
   components = componentsResult;
   // totalWeightResult[0]?.totalWeight es string | null para numeric, convertir a número
-  totalWeight = totalWeightResult[0]?.totalWeight
-    ? Number(totalWeightResult[0].totalWeight)
-    : 0;
+  totalWeight = totalWeightResult[0]?.totalWeight ? Number(totalWeightResult[0].totalWeight) : 0;
 
   // Cache components for 15 minutes
   benchmarkComponentsCacheUtil.set(componentsCacheKey, { components, totalWeight }, 900);
@@ -115,8 +113,3 @@ export const handleGetBenchmark = createRouteHandler(async (req: Request) => {
     isValid: Math.abs(totalWeight - 1.0) < 0.0001,
   };
 });
-
-
-
-
-

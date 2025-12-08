@@ -184,8 +184,3 @@ export const removeTeamMember = createRouteHandler(async (req: Request) => {
 
   return { removed: true };
 });
-
-
-
-
-

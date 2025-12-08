@@ -13,30 +13,3 @@ export function isEmailLike(value: string | null | undefined): boolean {
   if (!value) return false;
   return /@/.test(value);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

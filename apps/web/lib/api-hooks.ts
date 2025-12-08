@@ -19,13 +19,16 @@ const fetcher = async <T = unknown>(url: string): Promise<ApiResponse<T>> => {
 
   // Normalizar respuestas que usan { ok: boolean } a formato ApiResponse
   if (response && typeof response === 'object' && !('success' in response) && 'ok' in response) {
-    const ok = Boolean((response as any).ok);
+    const ok = Boolean((response as { ok: unknown }).ok);
     // Extraer solo los datos útiles, excluyendo 'ok' y 'error'
     const { ok: _ok, error: _error, ...dataWithoutOk } = response as Record<string, unknown>;
     return {
       success: ok,
       data: dataWithoutOk as T,
-      ...(ok === false && (response as any).error && { error: (response as any).error }),
+      ...(ok === false &&
+        typeof (response as { error?: unknown }).error === 'string' && {
+          error: (response as { error?: string }).error,
+        }),
     };
   }
 
@@ -51,14 +54,6 @@ const swrConfig = {
 const swrConfigLonger = {
   ...swrConfig,
   dedupingInterval: 30000, // 30s for data that changes less frequently
-};
-
-// AI_DECISION: Very long deduping for truly static data
-// Justificación: Some data like benchmarks list changes very rarely
-// Impacto: Maximum cache efficiency for static reference data
-const swrConfigStatic = {
-  ...swrConfig,
-  dedupingInterval: 60000, // 60s for truly static data
 };
 
 // Hook for contacts list
@@ -114,14 +109,14 @@ export function usePipelineStages() {
 export function useAdvisors() {
   const { user } = useAuth();
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<UserApiResponse[]>>(
     user ? `${API_BASE_URL}/v1/users/advisors` : null,
     fetcher,
     swrConfigLonger
   );
 
   return {
-    advisors: (data?.data as unknown[]) || [],
+    advisors: data?.data || [],
     error,
     isLoading,
     mutate,
@@ -430,19 +425,25 @@ export function useAumRows(params?: {
       rows = responseData.rows as AumRow[];
     }
     if ('pagination' in responseData && typeof responseData.pagination === 'object') {
+      const pag = responseData.pagination as {
+        total?: number;
+        limit?: number;
+        offset?: number;
+        hasMore?: boolean;
+      };
       pagination = {
-        total: (responseData.pagination as any).total ?? 0,
-        limit: (responseData.pagination as any).limit ?? 50,
-        offset: (responseData.pagination as any).offset ?? 0,
-        hasMore: (responseData.pagination as any).hasMore ?? false,
+        total: pag.total ?? 0,
+        limit: pag.limit ?? 50,
+        offset: pag.offset ?? 0,
+        hasMore: pag.hasMore ?? false,
       };
     }
   }
 
   // Fallback: si no encontramos rows en responseData, intentar directamente desde data
   if (rows.length === 0 && data && typeof data === 'object') {
-    if ('rows' in data && Array.isArray((data as any).rows)) {
-      rows = (data as any).rows as AumRow[];
+    if ('rows' in data && Array.isArray((data as { rows?: unknown }).rows)) {
+      rows = (data as { rows?: AumRow[] }).rows ?? [];
       logger.warn('[useAumRows] Using fallback: extracted rows directly from data');
     }
   }
@@ -598,9 +599,7 @@ export function useInvalidateCapacitacionesCache() {
             ? key[0]
             : '';
 
-      return (
-        keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`)
-      );
+      return keyStr.includes(`${API_BASE_URL}/v1/capacitaciones`);
     };
 
     // Invalidate and force immediate revalidation of all matching keys

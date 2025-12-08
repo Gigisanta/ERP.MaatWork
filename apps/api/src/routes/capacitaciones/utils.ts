@@ -89,7 +89,10 @@ export async function parseCapacitacionesCSV(filePath: string): Promise<{
     try {
       new URL(link);
     } catch {
-      errors.push({ row: rowNumber, message: `Fila ${rowNumber}: 'LINK' debe ser una URL válida: "${link}"` });
+      errors.push({
+        row: rowNumber,
+        message: `Fila ${rowNumber}: 'LINK' debe ser una URL válida: "${link}"`,
+      });
       continue;
     }
 
@@ -109,25 +112,3 @@ export async function parseCapacitacionesCSV(filePath: string): Promise<{
     errors,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

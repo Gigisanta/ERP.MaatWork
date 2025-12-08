@@ -92,25 +92,3 @@ export const handleListAdvisors = createRouteHandler(async (req: Request) => {
 
   return advisors;
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

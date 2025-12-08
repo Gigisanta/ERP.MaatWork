@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, Children, cloneElement, isValidElement } from 'react';
+import React, { useState, useEffect, Children, isValidElement } from 'react';
 import { cn } from '../../utils/cn';
 
 export interface AnimatedListProps {
@@ -47,11 +47,11 @@ const animationClasses = {
 
 /**
  * AnimatedList - Wrapper that applies staggered animations to children
- * 
+ *
  * AI_DECISION: Declarative component for consistent list animations
  * Justificación: Simplifies animation implementation across the app
  * Impacto: Reduces boilerplate and ensures animation consistency
- * 
+ *
  * @example
  * ```tsx
  * <AnimatedList animation="fade-up" baseDelay={75}>
@@ -106,10 +106,7 @@ export const AnimatedList = React.forwardRef<HTMLDivElement, AnimatedListProps>(
         return (
           <div
             key={child.key ?? index}
-            className={cn(
-              'transition-all ease-out',
-              animationState
-            )}
+            className={cn('transition-all ease-out', animationState)}
             style={{
               transitionDuration: `${duration}ms`,
               transitionDelay: `${delay}ms`,
@@ -127,7 +124,7 @@ AnimatedList.displayName = 'AnimatedList';
 
 /**
  * AnimatedItem - Individual animated item for more control
- * 
+ *
  * @example
  * ```tsx
  * <AnimatedItem index={0} animation="scale-in">
@@ -186,11 +183,7 @@ export const AnimatedItem = React.forwardRef<HTMLDivElement, AnimatedItemProps>(
     return (
       <div
         ref={ref}
-        className={cn(
-          'transition-all ease-out',
-          animationState,
-          className
-        )}
+        className={cn('transition-all ease-out', animationState, className)}
         style={{
           transitionDuration: `${duration}ms`,
           transitionDelay: `${delay}ms`,

@@ -77,8 +77,3 @@ export const handleListBenchmarks = createRouteHandler(async (req: Request) => {
 
   return benchmarksData;
 });
-
-
-
-
-

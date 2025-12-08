@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "build:clean": "turbo run build:clean && turbo run build",
+    "setup": "node scripts/setup.js",
     "dev": "node scripts/dev.js",
     "dev:fast": "node scripts/dev.js --skip-validation",
     "dev:basic": "turbo run dev --parallel",
