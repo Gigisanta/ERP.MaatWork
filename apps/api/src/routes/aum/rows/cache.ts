@@ -60,9 +60,4 @@ export function setCachedCount(cacheKey: string, total: number): void {
   }
 }
 
-/**
- * Limpia cache (útil para testing)
- */
-export function clearCache(): void {
-  countCache.clear();
-}
+// Cache se limpia automáticamente por TTL; función manual eliminada por no usarse

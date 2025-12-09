@@ -1,6 +1,6 @@
 /**
  * Tests para AUM Admin - File Management Routes
- * 
+ *
  * AI_DECISION: Tests unitarios para gestión de archivos AUM
  * Justificación: Validación crítica de operaciones de archivos
  * Impacto: Prevenir errores en gestión de archivos y verificación
@@ -18,7 +18,7 @@ vi.mock('@cactus/db', () => ({
   aumImportFiles: {},
   aumImportRows: {},
   eq: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../../../auth/middlewares', () => ({
@@ -26,11 +26,11 @@ vi.mock('../../../auth/middlewares', () => ({
     req.user = {
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     };
     next();
   }),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../../utils/validation', () => ({
@@ -42,17 +42,17 @@ vi.mock('../../../utils/validation', () => ({
       (req.query as Record<string, unknown>).force = false;
     }
     next();
-  })
+  }),
 }));
 
 vi.mock('node:fs', () => ({
   promises: {
-    unlink: vi.fn().mockResolvedValue(undefined)
-  }
+    unlink: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 vi.mock('node:path', () => ({
-  join: vi.fn((...args) => args.join('/'))
+  join: vi.fn((...args) => args.join('/')),
 }));
 
 import { db } from '@cactus/db';
@@ -81,7 +81,7 @@ describe('AUM Admin - Files Routes', () => {
     adminToken = await signUserToken({
       id: 'admin-123',
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin',
     });
     mockJoin.mockImplementation((...args) => args.join('/'));
   });
@@ -91,22 +91,24 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              originalFilename: 'test.csv',
-              status: 'parsed'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDelete = vi.fn((_table: unknown) => ({
-        where: vi.fn().mockResolvedValue(undefined)
+        where: vi.fn().mockResolvedValue(undefined),
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        delete: mockDelete
+        delete: mockDelete,
       } as unknown);
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -119,7 +121,7 @@ describe('AUM Admin - Files Routes', () => {
 
       expect(res.body).toEqual({
         ok: true,
-        message: 'Archivo eliminado exitosamente'
+        message: 'Archivo eliminado exitosamente',
       });
     });
 
@@ -127,13 +129,13 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // Array vacío = archivo no existe
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as unknown);
 
       const app = createTestApp();
@@ -142,26 +144,26 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(404);
 
-      expect(res.body).toEqual({
-        error: 'File not found'
-      });
+      expect(res.body.error).toContain('File not found');
     });
 
     it('debería retornar 400 cuando archivo está committed', async () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              originalFilename: 'test.csv',
-              status: 'committed'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                originalFilename: 'test.csv',
+                status: 'committed',
+              },
+            ]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as unknown);
 
       const app = createTestApp();
@@ -170,9 +172,7 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(400);
 
-      expect(res.body).toEqual({
-        error: 'Cannot delete committed import. Contact administrator if removal is necessary.'
-      });
+      expect(res.body.error).toContain('Cannot delete committed import');
     });
 
     it('debería verificar que el handler valida usuario (auth tested via middleware)', async () => {
@@ -181,22 +181,24 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              originalFilename: 'test.csv',
-              status: 'parsed'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDelete = vi.fn((_table: unknown) => ({
-        where: vi.fn().mockResolvedValue(undefined)
+        where: vi.fn().mockResolvedValue(undefined),
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        delete: mockDelete
+        delete: mockDelete,
       } as unknown);
 
       const app = createTestApp();
@@ -212,22 +214,24 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              originalFilename: 'test.csv',
-              status: 'parsed'
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+              },
+            ]),
+          }),
+        }),
       });
 
       const mockDelete = vi.fn((_table: unknown) => ({
-        where: vi.fn().mockResolvedValue(undefined)
+        where: vi.fn().mockResolvedValue(undefined),
       }));
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        delete: mockDelete
+        delete: mockDelete,
       } as unknown);
 
       mockFs.unlink.mockRejectedValue(new Error('File not found'));
@@ -246,13 +250,13 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockRejectedValue(new Error('Database error'))
-          })
-        })
+            limit: vi.fn().mockRejectedValue(new Error('Database error')),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as unknown);
 
       const app = createTestApp();
@@ -261,9 +265,8 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'Database error'
-      });
+      expect(res.body.error).toBe('Error eliminando archivo AUM');
+      expect(res.body.message).toBe('Database error');
     });
   });
 
@@ -272,7 +275,7 @@ describe('AUM Admin - Files Routes', () => {
       const mockExecute = vi.fn().mockResolvedValue({ rowCount: 5 });
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -283,7 +286,7 @@ describe('AUM Admin - Files Routes', () => {
 
       expect(res.body).toEqual({
         ok: true,
-        message: 'AUM uploads purgados (solo no committed)'
+        message: 'AUM uploads purgados (solo no committed)',
       });
       expect(mockExecute).toHaveBeenCalledTimes(2);
     });
@@ -292,7 +295,7 @@ describe('AUM Admin - Files Routes', () => {
       const mockExecute = vi.fn().mockResolvedValue({ rowCount: 10 });
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -303,7 +306,7 @@ describe('AUM Admin - Files Routes', () => {
 
       expect(res.body).toEqual({
         ok: true,
-        message: 'AUM uploads purgados (incluye committed)'
+        message: 'AUM uploads purgados (incluye committed)',
       });
       expect(mockExecute).toHaveBeenCalledTimes(2);
     });
@@ -312,7 +315,7 @@ describe('AUM Admin - Files Routes', () => {
       const mockExecute = vi.fn().mockRejectedValue(new Error('Purge failed'));
 
       mockDb.mockReturnValue({
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -321,9 +324,8 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'Purge failed'
-      });
+      expect(res.body.error).toBe('Error purgando archivos AUM');
+      expect(res.body.message).toBe('Purge failed');
     });
   });
 
@@ -332,37 +334,40 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv',
-              status: 'parsed',
-              totalParsed: 100,
-              totalMatched: 80,
-              totalUnmatched: 20,
-              createdAt: new Date('2024-01-01')
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+                totalParsed: 100,
+                totalMatched: 80,
+                totalUnmatched: 20,
+                createdAt: new Date('2024-01-01'),
+              },
+            ]),
+          }),
+        }),
       });
 
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ count: 100 }]
+          rows: [{ count: 100 }],
         })
         .mockResolvedValueOnce({
-          rows: [{ count: 5 }]
+          rows: [{ count: 5 }],
         })
         .mockResolvedValueOnce({
           rows: [
             { match_status: 'matched', count: 80 },
-            { match_status: 'unmatched', count: 20 }
-          ]
+            { match_status: 'unmatched', count: 20 },
+          ],
         });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -381,9 +386,9 @@ describe('AUM Admin - Files Routes', () => {
           totals: {
             parsed: 100,
             matched: 80,
-            unmatched: 20
+            unmatched: 20,
           },
-          createdAt: expect.any(String)
+          createdAt: expect.any(String),
         },
         verification: {
           dbCount: 100,
@@ -393,9 +398,9 @@ describe('AUM Admin - Files Routes', () => {
           onlyHolderNameCount: 5,
           statusCounts: {
             matched: 80,
-            unmatched: 20
-          }
-        }
+            unmatched: 20,
+          },
+        },
       });
     });
 
@@ -403,37 +408,40 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv',
-              status: 'parsed',
-              totalParsed: 100,
-              totalMatched: 80,
-              totalUnmatched: 20,
-              createdAt: new Date('2024-01-01')
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+                totalParsed: 100,
+                totalMatched: 80,
+                totalUnmatched: 20,
+                createdAt: new Date('2024-01-01'),
+              },
+            ]),
+          }),
+        }),
       });
 
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ count: 95 }]
+          rows: [{ count: 95 }],
         })
         .mockResolvedValueOnce({
-          rows: [{ count: 3 }]
+          rows: [{ count: 3 }],
         })
         .mockResolvedValueOnce({
           rows: [
             { match_status: 'matched', count: 75 },
-            { match_status: 'unmatched', count: 20 }
-          ]
+            { match_status: 'unmatched', count: 20 },
+          ],
         });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -450,8 +458,8 @@ describe('AUM Admin - Files Routes', () => {
         onlyHolderNameCount: 3,
         statusCounts: {
           matched: 75,
-          unmatched: 20
-        }
+          unmatched: 20,
+        },
       });
     });
 
@@ -459,13 +467,13 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as unknown);
 
       const app = createTestApp();
@@ -474,9 +482,7 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(404);
 
-      expect(res.body).toEqual({
-        error: 'File not found'
-      });
+      expect(res.body.error).toContain('File not found');
     });
 
     it('debería retornar 401 cuando no hay usuario autenticado', async () => {
@@ -490,67 +496,68 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv',
-              status: 'parsed',
-              totalParsed: 100,
-              totalMatched: 80,
-              totalUnmatched: 20,
-              createdAt: new Date()
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+                totalParsed: 100,
+                totalMatched: 80,
+                totalUnmatched: 20,
+                createdAt: new Date(),
+              },
+            ]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        execute: vi.fn()
+        execute: vi.fn(),
       } as unknown);
 
       const app = createTestApp();
-      const res = await request(app)
-        .get('/admin/aum/verify/file-123')
-        .expect(401);
+      const res = await request(app).get('/admin/aum/verify/file-123').expect(401);
 
-      expect(res.body).toEqual({
-        error: 'Unauthorized'
-      });
+      expect(res.body.error).toBe('Unauthorized');
     });
 
     it('debería manejar statusCounts vacío', async () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'file-123',
-              broker: 'balanz',
-              originalFilename: 'test.csv',
-              status: 'parsed',
-              totalParsed: 100,
-              totalMatched: 0,
-              totalUnmatched: 0,
-              createdAt: new Date('2024-01-01')
-            }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'file-123',
+                broker: 'balanz',
+                originalFilename: 'test.csv',
+                status: 'parsed',
+                totalParsed: 100,
+                totalMatched: 0,
+                totalUnmatched: 0,
+                createdAt: new Date('2024-01-01'),
+              },
+            ]),
+          }),
+        }),
       });
 
-      const mockExecute = vi.fn()
+      const mockExecute = vi
+        .fn()
         .mockResolvedValueOnce({
-          rows: [{ count: 100 }]
+          rows: [{ count: 100 }],
         })
         .mockResolvedValueOnce({
-          rows: [{ count: 0 }]
+          rows: [{ count: 0 }],
         })
         .mockResolvedValueOnce({
-          rows: []
+          rows: [],
         });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        execute: mockExecute
+        execute: mockExecute,
       } as unknown);
 
       const app = createTestApp();
@@ -566,13 +573,13 @@ describe('AUM Admin - Files Routes', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockRejectedValue(new Error('Database error'))
-          })
-        })
+            limit: vi.fn().mockRejectedValue(new Error('Database error')),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as unknown);
 
       const app = createTestApp();
@@ -581,10 +588,8 @@ describe('AUM Admin - Files Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'Database error'
-      });
+      expect(res.body.error).toBe('Error verificando archivo AUM');
+      expect(res.body.message).toBe('Database error');
     });
   });
 });
-

@@ -1,6 +1,6 @@
 /**
  * Tests for AssetSearcher Component
- * 
+ *
  * Covers:
  * - Rendering with default props
  * - Search functionality with debounce
@@ -23,11 +23,18 @@ vi.mock('@/lib/api', () => ({
   searchInstruments: vi.fn(),
   validateSymbol: vi.fn(),
 }));
-vi.mock('@/lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-  },
-}));
+vi.mock('@/lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+    },
+  };
+});
 
 describe('AssetSearcher', () => {
   const mockOnAssetSelect = vi.fn();
@@ -58,12 +65,7 @@ describe('AssetSearcher', () => {
     });
 
     it('should render with custom placeholder', () => {
-      render(
-        <AssetSearcher
-          onAssetSelect={mockOnAssetSelect}
-          placeholder="Custom placeholder"
-        />
-      );
+      render(<AssetSearcher onAssetSelect={mockOnAssetSelect} placeholder="Custom placeholder" />);
       const input = screen.getByPlaceholderText('Custom placeholder');
       expect(input).toBeInTheDocument();
     });
@@ -71,9 +73,9 @@ describe('AssetSearcher', () => {
     it('should show direct symbol button when query has text', () => {
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
-      
+
       expect(screen.getByTitle('Agregar símbolo directo')).toBeInTheDocument();
     });
   });
@@ -81,13 +83,13 @@ describe('AssetSearcher', () => {
   describe('Search Functionality', () => {
     it('should not search if query is less than 2 characters', async () => {
       const searchInstrumentsSpy = vi.spyOn(apiModule, 'searchInstruments');
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'A' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(searchInstrumentsSpy).not.toHaveBeenCalled();
       });
@@ -98,13 +100,13 @@ describe('AssetSearcher', () => {
         success: true,
         data: [],
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(searchInstrumentsSpy).toHaveBeenCalledWith('AAPL');
       });
@@ -115,16 +117,16 @@ describe('AssetSearcher', () => {
         success: true,
         data: [],
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AA' } });
       vi.advanceTimersByTime(200);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(searchInstrumentsSpy).toHaveBeenCalledTimes(1);
         expect(searchInstrumentsSpy).toHaveBeenCalledWith('AAPL');
@@ -146,18 +148,18 @@ describe('AssetSearcher', () => {
           type: 'EQUITY',
         },
       ];
-      
+
       vi.spyOn(apiModule, 'searchInstruments').mockResolvedValue({
         success: true,
         data: mockResults,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText('AAPL')).toBeInTheDocument();
         expect(screen.getByText('Apple Inc.')).toBeInTheDocument();
@@ -169,13 +171,13 @@ describe('AssetSearcher', () => {
       vi.spyOn(apiModule, 'searchInstruments').mockImplementation(
         () => new Promise((resolve) => setTimeout(() => resolve({ success: true, data: [] }), 100))
       );
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/buscando activos/i)).toBeInTheDocument();
       });
@@ -186,13 +188,13 @@ describe('AssetSearcher', () => {
         success: true,
         data: [],
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'XYZ' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/no se encontraron resultados/i)).toBeInTheDocument();
       });
@@ -204,13 +206,13 @@ describe('AssetSearcher', () => {
       (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
         user: null,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/debes iniciar sesión/i)).toBeInTheDocument();
       });
@@ -222,30 +224,32 @@ describe('AssetSearcher', () => {
         error: 'Service temporarily unavailable',
         status: 503,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
-        expect(screen.getByText(/servicio de búsqueda externa no está disponible/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/servicio de búsqueda externa no está disponible/i)
+        ).toBeInTheDocument();
       });
     });
 
     it('should handle 504 timeout error', async () => {
       const error = new Error('Gateway Timeout');
       (error as any).status = 504;
-      
+
       vi.spyOn(apiModule, 'searchInstruments').mockRejectedValue(error);
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/está tardando demasiado/i)).toBeInTheDocument();
       });
@@ -254,13 +258,13 @@ describe('AssetSearcher', () => {
     it('should handle network errors', async () => {
       const error = new Error('Failed to fetch');
       vi.spyOn(apiModule, 'searchInstruments').mockRejectedValue(error);
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText(/no se pudo conectar/i)).toBeInTheDocument();
       });
@@ -269,13 +273,13 @@ describe('AssetSearcher', () => {
     it('should log errors to logger', async () => {
       const error = new Error('Test error');
       vi.spyOn(apiModule, 'searchInstruments').mockRejectedValue(error);
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(logger.error).toHaveBeenCalled();
       });
@@ -292,27 +296,27 @@ describe('AssetSearcher', () => {
           type: 'EQUITY',
         },
       ];
-      
+
       vi.spyOn(apiModule, 'searchInstruments').mockResolvedValue({
         success: true,
         data: mockResults,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText('AAPL')).toBeInTheDocument();
       });
-      
+
       const assetItem = screen.getByText('AAPL').closest('div');
       if (assetItem) {
         fireEvent.click(assetItem);
       }
-      
+
       expect(mockOnAssetSelect).toHaveBeenCalledWith({
         id: 'AAPL',
         symbol: 'AAPL',
@@ -331,27 +335,27 @@ describe('AssetSearcher', () => {
           type: 'EQUITY',
         },
       ];
-      
+
       vi.spyOn(apiModule, 'searchInstruments').mockResolvedValue({
         success: true,
         data: mockResults,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i) as HTMLInputElement;
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
       vi.advanceTimersByTime(300);
-      
+
       await waitFor(() => {
         expect(screen.getByText('AAPL')).toBeInTheDocument();
       });
-      
+
       const assetItem = screen.getByText('AAPL').closest('div');
       if (assetItem) {
         fireEvent.click(assetItem);
       }
-      
+
       expect(input.value).toBe('');
       expect(screen.queryByText('AAPL')).not.toBeInTheDocument();
     });
@@ -366,15 +370,15 @@ describe('AssetSearcher', () => {
           symbol: 'AAPL',
         },
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
-      
+
       const directSymbolButton = screen.getByTitle('Agregar símbolo directo');
       fireEvent.click(directSymbolButton);
-      
+
       await waitFor(() => {
         expect(mockOnAssetSelect).toHaveBeenCalledWith({
           id: 'AAPL',
@@ -394,55 +398,59 @@ describe('AssetSearcher', () => {
           symbol: 'INVALID',
         },
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'INVALID' } });
-      
+
       const directSymbolButton = screen.getByTitle('Agregar símbolo directo');
       fireEvent.click(directSymbolButton);
-      
-      await waitFor(() => {
-        expect(mockOnAssetSelect).toHaveBeenCalled();
-      }, { timeout: 2000 });
+
+      await waitFor(
+        () => {
+          expect(mockOnAssetSelect).toHaveBeenCalled();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('should handle validation errors gracefully', async () => {
       const error = new Error('Validation error');
       vi.spyOn(apiModule, 'validateSymbol').mockRejectedValue(error);
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'TEST' } });
-      
+
       const directSymbolButton = screen.getByTitle('Agregar símbolo directo');
       fireEvent.click(directSymbolButton);
-      
-      await waitFor(() => {
-        expect(mockOnAssetSelect).toHaveBeenCalled();
-      }, { timeout: 2000 });
+
+      await waitFor(
+        () => {
+          expect(mockOnAssetSelect).toHaveBeenCalled();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it('should not add symbol if user is not authenticated', async () => {
       (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
         user: null,
       });
-      
+
       render(<AssetSearcher onAssetSelect={mockOnAssetSelect} />);
       const input = screen.getByPlaceholderText(/buscar por símbolo o nombre/i);
-      
+
       fireEvent.change(input, { target: { value: 'AAPL' } });
-      
+
       const directSymbolButton = screen.getByTitle('Agregar símbolo directo');
       fireEvent.click(directSymbolButton);
-      
+
       await waitFor(() => {
         expect(mockOnAssetSelect).not.toHaveBeenCalled();
       });
     });
   });
 });
-
-

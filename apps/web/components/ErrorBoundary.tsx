@@ -20,14 +20,14 @@ interface State {
 /**
  * Componente funcional interno para mostrar errores con hooks
  */
-function ErrorDisplay({ 
-  error, 
-  errorInfo, 
-  onRetry, 
-  onReportError 
-}: { 
-  error?: Error; 
-  errorInfo?: ErrorInfo; 
+function ErrorDisplay({
+  error,
+  errorInfo,
+  onRetry,
+  onReportError,
+}: {
+  error?: Error;
+  errorInfo?: ErrorInfo;
   onRetry: () => void;
   onReportError: () => void;
 }) {
@@ -65,9 +65,7 @@ function ErrorDisplay({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-medium text-gray-900">
-                Algo salió mal
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900">Algo salió mal</h3>
               <p className="text-sm text-gray-500">
                 Ha ocurrido un error inesperado en la aplicación.
               </p>
@@ -87,29 +85,17 @@ function ErrorDisplay({
           )}
 
           <div className="flex space-x-3">
-            <Button
-              variant="primary"
-              onClick={onRetry}
-              className="flex-1"
-            >
+            <Button variant="primary" onClick={onRetry} className="flex-1">
               Intentar de nuevo
             </Button>
-            
-            <Button
-              variant="secondary"
-              onClick={handleReportError}
-              className="flex-1"
-            >
+
+            <Button variant="secondary" onClick={handleReportError} className="flex-1">
               Reportar error
             </Button>
           </div>
 
           <div className="mt-4 text-center">
-            <Button
-              variant="ghost"
-              onClick={handleGoHome}
-              size="sm"
-            >
+            <Button variant="ghost" onClick={handleGoHome} size="sm">
               Volver al inicio
             </Button>
           </div>
@@ -148,19 +134,19 @@ export class ErrorBoundary extends Component<Props, State> {
     // Loggear el error con contexto completo
     // Usar pathname si está disponible, sino window.location.href como fallback
     const url = typeof window !== 'undefined' ? window.location.href : undefined;
-    
+
     logger.error('Error de renderizado capturado por ErrorBoundary', {
       error: {
         name: error.name,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       },
       errorInfo: {
-        componentStack: errorInfo.componentStack
+        componentStack: errorInfo.componentStack,
       },
       url,
       userAgent: typeof window !== 'undefined' ? navigator.userAgent : undefined,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Llamar callback personalizado si existe
@@ -181,7 +167,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // En un entorno real, aquí se enviaría el error a un servicio de reporte
       logger.info('Usuario reportó error manualmente', {
         error: this.state.error.message,
-        stack: this.state.error.stack
+        stack: this.state.error.stack,
       });
     }
   };
@@ -206,41 +192,4 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
-}
-
-/**
- * Hook para usar el Error Boundary en componentes funcionales
- */
-export function useErrorHandler() {
-  const pathname = usePathname();
-  
-  return (error: Error, errorInfo?: { componentStack?: string }) => {
-    logger.error('Error manejado por useErrorHandler', {
-      error: {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      },
-      errorInfo,
-      pathname,
-      // Include full URL for logging context when available
-      url: typeof window !== 'undefined' ? window.location.href : undefined
-    });
-  };
-}
-
-/**
- * HOC para envolver componentes con Error Boundary
- */
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  fallback?: ReactNode
-) {
-  return function WrappedComponent(props: P) {
-    return (
-      <ErrorBoundary fallback={fallback}>
-        <Component {...props} />
-      </ErrorBoundary>
-    );
-  };
 }

@@ -10,7 +10,6 @@ import { db } from '@cactus/db';
 import { users } from '@cactus/db/schema';
 import { eq } from 'drizzle-orm';
 import { signUserToken, verifyUserToken } from '../../../auth/jwt';
-import { hash } from 'bcryptjs';
 import { createTestUser, deleteTestUser, createTestToken } from '../../helpers/test-auth';
 
 describe('Auth Flow Integration Tests', () => {

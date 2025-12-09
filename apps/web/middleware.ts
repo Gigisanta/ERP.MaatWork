@@ -37,6 +37,7 @@ const protectedRoutes = [
 // Rutas públicas que no requieren autenticación
 const publicRoutes = ['/', '/login', '/register'];
 
+// ts-prune-ignore-next: Next.js middleware entrypoint discovered by filename
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -145,6 +146,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// ts-prune-ignore-next: Next.js middleware matcher consumed by framework
 export const config = {
   matcher: [
     /*

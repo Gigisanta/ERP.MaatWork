@@ -13,7 +13,7 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-const cache = new Map<string, CacheEntry>();
+export const cache = new Map<string, CacheEntry>();
 
 // TTL: 5 minutes (300000 ms)
 const TTL_MS = 5 * 60 * 1000;
@@ -68,20 +68,4 @@ export function invalidateAccessScope(userId: string, role?: string): void {
   }
 }
 
-/**
- * Invalidate all cached access scopes
- * Useful for testing or when team structure changes significantly
- */
-export function clearAccessScopeCache(): void {
-  cache.clear();
-}
-
-/**
- * Get cache statistics for monitoring
- */
-export function getCacheStats(): { size: number; keys: string[] } {
-  return {
-    size: cache.size,
-    keys: Array.from(cache.keys()),
-  };
-}
+// Cache se limpia por entry o TTL; funciones de depuración removidas por no usarse

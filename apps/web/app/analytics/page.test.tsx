@@ -26,13 +26,18 @@ vi.mock('@/lib/api', () => ({
   getDashboardKPIs: vi.fn(),
 }));
 
-vi.mock('../../lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}));
+vi.mock('../../lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      error: vi.fn(),
+      warn: vi.fn(),
+      info: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (

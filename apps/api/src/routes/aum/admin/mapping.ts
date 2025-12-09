@@ -1,6 +1,6 @@
 /**
  * AUM Admin - Advisor Mapping Routes
- * 
+ *
  * Handles advisor-account mapping file uploads
  */
 
@@ -19,19 +19,25 @@ const router = Router();
 
 // File Upload Configuration (using centralized utility)
 const uploadDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
-const upload = createAumUpload(AUM_LIMITS.MAX_FILE_SIZE, uploadDir);
+// Lazily create upload to honor per-test multer mocks and avoid stale instances
+const getUpload = () => createAumUpload(AUM_LIMITS.MAX_FILE_SIZE, uploadDir);
 
 /**
  * POST /admin/aum/advisor-mapping/upload
  * Upload advisor-account mapping file
  */
-router.post('/advisor-mapping/upload',
+router.post(
+  '/advisor-mapping/upload',
   requireAuth,
   requireRole(['admin']),
   (req, res, next) => {
+    const upload = getUpload();
     upload.single('file')(req, res, (err) => {
       if (err) {
-        req.log?.error?.({ err, filename: (req as { file?: Express.Multer.File }).file?.originalname }, 'Error en multer upload');
+        req.log?.error?.(
+          { err, filename: (req as { file?: Express.Multer.File }).file?.originalname },
+          'Error en multer upload'
+        );
         return handleMulterError(err, res, { maxFileSize: AUM_LIMITS.MAX_FILE_SIZE });
       }
       next();
@@ -50,12 +56,15 @@ router.post('/advisor-mapping/upload',
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      req.log?.info?.({
-        filename: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-        userId
-      }, 'Iniciando procesamiento de mapeo asesor-cuenta');
+      req.log?.info?.(
+        {
+          filename: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+          userId,
+        },
+        'Iniciando procesamiento de mapeo asesor-cuenta'
+      );
 
       const dbi = db();
 
@@ -70,7 +79,7 @@ router.post('/advisor-mapping/upload',
 
         return res.status(400).json({
           error: 'Error al procesar el archivo',
-          details: parseResult.error || parseResult.details || 'Error desconocido'
+          details: parseResult.error || parseResult.details || 'Error desconocido',
         });
       }
 
@@ -93,7 +102,9 @@ router.post('/advisor-mapping/upload',
 
         try {
           // Find existing mapping
-          const existing = await dbi.select().from(advisorAccountMapping)
+          const existing = await dbi
+            .select()
+            .from(advisorAccountMapping)
             .where(eq(advisorAccountMapping.accountNumber, normalizedAccountNumber))
             .limit(1);
 
@@ -101,7 +112,9 @@ router.post('/advisor-mapping/upload',
           let matchedUserId: string | null = null;
           if (advisorRaw) {
             try {
-              const advisorMatch = await dbi.select().from(advisorAliases)
+              const advisorMatch = await dbi
+                .select()
+                .from(advisorAliases)
                 .where(eq(advisorAliases.aliasNormalized, advisorRaw))
                 .limit(1);
               if (advisorMatch.length > 0) {
@@ -112,12 +125,13 @@ router.post('/advisor-mapping/upload',
 
           if (existing.length > 0) {
             // Update existing mapping
-            await dbi.update(advisorAccountMapping)
+            await dbi
+              .update(advisorAccountMapping)
               .set({
                 advisorName: advisorName,
                 advisorRaw: advisorRaw,
                 matchedUserId: matchedUserId,
-                updatedAt: new Date()
+                updatedAt: new Date(),
               })
               .where(eq(advisorAccountMapping.accountNumber, normalizedAccountNumber));
             updated++;
@@ -127,17 +141,20 @@ router.post('/advisor-mapping/upload',
               accountNumber: normalizedAccountNumber,
               advisorName: advisorName,
               advisorRaw: advisorRaw,
-              matchedUserId: matchedUserId
+              matchedUserId: matchedUserId,
             });
             inserted++;
           }
         } catch (error) {
           errors++;
-          req.log?.error?.({
-            err: error,
-            accountNumber: normalizedAccountNumber,
-            filename: file.originalname
-          }, 'Error procesando fila de mapeo asesor');
+          req.log?.error?.(
+            {
+              err: error,
+              accountNumber: normalizedAccountNumber,
+              filename: file.originalname,
+            },
+            'Error procesando fila de mapeo asesor'
+          );
         }
       }
 
@@ -146,12 +163,15 @@ router.post('/advisor-mapping/upload',
         await fs.unlink(file.path);
       } catch {}
 
-      req.log?.info?.({
-        inserted,
-        updated,
-        errors,
-        total: parsedRows.length
-      }, 'Advisor mapping uploaded successfully');
+      req.log?.info?.(
+        {
+          inserted,
+          updated,
+          errors,
+          total: parsedRows.length,
+        },
+        'Advisor mapping uploaded successfully'
+      );
 
       return res.status(201).json({
         ok: true,
@@ -160,17 +180,16 @@ router.post('/advisor-mapping/upload',
           inserted,
           updated,
           errors,
-          total: parsedRows.length
-        }
+          total: parsedRows.length,
+        },
       });
     } catch (error) {
       req.log?.error?.({ err: error }, 'AUM advisor mapping upload failed');
       return res.status(500).json({
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 );
 
 export default router;
-

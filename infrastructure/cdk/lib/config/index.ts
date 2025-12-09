@@ -281,5 +281,16 @@ export function getConfig(app: cdk.App): CactusConfig {
     return config;
 }
 
-// Re-exportar tipos
-export * from './types';
+// Re-exportar tipos específicos para tree-shaking
+export type {
+  DeploymentMode,
+  Environment,
+  VpcConfig,
+  DatabaseConfig,
+  MvpComputeConfig,
+  AdvancedComputeConfig,
+  MonitoringConfig,
+  CactusConfig,
+  CactusStackProps,
+  ComputeResources,
+} from './types';

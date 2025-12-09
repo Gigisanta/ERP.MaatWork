@@ -60,14 +60,12 @@
     "audit:barrels": "grep -r 'export \\* from' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
     "clean:temp": "node -e \"const fs=require('fs');['.tmp_aum_cookies.txt'].forEach(f=>{try{fs.unlinkSync(f);console.log('Deleted:',f)}catch(e){}})\""
   },
-  "dependencies": {
-    "@vercel/analytics": "^1.5.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "@cactus/db": "workspace:*",
     "@changesets/cli": "^2.29.8",
     "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.48.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -79,12 +77,18 @@
     "@vitest/coverage-v8": "^4.0.6",
     "@vitest/ui": "^4.0.6",
     "chalk": "^5.6.2",
+    "csv-parse": "^5.5.6",
     "depcheck": "^1.4.7",
+    "dotenv": "^16.6.1",
+    "drizzle-orm": "^0.38.4",
     "husky": "^9.0.11",
     "lint-staged": "^15.5.2",
+    "pino": "^8.16.0",
     "playwright": "^1.48.0",
+    "postgres": "^3.4.5",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.10",
+    "ts-prune": "^0.10.3",
     "turbo": "^2.1.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.6"

@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { uuidSchema } from '../../utils/common-schemas';
+import { optionalEmailSchema } from '../../utils/validation-common';
 
 // ==========================================================
 // Team CRUD Schemas
@@ -31,7 +32,7 @@ export const addMemberSchema = z.object({
 export const inviteMemberSchema = z
   .object({
     userId: z.string().uuid().optional(),
-    email: z.string().email().optional(),
+    email: optionalEmailSchema,
   })
   .refine((data) => data.userId || data.email, {
     message: 'Either userId or email must be provided',

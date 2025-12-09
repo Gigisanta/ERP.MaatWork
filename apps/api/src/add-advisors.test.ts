@@ -29,7 +29,7 @@ vi.mock('bcrypt', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
-  eq: vi.fn(),
+  eq: vi.fn(() => ({ mockCondition: true })),
 }));
 
 describe('add-advisors script', () => {
@@ -81,7 +81,7 @@ describe('add-advisors script', () => {
       await upsertAdvisor(advisor);
 
       expect(mockQuery.users.findFirst).toHaveBeenCalledWith({
-        where: expect.any(Function),
+        where: { mockCondition: true },
       });
       expect(bcrypt.hash).toHaveBeenCalledWith('Mvicente123', 10);
       expect(mockInsert).toHaveBeenCalledWith(users);

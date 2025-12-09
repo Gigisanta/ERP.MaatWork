@@ -1,6 +1,6 @@
 /**
  * Tests para AuthContext
- * 
+ *
  * AI_DECISION: Tests unitarios para contexto de autenticación
  * Justificación: Validación crítica de login, registro y gestión de sesión
  * Impacto: Prevenir errores en autenticación y gestión de usuario
@@ -17,24 +17,28 @@ import { logger } from '../../lib/logger';
 // Mock dependencies
 vi.mock('../../lib/fetch-client', () => ({
   fetchWithLogging: vi.fn(),
-  postJson: vi.fn()
+  postJson: vi.fn(),
 }));
 
 vi.mock('../../lib/config', () => ({
   config: {
-    apiUrl: 'http://localhost:3001'
-  }
+    apiUrl: 'http://localhost:3001',
+  },
 }));
 
-vi.mock('../../lib/logger', () => ({
-  logger: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    updateUser: vi.fn()
-  }
-}));
+vi.mock('../../lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      info: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      updateUser: vi.fn(),
+    },
+  };
+});
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -46,7 +50,7 @@ describe('AuthContext', () => {
       // Mock fetchWithLogging para que retorne una promesa resuelta
       (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue({
         ok: false,
-        json: vi.fn().mockResolvedValue({})
+        json: vi.fn().mockResolvedValue({}),
       });
 
       render(
@@ -66,9 +70,9 @@ describe('AuthContext', () => {
             id: 'user-123',
             email: 'test@example.com',
             role: 'advisor',
-            fullName: 'Test User'
-          }
-        })
+            fullName: 'Test User',
+          },
+        }),
       };
       (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse);
 
@@ -82,10 +86,9 @@ describe('AuthContext', () => {
         expect(result.current.initialized).toBe(true);
       });
 
-      expect(fetchWithLogging).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/me`,
-        { credentials: 'include' }
-      );
+      expect(fetchWithLogging).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/me`, {
+        credentials: 'include',
+      });
     });
 
     it('debería manejar error al verificar sesión', async () => {
@@ -108,7 +111,7 @@ describe('AuthContext', () => {
     it('debería manejar respuesta sin usuario', async () => {
       const mockResponse = {
         ok: false,
-        json: vi.fn().mockResolvedValue({})
+        json: vi.fn().mockResolvedValue({}),
       };
       (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse);
 
@@ -158,12 +161,12 @@ describe('AuthContext', () => {
         id: 'user-123',
         email: 'test@example.com',
         role: 'advisor' as const,
-        fullName: 'Test User'
+        fullName: 'Test User',
       };
 
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: mockUser
+        user: mockUser,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -178,20 +181,17 @@ describe('AuthContext', () => {
 
       expect(result.current.user).toEqual(mockUser);
       expect(logger.updateUser).toHaveBeenCalledWith(mockUser.id, mockUser.role);
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/login`,
-        {
-          identifier: 'test@example.com',
-          password: 'password',
-          rememberMe: undefined
-        }
-      );
+      expect(postJson).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/login`, {
+        identifier: 'test@example.com',
+        password: 'password',
+        rememberMe: undefined,
+      });
     });
 
     it('debería pasar rememberMe cuando se proporciona', async () => {
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: { id: 'user-123', email: 'test@example.com', role: 'advisor' }
+        user: { id: 'user-123', email: 'test@example.com', role: 'advisor' },
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -207,7 +207,7 @@ describe('AuthContext', () => {
       expect(postJson).toHaveBeenCalledWith(
         `${config.apiUrl}/v1/auth/login`,
         expect.objectContaining({
-          rememberMe: true
+          rememberMe: true,
         })
       );
     });
@@ -235,7 +235,7 @@ describe('AuthContext', () => {
   describe('register', () => {
     it('debería hacer registro exitoso', async () => {
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -248,22 +248,19 @@ describe('AuthContext', () => {
         email: 'new@example.com',
         fullName: 'New User',
         password: 'password123',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       await act(async () => {
         await result.current.register(registerData);
       });
 
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/register`,
-        registerData
-      );
+      expect(postJson).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/register`, registerData);
       expect(logger.info).toHaveBeenCalledWith(
         'Registro exitoso',
         expect.objectContaining({
           email: 'new@example.com',
-          role: 'advisor'
+          role: 'advisor',
         })
       );
     });
@@ -284,7 +281,7 @@ describe('AuthContext', () => {
             email: 'existing@example.com',
             fullName: 'User',
             password: 'password',
-            role: 'advisor'
+            role: 'advisor',
           });
         })
       ).rejects.toThrow('Email already exists');
@@ -298,13 +295,13 @@ describe('AuthContext', () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       // Primero hacer login
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: mockUser
+        user: mockUser,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -328,17 +325,14 @@ describe('AuthContext', () => {
 
       expect(result.current.user).toBeNull();
       expect(logger.updateUser).toHaveBeenCalledWith(null, null);
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/logout`,
-        {}
-      );
+      expect(postJson).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/logout`, {});
     });
 
     it('debería manejar error al limpiar cookie en logout', async () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       (postJson as ReturnType<typeof vi.fn>)
@@ -358,7 +352,7 @@ describe('AuthContext', () => {
       await act(async () => {
         result.current.logout();
         // Esperar un tick para que el catch se ejecute
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
       // El usuario debe ser limpiado incluso si hay error al limpiar cookie
@@ -368,4 +362,3 @@ describe('AuthContext', () => {
     });
   });
 });
-

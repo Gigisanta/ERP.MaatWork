@@ -2,15 +2,15 @@
 
 /**
  * SkeletonLoader - Consistent skeleton loading components
- * 
+ *
  * AI_DECISION: Centralized skeleton components for consistent loading states
  * Justificación: Eliminates duplicate skeleton definitions across loading.tsx files
  * Impacto: Unified loading experience with consistent skeleton-wave animation
- * 
+ *
  * @example
  * ```tsx
  * import { Skeleton, SkeletonText, SkeletonCard } from './SkeletonLoader';
- * 
+ *
  * <Skeleton className="h-8 w-48" />
  * <SkeletonText lines={3} />
  * <SkeletonCard />
@@ -18,7 +18,15 @@
  */
 
 import React from 'react';
-import { cn } from '@cactus/ui';
+// AI_DECISION: Create local cn function to avoid webpack module resolution issues with @cactus/ui
+// Justificación: Webpack sometimes fails to resolve @cactus/ui exports in certain contexts, causing "Cannot read properties of undefined (reading 'call')" error
+// Impacto: Fixes webpack module resolution error, ensures SkeletonLoader loads correctly
+// Note: clsx is available as transitive dependency through @cactus/ui
+import clsx from 'clsx';
+
+function cn(...inputs: Parameters<typeof clsx>) {
+  return clsx(inputs);
+}
 
 // =============================================================================
 // Types
@@ -85,20 +93,12 @@ export function Skeleton({
   delay = 0,
   rounded = 'md',
 }: SkeletonProps) {
-  const animationClass = animation === 'wave' 
-    ? 'skeleton-wave' 
-    : animation === 'pulse' 
-    ? 'animate-pulse' 
-    : '';
+  const animationClass =
+    animation === 'wave' ? 'skeleton-wave' : animation === 'pulse' ? 'animate-pulse' : '';
 
   return (
     <div
-      className={cn(
-        'bg-surface-hover',
-        roundedClasses[rounded],
-        animationClass,
-        className
-      )}
+      className={cn('bg-surface-hover', roundedClasses[rounded], animationClass, className)}
       style={delay > 0 ? { animationDelay: `${delay}ms` } : undefined}
     />
   );
@@ -119,10 +119,7 @@ export function SkeletonText({
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton
           key={i}
-          className={cn(
-            'h-4',
-            i === lines - 1 ? lastLineWidth : 'w-full'
-          )}
+          className={cn('h-4', i === lines - 1 ? lastLineWidth : 'w-full')}
           animation={animation}
           delay={i * 50}
         />
@@ -148,13 +145,7 @@ export function SkeletonAvatar({
     lg: 'h-12 w-12',
   };
 
-  return (
-    <Skeleton
-      className={sizeClasses[size]}
-      rounded="full"
-      animation={animation}
-    />
-  );
+  return <Skeleton className={sizeClasses[size]} rounded="full" animation={animation} />;
 }
 
 // =============================================================================
@@ -183,15 +174,12 @@ export function SkeletonCard({
           <Skeleton className="h-6 w-20" delay={delay + 50} />
         </div>
       )}
-      
+
       <div className="space-y-2">
         {Array.from({ length: contentLines }).map((_, i) => (
           <Skeleton
             key={i}
-            className={cn(
-              'h-4',
-              i === contentLines - 1 ? 'w-2/3' : 'w-full'
-            )}
+            className={cn('h-4', i === contentLines - 1 ? 'w-2/3' : 'w-full')}
             delay={delay + 100 + i * 50}
           />
         ))}
@@ -211,22 +199,13 @@ export function SkeletonCard({
 // Skeleton Table Row
 // =============================================================================
 
-export function SkeletonTableRow({
-  columns = 5,
-  delay = 0,
-}: {
-  columns?: number;
-  delay?: number;
-}) {
+export function SkeletonTableRow({ columns = 5, delay = 0 }: { columns?: number; delay?: number }) {
   return (
     <div className="flex items-center gap-4 py-3 border-b border-border last:border-b-0">
       {Array.from({ length: columns }).map((_, i) => (
         <Skeleton
           key={i}
-          className={cn(
-            'h-4 flex-1',
-            i === 0 ? 'max-w-[200px]' : 'max-w-[150px]'
-          )}
+          className={cn('h-4 flex-1', i === 0 ? 'max-w-[200px]' : 'max-w-[150px]')}
           delay={delay + i * 30}
         />
       ))}
@@ -252,21 +231,13 @@ export function SkeletonTable({
       {showHeader && (
         <div className="flex items-center gap-4 py-3 border-b-2 border-border mb-1">
           {Array.from({ length: columns }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className="h-5 flex-1 max-w-[150px]"
-              delay={i * 30}
-            />
+            <Skeleton key={i} className="h-5 flex-1 max-w-[150px]" delay={i * 30} />
           ))}
         </div>
       )}
       <div>
         {Array.from({ length: rows }).map((_, i) => (
-          <SkeletonTableRow
-            key={i}
-            columns={columns}
-            delay={(i + 1) * 75}
-          />
+          <SkeletonTableRow key={i} columns={columns} delay={(i + 1) * 75} />
         ))}
       </div>
     </div>

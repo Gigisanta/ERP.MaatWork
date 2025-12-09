@@ -149,12 +149,27 @@ export function createErrorResponse(options: ErrorResponseOptions): ErrorRespons
   const { error, requestId, userMessage, context } = options;
   const isProduction = process.env.NODE_ENV === 'production';
 
+  // AI_DECISION: Usar mensaje del error directamente si es HttpError (tiene statusCode)
+  // Justificación: HttpError ya contiene mensajes seguros para el usuario, no necesitan ser sobrescritos
+  // Impacto: Los errores HTTP (404, 400, etc.) muestran su mensaje original en lugar de un mensaje genérico
+  let errorMessage = userMessage || 'Internal server error';
+  if (
+    error &&
+    typeof error === 'object' &&
+    'statusCode' in error &&
+    typeof (error as { statusCode: unknown }).statusCode === 'number' &&
+    error instanceof Error
+  ) {
+    // Es un HttpError o error similar con statusCode - usar su mensaje
+    errorMessage = error.message || errorMessage;
+  }
+
   // Respuesta base (segura para produccion)
   // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
   // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
   // Impacto: Cumple con las reglas estrictas de TypeScript
   const response: Record<string, unknown> = {
-    error: userMessage || 'Internal server error',
+    error: errorMessage,
   };
 
   // Solo incluir requestId si está definido

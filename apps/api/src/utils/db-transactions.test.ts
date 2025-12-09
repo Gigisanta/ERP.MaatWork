@@ -1,6 +1,6 @@
 /**
  * Tests para db-transactions utility
- * 
+ *
  * AI_DECISION: Tests unitarios para transacciones con retry y timeout
  * Justificación: Validación crítica de lógica de retry, manejo de errores transitorios y timeouts
  * Impacto: Prevenir errores en operaciones críticas de base de datos
@@ -12,14 +12,14 @@ import { transactionWithLogging, type TransactionOptions } from './db-transactio
 
 // Mock de db-logger
 vi.mock('./db-logger', () => ({
-  loggedTransaction: vi.fn()
+  loggedTransaction: vi.fn(),
 }));
 
 // Mock de @cactus/db
 vi.mock('@cactus/db', () => ({
   db: vi.fn(() => ({
-    transaction: vi.fn()
-  }))
+    transaction: vi.fn(),
+  })),
 }));
 
 import { loggedTransaction } from './db-logger';
@@ -37,12 +37,12 @@ describe('transactionWithLogging', () => {
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
-      error: vi.fn()
+      error: vi.fn(),
     } as unknown as Logger;
 
     mockTransactionFn = vi.fn();
     (db as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-      transaction: mockTransactionFn
+      transaction: mockTransactionFn,
     });
   });
 
@@ -60,11 +60,7 @@ describe('transactionWithLogging', () => {
         async (_logger, _operation, fn) => await fn()
       );
 
-      const result = await transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn
-      );
+      const result = await transactionWithLogging(mockLogger, 'test-operation', transactionFn);
 
       expect(result).toEqual(expectedResult);
       expect(mockTransactionFn).toHaveBeenCalledTimes(1);
@@ -94,24 +90,16 @@ describe('transactionWithLogging', () => {
 
       const deadlockError = { code: '40P01', message: 'deadlock detected' };
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(deadlockError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(deadlockError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(100);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay: 100,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay: 100 }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (100ms)
       await vi.advanceTimersByTimeAsync(100);
       const result = await promise;
 
@@ -120,7 +108,7 @@ describe('transactionWithLogging', () => {
         expect.objectContaining({
           operation: 'test-operation',
           attempt: 0,
-          errorCode: '40P01'
+          errorCode: '40P01',
         }),
         'Retrying transaction after transient error'
       );
@@ -132,24 +120,16 @@ describe('transactionWithLogging', () => {
 
       const serializationError = { code: '40001', message: 'serialization failure' };
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(serializationError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(serializationError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(100);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay: 100,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay: 100 }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (100ms)
       await vi.advanceTimersByTimeAsync(100);
       const result = await promise;
 
@@ -163,24 +143,16 @@ describe('transactionWithLogging', () => {
 
       const lockError = { code: '55P03', message: 'lock not available' };
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(lockError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(lockError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(100);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay: 100,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay: 100 }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (100ms)
       await vi.advanceTimersByTimeAsync(100);
       const result = await promise;
 
@@ -193,28 +165,18 @@ describe('transactionWithLogging', () => {
       const transactionFn = vi.fn().mockResolvedValue(expectedResult);
       const deadlockError = { code: '40P01', message: 'deadlock' };
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(deadlockError)
         .mockRejectedValueOnce(deadlockError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(deadlockError)
-        .mockRejectedValueOnce(deadlockError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(200);
-          return await fn();
-        });
-
       const retryDelay = 100;
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay }
-      );
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay,
+      });
 
-      // Avanzar timers para simular delays
+      // Avanzar timers para simular delays exponenciales
       await vi.advanceTimersByTimeAsync(retryDelay * Math.pow(2, 0)); // Primer retry: 100ms
       await vi.advanceTimersByTimeAsync(retryDelay * Math.pow(2, 1)); // Segundo retry: 200ms
 
@@ -222,7 +184,7 @@ describe('transactionWithLogging', () => {
 
       expect(result).toEqual(expectedResult);
       expect(mockLogger.warn).toHaveBeenCalledTimes(2);
-      
+
       // Verificar que los delays fueron los correctos
       const warnCalls = (mockLogger.warn as ReturnType<typeof vi.fn>).mock.calls;
       expect(warnCalls[0][0].delay).toBe(100); // 100 * 2^0
@@ -237,12 +199,10 @@ describe('transactionWithLogging', () => {
       (loggedTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(deadlockError);
 
       const promise = expect(
-        transactionWithLogging(
-          mockLogger,
-          'test-operation',
-          transactionFn,
-          { maxRetries: 2, retryDelay: 100 }
-        )
+        transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+          maxRetries: 2,
+          retryDelay: 100,
+        })
       ).rejects.toEqual(deadlockError);
 
       // Avanzar timers para los retries
@@ -257,7 +217,7 @@ describe('transactionWithLogging', () => {
           operation: 'test-operation',
           attempt: 2,
           maxRetries: 2,
-          errorCode: '40P01'
+          errorCode: '40P01',
         }),
         'Transaction failed after max retries'
       );
@@ -281,7 +241,7 @@ describe('transactionWithLogging', () => {
         expect.objectContaining({
           operation: 'test-operation',
           attempt: 0,
-          errorCode: '23505'
+          errorCode: '23505',
         }),
         'Transaction failed with non-transient error'
       );
@@ -304,7 +264,7 @@ describe('transactionWithLogging', () => {
         expect.objectContaining({
           operation: 'test-operation',
           attempt: 0,
-          errorCode: 'UNKNOWN'
+          errorCode: 'UNKNOWN',
         }),
         'Transaction failed with non-transient error'
       );
@@ -317,24 +277,16 @@ describe('transactionWithLogging', () => {
       const transactionFn = vi.fn().mockResolvedValue(expectedResult);
       const timeoutError = { code: '57014', message: 'query canceled' };
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(timeoutError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(timeoutError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(100);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay: 100,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay: 100 }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (100ms)
       await vi.advanceTimersByTimeAsync(100);
       const result = await promise;
 
@@ -347,24 +299,16 @@ describe('transactionWithLogging', () => {
       const transactionFn = vi.fn().mockResolvedValue(expectedResult);
       const timeoutError = new Error('Transaction timeout after 30000ms');
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(timeoutError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(timeoutError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(100);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        maxRetries: 3,
+        retryDelay: 100,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { maxRetries: 3, retryDelay: 100 }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (100ms)
       await vi.advanceTimersByTimeAsync(100);
       const result = await promise;
 
@@ -385,12 +329,9 @@ describe('transactionWithLogging', () => {
         }
       );
 
-      await transactionWithLogging(
-        mockLogger,
-        'test-operation',
-        transactionFn,
-        { timeout: customTimeout }
-      );
+      await transactionWithLogging(mockLogger, 'test-operation', transactionFn, {
+        timeout: customTimeout,
+      });
 
       expect(mockTransactionFn).toHaveBeenCalledTimes(1);
       vi.useFakeTimers(); // Volver a fake timers
@@ -406,7 +347,10 @@ describe('transactionWithLogging', () => {
       (loggedTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(deadlockError);
 
       const promise = expect(
-        transactionWithLogging(mockLogger, 'test', transactionFn, { maxRetries: 1, retryDelay: 100 })
+        transactionWithLogging(mockLogger, 'test', transactionFn, {
+          maxRetries: 1,
+          retryDelay: 100,
+        })
       ).rejects.toEqual(deadlockError);
 
       await vi.advanceTimersByTimeAsync(100); // Primer retry
@@ -427,24 +371,16 @@ describe('transactionWithLogging', () => {
       const deadlockError = { code: '40P01', message: 'deadlock' };
       const customDelay = 200;
 
-      mockTransactionFn
+      (loggedTransaction as ReturnType<typeof vi.fn>)
         .mockRejectedValueOnce(deadlockError)
         .mockResolvedValueOnce(expectedResult);
 
-      (loggedTransaction as ReturnType<typeof vi.fn>)
-        .mockRejectedValueOnce(deadlockError)
-        .mockImplementationOnce(async (_logger, _operation, fn) => {
-          await vi.advanceTimersByTimeAsync(customDelay);
-          return await fn();
-        });
+      const promise = transactionWithLogging(mockLogger, 'test', transactionFn, {
+        maxRetries: 3,
+        retryDelay: customDelay,
+      });
 
-      const promise = transactionWithLogging(
-        mockLogger,
-        'test',
-        transactionFn,
-        { maxRetries: 3, retryDelay: customDelay }
-      );
-
+      // Avanzar timers para ejecutar el delay del retry (customDelay)
       await vi.advanceTimersByTimeAsync(customDelay);
       const result = await promise;
 
@@ -462,9 +398,9 @@ describe('transactionWithLogging', () => {
       mockTransactionFn.mockRejectedValue(nullError);
       (loggedTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(nullError);
 
-      await expect(
-        transactionWithLogging(mockLogger, 'test', transactionFn)
-      ).rejects.toEqual(nullError);
+      await expect(transactionWithLogging(mockLogger, 'test', transactionFn)).rejects.toEqual(
+        nullError
+      );
 
       expect(mockLogger.error).toHaveBeenCalled();
     });
@@ -476,9 +412,9 @@ describe('transactionWithLogging', () => {
       mockTransactionFn.mockRejectedValue(weirdError);
       (loggedTransaction as ReturnType<typeof vi.fn>).mockRejectedValue(weirdError);
 
-      await expect(
-        transactionWithLogging(mockLogger, 'test', transactionFn)
-      ).rejects.toEqual(weirdError);
+      await expect(transactionWithLogging(mockLogger, 'test', transactionFn)).rejects.toEqual(
+        weirdError
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({ errorCode: 'UNKNOWN' }),

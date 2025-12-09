@@ -1,6 +1,6 @@
 /**
  * Custom API Error class
- * 
+ *
  * AI_DECISION: Clase de error custom para manejo consistente
  * Justificación: Permite distinguir errores de API de otros errores
  * Impacto: Mejor debugging y manejo de errores
@@ -236,7 +236,8 @@ export class ApiError extends Error {
     if (this.isConflictError) {
       return {
         message: 'Conflicto con los datos actuales.',
-        action: 'El recurso puede haber sido modificado. Recarga la página para ver los cambios más recientes.',
+        action:
+          'El recurso puede haber sido modificado. Recarga la página para ver los cambios más recientes.',
         actionType: 'refresh',
         isRetryable: false,
         buttonText: 'Recargar',
@@ -246,7 +247,8 @@ export class ApiError extends Error {
     if (this.isServerError) {
       return {
         message: 'Error en el servidor.',
-        action: 'Estamos trabajando para solucionarlo. Por favor, intenta nuevamente en unos minutos.',
+        action:
+          'Estamos trabajando para solucionarlo. Por favor, intenta nuevamente en unos minutos.',
         actionType: 'retry',
         isRetryable: true,
         buttonText: 'Reintentar',
@@ -308,11 +310,11 @@ export async function createApiErrorFromResponse(response: Response): Promise<Ap
     timestamp?: string;
     requestId?: string;
   };
-  
+
   let errorData: ErrorResponse;
-  
+
   try {
-    errorData = await response.json() as ErrorResponse;
+    errorData = (await response.json()) as ErrorResponse;
   } catch {
     // Si no es JSON, usar texto
     const textData = await response.text();
@@ -342,58 +344,3 @@ export async function createApiErrorFromResponse(response: Response): Promise<Ap
     options
   );
 }
-
-/**
- * Check if error is an ApiError
- */
-export function isApiError(error: unknown): error is ApiError {
-  return error instanceof ApiError;
-}
-
-/**
- * Get a user-friendly message from any error type
- */
-export function getUserErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.userMessage;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (typeof error === 'string') {
-    return error;
-  }
-
-  return 'Ha ocurrido un error inesperado.';
-}
-
-/**
- * Get actionable message from any error type
- */
-export function getActionableErrorMessage(error: unknown): ActionableMessage {
-  if (error instanceof ApiError) {
-    return error.getActionableMessage();
-  }
-
-  // Network error (fetch failed)
-  if (error instanceof TypeError && error.message.includes('fetch')) {
-    return {
-      message: 'Error de conexión.',
-      action: 'Verifica tu conexión a internet e intenta nuevamente.',
-      actionType: 'retry',
-      isRetryable: true,
-      buttonText: 'Reintentar',
-    };
-  }
-
-  // Generic error
-  return {
-    message: error instanceof Error ? error.message : 'Ha ocurrido un error inesperado.',
-    action: 'Si el problema persiste, contacta al soporte técnico.',
-    actionType: 'none',
-    isRetryable: false,
-  };
-}
-

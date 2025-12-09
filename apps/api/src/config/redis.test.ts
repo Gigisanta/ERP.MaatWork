@@ -126,16 +126,28 @@ describe('redis config', () => {
   });
 
   describe('buildCacheKey', () => {
-    it('debería construir key correctamente', () => {
-      const key = buildCacheKey('test', 'path', 'query');
+    it('debería construir key correctamente con prefijo que incluye dominio', () => {
+      const key = buildCacheKey('bloomberg:', 'test', 'path', 'query');
 
-      expect(key).toBe('bloomberg:test:path:query');
+      expect(key).toBe('bloomberg::test:path:query');
     });
 
-    it('debería construir key con múltiples partes', () => {
-      const key = buildCacheKey('test', 'path1', 'path2', 'path3');
+    it('debería construir key con múltiples partes usando prefijo con dominio', () => {
+      const key = buildCacheKey('bloomberg:', 'test', 'path1', 'path2', 'path3');
 
-      expect(key).toBe('bloomberg:test:path1:path2:path3');
+      expect(key).toBe('bloomberg::test:path1:path2:path3');
+    });
+
+    it('debería construir key correctamente sin prefijo de dominio', () => {
+      const key = buildCacheKey('test', 'path', 'query');
+
+      expect(key).toBe('crm:test:path:query');
+    });
+
+    it('debería usar prefijo crm: por defecto cuando no se especifica dominio', () => {
+      const key = buildCacheKey('test', 'path', 'query');
+
+      expect(key).toBe('crm:test:path:query');
     });
   });
 

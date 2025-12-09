@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { paginationQuerySchema } from '../../utils/common-schemas';
+import { optionalEmailSchema } from '../../utils/validation-common';
 
 // ==========================================================
 // Query Parameter Schemas
@@ -38,7 +39,7 @@ const optionalLongText = z.string().max(2000).trim().optional().nullable();
 export const createContactSchema = z.object({
   firstName: z.string().min(1).max(255),
   lastName: z.string().min(1).max(255),
-  email: z.string().email().optional().nullable(),
+  email: optionalEmailSchema,
   phone: z.string().max(50).optional().nullable(),
   phoneSecondary: z.string().max(50).optional().nullable(),
   whatsapp: z.string().max(50).optional().nullable(),

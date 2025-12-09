@@ -172,9 +172,13 @@ const nextConfig = {
     // AI_DECISION: Asegurar resoluci?n correcta de alias para dynamic imports
     // Justificaci?n: Webpack puede tener problemas resolviendo alias @/ en m?dulos cargados din?micamente
     // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en dynamic imports
+    // AI_DECISION: Usar directamente el directorio dist para evitar problemas con symlinks y resoluci?n de m?dulos internos
+    // Justificaci?n: Symlinks de pnpm pueden causar problemas con webpack al resolver imports relativos dentro de @cactus/ui
+    // Impacto: Resuelve errores de resoluci?n al usar directamente el directorio dist compilado
+    const uiDistPath = path.resolve(__dirname, '../../packages/ui/dist');
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@cactus/ui': uiPath,
+      '@cactus/ui': uiDistPath,
       '@cactus/ui/styles.css': path.resolve(__dirname, '../../packages/ui/dist/styles.css'),
       '@cactus/db': dbPath,
       // Asegurar que @/ se resuelva correctamente para dynamic imports
@@ -189,6 +193,35 @@ const nextConfig = {
     } else if (!config.resolve.modules.includes('node_modules')) {
       config.resolve.modules.push('node_modules');
     }
+
+    // AI_DECISION: Mejorar resoluci?n de m?dulos internos de @cactus/ui
+    // Justificaci?n: Webpack tiene problemas resolviendo imports relativos dentro de @cactus/ui (ej: '../../utils/cn')
+    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" al resolver m?dulos internos
+    // Agregar el directorio dist de @cactus/ui a la resoluci?n de m?dulos para que webpack pueda resolver imports relativos
+    const uiDistDir = path.resolve(__dirname, '../../packages/ui/dist');
+    if (!config.resolve.modules.includes(uiDistDir)) {
+      config.resolve.modules.unshift(uiDistDir);
+    }
+
+    // AI_DECISION: Configurar resolveLoader para asegurar que webpack pueda resolver loaders correctamente
+    // Justificaci?n: Problemas de resoluci?n pueden estar relacionados con loaders de webpack
+    // Impacto: Asegura que webpack pueda resolver todos los loaders necesarios para procesar m?dulos
+    if (!config.resolveLoader) {
+      config.resolveLoader = {};
+    }
+    if (!config.resolveLoader.modules) {
+      config.resolveLoader.modules = ['node_modules'];
+    }
+
+    // AI_DECISION: Configurar mainFields para asegurar que webpack use los archivos compilados correctos
+    // Justificaci?n: Webpack necesita saber qu? campo del package.json usar para resolver m?dulos en monorepos
+    // Impacto: Asegura que webpack use los archivos compilados de dist/ en lugar de src/
+    config.resolve.mainFields = ['main', 'module', 'exports', 'browser'];
+
+    // AI_DECISION: Configurar conditionNames para resolver exports correctamente
+    // Justificaci?n: Next.js y webpack necesitan saber qu? condiciones usar al resolver exports del package.json
+    // Impacto: Resuelve correctamente los exports definidos en @cactus/ui/package.json
+    config.resolve.conditionNames = ['import', 'require', 'default', 'browser', 'module'];
 
     // AI_DECISION: Mejorar resoluci?n de m?dulos para dynamic imports
     // Justificaci?n: Dynamic imports necesitan resoluci?n expl?cita de extensiones y m?dulos
