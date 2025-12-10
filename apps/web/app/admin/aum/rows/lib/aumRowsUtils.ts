@@ -1,6 +1,6 @@
 /**
  * AUM Rows Utility Functions
- * 
+ *
  * AI_DECISION: Extraer funciones puras para mejor testability
  * Justificación: Funciones puras son fáciles de testear y reutilizar
  * Impacto: Mejor cobertura de tests y código más mantenible
@@ -17,7 +17,7 @@ export function formatNumber(value: number | null | undefined): string {
   // Asegurar que 0 se muestra como "0,00" y no como "--"
   return new Intl.NumberFormat('es-AR', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -30,7 +30,7 @@ export function formatCurrency(value: number | null | undefined): string {
     style: 'currency',
     currency: 'ARS',
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -38,7 +38,9 @@ export function formatCurrency(value: number | null | undefined): string {
  * Build column widths for table based on config
  */
 export function buildColumnWidths(config: Record<string, number>): string {
-  return Object.values(config).map(width => `${width}px`).join(' ');
+  return Object.values(config)
+    .map((width) => `${width}px`)
+    .join(' ');
 }
 
 /**
@@ -46,11 +48,11 @@ export function buildColumnWidths(config: Record<string, number>): string {
  */
 export function parseErrorMessage(error: unknown): string {
   if (!error) return 'An unknown error occurred';
-  
+
   if (typeof error === 'string') return error;
-  
+
   if (error instanceof Error) return error.message;
-  
+
   if (typeof error === 'object') {
     // Try to extract message from common error shapes
     const errorObj = error as Record<string, unknown>;
@@ -64,7 +66,7 @@ export function parseErrorMessage(error: unknown): string {
       return errorObj.details;
     }
   }
-  
+
   return 'An unknown error occurred';
 }
 
@@ -87,7 +89,7 @@ export function formatDate(date: Date | string | null | undefined): string {
   return dateObj.toLocaleDateString('es-AR', {
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
+    day: '2-digit',
   });
 }
 
@@ -103,7 +105,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 }
 
@@ -122,7 +124,7 @@ export function formatMatchStatus(status: 'matched' | 'ambiguous' | 'unmatched')
   const statusMap = {
     matched: 'Matcheado',
     ambiguous: 'Ambiguo',
-    unmatched: 'Sin Match'
+    unmatched: 'Sin Match',
   };
   return statusMap[status] || status;
 }
@@ -134,8 +136,7 @@ export function getMatchStatusColor(status: 'matched' | 'ambiguous' | 'unmatched
   const colorMap = {
     matched: 'text-green-600',
     ambiguous: 'text-yellow-600',
-    unmatched: 'text-red-600'
+    unmatched: 'text-red-600',
   };
   return colorMap[status] || 'text-gray-600';
 }
-

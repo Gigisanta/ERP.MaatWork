@@ -1,11 +1,11 @@
 /**
  * API Client
- * 
+ *
  * Main API client using modular components for:
  * - Request building (headers, body serialization)
  * - Retry logic with exponential backoff
  * - Auth management (token refresh)
- * 
+ *
  * AI_DECISION: Migración a cookies httpOnly exclusivas
  * Justificación: Más seguro (inmune a XSS), simplifica código (sin dual storage)
  * Impacto: Breaking change - requiere re-login de usuarios activos
@@ -30,20 +30,14 @@ export class ApiClient {
       retries: 2, // AI_DECISION: 2 retries = 3 total attempts for better resilience
       ...configOverride,
     };
-    
-    this.authManager = new AuthManager(
-      this.config,
-      this.fetchWithTimeout.bind(this)
-    );
+
+    this.authManager = new AuthManager(this.config, this.fetchWithTimeout.bind(this));
   }
 
   /**
    * Fetch with timeout
    */
-  private async fetchWithTimeout(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
+  private async fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
     const timeout = (options as RequestOptions).timeout || this.config.timeout;
 
     const controller = new AbortController();
@@ -92,7 +86,7 @@ export class ApiClient {
         // Handle non-successful responses
         if (!response.ok) {
           const error = await createApiErrorFromResponse(response);
-          
+
           // Handle 401 with automatic token refresh (only on first attempt)
           if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
             try {
@@ -103,7 +97,7 @@ export class ApiClient {
               throw error;
             }
           }
-          
+
           // Extract Retry-After header for 429
           if (response.status === 429) {
             const retryAfter = response.headers.get('Retry-After');
@@ -111,21 +105,17 @@ export class ApiClient {
               (error as ApiError & { retryAfter?: string }).retryAfter = retryAfter;
             }
           }
-          
+
           throw error;
         }
 
         // Parse and normalize response
         return await this.normalizeResponse<T>(response);
-
       } catch (error) {
         lastError = error as Error;
 
         // If last attempt or non-retryable error, throw
-        if (
-          attempt === maxRetries ||
-          error instanceof ApiError && !shouldRetry(error)
-        ) {
+        if (attempt === maxRetries || (error instanceof ApiError && !shouldRetry(error))) {
           throw error;
         }
 
@@ -148,7 +138,7 @@ export class ApiClient {
    */
   private async normalizeResponse<T>(response: Response): Promise<ApiResponse<T>> {
     const data = await response.json();
-    
+
     // Normalize responses that use { ok: boolean } instead of { success }
     if (data && typeof data === 'object' && !('success' in data) && 'ok' in data) {
       const ok = Boolean((data as { ok: boolean }).ok);
@@ -161,16 +151,13 @@ export class ApiClient {
       }
       return normalized;
     }
-    
+
     return data as ApiResponse<T>;
   }
 
   // HTTP Methods
 
-  async get<T = unknown>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<ApiResponse<T>> {
+  async get<T = unknown>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
     return this.requestWithRetry<T>(buildUrl(this.config.baseUrl, endpoint), {
       ...options,
       method: 'GET',
@@ -240,5 +227,3 @@ export class ApiClient {
     await this.post('/v1/auth/logout', {});
   }
 }
-
-

@@ -16,7 +16,7 @@
   /* ============================================================
      Brand Color Variables (Mapped from UI Package)
      ============================================================ */
-  
+
   /* Primary Brand Colors (Soft Purple) */
   --color-primary: #8b5cf6;
   --color-primary-hover: #7c3aed;
@@ -45,19 +45,19 @@
   /* ============================================================
      Semantic Color Variables
      ============================================================ */
-  
+
   --color-success: #22c55e;
   --color-success-hover: #16a34a;
   --color-success-subtle: #f0fdf4;
-  
+
   --color-error: #ef4444;
   --color-error-hover: #dc2626;
   --color-error-subtle: #fef2f2;
-  
+
   --color-warning: #f97316;
   --color-warning-hover: #ea580c;
   --color-warning-subtle: #fff7ed;
-  
+
   --color-info: #3b82f6;
   --color-info-hover: #2563eb;
   --color-info-subtle: #eff6ff;
@@ -65,26 +65,26 @@
   /* ============================================================
      Surface & Background Colors (Cream Palette)
      ============================================================ */
-  
+
   --color-background: #fdfcf8; /* Cream base */
-  --color-surface: #ffffff;    /* Pure white for cleaner look */
+  --color-surface: #ffffff; /* Pure white for cleaner look */
   --color-surface-hover: #fafaf9;
-  --color-border: #e5e5e5;     /* Lighter, cleaner border */
+  --color-border: #e5e5e5; /* Lighter, cleaner border */
   --color-border-hover: #d4d4d4;
 
   /* ============================================================
      Text Colors (High Contrast Warm Grays)
      ============================================================ */
-  
-  --color-text: #18181b;         /* Zinc 900 */
+
+  --color-text: #18181b; /* Zinc 900 */
   --color-text-secondary: #3f3f46; /* Zinc 700 */
-  --color-text-muted: #71717a;     /* Zinc 500 */
+  --color-text-muted: #71717a; /* Zinc 500 */
   --color-text-inverse: #ffffff;
 
   /* ============================================================
      Chart Colors for Data Visualization
      ============================================================ */
-  
+
   --color-chart-1: #8b5cf6; /* Soft Purple */
   --color-chart-2: #14b8a6; /* Fresh Teal */
   --color-chart-3: #f59e0b; /* Warm Amber */
@@ -95,13 +95,13 @@
   /* ============================================================
      Design Tokens
      ============================================================ */
-  
+
   /* Shadows - Refined for "Clean" look */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-  
+
   /* Primary Glow Shadow - Smoother */
   --shadow-primary: 0 4px 20px -2px rgba(139, 92, 246, 0.25);
   --shadow-primary-lg: 0 10px 30px -4px rgba(139, 92, 246, 0.35);
@@ -123,12 +123,12 @@
   /* ============================================================
      Auth Page Gradients (Centralized Configuration)
      ============================================================ */
-  
+
   /* RGB values for gradients with opacity */
-  --auth-primary-rgb: 139, 92, 246;      /* --color-primary */
-  --auth-accent-rgb: 20, 184, 166;       /* --color-accent */
-  --auth-joy-rgb: 245, 158, 11;          /* --color-joy */
-  
+  --auth-primary-rgb: 139, 92, 246; /* --color-primary */
+  --auth-accent-rgb: 20, 184, 166; /* --color-accent */
+  --auth-joy-rgb: 245, 158, 11; /* --color-joy */
+
   /* Light mode gradient opacities */
   --auth-gradient-opacity-primary: 0.15;
   --auth-gradient-opacity-accent: 0.12;
@@ -142,7 +142,7 @@
   /* ============================================================
      shadcn Compatibility Variables (mapped to semantic colors)
      ============================================================ */
-  
+
   --background: 0 0% 100%;
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
@@ -170,7 +170,7 @@
    ============================================================ */
 
 .dark,
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-primary: #a78bfa;
   --color-primary-hover: #c4b5fd;
   --color-primary-active: #ddd6fe;
@@ -210,15 +210,15 @@
 
   /* Dark surfaces (Deep Obsidian) */
   --color-background: #0f0f12; /* Rich Obsidian */
-  --color-surface: #18181b;    /* Zinc 900 */
+  --color-surface: #18181b; /* Zinc 900 */
   --color-surface-hover: #27272a; /* Zinc 800 */
   --color-border: #27272a;
   --color-border-hover: #3f3f46;
 
   /* Inverted text - Crisp & Clean */
-  --color-text: #f4f4f5;         /* Zinc 100 */
+  --color-text: #f4f4f5; /* Zinc 100 */
   --color-text-secondary: #a1a1aa; /* Zinc 400 */
-  --color-text-muted: #71717a;     /* Zinc 500 */
+  --color-text-muted: #71717a; /* Zinc 500 */
   --color-text-inverse: #09090b;
 
   /* Purple glow for dark mode */
@@ -247,10 +247,10 @@
   --ring: 263 90% 75%;
 
   /* Dark mode RGB values (using light variants) */
-  --auth-primary-rgb: 167, 139, 250;    /* --color-primary (dark mode) */
-  --auth-accent-rgb: 45, 212, 191;       /* --color-accent-light (dark mode) */
-  --auth-joy-rgb: 251, 191, 36;          /* --color-joy-light (dark mode) */
-  
+  --auth-primary-rgb: 167, 139, 250; /* --color-primary (dark mode) */
+  --auth-accent-rgb: 45, 212, 191; /* --color-accent-light (dark mode) */
+  --auth-joy-rgb: 251, 191, 36; /* --color-joy-light (dark mode) */
+
   /* Dark mode gradient opacities (slightly reduced) */
   --auth-gradient-opacity-primary: 0.12;
   --auth-gradient-opacity-accent: 0.1;
@@ -277,12 +277,19 @@ html {
 body {
   color: var(--color-text);
   /* Typography: Plus Jakarta Sans for body (Modern & Clean) */
-  font-family: var(--font-body), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    var(--font-body),
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
+
   /* App-wide background - Modern Gradients */
   min-height: 100vh;
   background-color: var(--color-background);
@@ -295,25 +302,25 @@ body {
       transparent 60%
     ),
     /* Accent Teal Orb */
-    radial-gradient(
-      circle at 10% 15%,
-      rgba(20, 184, 166, 0.08) 0%,
-      rgba(45, 212, 191, 0.03) 30%,
-      transparent 60%
-    ),
+      radial-gradient(
+        circle at 10% 15%,
+        rgba(20, 184, 166, 0.08) 0%,
+        rgba(45, 212, 191, 0.03) 30%,
+        transparent 60%
+      ),
     /* Joy Amber Orb */
-    radial-gradient(
-      circle at 5% 90%,
-      rgba(245, 158, 11, 0.06) 0%,
-      rgba(251, 191, 36, 0.02) 30%,
-      transparent 60%
-    );
+      radial-gradient(
+        circle at 5% 90%,
+        rgba(245, 158, 11, 0.06) 0%,
+        rgba(251, 191, 36, 0.02) 30%,
+        transparent 60%
+      );
   background-attachment: fixed;
 }
 
 /* Dark mode body background */
 .dark body,
-[data-theme="dark"] body {
+[data-theme='dark'] body {
   background-color: var(--color-background);
   background-image: 
     /* Primary Purple Glow */
@@ -324,12 +331,12 @@ body {
       transparent 70%
     ),
     /* Accent Teal Glow */
-    radial-gradient(
-      circle at 10% 15%,
-      rgba(20, 184, 166, 0.1) 0%,
-      rgba(13, 148, 136, 0.04) 40%,
-      transparent 70%
-    );
+      radial-gradient(
+        circle at 10% 15%,
+        rgba(20, 184, 166, 0.1) 0%,
+        rgba(13, 148, 136, 0.04) 40%,
+        transparent 70%
+      );
 }
 
 /* ============================================================
@@ -342,24 +349,24 @@ body {
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 
+  box-shadow:
     0 4px 20px -2px rgba(0, 0, 0, 0.05),
     0 2px 4px -2px rgba(0, 0, 0, 0.02);
 }
 
 /* Dark Mode Glass */
 .dark .glass-card,
-[data-theme="dark"] .glass-card {
+[data-theme='dark'] .glass-card {
   background: rgba(24, 24, 27, 0.75); /* Zinc 900 */
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
+  box-shadow:
     0 10px 30px -4px rgba(0, 0, 0, 0.3),
     0 4px 10px -2px rgba(0, 0, 0, 0.2);
 }
 
 /* Sidebar - Glass */
-aside, 
+aside,
 nav:not(.header-nav) {
   background: rgba(253, 252, 248, 0.95) !important;
   backdrop-filter: blur(16px);
@@ -369,15 +376,15 @@ nav:not(.header-nav) {
 
 .dark aside,
 .dark nav:not(.header-nav),
-[data-theme="dark"] aside,
-[data-theme="dark"] nav:not(.header-nav) {
+[data-theme='dark'] aside,
+[data-theme='dark'] nav:not(.header-nav) {
   background: rgba(24, 24, 27, 0.9) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Header - Glass */
 header,
-[role="banner"] {
+[role='banner'] {
   background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -385,23 +392,23 @@ header,
 }
 
 .dark header,
-.dark [role="banner"],
-[data-theme="dark"] header,
-[data-theme="dark"] [role="banner"] {
+.dark [role='banner'],
+[data-theme='dark'] header,
+[data-theme='dark'] [role='banner'] {
   background: rgba(24, 24, 27, 0.9) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Primary button enhancements */
-button[class*="primary"],
-[class*="btn-primary"],
+button[class*='primary'],
+[class*='btn-primary'],
 .cactus-button-primary {
   box-shadow: var(--shadow-primary);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-button[class*="primary"]:hover,
-[class*="btn-primary"]:hover,
+button[class*='primary']:hover,
+[class*='btn-primary']:hover,
 .cactus-button-primary:hover {
   box-shadow: var(--shadow-primary-lg);
   transform: translateY(-2px);
@@ -412,17 +419,43 @@ button[class*="primary"]:hover,
    ============================================================ */
 
 /* Headings use Outfit - Modern Geometric */
-h1, h2, h3, h4, h5, h6,
-.heading, .font-display {
-  font-family: var(--font-display), 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.heading,
+.font-display {
+  font-family:
+    var(--font-display),
+    'Outfit',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
   letter-spacing: -0.01em;
   font-weight: 700;
 }
 
 /* Body text uses Plus Jakarta Sans - Modern & Readable */
-p, span, div, li, td, th,
-.body, .font-body {
-  font-family: var(--font-body), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+p,
+span,
+div,
+li,
+td,
+th,
+.body,
+.font-body {
+  font-family:
+    var(--font-body),
+    'Plus Jakarta Sans',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
 
 /* ============================================================
@@ -430,22 +463,37 @@ p, span, div, li, td, th,
    ============================================================ */
 
 /* Entry Animations */
-.animate-enter { animation: springSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-.animate-pop { animation: springScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-enter {
+  animation: springSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-pop {
+  animation: springScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
 
 /* Continuous Animations */
-.animate-pulse-soft { animation: pulseSoft 2s ease-in-out infinite; }
-.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-pulse-soft {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
 
 /* Transitions */
-.transition-spring { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.transition-spring {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
 /* ============================================================
    Loading & Skeleton States
    ============================================================ */
 
 .skeleton {
-  background: linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-hover) 50%, var(--color-surface) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-surface-hover) 50%,
+    var(--color-surface) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
   border-radius: var(--radius-md);
@@ -462,16 +510,26 @@ p, span, div, li, td, th,
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.gradient-primary { background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); }
-.gradient-joy { background: linear-gradient(135deg, var(--color-joy) 0%, var(--color-joy-hover) 100%); }
+.gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+}
+.gradient-joy {
+  background: linear-gradient(135deg, var(--color-joy) 0%, var(--color-joy-hover) 100%);
+}
 
 /* ============================================================
    Mobile Improvements
    ============================================================ */
 
 @layer utilities {
-  .touch-target { min-width: 44px; min-height: 44px; }
-  .scroll-touch { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
 
 /* ============================================================
@@ -498,7 +556,7 @@ p, span, div, li, td, th,
     rgb(var(--auth-accent-rgb) / var(--auth-gradient-opacity-accent)) 50%,
     rgb(var(--auth-joy-rgb) / var(--auth-gradient-opacity-joy)) 100%
   );
-  background-image: 
+  background-image:
     radial-gradient(
       circle at 20% 30%,
       rgb(var(--auth-primary-rgb) / var(--auth-radial-opacity-primary)) 0%,

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import {
   Card,
@@ -37,21 +37,18 @@ interface NotesSectionProps {
 
 /**
  * NotesSection - Client Island for notes management
- * 
+ *
  * @example
  * <NotesSection
  *   contactId={contact.id}
  *   initialNotes={notes}
  * />
  */
-export default function NotesSection({ 
-  contactId, 
-  initialNotes 
-}: NotesSectionProps) {
+export default function NotesSection({ contactId, initialNotes }: NotesSectionProps) {
   const { notes, error, isLoading, mutate } = useNotes(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   // Estado para ConfirmDialog
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -62,13 +59,13 @@ export default function NotesSection({
   }>({
     open: false,
     title: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
   const [newNote, setNewNote] = useState({
     content: '',
     noteType: 'general',
-    source: 'manual'
+    source: 'manual',
   });
 
   const handleCreateNote = async () => {
@@ -76,7 +73,7 @@ export default function NotesSection({
     try {
       await createNote({
         content: newNote.content,
-        contactId
+        contactId,
       });
 
       await mutate(); // Refresh data
@@ -102,45 +99,63 @@ export default function NotesSection({
         } catch (err) {
           logger.error('Error deleting note', toLogContext({ err, noteId }));
         }
-      }
+      },
     });
   };
 
   const getNoteTypeBadgeVariant = (noteType: string) => {
     switch (noteType) {
-      case 'call': return 'default';
-      case 'meeting': return 'success';
-      case 'email': return 'warning';
-      case 'general': return 'default';
-      default: return 'default';
+      case 'call':
+        return 'default';
+      case 'meeting':
+        return 'success';
+      case 'email':
+        return 'warning';
+      case 'general':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
   const getNoteTypeLabel = (noteType: string) => {
     switch (noteType) {
-      case 'call': return 'Llamada';
-      case 'meeting': return 'Reunión';
-      case 'email': return 'Email';
-      case 'general': return 'General';
-      default: return noteType;
+      case 'call':
+        return 'Llamada';
+      case 'meeting':
+        return 'Reunión';
+      case 'email':
+        return 'Email';
+      case 'general':
+        return 'General';
+      default:
+        return noteType;
     }
   };
 
   const getSourceBadgeVariant = (source: string) => {
     switch (source) {
-      case 'manual': return 'default';
-      case 'system': return 'default';
-      case 'import': return 'warning';
-      default: return 'default';
+      case 'manual':
+        return 'default';
+      case 'system':
+        return 'default';
+      case 'import':
+        return 'warning';
+      default:
+        return 'default';
     }
   };
 
   const getSourceLabel = (source: string) => {
     switch (source) {
-      case 'manual': return 'Manual';
-      case 'system': return 'Sistema';
-      case 'import': return 'Importado';
-      default: return source;
+      case 'manual':
+        return 'Manual';
+      case 'system':
+        return 'Sistema';
+      case 'import':
+        return 'Importado';
+      default:
+        return source;
     }
   };
 
@@ -151,11 +166,7 @@ export default function NotesSection({
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Notas</CardTitle>
-          <Button 
-            variant="primary" 
-            size="sm"
-            onClick={() => setShowCreateModal(true)}
-          >
+          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
             Agregar Nota
           </Button>
         </div>
@@ -170,48 +181,44 @@ export default function NotesSection({
             Error al cargar las notas
           </Alert>
         ) : notesList.length === 0 ? (
-          <EmptyState
-            title="Sin notas"
-            description="Este contacto no tiene notas registradas"
-          />
+          <EmptyState title="Sin notas" description="Este contacto no tiene notas registradas" />
         ) : (
           <Stack direction="column" gap="md">
             {notesList
-              .sort((a: Note, b: Note) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .sort(
+                (a: Note, b: Note) =>
+                  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              )
               .map((note: Note) => (
-              <div key={note.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={getNoteTypeBadgeVariant(note.noteType || 'general')}>
-                        {getNoteTypeLabel(note.noteType || 'general')}
-                      </Badge>
-                      <Badge variant={getSourceBadgeVariant(note.source || 'manual')}>
-                        {getSourceLabel(note.source || 'manual')}
-                      </Badge>
-                      {note.authorName && (
-                        <Text size="xs" color="muted">
-                          por {note.authorName}
-                        </Text>
-                      )}
+                <div key={note.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant={getNoteTypeBadgeVariant(note.noteType || 'general')}>
+                          {getNoteTypeLabel(note.noteType || 'general')}
+                        </Badge>
+                        <Badge variant={getSourceBadgeVariant(note.source || 'manual')}>
+                          {getSourceLabel(note.source || 'manual')}
+                        </Badge>
+                        {note.authorName && (
+                          <Text size="xs" color="muted">
+                            por {note.authorName}
+                          </Text>
+                        )}
+                      </div>
+                      <Text size="sm" className="mb-2">
+                        {note.content}
+                      </Text>
+                      <Text size="xs" color="muted">
+                        {new Date(note.createdAt).toLocaleString()}
+                      </Text>
                     </div>
-                    <Text size="sm" className="mb-2">
-                      {note.content}
-                    </Text>
-                    <Text size="xs" color="muted">
-                      {new Date(note.createdAt).toLocaleString()}
-                    </Text>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteNote(note.id)}>
+                      Eliminar
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteNote(note.id)}
-                  >
-                    Eliminar
-                  </Button>
                 </div>
-              </div>
-            ))}
+              ))}
           </Stack>
         )}
       </CardContent>
@@ -224,10 +231,12 @@ export default function NotesSection({
         <ModalContent>
           <Stack direction="column" gap="md">
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Tipo de Nota</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Tipo de Nota
+              </Text>
               <select
                 value={newNote.noteType}
-                onChange={(e) => setNewNote(prev => ({ ...prev, noteType: e.target.value }))}
+                onChange={(e) => setNewNote((prev) => ({ ...prev, noteType: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="general">General</option>
@@ -237,10 +246,12 @@ export default function NotesSection({
               </select>
             </div>
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Contenido</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Contenido
+              </Text>
               <textarea
                 value={newNote.content}
-                onChange={(e) => setNewNote(prev => ({ ...prev, content: e.target.value }))}
+                onChange={(e) => setNewNote((prev) => ({ ...prev, content: e.target.value }))}
                 placeholder="Escribe tu nota aquí..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 rows={4}
@@ -249,15 +260,11 @@ export default function NotesSection({
           </Stack>
         </ModalContent>
         <ModalFooter>
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowCreateModal(false)}
-            disabled={saving}
-          >
+          <Button variant="secondary" onClick={() => setShowCreateModal(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleCreateNote}
             disabled={saving || !newNote.content.trim()}
           >
@@ -269,7 +276,7 @@ export default function NotesSection({
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

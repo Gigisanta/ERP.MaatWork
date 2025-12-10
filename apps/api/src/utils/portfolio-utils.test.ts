@@ -1,6 +1,6 @@
 /**
  * Tests para portfolio-utils
- * 
+ *
  * AI_DECISION: Tests unitarios para utilidades de portfolios
  * Justificación: Validación crítica de cálculos matemáticos
  * Impacto: Prevenir errores en cálculos de peso
@@ -11,22 +11,14 @@ import { calculateTotalWeight, isValidTotalWeight } from './portfolio-utils';
 
 describe('calculateTotalWeight', () => {
   it('debería calcular peso total correctamente', () => {
-    const lines = [
-      { targetWeight: 0.3 },
-      { targetWeight: 0.4 },
-      { targetWeight: 0.3 }
-    ];
+    const lines = [{ targetWeight: 0.3 }, { targetWeight: 0.4 }, { targetWeight: 0.3 }];
 
     const total = calculateTotalWeight(lines);
     expect(total).toBe(1.0);
   });
 
   it('debería manejar pesos como strings', () => {
-    const lines = [
-      { targetWeight: '0.25' },
-      { targetWeight: '0.25' },
-      { targetWeight: '0.5' }
-    ];
+    const lines = [{ targetWeight: '0.25' }, { targetWeight: '0.25' }, { targetWeight: '0.5' }];
 
     const total = calculateTotalWeight(lines);
     expect(total).toBe(1.0);
@@ -39,11 +31,7 @@ describe('calculateTotalWeight', () => {
   });
 
   it('debería manejar pesos mixtos (string y number)', () => {
-    const lines = [
-      { targetWeight: 0.3 },
-      { targetWeight: '0.4' },
-      { targetWeight: 0.3 }
-    ];
+    const lines = [{ targetWeight: 0.3 }, { targetWeight: '0.4' }, { targetWeight: 0.3 }];
 
     const total = calculateTotalWeight(lines);
     expect(total).toBe(1.0);
@@ -75,4 +63,3 @@ describe('isValidTotalWeight', () => {
     expect(isValidTotalWeight(0.99, 0.001)).toBe(false);
   });
 });
-

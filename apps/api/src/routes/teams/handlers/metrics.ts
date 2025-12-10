@@ -19,8 +19,8 @@ import {
 } from '@cactus/db/schema';
 import { eq, and, sum, count, gte, sql, desc } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
-import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/cache';
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
+import { validateUuidParam } from '../../../utils/validation/common-schemas';
 
 /**
  * Calculate days since a date

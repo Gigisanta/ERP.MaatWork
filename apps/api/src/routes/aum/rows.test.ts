@@ -7,6 +7,7 @@ import express from 'express';
 import request from 'supertest';
 import rowsRouter from './rows/index';
 import { signUserToken } from '../../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
@@ -66,7 +67,7 @@ vi.mock('../../services/aumMatcher', () => ({
   matchAdvisor: vi.fn(),
 }));
 
-vi.mock('../../utils/aum-normalization', () => ({
+vi.mock('../../utils/aum/aum-normalization', () => ({
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
 
@@ -76,12 +77,7 @@ import { aumImportRows, aumImportFiles } from '@cactus/db';
 const mockDb = vi.mocked(db);
 
 describe('AUM Rows Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', rowsRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () => createTestApp([{ path: '/admin/aum', router: rowsRouter }]);
 
   let adminToken: string;
 
@@ -151,7 +147,7 @@ describe('AUM Rows Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?limit=10&offset=0')
         .set('Cookie', `token=${adminToken}`)
@@ -186,7 +182,7 @@ describe('AUM Rows Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?broker=balanz')
         .set('Cookie', `token=${adminToken}`)
@@ -209,7 +205,7 @@ describe('AUM Rows Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?status=matched')
         .set('Cookie', `token=${adminToken}`)
@@ -278,7 +274,7 @@ describe('AUM Rows Routes', () => {
         update: mockUpdate,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/uploads/file-1/match')
         .set('Cookie', `token=${adminToken}`)

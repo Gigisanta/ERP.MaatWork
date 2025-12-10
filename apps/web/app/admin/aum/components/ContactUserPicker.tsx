@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 // AI_DECISION: Create simple picker component for contact/user matching
 // Justificación: Enables manual association of AUM rows with CRM contacts and users
@@ -24,7 +24,7 @@ function ContactUserPickerComponent({
   initialContactId,
   initialUserId,
   suggestedUserId,
-  onSave
+  onSave,
 }: ContactUserPickerProps) {
   const [contactId, setContactId] = useState(initialContactId || '');
   const [userId, setUserId] = useState(initialUserId || suggestedUserId || '');

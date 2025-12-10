@@ -11,9 +11,16 @@ import { db, advisorAccountMapping, advisorAliases } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { AUM_LIMITS } from '../../../config/aum-limits';
-import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../../utils/aum-normalization';
+import {
+  normalizeAccountNumber,
+  normalizeAdvisorAlias,
+} from '../../../utils/aum/aum-normalization';
 import { parseAumFile } from '../../../services/aumParser';
-import { createAumUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../../utils/file-upload';
+import {
+  createAumUpload,
+  handleMulterError,
+  DEFAULT_UPLOAD_DIR,
+} from '../../../utils/file/file-upload';
 
 const router = Router();
 

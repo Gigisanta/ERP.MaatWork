@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '../utils/cn';
-import { type ResponsiveProp } from '../tokens/breakpoints';
-import { buildResponsiveClasses } from '../utils/responsive';
+import { cn } from '../utils/cn.js';
+import { type ResponsiveProp } from '../tokens/breakpoints.js';
+import { buildResponsiveClasses } from '../utils/responsive.js';
 
 export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
   direction?: ResponsiveProp<'row' | 'column'>;

@@ -110,11 +110,13 @@ export default function TagManagementModal({
                     onChange={(e) => onNewTagColorChange(e.target.value)}
                     className="w-12 h-10 rounded-lg cursor-pointer border border-border hover:border-primary/50 transition-colors"
                   />
-                  <div 
+                  <div
                     className="flex-1 h-10 rounded-lg border border-border flex items-center px-3"
                     style={{ backgroundColor: newTagColor }}
                   >
-                    <span className="text-sm font-mono text-white drop-shadow-sm">{newTagColor}</span>
+                    <span className="text-sm font-mono text-white drop-shadow-sm">
+                      {newTagColor}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -168,11 +170,13 @@ export default function TagManagementModal({
                     onChange={(e) => onEditedTagColorChange(e.target.value)}
                     className="w-12 h-10 rounded-lg cursor-pointer border border-border hover:border-primary/50 transition-colors"
                   />
-                  <div 
+                  <div
                     className="flex-1 h-10 rounded-lg border border-border flex items-center px-3"
                     style={{ backgroundColor: editedTagColor }}
                   >
-                    <span className="text-sm font-mono text-white drop-shadow-sm">{editedTagColor}</span>
+                    <span className="text-sm font-mono text-white drop-shadow-sm">
+                      {editedTagColor}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -270,4 +274,3 @@ export default function TagManagementModal({
     </Modal>
   );
 }
-

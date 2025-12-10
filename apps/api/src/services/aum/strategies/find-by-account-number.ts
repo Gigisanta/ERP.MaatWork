@@ -9,7 +9,7 @@
 import { db } from '@cactus/db';
 import { sql } from 'drizzle-orm';
 import { logger } from '../../../utils/logger';
-import { normalizeAccountNumber } from '../../../utils/aum-normalization';
+import { normalizeAccountNumber } from '../../../utils/aum/aum-normalization';
 import type { AumRowInsert, AumRowDbResult, ExistingRow } from '../types';
 
 /**
@@ -67,30 +67,3 @@ export async function findByAccountNumber(
 
   return null;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

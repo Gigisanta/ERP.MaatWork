@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface PageTitleContextType {
@@ -39,4 +39,3 @@ export function usePageTitleContext() {
   }
   return context;
 }
-

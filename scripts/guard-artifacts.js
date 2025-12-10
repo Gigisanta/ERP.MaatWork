@@ -13,13 +13,7 @@ try {
   const files = output.split('\n').filter(Boolean);
 
   // Patrones prohibidos
-  const forbiddenPatterns = [
-    /\/node_modules\//,
-    /\/dist\//,
-    /\/build\//,
-    /\.next\//,
-    /\.turbo\//,
-  ];
+  const forbiddenPatterns = [/\/node_modules\//, /\/dist\//, /\/build\//, /\.next\//, /\.turbo\//];
 
   let foundForbidden = false;
 
@@ -44,4 +38,3 @@ try {
   console.error('Error checking artifacts:', error.message);
   process.exit(1);
 }
-

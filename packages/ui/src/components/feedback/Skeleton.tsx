@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export type SkeletonVariant = 'text' | 'circle' | 'rectangle' | 'button' | 'avatar' | 'card-header';
 export type SkeletonAnimation = 'pulse' | 'wave' | 'none';
@@ -22,48 +22,52 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 /**
  * Skeleton component for loading placeholders.
  * Provides visual feedback while content is loading.
- * 
+ *
  * @example
  * ```tsx
  * // Text skeleton (default)
  * <Skeleton width="200px" />
- * 
+ *
  * // Multiple text lines
  * <Skeleton variant="text" lines={3} />
- * 
+ *
  * // Circle (avatars, icons)
  * <Skeleton variant="circle" width={40} height={40} />
- * 
+ *
  * // Rectangle (cards, images)
  * <Skeleton variant="rectangle" width="100%" height={200} />
  * ```
  */
 export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
-  ({ 
-    variant = 'text', 
-    width, 
-    height, 
-    lines = 1, 
-    animate = true,
-    animation = 'wave',
-    className,
-    style,
-    ...props 
-  }, ref) => {
+  (
+    {
+      variant = 'text',
+      width,
+      height,
+      lines = 1,
+      animate = true,
+      animation = 'wave',
+      className,
+      style,
+      ...props
+    },
+    ref
+  ) => {
     // Animation classes based on animation prop or legacy animate prop
-    const animationClass = !animate ? '' : animation === 'pulse' 
-      ? 'animate-pulse' 
-      : animation === 'wave' 
-        ? 'skeleton-wave' 
-        : '';
+    const animationClass = !animate
+      ? ''
+      : animation === 'pulse'
+        ? 'animate-pulse'
+        : animation === 'wave'
+          ? 'skeleton-wave'
+          : '';
 
-    const baseClasses = cn(
-      'bg-surface dark:bg-gray-700 rounded',
-      animationClass,
-      className
-    );
+    const baseClasses = cn('bg-surface dark:bg-gray-700 rounded', animationClass, className);
 
-    const getStyle = (customWidth?: string | number, customHeight?: string | number): React.CSSProperties => ({
+    const getStyle = (
+      customWidth?: string | number,
+      customHeight?: string | number
+    ): React.CSSProperties => ({
       width: typeof customWidth === 'number' ? `${customWidth}px` : customWidth,
       height: typeof customHeight === 'number' ? `${customHeight}px` : customHeight,
       ...style,
@@ -106,7 +110,7 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
               className={cn(baseClasses, 'rounded h-4')}
               style={getStyle(
                 // Last line is shorter for natural text appearance
-                index === lines - 1 ? '75%' : (width || '100%'),
+                index === lines - 1 ? '75%' : width || '100%',
                 height || 16
               )}
             />
@@ -131,7 +135,7 @@ Skeleton.displayName = 'Skeleton';
 
 /**
  * SkeletonGroup component for composing multiple skeleton elements.
- * 
+ *
  * @example
  * ```tsx
  * <SkeletonGroup>
@@ -192,10 +196,7 @@ export const SkeletonCard = React.forwardRef<HTMLDivElement, SkeletonCardProps>(
     return (
       <div
         ref={ref}
-        className={cn(
-          'p-4 border border-gray-200 dark:border-gray-700 rounded-lg',
-          className
-        )}
+        className={cn('p-4 border border-gray-200 dark:border-gray-700 rounded-lg', className)}
         {...props}
       >
         <SkeletonGroup gap="md">
@@ -236,10 +237,10 @@ export const SkeletonTable = React.forwardRef<HTMLDivElement, SkeletonTableProps
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div key={`row-${rowIndex}`} className="flex gap-4">
             {Array.from({ length: columns }).map((_, colIndex) => (
-              <Skeleton 
-                key={`cell-${rowIndex}-${colIndex}`} 
-                height={16} 
-                width={`${100 / columns}%`} 
+              <Skeleton
+                key={`cell-${rowIndex}-${colIndex}`}
+                height={16}
+                width={`${100 / columns}%`}
               />
             ))}
           </div>

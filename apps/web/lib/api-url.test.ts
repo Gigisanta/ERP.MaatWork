@@ -1,6 +1,6 @@
 /**
  * Tests para api-url utility
- * 
+ *
  * AI_DECISION: Tests unitarios para construcción de URLs
  * Justificación: Prevenir errores en URLs de descarga y formularios
  * Impacto: UX y funcionalidad de features críticas
@@ -88,7 +88,7 @@ describe('api-url utility', () => {
       it('debería construir URL de exportación correctamente', () => {
         const fileId = '550e8400-e29b-41d4-a716-446655440000';
         const result = getApiUrl(`/admin/aum/uploads/${fileId}/export`);
-        
+
         expect(result).toMatch(/^https?:\/\//);
         expect(result).toContain('/admin/aum/uploads/');
         expect(result).toContain(fileId);
@@ -98,7 +98,7 @@ describe('api-url utility', () => {
       it('debería construir URL de commit correctamente', () => {
         const fileId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
         const result = getApiUrl(`/admin/aum/uploads/${fileId}/commit`);
-        
+
         expect(result).toMatch(/^https?:\/\//);
         expect(result).toContain('/admin/aum/uploads/');
         expect(result).toContain(fileId);
@@ -107,7 +107,7 @@ describe('api-url utility', () => {
 
       it('debería funcionar con enlaces de descarga', () => {
         const result = getApiUrl('/admin/aum/uploads/abc123/export');
-        
+
         // Debe ser una URL absoluta válida para usar en <a href>
         const url = new URL(result);
         expect(url.protocol).toMatch(/^https?:$/);
@@ -116,7 +116,7 @@ describe('api-url utility', () => {
 
       it('debería funcionar con form actions', () => {
         const result = getApiUrl('/admin/aum/uploads/def456/commit');
-        
+
         // Debe ser una URL absoluta válida para usar en <form action>
         const url = new URL(result);
         expect(url.protocol).toMatch(/^https?:$/);
@@ -176,4 +176,3 @@ describe('api-url utility', () => {
     });
   });
 });
-

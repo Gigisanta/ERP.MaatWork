@@ -4,8 +4,8 @@ import { db, advisorAliases, users } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
-import { uuidSchema } from '../utils/common-schemas';
-import { normalizeAdvisorAlias } from '../utils/aum-normalization';
+import { uuidSchema } from '../utils/validation/common-schemas';
+import { normalizeAdvisorAlias } from '../utils/aum/aum-normalization';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';
 
 const router = Router();
@@ -42,7 +42,10 @@ router.get(
     const requesterId = req.user?.id as string | undefined;
     const requesterRole = req.user?.role as 'admin' | 'manager' | 'advisor' | undefined;
     if (requesterRole === 'advisor' && requesterId) {
-      const rows = await dbi.select().from(advisorAliases).where(eq(advisorAliases.userId, requesterId));
+      const rows = await dbi
+        .select()
+        .from(advisorAliases)
+        .where(eq(advisorAliases.userId, requesterId));
       return { ok: true, aliases: rows };
     }
     const rows = await dbi.select().from(advisorAliases);
@@ -61,7 +64,10 @@ router.post(
     const requesterId = req.user?.id as string | undefined;
     const requesterRole = req.user?.role as 'admin' | 'manager' | 'advisor' | undefined;
     // Advisors can only create aliases for themselves; managers/admin unrestricted
-    if (!requesterId || (!['admin', 'manager'].includes(requesterRole || '') && requesterId !== userId)) {
+    if (
+      !requesterId ||
+      (!['admin', 'manager'].includes(requesterRole || '') && requesterId !== userId)
+    ) {
       throw new HttpError(403, 'Forbidden');
     }
     // Ensure user exists and is active
@@ -102,7 +108,11 @@ router.put(
 
     // If advisor, ensure the alias belongs to them and they cannot reassign to other users
     if (requesterRole === 'advisor') {
-      const [existing] = await dbi.select().from(advisorAliases).where(eq(advisorAliases.id, id)).limit(1);
+      const [existing] = await dbi
+        .select()
+        .from(advisorAliases)
+        .where(eq(advisorAliases.id, id))
+        .limit(1);
       if (!existing || (existing as any).userId !== requesterId) {
         throw new HttpError(403, 'Forbidden');
       }
@@ -156,7 +166,11 @@ router.delete(
     const requesterRole = req.user?.role as 'admin' | 'manager' | 'advisor' | undefined;
 
     if (requesterRole === 'advisor') {
-      const [existing] = await dbi.select().from(advisorAliases).where(eq(advisorAliases.id, id)).limit(1);
+      const [existing] = await dbi
+        .select()
+        .from(advisorAliases)
+        .where(eq(advisorAliases.id, id))
+        .limit(1);
       if (!existing || (existing as any).userId !== requesterId) {
         throw new HttpError(403, 'Forbidden');
       }

@@ -2,14 +2,14 @@
 
 /**
  * Performance Report Generator
- * 
+ *
  * AI_DECISION: Create automated performance report generator
  * Justificación: Provides comprehensive performance metrics in a single report
  * Impacto: Easier performance monitoring, better visibility of metrics
- * 
+ *
  * Usage:
  *   node scripts/generate-performance-report.js
- * 
+ *
  * This script generates a comprehensive performance report including:
  * - Bundle size metrics
  * - Lighthouse CI metrics (if available)
@@ -46,7 +46,7 @@ function loadLighthouseReport() {
     // Look for latest Lighthouse report
     if (fs.existsSync(LIGHTHOUSE_REPORT_PATH)) {
       const files = fs.readdirSync(LIGHTHOUSE_REPORT_PATH);
-      const jsonFiles = files.filter(f => f.endsWith('.json'));
+      const jsonFiles = files.filter((f) => f.endsWith('.json'));
       if (jsonFiles.length > 0) {
         const latest = jsonFiles.sort().reverse()[0];
         return JSON.parse(fs.readFileSync(path.join(LIGHTHOUSE_REPORT_PATH, latest), 'utf8'));
@@ -67,7 +67,7 @@ function generateReport() {
   // Get bundle metrics
   const bundleReport = loadBundleReport();
   let bundleMetrics = null;
-  
+
   if (!bundleReport) {
     console.log('⚠️  No bundle report found. Running bundle size check...');
     const result = checkBundleSizes();
@@ -94,7 +94,7 @@ function generateReport() {
  */
 function generateMarkdownReport(bundleMetrics, lighthouseMetrics) {
   const timestamp = new Date().toISOString();
-  
+
   let report = `# Performance Report
 
 **Generated:** ${new Date(timestamp).toLocaleString()}
@@ -123,14 +123,14 @@ function generateMarkdownReport(bundleMetrics, lighthouseMetrics) {
 
     if (bundleMetrics.errors.length > 0) {
       report += `\n### ⚠️ Errors\n\n`;
-      bundleMetrics.errors.forEach(error => {
+      bundleMetrics.errors.forEach((error) => {
         report += `- ${error}\n`;
       });
     }
 
     if (bundleMetrics.warnings.length > 0) {
       report += `\n### ⚠️ Warnings\n\n`;
-      bundleMetrics.warnings.forEach(warning => {
+      bundleMetrics.warnings.forEach((warning) => {
         report += `- ${warning}\n`;
       });
     }
@@ -145,7 +145,7 @@ function generateMarkdownReport(bundleMetrics, lighthouseMetrics) {
     if (lighthouseMetrics.lhr) {
       const scores = lighthouseMetrics.lhr.categories;
       report += `### Performance Scores\n\n`;
-      Object.keys(scores).forEach(key => {
+      Object.keys(scores).forEach((key) => {
         const score = scores[key];
         report += `- **${score.title}**: ${(score.score * 100).toFixed(0)}/100\n`;
       });
@@ -199,4 +199,3 @@ if (require.main === module) {
 }
 
 module.exports = { generateReport };
-

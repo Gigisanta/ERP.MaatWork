@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import { Text, Button, Icon } from '@cactus/ui';
 import { logger } from '@/lib/logger';
@@ -16,7 +16,7 @@ interface SortableListProps {
 
 /**
  * SortableList - Componente para listas ordenables con drag and drop
- * 
+ *
  * Permite agregar, editar, eliminar y reordenar items mediante drag and drop
  */
 export default function SortableList({
@@ -25,9 +25,9 @@ export default function SortableList({
   onAdd,
   onEdit,
   onDelete,
-  placeholder = "Agregar item...",
-  emptyMessage = "No hay items",
-  label
+  placeholder = 'Agregar item...',
+  emptyMessage = 'No hay items',
+  label,
 }: SortableListProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
@@ -63,7 +63,7 @@ export default function SortableList({
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    
+
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDraggedOverIndex(null);
@@ -73,7 +73,7 @@ export default function SortableList({
     const newItems = [...items];
     const [removed] = newItems.splice(draggedIndex, 1);
     newItems.splice(dropIndex, 0, removed);
-    
+
     onItemsChange(newItems);
     setDraggedIndex(null);
     setDraggedOverIndex(null);
@@ -100,13 +100,13 @@ export default function SortableList({
   return (
     <div className="space-y-3">
       {label && (
-        <Text size="sm" weight="medium" color="secondary">{label}</Text>
+        <Text size="sm" weight="medium" color="secondary">
+          {label}
+        </Text>
       )}
-      
+
       {items.length === 0 ? (
-        <div className="text-center py-4 text-gray-400 text-sm">
-          {emptyMessage}
-        </div>
+        <div className="text-center py-4 text-gray-400 text-sm">{emptyMessage}</div>
       ) : (
         <div className="space-y-2">
           {items.map((item, index) => (
@@ -145,18 +145,10 @@ export default function SortableList({
                     className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     autoFocus
                   />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleSaveEdit}
-                  >
+                  <Button size="sm" variant="ghost" onClick={handleSaveEdit}>
                     Guardar
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCancelEdit}
-                  >
+                  <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
                     Cancelar
                   </Button>
                 </div>
@@ -166,18 +158,10 @@ export default function SortableList({
                     <Text size="sm">{item}</Text>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleStartEdit(index)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => handleStartEdit(index)}>
                       <Icon name="edit" size={14} />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onDelete(index)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => onDelete(index)}>
                       <Icon name="trash-2" size={14} />
                     </Button>
                   </div>
@@ -188,16 +172,10 @@ export default function SortableList({
         </div>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onAdd}
-        className="w-full"
-      >
+      <Button variant="outline" size="sm" onClick={onAdd} className="w-full">
         <Icon name="plus" size={14} className="mr-2" />
         Agregar
       </Button>
     </div>
   );
 }
-

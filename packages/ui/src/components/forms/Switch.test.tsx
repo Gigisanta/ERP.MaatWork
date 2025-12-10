@@ -56,21 +56,21 @@ describe('Switch Component', () => {
     it('should have base styling classes', () => {
       render(<Switch />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveClass('inline-flex', 'h-5', 'w-9', 'rounded-full');
     });
 
     it('should apply checked state styles', () => {
       render(<Switch defaultChecked />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveAttribute('data-state', 'checked');
     });
 
     it('should apply unchecked state styles', () => {
       render(<Switch />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveAttribute('data-state', 'unchecked');
     });
 
@@ -84,13 +84,13 @@ describe('Switch Component', () => {
     it('should toggle when clicked', async () => {
       const user = userEvent.setup();
       render(<Switch />);
-      
+
       const switchEl = screen.getByRole('switch');
       expect(switchEl).toHaveAttribute('data-state', 'unchecked');
-      
+
       await user.click(switchEl);
       expect(switchEl).toHaveAttribute('data-state', 'checked');
-      
+
       await user.click(switchEl);
       expect(switchEl).toHaveAttribute('data-state', 'unchecked');
     });
@@ -98,9 +98,9 @@ describe('Switch Component', () => {
     it('should call onCheckedChange when toggled', async () => {
       const handleChange = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Switch onCheckedChange={handleChange} />);
-      
+
       await user.click(screen.getByRole('switch'));
       expect(handleChange).toHaveBeenCalledWith(true);
     });
@@ -108,10 +108,10 @@ describe('Switch Component', () => {
     it('should toggle when label is clicked', async () => {
       const user = userEvent.setup();
       render(<Switch label="Click me" />);
-      
+
       const switchEl = screen.getByRole('switch');
       expect(switchEl).toHaveAttribute('data-state', 'unchecked');
-      
+
       await user.click(screen.getByText('Click me'));
       expect(switchEl).toHaveAttribute('data-state', 'checked');
     });
@@ -119,9 +119,9 @@ describe('Switch Component', () => {
     it('should not toggle when disabled', async () => {
       const handleChange = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Switch disabled onCheckedChange={handleChange} />);
-      
+
       await user.click(screen.getByRole('switch'));
       expect(handleChange).not.toHaveBeenCalled();
     });
@@ -131,7 +131,7 @@ describe('Switch Component', () => {
     it('should have proper ARIA attributes when error is present', () => {
       render(<Switch error="Error message" />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveAttribute('aria-invalid', 'true');
       expect(switchEl).toHaveAttribute('aria-describedby');
     });
@@ -139,18 +139,18 @@ describe('Switch Component', () => {
     it('should link helper text with aria-describedby', () => {
       render(<Switch helperText="Helper text" id="test-switch" />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveAttribute('aria-describedby', 'test-switch-helper');
     });
 
     it('should be keyboard accessible', async () => {
       const user = userEvent.setup();
       render(<Switch label="Keyboard test" />);
-      
+
       const switchEl = screen.getByRole('switch');
       switchEl.focus();
       expect(switchEl).toHaveFocus();
-      
+
       await user.keyboard(' ');
       expect(switchEl).toHaveAttribute('data-state', 'checked');
     });
@@ -158,7 +158,7 @@ describe('Switch Component', () => {
     it('should have focus styles', () => {
       render(<Switch />);
       const switchEl = screen.getByRole('switch');
-      
+
       expect(switchEl).toHaveClass('focus-visible:outline-none', 'focus-visible:ring-2');
     });
 
@@ -186,4 +186,3 @@ describe('Switch Component', () => {
     });
   });
 });
-

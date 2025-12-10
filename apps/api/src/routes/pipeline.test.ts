@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline routes
- * 
+ *
  * AI_DECISION: Tests unitarios para pipeline Kanban
  * Justificación: Validación crítica de movimiento de contactos y RBAC
  * Impacto: Prevenir errores en flujo de pipeline y accesos no autorizados
@@ -10,7 +10,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
-import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
+import {
+  getUserAccessScope,
+  buildContactAccessFilter,
+  canAccessContact,
+} from '../auth/authorization';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
 
@@ -26,18 +30,18 @@ vi.mock('@cactus/db', () => ({
   isNull: vi.fn(),
   sql: vi.fn(),
   inArray: vi.fn(),
-  count: vi.fn()
+  count: vi.fn(),
 }));
 
 vi.mock('../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
   buildContactAccessFilter: vi.fn(),
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -54,15 +58,15 @@ describe('GET /pipeline/stages', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -70,7 +74,7 @@ describe('GET /pipeline/stages', () => {
   it('debería listar etapas con conteo de contactos', async () => {
     const stages = [
       { id: 'stage-1', name: 'Prospecto', order: 1 },
-      { id: 'stage-2', name: 'Contactado', order: 2 }
+      { id: 'stage-2', name: 'Contactado', order: 2 },
     ];
 
     const accessScope = {
@@ -79,25 +83,25 @@ describe('GET /pipeline/stages', () => {
       accessibleAdvisorIds: ['user-123'],
       canSeeUnassigned: false,
       canAssignToOthers: false,
-      canReassign: false
+      canReassign: false,
     };
 
     mockGetUserAccessScope.mockResolvedValue(accessScope);
     mockBuildContactAccessFilter.mockReturnValue({
       whereClause: {} as any,
-      description: 'advisor access'
+      description: 'advisor access',
     });
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockResolvedValue(stages)
-        })
-      })
+          orderBy: vi.fn().mockResolvedValue(stages),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     // Test stages listing
@@ -119,16 +123,16 @@ describe('GET /pipeline/board', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       query: {},
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -136,7 +140,7 @@ describe('GET /pipeline/board', () => {
   it('debería retornar board completo con contactos agrupados por etapa', async () => {
     const stages = [
       { id: 'stage-1', name: 'Prospecto', order: 1 },
-      { id: 'stage-2', name: 'Contactado', order: 2 }
+      { id: 'stage-2', name: 'Contactado', order: 2 },
     ];
 
     const accessScope = {
@@ -145,13 +149,13 @@ describe('GET /pipeline/board', () => {
       accessibleAdvisorIds: ['user-123'],
       canSeeUnassigned: false,
       canAssignToOthers: false,
-      canReassign: false
+      canReassign: false,
     };
 
     mockGetUserAccessScope.mockResolvedValue(accessScope);
     mockBuildContactAccessFilter.mockReturnValue({
       whereClause: {} as any,
-      description: 'advisor access'
+      description: 'advisor access',
     });
 
     // Test board retrieval
@@ -183,22 +187,22 @@ describe('POST /pipeline/move', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       body: {
         contactId: '00000000-0000-0000-0000-000000000001',
         toStageId: '00000000-0000-0000-0000-000000000002',
-        reason: 'Moved to next stage'
+        reason: 'Moved to next stage',
       },
       log: {
         info: vi.fn(),
         error: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -208,7 +212,7 @@ describe('POST /pipeline/move', () => {
     const moveContactSchema = z.object({
       contactId: z.string().uuid(),
       toStageId: z.string().uuid(),
-      reason: z.string().max(500).optional().nullable()
+      reason: z.string().max(500).optional().nullable(),
     });
 
     // Simular request con stageId (incorrecto)
@@ -216,9 +220,9 @@ describe('POST /pipeline/move', () => {
       ...mockReq,
       body: {
         contactId: '00000000-0000-0000-0000-000000000001',
-        stageId: '00000000-0000-0000-0000-000000000002' // Campo incorrecto
+        stageId: '00000000-0000-0000-0000-000000000002', // Campo incorrecto
       },
-      log: mockReq.log
+      log: mockReq.log,
     };
 
     const middleware = validate({ body: moveContactSchema });
@@ -231,9 +235,9 @@ describe('POST /pipeline/move', () => {
         details: expect.arrayContaining([
           expect.objectContaining({
             path: 'toStageId',
-            message: expect.stringContaining('Required')
-          })
-        ])
+            message: expect.stringContaining('Required'),
+          }),
+        ]),
       })
     );
     expect(mockNext).not.toHaveBeenCalled();
@@ -243,7 +247,7 @@ describe('POST /pipeline/move', () => {
     const moveContactSchema = z.object({
       contactId: z.string().uuid(),
       toStageId: z.string().uuid(),
-      reason: z.string().max(500).optional().nullable()
+      reason: z.string().max(500).optional().nullable(),
     });
 
     // Simular request con toStageId (correcto)
@@ -251,9 +255,9 @@ describe('POST /pipeline/move', () => {
       ...mockReq,
       body: {
         contactId: '00000000-0000-0000-0000-000000000001',
-        toStageId: '00000000-0000-0000-0000-000000000002'
+        toStageId: '00000000-0000-0000-0000-000000000002',
       },
-      log: mockReq.log
+      log: mockReq.log,
     };
 
     const middleware = validate({ body: moveContactSchema });
@@ -268,7 +272,7 @@ describe('POST /pipeline/move', () => {
     const moveContactSchema = z.object({
       contactId: z.string().uuid(),
       toStageId: z.string().uuid(),
-      reason: z.string().max(500).optional().nullable()
+      reason: z.string().max(500).optional().nullable(),
     });
 
     const validReq = {
@@ -276,9 +280,9 @@ describe('POST /pipeline/move', () => {
       body: {
         contactId: '00000000-0000-0000-0000-000000000001',
         toStageId: '00000000-0000-0000-0000-000000000002',
-        reason: 'Moved to next stage'
+        reason: 'Moved to next stage',
       },
-      log: mockReq.log
+      log: mockReq.log,
     };
 
     const middleware = validate({ body: moveContactSchema });
@@ -324,23 +328,23 @@ describe('POST /pipeline/stages', () => {
       user: {
         id: 'manager-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       },
       body: {
         name: 'Nueva Etapa',
         description: 'Descripción',
         order: 8,
         color: '#000000',
-        wipLimit: null
+        wipLimit: null,
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -348,15 +352,17 @@ describe('POST /pipeline/stages', () => {
   it('debería crear nueva etapa (manager/admin)', async () => {
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'stage-123',
-          ...mockReq.body
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'stage-123',
+            ...mockReq.body,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     // Test stage creation
@@ -378,21 +384,21 @@ describe('PUT /pipeline/stages/:id', () => {
       user: {
         id: 'manager-123',
         email: 'manager@example.com',
-        role: 'manager'
+        role: 'manager',
       },
       params: { id: 'stage-123' },
       body: {
         name: 'Etapa Actualizada',
-        color: '#ffffff'
+        color: '#ffffff',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -401,16 +407,18 @@ describe('PUT /pipeline/stages/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'stage-123',
-            ...mockReq.body
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'stage-123',
+              ...mockReq.body,
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     // Test stage update
@@ -421,13 +429,13 @@ describe('PUT /pipeline/stages/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([]) // No stage found
-        })
-      })
+          returning: vi.fn().mockResolvedValue([]), // No stage found
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     // Test 404

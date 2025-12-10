@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, forwardRef } from 'react';
-import Icon, { type IconName } from '../Icon';
-import { cn } from '../../utils/cn';
+import Icon, { type IconName } from '../Icon.js';
+import { cn } from '../../utils/cn.js';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
@@ -20,7 +20,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
  * Input component with brand styling.
  * Uses Open Sans (body font) for text.
  * Focus ring uses Primary Purple color.
- * 
+ *
  * @example
  * ```tsx
  * <Input label="Email" placeholder="Enter your email" />
@@ -28,27 +28,30 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
  * <Input error="This field is required" />
  * ```
  */
-const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ 
-  label, 
-  error, 
-  className = '', 
-  leftIcon,
-  rightIcon,
-  onRightIconClick,
-  size = 'md',
-  showPasswordToggle = false,
-  type,
-  ...props 
-}: InputProps, ref: React.ForwardedRef<HTMLInputElement>) {
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  {
+    label,
+    error,
+    className = '',
+    leftIcon,
+    rightIcon,
+    onRightIconClick,
+    size = 'md',
+    showPasswordToggle = false,
+    type,
+    ...props
+  }: InputProps,
+  ref: React.ForwardedRef<HTMLInputElement>
+) {
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Normalize error: convert undefined to null for exactOptionalPropertyTypes compatibility
   const errorValue = error ?? null;
-  
+
   // Only use password toggle if type is password and showPasswordToggle is true
   const isPassword = type === 'password';
   const inputType = isPassword && showPasswordToggle && showPassword ? 'text' : type;
-  
+
   const sizeClasses = {
     sm: 'h-9 text-sm px-3',
     md: 'h-10 text-base px-3',
@@ -79,7 +82,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
           type={inputType}
           className={cn(
             // Base styles with enhanced transitions
-            'w-full border rounded-md transition-all duration-200 font-body',
+            'w-full border rounded-md transition-all-smooth font-body',
             'bg-background text-text placeholder:text-text-muted',
             // Focus styles - using Primary Purple with smooth glow transition
             'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary focus:shadow-[0_0_0_3px_rgba(89,0,255,0.1)]',
@@ -89,8 +92,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
             rightIcon && !leftIcon && 'pr-10',
             isPassword && showPasswordToggle && 'pr-10',
             // Error state with shake animation class
-            errorValue 
-              ? 'border-error focus:border-error focus:ring-error/30 animate-shake' 
+            errorValue
+              ? 'border-error focus:border-error focus:ring-error/30 animate-shake'
               : 'border-border hover:border-border-hover',
             // Disabled state
             props.disabled && 'opacity-50 cursor-not-allowed bg-surface',
@@ -98,8 +101,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
           )}
           {...props}
         />
-        {rightIcon && !(isPassword && showPasswordToggle) && (
-          onRightIconClick ? (
+        {rightIcon &&
+          !(isPassword && showPasswordToggle) &&
+          (onRightIconClick ? (
             <button
               type="button"
               onClick={onRightIconClick}
@@ -112,8 +116,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
               <Icon name={rightIcon} size={16} className="text-text-muted" />
             </div>
-          )
-        )}
+          ))}
         {isPassword && showPasswordToggle && (
           <button
             type="button"
@@ -125,9 +128,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
           </button>
         )}
       </div>
-      {errorValue && (
-        <p className="mt-1.5 text-sm text-error font-body">{errorValue}</p>
-      )}
+      {errorValue && <p className="mt-1.5 text-sm text-error font-body">{errorValue}</p>}
     </div>
   );
 });

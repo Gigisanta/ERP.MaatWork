@@ -2,7 +2,7 @@
  * Wrapper de fetch con logging estructurado y correlación de request IDs
  * Reemplaza fetch nativo para incluir X-Request-ID automáticamente
  * REGLA CURSOR: Mantener propagación de X-Request-ID, no alterar estructura de logging, preservar correlación
- * 
+ *
  * AI_DECISION: Mantener fetch directo en lugar de usar apiClient
  * Justificación: Este archivo ES un wrapper de fetch que agrega funcionalidad específica:
  *                 - Logging estructurado con correlación de request IDs
@@ -39,11 +39,7 @@ export async function fetchWithLogging(
   url: string | URL,
   options: FetchOptions = {}
 ): Promise<Response> {
-  const {
-    skipLogging = false,
-    requestId = generateRequestId(),
-    ...fetchOptions
-  } = options;
+  const { skipLogging = false, requestId = generateRequestId(), ...fetchOptions } = options;
 
   const startTime = Date.now();
   const method = fetchOptions.method || 'GET';
@@ -57,7 +53,7 @@ export async function fetchWithLogging(
   if (!skipLogging) {
     logger.logRequest(method, fullUrl, requestId, {
       headers: Object.fromEntries(headers.entries()),
-      body: fetchOptions.body ? '[BODY]' : undefined
+      body: fetchOptions.body ? '[BODY]' : undefined,
     });
   }
 
@@ -73,7 +69,7 @@ export async function fetchWithLogging(
       ...fetchOptions,
       headers,
       signal: controller.signal,
-      credentials: 'include'  // NUEVO: Incluir cookies en todas las requests
+      credentials: 'include', // NUEVO: Incluir cookies en todas las requests
     });
 
     clearTimeout(timeoutId);
@@ -82,7 +78,7 @@ export async function fetchWithLogging(
     // Log de la respuesta
     if (!skipLogging) {
       logger.logResponse(method, fullUrl, response.status, duration, requestId, {
-        responseHeaders: Object.fromEntries(response.headers.entries())
+        responseHeaders: Object.fromEntries(response.headers.entries()),
       });
     }
 
@@ -94,29 +90,17 @@ export async function fetchWithLogging(
     // Convertir AbortError en timeout error más descriptivo
     if (error instanceof Error && error.name === 'AbortError') {
       const timeoutError = new Error(`Request timeout after ${timeout}ms`);
-      
+
       if (!skipLogging) {
-        logger.logNetworkError(
-          method,
-          fullUrl,
-          timeoutError,
-          requestId,
-          { duration, timeout }
-        );
+        logger.logNetworkError(method, fullUrl, timeoutError, requestId, { duration, timeout });
       }
-      
+
       throw timeoutError;
     }
 
     // Para otros errores, loguear y relanzar
     if (!skipLogging) {
-      logger.logNetworkError(
-        method,
-        fullUrl,
-        error as Error,
-        requestId,
-        { duration }
-      );
+      logger.logNetworkError(method, fullUrl, error as Error, requestId, { duration });
     }
 
     throw error;
@@ -134,8 +118,8 @@ export async function fetchJson<T = unknown>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers
-    }
+      ...options.headers,
+    },
   });
 
   if (!response.ok) {
@@ -144,9 +128,9 @@ export async function fetchJson<T = unknown>(
       message?: string;
       error?: string;
     };
-    
+
     let errorData: ErrorResponse;
-    
+
     try {
       errorData = JSON.parse(errorText) as ErrorResponse;
     } catch {
@@ -154,8 +138,7 @@ export async function fetchJson<T = unknown>(
     }
 
     throw new Error(
-      errorData.message || errorData.error || 
-      `HTTP ${response.status}: ${response.statusText}`
+      errorData.message || errorData.error || `HTTP ${response.status}: ${response.statusText}`
     );
   }
 
@@ -173,7 +156,7 @@ export async function postJson<T = unknown>(
   return fetchJson<T>(url, {
     ...options,
     method: 'POST',
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 }
 
@@ -188,7 +171,7 @@ export async function putJson<T = unknown>(
   return fetchJson<T>(url, {
     ...options,
     method: 'PUT',
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 }
 
@@ -201,7 +184,7 @@ export async function deleteJson<T = unknown>(
 ): Promise<T> {
   return fetchJson<T>(url, {
     ...options,
-    method: 'DELETE'
+    method: 'DELETE',
   });
 }
 
@@ -214,7 +197,7 @@ export async function getJson<T = unknown>(
   options: Omit<FetchOptions, 'method'> = {}
 ): Promise<T> {
   let fullUrl = typeof url === 'string' ? url : url.toString();
-  
+
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -225,6 +208,6 @@ export async function getJson<T = unknown>(
 
   return fetchJson<T>(fullUrl, {
     ...options,
-    method: 'GET'
+    method: 'GET',
   });
 }

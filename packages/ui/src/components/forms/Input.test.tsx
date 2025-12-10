@@ -83,57 +83,57 @@ describe('Input Component', () => {
     it('should accept user input', async () => {
       const user = userEvent.setup();
       render(<Input />);
-      
+
       const input = screen.getByRole('textbox');
       await user.type(input, 'Hello World');
-      
+
       expect(input).toHaveValue('Hello World');
     });
 
     it('should call onChange handler', async () => {
       const handleChange = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Input onChange={handleChange} />);
-      
+
       const input = screen.getByRole('textbox');
       await user.type(input, 'A');
-      
+
       expect(handleChange).toHaveBeenCalled();
     });
 
     it('should call onFocus handler', async () => {
       const handleFocus = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Input onFocus={handleFocus} />);
-      
+
       const input = screen.getByRole('textbox');
       await user.click(input);
-      
+
       expect(handleFocus).toHaveBeenCalled();
     });
 
     it('should call onBlur handler', async () => {
       const handleBlur = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Input onBlur={handleBlur} />);
-      
+
       const input = screen.getByRole('textbox');
       await user.click(input);
       await user.tab();
-      
+
       expect(handleBlur).toHaveBeenCalled();
     });
 
     it('should not accept input when disabled', async () => {
       const user = userEvent.setup();
       render(<Input disabled defaultValue="Initial" />);
-      
+
       const input = screen.getByRole('textbox');
       await user.type(input, 'New');
-      
+
       expect(input).toHaveValue('Initial');
     });
   });
@@ -142,24 +142,24 @@ describe('Input Component', () => {
     it('should be keyboard accessible', async () => {
       const user = userEvent.setup();
       render(<Input />);
-      
+
       const input = screen.getByRole('textbox');
       await user.tab();
-      
+
       expect(input).toHaveFocus();
     });
 
     it('should have focus styles', () => {
       render(<Input />);
       const input = screen.getByRole('textbox');
-      
+
       expect(input).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-primary/30');
     });
 
     it('should associate label with input', () => {
       render(<Input label="Email" />);
       const label = screen.getByText('Email');
-      
+
       expect(label.tagName).toBe('LABEL');
       // Note: implicit association through parent div, not explicit htmlFor
       expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -201,4 +201,3 @@ describe('Input Component', () => {
     });
   });
 });
-

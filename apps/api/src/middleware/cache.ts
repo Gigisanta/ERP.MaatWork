@@ -1,6 +1,6 @@
 /**
  * Redis cache middleware for API endpoints
- * 
+ *
  * AI_DECISION: Middleware-based caching with automatic key generation
  * Justificación: Reduces code duplication, consistent caching pattern, easy to apply to any endpoint
  * Impacto: Better code organization, easier to maintain cache invalidation
@@ -66,7 +66,7 @@ export function cache(options: CacheOptions) {
         const stats = getCacheStats(options.keyPrefix);
         stats.hits++;
         const hitRate = getHitRate(options.keyPrefix);
-        
+
         logger.debug({ cacheKey, hitRate: hitRate.toFixed(2) }, 'Cache hit');
         res.setHeader('X-Cache', 'HIT');
         res.setHeader('X-Cache-Hit-Rate', `${hitRate.toFixed(2)}%`);
@@ -78,14 +78,14 @@ export function cache(options: CacheOptions) {
       const stats = getCacheStats(options.keyPrefix);
       stats.misses++;
       const hitRate = getHitRate(options.keyPrefix);
-      
+
       const originalJson = res.json.bind(res);
-      res.json = function(body: unknown) {
+      res.json = function (body: unknown) {
         // Cache the response
         redis.setEx(cacheKey, options.ttl, JSON.stringify(body)).catch((err) => {
           logger.error({ error: err, cacheKey }, 'Failed to cache response');
         });
-        
+
         res.setHeader('X-Cache', 'MISS');
         res.setHeader('X-Cache-Hit-Rate', `${hitRate.toFixed(2)}%`);
         return originalJson(body);
@@ -136,4 +136,3 @@ export async function invalidateCacheKey(key: string): Promise<void> {
     logger.error({ error, key }, 'Failed to invalidate cache key');
   }
 }
-

@@ -2,7 +2,7 @@
 
 /**
  * useBackNavigation Hook
- * 
+ *
  * AI_DECISION: Hook para navegación "volver" con contexto
  * Justificación: Proporciona botón volver inteligente que recuerda de dónde vino el usuario
  * Impacto: Mejor UX, navegación más intuitiva
@@ -43,14 +43,14 @@ export interface BackButtonProps {
 
 /**
  * Hook for contextual back navigation
- * 
+ *
  * @example
  * ```tsx
  * function ContactDetailPage() {
  *   const { goBack, canGoBack, BackButton } = useBackNavigation({
  *     fallbackPath: '/contacts'
  *   });
- *   
+ *
  *   return (
  *     <div>
  *       <BackButton label="Volver a Contactos" />
@@ -79,7 +79,7 @@ export function useBackNavigation(options: UseBackNavigationOptions = {}): UseBa
   useEffect(() => {
     if (typeof window !== 'undefined') {
       historyLengthRef.current = window.history.length;
-      
+
       // Try to get previous path from sessionStorage
       const storedPath = sessionStorage.getItem('previousPath');
       if (storedPath && storedPath !== pathname) {
@@ -96,7 +96,7 @@ export function useBackNavigation(options: UseBackNavigationOptions = {}): UseBa
   // Determine if we can go back
   const canGoBack = useMemo(() => {
     if (typeof window === 'undefined') return false;
-    
+
     // Check if we have history entries
     if (window.history.length <= 1) return false;
 
@@ -138,7 +138,7 @@ export function useBackNavigation(options: UseBackNavigationOptions = {}): UseBa
         try {
           const referrerUrl = new URL(document.referrer);
           const currentUrl = new URL(window.location.href);
-          
+
           if (referrerUrl.origin === currentUrl.origin) {
             window.history.back();
             return;
@@ -182,12 +182,7 @@ export function useBackNavigation(options: UseBackNavigationOptions = {}): UseBa
       const combinedClassName = `${sizeClasses[size]} ${className}`.trim();
 
       return (
-        <Button
-          variant="ghost"
-          onClick={goBack}
-          className={combinedClassName}
-          title={buttonTitle}
-        >
+        <Button variant="ghost" onClick={goBack} className={combinedClassName} title={buttonTitle}>
           <Icon name="ChevronLeft" size={iconSize} className="mr-1" />
           {label}
         </Button>
@@ -203,7 +198,7 @@ export function useBackNavigation(options: UseBackNavigationOptions = {}): UseBa
     backPath,
     BackButton,
   };
-  
+
   return result;
 }
 

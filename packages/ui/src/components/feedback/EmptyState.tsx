@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface EmptyStateProps {
   title: string;
@@ -17,19 +17,19 @@ export interface EmptyStateProps {
 
 /**
  * EmptyState component with enhanced animations
- * 
+ *
  * AI_DECISION: Added animations for better UX feedback
  * Justificación: Animated empty states feel more polished and engaging
  * Impacto: Better perceived quality of the app
  */
-export default function EmptyState({ 
-  title, 
-  description, 
-  icon, 
-  action, 
+export default function EmptyState({
+  title,
+  description,
+  icon,
+  action,
   className = '',
   animated = true,
-  floatingIcon = true
+  floatingIcon = true,
 }: EmptyStateProps) {
   const [mounted, setMounted] = useState(!animated);
 
@@ -40,7 +40,7 @@ export default function EmptyState({
   }, [animated]);
 
   return (
-    <div 
+    <div
       className={cn(
         'flex flex-col items-center justify-center p-8 text-center',
         animated && 'transition-all duration-500 ease-out',
@@ -49,7 +49,7 @@ export default function EmptyState({
       )}
     >
       {icon && (
-        <div 
+        <div
           className={cn(
             'mb-4 text-4xl text-text-muted',
             floatingIcon && 'animate-float',
@@ -61,7 +61,7 @@ export default function EmptyState({
           {icon}
         </div>
       )}
-      <h3 
+      <h3
         className={cn(
           'text-lg font-medium text-text mb-2 font-display',
           animated && 'transition-all duration-500 ease-out',
@@ -72,7 +72,7 @@ export default function EmptyState({
         {title}
       </h3>
       {description && (
-        <p 
+        <p
           className={cn(
             'text-sm text-text-secondary mb-4 max-w-sm font-body',
             animated && 'transition-all duration-500 ease-out',
@@ -84,11 +84,12 @@ export default function EmptyState({
         </p>
       )}
       {action && (
-        <div 
+        <div
           className={cn(
             'mt-4',
             animated && 'transition-all duration-500 ease-out',
-            animated && (mounted ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95')
+            animated &&
+              (mounted ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95')
           )}
           style={{ transitionDelay: animated ? '400ms' : '0ms' }}
         >

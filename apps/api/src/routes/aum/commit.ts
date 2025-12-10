@@ -1,6 +1,6 @@
 /**
  * AUM Commit Routes
- * 
+ *
  * AI_DECISION: Modularizar endpoints de commit en archivo separado
  * Justificación: Separar responsabilidades, facilitar mantenimiento y testing
  * Impacto: Código más organizado y mantenible
@@ -13,12 +13,12 @@ import { requireAuth, requireRole } from '@/auth/middlewares';
 import { canAccessAumFile } from '@/auth/authorization';
 import { validate } from '@/utils/validation';
 import { createAsyncHandler, HttpError } from '@/utils/route-handler';
-import { transactionWithLogging } from '@/utils/db-transactions';
+import { transactionWithLogging } from '@/utils/database/db-transactions';
 import {
   aumFileIdParamsSchema,
   aumCommitQuerySchema,
-  aumConfirmChangesBodySchema
-} from '@/utils/aum-validation';
+  aumConfirmChangesBodySchema,
+} from '../../utils/aum/aum-validation';
 
 const router = Router();
 
@@ -26,7 +26,8 @@ const router = Router();
  * POST /admin/aum/uploads/:fileId/commit
  * Commit matched rows to broker_accounts and contacts
  */
-router.post('/uploads/:fileId/commit',
+router.post(
+  '/uploads/:fileId/commit',
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: aumFileIdParamsSchema, query: aumCommitQuerySchema }),
@@ -48,11 +49,17 @@ router.post('/uploads/:fileId/commit',
 
     const dbi = db();
 
-    const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
+    const [file] = await dbi
+      .select()
+      .from(aumImportFiles)
+      .where(eq(aumImportFiles.id, fileId))
+      .limit(1);
     if (!file) throw new HttpError(404, 'File not found');
 
     // Check for ambiguous rows that need resolution
-    const ambiguousRows = await dbi.select().from(aumImportRows)
+    const ambiguousRows = await dbi
+      .select()
+      .from(aumImportRows)
       .where(and(eq(aumImportRows.fileId, fileId), eq(aumImportRows.matchStatus, 'ambiguous')));
 
     if (ambiguousRows.length > 0) {
@@ -63,12 +70,16 @@ router.post('/uploads/:fileId/commit',
     }
 
     // Only commit matched rows that are preferred (source of truth)
-    const rows = await dbi.select().from(aumImportRows)
-      .where(and(
-        eq(aumImportRows.fileId, fileId),
-        eq(aumImportRows.matchStatus, 'matched'),
-        eq(aumImportRows.isPreferred, true)
-      ));
+    const rows = await dbi
+      .select()
+      .from(aumImportRows)
+      .where(
+        and(
+          eq(aumImportRows.fileId, fileId),
+          eq(aumImportRows.matchStatus, 'matched'),
+          eq(aumImportRows.isPreferred, true)
+        )
+      );
 
     // Use transaction for atomic consistency
     const result = await transactionWithLogging(
@@ -85,8 +96,15 @@ router.post('/uploads/:fileId/commit',
           }
 
           // Find existing broker account
-          const existing = await tx.select().from(brokerAccounts)
-            .where(and(eq(brokerAccounts.broker, broker as string), eq(brokerAccounts.accountNumber, r.accountNumber)))
+          const existing = await tx
+            .select()
+            .from(brokerAccounts)
+            .where(
+              and(
+                eq(brokerAccounts.broker, broker as string),
+                eq(brokerAccounts.accountNumber, r.accountNumber)
+              )
+            )
             .limit(1);
 
           if (existing.length === 0) {
@@ -95,16 +113,22 @@ router.post('/uploads/:fileId/commit',
               accountNumber: r.accountNumber,
               holderName: r.holderName ?? null,
               contactId: r.matchedContactId as string,
-              status: 'active'
+              status: 'active',
             });
             upserts += 1;
           } else {
             // Update holder name/contact if changed (prefer matched contactId)
             const ex = existing[0];
-            const needsUpdate = (ex.holderName !== (r.holderName ?? null)) || (ex.contactId !== r.matchedContactId);
+            const needsUpdate =
+              ex.holderName !== (r.holderName ?? null) || ex.contactId !== r.matchedContactId;
             if (needsUpdate) {
-              await tx.update(brokerAccounts)
-                .set({ holderName: r.holderName ?? null, contactId: r.matchedContactId as string, status: 'active' })
+              await tx
+                .update(brokerAccounts)
+                .set({
+                  holderName: r.holderName ?? null,
+                  contactId: r.matchedContactId as string,
+                  status: 'active',
+                })
                 .where(eq(brokerAccounts.id, ex.id as string));
               upserts += 1;
             }
@@ -112,12 +136,14 @@ router.post('/uploads/:fileId/commit',
 
           // Optionally set advisor on contact if empty and we have a matched user
           if (r.matchedUserId) {
-            const [c] = await tx.select({ assignedAdvisorId: contacts.assignedAdvisorId })
+            const [c] = await tx
+              .select({ assignedAdvisorId: contacts.assignedAdvisorId })
               .from(contacts)
               .where(eq(contacts.id, r.matchedContactId as string))
               .limit(1);
             if (c && !c.assignedAdvisorId) {
-              await tx.update(contacts)
+              await tx
+                .update(contacts)
                 .set({ assignedAdvisorId: r.matchedUserId as string })
                 .where(eq(contacts.id, r.matchedContactId as string));
             }
@@ -125,7 +151,8 @@ router.post('/uploads/:fileId/commit',
         }
 
         // Update file status only if all operations succeeded
-        await tx.update(aumImportFiles)
+        await tx
+          .update(aumImportFiles)
           .set({ status: 'committed' })
           .where(eq(aumImportFiles.id, fileId));
 
@@ -133,25 +160,28 @@ router.post('/uploads/:fileId/commit',
       },
       {
         timeout: 60000, // 60 seconds for long batch operations
-        maxRetries: 3
+        maxRetries: 3,
       }
     );
 
     const { upserts, skipped } = result;
 
-    req.log?.info?.({
-      fileId,
-      upserts,
-      skipped,
-      total: rows.length
-    }, 'AUM file committed successfully');
+    req.log?.info?.(
+      {
+        fileId,
+        upserts,
+        skipped,
+        total: rows.length,
+      },
+      'AUM file committed successfully'
+    );
 
     return res.json({
       ok: true,
       upserts,
       skipped,
       total: rows.length,
-      message: `${upserts} cuentas sincronizadas` + (skipped > 0 ? `, ${skipped} omitidas` : '')
+      message: `${upserts} cuentas sincronizadas` + (skipped > 0 ? `, ${skipped} omitidas` : ''),
     });
   })
 );
@@ -160,11 +190,12 @@ router.post('/uploads/:fileId/commit',
  * POST /admin/aum/uploads/:fileId/confirm-changes
  * Confirm or reject changes that require confirmation
  */
-router.post('/uploads/:fileId/confirm-changes',
+router.post(
+  '/uploads/:fileId/confirm-changes',
   requireAuth,
   validate({
     params: aumFileIdParamsSchema,
-    body: aumConfirmChangesBodySchema
+    body: aumConfirmChangesBodySchema,
   }),
   createAsyncHandler(async (req: Request, res: Response) => {
     const { fileId } = req.params;
@@ -185,7 +216,11 @@ router.post('/uploads/:fileId/confirm-changes',
     const dbi = db();
 
     // Ensure file exists
-    const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
+    const [file] = await dbi
+      .select()
+      .from(aumImportFiles)
+      .where(eq(aumImportFiles.id, fileId))
+      .limit(1);
     if (!file) throw new HttpError(404, 'File not found');
 
     // Process each confirmation
@@ -193,18 +228,21 @@ router.post('/uploads/:fileId/confirm-changes',
       const { rowId, confirm } = change;
 
       // Verify that row belongs to file and needs confirmation
-      const [row] = await dbi.select({
-        id: aumImportRows.id,
-        fileId: aumImportRows.fileId,
-        needsConfirmation: aumImportRows.needsConfirmation,
-        accountNumber: aumImportRows.accountNumber
-      })
+      const [row] = await dbi
+        .select({
+          id: aumImportRows.id,
+          fileId: aumImportRows.fileId,
+          needsConfirmation: aumImportRows.needsConfirmation,
+          accountNumber: aumImportRows.accountNumber,
+        })
         .from(aumImportRows)
-        .where(and(
-          eq(aumImportRows.id, rowId),
-          eq(aumImportRows.fileId, fileId),
-          eq(aumImportRows.needsConfirmation, true)
-        ))
+        .where(
+          and(
+            eq(aumImportRows.id, rowId),
+            eq(aumImportRows.fileId, fileId),
+            eq(aumImportRows.needsConfirmation, true)
+          )
+        )
         .limit(1);
 
       if (!row) {
@@ -214,35 +252,39 @@ router.post('/uploads/:fileId/confirm-changes',
 
       if (confirm) {
         // Confirm change: keep new accountNumber and remove needsConfirmation
-        await dbi.update(aumImportRows)
+        await dbi
+          .update(aumImportRows)
           .set({
             needsConfirmation: false,
-            conflictDetected: false
+            conflictDetected: false,
           })
           .where(eq(aumImportRows.id, rowId));
       } else {
         // Reject change: remove needsConfirmation but keep current accountNumber
         // Note: Future implementation could restore previous accountNumber from a separate field
-        await dbi.update(aumImportRows)
+        await dbi
+          .update(aumImportRows)
           .set({
             needsConfirmation: false,
-            conflictDetected: false
+            conflictDetected: false,
           })
           .where(eq(aumImportRows.id, rowId));
       }
     }
 
-    req.log?.info?.({
-      fileId,
-      changesCount: changes.length
-    }, 'AUM changes confirmed/rejected');
+    req.log?.info?.(
+      {
+        fileId,
+        changesCount: changes.length,
+      },
+      'AUM changes confirmed/rejected'
+    );
 
     return res.json({
       ok: true,
-      message: `Procesadas ${changes.length} confirmaciones`
+      message: `Procesadas ${changes.length} confirmaciones`,
     });
   })
 );
 
 export default router;
-

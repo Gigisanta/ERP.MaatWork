@@ -1,10 +1,10 @@
 /**
  * Tipos comunes compartidos en toda la aplicación
- * 
+ *
  * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
  * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
- * 
+ *
  * Tipos específicos del frontend (ApiResponse, Pagination, etc.) se mantienen aquí
  * porque tienen estructura diferente a los del backend.
  */

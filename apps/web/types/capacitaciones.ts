@@ -19,7 +19,8 @@ export interface Capacitacion extends TimestampedEntity {
 /**
  * Request para crear capacitación - usando utility type CreateRequest
  */
-export interface CreateCapacitacionRequest extends Omit<CreateRequest<Capacitacion>, 'createdByUserId' | 'fecha'> {
+export interface CreateCapacitacionRequest
+  extends Omit<CreateRequest<Capacitacion>, 'createdByUserId' | 'fecha'> {
   titulo: string;
   tema: string;
   link: string;
@@ -64,4 +65,3 @@ export interface CapacitacionesListResponse {
     hasMore: boolean;
   };
 }
-

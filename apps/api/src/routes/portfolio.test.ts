@@ -1,6 +1,6 @@
 /**
  * Tests para portfolio routes
- * 
+ *
  * AI_DECISION: Tests unitarios completos para gestión de portafolios
  * Justificación: Validación crítica de asignaciones, RBAC y validaciones Zod
  * Impacto: Prevenir errores en gestión de portafolios y accesos no autorizados
@@ -9,11 +9,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { db, portfolioTemplates, portfolioTemplateLines, clientPortfolioAssignments, contacts, instruments, lookupAssetClass } from '@cactus/db';
+import {
+  db,
+  portfolioTemplates,
+  portfolioTemplateLines,
+  clientPortfolioAssignments,
+  contacts,
+  instruments,
+  lookupAssetClass,
+} from '@cactus/db';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { getUserAccessScope } from '../auth/authorization';
 import { eq, and, sql, desc, asc } from 'drizzle-orm';
-import { uuidSchema } from '../utils/common-schemas';
+import { uuidSchema } from '../utils/validation/common-schemas';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -28,20 +36,20 @@ vi.mock('@cactus/db', () => ({
   and: vi.fn(),
   sql: vi.fn(),
   desc: vi.fn(),
-  asc: vi.fn()
+  asc: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../auth/authorization', () => ({
-  getUserAccessScope: vi.fn()
+  getUserAccessScope: vi.fn(),
 }));
 
 vi.mock('../utils/validation', () => ({
-  validate: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next())
+  validate: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -62,14 +70,14 @@ describe('Portfolio Templates - GET /templates', () => {
             description: 'Descripción',
             riskLevel: 'conservative',
             createdAt: new Date(),
-            clientCount: 5
-          }
-        ])
-      })
+            clientCount: 5,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(mockSelect).toBeDefined();
@@ -82,14 +90,14 @@ describe('Portfolio Templates - GET /templates', () => {
           {
             id: 'template-1',
             name: 'Cartera',
-            clientCount: 3
-          }
-        ])
-      })
+            clientCount: 3,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(mockSelect).toBeDefined();
@@ -110,19 +118,21 @@ describe('Portfolio Templates - GET /templates/:id', () => {
 
   it('debería obtener template por ID con líneas', async () => {
     const templateId = 'template-123';
-    
+
     const mockSelectTemplate = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            id: templateId,
-            name: 'Cartera',
-            description: 'Desc',
-            riskLevel: 'moderate',
-            createdAt: new Date()
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: templateId,
+              name: 'Cartera',
+              description: 'Desc',
+              riskLevel: 'moderate',
+              createdAt: new Date(),
+            },
+          ]),
+        }),
+      }),
     });
 
     const mockSelectLines = vi.fn().mockReturnValue({
@@ -136,19 +146,20 @@ describe('Portfolio Templates - GET /templates/:id', () => {
                   targetType: 'instrument',
                   targetWeight: '0.5',
                   instrumentSymbol: 'AAPL',
-                  instrumentName: 'Apple Inc.'
-                }
-              ])
-            })
-          })
-        })
-      })
+                  instrumentName: 'Apple Inc.',
+                },
+              ]),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: vi.fn()
+      select: vi
+        .fn()
         .mockReturnValueOnce(mockSelectTemplate())
-        .mockReturnValueOnce(mockSelectLines())
+        .mockReturnValueOnce(mockSelectLines()),
     } as any);
 
     expect(templateId).toBe('template-123');
@@ -158,13 +169,13 @@ describe('Portfolio Templates - GET /templates/:id', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No encontrado
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No encontrado
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -179,24 +190,26 @@ describe('Portfolio Templates - POST /templates', () => {
   it('debería crear template con datos válidos', async () => {
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'new-template',
-          name: 'Nueva Cartera',
-          description: 'Descripción',
-          riskLevel: 'moderate',
-          createdAt: new Date()
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'new-template',
+            name: 'Nueva Cartera',
+            description: 'Descripción',
+            riskLevel: 'moderate',
+            createdAt: new Date(),
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const validData = {
       name: 'Nueva Cartera',
       description: 'Descripción',
-      riskLevel: 'moderate' as const
+      riskLevel: 'moderate' as const,
     };
 
     expect(validData.name).toBe('Nueva Cartera');
@@ -206,7 +219,7 @@ describe('Portfolio Templates - POST /templates', () => {
   it('debería validar que name es requerido', () => {
     const invalidData = {
       description: 'Desc',
-      riskLevel: 'moderate' as const
+      riskLevel: 'moderate' as const,
     };
 
     expect(invalidData).not.toHaveProperty('name');
@@ -215,7 +228,7 @@ describe('Portfolio Templates - POST /templates', () => {
   it('debería validar que riskLevel es válido', () => {
     const invalidRiskLevel = 'invalid';
     const validLevels = ['conservative', 'moderate', 'aggressive'];
-    
+
     expect(validLevels).not.toContain(invalidRiskLevel);
   });
 
@@ -237,22 +250,24 @@ describe('Portfolio Templates - PUT /templates/:id', () => {
 
   it('debería actualizar template existente', async () => {
     const templateId = 'template-123';
-    
+
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: templateId,
-            name: 'Cartera Actualizada',
-            description: 'Nueva descripción',
-            riskLevel: 'aggressive'
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: templateId,
+              name: 'Cartera Actualizada',
+              description: 'Nueva descripción',
+              riskLevel: 'aggressive',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(templateId).toBe('template-123');
@@ -262,13 +277,13 @@ describe('Portfolio Templates - PUT /templates/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([]) // No encontrado
-        })
-      })
+          returning: vi.fn().mockResolvedValue([]), // No encontrado
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -276,7 +291,7 @@ describe('Portfolio Templates - PUT /templates/:id', () => {
 
   it('debería permitir actualizar campos parcialmente', () => {
     const partialUpdate = {
-      name: 'Solo nombre'
+      name: 'Solo nombre',
     };
 
     expect(partialUpdate).toHaveProperty('name');
@@ -300,33 +315,30 @@ describe('Portfolio Template Lines - GET /templates/:id/lines', () => {
                   id: 'line-1',
                   targetType: 'instrument',
                   targetWeight: '0.5',
-                  instrumentSymbol: 'AAPL'
+                  instrumentSymbol: 'AAPL',
                 },
                 {
                   id: 'line-2',
                   targetType: 'assetClass',
                   targetWeight: '0.5',
-                  assetClassName: 'Equity'
-                }
-              ])
-            })
-          })
-        })
-      })
+                  assetClassName: 'Equity',
+                },
+              ]),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(mockSelect).toBeDefined();
   });
 
   it('debería calcular totalWeight e isValid correctamente', () => {
-    const lines = [
-      { targetWeight: '0.5' },
-      { targetWeight: '0.5' }
-    ];
+    const lines = [{ targetWeight: '0.5' }, { targetWeight: '0.5' }];
 
     const totalWeight = lines.reduce((sum, line) => sum + Number(line.targetWeight), 0);
     const isValid = Math.abs(totalWeight - 1.0) < 0.0001;
@@ -336,10 +348,7 @@ describe('Portfolio Template Lines - GET /templates/:id/lines', () => {
   });
 
   it('debería detectar cuando pesos no suman 100%', () => {
-    const lines = [
-      { targetWeight: '0.3' },
-      { targetWeight: '0.4' }
-    ];
+    const lines = [{ targetWeight: '0.3' }, { targetWeight: '0.4' }];
 
     const totalWeight = lines.reduce((sum, line) => sum + Number(line.targetWeight), 0);
     const isValid = Math.abs(totalWeight - 1.0) < 0.0001;
@@ -358,7 +367,7 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
     const validLine = {
       targetType: 'instrument' as const,
       instrumentId: 'instrument-123',
-      targetWeight: 0.25
+      targetWeight: 0.25,
     };
 
     expect(validLine.targetType).toBe('instrument');
@@ -371,7 +380,7 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
     const validLine = {
       targetType: 'assetClass' as const,
       assetClass: 'equity',
-      targetWeight: 0.3
+      targetWeight: 0.3,
     };
 
     expect(validLine.targetType).toBe('assetClass');
@@ -381,7 +390,7 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
   it('debería validar que instrumentId es requerido para tipo instrument', () => {
     const invalidLine = {
       targetType: 'instrument' as const,
-      targetWeight: 0.25
+      targetWeight: 0.25,
     };
 
     expect(invalidLine).not.toHaveProperty('instrumentId');
@@ -390,7 +399,7 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
   it('debería validar que assetClass es requerido para tipo assetClass', () => {
     const invalidLine = {
       targetType: 'assetClass' as const,
-      targetWeight: 0.25
+      targetWeight: 0.25,
     };
 
     expect(invalidLine).not.toHaveProperty('assetClass');
@@ -401,25 +410,61 @@ describe('Portfolio Template Lines - POST /templates/:id/lines', () => {
       targetType: z.enum(['instrument', 'assetClass']),
       instrumentId: uuidSchema.optional(),
       assetClass: z.string().optional(),
-      targetWeight: z.number().min(0, 'El peso debe ser mayor o igual a 0').max(1, 'El peso debe ser menor o igual a 1')
+      targetWeight: z
+        .number()
+        .min(0, 'El peso debe ser mayor o igual a 0')
+        .max(1, 'El peso debe ser menor o igual a 1'),
     });
-    
+
     // Validar pesos válidos
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 0.5 })).not.toThrow();
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 0 })).not.toThrow();
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 1 })).not.toThrow();
-    
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: 0.5,
+      })
+    ).not.toThrow();
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: 0,
+      })
+    ).not.toThrow();
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: 1,
+      })
+    ).not.toThrow();
+
     // Validar pesos inválidos
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: -0.1 })).toThrow();
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 1.1 })).toThrow();
-    expect(() => schema.parse({ targetType: 'instrument', instrumentId: '550e8400-e29b-41d4-a716-446655440000', targetWeight: 2.0 })).toThrow();
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: -0.1,
+      })
+    ).toThrow();
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: 1.1,
+      })
+    ).toThrow();
+    expect(() =>
+      schema.parse({
+        targetType: 'instrument',
+        instrumentId: '550e8400-e29b-41d4-a716-446655440000',
+        targetWeight: 2.0,
+      })
+    ).toThrow();
   });
 
   it('debería validar que suma de pesos no exceda 1.0', async () => {
-    const existingLines = [
-      { weight: '0.7' },
-      { weight: '0.2' }
-    ];
+    const existingLines = [{ weight: '0.7' }, { weight: '0.2' }];
     const currentTotal = existingLines.reduce((sum, line) => sum + Number(line.weight), 0);
     const newWeight = 0.2;
     const wouldExceed = currentTotal + newWeight > 1.0;
@@ -435,11 +480,11 @@ describe('Portfolio Template Lines - DELETE /templates/:id/lines/:lineId', () =>
 
   it('debería eliminar línea existente', async () => {
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue(undefined)
+      where: vi.fn().mockResolvedValue(undefined),
     });
 
     mockDb.mockReturnValue({
-      delete: mockDelete
+      delete: mockDelete,
     } as any);
 
     expect(mockDelete).toBeDefined();
@@ -453,7 +498,7 @@ describe('Portfolio Template Lines - GET /templates/lines/batch', () => {
 
   it('debería obtener líneas de múltiples templates', async () => {
     const templateIds = ['template-1', 'template-2'];
-    
+
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         leftJoin: vi.fn().mockReturnValue({
@@ -461,20 +506,20 @@ describe('Portfolio Template Lines - GET /templates/lines/batch', () => {
             {
               templateId: 'template-1',
               lineId: 'line-1',
-              targetWeight: '0.5'
+              targetWeight: '0.5',
             },
             {
               templateId: 'template-2',
               lineId: 'line-2',
-              targetWeight: '0.3'
-            }
-          ])
-        })
-      })
+              targetWeight: '0.3',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(templateIds).toHaveLength(2);
@@ -483,9 +528,9 @@ describe('Portfolio Template Lines - GET /templates/lines/batch', () => {
   it('debería validar formato UUID de IDs', () => {
     const validUuid = '123e4567-e89b-12d3-a456-426614174000';
     const invalidUuid = 'not-a-uuid';
-    
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+
     expect(uuidRegex.test(validUuid)).toBe(true);
     expect(uuidRegex.test(invalidUuid)).toBe(false);
   });
@@ -503,48 +548,51 @@ describe('Portfolio Assignments - POST /assignments', () => {
       accessibleAdvisorIds: ['user-123'],
       canSeeUnassigned: false,
       canAssignToOthers: false,
-      canReassign: false
+      canReassign: false,
     };
 
     mockGetUserAccessScope.mockResolvedValue(accessScope);
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'template-123' }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'template-123' }]),
+          }),
+        }),
       });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'assignment-123',
-          contactId: 'contact-123',
-          templateId: 'template-123',
-          status: 'active'
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'assignment-123',
+            contactId: 'contact-123',
+            templateId: 'template-123',
+            status: 'active',
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
       update: mockUpdate,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(accessScope.role).toBe('advisor');
@@ -557,19 +605,19 @@ describe('Portfolio Assignments - POST /assignments', () => {
       accessibleAdvisorIds: ['user-123'],
       canSeeUnassigned: false,
       canAssignToOthers: false,
-      canReassign: false
+      canReassign: false,
     });
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No access
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No access
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -578,9 +626,9 @@ describe('Portfolio Assignments - POST /assignments', () => {
   it('debería validar formato de fecha ISO', () => {
     const validDate = '2024-01-15T10:30:00.000Z';
     const invalidDate = '2024-01-15';
-    
+
     const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
-    
+
     expect(isoRegex.test(validDate)).toBe(true);
     expect(isoRegex.test(invalidDate)).toBe(false);
   });
@@ -588,12 +636,12 @@ describe('Portfolio Assignments - POST /assignments', () => {
   it('debería desactivar asignaciones previas del contacto', async () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([])
-      })
+        where: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(mockUpdate).toBeDefined();
@@ -612,76 +660,80 @@ describe('Portfolio Assignments - GET /contacts/:id/portfolio', () => {
       accessibleAdvisorIds: ['user-123'],
       canSeeUnassigned: false,
       canAssignToOthers: false,
-      canReassign: false
+      canReassign: false,
     };
 
     mockGetUserAccessScope.mockResolvedValue(accessScope);
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{
-                id: 'assignment-123',
-                templateId: 'template-123'
-              }])
-            })
-          })
-        })
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: 'assignment-123',
+                  templateId: 'template-123',
+                },
+              ]),
+            }),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           leftJoin: vi.fn().mockReturnValue({
             leftJoin: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue([])
-              })
-            })
-          })
-        })
+                orderBy: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(accessScope.role).toBe('advisor');
   });
 
   it('debería retornar null si no hay portfolio asignado', async () => {
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'contact-123' }]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([]) // No assignment
-            })
-          })
-        })
+              limit: vi.fn().mockResolvedValue([]), // No assignment
+            }),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -695,8 +747,8 @@ describe('Portfolio Assignments - PATCH /assignments/:id', () => {
 
   it('debería actualizar estado de asignación', async () => {
     const validStatuses = ['active', 'paused', 'ended'];
-    
-    validStatuses.forEach(status => {
+
+    validStatuses.forEach((status) => {
       expect(['active', 'paused', 'ended']).toContain(status);
     });
   });
@@ -704,7 +756,7 @@ describe('Portfolio Assignments - PATCH /assignments/:id', () => {
   it('debería establecer endDate cuando status es ended', () => {
     const status = 'ended';
     const shouldSetEndDate = status === 'ended';
-    
+
     expect(shouldSetEndDate).toBe(true);
   });
 });
@@ -717,12 +769,12 @@ describe('Portfolio Assignments - DELETE /assignments/:id', () => {
   it('debería hacer soft delete (marcar como ended)', async () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined)
-      })
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(mockUpdate).toBeDefined();

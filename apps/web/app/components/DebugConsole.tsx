@@ -14,14 +14,20 @@ export default function DebugConsole() {
     }
 
     // Guard: verificar si ya existe una instancia antes de inicializar
-    if (window.debugConsole && typeof (window.debugConsole as { getLogs?: () => unknown[] }).getLogs === 'function') {
+    if (
+      window.debugConsole &&
+      typeof (window.debugConsole as { getLogs?: () => unknown[] }).getLogs === 'function'
+    ) {
       return; // Ya está inicializado, no hacer nada
     }
 
     // Intentar inicializar inmediatamente
     const initializeDebug = async () => {
       // Verificar nuevamente antes de inicializar (race condition guard)
-      if (window.debugConsole && typeof (window.debugConsole as { getLogs?: () => unknown[] }).getLogs === 'function') {
+      if (
+        window.debugConsole &&
+        typeof (window.debugConsole as { getLogs?: () => unknown[] }).getLogs === 'function'
+      ) {
         return; // Ya fue inicializado por otro proceso
       }
 
@@ -30,7 +36,7 @@ export default function DebugConsole() {
         initDebugConsole();
       } catch (err) {
         console.error('❌ Error al cargar Debug Console:', err);
-        
+
         // Crear fallback mínimo solo si no existe
         if (!window.debugConsole) {
           const fallback = {
@@ -44,19 +50,19 @@ export default function DebugConsole() {
             exportLogs: () => localStorage.getItem('debug-console-logs') || '[]',
             clearLogs: () => localStorage.removeItem('debug-console-logs'),
           };
-          
+
           Object.defineProperty(window, 'debugConsole', {
             value: fallback,
             writable: true,
             configurable: true,
             enumerable: true,
           });
-          
+
           (window as unknown as { $debug: typeof fallback }).$debug = fallback;
         }
       }
     };
-    
+
     // Dar un pequeño delay para asegurar que el DOM esté listo
     setTimeout(() => {
       initializeDebug();
@@ -65,4 +71,3 @@ export default function DebugConsole() {
 
   return null; // Componente sin UI
 }
-

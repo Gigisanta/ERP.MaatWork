@@ -2,7 +2,7 @@
 
 /**
  * KeyboardShortcutsModal Component
- * 
+ *
  * AI_DECISION: Modal centralizado para mostrar atajos de teclado disponibles
  * Justificación: Mejora la accesibilidad y productividad de usuarios avanzados
  * Impacto: UX mejorada, usuarios pueden descubrir y usar atajos fácilmente
@@ -114,9 +114,7 @@ function ShortcutRow({ shortcut }: { shortcut: KeyboardShortcut }) {
         {shortcut.keys.map((key, index) => (
           <React.Fragment key={key}>
             <KeyBadge>{key}</KeyBadge>
-            {index < shortcut.keys.length - 1 && (
-              <span className="text-gray-400 text-xs">+</span>
-            )}
+            {index < shortcut.keys.length - 1 && <span className="text-gray-400 text-xs">+</span>}
           </React.Fragment>
         ))}
       </div>
@@ -127,15 +125,15 @@ function ShortcutRow({ shortcut }: { shortcut: KeyboardShortcut }) {
 /**
  * Shortcut category section
  */
-function ShortcutSection({ 
-  category, 
-  shortcuts 
-}: { 
-  category: keyof typeof categories; 
+function ShortcutSection({
+  category,
+  shortcuts,
+}: {
+  category: keyof typeof categories;
   shortcuts: KeyboardShortcut[];
 }) {
   const config = categories[category];
-  const filteredShortcuts = shortcuts.filter(s => s.category === category);
+  const filteredShortcuts = shortcuts.filter((s) => s.category === category);
 
   if (filteredShortcuts.length === 0) return null;
 
@@ -180,9 +178,9 @@ export default function KeyboardShortcutsModal({
           <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
             <Icon name="info" size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
             <Text size="xs" className="text-blue-700">
-              <strong>Tip:</strong> Usa{' '}
-              <KeyBadge>Cmd</KeyBadge> en Mac o <KeyBadge>Ctrl</KeyBadge> en Windows/Linux.
-              Presiona <KeyBadge>?</KeyBadge> en cualquier momento para ver este panel.
+              <strong>Tip:</strong> Usa <KeyBadge>Cmd</KeyBadge> en Mac o <KeyBadge>Ctrl</KeyBadge>{' '}
+              en Windows/Linux. Presiona <KeyBadge>?</KeyBadge> en cualquier momento para ver este
+              panel.
             </Text>
           </div>
 
@@ -198,12 +196,12 @@ export default function KeyboardShortcutsModal({
 
 /**
  * Hook to manage keyboard shortcuts modal
- * 
+ *
  * @example
  * ```tsx
  * function App() {
  *   const { isOpen, open, close } = useKeyboardShortcutsModal();
- *   
+ *
  *   return (
  *     <>
  *       <KeyboardShortcutsModal open={isOpen} onOpenChange={close} />
@@ -218,7 +216,7 @@ export function useKeyboardShortcutsModal() {
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen(prev => !prev), []);
+  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
   // Listen for Cmd/Ctrl + ? to open the modal
   useEffect(() => {

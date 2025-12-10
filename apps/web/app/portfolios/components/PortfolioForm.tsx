@@ -2,22 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import {
-  Drawer,
-  Stack,
-  Heading,
-  Text,
-  Input,
-  Select,
-  Button,
-} from '@cactus/ui';
+import { Drawer, Stack, Heading, Text, Input, Select, Button } from '@cactus/ui';
 import { PortfolioComposition } from './PortfolioComposition';
-import type {
-  Portfolio,
-  PortfolioLine,
-  RiskLevel,
-  InstrumentSearchResult,
-} from '@/types';
+import type { Portfolio, PortfolioLine, RiskLevel, InstrumentSearchResult } from '@/types';
 
 interface PortfolioFormProps {
   open: boolean;
@@ -81,9 +68,7 @@ export function PortfolioForm({
 
   const handleUpdateWeight = (lineId: string, weight: number) => {
     setLines((prevLines) =>
-      prevLines.map((line) =>
-        line.id === lineId ? { ...line, targetWeight: weight / 100 } : line
-      )
+      prevLines.map((line) => (line.id === lineId ? { ...line, targetWeight: weight / 100 } : line))
     );
   };
 
@@ -113,9 +98,7 @@ export function PortfolioForm({
     <Drawer open={open} onOpenChange={onOpenChange} side="right" className="w-full max-w-2xl">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <Heading level={2}>
-            {isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}
-          </Heading>
+          <Heading level={2}>{isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}</Heading>
           <Button
             variant="ghost"
             size="sm"
@@ -173,25 +156,17 @@ export function PortfolioForm({
 
         <div className="p-6 border-t border-border">
           <Stack direction="row" gap="sm" justify="end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={!isValid || isLoading}
-            >
+            <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isLoading}>
               {isLoading
                 ? isEditing
                   ? 'Guardando...'
                   : 'Creando...'
                 : isEditing
-                ? 'Guardar Cambios'
-                : 'Crear Cartera'}
+                  ? 'Guardar Cambios'
+                  : 'Crear Cartera'}
             </Button>
           </Stack>
         </div>
@@ -199,4 +174,3 @@ export function PortfolioForm({
     </Drawer>
   );
 }
-

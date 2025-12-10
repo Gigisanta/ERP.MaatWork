@@ -1,6 +1,6 @@
 /**
  * Tests para api-server (Server Components API)
- * 
+ *
  * AI_DECISION: Tests unitarios para funciones de Server Components
  * Justificación: Validación crítica de llamadas API en Server Components
  * Impacto: Prevenir errores en fetching de datos del servidor
@@ -12,14 +12,14 @@ import { config } from './config';
 
 // Mock Next.js cookies
 vi.mock('next/headers', () => ({
-  cookies: vi.fn()
+  cookies: vi.fn(),
 }));
 
 // Mock config
 vi.mock('./config', () => ({
   config: {
-    apiUrl: 'http://localhost:3001'
-  }
+    apiUrl: 'http://localhost:3001',
+  },
 }));
 
 import { cookies } from 'next/headers';
@@ -35,13 +35,13 @@ describe('api-server', () => {
   describe('apiCall', () => {
     it('debería hacer GET request con cookies', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
       const mockResponse = {
         ok: true,
-        json: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } })
+        json: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -54,9 +54,9 @@ describe('api-server', () => {
           method: 'GET',
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'Cookie': 'token=test-token'
+            Cookie: 'token=test-token',
           }),
-          cache: 'no-store'
+          cache: 'no-store',
         })
       );
       expect(result).toEqual({ success: true, data: { id: '1' } });
@@ -64,39 +64,39 @@ describe('api-server', () => {
 
     it('debería hacer POST request con body', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
       const mockResponse = {
         ok: true,
-        json: vi.fn().mockResolvedValue({ success: true })
+        json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
       await apiCall('/v1/test', {
         method: 'POST',
-        body: { name: 'Test' }
+        body: { name: 'Test' },
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
         'http://localhost:3001/v1/test',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ name: 'Test' })
+          body: JSON.stringify({ name: 'Test' }),
         })
       );
     });
 
     it('debería funcionar sin cookie si no está disponible', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue(undefined)
+        get: vi.fn().mockReturnValue(undefined),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
       const mockResponse = {
         ok: true,
-        json: vi.fn().mockResolvedValue({ success: true })
+        json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -106,27 +106,27 @@ describe('api-server', () => {
         'http://localhost:3001/v1/test',
         expect.objectContaining({
           headers: expect.not.objectContaining({
-            Cookie: expect.anything()
-          })
+            Cookie: expect.anything(),
+          }),
         })
       );
     });
 
     it('debería manejar timeout', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
       // Mock AbortController correctamente
       const mockAbort = vi.fn();
       const mockSignal = { aborted: false } as AbortSignal;
-      
+
       const AbortControllerMock = class {
         abort = mockAbort;
         signal = mockSignal;
       };
-      
+
       global.AbortController = AbortControllerMock as unknown as typeof AbortController;
 
       // Mock setTimeout para que ejecute inmediatamente
@@ -141,13 +141,13 @@ describe('api-server', () => {
       });
 
       await expect(apiCall('/v1/test', { timeoutMs: 1000 })).rejects.toThrow();
-      
+
       global.setTimeout = originalSetTimeout;
     });
 
     it('debería lanzar error cuando response no es ok', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
@@ -155,7 +155,7 @@ describe('api-server', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-        json: vi.fn().mockResolvedValue({ error: 'Not found' })
+        json: vi.fn().mockResolvedValue({ error: 'Not found' }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -164,7 +164,7 @@ describe('api-server', () => {
 
     it('debería manejar error de JSON parsing', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
@@ -172,7 +172,7 @@ describe('api-server', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-        json: vi.fn().mockRejectedValue(new Error('Invalid JSON'))
+        json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -181,13 +181,13 @@ describe('api-server', () => {
 
     it('debería usar timeout personalizado', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
       const mockResponse = {
         ok: true,
-        json: vi.fn().mockResolvedValue({ success: true })
+        json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -203,7 +203,7 @@ describe('api-server', () => {
       await apiCall('/v1/test', { timeoutMs: 5000 });
 
       expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
-      
+
       setTimeoutSpy.mockRestore();
     });
   });
@@ -211,7 +211,7 @@ describe('api-server', () => {
   describe('getContactById', () => {
     it('debería llamar apiCall con el endpoint correcto', async () => {
       const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' })
+        get: vi.fn().mockReturnValue({ value: 'test-token' }),
       };
       (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
 
@@ -226,8 +226,8 @@ describe('api-server', () => {
         ok: true,
         json: vi.fn().mockResolvedValue({
           success: true,
-          data: { id: 'contact-123', firstName: 'John' }
-        })
+          data: { id: 'contact-123', firstName: 'John' },
+        }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
 
@@ -240,6 +240,4 @@ describe('api-server', () => {
       expect(result.data).toEqual({ id: 'contact-123', firstName: 'John' });
     });
   });
-
 });
-

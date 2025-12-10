@@ -13,7 +13,7 @@ import {
   numeric,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { users, teams } from './users';
 
@@ -33,10 +33,10 @@ export const pipelineStages = pgTable(
     slaHours: integer('sla_hours'), // SLA en horas para esta etapa
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    pipelineStagesOrderIdx: index('idx_pipeline_stages_order').on(table.order)
+    pipelineStagesOrderIdx: index('idx_pipeline_stages_order').on(table.order),
   })
 );
 
@@ -68,18 +68,24 @@ export const contacts = pgTable(
     expectativas: text('expectativas'), // Expectativas del contacto
     objetivos: text('objetivos'), // Objetivos del contacto
     requisitosPlanificacion: text('requisitos_planificacion'), // Qué tendría que tener la planificación para avanzar
-    prioridades: jsonb('prioridades').notNull().default(sql`'[]'::jsonb`), // Lista ordenada de prioridades
-    preocupaciones: jsonb('preocupaciones').notNull().default(sql`'[]'::jsonb`), // Lista ordenada de preocupaciones
+    prioridades: jsonb('prioridades')
+      .notNull()
+      .default(sql`'[]'::jsonb`), // Lista ordenada de prioridades
+    preocupaciones: jsonb('preocupaciones')
+      .notNull()
+      .default(sql`'[]'::jsonb`), // Lista ordenada de preocupaciones
     ingresos: numeric('ingresos', { precision: 18, scale: 2 }), // Ingresos mensuales
     gastos: numeric('gastos', { precision: 18, scale: 2 }), // Gastos mensuales
     excedente: numeric('excedente', { precision: 18, scale: 2 }), // Excedente (ingresos - gastos)
-    customFields: jsonb('custom_fields').notNull().default(sql`'{}'::jsonb`),
+    customFields: jsonb('custom_fields')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     contactLastTouchAt: timestamp('contact_last_touch_at', { withTimezone: true }),
     pipelineStageUpdatedAt: timestamp('pipeline_stage_updated_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     contactsAdvisorIdx: index('idx_contacts_advisor').on(table.assignedAdvisorId),
@@ -89,8 +95,8 @@ export const contacts = pgTable(
     // Justificación: Most queries filter by advisor + stage + deletedAt. Composite index reduces query time by 60-80% vs single indexes.
     // Impacto: Faster contact list loading, especially for advisors with many contacts
     contactsAdvisorStageDeletedIdx: index('idx_contacts_advisor_stage_deleted').on(
-      table.assignedAdvisorId, 
-      table.pipelineStageId, 
+      table.assignedAdvisorId,
+      table.pipelineStageId,
       table.deletedAt
     ),
     // AI_DECISION: Add composite index for advisor + deletedAt + updatedAt ordering
@@ -109,7 +115,7 @@ export const contacts = pgTable(
     // Impacto: Faster active contact list loading, smaller index size (only active contacts)
     contactsActiveByAdvisorIdx: index('idx_contacts_active_by_advisor')
       .on(table.assignedAdvisorId, table.updatedAt)
-      .where(sql`${table.deletedAt} IS NULL`)
+      .where(sql`${table.deletedAt} IS NULL`),
   })
 );
 
@@ -121,15 +127,19 @@ export const contactFieldHistory = pgTable(
   'contact_field_history',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
     fieldName: text('field_name').notNull(),
     oldValue: text('old_value'),
     newValue: text('new_value'),
-    changedByUserId: uuid('changed_by_user_id').notNull().references(() => users.id),
-    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow()
+    changedByUserId: uuid('changed_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    contactFieldHistoryIdx: index('idx_contact_field_history').on(table.contactId, table.changedAt)
+    contactFieldHistoryIdx: index('idx_contact_field_history').on(table.contactId, table.changedAt),
   })
 );
 
@@ -141,20 +151,30 @@ export const pipelineStageHistory = pgTable(
   'pipeline_stage_history',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id),
     fromStage: text('from_stage'),
     toStage: text('to_stage').notNull(),
     reason: text('reason'),
-    changedByUserId: uuid('changed_by_user_id').notNull().references(() => users.id),
-    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow()
+    changedByUserId: uuid('changed_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    changedAt: timestamp('changed_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     pipelineHistoryIdx: index('idx_pipeline_history_contact').on(table.contactId, table.changedAt),
-    pipelineHistoryToStageIdx: index('idx_pipeline_history_to_stage').on(table.toStage, table.changedAt),
+    pipelineHistoryToStageIdx: index('idx_pipeline_history_to_stage').on(
+      table.toStage,
+      table.changedAt
+    ),
     // AI_DECISION: Índice para métricas de pipeline que agrupan por from_stage
     // Justificación: Queries de métricas agrupan por from_stage y filtran por fecha
     // Impacto: Faster pipeline metrics queries
-    pipelineHistoryFromStageIdx: index('idx_pipeline_stage_history_from_stage_changed').on(table.fromStage, table.changedAt)
+    pipelineHistoryFromStageIdx: index('idx_pipeline_stage_history_from_stage_changed').on(
+      table.fromStage,
+      table.changedAt
+    ),
   })
 );
 
@@ -175,10 +195,10 @@ export const tags = pgTable(
     isSystem: boolean('is_system').notNull().default(false),
     createdByUserId: uuid('created_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    scopeNameUnique: uniqueIndex('tags_scope_name_unique').on(table.scope, table.name)
+    scopeNameUnique: uniqueIndex('tags_scope_name_unique').on(table.scope, table.name),
   })
 );
 
@@ -190,18 +210,22 @@ export const tagRules = pgTable(
   'tag_rules',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    tagId: uuid('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+    tagId: uuid('tag_id')
+      .notNull()
+      .references(() => tags.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     conditions: jsonb('conditions').notNull(), // Estructura de reglas (AND/OR, campos, operadores)
     isActive: boolean('is_active').notNull().default(true),
     lastEvaluatedAt: timestamp('last_evaluated_at', { withTimezone: true }),
-    createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
+    createdByUserId: uuid('created_by_user_id')
+      .notNull()
+      .references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     tagRulesTagIdx: index('idx_tag_rules_tag').on(table.tagId),
-    tagRulesActiveIdx: index('idx_tag_rules_active').on(table.isActive)
+    tagRulesActiveIdx: index('idx_tag_rules_active').on(table.isActive),
   })
 );
 
@@ -220,14 +244,16 @@ export const segments = pgTable(
     contactCount: integer('contact_count').notNull().default(0),
     lastRefreshedAt: timestamp('last_refreshed_at', { withTimezone: true }),
     refreshSchedule: text('refresh_schedule'), // cron expression
-    ownerId: uuid('owner_id').notNull().references(() => users.id),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id),
     isShared: boolean('is_shared').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     segmentsOwnerIdx: index('idx_segments_owner').on(table.ownerId),
-    segmentsDynamicIdx: index('idx_segments_dynamic').on(table.isDynamic)
+    segmentsDynamicIdx: index('idx_segments_dynamic').on(table.isDynamic),
   })
 );
 
@@ -239,14 +265,21 @@ export const segmentMembers = pgTable(
   'segment_members',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    segmentId: uuid('segment_id').notNull().references(() => segments.id, { onDelete: 'cascade' }),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow()
+    segmentId: uuid('segment_id')
+      .notNull()
+      .references(() => segments.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    segmentMembersUnique: uniqueIndex('segment_members_unique').on(table.segmentId, table.contactId),
+    segmentMembersUnique: uniqueIndex('segment_members_unique').on(
+      table.segmentId,
+      table.contactId
+    ),
     segmentMembersSegmentIdx: index('idx_segment_members_segment').on(table.segmentId),
-    segmentMembersContactIdx: index('idx_segment_members_contact').on(table.contactId)
+    segmentMembersContactIdx: index('idx_segment_members_contact').on(table.contactId),
   })
 );
 
@@ -259,18 +292,21 @@ export const contactTags = pgTable(
   'contact_tags',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id, { onDelete: 'cascade' }),
-    tagId: uuid('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    tagId: uuid('tag_id')
+      .notNull()
+      .references(() => tags.id, { onDelete: 'cascade' }),
     monthlyPremium: integer('monthly_premium'), // Prima mensual (números enteros, ej: 550)
     policyNumber: text('policy_number'), // Número de póliza (texto y números)
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     contactTagUnique: uniqueIndex('contact_tags_unique').on(table.contactId, table.tagId),
     // AI_DECISION: Add contactId index for hot queries
     // Justificación: Contact tags endpoint queries by contactId frequently for batched lookups
     // Impacto: Query p95 reduction ~30-60% for contact-tag relationship queries
-    contactTagsContactIdx: index('idx_contact_tags_contact').on(table.contactId)
+    contactTagsContactIdx: index('idx_contact_tags_contact').on(table.contactId),
   })
 );
-

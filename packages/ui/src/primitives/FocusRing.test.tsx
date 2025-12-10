@@ -1,6 +1,6 @@
 /**
  * Tests para FocusRing primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para FocusRing component
  * Justificación: Validación de accesibilidad y focus states
  * Impacto: Prevenir errores en accesibilidad
@@ -66,5 +66,3 @@ describe('FocusRing', () => {
     expect(container.querySelector('label')).toBeInTheDocument();
   });
 });
-
-

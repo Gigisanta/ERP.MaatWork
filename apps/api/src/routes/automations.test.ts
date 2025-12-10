@@ -1,6 +1,6 @@
 /**
  * Tests para automations routes
- * 
+ *
  * AI_DECISION: Tests unitarios para CRUD de automation configs
  * Justificación: Validación crítica de automatizaciones y configuración
  * Impacto: Prevenir errores en configuración de automatizaciones
@@ -16,11 +16,11 @@ import { requireAuth } from '../auth/middlewares';
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   automationConfigs: {},
-  eq: vi.fn()
+  eq: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -35,12 +35,12 @@ describe('GET /v1/automations', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -53,25 +53,25 @@ describe('GET /v1/automations', () => {
         name: 'welcome-email',
         displayName: 'Welcome Email',
         triggerType: 'contact_created',
-        enabled: true
+        enabled: true,
       },
       {
         id: 'auto-2',
         name: 'follow-up',
         displayName: 'Follow Up',
         triggerType: 'contact_updated',
-        enabled: false
-      }
+        enabled: false,
+      },
     ];
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockResolvedValue(mockData)
-      })
+        orderBy: vi.fn().mockResolvedValue(mockData),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     // Simular handler
@@ -98,12 +98,12 @@ describe('GET /v1/automations', () => {
     const mockError = new Error('Database error');
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockRejectedValue(mockError)
-      })
+        orderBy: vi.fn().mockRejectedValue(mockError),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -121,7 +121,10 @@ describe('GET /v1/automations', () => {
 
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(mockReq.log?.error).toHaveBeenCalledWith({ err: mockError }, 'failed to list automation configs');
+    expect(mockReq.log?.error).toHaveBeenCalledWith(
+      { err: mockError },
+      'failed to list automation configs'
+    );
     expect(mockNext).toHaveBeenCalledWith(mockError);
   });
 });
@@ -137,12 +140,12 @@ describe('GET /v1/automations/:id', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -154,19 +157,19 @@ describe('GET /v1/automations/:id', () => {
       name: 'welcome-email',
       displayName: 'Welcome Email',
       triggerType: 'contact_created',
-      enabled: true
+      enabled: true,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockData])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([mockData]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -199,13 +202,13 @@ describe('GET /v1/automations/:id', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -246,12 +249,12 @@ describe('GET /v1/automations/by-name/:name', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -263,19 +266,19 @@ describe('GET /v1/automations/by-name/:name', () => {
       name: 'welcome-email',
       displayName: 'Welcome Email',
       triggerType: 'contact_created',
-      enabled: true
+      enabled: true,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockData])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([mockData]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -307,13 +310,13 @@ describe('GET /v1/automations/by-name/:name', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -356,17 +359,17 @@ describe('POST /v1/automations', () => {
         triggerType: 'contact_created',
         triggerConfig: { delay: 3600 },
         enabled: true,
-        config: {}
+        config: {},
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -376,26 +379,26 @@ describe('POST /v1/automations', () => {
     const newConfig = {
       id: 'auto-new',
       ...mockReq.body,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No existe
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([newConfig])
-      })
+        returning: vi.fn().mockResolvedValue([newConfig]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -415,7 +418,7 @@ describe('POST /v1/automations', () => {
           .insert(automationConfigs)
           .values({
             ...validated,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .returning();
 
@@ -431,25 +434,28 @@ describe('POST /v1/automations', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(201);
     expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: newConfig });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ automationConfigId: newConfig.id }, 'automation config created');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { automationConfigId: newConfig.id },
+      'automation config created'
+    );
   });
 
   it('debería retornar 409 cuando name ya existe', async () => {
     const existing = {
       id: 'auto-existing',
-      name: 'new-automation'
+      name: 'new-automation',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -469,7 +475,7 @@ describe('POST /v1/automations', () => {
           .insert(automationConfigs)
           .values({
             ...validated,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .returning();
 
@@ -484,7 +490,9 @@ describe('POST /v1/automations', () => {
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockRes.status).toHaveBeenCalledWith(409);
-    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Automation config with this name already exists' });
+    expect(mockRes.json).toHaveBeenCalledWith({
+      error: 'Automation config with this name already exists',
+    });
   });
 });
 
@@ -498,17 +506,17 @@ describe('PATCH /v1/automations/:id', () => {
       params: { id: 'auto-123' },
       body: {
         displayName: 'Updated Display Name',
-        enabled: false
+        enabled: false,
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -519,34 +527,34 @@ describe('PATCH /v1/automations/:id', () => {
       id: 'auto-123',
       name: 'welcome-email',
       displayName: 'Welcome Email',
-      enabled: true
+      enabled: true,
     };
 
     const updated = {
       ...existing,
       ...mockReq.body,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([updated])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -567,7 +575,7 @@ describe('PATCH /v1/automations/:id', () => {
           .update(automationConfigs)
           .set({
             ...validated,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(automationConfigs.id, id))
           .returning();
@@ -583,20 +591,23 @@ describe('PATCH /v1/automations/:id', () => {
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: updated });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ automationConfigId: 'auto-123' }, 'automation config updated');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { automationConfigId: 'auto-123' },
+      'automation config updated'
+    );
   });
 
   it('debería retornar 404 cuando no existe', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -617,7 +628,7 @@ describe('PATCH /v1/automations/:id', () => {
           .update(automationConfigs)
           .set({
             ...validated,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(automationConfigs.id, id))
           .returning();
@@ -648,12 +659,12 @@ describe('DELETE /v1/automations/:id', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -662,24 +673,24 @@ describe('DELETE /v1/automations/:id', () => {
   it('debería eliminar automation config', async () => {
     const existing = {
       id: 'auto-123',
-      name: 'welcome-email'
+      name: 'welcome-email',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue([])
+      where: vi.fn().mockResolvedValue([]),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      delete: mockDelete
+      delete: mockDelete,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -695,9 +706,7 @@ describe('DELETE /v1/automations/:id', () => {
           return res.status(404).json({ error: 'Automation config not found' });
         }
 
-        await db()
-          .delete(automationConfigs)
-          .where(eq(automationConfigs.id, id));
+        await db().delete(automationConfigs).where(eq(automationConfigs.id, id));
 
         req.log.info({ automationConfigId: id }, 'automation config deleted');
         res.json({ success: true });
@@ -710,20 +719,23 @@ describe('DELETE /v1/automations/:id', () => {
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith({ success: true });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ automationConfigId: 'auto-123' }, 'automation config deleted');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { automationConfigId: 'auto-123' },
+      'automation config deleted'
+    );
   });
 
   it('debería retornar 404 cuando no existe', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -739,9 +751,7 @@ describe('DELETE /v1/automations/:id', () => {
           return res.status(404).json({ error: 'Automation config not found' });
         }
 
-        await db()
-          .delete(automationConfigs)
-          .where(eq(automationConfigs.id, id));
+        await db().delete(automationConfigs).where(eq(automationConfigs.id, id));
 
         req.log.info({ automationConfigId: id }, 'automation config deleted');
         res.json({ success: true });
@@ -757,4 +767,3 @@ describe('DELETE /v1/automations/:id', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Automation config not found' });
   });
 });
-

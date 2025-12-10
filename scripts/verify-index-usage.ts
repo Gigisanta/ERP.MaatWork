@@ -1,12 +1,20 @@
 /**
  * Script para verificar uso de índices en queries críticas
- * 
+ *
  * Ejecuta EXPLAIN ANALYZE en queries importantes para verificar que los índices
  * se están utilizando correctamente.
  */
 
 import { db } from '../packages/db/src/index.js';
-import { contacts, tasks, notes, aumImportRows, brokerAccounts, aumSnapshots, dailyMetricsUser } from '../packages/db/src/schema.js';
+import {
+  contacts,
+  tasks,
+  notes,
+  aumImportRows,
+  brokerAccounts,
+  aumSnapshots,
+  dailyMetricsUser,
+} from '../packages/db/src/schema.js';
 import { eq, and, isNull, inArray, sql, gte } from 'drizzle-orm';
 
 async function verifyIndexUsage() {
@@ -15,8 +23,16 @@ async function verifyIndexUsage() {
   try {
     // Obtener algunos IDs de ejemplo de la base de datos
     const [sampleContact] = await db().select({ id: contacts.id }).from(contacts).limit(1);
-    const [sampleUser] = await db().select({ id: contacts.assignedAdvisorId }).from(contacts).where(sql`${contacts.assignedAdvisorId} IS NOT NULL`).limit(1);
-    const [sampleAumRow] = await db().select({ accountNumber: aumImportRows.accountNumber }).from(aumImportRows).where(sql`${aumImportRows.accountNumber} IS NOT NULL`).limit(1);
+    const [sampleUser] = await db()
+      .select({ id: contacts.assignedAdvisorId })
+      .from(contacts)
+      .where(sql`${contacts.assignedAdvisorId} IS NOT NULL`)
+      .limit(1);
+    const [sampleAumRow] = await db()
+      .select({ accountNumber: aumImportRows.accountNumber })
+      .from(aumImportRows)
+      .where(sql`${aumImportRows.accountNumber} IS NOT NULL`)
+      .limit(1);
 
     const contactId = sampleContact?.id || '00000000-0000-0000-0000-000000000000';
     const userId = sampleUser?.assignedAdvisorId || '00000000-0000-0000-0000-000000000000';
@@ -133,7 +149,7 @@ async function verifyIndexUsage() {
       ORDER BY pg_relation_size(indexrelid) DESC
       LIMIT 20
     `);
-    
+
     if (unusedIndexes.rows.length > 0) {
       console.log('⚠️  Índices no utilizados encontrados:');
       console.table(unusedIndexes.rows);
@@ -163,7 +179,7 @@ async function verifyIndexUsage() {
       )
       ORDER BY idx_scan DESC
     `);
-    
+
     console.log('Uso de índices nuevos:');
     console.table(newIndexesUsage.rows);
 
@@ -175,8 +191,8 @@ async function verifyIndexUsage() {
       summary: {
         totalUnusedIndexes: unusedIndexes.rows.length,
         totalIndexesChecked: newIndexesUsage.rows.length,
-        indexesWithScans: newIndexesUsage.rows.filter((r: any) => r.idx_scan > 0).length
-      }
+        indexesWithScans: newIndexesUsage.rows.filter((r: any) => r.idx_scan > 0).length,
+      },
     };
 
     // Guardar reporte JSON
@@ -201,19 +217,19 @@ async function verifyIndexUsage() {
 
 function generateTextReport(report: any): string {
   const lines: string[] = [];
-  
+
   lines.push('='.repeat(80));
   lines.push('REPORTE DE USO DE ÍNDICES');
   lines.push(`Generado: ${report.timestamp}`);
   lines.push('='.repeat(80));
   lines.push('');
-  
+
   lines.push('RESUMEN:');
   lines.push(`  Total de índices no utilizados: ${report.summary.totalUnusedIndexes}`);
   lines.push(`  Total de índices verificados: ${report.summary.totalIndexesChecked}`);
   lines.push(`  Índices con uso: ${report.summary.indexesWithScans}`);
   lines.push('');
-  
+
   if (report.unusedIndexes.length > 0) {
     lines.push('ÍNDICES NO UTILIZADOS:');
     lines.push('-'.repeat(80));
@@ -223,7 +239,7 @@ function generateTextReport(report: any): string {
       lines.push('');
     });
   }
-  
+
   lines.push('USO DE ÍNDICES ESPECÍFICOS:');
   lines.push('-'.repeat(80));
   report.indexUsage.forEach((idx: any) => {
@@ -233,7 +249,7 @@ function generateTextReport(report: any): string {
     lines.push(`    Tuplas obtenidas: ${idx.idx_tup_fetch}`);
     lines.push('');
   });
-  
+
   return lines.join('\n');
 }
 
@@ -247,4 +263,3 @@ verifyIndexUsage()
     console.error('\n❌ Error:', error);
     process.exit(1);
   });
-

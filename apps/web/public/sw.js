@@ -1,22 +1,19 @@
 /**
  * Service Worker for offline caching
- * 
+ *
  * AI_DECISION: Implement service worker for offline asset caching
  * Justificación: Service workers improve UX with offline support and faster asset loading
  * Impacto: Better perceived performance, offline functionality, reduced server load
  */
 
 const CACHE_NAME = 'cactus-crm-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/favicon.ico',
-  '/manifest.json'
-];
+const STATIC_ASSETS = ['/', '/favicon.ico', '/manifest.json'];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(STATIC_ASSETS);
       })
@@ -29,15 +26,16 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    }).then(() => {
-      return self.clients.claim(); // Take control of all pages
-    })
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+        );
+      })
+      .then(() => {
+        return self.clients.claim(); // Take control of all pages
+      })
   );
 });
 
@@ -68,23 +66,22 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.ico')
   ) {
     event.respondWith(
-      caches.match(request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          return fetch(request).then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseToCache);
-            });
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(request).then((response) => {
+          // Don't cache non-successful responses
+          if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
+          }
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
           });
-        })
+          return response;
+        });
+      })
     );
     return;
   }
@@ -114,4 +111,3 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
-

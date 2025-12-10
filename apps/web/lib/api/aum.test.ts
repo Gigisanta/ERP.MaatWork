@@ -23,5 +23,3 @@ describe('getAumRows', () => {
     expect(calledWith).toContain('preferredOnly=false');
   });
 });
-
-

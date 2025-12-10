@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export type ProgressBarVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
 export type ProgressBarSize = 'sm' | 'md' | 'lg';
@@ -49,42 +49,45 @@ const trackVariantClasses: Record<ProgressBarVariant, string> = {
 
 /**
  * ProgressBar component for showing progress of operations.
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * <ProgressBar value={50} />
- * 
+ *
  * // With label
  * <ProgressBar value={75} showLabel />
- * 
+ *
  * // Custom label
  * <ProgressBar value={30} label="Uploading..." />
- * 
+ *
  * // Different sizes and variants
  * <ProgressBar value={60} size="lg" variant="success" />
- * 
+ *
  * // Indeterminate (loading)
  * <ProgressBar indeterminate />
- * 
+ *
  * // Striped and animated
  * <ProgressBar value={50} striped animated />
  * ```
  */
 export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
-  ({
-    value,
-    max = 100,
-    showLabel = false,
-    label,
-    size = 'md',
-    variant = 'default',
-    indeterminate = false,
-    animated = true,
-    striped = false,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      value,
+      max = 100,
+      showLabel = false,
+      label,
+      size = 'md',
+      variant = 'default',
+      indeterminate = false,
+      animated = true,
+      striped = false,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     // Clamp value between 0 and max
     const clampedValue = Math.min(Math.max(0, value), max);
     const percentage = (clampedValue / max) * 100;
@@ -96,9 +99,7 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
         {/* Label */}
         {(showLabel || label) && (
           <div className="flex justify-between items-center mb-1">
-            <span className="text-sm font-medium text-text-secondary">
-              {displayLabel}
-            </span>
+            <span className="text-sm font-medium text-text-secondary">{displayLabel}</span>
             {showLabel && !label && (
               <span className="text-xs text-text-muted">
                 {clampedValue}/{max}
@@ -158,12 +159,8 @@ export const ProgressBarWithStatus = React.forwardRef<HTMLDivElement, ProgressBa
         <ProgressBar {...props} />
         {(status || details) && (
           <div className="flex justify-between items-center">
-            {status && (
-              <span className="text-sm text-text-secondary">{status}</span>
-            )}
-            {details && (
-              <span className="text-xs text-text-muted">{details}</span>
-            )}
+            {status && <span className="text-sm text-text-secondary">{status}</span>}
+            {details && <span className="text-xs text-text-muted">{details}</span>}
           </div>
         )}
       </div>
@@ -192,16 +189,19 @@ export interface CircularProgressProps extends React.SVGAttributes<SVGSVGElement
 }
 
 export const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps>(
-  ({
-    value,
-    size = 48,
-    strokeWidth = 4,
-    variant = 'default',
-    showLabel = false,
-    indeterminate = false,
-    className,
-    ...props
-  }, ref) => {
+  (
+    {
+      value,
+      size = 48,
+      strokeWidth = 4,
+      variant = 'default',
+      showLabel = false,
+      indeterminate = false,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const clampedValue = Math.min(Math.max(0, value), 100);
@@ -222,10 +222,7 @@ export const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgress
           width={size}
           height={size}
           viewBox={`0 0 ${size} ${size}`}
-          className={cn(
-            indeterminate && 'animate-spin',
-            className
-          )}
+          className={cn(indeterminate && 'animate-spin', className)}
           role="progressbar"
           aria-valuenow={indeterminate ? undefined : clampedValue}
           aria-valuemin={0}

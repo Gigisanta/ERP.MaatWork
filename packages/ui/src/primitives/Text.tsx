@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 export interface TextProps {
   as?: keyof React.JSX.IntrinsicElements;
@@ -7,7 +7,15 @@ export interface TextProps {
   className?: string;
   size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl';
   weight?: 'normal' | 'medium' | 'semibold' | 'bold';
-  color?: 'default' | 'secondary' | 'muted' | 'accent' | 'success' | 'warning' | 'error' | 'inverse';
+  color?:
+    | 'default'
+    | 'secondary'
+    | 'muted'
+    | 'accent'
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'inverse';
   /** Whether to use display font (Poppins) instead of body font (Open Sans) */
   display?: boolean;
   // Allow all standard HTML attributes
@@ -17,7 +25,7 @@ export interface TextProps {
 /**
  * Text component using Open Sans font (body font) by default.
  * Can optionally use Poppins (display font) for emphasis.
- * 
+ *
  * @example
  * ```tsx
  * <Text>Regular body text</Text>

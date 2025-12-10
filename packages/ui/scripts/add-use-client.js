@@ -5,9 +5,11 @@
  * TypeScript no preserva las directivas "use client" de Next.js, así que las agregamos post-build
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(__dirname, '../src');
 const distDir = path.join(__dirname, '../dist');
 
@@ -74,25 +76,3 @@ try {
   console.error('Error adding "use client" directives:', error);
   process.exit(1);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { db, advisorAliases, users } from '@cactus/db';
 import { requireAuth } from '../auth/middlewares';
-import { normalizeAdvisorAlias } from '../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../utils/aum/aum-normalization';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -24,7 +24,7 @@ vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
 }));
 
-vi.mock('../utils/aum-normalization', () => ({
+vi.mock('../utils/aum/aum-normalization', () => ({
   normalizeAdvisorAlias: vi.fn((alias) => alias.toLowerCase().trim()),
 }));
 

@@ -1,6 +1,6 @@
 /**
  * Tests para logger estructurado
- * 
+ *
  * AI_DECISION: Tests unitarios para ClientLogger
  * Justificación: Validación crítica de logging estructurado
  * Impacto: Prevenir errores en logging y debugging
@@ -12,8 +12,8 @@ import { logger, ClientLogger, toLogContextValue, toLogContext, type LogLevel } 
 // Mock apiClient
 vi.mock('./api-client', () => ({
   apiClient: {
-    post: vi.fn()
-  }
+    post: vi.fn(),
+  },
 }));
 
 describe('toLogContextValue', () => {
@@ -34,20 +34,20 @@ describe('toLogContextValue', () => {
   it('debería convertir Error a objeto', () => {
     const error = new Error('Test error');
     error.stack = 'Error: Test error\n    at test.js:1:1';
-    
+
     const result = toLogContextValue(error);
-    
+
     expect(result).toEqual({
       message: 'Test error',
       name: 'Error',
-      stack: 'Error: Test error\n    at test.js:1:1'
+      stack: 'Error: Test error\n    at test.js:1:1',
     });
   });
 
   it('debería convertir arrays recursivamente', () => {
     const arr = ['string', 123, true, null];
     const result = toLogContextValue(arr);
-    
+
     expect(result).toEqual(['string', 123, true, null]);
   });
 
@@ -56,24 +56,24 @@ describe('toLogContextValue', () => {
       string: 'value',
       number: 123,
       nested: {
-        bool: true
-      }
+        bool: true,
+      },
     };
     const result = toLogContextValue(obj);
-    
+
     expect(result).toEqual({
       string: 'value',
       number: 123,
       nested: {
-        bool: true
-      }
+        bool: true,
+      },
     });
   });
 
   it('debería convertir valores desconocidos a string', () => {
     const symbol = Symbol('test');
     const result = toLogContextValue(symbol);
-    
+
     expect(typeof result).toBe('string');
   });
 });
@@ -83,18 +83,18 @@ describe('toLogContext', () => {
     const record = {
       string: 'value',
       number: 123,
-      error: new Error('Test')
+      error: new Error('Test'),
     };
-    
+
     const result = toLogContext(record);
-    
+
     expect(result).toEqual({
       string: 'value',
       number: 123,
       error: {
         message: 'Test error',
-        name: 'Error'
-      }
+        name: 'Error',
+      },
     });
   });
 });
@@ -113,21 +113,21 @@ describe('ClientLogger', () => {
       log: vi.spyOn(console, 'log').mockImplementation(() => {}),
       error: vi.spyOn(console, 'error').mockImplementation(() => {}),
       warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
-      debug: vi.spyOn(console, 'debug').mockImplementation(() => {})
+      debug: vi.spyOn(console, 'debug').mockImplementation(() => {}),
     };
 
     // Mock window
     global.window = {
       ...global.window,
       location: { href: 'http://localhost:3000' },
-      navigator: { userAgent: 'test-agent' }
+      navigator: { userAgent: 'test-agent' },
     } as any;
 
     // Mock localStorage
     global.localStorage = {
       getItem: vi.fn().mockReturnValue(null),
       setItem: vi.fn(),
-      removeItem: vi.fn()
+      removeItem: vi.fn(),
     } as any;
   });
 
@@ -139,27 +139,28 @@ describe('ClientLogger', () => {
     it('debería generar sessionId único', () => {
       const logger1 = new ClientLogger();
       const logger2 = new ClientLogger();
-      
+
       expect(logger1['sessionId']).toBeDefined();
       expect(logger2['sessionId']).toBeDefined();
       expect(logger1['sessionId']).not.toBe(logger2['sessionId']);
     });
 
     it('debería extraer userId y role de token en localStorage', () => {
-      const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXItMTIzIiwicm9sZSI6ImFkbWluIn0.test';
+      const mockToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InVzZXItMTIzIiwicm9sZSI6ImFkbWluIn0.test';
       global.localStorage.getItem = vi.fn().mockReturnValue(mockToken);
-      
+
       const testLogger = new ClientLogger();
-      
+
       expect(testLogger['userId']).toBe('user-123');
       expect(testLogger['userRole']).toBe('admin');
     });
 
     it('debería manejar token inválido correctamente', () => {
       global.localStorage.getItem = vi.fn().mockReturnValue('invalid-token');
-      
+
       const testLogger = new ClientLogger();
-      
+
       expect(testLogger['userId']).toBeNull();
       expect(testLogger['userRole']).toBeNull();
     });
@@ -175,31 +176,31 @@ describe('ClientLogger', () => {
 
     it('debería loguear debug correctamente', () => {
       testLogger.debug('Debug message', { key: 'value' });
-      
+
       expect(mockConsole.debug).toHaveBeenCalled();
     });
 
     it('debería loguear info correctamente', () => {
       testLogger.info('Info message', { key: 'value' });
-      
+
       expect(mockConsole.log).toHaveBeenCalled();
     });
 
     it('debería loguear warn correctamente', () => {
       testLogger.warn('Warning message', { key: 'value' });
-      
+
       expect(mockConsole.warn).toHaveBeenCalled();
     });
 
     it('debería loguear error correctamente', () => {
       testLogger.error('Error message', { key: 'value' });
-      
+
       expect(mockConsole.error).toHaveBeenCalled();
     });
 
     it('debería incluir contexto en logs', () => {
       testLogger.info('Test', { userId: '123', action: 'test' });
-      
+
       const call = mockConsole.log.mock.calls[0];
       expect(call[0]).toContain('Test');
       expect(call[1]).toEqual({ userId: '123', action: 'test' });
@@ -209,9 +210,9 @@ describe('ClientLogger', () => {
   describe('updateUser', () => {
     it('debería actualizar userId y userRole', () => {
       const testLogger = new ClientLogger();
-      
+
       testLogger.updateUser('new-user-123', 'manager');
-      
+
       expect(testLogger['userId']).toBe('new-user-123');
       expect(testLogger['userRole']).toBe('manager');
     });
@@ -219,9 +220,9 @@ describe('ClientLogger', () => {
     it('debería permitir null para logout', () => {
       const testLogger = new ClientLogger();
       testLogger.updateUser('user-123', 'admin');
-      
+
       testLogger.updateUser(null, null);
-      
+
       expect(testLogger['userId']).toBeNull();
       expect(testLogger['userRole']).toBeNull();
     });
@@ -231,9 +232,9 @@ describe('ClientLogger', () => {
     it('debería loguear request con requestId', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
-      
+
       testLogger.logRequest('GET', '/api/users', 'req-123', { userId: 'user-1' });
-      
+
       expect(mockConsole.log).toHaveBeenCalled();
       const call = mockConsole.log.mock.calls[0];
       expect(call[0]).toContain('GET');
@@ -245,27 +246,27 @@ describe('ClientLogger', () => {
     it('debería loguear response exitosa como info', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
-      
+
       testLogger.logResponse('GET', '/api/users', 200, 150, 'req-123');
-      
+
       expect(mockConsole.log).toHaveBeenCalled();
     });
 
     it('debería loguear response 4xx como error', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
-      
+
       testLogger.logResponse('GET', '/api/users', 404, 50, 'req-123');
-      
+
       expect(mockConsole.error).toHaveBeenCalled();
     });
 
     it('debería loguear response 3xx como warn', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
-      
+
       testLogger.logResponse('GET', '/api/users', 301, 30, 'req-123');
-      
+
       expect(mockConsole.warn).toHaveBeenCalled();
     });
   });
@@ -274,10 +275,10 @@ describe('ClientLogger', () => {
     it('debería loguear error de red', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
-      
+
       const error = new Error('Network error');
       testLogger.logNetworkError('GET', '/api/users', error, 'req-123');
-      
+
       expect(mockConsole.error).toHaveBeenCalled();
       const call = mockConsole.error.mock.calls[0];
       expect(call[0]).toContain('Network error');
@@ -288,12 +289,12 @@ describe('ClientLogger', () => {
     it('debería solo loguear errores y warnings en producción', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'production';
-      
+
       testLogger.debug('Debug message');
       testLogger.info('Info message');
       testLogger.warn('Warning message');
       testLogger.error('Error message');
-      
+
       expect(mockConsole.debug).not.toHaveBeenCalled();
       expect(mockConsole.log).not.toHaveBeenCalled();
       expect(mockConsole.warn).toHaveBeenCalled();
@@ -305,12 +306,12 @@ describe('ClientLogger', () => {
     it('debería prevenir recursión infinita', async () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'production';
-      
+
       // Simular que ya estamos enviando un log
       testLogger['isSendingLog'] = true;
-      
+
       testLogger.error('Test error');
-      
+
       // No debería intentar enviar al backend
       // Verificamos que no hay llamadas a apiClient
       const { apiClient } = await import('./api-client');
@@ -320,16 +321,16 @@ describe('ClientLogger', () => {
     it('debería desactivar envío después de MAX_BACKEND_ERRORS', async () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'production';
-      
+
       const { apiClient } = await import('./api-client');
       vi.mocked(apiClient.post).mockRejectedValue(new Error('Backend error'));
-      
+
       // Enviar múltiples errores
       for (let i = 0; i < 5; i++) {
         testLogger.error(`Error ${i}`);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
-      
+
       // Después de 3 errores, debería dejar de intentar
       expect(apiClient.post).toHaveBeenCalledTimes(3);
     });
@@ -348,5 +349,3 @@ describe('logger singleton', () => {
     expect(typeof logger.error).toBe('function');
   });
 });
-
-

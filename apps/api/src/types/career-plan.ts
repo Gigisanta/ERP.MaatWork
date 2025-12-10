@@ -45,4 +45,3 @@ export interface UserCareerProgress {
   progressPercentage: number; // Porcentaje de progreso hacia el objetivo del nivel actual (0-100+)
   nextLevel: CareerPlanLevel | null; // Siguiente nivel (si existe)
 }
-

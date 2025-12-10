@@ -1,6 +1,6 @@
 /**
  * Tests para contacts history routes
- * 
+ *
  * AI_DECISION: Tests unitarios para historial de cambios
  * Justificación: Validación crítica de historial
  * Impacto: Prevenir errores en consulta de historial
@@ -16,11 +16,11 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   contactFieldHistory: {},
   eq: vi.fn(),
-  desc: vi.fn()
+  desc: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -35,11 +35,11 @@ describe('GET /contacts/:id/history', () => {
       user: { id: 'user-123', role: 'advisor' },
       params: { id: 'contact-123' },
       query: { limit: '50', offset: '0' },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -53,7 +53,7 @@ describe('GET /contacts/:id/history', () => {
         fieldName: 'firstName',
         oldValue: 'John',
         newValue: 'Johnny',
-        changedAt: new Date()
+        changedAt: new Date(),
       },
       {
         id: 'history-2',
@@ -61,8 +61,8 @@ describe('GET /contacts/:id/history', () => {
         fieldName: 'email',
         oldValue: 'old@example.com',
         newValue: 'new@example.com',
-        changedAt: new Date()
-      }
+        changedAt: new Date(),
+      },
     ];
 
     const mockSelect = vi.fn().mockReturnValue({
@@ -70,15 +70,15 @@ describe('GET /contacts/:id/history', () => {
         where: vi.fn().mockReturnValue({
           orderBy: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
-              offset: vi.fn().mockResolvedValue(mockHistory)
-            })
-          })
-        })
-      })
+              offset: vi.fn().mockResolvedValue(mockHistory),
+            }),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -95,8 +95,8 @@ describe('GET /contacts/:id/history', () => {
         data: history,
         meta: {
           limit: parseInt(limit as string),
-          offset: parseInt(offset as string)
-        }
+          offset: parseInt(offset as string),
+        },
       });
     };
 
@@ -104,15 +104,12 @@ describe('GET /contacts/:id/history', () => {
 
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.arrayContaining([
-          expect.objectContaining({ id: 'history-1' })
-        ]),
+        data: expect.arrayContaining([expect.objectContaining({ id: 'history-1' })]),
         meta: expect.objectContaining({
           limit: 50,
-          offset: 0
-        })
+          offset: 0,
+        }),
       })
     );
   });
 });
-

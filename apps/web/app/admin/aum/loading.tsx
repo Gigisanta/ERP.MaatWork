@@ -1,17 +1,13 @@
 /**
  * Loading component for admin AUM page
- * 
+ *
  * AI_DECISION: Create loading.tsx for streaming SSR
  * Justificación: Provides instant loading state while Server Component fetches data
  * Impacto: Better perceived performance, reduced layout shift
  */
 
 import { Card, CardContent, Stack } from '@cactus/ui';
-import { 
-  Skeleton, 
-  SkeletonPageHeader, 
-  SkeletonTable 
-} from '../../components/SkeletonLoader';
+import { Skeleton, SkeletonPageHeader, SkeletonTable } from '../../components/SkeletonLoader';
 
 export default function AdminAumLoading() {
   return (
@@ -41,4 +37,3 @@ export default function AdminAumLoading() {
     </main>
   );
 }
-

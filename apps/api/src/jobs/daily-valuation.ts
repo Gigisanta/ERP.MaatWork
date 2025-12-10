@@ -1,8 +1,8 @@
 import { db } from '@cactus/db';
-import { 
-  instruments, 
-  priceSnapshots, 
-  brokerPositions, 
+import {
+  instruments,
+  priceSnapshots,
+  brokerPositions,
   brokerBalances,
   brokerAccounts,
   aumSnapshots,
@@ -10,13 +10,13 @@ import {
   portfolioMonitoringSnapshot,
   portfolioMonitoringDetails,
   portfolioTemplateLines,
-  contacts
+  contacts,
 } from '@cactus/db/schema';
 import { eq, and, sql, desc, gte, lte, sum, type InferSelectModel } from 'drizzle-orm';
 import axios from 'axios';
 import pino from 'pino';
 import { PositionWithMarketValue } from '../types/daily-valuation';
-import { CircuitBreaker, CircuitBreakerOpenError } from '../utils/circuit-breaker';
+import { CircuitBreaker, CircuitBreakerOpenError } from '../utils/validation/circuit-breaker';
 
 const logger = pino({ name: 'daily-valuation' });
 
@@ -55,16 +55,16 @@ export class DailyValuationJob {
 
   constructor() {
     this.analyticsServiceUrl = process.env.ANALYTICS_SERVICE_URL || 'http://localhost:3002';
-    
+
     // AI_DECISION: Circuit breaker para microservicio de precios
     // Justificación: Previene llamadas repetidas cuando el servicio está caído
     // Permite fallback rápido a precios históricos
     // Impacto: Mejor resiliencia, menos carga en servicio fallido, recuperación automática
     this.circuitBreaker = new CircuitBreaker({
-      failureThreshold: 5,      // Abrir después de 5 fallos
-      resetTimeout: 60000,      // Intentar half-open después de 60 segundos
-      timeout: 30000,           // Timeout de 30 segundos por request
-      successThreshold: 2       // Cerrar después de 2 éxitos en half-open
+      failureThreshold: 5, // Abrir después de 5 fallos
+      resetTimeout: 60000, // Intentar half-open después de 60 segundos
+      timeout: 30000, // Timeout de 30 segundos por request
+      successThreshold: 2, // Cerrar después de 2 éxitos en half-open
     });
   }
 
@@ -73,12 +73,12 @@ export class DailyValuationJob {
    */
   async run(): Promise<void> {
     logger.info('🚀 Iniciando job de valuación diaria...');
-    
+
     try {
       // 1. Obtener instrumentos activos
       logger.info('📊 Obteniendo instrumentos activos...');
       const activeInstruments = await this.getActiveInstruments();
-      
+
       if (activeInstruments.length === 0) {
         logger.warn('⚠️ No hay instrumentos activos para valuar');
         return;
@@ -89,7 +89,7 @@ export class DailyValuationJob {
       // 2. Obtener precios actuales del microservicio Python
       logger.info('💰 Obteniendo precios actuales...');
       const prices = await this.fetchCurrentPrices(activeInstruments);
-      
+
       if (!prices || Object.keys(prices).length === 0) {
         logger.warn('⚠️ No se pudieron obtener precios');
         return;
@@ -117,7 +117,6 @@ export class DailyValuationJob {
       await refreshJob.refreshAll();
 
       logger.info('✅ Job de valuación diaria completado exitosamente');
-
     } catch (error) {
       logger.error({ err: error }, '❌ Error en job de valuación diaria');
       throw error;
@@ -133,7 +132,7 @@ export class DailyValuationJob {
         id: instruments.id,
         symbol: instruments.symbol,
         name: instruments.name,
-        currency: instruments.currency
+        currency: instruments.currency,
       })
       .from(instruments)
       .where(eq(instruments.active, true));
@@ -145,26 +144,29 @@ export class DailyValuationJob {
   private async fetchCurrentPrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
     // Si el circuit breaker está abierto, usar fallback inmediato
     if (this.circuitBreaker.isOpen()) {
-      logger.warn({
-        circuitState: this.circuitBreaker.getState(),
-        metrics: this.circuitBreaker.getMetrics()
-      }, 'Circuit breaker OPEN - usando fallback inmediato');
+      logger.warn(
+        {
+          circuitState: this.circuitBreaker.getState(),
+          metrics: this.circuitBreaker.getMetrics(),
+        },
+        'Circuit breaker OPEN - usando fallback inmediato'
+      );
       return await this.getLastAvailablePrices(instrumentsList);
     }
 
     try {
       // Ejecutar llamada protegida por circuit breaker
       const prices = await this.circuitBreaker.execute(async () => {
-        const symbols = instrumentsList.map(inst => inst.symbol);
-        
+        const symbols = instrumentsList.map((inst) => inst.symbol);
+
         const response = await axios.post<YFinanceResponse>(
           `${this.analyticsServiceUrl}/prices/fetch`,
           { symbols },
           {
             timeout: 30000, // 30 segundos timeout
             headers: {
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+            },
           }
         );
 
@@ -176,7 +178,6 @@ export class DailyValuationJob {
       });
 
       return prices;
-
     } catch (error) {
       // Si es CircuitBreakerOpenError, ya usamos fallback arriba
       if (error instanceof CircuitBreakerOpenError) {
@@ -185,12 +186,15 @@ export class DailyValuationJob {
       }
 
       // Para otros errores, loguear y usar fallback
-      logger.error({ 
-        err: error,
-        circuitState: this.circuitBreaker.getState(),
-        metrics: this.circuitBreaker.getMetrics()
-      }, 'Error obteniendo precios');
-      
+      logger.error(
+        {
+          err: error,
+          circuitState: this.circuitBreaker.getState(),
+          metrics: this.circuitBreaker.getMetrics(),
+        },
+        'Error obteniendo precios'
+      );
+
       // Si el circuit breaker se abrió debido a este error, usar fallback
       if (this.circuitBreaker.isOpen()) {
         logger.warn('🔄 Circuit breaker se abrió - usando últimos precios disponibles...');
@@ -206,10 +210,12 @@ export class DailyValuationJob {
   /**
    * Obtener últimos precios disponibles como fallback
    */
-  private async getLastAvailablePrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
+  private async getLastAvailablePrices(
+    instrumentsList: InstrumentSelect[]
+  ): Promise<PriceData | null> {
     try {
-      const instrumentIds = instrumentsList.map(inst => inst.id);
-      
+      const instrumentIds = instrumentsList.map((inst) => inst.id);
+
       // Obtener últimos precios por instrumento
       const lastPrices = await db()
         .select({
@@ -217,7 +223,7 @@ export class DailyValuationJob {
           symbol: instruments.symbol,
           closePrice: priceSnapshots.closePrice,
           currency: priceSnapshots.currency,
-          asOfDate: priceSnapshots.asOfDate
+          asOfDate: priceSnapshots.asOfDate,
         })
         .from(priceSnapshots)
         .innerJoin(instruments, eq(priceSnapshots.instrumentId, instruments.id))
@@ -232,9 +238,9 @@ export class DailyValuationJob {
         currency: string;
         asOfDate: Date;
       };
-      
+
       const latestPrices: Map<string, PriceSnapshot> = new Map();
-      
+
       for (const price of lastPrices) {
         if (!latestPrices.has(price.instrumentId)) {
           latestPrices.set(price.instrumentId, price);
@@ -249,13 +255,12 @@ export class DailyValuationJob {
           currency: price.currency,
           date: price.asOfDate.toISOString(),
           source: 'fallback',
-          success: true
+          success: true,
         };
       }
 
       logger.info({ count: Object.keys(result).length }, '📈 Usando precios de fallback');
       return result;
-
     } catch (error) {
       logger.error({ err: error }, 'Error obteniendo precios de fallback');
       return null;
@@ -276,14 +281,14 @@ export class DailyValuationJob {
 
     for (const instrument of instrumentsList) {
       const priceData = prices[instrument.symbol];
-      
+
       if (priceData && priceData.success) {
         snapshotsToInsert.push({
           instrumentId: instrument.id,
           asOfDate: date,
           closePrice: priceData.price,
           currency: priceData.currency,
-          source: priceData.source
+          source: priceData.source,
         });
       }
     }
@@ -298,8 +303,8 @@ export class DailyValuationJob {
           set: {
             closePrice: sql`EXCLUDED.close_price`,
             currency: sql`EXCLUDED.currency`,
-            source: sql`EXCLUDED.source`
-          }
+            source: sql`EXCLUDED.source`,
+          },
         });
 
       logger.info({ count: snapshotsToInsert.length }, '💾 Snapshots de precios guardados');
@@ -316,7 +321,7 @@ export class DailyValuationJob {
       const aumByContact = await db()
         .select({
           contactId: brokerAccounts.contactId,
-          aumTotal: sum(brokerPositions.marketValue)
+          aumTotal: sum(brokerPositions.marketValue),
         })
         .from(brokerPositions)
         .innerJoin(brokerAccounts, eq(brokerPositions.brokerAccountId, brokerAccounts.id))
@@ -330,7 +335,7 @@ export class DailyValuationJob {
         .map((row: { contactId: string; aumTotal: string | null }) => ({
           contactId: row.contactId,
           date,
-          aumTotal: row.aumTotal as string // sum() retorna string para numeric
+          aumTotal: row.aumTotal as string, // sum() retorna string para numeric
         }));
 
       if (aumSnapshotsToInsert.length > 0) {
@@ -340,18 +345,17 @@ export class DailyValuationJob {
           .onConflictDoUpdate({
             target: [aumSnapshots.contactId, aumSnapshots.date],
             set: {
-              aumTotal: sql`EXCLUDED.aum_total`
-            }
+              aumTotal: sql`EXCLUDED.aum_total`,
+            },
           });
 
         logger.info({ count: aumSnapshotsToInsert.length }, '📊 AUM calculado para contactos');
-        
+
         // Refresh materialized view after AUM calculation
         const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
         const refreshJob = new RefreshMaterializedViewsJob();
         await refreshJob.refreshContactAumSummary();
       }
-
     } catch (error) {
       logger.error({ err: error }, 'Error calculando AUM');
       throw error;
@@ -368,26 +372,32 @@ export class DailyValuationJob {
         .select({
           contactId: clientPortfolioAssignments.contactId,
           templateId: clientPortfolioAssignments.templateId,
-          assignmentId: clientPortfolioAssignments.id
+          assignmentId: clientPortfolioAssignments.id,
         })
         .from(clientPortfolioAssignments)
-        .where(and(
-          eq(clientPortfolioAssignments.status, 'active'),
-          lte(clientPortfolioAssignments.startDate, date),
-          sql`(${clientPortfolioAssignments.endDate} IS NULL OR ${clientPortfolioAssignments.endDate} >= ${date})`
-        ));
+        .where(
+          and(
+            eq(clientPortfolioAssignments.status, 'active'),
+            lte(clientPortfolioAssignments.startDate, date),
+            sql`(${clientPortfolioAssignments.endDate} IS NULL OR ${clientPortfolioAssignments.endDate} >= ${date})`
+          )
+        );
 
       logger.info({ count: contactsWithPortfolios.length }, '📏 Calculando desvíos');
 
       for (const contact of contactsWithPortfolios) {
-        await this.calculateContactPortfolioDeviation(contact.contactId, contact.templateId, contact.assignmentId, date);
+        await this.calculateContactPortfolioDeviation(
+          contact.contactId,
+          contact.templateId,
+          contact.assignmentId,
+          date
+        );
       }
 
       // Refresh materialized view after portfolio deviation calculation
       const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
       const refreshJob = new RefreshMaterializedViewsJob();
       await refreshJob.refreshPortfolioDeviationSummary();
-
     } catch (error) {
       logger.error({ err: error }, 'Error calculando desvíos de carteras');
       throw error;
@@ -398,9 +408,9 @@ export class DailyValuationJob {
    * Calcular desvío específico de un contacto
    */
   private async calculateContactPortfolioDeviation(
-    contactId: string, 
-    templateId: string, 
-    assignmentId: string, 
+    contactId: string,
+    templateId: string,
+    assignmentId: string,
     date: string
   ): Promise<void> {
     try {
@@ -410,7 +420,7 @@ export class DailyValuationJob {
           targetType: portfolioTemplateLines.targetType,
           assetClass: portfolioTemplateLines.assetClass,
           instrumentId: portfolioTemplateLines.instrumentId,
-          targetWeight: portfolioTemplateLines.targetWeight
+          targetWeight: portfolioTemplateLines.targetWeight,
         })
         .from(portfolioTemplateLines)
         .where(eq(portfolioTemplateLines.templateId, templateId));
@@ -419,17 +429,17 @@ export class DailyValuationJob {
       const currentPositions = await db()
         .select({
           instrumentId: brokerPositions.instrumentId,
-          marketValue: brokerPositions.marketValue
+          marketValue: brokerPositions.marketValue,
         })
         .from(brokerPositions)
         .innerJoin(brokerAccounts, eq(brokerPositions.brokerAccountId, brokerAccounts.id))
-        .where(and(
-          eq(brokerAccounts.contactId, contactId),
-          eq(brokerPositions.asOfDate, date)
-        ));
+        .where(and(eq(brokerAccounts.contactId, contactId), eq(brokerPositions.asOfDate, date)));
 
       // Calcular AUM total del contacto
-      const totalAUM = currentPositions.reduce((sum: number, pos: PositionWithMarketValue) => sum + Number(pos.marketValue || 0), 0);
+      const totalAUM = currentPositions.reduce(
+        (sum: number, pos: PositionWithMarketValue) => sum + Number(pos.marketValue || 0),
+        0
+      );
 
       if (totalAUM === 0) {
         logger.warn({ contactId }, '⚠️ Contacto sin AUM para calcular desvíos');
@@ -460,7 +470,7 @@ export class DailyValuationJob {
           instrumentId: line.instrumentId,
           targetWeight,
           actualWeight,
-          deviationPct: deviation
+          deviationPct: deviation,
         });
       }
 
@@ -470,13 +480,13 @@ export class DailyValuationJob {
         .values({
           contactId,
           asOfDate: date,
-          totalDeviationPct: totalDeviation
+          totalDeviationPct: totalDeviation,
         })
         .onConflictDoUpdate({
           target: [portfolioMonitoringSnapshot.contactId, portfolioMonitoringSnapshot.asOfDate],
           set: {
-            totalDeviationPct: sql`EXCLUDED.total_deviation_pct`
-          }
+            totalDeviationPct: sql`EXCLUDED.total_deviation_pct`,
+          },
         });
 
       // Guardar detalles de desvío
@@ -484,37 +494,39 @@ export class DailyValuationJob {
         // Eliminar detalles previos para esta fecha
         await db()
           .delete(portfolioMonitoringDetails)
-          .where(eq(portfolioMonitoringDetails.snapshotId, 
-            sql`(SELECT id FROM ${portfolioMonitoringSnapshot} WHERE contact_id = ${contactId} AND as_of_date = ${date})`
-          ));
+          .where(
+            eq(
+              portfolioMonitoringDetails.snapshotId,
+              sql`(SELECT id FROM ${portfolioMonitoringSnapshot} WHERE contact_id = ${contactId} AND as_of_date = ${date})`
+            )
+          );
 
         // Insertar nuevos detalles
         const snapshotId = await db()
           .select({ id: portfolioMonitoringSnapshot.id })
           .from(portfolioMonitoringSnapshot)
-          .where(and(
-            eq(portfolioMonitoringSnapshot.contactId, contactId),
-            eq(portfolioMonitoringSnapshot.asOfDate, date)
-          ))
+          .where(
+            and(
+              eq(portfolioMonitoringSnapshot.contactId, contactId),
+              eq(portfolioMonitoringSnapshot.asOfDate, date)
+            )
+          )
           .limit(1);
 
         if (snapshotId.length > 0) {
-          const detailsToInsert = deviationDetails.map(detail => ({
+          const detailsToInsert = deviationDetails.map((detail) => ({
             snapshotId: snapshotId[0].id,
             targetType: detail.targetType,
             assetClass: detail.assetClass,
             instrumentId: detail.instrumentId,
             targetWeight: detail.targetWeight,
             actualWeight: detail.actualWeight,
-            deviationPct: detail.deviationPct
+            deviationPct: detail.deviationPct,
           }));
 
-          await db()
-            .insert(portfolioMonitoringDetails)
-            .values(detailsToInsert);
+          await db().insert(portfolioMonitoringDetails).values(detailsToInsert);
         }
       }
-
     } catch (error) {
       logger.error({ err: error, contactId }, 'Error calculando desvío para contacto');
       // No lanzar error para no interrumpir el procesamiento de otros contactos
@@ -531,26 +543,26 @@ export async function runDailyValuationJob(): Promise<void> {
 // Función para ejecutar backfill de precios históricos
 export async function runPriceBackfillJob(days: number = 365): Promise<void> {
   logger.info({ days }, '🔄 Iniciando backfill de precios históricos');
-  
+
   try {
     const job = new DailyValuationJob();
     const activeInstruments = await job['getActiveInstruments']();
-    
+
     if (activeInstruments.length === 0) {
       logger.warn('⚠️ No hay instrumentos activos para backfill');
       return;
     }
 
     const symbols = activeInstruments.map((inst: InstrumentSelect) => inst.symbol);
-    
+
     const response = await axios.post(
       `${job['analyticsServiceUrl']}/prices/backfill`,
       { symbols, days },
       {
         timeout: 300000, // 5 minutos timeout para backfill
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       }
     );
 
@@ -558,39 +570,42 @@ export async function runPriceBackfillJob(days: number = 365): Promise<void> {
       throw new Error('Error en respuesta del servicio de backfill');
     }
 
-    logger.info({ totalRecords: response.data.total_records, symbols: response.data.symbols_count }, '✅ Backfill completado');
+    logger.info(
+      { totalRecords: response.data.total_records, symbols: response.data.symbols_count },
+      '✅ Backfill completado'
+    );
 
     // Guardar datos históricos en price_snapshots
     const historicalData = response.data.data;
-    
+
     type HistoricalRecord = {
       date: string;
       price: number;
       currency: string;
     };
-    
+
     for (const [symbol, records] of Object.entries(historicalData)) {
       if (Array.isArray(records) && records.length > 0) {
-        const instrument = activeInstruments.find((inst: InstrumentSelect) => inst.symbol === symbol);
+        const instrument = activeInstruments.find(
+          (inst: InstrumentSelect) => inst.symbol === symbol
+        );
         if (instrument) {
-          const snapshotsToInsert = (records as HistoricalRecord[]).map((record: HistoricalRecord) => ({
-            instrumentId: instrument.id,
-            asOfDate: record.date,
-            closePrice: record.price,
-            currency: record.currency || instrument.currency || 'USD',
-            source: 'yfinance'
-          }));
+          const snapshotsToInsert = (records as HistoricalRecord[]).map(
+            (record: HistoricalRecord) => ({
+              instrumentId: instrument.id,
+              asOfDate: record.date,
+              closePrice: record.price,
+              currency: record.currency || instrument.currency || 'USD',
+              source: 'yfinance',
+            })
+          );
 
-          await db()
-            .insert(priceSnapshots)
-            .values(snapshotsToInsert)
-            .onConflictDoNothing(); // Ignorar duplicados
+          await db().insert(priceSnapshots).values(snapshotsToInsert).onConflictDoNothing(); // Ignorar duplicados
         }
       }
     }
 
     logger.info('💾 Datos históricos guardados en price_snapshots');
-
   } catch (error) {
     logger.error({ err: error }, '❌ Error en backfill de precios');
     throw error;

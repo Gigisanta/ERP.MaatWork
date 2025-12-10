@@ -442,6 +442,22 @@ lib/hooks/
 - ✅ Tipos exportados explícitamente (`type ComponentProps`)
 - ✅ Build genera `dist/` con `.js` y `.d.ts`
 
+## Mejoras Recientes de Consistencia
+
+### Optimización de Imports y Exports
+- **Exports nombrados específicos**: Convertidos exports barrel (`export *`) en módulos críticos (`utils/database/`, `utils/file/`, `utils/http/`) para mejor tree-shaking y reducción de bundle size
+- **Aliases de importación**: Estandarizados imports relativos largos a aliases `@/` (`@/utils/*`, `@/routes/*`, `@/services/*`, etc.) para mejor mantenibilidad
+- **Nomenclatura de archivos**: Renombrados archivos de servicios a convención kebab-case (`aum-conflict-resolution.ts`, `aum-matcher.ts`, `aum-upsert.ts`)
+
+### Documentación y Comentarios
+- **AI_DECISION comments**: Agregados comentarios explicativos a funciones complejas (`validate()`, `RATE_LIMIT_PRESETS`) siguiendo el patrón establecido
+- **Justificación e impacto**: Cada AI_DECISION incluye por qué se tomó la decisión y qué impacto tiene
+
+### Calidad de Código Verificada
+- **Typecheck**: Configuración TypeScript estricta con `exactOptionalPropertyTypes: true`
+- **Linting**: Reglas ESLint que previenen `any` types, `console.*`, y barrel exports
+- **Tests**: Cobertura de tests unitarios en módulos críticos con patrones de mocking consistentes
+
 ## Variables de entorno
 - API: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`, `JWT_SECRET`, `JWT_EXPIRES_IN`
 - Web: `NEXT_PUBLIC_API_URL`, `JWT_SECRET`

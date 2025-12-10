@@ -1,6 +1,6 @@
 /**
  * Tests para AppLayout component
- * 
+ *
  * AI_DECISION: Tests unitarios para AppLayout
  * Justificación: Validación de layout principal
  * Impacto: Prevenir errores en estructura de página
@@ -78,5 +78,3 @@ describe('AppLayout', () => {
     expect(main?.className).toContain('lg:pt-4');
   });
 });
-
-

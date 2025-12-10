@@ -47,7 +47,7 @@ const PERIOD_OPTIONS = [
   { value: '6M', label: '6 Meses' },
   { value: '1Y', label: '1 Año' },
   { value: 'YTD', label: 'Año Actual' },
-  { value: 'ALL', label: 'Todo' }
+  { value: 'ALL', label: 'Todo' },
 ];
 
 const COLORS = [
@@ -67,47 +67,57 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
   benchmarkIds = [],
   period = '1Y',
   height = 400,
-  className = ""
+  className = '',
 }: PerformanceChartProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(period || '1Y');
-  
+
   // AI_DECISION: Migrate from useState+useEffect to SWR hook
   // Justificación: Eliminates redundant requests, provides automatic caching and revalidation
   // Impacto: Reduces API load, improves perceived performance with instant cache hits
-  const { comparisonData, error: comparisonError, isLoading } = usePortfolioComparison(
-    portfolioIds,
-    benchmarkIds,
-    selectedPeriod
-  );
+  const {
+    comparisonData,
+    error: comparisonError,
+    isLoading,
+  } = usePortfolioComparison(portfolioIds, benchmarkIds, selectedPeriod);
 
   // AI_DECISION: Memoize performance data transformation to prevent recalculation
   // Justificación: Transformation runs on every render, memoization prevents unnecessary recalculations
   // Impacto: Reduces computation time by 90%+ when data doesn't change
   const performanceData = useMemo<PerformanceData[]>(() => {
-    if (!comparisonData?.results || !Array.isArray(comparisonData.results) || comparisonData.results.length === 0) {
+    if (
+      !comparisonData?.results ||
+      !Array.isArray(comparisonData.results) ||
+      comparisonData.results.length === 0
+    ) {
       return [];
     }
 
-    return (comparisonData.results as ComparisonResult[]).map((item: ComparisonResult, index: number) => ({
-      id: item.id,
-      name: item.name,
-      type: item.type,
-      performance: item.performance.map((p: PerformanceDataPoint) => ({
-        date: p.date,
-        value: p.value // Ya viene normalizado a base 100
-      })),
-      totalReturn: item.metrics?.totalReturn || 0,
-      color: COLORS[index % COLORS.length]
-    }));
+    return (comparisonData.results as ComparisonResult[]).map(
+      (item: ComparisonResult, index: number) => ({
+        id: item.id,
+        name: item.name,
+        type: item.type,
+        performance: item.performance.map((p: PerformanceDataPoint) => ({
+          date: p.date,
+          value: p.value, // Ya viene normalizado a base 100
+        })),
+        totalReturn: item.metrics?.totalReturn || 0,
+        color: COLORS[index % COLORS.length],
+      })
+    );
   }, [comparisonData]);
 
-  const error = comparisonError ? (comparisonError instanceof Error ? comparisonError.message : 'Error al cargar datos de rendimiento') : null;
+  const error = comparisonError
+    ? comparisonError instanceof Error
+      ? comparisonError.message
+      : 'Error al cargar datos de rendimiento'
+    : null;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('es-ES', {
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -165,7 +175,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
   }
 
   // Calcular rangos para el gráfico
-  const allValues = performanceData.flatMap(d => d.performance.map(p => p.value));
+  const allValues = performanceData.flatMap((d) => d.performance.map((p) => p.value));
   const minValue = Math.min(...allValues);
   const maxValue = Math.max(...allValues);
   const range = maxValue - minValue;
@@ -187,7 +197,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
             <BarChart3 className="w-5 h-5 text-accent-text" />
             <CardTitle>Rendimiento Comparativo</CardTitle>
           </Stack>
-          
+
           <Stack direction="row" gap="sm" align="center">
             <Calendar className="w-4 h-4 text-foreground-tertiary" />
             <Select
@@ -230,17 +240,19 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
               <g key={data.id}>
                 {/* Line path */}
                 <path
-                  d={data.performance.map((point, index) => {
-                    const x = scaleX(index, data.performance.length);
-                    const y = scaleY(point.value);
-                    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
-                  }).join(' ')}
+                  d={data.performance
+                    .map((point, index) => {
+                      const x = scaleX(index, data.performance.length);
+                      const y = scaleY(point.value);
+                      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+                    })
+                    .join(' ')}
                   fill="none"
                   stroke={data.color}
                   strokeWidth="2"
                   className="drop-shadow-sm"
                 />
-                
+
                 {/* Data points */}
                 {data.performance.map((point, index) => {
                   const x = scaleX(index, data.performance.length);
@@ -276,10 +288,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
         <div className="mt-6 flex flex-wrap gap-4">
           {performanceData.map((data) => (
             <Stack key={data.id} direction="row" gap="sm" align="center">
-              <div 
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: data.color }}
-              />
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: data.color }} />
               <Text weight="medium">{data.name}</Text>
               <Badge variant={data.totalReturn >= 0 ? 'success' : 'error'}>
                 <Stack direction="row" gap="xs" align="center">
@@ -300,19 +309,21 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
           <Card>
             <CardContent>
               <Stack direction="column" gap="sm">
-                <Text size="sm" weight="medium" color="secondary">Mejor Rendimiento</Text>
+                <Text size="sm" weight="medium" color="secondary">
+                  Mejor Rendimiento
+                </Text>
                 <Stack direction="column" gap="xs">
                   <Text size="lg" weight="semibold" color="default">
-                    {performanceData.length > 0 ? (
-                      performanceData.reduce((best, current) => 
-                        current.totalReturn > best.totalReturn ? current : best
-                      ).name
-                    ) : (
-                      'N/A'
-                    )}
+                    {performanceData.length > 0
+                      ? performanceData.reduce((best, current) =>
+                          current.totalReturn > best.totalReturn ? current : best
+                        ).name
+                      : 'N/A'}
                   </Text>
                   <Text size="sm" color="secondary">
-                    {performanceData.length > 0 ? formatReturn(Math.max(...performanceData.map(d => d.totalReturn))) : ''}
+                    {performanceData.length > 0
+                      ? formatReturn(Math.max(...performanceData.map((d) => d.totalReturn)))
+                      : ''}
                   </Text>
                 </Stack>
               </Stack>
@@ -322,19 +333,21 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
           <Card>
             <CardContent>
               <Stack direction="column" gap="sm">
-                <Text size="sm" weight="medium" color="secondary">Peor Rendimiento</Text>
+                <Text size="sm" weight="medium" color="secondary">
+                  Peor Rendimiento
+                </Text>
                 <Stack direction="column" gap="xs">
                   <Text size="lg" weight="semibold" color="secondary">
-                    {performanceData.length > 0 ? (
-                      performanceData.reduce((worst, current) => 
-                        current.totalReturn < worst.totalReturn ? current : worst
-                      ).name
-                    ) : (
-                      'N/A'
-                    )}
+                    {performanceData.length > 0
+                      ? performanceData.reduce((worst, current) =>
+                          current.totalReturn < worst.totalReturn ? current : worst
+                        ).name
+                      : 'N/A'}
                   </Text>
                   <Text size="sm" color="secondary">
-                    {performanceData.length > 0 ? formatReturn(Math.min(...performanceData.map(d => d.totalReturn))) : ''}
+                    {performanceData.length > 0
+                      ? formatReturn(Math.min(...performanceData.map((d) => d.totalReturn)))
+                      : ''}
                   </Text>
                 </Stack>
               </Stack>
@@ -344,16 +357,17 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
           <Card>
             <CardContent>
               <Stack direction="column" gap="sm">
-                <Text size="sm" weight="medium" color="secondary">Rendimiento Promedio</Text>
+                <Text size="sm" weight="medium" color="secondary">
+                  Rendimiento Promedio
+                </Text>
                 <Stack direction="column" gap="xs">
                   <Text size="lg" weight="semibold">
-                    {performanceData.length > 0 ? (
-                      formatReturn(
-                        performanceData.reduce((sum, d) => sum + d.totalReturn, 0) / performanceData.length
-                      )
-                    ) : (
-                      'N/A'
-                    )}
+                    {performanceData.length > 0
+                      ? formatReturn(
+                          performanceData.reduce((sum, d) => sum + d.totalReturn, 0) /
+                            performanceData.length
+                        )
+                      : 'N/A'}
                   </Text>
                   <Text size="sm" color="secondary">
                     {performanceData.length > 0 ? `${performanceData.length} elementos` : ''}

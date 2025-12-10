@@ -4,8 +4,8 @@
  * Zod schemas for validating teams CRUD and membership operations
  */
 import { z } from 'zod';
-import { uuidSchema } from '../../utils/common-schemas';
-import { optionalEmailSchema } from '../../utils/validation-common';
+import { uuidSchema } from '../../utils/validation/common-schemas';
+import { optionalEmailSchema } from '../../utils/validation/validation-common';
 
 // ==========================================================
 // Team CRUD Schemas

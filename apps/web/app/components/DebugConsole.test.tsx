@@ -1,6 +1,6 @@
 /**
  * Tests para DebugConsole component
- * 
+ *
  * AI_DECISION: Tests unitarios para inicialización de Debug Console
  * Justificación: Validación crítica de inicialización y fallback de debug console
  * Impacto: Prevenir errores en herramientas de desarrollo
@@ -12,7 +12,7 @@ import DebugConsole from './DebugConsole';
 
 // Mock dependencies
 vi.mock('../../lib/debug-console', () => ({
-  initDebugConsole: vi.fn()
+  initDebugConsole: vi.fn(),
 }));
 
 import { initDebugConsole } from '../../lib/debug-console/index';
@@ -31,11 +31,11 @@ describe('DebugConsole', () => {
         localStorage: {
           getItem: vi.fn(),
           setItem: vi.fn(),
-          removeItem: vi.fn()
-        }
+          removeItem: vi.fn(),
+        },
       },
       writable: true,
-      configurable: true
+      configurable: true,
     });
   });
 
@@ -45,7 +45,7 @@ describe('DebugConsole', () => {
     Object.defineProperty(global, 'window', {
       value: originalWindow,
       writable: true,
-      configurable: true
+      configurable: true,
     });
     delete (global.window as any).debugConsole;
     delete (global.window as any).$debug;
@@ -58,7 +58,7 @@ describe('DebugConsole', () => {
 
   it('no debería inicializar en producción', () => {
     process.env.NODE_ENV = 'production';
-    
+
     render(<DebugConsole />);
     vi.advanceTimersByTime(500);
 
@@ -70,7 +70,7 @@ describe('DebugConsole', () => {
     Object.defineProperty(global, 'window', {
       value: undefined,
       writable: true,
-      configurable: true
+      configurable: true,
     });
 
     render(<DebugConsole />);
@@ -84,7 +84,7 @@ describe('DebugConsole', () => {
     (initDebugConsole as ReturnType<typeof vi.fn>).mockReturnValue({
       getLogs: vi.fn(),
       exportLogs: vi.fn(),
-      clearLogs: vi.fn()
+      clearLogs: vi.fn(),
     });
 
     render(<DebugConsole />);
@@ -166,4 +166,3 @@ describe('DebugConsole', () => {
     expect(fallback.getLogs()).toEqual([]);
   });
 });
-

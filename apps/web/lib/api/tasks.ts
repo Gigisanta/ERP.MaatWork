@@ -37,10 +37,7 @@ export async function createTask(data: CreateTaskRequest): Promise<ApiResponse<T
 /**
  * Actualizar tarea
  */
-export async function updateTask(
-  id: string,
-  data: UpdateTaskRequest
-): Promise<ApiResponse<Task>> {
+export async function updateTask(id: string, data: UpdateTaskRequest): Promise<ApiResponse<Task>> {
   return apiClient.put<Task>(`/v1/tasks/${id}`, data);
 }
 
@@ -50,4 +47,3 @@ export async function updateTask(
 export async function deleteTask(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/tasks/${id}`);
 }
-

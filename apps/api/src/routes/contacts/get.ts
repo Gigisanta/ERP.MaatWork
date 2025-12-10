@@ -21,9 +21,9 @@ import {
 import { eq, desc, and, isNull, sql, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
-import { createDrizzleLogger, createOperationName } from '../../utils/db-logger';
+import { createDrizzleLogger, createOperationName } from '../../utils/database/db-logger';
 import { validate } from '../../utils/validation';
-import { idParamSchema } from '../../utils/common-schemas';
+import { idParamSchema } from '../../utils/validation/common-schemas';
 import { type Contact, type TimelineItem } from '../../types/contacts';
 import { contactDetailQuerySchema } from './schemas';
 import { createRouteHandler, HttpError } from '../../utils/route-handler';

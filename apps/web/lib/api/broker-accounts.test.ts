@@ -10,8 +10,8 @@ vi.mock('../api-client', () => {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -43,4 +43,3 @@ describe('broker-accounts api client endpoints', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/broker-accounts/account-123');
   });
 });
-

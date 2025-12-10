@@ -78,15 +78,14 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
             logger.updateUser(userPayload.id, userPayload.role);
           }
         } else if (r.status === 401) {
-          // Token inválido o expirado - limpiar estado local
+          // Token inválido o expirado - limpiar estado local solamente
+          // AI_DECISION: No llamar /logout cuando /users/me devuelve 401
+          // Justificación: Si /users/me devuelve 401, ya sabemos que no hay sesión válida.
+          //                Llamar /logout genera otro 401 innecesario. El middleware ya limpia cookies expiradas.
+          // Impacto: Elimina 401s redundantes en logs, mejora claridad de debugging
           logger.warn('Sesión inválida o expirada, limpiando estado');
           setUser(null);
           logger.updateUser(null, null);
-
-          // Intentar limpiar cookie llamando al endpoint de logout
-          postJson(`${config.apiUrl}/v1/auth/logout`, {}).catch(() => {
-            // Ignorar errores al limpiar cookie
-          });
         }
         setInitialized(true);
       })

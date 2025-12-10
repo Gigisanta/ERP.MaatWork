@@ -1,5 +1,5 @@
 /* =============================================================================
-   Maat Design System v2.2.1 - Base Styles (Refined & Readable)
+   Maat Design System v2.3.0 - Base Styles (Refined & Readable)
    Typography: Outfit (Display) + Plus Jakarta Sans (Body)
    Colors: Primary (Soft Purple), Secondary (Warm Stone), Accent (Soft Green), Joy (Sunshine)
    ============================================================================= */
@@ -76,31 +76,41 @@
   --color-chart-5: #3b82f6;
   --color-chart-6: #ec4899;
 
-  /* Shadows - Exquisite, Colored, Diffused */
-  --shadow-sm: 0 2px 4px -1px rgb(28 25 23 / 0.04), 0 1px 2px -1px rgb(28 25 23 / 0.04);
-  --shadow-base: 0 4px 6px -1px rgb(28 25 23 / 0.08), 0 2px 4px -2px rgb(28 25 23 / 0.08);
-  --shadow-md: 0 8px 16px -2px rgb(28 25 23 / 0.08), 0 4px 8px -2px rgb(28 25 23 / 0.04);
-  --shadow-lg: 0 12px 24px -4px rgb(28 25 23 / 0.1), 0 6px 12px -4px rgb(28 25 23 / 0.06);
-  --shadow-xl: 0 20px 40px -8px rgb(28 25 23 / 0.12), 0 10px 20px -8px rgb(28 25 23 / 0.04);
-  --shadow-primary: 0 10px 30px -4px rgba(139, 92, 246, 0.2), 0 6px 14px -4px rgba(139, 92, 246, 0.15);
+  /* Shadows - Layered & Diffused (Cool Gray Base) */
+  --shadow-sm: 0 1px 2px 0 rgb(20 20 30 / 0.05);
+  --shadow-base: 
+    0 1px 3px 0 rgb(20 20 30 / 0.1), 
+    0 1px 2px -1px rgb(20 20 30 / 0.1);
+  --shadow-md: 
+    0 4px 6px -1px rgb(20 20 30 / 0.07), 
+    0 2px 4px -2px rgb(20 20 30 / 0.07);
+  --shadow-lg: 
+    0 10px 15px -3px rgb(20 20 30 / 0.08), 
+    0 4px 6px -4px rgb(20 20 30 / 0.08);
+  --shadow-xl: 
+    0 20px 25px -5px rgb(20 20 30 / 0.08), 
+    0 8px 10px -6px rgb(20 20 30 / 0.08);
+  --shadow-primary:
+    0 10px 30px -4px rgba(139, 92, 246, 0.2), 
+    0 6px 14px -4px rgba(139, 92, 246, 0.15);
 
   /* Border Radius - Modern & Round */
   --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --radius-md: 0.75rem; /* Increased from 0.5rem */
+  --radius-lg: 1rem;    /* Increased from 0.75rem */
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
   --radius-full: 9999px;
 
   /* Transitions */
-  --transition-fast: 100ms;
-  --transition-base: 200ms; /* Slightly slower for elegance */
-  --transition-slow: 300ms;
+  --transition-fast: 150ms;
+  --transition-base: 300ms;
+  --transition-slow: 500ms;
 }
 
 /* Dark Mode - "Warm Dark" Stone 950 Base */
 .dark,
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-primary: #a78bfa;
   --color-primary-hover: #c4b5fd;
   --color-primary-active: #ddd6fe;
@@ -140,23 +150,25 @@
 
   /* Warm Dark Surfaces */
   --color-background: #0c0a09; /* Stone 950 */
-  --color-surface: #1c1917;    /* Stone 900 */
+  --color-surface: #1c1917; /* Stone 900 */
   --color-surface-hover: #292524; /* Stone 800 */
 
-  --color-border: #292524;     /* Stone 800 - Subtle border */
+  --color-border: #292524; /* Stone 800 - Subtle border */
   --color-border-hover: #44403c; /* Stone 700 */
 
   /* High Contrast Warm Text */
-  --color-text: #fafaf9;       /* Stone 50 */
+  --color-text: #fafaf9; /* Stone 50 */
   --color-text-secondary: #a8a29e; /* Stone 400 */
-  --color-text-muted: #57534e;     /* Stone 600 */
+  --color-text-muted: #57534e; /* Stone 600 */
   --color-text-inverse: #1c1917;
 
   /* Deep Dark Shadows */
-  --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 16px -2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 10px 30px -4px rgba(167, 139, 250, 0.25), 0 6px 14px -4px rgba(167, 139, 250, 0.15);
+  --shadow-primary:
+    0 10px 30px -4px rgba(167, 139, 250, 0.25), 
+    0 6px 14px -4px rgba(167, 139, 250, 0.15);
 }
 
 /* -----------------------------------------------------------------------------
@@ -172,10 +184,14 @@
   font-weight: 600;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-base) cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
   border: none;
   outline: none;
+}
+
+.cactus-button:active {
+  transform: scale(0.98);
 }
 
 .cactus-button:focus-visible {
@@ -187,6 +203,7 @@
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 .cactus-button-primary {
@@ -197,14 +214,18 @@
 
 .cactus-button-primary:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
-  box-shadow: 0 15px 35px -5px rgba(139, 92, 246, 0.4), 0 8px 16px -5px rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 15px 35px -5px rgba(139, 92, 246, 0.4),
+    0 8px 16px -5px rgba(139, 92, 246, 0.3);
   transform: translateY(-2px);
 }
 
 /* Dark mode button adjustments */
 .dark .cactus-button-primary:hover:not(:disabled),
-[data-theme="dark"] .cactus-button-primary:hover:not(:disabled) {
-  box-shadow: 0 15px 35px -5px rgba(167, 139, 250, 0.35), 0 8px 16px -5px rgba(167, 139, 250, 0.25);
+[data-theme='dark'] .cactus-button-primary:hover:not(:disabled) {
+  box-shadow:
+    0 15px 35px -5px rgba(167, 139, 250, 0.35),
+    0 8px 16px -5px rgba(167, 139, 250, 0.25);
 }
 
 .cactus-button-secondary {
@@ -220,7 +241,9 @@
 .cactus-button-accent {
   background-color: var(--color-accent);
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 30px -4px rgba(16, 185, 129, 0.2), 0 6px 14px -4px rgba(16, 185, 129, 0.15);
+  box-shadow:
+    0 10px 30px -4px rgba(16, 185, 129, 0.2),
+    0 6px 14px -4px rgba(16, 185, 129, 0.15);
 }
 
 .cactus-button-accent:hover:not(:disabled) {
@@ -231,7 +254,9 @@
 .cactus-button-joy {
   background-color: var(--color-joy);
   color: var(--color-text-inverse);
-  box-shadow: 0 10px 30px -4px rgba(245, 158, 11, 0.2), 0 6px 14px -4px rgba(245, 158, 11, 0.15);
+  box-shadow:
+    0 10px 30px -4px rgba(245, 158, 11, 0.2),
+    0 6px 14px -4px rgba(245, 158, 11, 0.15);
 }
 
 .cactus-button-joy:hover:not(:disabled) {
@@ -274,7 +299,7 @@
 
 /* Dark Mode Card Adjustments */
 .dark .cactus-card,
-[data-theme="dark"] .cactus-card {
+[data-theme='dark'] .cactus-card {
   background-color: rgba(28, 25, 23, 0.6); /* Semi-transparent dark stone */
   backdrop-filter: blur(12px);
   border-color: rgba(255, 255, 255, 0.08);
@@ -286,7 +311,8 @@
 }
 
 .cactus-card-interactive {
-  transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
 }
 
 .cactus-card-interactive:hover {
@@ -296,7 +322,7 @@
 }
 
 .dark .cactus-card-interactive:hover,
-[data-theme="dark"] .cactus-card-interactive:hover {
+[data-theme='dark'] .cactus-card-interactive:hover {
   border-color: var(--color-primary);
   box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6);
 }
@@ -315,7 +341,10 @@
   font-size: 0.9375rem; /* Larger font (15px) */
   line-height: 1.5;
   outline: none;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .cactus-input::placeholder {
@@ -334,7 +363,7 @@
 
 /* Dark mode input focus ring opacity */
 .dark .cactus-input:focus,
-[data-theme="dark"] .cactus-input:focus {
+[data-theme='dark'] .cactus-input:focus {
   box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.2);
   background-color: var(--color-surface-hover);
 }

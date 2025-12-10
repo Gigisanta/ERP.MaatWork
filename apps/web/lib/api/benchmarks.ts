@@ -41,7 +41,9 @@ export async function getBenchmarkComponentsBatch(
 /**
  * Crear benchmark
  */
-export async function createBenchmark(data: CreateBenchmarkRequest): Promise<ApiResponse<Benchmark>> {
+export async function createBenchmark(
+  data: CreateBenchmarkRequest
+): Promise<ApiResponse<Benchmark>> {
   return apiClient.post<Benchmark>('/v1/benchmarks', data);
 }
 
@@ -69,10 +71,7 @@ export async function addBenchmarkComponent(
   benchmarkId: string,
   data: AddBenchmarkComponentRequest
 ): Promise<ApiResponse<BenchmarkComponent>> {
-  return apiClient.post<BenchmarkComponent>(
-    `/v1/benchmarks/${benchmarkId}/components`,
-    data
-  );
+  return apiClient.post<BenchmarkComponent>(`/v1/benchmarks/${benchmarkId}/components`, data);
 }
 
 /**
@@ -96,8 +95,5 @@ export async function deleteBenchmarkComponent(
   benchmarkId: string,
   componentId: string
 ): Promise<ApiResponse<void>> {
-  return apiClient.delete<void>(
-    `/v1/benchmarks/${benchmarkId}/components/${componentId}`
-  );
+  return apiClient.delete<void>(`/v1/benchmarks/${benchmarkId}/components/${componentId}`);
 }
-

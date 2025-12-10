@@ -13,7 +13,7 @@ const chalk = chalkModule.default || chalkModule;
 const {
   resolveAnalyticsPort,
   buildAnalyticsServiceUrl,
-  DEFAULT_ANALYTICS_PORT
+  DEFAULT_ANALYTICS_PORT,
 } = require('./utils/analytics-port');
 
 const isWindows = process.platform === 'win32';
@@ -35,10 +35,8 @@ const analyticsPort = resolveAnalyticsPort();
 const analyticsUrl = buildAnalyticsServiceUrl(analyticsPort);
 
 process.env.ANALYTICS_PORT = String(analyticsPort);
-process.env.ANALYTICS_SERVICE_URL =
-  process.env.ANALYTICS_SERVICE_URL || analyticsUrl;
-process.env.PYTHON_SERVICE_URL =
-  process.env.PYTHON_SERVICE_URL || analyticsUrl;
+process.env.ANALYTICS_SERVICE_URL = process.env.ANALYTICS_SERVICE_URL || analyticsUrl;
+process.env.PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || analyticsUrl;
 
 // Procesos hijos
 const processes = [];
@@ -145,9 +143,7 @@ function startProcess(name, command, args, options, color) {
   });
 
   child.on('error', (err) => {
-    console.error(
-      formatLogLine(name, error, `Error al iniciar: ${err.message}`)
-    );
+    console.error(formatLogLine(name, error, `Error al iniciar: ${err.message}`));
   });
 
   child.on('exit', (code, signal) => {
@@ -213,9 +209,7 @@ async function main() {
 
   if (analyticsPort !== DEFAULT_ANALYTICS_PORT) {
     console.log(
-      warning(
-        `⚠️  Puerto 3002 no está disponible. Analytics usará el puerto ${analyticsPort}.`
-      )
+      warning(`⚠️  Puerto 3002 no está disponible. Analytics usará el puerto ${analyticsPort}.`)
     );
     console.log('');
   }
@@ -308,11 +302,7 @@ async function main() {
 
   // Health check Analytics (opcional)
   console.log(info(`🔍 Verificando Analytics Service (${analyticsUrl}/health)...`));
-  const analyticsHealthy = await healthCheck(
-    `${analyticsUrl}/health`,
-    'Analytics',
-    5
-  );
+  const analyticsHealthy = await healthCheck(`${analyticsUrl}/health`, 'Analytics', 5);
   if (analyticsHealthy) {
     console.log(success('  ✅ Analytics Service está funcionando'));
   } else {
@@ -345,9 +335,3 @@ main().catch((err) => {
   cleanup();
   process.exit(1);
 });
-
-
-
-
-
-

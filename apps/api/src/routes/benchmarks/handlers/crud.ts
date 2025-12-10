@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { db } from '@cactus/db';
 import { benchmarkDefinitions, benchmarkComponents, instruments } from '@cactus/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { benchmarksCacheUtil } from '../../../utils/cache';
+import { benchmarksCacheUtil } from '../../../utils/performance/cache';
 import { createAsyncHandler, createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { createBenchmarkSchema, updateBenchmarkSchema } from '../schemas';
 

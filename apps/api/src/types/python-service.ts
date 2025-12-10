@@ -1,6 +1,6 @@
 /**
  * Tipos para respuestas del servicio Python de analytics
- * 
+ *
  * AI_DECISION: Tipos específicos para respuestas del servicio Python
  * Justificación: Eliminar uso de `any` y proporcionar type safety completo
  * Impacto: Mejor type safety y detección de errores en tiempo de compilación
@@ -37,11 +37,14 @@ export interface SymbolSearchResult {
  */
 export interface SymbolSearchResponse {
   status: 'success' | 'error';
-  data?: {
-    results?: SymbolSearchResult[];
-  } | SymbolSearchResult[] | {
-    message?: string;
-  };
+  data?:
+    | {
+        results?: SymbolSearchResult[];
+      }
+    | SymbolSearchResult[]
+    | {
+        message?: string;
+      };
   message?: string;
 }
 
@@ -107,19 +110,17 @@ export function isConnectionError(error: unknown): error is PythonServiceConnect
   if (!(error instanceof Error)) {
     return false;
   }
-  
+
   const err = error as PythonServiceConnectionError;
   const message = typeof err.message === 'string' ? err.message : '';
   return (
     err.code === 'ECONNREFUSED' ||
     err.code === 'ETIMEDOUT' ||
     err.name === 'AbortError' ||
-    (message !== '' && (
-      message.includes('ECONNREFUSED') ||
-      message.includes('ETIMEDOUT') ||
-      message.includes('timeout') ||
-      message.includes('fetch failed')
-    ))
+    (message !== '' &&
+      (message.includes('ECONNREFUSED') ||
+        message.includes('ETIMEDOUT') ||
+        message.includes('timeout') ||
+        message.includes('fetch failed')))
   );
 }
-

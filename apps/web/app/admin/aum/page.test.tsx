@@ -1,6 +1,6 @@
 /**
  * Tests for AUM Hub Page
- * 
+ *
  * Covers:
  * - Rendering of navigation sections
  * - Link navigation
@@ -28,7 +28,7 @@ describe('AumHubPage', () => {
     render(<AumHubPage />);
     const comisionesLink = screen.getByRole('link', { name: /comisiones/i });
     const rowsLink = screen.getByRole('link', { name: /filas y cuentas/i });
-    
+
     expect(comisionesLink).toHaveAttribute('href', '/admin/aum/comisiones');
     expect(rowsLink).toHaveAttribute('href', '/admin/aum/rows');
   });
@@ -39,4 +39,3 @@ describe('AumHubPage', () => {
     expect(screen.getByText(/Normalización y sincronización/i)).toBeInTheDocument();
   });
 });
-

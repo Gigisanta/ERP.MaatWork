@@ -1,6 +1,6 @@
 /**
  * useStaggeredAnimation - Hook for staggered entrance animations
- * 
+ *
  * AI_DECISION: Centralized hook for consistent staggered animations across the app
  * Justificación: Reduces code duplication and ensures consistent animation timing
  * Impacto: Uniform entrance animations for lists, grids, and sequential content
@@ -32,14 +32,14 @@ export interface UseStaggeredAnimationReturn {
 
 /**
  * Hook for creating staggered entrance animations on lists and grids
- * 
+ *
  * @example
  * ```tsx
  * const { mounted, getDelayStyle, getAnimationClass } = useStaggeredAnimation({
  *   baseDelay: 75,
  *   initialDelay: 100,
  * });
- * 
+ *
  * return (
  *   <div className="grid grid-cols-3 gap-4">
  *     {items.map((item, index) => (
@@ -58,12 +58,7 @@ export interface UseStaggeredAnimationReturn {
 export function useStaggeredAnimation(
   options: UseStaggeredAnimationOptions = {}
 ): UseStaggeredAnimationReturn {
-  const {
-    baseDelay = 50,
-    initialDelay = 0,
-    maxTotalDelay = 1000,
-    enabled = true,
-  } = options;
+  const { baseDelay = 50, initialDelay = 0, maxTotalDelay = 1000, enabled = true } = options;
 
   const [mounted, setMounted] = useState(false);
 
@@ -96,10 +91,8 @@ export function useStaggeredAnimation(
 
   const getAnimationClass = useCallback(
     (index: number, baseClass = ''): string => {
-      const animationState = mounted
-        ? 'opacity-100 translate-y-0'
-        : 'opacity-0 translate-y-4';
-      
+      const animationState = mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4';
+
       return `transition-all duration-500 ease-out ${animationState} ${baseClass}`.trim();
     },
     [mounted]

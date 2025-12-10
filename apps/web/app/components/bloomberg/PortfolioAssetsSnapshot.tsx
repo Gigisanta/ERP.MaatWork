@@ -2,7 +2,7 @@
 
 /**
  * PortfolioAssetsSnapshot - Grid de snapshots tipo Bloomberg para activos únicos en las carteras
- * 
+ *
  * AI_DECISION: Componente cliente para mostrar snapshots de activos en carteras
  * Justificación: Necesita interactividad y navegación, muestra datos en tiempo real
  * Impacto: Mejor UX para ver datos de mercado de activos en carteras
@@ -10,7 +10,18 @@
 
 import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, Grid, Button, Text, Stack, Spinner, Alert } from '@cactus/ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Grid,
+  Button,
+  Text,
+  Stack,
+  Spinner,
+  Alert,
+} from '@cactus/ui';
 import { ExternalLink } from 'lucide-react';
 import { usePortfolioAssets } from '@/lib/hooks/usePortfolioAssets';
 import type { Portfolio } from '@/types';
@@ -27,14 +38,14 @@ interface PortfolioAssetsSnapshotProps {
   className?: string;
 }
 
-export default function PortfolioAssetsSnapshot({ 
-  portfolios, 
+export default function PortfolioAssetsSnapshot({
+  portfolios,
   maxAssets = 12,
-  className 
+  className,
 }: PortfolioAssetsSnapshotProps) {
   const router = useRouter();
   const assets = usePortfolioAssets(portfolios);
-  
+
   // Limitar número de activos si se especifica
   const displayedAssets = useMemo(() => {
     return assets.slice(0, maxAssets);
@@ -55,7 +66,10 @@ export default function PortfolioAssetsSnapshot({
       <Card className={className}>
         <CardContent className="p-6">
           <Alert variant="info">
-            <Text>No hay activos en las carteras. Agrega instrumentos a tus carteras para ver sus datos de mercado.</Text>
+            <Text>
+              No hay activos en las carteras. Agrega instrumentos a tus carteras para ver sus datos
+              de mercado.
+            </Text>
           </Alert>
         </CardContent>
       </Card>
@@ -69,14 +83,15 @@ export default function PortfolioAssetsSnapshot({
           <Stack direction="row" gap="md" align="center" justify="between">
             <CardTitle>Portfolio Assets Snapshot</CardTitle>
             <Text size="sm" color="secondary">
-              {assets.length} activo{assets.length !== 1 ? 's' : ''} único{assets.length !== 1 ? 's' : ''}
+              {assets.length} activo{assets.length !== 1 ? 's' : ''} único
+              {assets.length !== 1 ? 's' : ''}
               {assets.length > maxAssets && ` (mostrando ${maxAssets})`}
             </Text>
           </Stack>
         </CardHeader>
         <CardContent>
           <Grid cols={1} gap="md" className="md:grid-cols-2 lg:grid-cols-3">
-            {displayedAssets.map(asset => (
+            {displayedAssets.map((asset) => (
               <div key={asset.symbol} className="relative">
                 <AssetSnapshot symbol={asset.symbol} />
                 <div className="mt-2 flex items-center justify-between">
@@ -95,12 +110,12 @@ export default function PortfolioAssetsSnapshot({
               </div>
             ))}
           </Grid>
-          
+
           {assets.length > maxAssets && (
             <div className="mt-4 text-center">
               <Text size="sm" color="secondary">
-                Mostrando {maxAssets} de {assets.length} activos. 
-                Agrega más activos a tus carteras para ver más snapshots.
+                Mostrando {maxAssets} de {assets.length} activos. Agrega más activos a tus carteras
+                para ver más snapshots.
               </Text>
             </div>
           )}
@@ -109,4 +124,3 @@ export default function PortfolioAssetsSnapshot({
     </div>
   );
 }
-

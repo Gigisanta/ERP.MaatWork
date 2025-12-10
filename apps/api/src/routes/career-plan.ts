@@ -4,7 +4,7 @@ import { db, careerPlanLevels } from '@cactus/db';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
-import { uuidSchema } from '../utils/common-schemas';
+import { uuidSchema } from '../utils/validation/common-schemas';
 import { calculateUserCareerProgress } from '../utils/career-plan';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';
 
@@ -18,22 +18,18 @@ const createLevelSchema = z.object({
   category: z.string().min(1).max(100),
   level: z.string().min(1).max(100),
   levelNumber: z.number().int().positive(),
-  index: z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      if (typeof val === 'string') {
-        return val;
-      }
-      return val.toString();
-    }),
-  percentage: z
-    .union([z.string(), z.number()])
-    .transform((val) => {
-      if (typeof val === 'string') {
-        return val;
-      }
-      return val.toString();
-    }),
+  index: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      return val;
+    }
+    return val.toString();
+  }),
+  percentage: z.union([z.string(), z.number()]).transform((val) => {
+    if (typeof val === 'string') {
+      return val;
+    }
+    return val.toString();
+  }),
   annualGoalUsd: z.number().int().positive(),
   isActive: z.boolean().optional().default(true),
 });
@@ -76,7 +72,10 @@ router.get(
   requireAuth,
   createRouteHandler(async (req: Request) => {
     const dbi = db();
-    const levels = await dbi.select().from(careerPlanLevels).orderBy(asc(careerPlanLevels.levelNumber));
+    const levels = await dbi
+      .select()
+      .from(careerPlanLevels)
+      .orderBy(asc(careerPlanLevels.levelNumber));
 
     return levels;
   })

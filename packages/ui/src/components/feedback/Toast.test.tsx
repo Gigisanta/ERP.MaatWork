@@ -81,10 +81,10 @@ describe('Toast Component', () => {
       const { container } = render(
         <Toast title="Closeable" open={true} onOpenChange={handleOpenChange} />
       );
-      
+
       const closeButton = container.querySelector('.absolute.right-2.top-2') as HTMLElement;
       closeButton?.click();
-      
+
       expect(handleOpenChange).toHaveBeenCalledWith(false);
     });
   });
@@ -142,13 +142,15 @@ describe('Toast Component', () => {
     });
 
     it('should handle long titles', () => {
-      const longTitle = 'This is a very long notification title that might wrap to multiple lines in the toast component';
+      const longTitle =
+        'This is a very long notification title that might wrap to multiple lines in the toast component';
       render(<Toast title={longTitle} open={true} />);
       expect(screen.getByText(longTitle)).toBeInTheDocument();
     });
 
     it('should handle long descriptions', () => {
-      const longDesc = 'This is a detailed description explaining what happened in the system with lots of contextual information';
+      const longDesc =
+        'This is a detailed description explaining what happened in the system with lots of contextual information';
       render(<Toast title="Title" description={longDesc} open={true} />);
       expect(screen.getByText(longDesc)).toBeInTheDocument();
     });
@@ -180,4 +182,3 @@ describe('Toast Component', () => {
     });
   });
 });
-

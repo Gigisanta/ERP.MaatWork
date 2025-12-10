@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -34,8 +34,14 @@ describe('tasks api client endpoints', () => {
   });
 
   it('calls get tasks endpoint with all filters', async () => {
-    await apiIndex.getTasks({ contactId: 'contact-123', assignedToId: 'user-456', status: 'pending' });
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/tasks?contactId=contact-123&assignedToId=user-456&status=pending');
+    await apiIndex.getTasks({
+      contactId: 'contact-123',
+      assignedToId: 'user-456',
+      status: 'pending',
+    });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/tasks?contactId=contact-123&assignedToId=user-456&status=pending'
+    );
   });
 
   it('calls create task endpoint', async () => {
@@ -55,4 +61,3 @@ describe('tasks api client endpoints', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/tasks/task-123');
   });
 });
-

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useSidebar } from './SidebarContext';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
@@ -16,7 +16,7 @@ const FULL_SCREEN_ROUTES = ['/login', '/register', '/forgot-password', '/reset-p
 /**
  * App Layout component with smooth page transitions.
  * Handles sidebar state and provides animated content container.
- * 
+ *
  * AI_DECISION: Auth pages render without wrapper for full-screen backgrounds
  * Justificación: Login/register pages need full viewport control without sidebar interference
  * Impacto: Auth pages display correctly, other pages maintain proper sidebar layout
@@ -29,14 +29,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const previousPathname = useRef(pathname);
 
   // Check if current route should use full-screen layout (no wrapper)
-  const isFullScreenRoute = FULL_SCREEN_ROUTES.some(route => pathname.startsWith(route));
+  const isFullScreenRoute = FULL_SCREEN_ROUTES.some((route) => pathname.startsWith(route));
 
   // Handle page transitions
   useEffect(() => {
     if (pathname !== previousPathname.current) {
       // Start exit animation
       setIsTransitioning(true);
-      
+
       // After brief fade out, update content and start enter animation
       const timeout = setTimeout(() => {
         setDisplayedChildren(children);
@@ -57,7 +57,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <main 
+    <main
       className={[
         // Base styles - transparent to show body gradient
         'min-h-screen',
@@ -78,15 +78,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         'safe-area-bottom',
       ].join(' ')}
     >
-      <div 
+      <div
         className={[
           'transition-opacity duration-150 ease-out',
           isTransitioning ? 'opacity-0 scale-[0.99]' : 'opacity-100 scale-100',
         ].join(' ')}
       >
-        <div className="animate-fade-in max-w-[1600px] mx-auto">
-          {displayedChildren}
-        </div>
+        <div className="animate-fade-in max-w-[1600px] mx-auto">{displayedChildren}</div>
       </div>
     </main>
   );

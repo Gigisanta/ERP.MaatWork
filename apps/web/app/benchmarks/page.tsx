@@ -9,10 +9,10 @@ import type { Benchmark } from '@/types';
 // Justificación: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 2 hour revalidation for benchmark data
-// Justificación: Benchmarks change rarely, ISR reduces server load 60-80% while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for benchmark management page
-export const revalidate = 7200; // Revalidate every 2 hours
+// AI_DECISION: Force dynamic rendering for benchmarks page
+// Justificación: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+export const dynamic = 'force-dynamic';
 
 export default async function BenchmarksPage() {
   // Check authentication and get user
@@ -34,8 +34,8 @@ export default async function BenchmarksPage() {
         <Alert variant="warning" title="Acceso restringido">
           No tienes permisos para gestionar benchmarks.
         </Alert>
-        <Link 
-          href="/home" 
+        <Link
+          href="/home"
           className="inline-block mt-4 text-info hover:underline transition-colors"
         >
           ← Volver al inicio
@@ -67,10 +67,7 @@ export default async function BenchmarksPage() {
           📈 Benchmarks
         </Heading>
         <div className="flex flex-wrap items-center gap-4">
-          <Link 
-            href="/home" 
-            className="text-info hover:underline transition-colors text-sm"
-          >
+          <Link href="/home" className="text-info hover:underline transition-colors text-sm">
             ← Volver al inicio
           </Link>
           <span className="text-text-muted">|</span>

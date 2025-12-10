@@ -87,7 +87,7 @@ describe('Select Component', () => {
     it('should have proper ARIA attributes when error is present', () => {
       render(<Select items={mockItems} error="Error message" id="test-select" />);
       const trigger = screen.getByRole('combobox');
-      
+
       expect(trigger).toHaveAttribute('aria-invalid', 'true');
       expect(trigger).toHaveAttribute('aria-describedby', 'test-select-error');
     });
@@ -95,7 +95,7 @@ describe('Select Component', () => {
     it('should link helper text with aria-describedby', () => {
       render(<Select items={mockItems} helperText="Helper text" id="test-select" />);
       const trigger = screen.getByRole('combobox');
-      
+
       expect(trigger).toHaveAttribute('aria-describedby', 'test-select-helper');
     });
 
@@ -106,7 +106,7 @@ describe('Select Component', () => {
 
     it('should be keyboard accessible', () => {
       render(<Select items={mockItems} />);
-      
+
       const trigger = screen.getByRole('combobox');
       trigger.focus();
       expect(trigger).toHaveFocus();
@@ -125,7 +125,8 @@ describe('Select Component', () => {
     });
 
     it('should forward ref correctly', () => {
-      const ref = React.createRef<React.ElementRef<typeof import('@radix-ui/react-select').Trigger>>();
+      const ref =
+        React.createRef<React.ElementRef<typeof import('@radix-ui/react-select').Trigger>>();
       render(<Select items={mockItems} ref={ref} />);
       expect(ref.current).not.toBeNull();
     });
@@ -150,4 +151,3 @@ describe('Select Component', () => {
     });
   });
 });
-

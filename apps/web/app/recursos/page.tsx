@@ -1,13 +1,5 @@
 import Link from 'next/link';
-import {
-  Heading,
-  Text,
-  Card,
-  CardContent,
-  Grid,
-  Stack,
-  Icon,
-} from '@cactus/ui';
+import { Heading, Text, Card, CardContent, Grid, Stack, Icon } from '@cactus/ui';
 
 /**
  * Página de Recursos - Hub para acceder a material visual y datos de facturación

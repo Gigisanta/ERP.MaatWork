@@ -9,8 +9,8 @@ vi.mock('../api-client', () => {
   return {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
-      post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true }))
-    }
+      post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
+    },
   };
 });
 
@@ -37,4 +37,3 @@ describe('analytics api client endpoints', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/v1/analytics/compare', data);
   });
 });
-

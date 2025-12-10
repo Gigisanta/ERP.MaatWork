@@ -7,14 +7,14 @@ export default function AumHubPage() {
       title: 'AUM - Comisiones',
       description: 'Gestiona y normaliza datos de comisiones por operaciones de brokers.',
       href: '/admin/aum/comisiones',
-      icon: '💰'
+      icon: '💰',
     },
     {
       title: 'AUM - Filas y Cuentas',
       description: 'Normalización y sincronización de cuentas comitentes con el CRM.',
       href: '/admin/aum/rows',
-      icon: '📊'
-    }
+      icon: '📊',
+    },
   ];
 
   return (
@@ -30,15 +30,15 @@ export default function AumHubPage() {
             <Card variant="interactive" padding="lg" className="h-full">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-3xl" aria-hidden>{section.icon}</span>
+                  <span className="text-3xl" aria-hidden>
+                    {section.icon}
+                  </span>
                   <CardTitle>{section.title}</CardTitle>
                 </div>
                 <CardDescription>{section.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mt-4 text-sm text-primary">
-                  Ir a {section.title} →
-                </div>
+                <div className="mt-4 text-sm text-primary">Ir a {section.title} →</div>
               </CardContent>
             </Card>
           </Link>

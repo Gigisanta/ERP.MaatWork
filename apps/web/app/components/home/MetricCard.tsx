@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Card, CardContent, Text, Stack } from '@cactus/ui';
 import { useMemo, useEffect, useState, memo } from 'react';
@@ -15,7 +15,7 @@ interface MetricCardProps {
 /**
  * Card individual para mostrar una métrica con su valor actual y objetivo
  * Con animaciones de entrada staggered y progress bar animado
- * 
+ *
  * AI_DECISION: Memoizado para evitar re-renders innecesarios
  * Justificación: Solo debe re-renderizar si cambian los valores reales, no el timestamp
  * Impacto: Menos re-renders en dashboard home, mejor performance
@@ -28,8 +28,8 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
     // Trigger mount animation
     const mountTimer = setTimeout(() => setMounted(true), 50);
     // Trigger progress bar animation after card is visible
-    const progressTimer = setTimeout(() => setAnimateProgress(true), 300 + (index * 100));
-    
+    const progressTimer = setTimeout(() => setAnimateProgress(true), 300 + index * 100);
+
     return () => {
       clearTimeout(mountTimer);
       clearTimeout(progressTimer);
@@ -80,24 +80,24 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
         }}
       >
         {/* Subtle glow effect on hover */}
-        <div 
+        <div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
           style={{
             background: `radial-gradient(circle at top, ${getGlowColor(color)}, transparent 70%)`,
           }}
         />
-        
+
         <CardContent className="p-5 relative">
           <Stack direction="column" gap="sm">
             {/* Title */}
             <Text size="sm" color="secondary" className="font-medium uppercase tracking-wide">
               {title}
             </Text>
-            
+
             {/* Value with count-up animation feel */}
             <div className="flex items-baseline gap-2">
-              <Text 
-                size="xl" 
+              <Text
+                size="xl"
                 className="font-bold text-3xl transition-all duration-300"
                 style={{ color }}
               >
@@ -109,18 +109,23 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
                 </Text>
               )}
             </div>
-            
+
             {/* Percentage badge */}
             {goal > 0 && (
               <div className="flex items-center gap-2">
-                <span 
+                <span
                   className={`
                     inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
                     transition-all duration-300
-                    ${percentage >= 100 ? 'bg-success-subtle text-success' : 
-                      percentage >= 75 ? 'bg-accent-subtle text-accent-hover' :
-                      percentage >= 50 ? 'bg-warning-subtle text-warning' :
-                      'bg-surface-hover text-text-secondary'}
+                    ${
+                      percentage >= 100
+                        ? 'bg-success-subtle text-success'
+                        : percentage >= 75
+                          ? 'bg-accent-subtle text-accent-hover'
+                          : percentage >= 50
+                            ? 'bg-warning-subtle text-warning'
+                            : 'bg-surface-hover text-text-secondary'
+                    }
                   `}
                 >
                   {percentage.toFixed(0)}%
@@ -130,7 +135,7 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
                 </Text>
               </div>
             )}
-            
+
             {/* Progress bar with animation */}
             {goal > 0 && (
               <div className="w-full h-2 bg-surface rounded-full overflow-hidden mt-2">

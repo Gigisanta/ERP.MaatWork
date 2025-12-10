@@ -27,7 +27,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 async function fullReset() {
   try {
     console.log('🔄 Reset completo de base de datos y migraciones\n');
-    
+
     // Paso 1: Limpiar migraciones existentes
     console.log('1️⃣ Limpiando migraciones existentes...\n');
     if (existsSync(migrationsDir)) {
@@ -39,31 +39,35 @@ async function fullReset() {
           console.log(`   ✓ Eliminado: ${file}`);
         }
       }
-      
+
       // Limpiar meta y recrear journal vacío
       const metaDir = resolve(migrationsDir, 'meta');
       if (existsSync(metaDir)) {
         rmSync(metaDir, { recursive: true, force: true });
       }
       mkdirSync(metaDir, { recursive: true });
-      
+
       writeFileSync(
         resolve(metaDir, '_journal.json'),
-        JSON.stringify({
-          version: '7',
-          dialect: 'postgresql',
-          entries: []
-        }, null, 2)
+        JSON.stringify(
+          {
+            version: '7',
+            dialect: 'postgresql',
+            entries: [],
+          },
+          null,
+          2
+        )
       );
       console.log('   ✓ Journal vaciado (entries: [])');
     }
-    
+
     // Paso 2: Resetear base de datos
     console.log('\n2️⃣ Reseteando base de datos...\n');
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // Eliminar todas las tablas
       const tables = await client.query(`
         SELECT tablename 
@@ -71,7 +75,7 @@ async function fullReset() {
         WHERE schemaname = 'public'
         AND tablename NOT LIKE 'pg_%'
       `);
-      
+
       if (tables.rows.length > 0) {
         for (const row of tables.rows) {
           await client.query(`DROP TABLE IF EXISTS "public"."${row.tablename}" CASCADE`);
@@ -80,38 +84,36 @@ async function fullReset() {
       } else {
         console.log('   ℹ️  No hay tablas para eliminar');
       }
-      
+
       // Eliminar schema drizzle
       await client.query('DROP SCHEMA IF EXISTS drizzle CASCADE');
       console.log('   ✓ Schema drizzle eliminado');
-      
+
       await client.query('COMMIT');
       console.log('   ✅ Base de datos reseteada\n');
-      
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
     } finally {
       client.release();
     }
-    
+
     // Paso 3: Regenerar migraciones desde el schema
     console.log('3️⃣ Regenerando migraciones desde el schema actual...\n');
-    execSync('pnpm generate', { 
-      cwd: import.meta.dirname, 
+    execSync('pnpm generate', {
+      cwd: import.meta.dirname,
       stdio: 'inherit',
-      env: process.env
+      env: process.env,
     });
-    
+
     // Paso 4: Aplicar migraciones
     console.log('\n4️⃣ Aplicando migraciones...\n');
     const dbConnection = drizzle(pool);
     await migrate(dbConnection, { migrationsFolder: migrationsDir });
     console.log('   ✅ Migraciones aplicadas exitosamente\n');
-    
+
     console.log('🎉 Reset completo finalizado!');
     console.log('   La base de datos está lista para usar.\n');
-    
   } catch (error) {
     console.error('\n❌ Error durante el reset:', error.message);
     process.exit(1);
@@ -121,4 +123,3 @@ async function fullReset() {
 }
 
 fullReset();
-

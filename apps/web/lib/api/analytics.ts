@@ -41,4 +41,3 @@ export async function comparePortfolios(
 ): Promise<ApiResponse<CompareResponse>> {
   return apiClient.post<CompareResponse>('/v1/analytics/compare', data);
 }
-

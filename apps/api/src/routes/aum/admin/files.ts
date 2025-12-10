@@ -13,7 +13,7 @@ import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
 import { createErrorResponse, getStatusCodeFromError } from '../../../utils/error-response';
 import { HttpError } from '../../../utils/route-handler';
-import { aumFileIdParamsSchema, aumPurgeQuerySchema } from '../../../utils/aum-validation';
+import { aumFileIdParamsSchema, aumPurgeQuerySchema } from '../../../utils/aum/aum-validation';
 
 const router = Router();
 

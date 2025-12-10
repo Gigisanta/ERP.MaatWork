@@ -30,6 +30,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createErrorResponse, getStatusCodeFromError } from './error-response';
+import { canAccessContact } from '../auth/authorization';
 
 /**
  * Tipo para handlers que retornan datos directamente
@@ -345,4 +346,65 @@ export function getStatusCode(error: unknown): number {
     return error.statusCode;
   }
   return originalGetStatusCode(error);
+}
+
+/**
+ * Verifica acceso a un contacto y lanza HttpError si no tiene permisos
+ *
+ * AI_DECISION: Centralizar verificación de acceso a contactos
+ * Justificación: Elimina duplicación de lógica de permisos en múltiples handlers
+ * Impacto: Consistencia en manejo de permisos, menos código duplicado, mejor mantenibilidad
+ *
+ * @param userId - ID del usuario que solicita acceso
+ * @param userRole - Rol del usuario
+ * @param contactId - ID del contacto al que se quiere acceder
+ * @param action - Acción que se está intentando realizar (para logging)
+ * @param req - Request object para logging
+ *
+ * @example
+ * ```typescript
+ * // En un handler
+ * export const handleUpdateContact = createRouteHandler(async (req) => {
+ *   const { id } = req.params;
+ *   const userId = req.user!.id;
+ *   const userRole = req.user!.role;
+ *
+ *   await requireContactAccess(userId, userRole, id, 'update_contact', req);
+ *
+ *   // Continuar con la lógica del handler...
+ * });
+ * ```
+ */
+export async function requireContactAccess(
+  userId: string,
+  userRole: 'advisor' | 'manager' | 'admin' | 'owner' | 'staff',
+  contactId: string,
+  action: string,
+  req: Request
+): Promise<void> {
+  const hasAccess = await canAccessContact(userId, userRole, contactId);
+
+  if (!hasAccess) {
+    req.log?.warn?.(
+      {
+        contactId,
+        userId,
+        userRole,
+        action: `${action}_denied`,
+      },
+      `User attempted ${action} on inaccessible contact`
+    );
+
+    throw new HttpError(404, 'Contact not found');
+  }
+
+  req.log?.info?.(
+    {
+      contactId,
+      userId,
+      userRole,
+      action: `${action}_access_granted`,
+    },
+    `Contact access granted for ${action}`
+  );
 }

@@ -1,8 +1,18 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, Icon, Heading, Text, Stack, Grid, GridItem, type IconName } from '@cactus/ui';
+import {
+  Card,
+  CardContent,
+  Icon,
+  Heading,
+  Text,
+  Stack,
+  Grid,
+  GridItem,
+  type IconName,
+} from '@cactus/ui';
 
 interface NavCard {
   href: string;
@@ -40,7 +50,7 @@ const navCards: NavCard[] = [
     title: 'Equipos',
     description: 'Crea y gestiona equipos de trabajo',
     gradient: 'from-amber-500/10 to-orange-500/10',
-  }
+  },
 ];
 
 /**
@@ -64,12 +74,12 @@ export function QuickNavCards() {
             `}
             style={{ transitionDelay: `${index * 100}ms` }}
           >
-            <Link 
-              href={card.href} 
+            <Link
+              href={card.href}
               className="block no-underline focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 rounded-xl"
               aria-label={`Navegar a ${card.title}: ${card.description}`}
             >
-              <Card 
+              <Card
                 className={`
                   h-full cursor-pointer group relative overflow-hidden
                   border border-border/50 hover:border-primary/30
@@ -78,73 +88,74 @@ export function QuickNavCards() {
                 `}
               >
                 {/* Gradient background on hover */}
-                <div 
+                <div
                   className={`
                     absolute inset-0 bg-gradient-to-br ${card.gradient}
                     opacity-0 group-hover:opacity-100
                     transition-opacity duration-300
                   `}
                 />
-                
+
                 {/* Accent border on hover */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-1 bg-secondary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-                />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-secondary scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
                 <CardContent className="p-5 relative">
                   <Stack direction="column" gap="md">
                     {/* Icon with animated background */}
                     <div className="relative">
-                      <div 
+                      <div
                         className={`
                           w-12 h-12 rounded-xl flex items-center justify-center
                           bg-surface group-hover:bg-white
                           transition-all duration-300
                           group-hover:shadow-lg group-hover:scale-110
                         `}
-                        style={{ 
+                        style={{
                           boxShadow: 'none',
                         }}
                         aria-hidden="true"
                       >
-                        <Icon 
-                          name={card.icon} 
-                          size={24} 
+                        <Icon
+                          name={card.icon}
+                          size={24}
                           className="transition-all duration-300 text-secondary"
                         />
                       </div>
-                      
+
                       {/* Glow effect */}
-                      <div 
-                        className="absolute inset-0 rounded-xl bg-secondary opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-300"
-                      />
+                      <div className="absolute inset-0 rounded-xl bg-secondary opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-300" />
                     </div>
-                    
+
                     {/* Title */}
-                    <Heading 
+                    <Heading
                       level={3}
                       className="text-lg group-hover:text-secondary transition-colors duration-200"
                     >
                       {card.title}
                     </Heading>
-                    
+
                     {/* Description */}
                     <Text size="sm" color="secondary" className="line-clamp-2">
                       {card.description}
                     </Text>
-                    
+
                     {/* Arrow indicator */}
                     <div className="flex items-center gap-1 text-text-muted group-hover:text-secondary transition-all duration-200">
                       <Text size="sm" className="font-medium">
                         Explorar
                       </Text>
-                      <svg 
-                        className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
+                      <svg
+                        className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200"
+                        fill="none"
+                        viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </Stack>

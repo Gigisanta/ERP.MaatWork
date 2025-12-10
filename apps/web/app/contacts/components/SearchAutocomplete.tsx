@@ -2,7 +2,7 @@
 
 /**
  * SearchAutocomplete Component
- * 
+ *
  * AI_DECISION: Componente de búsqueda con historial y autocompletado
  * Justificación: Mejora la UX al recordar búsquedas anteriores
  * Impacto: Búsquedas más rápidas, menor esfuerzo del usuario
@@ -49,7 +49,7 @@ function getSearchHistory(): string[] {
  */
 function saveToHistory(term: string): void {
   if (typeof window === 'undefined' || !term.trim()) return;
-  
+
   try {
     const history = getSearchHistory();
     // Remove duplicates and add new term at the beginning
@@ -57,7 +57,7 @@ function saveToHistory(term: string): void {
       term.trim(),
       ...history.filter((item) => item.toLowerCase() !== term.toLowerCase().trim()),
     ].slice(0, MAX_HISTORY_ITEMS);
-    
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
   } catch {
     // Ignore storage errors
@@ -100,20 +100,20 @@ export default function SearchAutocomplete({
   // Combined suggestions: history + external suggestions
   const combinedSuggestions = useMemo(() => {
     const searchLower = value.toLowerCase();
-    
+
     // Filter history items that match the current search
     const matchingHistory = value
-      ? history.filter((item) => 
-          item.toLowerCase().includes(searchLower) && 
-          item.toLowerCase() !== searchLower
+      ? history.filter(
+          (item) => item.toLowerCase().includes(searchLower) && item.toLowerCase() !== searchLower
         )
       : history;
-    
+
     // Filter external suggestions
-    const matchingSuggestions = suggestions.filter((item) =>
-      item.toLowerCase().includes(searchLower) && 
-      item.toLowerCase() !== searchLower &&
-      !history.some((h) => h.toLowerCase() === item.toLowerCase())
+    const matchingSuggestions = suggestions.filter(
+      (item) =>
+        item.toLowerCase().includes(searchLower) &&
+        item.toLowerCase() !== searchLower &&
+        !history.some((h) => h.toLowerCase() === item.toLowerCase())
     );
 
     return [...matchingHistory, ...matchingSuggestions].slice(0, 8);
@@ -132,54 +132,56 @@ export default function SearchAutocomplete({
   }, []);
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (!isOpen || combinedSuggestions.length === 0) {
-      if (event.key === 'ArrowDown' && combinedSuggestions.length > 0) {
-        setIsOpen(true);
-        event.preventDefault();
-      }
-      return;
-    }
-
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        setHighlightedIndex((prev) => 
-          prev < combinedSuggestions.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        setHighlightedIndex((prev) => 
-          prev > 0 ? prev - 1 : combinedSuggestions.length - 1
-        );
-        break;
-      case 'Enter':
-        event.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < combinedSuggestions.length) {
-          selectSuggestion(combinedSuggestions[highlightedIndex]);
-        } else if (value.trim()) {
-          // Save current search to history
-          saveToHistory(value);
-          setHistory(getSearchHistory());
-          setIsOpen(false);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!isOpen || combinedSuggestions.length === 0) {
+        if (event.key === 'ArrowDown' && combinedSuggestions.length > 0) {
+          setIsOpen(true);
+          event.preventDefault();
         }
-        break;
-      case 'Escape':
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-        break;
-    }
-  }, [isOpen, combinedSuggestions, highlightedIndex, value]);
+        return;
+      }
+
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          setHighlightedIndex((prev) => (prev < combinedSuggestions.length - 1 ? prev + 1 : 0));
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : combinedSuggestions.length - 1));
+          break;
+        case 'Enter':
+          event.preventDefault();
+          if (highlightedIndex >= 0 && highlightedIndex < combinedSuggestions.length) {
+            selectSuggestion(combinedSuggestions[highlightedIndex]);
+          } else if (value.trim()) {
+            // Save current search to history
+            saveToHistory(value);
+            setHistory(getSearchHistory());
+            setIsOpen(false);
+          }
+          break;
+        case 'Escape':
+          setIsOpen(false);
+          setHighlightedIndex(-1);
+          break;
+      }
+    },
+    [isOpen, combinedSuggestions, highlightedIndex, value]
+  );
 
   // Select a suggestion
-  const selectSuggestion = useCallback((suggestion: string) => {
-    onChange(suggestion);
-    saveToHistory(suggestion);
-    setHistory(getSearchHistory());
-    setIsOpen(false);
-    setHighlightedIndex(-1);
-  }, [onChange]);
+  const selectSuggestion = useCallback(
+    (suggestion: string) => {
+      onChange(suggestion);
+      saveToHistory(suggestion);
+      setHistory(getSearchHistory());
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    },
+    [onChange]
+  );
 
   // Handle input focus
   const handleFocus = useCallback(() => {
@@ -189,12 +191,15 @@ export default function SearchAutocomplete({
   }, [combinedSuggestions.length]);
 
   // Handle input change
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    onChange(newValue);
-    setIsOpen(true);
-    setHighlightedIndex(-1);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      onChange(newValue);
+      setIsOpen(true);
+      setHighlightedIndex(-1);
+    },
+    [onChange]
+  );
 
   // Handle clear history
   const handleClearHistory = useCallback((e: React.MouseEvent) => {
@@ -266,10 +271,10 @@ export default function SearchAutocomplete({
                   onClick={() => selectSuggestion(suggestion)}
                   onMouseEnter={() => setHighlightedIndex(index)}
                 >
-                  <Icon 
-                    name={isHistory ? 'Clock' : 'search'} 
-                    size={14} 
-                    className={isHighlighted ? 'text-primary' : 'text-text-muted'} 
+                  <Icon
+                    name={isHistory ? 'Clock' : 'search'}
+                    size={14}
+                    className={isHighlighted ? 'text-primary' : 'text-text-muted'}
                   />
                   <span className="text-sm flex-1 truncate">
                     {/* Highlight matching text */}
@@ -314,13 +319,22 @@ export default function SearchAutocomplete({
           {/* Keyboard hints */}
           <div className="px-3 py-1.5 bg-surface-hover border-t border-border flex items-center gap-3">
             <Text size="xs" className="text-text-muted">
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">↑↓</kbd> navegar
+              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">
+                ↑↓
+              </kbd>{' '}
+              navegar
             </Text>
             <Text size="xs" className="text-text-muted">
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">Enter</kbd> seleccionar
+              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">
+                Enter
+              </kbd>{' '}
+              seleccionar
             </Text>
             <Text size="xs" className="text-text-muted">
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">Esc</kbd> cerrar
+              <kbd className="px-1 py-0.5 bg-surface border border-border rounded text-[10px]">
+                Esc
+              </kbd>{' '}
+              cerrar
             </Text>
           </div>
         </div>

@@ -1,14 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from './Card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 
 describe('Card Component', () => {
   describe('Rendering', () => {
@@ -236,11 +229,10 @@ describe('Card Composition', () => {
         <CardFooter>Footer actions</CardFooter>
       </Card>
     );
-    
+
     expect(screen.getByText('Card Title')).toBeInTheDocument();
     expect(screen.getByText('Card description')).toBeInTheDocument();
     expect(screen.getByText('Main content goes here')).toBeInTheDocument();
     expect(screen.getByText('Footer actions')).toBeInTheDocument();
   });
 });
-

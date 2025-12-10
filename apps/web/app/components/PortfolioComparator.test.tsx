@@ -1,6 +1,6 @@
 /**
  * Tests para PortfolioComparator component
- * 
+ *
  * AI_DECISION: Tests unitarios para comparador de carteras
  * Justificación: Validación crítica de lógica de comparación y selección
  * Impacto: Prevenir errores en análisis comparativo
@@ -14,7 +14,7 @@ import { usePortfolioComparison } from '../../lib/api-hooks';
 
 // Mock dependencies
 vi.mock('../../lib/api-hooks', () => ({
-  usePortfolioComparison: vi.fn()
+  usePortfolioComparison: vi.fn(),
 }));
 
 vi.mock('./PerformanceChart', () => ({
@@ -23,7 +23,7 @@ vi.mock('./PerformanceChart', () => ({
     <div data-testid="performance-chart">
       Portfolios: {portfolioIds.join(',')}, Benchmarks: {benchmarkIds.join(',')}
     </div>
-  )
+  ),
 }));
 
 vi.mock('@cactus/ui', () => ({
@@ -32,7 +32,9 @@ vi.mock('@cactus/ui', () => ({
   CardTitle: ({ children }: any) => <h3>{children}</h3>,
   CardContent: ({ children }: any) => <div>{children}</div>,
   Button: ({ children, onClick, disabled }: any) => (
-    <button onClick={onClick} disabled={disabled}>{children}</button>
+    <button onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
   ),
   Text: ({ children, size, weight, color, className }: any) => (
     <span className={className}>{children}</span>
@@ -60,32 +62,30 @@ vi.mock('@cactus/ui', () => ({
         ))}
       </tbody>
     </table>
-  )
+  ),
 }));
 
 describe('PortfolioComparator', () => {
   const mockPortfolios = [
     { id: '1', name: 'Portfolio 1', type: 'portfolio' as const, riskLevel: 'moderate' },
-    { id: '2', name: 'Portfolio 2', type: 'portfolio' as const, riskLevel: 'aggressive' }
+    { id: '2', name: 'Portfolio 2', type: 'portfolio' as const, riskLevel: 'aggressive' },
   ];
 
   const mockBenchmarks = [
     { id: 'b1', name: 'Benchmark 1', type: 'benchmark' as const },
-    { id: 'b2', name: 'Benchmark 2', type: 'benchmark' as const }
+    { id: 'b2', name: 'Benchmark 2', type: 'benchmark' as const },
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
     (usePortfolioComparison as ReturnType<typeof vi.fn>).mockReturnValue({
       comparisonData: null,
-      isLoading: false
+      isLoading: false,
     });
   });
 
   it('debería mostrar portfolios y benchmarks', () => {
-    render(
-      <PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />
-    );
+    render(<PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />);
 
     expect(screen.getByText('Portfolio 1')).toBeInTheDocument();
     expect(screen.getByText('Portfolio 2')).toBeInTheDocument();
@@ -118,9 +118,7 @@ describe('PortfolioComparator', () => {
     );
 
     const addButtons = screen.getAllByRole('button');
-    const portfolioAddButton = addButtons.find(btn => 
-      btn.textContent === '+' && !btn.disabled
-    );
+    const portfolioAddButton = addButtons.find((btn) => btn.textContent === '+' && !btn.disabled);
 
     if (portfolioAddButton) {
       await user.click(portfolioAddButton);
@@ -140,18 +138,16 @@ describe('PortfolioComparator', () => {
               totalReturn: 0.15,
               volatility: 0.12,
               sharpeRatio: 1.25,
-              maxDrawdown: -0.08
+              maxDrawdown: -0.08,
             },
-            performance: []
-          }
-        ]
+            performance: [],
+          },
+        ],
       },
-      isLoading: false
+      isLoading: false,
     });
 
-    render(
-      <PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />
-    );
+    render(<PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />);
 
     expect(screen.getByText('Métricas Comparativas')).toBeInTheDocument();
   });
@@ -159,12 +155,10 @@ describe('PortfolioComparator', () => {
   it('debería mostrar loading cuando está cargando', () => {
     (usePortfolioComparison as ReturnType<typeof vi.fn>).mockReturnValue({
       comparisonData: null,
-      isLoading: true
+      isLoading: true,
     });
 
-    render(
-      <PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />
-    );
+    render(<PortfolioComparator portfolios={mockPortfolios} benchmarks={mockBenchmarks} />);
 
     expect(screen.getByTestId('spinner')).toBeInTheDocument();
     expect(screen.getByText('Calculando métricas comparativas...')).toBeInTheDocument();
@@ -183,4 +177,3 @@ describe('PortfolioComparator', () => {
     expect(wrapper).toHaveClass('custom-class');
   });
 });
-

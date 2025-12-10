@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Button from './Button';
-import Icon, { type IconName } from '../Icon';
+import { cn } from '../../utils/cn.js';
+import Button from './Button.js';
+import Icon, { type IconName } from '../Icon.js';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 export interface NavItem {
@@ -32,22 +32,25 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
 /**
  * Header component with brand styling.
  * Uses smooth transitions and Primary Purple for focus states and highlights.
- * 
+ *
  * AI_DECISION: Improved responsive behavior for small screens
  * Justificación: Better UX on mobile devices with proper spacing and touch targets
  * Impacto: Header works well on screens as small as 320px
  */
 export const Header = React.forwardRef<HTMLElement, HeaderProps>(
-  ({ 
-    logo,
-    navItems = [],
-    user,
-    onLogout,
-    onToggleSidebar,
-    sidebarOpen = false,
-    className,
-    ...props 
-  }, ref) => {
+  (
+    {
+      logo,
+      navItems = [],
+      user,
+      onLogout,
+      onToggleSidebar,
+      sidebarOpen = false,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     return (
       <header
         ref={ref}
@@ -82,12 +85,8 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                 <Icon name={sidebarOpen ? 'X' : 'Menu'} size={20} className="sm:w-4 sm:h-4" />
               </Button>
             )}
-            
-            {logo && (
-              <div className="flex items-center min-w-0 flex-1 overflow-hidden">
-                {logo}
-              </div>
-            )}
+
+            {logo && <div className="flex items-center min-w-0 flex-1 overflow-hidden">{logo}</div>}
           </div>
 
           {/* Center section: Navigation (desktop) */}
@@ -96,7 +95,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
               className="flex items-center space-x-4 overflow-x-auto whitespace-nowrap flex-1 justify-center min-w-0"
               role="navigation"
             >
-              {navItems.map((item) => (
+              {navItems.map((item) =>
                 item.href.startsWith('http') ? (
                   <a
                     key={item.href}
@@ -140,7 +139,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                     )}
                   </a>
                 )
-              ))}
+              )}
             </nav>
           )}
 

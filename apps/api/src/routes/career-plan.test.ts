@@ -1,6 +1,6 @@
 /**
  * Tests para career-plan routes
- * 
+ *
  * AI_DECISION: Tests unitarios para CRUD de career plan levels y cálculo de progreso
  * Justificación: Validación crítica de plan de carrera y progreso de usuarios
  * Impacto: Prevenir errores en gestión de niveles y cálculos de progreso
@@ -18,16 +18,16 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   careerPlanLevels: {},
   eq: vi.fn(),
-  asc: vi.fn()
+  asc: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../utils/career-plan', () => ({
-  calculateUserCareerProgress: vi.fn()
+  calculateUserCareerProgress: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -43,12 +43,12 @@ describe('GET /career-plan/levels', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -64,7 +64,7 @@ describe('GET /career-plan/levels', () => {
         index: '1',
         percentage: '10%',
         annualGoalUsd: 100000,
-        isActive: true
+        isActive: true,
       },
       {
         id: 'level-2',
@@ -74,18 +74,18 @@ describe('GET /career-plan/levels', () => {
         index: '2',
         percentage: '20%',
         annualGoalUsd: 200000,
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockResolvedValue(mockData)
-      })
+        orderBy: vi.fn().mockResolvedValue(mockData),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -112,12 +112,12 @@ describe('GET /career-plan/levels', () => {
     const mockError = new Error('Database error');
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
-        orderBy: vi.fn().mockRejectedValue(mockError)
-      })
+        orderBy: vi.fn().mockRejectedValue(mockError),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -136,7 +136,10 @@ describe('GET /career-plan/levels', () => {
 
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(mockReq.log?.error).toHaveBeenCalledWith({ err: mockError }, 'failed to list career plan levels');
+    expect(mockReq.log?.error).toHaveBeenCalledWith(
+      { err: mockError },
+      'failed to list career plan levels'
+    );
     expect(mockNext).toHaveBeenCalledWith(mockError);
   });
 });
@@ -152,12 +155,12 @@ describe('GET /career-plan/levels/:id', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -172,19 +175,19 @@ describe('GET /career-plan/levels/:id', () => {
       index: '1',
       percentage: '10%',
       annualGoalUsd: 100000,
-      isActive: true
+      isActive: true,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockData])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([mockData]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -217,13 +220,13 @@ describe('GET /career-plan/levels/:id', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -268,17 +271,17 @@ describe('POST /career-plan/levels', () => {
         index: '1',
         percentage: '10%',
         annualGoalUsd: 100000,
-        isActive: true
+        isActive: true,
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -289,26 +292,26 @@ describe('POST /career-plan/levels', () => {
       id: 'level-new',
       ...mockReq.body,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // levelNumber no existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // levelNumber no existe
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([newLevel])
-      })
+        returning: vi.fn().mockResolvedValue([newLevel]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -334,7 +337,7 @@ describe('POST /career-plan/levels', () => {
             index: data.index,
             percentage: data.percentage,
             annualGoalUsd: data.annualGoalUsd,
-            isActive: data.isActive ?? true
+            isActive: data.isActive ?? true,
           })
           .returning();
 
@@ -350,25 +353,28 @@ describe('POST /career-plan/levels', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(201);
     expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: newLevel });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ levelId: newLevel.id }, 'career plan level created');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { levelId: newLevel.id },
+      'career plan level created'
+    );
   });
 
   it('debería retornar 409 cuando levelNumber ya existe', async () => {
     const existing = {
       id: 'level-existing',
-      levelNumber: 1
+      levelNumber: 1,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -394,7 +400,7 @@ describe('POST /career-plan/levels', () => {
             index: data.index,
             percentage: data.percentage,
             annualGoalUsd: data.annualGoalUsd,
-            isActive: data.isActive ?? true
+            isActive: data.isActive ?? true,
           })
           .returning();
 
@@ -423,17 +429,17 @@ describe('PUT /career-plan/levels/:id', () => {
       params: { id: 'level-123' },
       body: {
         level: 'Senior',
-        levelNumber: 2
+        levelNumber: 2,
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -448,42 +454,43 @@ describe('PUT /career-plan/levels/:id', () => {
       index: '1',
       percentage: '10%',
       annualGoalUsd: 100000,
-      isActive: true
+      isActive: true,
     };
 
     const updated = {
       ...existing,
       ...mockReq.body,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([existing])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([existing]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // levelNumber no duplicado
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // levelNumber no duplicado
+          }),
+        }),
       });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([updated])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -541,20 +548,23 @@ describe('PUT /career-plan/levels/:id', () => {
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: updated });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ levelId: 'level-123' }, 'career plan level updated');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { levelId: 'level-123' },
+      'career plan level updated'
+    );
   });
 
   it('debería retornar 404 cuando nivel no existe', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -590,32 +600,33 @@ describe('PUT /career-plan/levels/:id', () => {
   it('debería retornar 409 cuando levelNumber duplicado', async () => {
     const existing = {
       id: 'level-123',
-      levelNumber: 1
+      levelNumber: 1,
     };
 
     const duplicate = {
       id: 'level-456',
-      levelNumber: 2
+      levelNumber: 2,
     };
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([existing])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([existing]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([duplicate])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([duplicate]),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -671,12 +682,12 @@ describe('DELETE /career-plan/levels/:id', () => {
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -686,24 +697,24 @@ describe('DELETE /career-plan/levels/:id', () => {
     const existing = {
       id: 'level-123',
       category: 'Advisor',
-      level: 'Junior'
+      level: 'Junior',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue([])
+      where: vi.fn().mockResolvedValue([]),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      delete: mockDelete
+      delete: mockDelete,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -734,20 +745,23 @@ describe('DELETE /career-plan/levels/:id', () => {
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
     expect(mockRes.json).toHaveBeenCalledWith({ success: true });
-    expect(mockReq.log?.info).toHaveBeenCalledWith({ levelId: 'level-123' }, 'career plan level deleted');
+    expect(mockReq.log?.info).toHaveBeenCalledWith(
+      { levelId: 'level-123' },
+      'career plan level deleted'
+    );
   });
 
   it('debería retornar 404 cuando nivel no existe', async () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -791,17 +805,17 @@ describe('GET /career-plan/user-progress', () => {
     mockReq = {
       user: {
         id: 'user-123',
-        role: 'advisor'
+        role: 'advisor',
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -812,16 +826,16 @@ describe('GET /career-plan/user-progress', () => {
       currentLevel: {
         id: 'level-1',
         level: 'Junior',
-        levelNumber: 1
+        levelNumber: 1,
       },
       nextLevel: {
         id: 'level-2',
         level: 'Senior',
-        levelNumber: 2
+        levelNumber: 2,
       },
       progress: 0.5,
       annualGoalUsd: 100000,
-      currentAum: 50000
+      currentAum: 50000,
     };
 
     mockCalculateUserCareerProgress.mockResolvedValue(mockProgress);
@@ -862,8 +876,10 @@ describe('GET /career-plan/user-progress', () => {
 
     await handler(mockReq as Request, mockRes as Response, mockNext);
 
-    expect(mockReq.log?.error).toHaveBeenCalledWith({ err: mockError, userId: 'user-123' }, 'failed to calculate user career progress');
+    expect(mockReq.log?.error).toHaveBeenCalledWith(
+      { err: mockError, userId: 'user-123' },
+      'failed to calculate user career progress'
+    );
     expect(mockNext).toHaveBeenCalledWith(mockError);
   });
 });
-

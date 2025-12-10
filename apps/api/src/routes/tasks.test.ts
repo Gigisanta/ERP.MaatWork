@@ -1,6 +1,6 @@
 /**
  * Tests para tasks routes
- * 
+ *
  * AI_DECISION: Tests unitarios para CRUD de tareas
  * Justificación: Validación crítica de gestión de tareas y RBAC
  * Impacto: Prevenir errores en gestión de tareas y accesos no autorizados
@@ -9,7 +9,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { db, tasks, taskRecurrences, contacts } from '@cactus/db';
-import { getUserAccessScope, buildContactAccessFilter, canAccessContact } from '../auth/authorization';
+import {
+  getUserAccessScope,
+  buildContactAccessFilter,
+  canAccessContact,
+} from '../auth/authorization';
 import { requireAuth } from '../auth/middlewares';
 
 // Mock dependencies
@@ -26,17 +30,17 @@ vi.mock('@cactus/db', () => ({
   lte: vi.fn(),
   gte: vi.fn(),
   sql: vi.fn(),
-  or: vi.fn()
+  or: vi.fn(),
 }));
 
 vi.mock('../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
   buildContactAccessFilter: vi.fn(),
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -53,15 +57,15 @@ describe('GET /tasks', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       query: {},
       log: {
-        info: vi.fn()
-      }
+        info: vi.fn(),
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -71,7 +75,7 @@ describe('GET /tasks', () => {
       mockReq.query = {
         contactId: 'contact-123',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       // Test contactId filter
@@ -82,7 +86,7 @@ describe('GET /tasks', () => {
       mockReq.query = {
         assignedToUserId: 'user-123',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       // Test assignedToUserId filter
@@ -93,7 +97,7 @@ describe('GET /tasks', () => {
       mockReq.query = {
         status: 'pending',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       // Test status filter
@@ -105,7 +109,7 @@ describe('GET /tasks', () => {
         dueDateFrom: '2024-01-01',
         dueDateTo: '2024-12-31',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       expect(mockReq.query.dueDateFrom).toBe('2024-01-01');
@@ -116,7 +120,7 @@ describe('GET /tasks', () => {
       mockReq.query = {
         priority: 'high',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       expect(mockReq.query.priority).toBe('high');
@@ -126,7 +130,7 @@ describe('GET /tasks', () => {
       mockReq.query = {
         includeCompleted: 'true',
         limit: '50',
-        offset: '0'
+        offset: '0',
       };
 
       expect(mockReq.query.includeCompleted).toBe('true');
@@ -141,13 +145,13 @@ describe('GET /tasks', () => {
         accessibleAdvisorIds: ['user-123'],
         canSeeUnassigned: false,
         canAssignToOthers: false,
-        canReassign: false
+        canReassign: false,
       };
 
       mockGetUserAccessScope.mockResolvedValue(accessScope);
       mockBuildContactAccessFilter.mockReturnValue({
         whereClause: {} as any,
-        description: 'advisor access'
+        description: 'advisor access',
       });
 
       // Test RBAC
@@ -165,7 +169,7 @@ describe('POST /tasks', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       body: {
         contactId: 'contact-123',
@@ -174,16 +178,16 @@ describe('POST /tasks', () => {
         status: 'pending',
         dueDate: '2024-12-31',
         priority: 'high',
-        assignedToUserId: 'user-123'
+        assignedToUserId: 'user-123',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -193,15 +197,17 @@ describe('POST /tasks', () => {
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'task-123',
-          ...mockReq.body
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'task-123',
+            ...mockReq.body,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     // Test task creation
@@ -221,8 +227,8 @@ describe('POST /tasks', () => {
       recurrence: {
         rrule: 'FREQ=DAILY',
         timezone: 'America/Argentina/Buenos_Aires',
-        startDate: '2024-01-01'
-      }
+        startDate: '2024-01-01',
+      },
     };
 
     // Test recurrence creation
@@ -239,21 +245,21 @@ describe('PATCH /tasks/:id', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'task-123' },
       body: {
         title: 'Tarea actualizada',
-        status: 'completed'
+        status: 'completed',
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -262,16 +268,18 @@ describe('PATCH /tasks/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'task-123',
-            ...mockReq.body
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'task-123',
+              ...mockReq.body,
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     // Test task update
@@ -281,7 +289,7 @@ describe('PATCH /tasks/:id', () => {
   it('debería marcar como completada', async () => {
     mockReq.body = {
       status: 'completed',
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     };
 
     // Test completion
@@ -298,28 +306,28 @@ describe('DELETE /tasks/:id', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'task-123' },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
 
   it('debería eliminar tarea exitosamente', async () => {
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue([])
+      where: vi.fn().mockResolvedValue([]),
     });
 
     mockDb.mockReturnValue({
-      delete: mockDelete
+      delete: mockDelete,
     } as any);
 
     // Test task deletion
@@ -336,20 +344,20 @@ describe('POST /tasks/bulk', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       body: {
         taskIds: ['task-1', 'task-2'],
         action: 'complete',
-        params: {}
+        params: {},
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -357,7 +365,7 @@ describe('POST /tasks/bulk', () => {
   it('debería completar múltiples tareas', async () => {
     mockReq.body = {
       taskIds: ['task-1', 'task-2'],
-      action: 'complete'
+      action: 'complete',
     };
 
     // Test bulk complete
@@ -367,7 +375,7 @@ describe('POST /tasks/bulk', () => {
   it('debería eliminar múltiples tareas', async () => {
     mockReq.body = {
       taskIds: ['task-1', 'task-2'],
-      action: 'delete'
+      action: 'delete',
     };
 
     // Test bulk delete
@@ -378,7 +386,7 @@ describe('POST /tasks/bulk', () => {
     mockReq.body = {
       taskIds: ['task-1', 'task-2'],
       action: 'reassign',
-      params: { assignedToUserId: 'user-456' }
+      params: { assignedToUserId: 'user-456' },
     };
 
     // Test bulk reassign
@@ -389,7 +397,7 @@ describe('POST /tasks/bulk', () => {
     mockReq.body = {
       taskIds: ['task-1', 'task-2'],
       action: 'change_status',
-      params: { status: 'in_progress' }
+      params: { status: 'in_progress' },
     };
 
     expect(mockReq.body.action).toBe('change_status');
@@ -400,7 +408,7 @@ describe('POST /tasks/bulk', () => {
     mockReq.body = {
       taskIds: ['task-1'],
       action: 'reassign',
-      params: {}
+      params: {},
     };
 
     expect(mockReq.body.params.assignedToUserId).toBeUndefined();
@@ -410,7 +418,7 @@ describe('POST /tasks/bulk', () => {
     mockReq.body = {
       taskIds: ['task-1'],
       action: 'change_status',
-      params: {}
+      params: {},
     };
 
     expect(mockReq.body.params.status).toBeUndefined();
@@ -420,7 +428,7 @@ describe('POST /tasks/bulk', () => {
     mockReq.body = {
       taskIds: ['task-1'],
       action: 'invalid_action',
-      params: {}
+      params: {},
     };
 
     expect(mockReq.body.action).toBe('invalid_action');
@@ -436,17 +444,17 @@ describe('POST /tasks/:id/complete', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: { id: 'task-123' },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -455,17 +463,19 @@ describe('POST /tasks/:id/complete', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'task-123',
-            status: 'completed',
-            completedAt: new Date()
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'task-123',
+              status: 'completed',
+              completedAt: new Date(),
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(mockReq.params.id).toBe('task-123');
@@ -475,13 +485,13 @@ describe('POST /tasks/:id/complete', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(mockReq.params.id).toBe('task-123');
@@ -491,32 +501,34 @@ describe('POST /tasks/:id/complete', () => {
     const mockTask = {
       id: 'task-123',
       recurrenceId: 'recurrence-123',
-      status: 'completed'
+      status: 'completed',
     };
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([mockTask])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([mockTask]),
+        }),
+      }),
     });
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            id: 'recurrence-123',
-            isActive: true,
-            nextOccurrence: new Date()
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: 'recurrence-123',
+              isActive: true,
+              nextOccurrence: new Date(),
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(mockTask.recurrenceId).toBeDefined();
@@ -532,18 +544,18 @@ describe('GET /tasks/export/csv', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       query: {},
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       setHeader: vi.fn().mockReturnThis(),
       send: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -552,14 +564,3 @@ describe('GET /tasks/export/csv', () => {
     expect(mockReq.user).toBeDefined();
   });
 });
-
-
-
-
-
-
-
-
-
-
-

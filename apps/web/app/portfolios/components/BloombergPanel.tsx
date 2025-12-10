@@ -5,27 +5,47 @@ import { Card, CardContent, Tabs, TabsList, TabsTrigger, TabsContent, Heading } 
 import { LineChart } from 'lucide-react';
 import type { Portfolio } from '@/types';
 
-const PortfolioAssetsSnapshot = dynamic(() => import('../../components/bloomberg/PortfolioAssetsSnapshot'), {
-  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando datos de mercado...</div>,
-  ssr: false,
-});
+const PortfolioAssetsSnapshot = dynamic(
+  () => import('../../components/bloomberg/PortfolioAssetsSnapshot'),
+  {
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando datos de mercado...</div>
+    ),
+    ssr: false,
+  }
+);
 
-const PortfolioPerformanceMetrics = dynamic(() => import('../../components/bloomberg/PortfolioPerformanceMetrics'), {
-  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando métricas de rendimiento...</div>,
-  ssr: false,
-});
+const PortfolioPerformanceMetrics = dynamic(
+  () => import('../../components/bloomberg/PortfolioPerformanceMetrics'),
+  {
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        Cargando métricas de rendimiento...
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
-const BloombergMacroWidget = dynamic(() => import('../../components/bloomberg/BloombergMacroWidget'), {
-  loading: () => <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando datos macro...</div>,
-  ssr: false,
-});
+const BloombergMacroWidget = dynamic(
+  () => import('../../components/bloomberg/BloombergMacroWidget'),
+  {
+    loading: () => (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>Cargando datos macro...</div>
+    ),
+    ssr: false,
+  }
+);
 
 interface BloombergIntegratedPanelProps {
   portfolios: Portfolio[];
   selectedPortfolioId?: string | null;
 }
 
-export function BloombergIntegratedPanel({ portfolios, selectedPortfolioId }: BloombergIntegratedPanelProps) {
+export function BloombergIntegratedPanel({
+  portfolios,
+  selectedPortfolioId,
+}: BloombergIntegratedPanelProps) {
   // Filtrar portfolios si hay uno seleccionado
   const displayedPortfolios = selectedPortfolioId
     ? portfolios.filter((p) => p.id === selectedPortfolioId)
@@ -61,4 +81,3 @@ export function BloombergIntegratedPanel({ portfolios, selectedPortfolioId }: Bl
     </div>
   );
 }
-

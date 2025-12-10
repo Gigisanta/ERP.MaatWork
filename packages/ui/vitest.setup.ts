@@ -9,8 +9,10 @@ declare module 'vitest' {
 }
 
 // Cleanup after each test
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  // Wait a bit for any async callbacks to complete
+  await new Promise((resolve) => setTimeout(resolve, 0));
 });
 
 // Suppress React 18 act() warnings and Radix UI accessibility warnings in tests

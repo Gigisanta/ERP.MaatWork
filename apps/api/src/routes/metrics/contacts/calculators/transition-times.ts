@@ -1,6 +1,6 @@
 /**
  * Transition Times Calculator
- * 
+ *
  * Calculates average time between pipeline stage transitions
  */
 
@@ -16,30 +16,30 @@ interface HistoryEntry {
 /**
  * Get contacts that had stage changes in the month
  */
-async function getContactsWithChangesInMonth(
-  ctx: CalculatorContext
-): Promise<string[]> {
+async function getContactsWithChangesInMonth(ctx: CalculatorContext): Promise<string[]> {
   const { stageIds, range, accessFilter } = ctx;
   const { firstMeetingStageId, secondMeetingStageId, clienteStageId } = stageIds;
   const { monthStart, monthEnd } = range;
 
   const contactsWithChangesInMonth = await db()
     .select({
-      contactId: pipelineStageHistory.contactId
+      contactId: pipelineStageHistory.contactId,
     })
     .from(pipelineStageHistory)
     .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-    .where(and(
-      inArray(pipelineStageHistory.toStage, [
-        firstMeetingStageId,
-        secondMeetingStageId,
-        clienteStageId
-      ]),
-      gte(pipelineStageHistory.changedAt, monthStart),
-      lte(pipelineStageHistory.changedAt, monthEnd),
-      isNull(contacts.deletedAt),
-      accessFilter.whereClause
-    ))
+    .where(
+      and(
+        inArray(pipelineStageHistory.toStage, [
+          firstMeetingStageId,
+          secondMeetingStageId,
+          clienteStageId,
+        ]),
+        gte(pipelineStageHistory.changedAt, monthStart),
+        lte(pipelineStageHistory.changedAt, monthEnd),
+        isNull(contacts.deletedAt),
+        accessFilter.whereClause
+      )
+    )
     .groupBy(pipelineStageHistory.contactId);
 
   return contactsWithChangesInMonth.map((c: { contactId: string }) => c.contactId);
@@ -62,7 +62,7 @@ async function getContactHistoryAndCreations(
   }
 
   const { prospectoStageId, firstMeetingStageId, secondMeetingStageId, clienteStageId } = stageIds;
-  
+
   // Limit to last 2 years to optimize query
   const twoYearsAgo = new Date(range.monthEnd);
   twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
@@ -71,7 +71,7 @@ async function getContactHistoryAndCreations(
     prospectoStageId,
     firstMeetingStageId,
     secondMeetingStageId,
-    clienteStageId
+    clienteStageId,
   ].filter((id): id is string => id !== undefined);
 
   const [fullHistoryForContacts, contactCreations] = await Promise.all([
@@ -80,31 +80,31 @@ async function getContactHistoryAndCreations(
       .select({
         contactId: pipelineStageHistory.contactId,
         toStage: pipelineStageHistory.toStage,
-        changedAt: pipelineStageHistory.changedAt
+        changedAt: pipelineStageHistory.changedAt,
       })
       .from(pipelineStageHistory)
       .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-      .where(and(
-        inArray(pipelineStageHistory.contactId, contactIds),
-        inArray(pipelineStageHistory.toStage, stageIdsToCheck),
-        gte(pipelineStageHistory.changedAt, twoYearsAgo),
-        isNull(contacts.deletedAt),
-        accessFilter.whereClause
-      ))
+      .where(
+        and(
+          inArray(pipelineStageHistory.contactId, contactIds),
+          inArray(pipelineStageHistory.toStage, stageIdsToCheck),
+          gte(pipelineStageHistory.changedAt, twoYearsAgo),
+          isNull(contacts.deletedAt),
+          accessFilter.whereClause
+        )
+      )
       .orderBy(asc(pipelineStageHistory.changedAt)),
 
     // Get contact creation dates
     db()
       .select({
         id: contacts.id,
-        createdAt: contacts.createdAt
+        createdAt: contacts.createdAt,
       })
       .from(contacts)
-      .where(and(
-        inArray(contacts.id, contactIds),
-        isNull(contacts.deletedAt),
-        accessFilter.whereClause
-      ))
+      .where(
+        and(inArray(contacts.id, contactIds), isNull(contacts.deletedAt), accessFilter.whereClause)
+      ),
   ]);
 
   const creationMap = new Map<string, Date>(
@@ -119,7 +119,7 @@ async function getContactHistoryAndCreations(
     }
     historyByContact.get(entry.contactId)!.push({
       toStage: entry.toStage,
-      changedAt: entry.changedAt
+      changedAt: entry.changedAt,
     });
   }
 
@@ -148,41 +148,41 @@ function calculateContactTransitionTimes(
   let secondToClient: number | null = null;
 
   // Prospecto → First meeting: calculate only if entered First meeting in the month
-  const firstMeetingEntry = sortedHistory.find(h => 
-    h.toStage === firstMeetingStageId &&
-    h.changedAt >= monthStart &&
-    h.changedAt <= monthEnd
+  const firstMeetingEntry = sortedHistory.find(
+    (h) => h.toStage === firstMeetingStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (firstMeetingEntry && createdAt && createdAt instanceof Date) {
-    const days = (firstMeetingEntry.changedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (firstMeetingEntry.changedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (days > 0) {
       prospectoToFirst = days;
     }
   }
 
   // First meeting → Second meeting: calculate only if entered Second meeting in the month
-  const firstMeetingEntryInHistory = sortedHistory.find(h => h.toStage === firstMeetingStageId);
-  const secondMeetingEntry = sortedHistory.find(h => 
-    h.toStage === secondMeetingStageId &&
-    h.changedAt >= monthStart &&
-    h.changedAt <= monthEnd
+  const firstMeetingEntryInHistory = sortedHistory.find((h) => h.toStage === firstMeetingStageId);
+  const secondMeetingEntry = sortedHistory.find(
+    (h) =>
+      h.toStage === secondMeetingStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (firstMeetingEntryInHistory && secondMeetingEntry) {
-    const days = (secondMeetingEntry.changedAt.getTime() - firstMeetingEntryInHistory.changedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (secondMeetingEntry.changedAt.getTime() - firstMeetingEntryInHistory.changedAt.getTime()) /
+      (1000 * 60 * 60 * 24);
     if (days > 0) {
       firstToSecond = days;
     }
   }
 
   // Second meeting → Client: calculate only if entered Client in the month
-  const secondMeetingEntryInHistory = sortedHistory.find(h => h.toStage === secondMeetingStageId);
-  const clientEntry = sortedHistory.find(h => 
-    h.toStage === clienteStageId &&
-    h.changedAt >= monthStart &&
-    h.changedAt <= monthEnd
+  const secondMeetingEntryInHistory = sortedHistory.find((h) => h.toStage === secondMeetingStageId);
+  const clientEntry = sortedHistory.find(
+    (h) => h.toStage === clienteStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (secondMeetingEntryInHistory && clientEntry) {
-    const days = (clientEntry.changedAt.getTime() - secondMeetingEntryInHistory.changedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (clientEntry.changedAt.getTime() - secondMeetingEntryInHistory.changedAt.getTime()) /
+      (1000 * 60 * 60 * 24);
     if (days > 0) {
       secondToClient = days;
     }
@@ -202,16 +202,14 @@ function calculateAverage(values: number[]): number | null {
 /**
  * Calculate average transition times between stages
  */
-export async function calculateTransitionTimes(
-  ctx: CalculatorContext
-): Promise<TransitionTimes> {
+export async function calculateTransitionTimes(ctx: CalculatorContext): Promise<TransitionTimes> {
   const contactIdsWithChanges = await getContactsWithChangesInMonth(ctx);
 
   if (contactIdsWithChanges.length === 0) {
     return {
       prospectoToFirstMeeting: null,
       firstToSecondMeeting: null,
-      secondMeetingToClient: null
+      secondMeetingToClient: null,
     };
   }
 
@@ -241,7 +239,6 @@ export async function calculateTransitionTimes(
   return {
     prospectoToFirstMeeting: calculateAverage(prospectoToFirstTimes),
     firstToSecondMeeting: calculateAverage(firstToSecondTimes),
-    secondMeetingToClient: calculateAverage(secondToClientTimes)
+    secondMeetingToClient: calculateAverage(secondToClientTimes),
   };
 }
-

@@ -1,6 +1,6 @@
 /**
  * Tests para notifications API
- * 
+ *
  * AI_DECISION: Tests básicos para archivo notifications.ts
  * Justificación: Archivo vacío pero debe tener tests para cobertura
  * Impacto: Mantener cobertura al 100%
@@ -15,4 +15,3 @@ describe('notifications API', () => {
     expect(true).toBe(true);
   });
 });
-

@@ -12,4 +12,3 @@ declare global {
   const beforeEach: typeof import('vitest').beforeEach;
   const afterEach: typeof import('vitest').afterEach;
 }
-

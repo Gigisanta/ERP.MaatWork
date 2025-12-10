@@ -56,6 +56,43 @@ const swrConfigLonger = {
   dedupingInterval: 30000, // 30s for data that changes less frequently
 };
 
+/**
+ * Generic SWR hook factory for API endpoints
+ *
+ * AI_DECISION: Consolidar lógica común de SWR hooks
+ * Justificación: Todos los hooks siguen el mismo patrón (useAuth + URL building + useSWR + return object)
+ * Impacto: Reduce duplicación de código, más mantenible, patrón consistente
+ */
+function createApiHook<T = unknown, P extends Record<string, unknown> = Record<string, unknown>, R = T>(
+  endpoint: string | ((params?: P) => string),
+  config = swrConfig,
+  transformData?: (data: T | null) => R
+) {
+  return function useApiData(params?: P) {
+    const { user } = useAuth();
+
+    // Build URL - support both string endpoints and functions
+    const url = typeof endpoint === 'function'
+      ? (user ? endpoint(params) : null)
+      : (user ? `${API_BASE_URL}${endpoint}` : null);
+
+    const { data, error, isLoading, mutate } = useSWR<ApiResponse<T>>(
+      url,
+      fetcher,
+      config
+    );
+
+    const transformedData = transformData ? transformData(data?.data || null) : (data?.data as R || null);
+
+    return {
+      data: transformedData,
+      error,
+      isLoading,
+      mutate,
+    };
+  };
+}
+
 // Hook for contacts list
 export function useContacts(assignedAdvisorId?: string | null) {
   const { user } = useAuth();
@@ -88,9 +125,6 @@ export function useContacts(assignedAdvisorId?: string | null) {
 export function usePipelineStages() {
   const { user } = useAuth();
 
-  // AI_DECISION: Use longer deduping for pipeline stages (semi-static data)
-  // Justificación: Pipeline stages change infrequently, longer deduping reduces API calls
-  // Impacto: Better cache efficiency for pipeline data
   const { data, error, isLoading, mutate } = useSWR<ApiResponse<unknown[]>>(
     user ? `${API_BASE_URL}/v1/pipeline/stages` : null,
     fetcher,

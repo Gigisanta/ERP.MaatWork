@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -37,7 +37,10 @@ describe('settings api client endpoints', () => {
   it('calls update advisor alias endpoint', async () => {
     const data = { alias: 'updated-alias' };
     await apiIndex.updateAdvisorAlias('alias-123', data);
-    expect(apiClient.put).toHaveBeenCalledWith('/v1/admin/settings/advisors/aliases/alias-123', data);
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/v1/admin/settings/advisors/aliases/alias-123',
+      data
+    );
   });
 
   it('calls delete advisor alias endpoint', async () => {
@@ -45,4 +48,3 @@ describe('settings api client endpoints', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/admin/settings/advisors/aliases/alias-123');
   });
 });
-

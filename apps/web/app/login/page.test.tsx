@@ -1,6 +1,6 @@
 /**
  * Tests para página de login
- * 
+ *
  * AI_DECISION: Tests unitarios para página de login
  * Justificación: Validación crítica de autenticación y UX
  * Impacto: Prevenir errores en flujo de autenticación
@@ -217,4 +217,3 @@ describe('LoginPage', () => {
     });
   });
 });
-

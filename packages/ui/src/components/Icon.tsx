@@ -101,7 +101,7 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     'alert-triangle': '⚠️',
     'x-circle': '❌',
     'wifi-off': '📶',
-    'loader': '⏳',
+    loader: '⏳',
     'refresh-cw': '🔄',
     edit: '✏️',
     'more-vertical': '⋮',

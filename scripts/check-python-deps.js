@@ -28,10 +28,8 @@ let hasWarnings = false;
  * Encontrar comando Python disponible
  */
 function findPythonCommand() {
-  const pythonCommands = isWindows 
-    ? ['python', 'py', 'python3']
-    : ['python3', 'python'];
-  
+  const pythonCommands = isWindows ? ['python', 'py', 'python3'] : ['python3', 'python'];
+
   for (const cmd of pythonCommands) {
     try {
       const version = execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
@@ -71,7 +69,7 @@ function checkInstalledDependencies() {
   const pipCommands = isWindows
     ? ['pip', 'pip3', 'python -m pip', 'py -m pip']
     : ['pip3', 'pip', 'python3 -m pip', 'python -m pip'];
-  
+
   let pipCmd = null;
   for (const cmd of pipCommands) {
     try {
@@ -93,9 +91,9 @@ function checkInstalledDependencies() {
   const requirements = fs.readFileSync(requirementsPath, 'utf8');
   const packages = requirements
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line && !line.startsWith('#'))
-    .map(line => line.split(/[>=<!=]/)[0].trim());
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+    .map((line) => line.split(/[>=<!=]/)[0].trim());
 
   const criticalPackages = ['fastapi', 'uvicorn', 'yfinance'];
   let allInstalled = true;
@@ -162,4 +160,3 @@ function main() {
 
 // Ejecutar
 main();
-

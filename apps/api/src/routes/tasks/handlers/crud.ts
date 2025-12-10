@@ -10,7 +10,7 @@ import type { Request, Response } from 'express';
 import { db, tasks, taskRecurrences } from '@cactus/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { canAccessContact } from '../../../auth/authorization';
-import { createAsyncHandler, createRouteHandler, HttpError } from '../../../utils/route-handler';
+import { createAsyncHandler, createRouteHandler, HttpError, requireContactAccess } from '../../../utils/route-handler';
 
 /**
  * POST /tasks - Crear nueva tarea
@@ -23,18 +23,7 @@ export const handleCreateTask = createAsyncHandler(async (req: Request, res: Res
   const userRole = req.user!.role;
 
   // Verify user has access to the contact
-  const hasContactAccess = await canAccessContact(userId, userRole, validated.contactId);
-  if (!hasContactAccess) {
-    req.log.warn(
-      {
-        contactId: validated.contactId,
-        userId,
-        userRole,
-      },
-      'user attempted to create task for inaccessible contact'
-    );
-    return res.status(404).json({ error: 'Contact not found' });
-  }
+  await requireContactAccess(userId, userRole, validated.contactId, 'create_task', req);
 
   // Si hay recurrencia, crear la definición de recurrencia primero
   let recurrenceId = null;

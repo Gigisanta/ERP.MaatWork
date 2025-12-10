@@ -2,7 +2,16 @@
  * Utilidades para el cálculo del plan de carrera comercial
  */
 
-import { db, contactTags, contacts, tags, careerPlanLevels, users, teamMembership, teams } from '@cactus/db';
+import {
+  db,
+  contactTags,
+  contacts,
+  tags,
+  careerPlanLevels,
+  users,
+  teamMembership,
+  teams,
+} from '@cactus/db';
 import { eq, and, isNotNull, sql, inArray } from 'drizzle-orm';
 import type { CareerPlanLevel, UserCareerProgress } from '../types/career-plan';
 import type { UserRole } from '../auth/types';
@@ -13,11 +22,14 @@ import type { UserRole } from '../auth/types';
  * Para managers, incluye contactos de miembros del equipo
  * Multiplica por 12 para obtener producción anual estimada
  */
-export async function calculateUserAnnualProduction(userId: string, userRole?: UserRole): Promise<number> {
+export async function calculateUserAnnualProduction(
+  userId: string,
+  userRole?: UserRole
+): Promise<number> {
   const dbi = db();
-  
+
   let advisorIds: string[] = [userId];
-  
+
   // Si es manager, incluir contactos de miembros del equipo
   if (userRole === 'manager') {
     try {
@@ -27,7 +39,7 @@ export async function calculateUserAnnualProduction(userId: string, userRole?: U
         .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
         .innerJoin(teams, eq(teamMembership.teamId, teams.id))
         .where(eq(teams.managerUserId, userId));
-      
+
       // Incluir el manager mismo y los miembros del equipo
       advisorIds = [userId, ...teamMembers.map((m: { id: string }) => m.id)];
     } catch (error) {
@@ -35,14 +47,14 @@ export async function calculateUserAnnualProduction(userId: string, userRole?: U
       advisorIds = [userId];
     }
   }
-  
+
   // Sumar monthlyPremium de contact_tags donde:
   // - contact.assignedAdvisorId IN (advisorIds)
   // - tag.businessLine = 'zurich'
   // - monthlyPremium IS NOT NULL
   const result = await dbi
     .select({
-      totalMonthlyPremium: sql<number>`COALESCE(SUM(${contactTags.monthlyPremium}), 0)`
+      totalMonthlyPremium: sql<number>`COALESCE(SUM(${contactTags.monthlyPremium}), 0)`,
     })
     .from(contactTags)
     .innerJoin(contacts, eq(contactTags.contactId, contacts.id))
@@ -56,7 +68,7 @@ export async function calculateUserAnnualProduction(userId: string, userRole?: U
     );
 
   const totalMonthlyPremium = result[0]?.totalMonthlyPremium ?? 0;
-  
+
   // Multiplicar por 12 para obtener producción anual estimada
   return totalMonthlyPremium * 12;
 }
@@ -75,7 +87,7 @@ export async function determineUserLevel(
 
   // Ordenar niveles por levelNumber descendente (mayor a menor)
   const sortedLevels = [...levels]
-    .filter(level => level.isActive)
+    .filter((level) => level.isActive)
     .sort((a, b) => b.levelNumber - a.levelNumber);
 
   // Encontrar el nivel más alto que el usuario ha alcanzado
@@ -95,14 +107,11 @@ export async function determineUserLevel(
  * Calcula el porcentaje de progreso hacia el objetivo del nivel actual
  * Retorna un número entre 0 y 100+ (puede ser mayor a 100 si superó el objetivo)
  */
-export function calculateProgressPercentage(
-  annualProduction: number,
-  levelGoal: number
-): number {
+export function calculateProgressPercentage(annualProduction: number, levelGoal: number): number {
   if (levelGoal === 0) {
     return 0;
   }
-  
+
   const percentage = (annualProduction / levelGoal) * 100;
   return Math.round(percentage * 100) / 100; // Redondear a 2 decimales
 }
@@ -117,14 +126,14 @@ export async function getNextLevel(
   if (!currentLevel) {
     // Si no hay nivel actual, retornar el nivel más bajo (levelNumber = 1)
     const lowestLevel = levels
-      .filter(level => level.isActive)
+      .filter((level) => level.isActive)
       .sort((a, b) => a.levelNumber - b.levelNumber)[0];
     return lowestLevel || null;
   }
 
   // Encontrar el siguiente nivel (levelNumber mayor)
   const nextLevel = levels
-    .filter(level => level.isActive && level.levelNumber > currentLevel.levelNumber)
+    .filter((level) => level.isActive && level.levelNumber > currentLevel.levelNumber)
     .sort((a, b) => a.levelNumber - b.levelNumber)[0];
 
   return nextLevel || null;
@@ -133,7 +142,10 @@ export async function getNextLevel(
 /**
  * Calcula el progreso completo del usuario en el plan de carrera
  */
-export async function calculateUserCareerProgress(userId: string, userRole?: UserRole): Promise<UserCareerProgress> {
+export async function calculateUserCareerProgress(
+  userId: string,
+  userRole?: UserRole
+): Promise<UserCareerProgress> {
   // Obtener todos los niveles activos ordenados por levelNumber
   const allLevels = await db()
     .select()
@@ -146,7 +158,7 @@ export async function calculateUserCareerProgress(userId: string, userRole?: Use
 
   // Determinar nivel actual inicial
   let currentLevel = await determineUserLevel(annualProduction, allLevels);
-  
+
   // Obtener siguiente nivel
   let nextLevel = await getNextLevel(currentLevel, allLevels);
 
@@ -154,12 +166,12 @@ export async function calculateUserCareerProgress(userId: string, userRole?: Use
   let progressPercentage = 0;
   let displayLevel = currentLevel;
   let displayNextLevel = nextLevel;
-  
+
   if (currentLevel) {
     // Si tiene nivel actual, calcular progreso hacia ese nivel
     const goalUsd = Number(currentLevel.annualGoalUsd);
     progressPercentage = calculateProgressPercentage(annualProduction, goalUsd);
-    
+
     // Si el progreso es > 100%, pasar al siguiente nivel automáticamente
     if (progressPercentage > 100 && nextLevel) {
       displayLevel = nextLevel;
@@ -179,7 +191,6 @@ export async function calculateUserCareerProgress(userId: string, userRole?: Use
     currentLevel: displayLevel,
     annualProduction,
     progressPercentage,
-    nextLevel: displayNextLevel
+    nextLevel: displayNextLevel,
   };
 }
-

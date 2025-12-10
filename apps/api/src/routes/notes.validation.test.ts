@@ -3,6 +3,7 @@ import request from 'supertest';
 import notesRouter from './notes';
 import { signUserToken } from '../auth/jwt';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 // Mock auth middleware
 vi.mock('../auth/middlewares', () => ({
@@ -13,15 +14,10 @@ vi.mock('../auth/middlewares', () => ({
 }));
 
 describe('Notes route validation', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/notes', notesRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () => createTestApp([{ path: '/notes', router: notesRouter }]);
 
   it('returns 400 on invalid POST /notes payload (missing required fields)', async () => {
-    const app = createTestApp();
+    const app = createTestAppWithRoutes();
     const token = await signUserToken({
       id: '00000000-0000-0000-0000-000000000001',
       email: 't@e.st',

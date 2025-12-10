@@ -1,6 +1,6 @@
 /**
  * Tests para analytics dashboard routes
- * 
+ *
  * AI_DECISION: Tests unitarios para dashboard KPIs por rol
  * Justificación: Validación crítica de métricas y filtros por rol
  * Impacto: Prevenir errores en dashboard y acceso incorrecto a datos
@@ -13,12 +13,12 @@ import { requireAuth, requireRole } from '../../auth/middlewares';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
-  db: vi.fn()
+  db: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -31,17 +31,17 @@ describe('GET /analytics/dashboard', () => {
     mockReq = {
       user: {
         id: 'user-123',
-        role: 'advisor'
+        role: 'advisor',
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -70,7 +70,7 @@ describe('GET /analytics/dashboard', () => {
     const mockDeviationAlerts = [{ count: 2 }];
     const mockAumTrend = [
       { date: '2024-01-01', totalAum: '900000' },
-      { date: '2024-01-02', totalAum: '1000000' }
+      { date: '2024-01-02', totalAum: '1000000' },
     ];
 
     let selectCallCount = 0;
@@ -80,27 +80,27 @@ describe('GET /analytics/dashboard', () => {
         return {
           from: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(mockAumResult)
-            })
-          })
+              where: vi.fn().mockResolvedValue(mockAumResult),
+            }),
+          }),
         };
       }
       if (selectCallCount === 2) {
         return {
           from: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(mockClientCount)
-            })
-          })
+              where: vi.fn().mockResolvedValue(mockClientCount),
+            }),
+          }),
         };
       }
       if (selectCallCount === 3) {
         return {
           from: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(mockDeviationAlerts)
-            })
-          })
+              where: vi.fn().mockResolvedValue(mockDeviationAlerts),
+            }),
+          }),
         };
       }
       return {
@@ -108,16 +108,16 @@ describe('GET /analytics/dashboard', () => {
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
               groupBy: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue(mockAumTrend)
-              })
-            })
-          })
-        })
+                orderBy: vi.fn().mockResolvedValue(mockAumTrend),
+              }),
+            }),
+          }),
+        }),
       };
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response) => {
@@ -132,23 +132,23 @@ describe('GET /analytics/dashboard', () => {
           kpis: {
             totalAum: '1000000',
             clientsWithPortfolio: 5,
-            deviationAlerts: 2
+            deviationAlerts: 2,
           },
           aumTrend: mockAumTrend.map((item) => ({
             date: item.date,
-            value: Number(item.totalAum) || 0
-          }))
+            value: Number(item.totalAum) || 0,
+          })),
         };
 
         res.json({
           success: true,
-          data: dashboardData
+          data: dashboardData,
         });
       } catch (error) {
         req.log.error(error, 'Error fetching dashboard data');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -163,9 +163,9 @@ describe('GET /analytics/dashboard', () => {
           kpis: expect.objectContaining({
             totalAum: '1000000',
             clientsWithPortfolio: 5,
-            deviationAlerts: 2
-          })
-        })
+            deviationAlerts: 2,
+          }),
+        }),
       })
     );
   });
@@ -186,23 +186,21 @@ describe('GET /analytics/dashboard', () => {
             teamAum: '5000000',
             riskDistribution: [
               { riskLevel: 'conservative', count: 10 },
-              { riskLevel: 'moderate', count: 15 }
+              { riskLevel: 'moderate', count: 15 },
             ],
-            topClients: [
-              { contactId: 'c1', contactName: 'Client 1', aum: '1000000' }
-            ]
-          }
+            topClients: [{ contactId: 'c1', contactName: 'Client 1', aum: '1000000' }],
+          },
         };
 
         res.json({
           success: true,
-          data: dashboardData
+          data: dashboardData,
         });
       } catch (error) {
         req.log.error(error, 'Error fetching dashboard data');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -213,8 +211,8 @@ describe('GET /analytics/dashboard', () => {
       expect.objectContaining({
         success: true,
         data: expect.objectContaining({
-          role: 'manager'
-        })
+          role: 'manager',
+        }),
       })
     );
   });
@@ -235,19 +233,19 @@ describe('GET /analytics/dashboard', () => {
             globalAum: '10000000',
             activeTemplates: 10,
             clientsWithoutPortfolio: 5,
-            instrumentsWithoutPrice: 2
-          }
+            instrumentsWithoutPrice: 2,
+          },
         };
 
         res.json({
           success: true,
-          data: dashboardData
+          data: dashboardData,
         });
       } catch (error) {
         req.log.error(error, 'Error fetching dashboard data');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -258,8 +256,8 @@ describe('GET /analytics/dashboard', () => {
       expect.objectContaining({
         success: true,
         data: expect.objectContaining({
-          role: 'admin'
-        })
+          role: 'admin',
+        }),
       })
     );
   });
@@ -282,7 +280,7 @@ describe('GET /analytics/dashboard', () => {
         req.log.error(error, 'Error fetching dashboard data');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -293,8 +291,7 @@ describe('GET /analytics/dashboard', () => {
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({
       error: 'Internal server error',
-      details: 'Database error'
+      details: 'Database error',
     });
   });
 });
-

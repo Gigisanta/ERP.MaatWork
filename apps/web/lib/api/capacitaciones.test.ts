@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -30,7 +30,9 @@ describe('capacitaciones api client endpoints', () => {
 
   it('calls get capacitaciones endpoint with filters', async () => {
     await apiIndex.getCapacitaciones({ tema: 'test', search: 'query', limit: 10, offset: 0 });
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/capacitaciones?tema=test&search=query&limit=10&offset=0');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/capacitaciones?tema=test&search=query&limit=10&offset=0'
+    );
   });
 
   it('calls get capacitacion by id endpoint', async () => {
@@ -61,4 +63,3 @@ describe('capacitaciones api client endpoints', () => {
     expect(apiClient.post).toHaveBeenCalledWith('/v1/capacitaciones/import', expect.any(FormData));
   });
 });
-

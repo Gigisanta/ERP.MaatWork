@@ -1,6 +1,19 @@
-"use client";
+'use client';
 import React, { useState, useTransition } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Text, Button, Input, Modal, ModalHeader, ModalContent, ModalTitle, ModalFooter } from '@cactus/ui';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Text,
+  Button,
+  Input,
+  Modal,
+  ModalHeader,
+  ModalContent,
+  ModalTitle,
+  ModalFooter,
+} from '@cactus/ui';
 import { useRouter } from 'next/navigation';
 import { logger, toLogContext } from '@/lib/logger';
 import SortableList from './SortableList';
@@ -17,13 +30,13 @@ interface PrioritiesConcernsSectionProps {
 export default function PrioritiesConcernsSection({
   contactId,
   prioridades,
-  preocupaciones
+  preocupaciones,
 }: PrioritiesConcernsSectionProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [localPrioridades, setLocalPrioridades] = useState<string[]>(prioridades || []);
   const [localPreocupaciones, setLocalPreocupaciones] = useState<string[]>(preocupaciones || []);
-  
+
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddConcernModal, setShowAddConcernModal] = useState(false);
   const [newPriority, setNewPriority] = useState('');
@@ -36,7 +49,10 @@ export default function PrioritiesConcernsSection({
         await updateContactField(contactId, field, value);
         router.refresh();
       } catch (err) {
-        logger.error('Error updating priorities/concerns', toLogContext({ err, contactId, field, value }));
+        logger.error(
+          'Error updating priorities/concerns',
+          toLogContext({ err, contactId, field, value })
+        );
       }
     });
   };
@@ -141,10 +157,7 @@ export default function PrioritiesConcernsSection({
       </Card>
 
       {/* Modal para agregar prioridad */}
-      <Modal
-        open={showAddPriorityModal}
-        onOpenChange={setShowAddPriorityModal}
-      >
+      <Modal open={showAddPriorityModal} onOpenChange={setShowAddPriorityModal}>
         <ModalHeader>
           <ModalTitle>Agregar Prioridad</ModalTitle>
         </ModalHeader>
@@ -174,20 +187,14 @@ export default function PrioritiesConcernsSection({
           >
             Cancelar
           </Button>
-          <Button
-            onClick={handleAddPriority}
-            disabled={!newPriority.trim()}
-          >
+          <Button onClick={handleAddPriority} disabled={!newPriority.trim()}>
             Agregar
           </Button>
         </ModalFooter>
       </Modal>
 
       {/* Modal para agregar preocupación */}
-      <Modal
-        open={showAddConcernModal}
-        onOpenChange={setShowAddConcernModal}
-      >
+      <Modal open={showAddConcernModal} onOpenChange={setShowAddConcernModal}>
         <ModalHeader>
           <ModalTitle>Agregar Preocupación</ModalTitle>
         </ModalHeader>
@@ -217,10 +224,7 @@ export default function PrioritiesConcernsSection({
           >
             Cancelar
           </Button>
-          <Button
-            onClick={handleAddConcern}
-            disabled={!newConcern.trim()}
-          >
+          <Button onClick={handleAddConcern} disabled={!newConcern.trim()}>
             Agregar
           </Button>
         </ModalFooter>
@@ -228,4 +232,3 @@ export default function PrioritiesConcernsSection({
     </>
   );
 }
-

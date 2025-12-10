@@ -61,30 +61,3 @@ export async function findByIdCuenta(
 
   return null;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

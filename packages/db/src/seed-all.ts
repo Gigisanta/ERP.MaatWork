@@ -1,21 +1,28 @@
 /**
  * SYSTEM-ESSENTIAL Database Seeding Script
- * 
+ *
  * Seeds only SYSTEM-REQUIRED data:
  * - Pipeline stages (7 required stages for CRM functionality)
  * - Lookup tables (task status, priority, notification types, asset classes)
- * 
+ *
  * NO SIMULATED/FICTIONAL DATA:
  * - Benchmarks/instruments (must be fetched from yfinance based on user needs)
  * - Notification templates (system functionality, pre-configured separately)
- * 
+ *
  * Can be run manually via: pnpm -F @cactus/db seed:all
- * 
+ *
  * REGLA CURSOR: This script is idempotent - safe to run multiple times
  */
 
 import 'dotenv/config';
-import { db, pipelineStages, lookupTaskStatus, lookupPriority, lookupNotificationType, lookupAssetClass } from './index';
+import {
+  db,
+  pipelineStages,
+  lookupTaskStatus,
+  lookupPriority,
+  lookupNotificationType,
+  lookupAssetClass,
+} from './index';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -30,50 +37,50 @@ async function seedPipelineStages() {
       description: 'Contacto inicial identificado',
       order: 1,
       color: '#3b82f6', // Azul
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Contactado',
       description: 'Primer contacto realizado',
       order: 2,
       color: '#8b5cf6', // Morado
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Primera reunion',
       description: 'Primera reunión agendada o realizada',
       order: 3,
       color: '#f59e0b', // Amarillo/Naranja
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Segunda reunion',
       description: 'Segunda reunión agendada o realizada',
       order: 4,
       color: '#f97316', // Naranja
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Cliente',
       description: 'Cliente activo',
       order: 5,
       color: '#10b981', // Verde
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Cuenta vacia',
       description: 'Cliente sin saldo',
       order: 6,
       color: '#6b7280', // Gris
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Caido',
       description: 'Cliente perdido o inactivo',
       order: 7,
       color: '#ef4444', // Rojo
-      wipLimit: null
-    }
+      wipLimit: null,
+    },
   ];
 
   for (const stage of stages) {
@@ -95,23 +102,21 @@ async function seedPipelineStages() {
             color: stage.color,
             wipLimit: stage.wipLimit,
             isActive: true,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(pipelineStages.id, existing[0].id));
 
         console.log(`✅ Updated stage: ${stage.name}`);
       } else {
         // Crear nueva etapa
-        await db()
-          .insert(pipelineStages)
-          .values({
-            name: stage.name,
-            description: stage.description,
-            order: stage.order,
-            color: stage.color,
-            wipLimit: stage.wipLimit,
-            isActive: true
-          });
+        await db().insert(pipelineStages).values({
+          name: stage.name,
+          description: stage.description,
+          order: stage.order,
+          color: stage.color,
+          wipLimit: stage.wipLimit,
+          isActive: true,
+        });
 
         console.log(`✅ Created stage: ${stage.name}`);
       }
@@ -128,21 +133,18 @@ async function seedPipelineStages() {
  */
 async function seedLookupTables() {
   console.log('🌱 Seeding lookup tables...');
-  
+
   // Task Status lookup
   const taskStatuses = [
     { id: 'open', label: 'Abierta' },
     { id: 'in_progress', label: 'En Progreso' },
     { id: 'completed', label: 'Completada' },
-    { id: 'cancelled', label: 'Cancelada' }
+    { id: 'cancelled', label: 'Cancelada' },
   ];
-  
+
   for (const status of taskStatuses) {
     try {
-      await db()
-        .insert(lookupTaskStatus)
-        .values(status)
-        .onConflictDoNothing();
+      await db().insert(lookupTaskStatus).values(status).onConflictDoNothing();
       console.log(`  ✓ Task status: ${status.label}`);
     } catch (err: unknown) {
       type ErrorWithMessage = {
@@ -154,21 +156,18 @@ async function seedLookupTables() {
       }
     }
   }
-  
+
   // Priority lookup
   const priorities = [
     { id: 'low', label: 'Baja' },
     { id: 'medium', label: 'Media' },
     { id: 'high', label: 'Alta' },
-    { id: 'urgent', label: 'Urgente' }
+    { id: 'urgent', label: 'Urgente' },
   ];
-  
+
   for (const priority of priorities) {
     try {
-      await db()
-        .insert(lookupPriority)
-        .values(priority)
-        .onConflictDoNothing();
+      await db().insert(lookupPriority).values(priority).onConflictDoNothing();
       console.log(`  ✓ Priority: ${priority.label}`);
     } catch (err: unknown) {
       type ErrorWithMessage = {
@@ -180,22 +179,19 @@ async function seedLookupTables() {
       }
     }
   }
-  
+
   // Notification Type lookup
   const notificationTypes = [
     { id: 'task_assigned', label: 'Tarea Asignada' },
     { id: 'task_due', label: 'Tarea Vencida' },
     { id: 'sla_warning', label: 'Advertencia SLA' },
     { id: 'contact_moved', label: 'Contacto Movido' },
-    { id: 'note_mention', label: 'Mención en Nota' }
+    { id: 'note_mention', label: 'Mención en Nota' },
   ];
-  
+
   for (const type of notificationTypes) {
     try {
-      await db()
-        .insert(lookupNotificationType)
-        .values(type)
-        .onConflictDoNothing();
+      await db().insert(lookupNotificationType).values(type).onConflictDoNothing();
       console.log(`  ✓ Notification type: ${type.label}`);
     } catch (err: unknown) {
       type ErrorWithMessage = {
@@ -207,22 +203,19 @@ async function seedLookupTables() {
       }
     }
   }
-  
+
   // Asset Class lookup
   const assetClasses = [
     { id: 'equity', label: 'Acciones' },
     { id: 'fixed_income', label: 'Renta Fija' },
     { id: 'money_market', label: 'Mercado Monetario' },
     { id: 'alternative', label: 'Alternativos' },
-    { id: 'commodities', label: 'Commodities' }
+    { id: 'commodities', label: 'Commodities' },
   ];
-  
+
   for (const assetClass of assetClasses) {
     try {
-      await db()
-        .insert(lookupAssetClass)
-        .values(assetClass)
-        .onConflictDoNothing();
+      await db().insert(lookupAssetClass).values(assetClass).onConflictDoNothing();
       console.log(`  ✓ Asset class: ${assetClass.label}`);
     } catch (err: unknown) {
       type ErrorWithMessage = {
@@ -234,10 +227,9 @@ async function seedLookupTables() {
       }
     }
   }
-  
+
   console.log('✅ Lookup tables seeded successfully!');
 }
-
 
 /**
  * Main seeding function
@@ -256,8 +248,12 @@ async function seedAll() {
     console.log('');
 
     console.log('✅ SYSTEM-ESSENTIAL seeding completed successfully!');
-    console.log('ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios');
-    console.log('ℹ️  Note: Notification templates are system functionality, pre-configured separately');
+    console.log(
+      'ℹ️  Note: Benchmarks/instruments must be fetched from yfinance based on user searches/portfolios'
+    );
+    console.log(
+      'ℹ️  Note: Notification templates are system functionality, pre-configured separately'
+    );
   } catch (error) {
     console.error('❌ Error during seeding:', error);
     process.exit(1);

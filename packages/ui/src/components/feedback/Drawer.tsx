@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useCallback } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface DrawerProps {
   open: boolean;

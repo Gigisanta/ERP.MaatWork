@@ -22,7 +22,8 @@ export interface CareerPlanLevel extends TimestampedEntity {
  * Request para crear un nivel del plan de carrera - usando utility type CreateRequest
  * Nota: index y percentage aceptan string | number para flexibilidad en el formulario
  */
-export interface CareerPlanLevelCreateRequest extends Omit<CreateRequest<CareerPlanLevel>, 'isActive' | 'index' | 'percentage'> {
+export interface CareerPlanLevelCreateRequest
+  extends Omit<CreateRequest<CareerPlanLevel>, 'isActive' | 'index' | 'percentage'> {
   category: string;
   level: string;
   levelNumber: number;
@@ -46,4 +47,3 @@ export interface UserCareerProgress {
   progressPercentage: number; // Porcentaje de progreso hacia el objetivo del nivel actual (0-100+)
   nextLevel: CareerPlanLevel | null; // Siguiente nivel (si existe)
 }
-

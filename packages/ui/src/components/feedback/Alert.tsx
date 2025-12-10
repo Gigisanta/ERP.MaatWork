@@ -1,6 +1,6 @@
 import React from 'react';
-import Icon, { type IconName } from '../Icon';
-import { cn } from '../../utils/cn';
+import Icon, { type IconName } from '../Icon.js';
+import { cn } from '../../utils/cn.js';
 
 /**
  * Props for the Alert component
@@ -22,40 +22,40 @@ const variantConfig = {
   info: {
     icon: 'info' as IconName,
     className: 'border-info bg-info-subtle text-text',
-    iconClassName: 'text-info'
+    iconClassName: 'text-info',
   },
   success: {
     icon: 'check-circle' as IconName,
     className: 'border-success bg-success-subtle text-text',
-    iconClassName: 'text-success'
+    iconClassName: 'text-success',
   },
   warning: {
     icon: 'alert-circle' as IconName,
     className: 'border-warning bg-warning-subtle text-text',
-    iconClassName: 'text-warning'
+    iconClassName: 'text-warning',
   },
   error: {
     icon: 'x-circle' as IconName,
     className: 'border-error bg-error-subtle text-text',
-    iconClassName: 'text-error'
+    iconClassName: 'text-error',
   },
   secondary: {
     icon: 'info' as IconName,
     className: 'border-secondary bg-secondary-subtle text-text',
-    iconClassName: 'text-secondary'
-  }
+    iconClassName: 'text-secondary',
+  },
 };
 
 /**
  * Alert component for displaying informational, success, warning, or error messages.
  * Uses Open Sans (body font) for content and Poppins (display font) for titles.
- * 
+ *
  * @example
  * ```tsx
  * <Alert variant="error" title="Error">
  *   Something went wrong
  * </Alert>
- * 
+ *
  * <Alert variant="secondary" title="New Feature">
  *   Check out our latest update!
  * </Alert>
@@ -86,13 +86,9 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
           )}
           <div className="flex-1">
             {title && (
-              <h4 className="mb-1 text-sm font-semibold leading-none font-display">
-                {title}
-              </h4>
+              <h4 className="mb-1 text-sm font-semibold leading-none font-display">{title}</h4>
             )}
-            <div className="text-sm">
-              {children}
-            </div>
+            <div className="text-sm">{children}</div>
           </div>
         </div>
       </div>
@@ -125,11 +121,7 @@ export const AlertDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('text-sm [&_p]:leading-relaxed font-body', className)}
-    {...props}
-  />
+  <div ref={ref} className={cn('text-sm [&_p]:leading-relaxed font-body', className)} {...props} />
 ));
 
 AlertDescription.displayName = 'AlertDescription';

@@ -1,6 +1,6 @@
 /**
  * Tests para BloombergMacroWidget component
- * 
+ *
  * AI_DECISION: Tests unitarios para widget macro Bloomberg
  * Justificación: Validación crítica de fetching y renderizado de spreads de tasas
  * Impacto: Prevenir errores en visualización de indicadores macro
@@ -13,28 +13,32 @@ import { getYieldSpreads } from '@/lib/api/bloomberg';
 
 // Mock dependencies
 vi.mock('@/lib/api/bloomberg', () => ({
-  getYieldSpreads: vi.fn()
+  getYieldSpreads: vi.fn(),
 }));
 
 vi.mock('@cactus/ui', () => ({
   Card: ({ children, className }: any) => (
-    <div data-testid="card" className={className}>{children}</div>
+    <div data-testid="card" className={className}>
+      {children}
+    </div>
   ),
   CardContent: ({ children }: any) => <div>{children}</div>,
   CardHeader: ({ children }: any) => <div>{children}</div>,
   CardTitle: ({ children }: any) => <h3>{children}</h3>,
   Grid: ({ children, className }: any) => <div className={className}>{children}</div>,
   Text: ({ children, size, weight, color, className, style }: any) => (
-    <span className={className} style={style}>{children}</span>
+    <span className={className} style={style}>
+      {children}
+    </span>
   ),
-  Stack: ({ children, direction, gap, align, justify }: any) => (
-    <div>{children}</div>
-  ),
+  Stack: ({ children, direction, gap, align, justify }: any) => <div>{children}</div>,
   Badge: ({ children, variant }: any) => <span data-badge-variant={variant}>{children}</span>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
-  )
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
+  ),
 }));
 
 describe('BloombergMacroWidget', () => {
@@ -59,12 +63,12 @@ describe('BloombergMacroWidget', () => {
   it('debería mostrar datos de spreads cuando se cargan exitosamente', async () => {
     const mockSpreads = {
       '2s10s': 0.5,
-      '3m10y': 1.2
+      '3m10y': 1.2,
     };
 
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<BloombergMacroWidget />);
@@ -81,12 +85,12 @@ describe('BloombergMacroWidget', () => {
   it('debería mostrar badge "Inverted" cuando 2s10s es negativo', async () => {
     const mockSpreads = {
       '2s10s': -0.3,
-      '3m10y': 0.8
+      '3m10y': 0.8,
     };
 
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<BloombergMacroWidget />);
@@ -97,18 +101,21 @@ describe('BloombergMacroWidget', () => {
 
     const invertedBadge = screen.getByText('Inverted');
     expect(invertedBadge).toBeInTheDocument();
-    expect(invertedBadge.closest('[data-badge-variant]')).toHaveAttribute('data-badge-variant', 'error');
+    expect(invertedBadge.closest('[data-badge-variant]')).toHaveAttribute(
+      'data-badge-variant',
+      'error'
+    );
   });
 
   it('debería mostrar alerta de curva invertida cuando 2s10s es negativo', async () => {
     const mockSpreads = {
       '2s10s': -0.5,
-      '3m10y': 0.5
+      '3m10y': 0.5,
     };
 
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<BloombergMacroWidget />);
@@ -123,7 +130,7 @@ describe('BloombergMacroWidget', () => {
   it('debería mostrar error cuando falla la carga', async () => {
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: false,
-      error: 'Failed to fetch spreads'
+      error: 'Failed to fetch spreads',
     });
 
     render(<BloombergMacroWidget />);
@@ -139,9 +146,7 @@ describe('BloombergMacroWidget', () => {
   });
 
   it('debería manejar errores de excepción', async () => {
-    (getYieldSpreads as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('Network error')
-    );
+    (getYieldSpreads as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
     render(<BloombergMacroWidget />);
 
@@ -156,12 +161,12 @@ describe('BloombergMacroWidget', () => {
   it('debería refrescar datos cada 5 minutos', async () => {
     const mockSpreads = {
       '2s10s': 0.5,
-      '3m10y': 1.2
+      '3m10y': 1.2,
     };
 
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<BloombergMacroWidget />);
@@ -181,7 +186,7 @@ describe('BloombergMacroWidget', () => {
   it('debería mostrar "No data available" cuando no hay spreads', async () => {
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: null }
+      data: { spreads: null },
     });
 
     render(<BloombergMacroWidget />);
@@ -196,7 +201,7 @@ describe('BloombergMacroWidget', () => {
   it('debería aplicar className personalizada', () => {
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: { '2s10s': 0.5 } }
+      data: { spreads: { '2s10s': 0.5 } },
     });
 
     const { container } = render(<BloombergMacroWidget className="custom-class" />);
@@ -207,7 +212,7 @@ describe('BloombergMacroWidget', () => {
   it('debería mostrar indicadores macro estáticos', async () => {
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: { '2s10s': 0.5 } }
+      data: { spreads: { '2s10s': 0.5 } },
     });
 
     render(<BloombergMacroWidget />);
@@ -221,4 +226,3 @@ describe('BloombergMacroWidget', () => {
     expect(screen.getByText('United States')).toBeInTheDocument();
   });
 });
-

@@ -1,6 +1,6 @@
 /**
  * Tests para metrics goals routes
- * 
+ *
  * AI_DECISION: Tests unitarios para objetivos mensuales
  * Justificación: Validación crítica de objetivos
  * Impacto: Prevenir errores en gestión de objetivos
@@ -16,11 +16,11 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   monthlyGoals: {},
   eq: vi.fn(),
-  and: vi.fn()
+  and: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -34,11 +34,11 @@ describe('GET /metrics/goals', () => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -53,19 +53,19 @@ describe('GET /metrics/goals', () => {
       newProspectsGoal: 20,
       firstMeetingsGoal: 15,
       secondMeetingsGoal: 10,
-      newClientsGoal: 5
+      newClientsGoal: 5,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockGoal])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([mockGoal]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -80,7 +80,7 @@ describe('GET /metrics/goals', () => {
         .limit(1);
       res.json({
         success: true,
-        data: goal || null
+        data: goal || null,
       });
     };
 
@@ -88,7 +88,7 @@ describe('GET /metrics/goals', () => {
 
     expect(mockRes.json).toHaveBeenCalledWith({
       success: true,
-      data: mockGoal
+      data: mockGoal,
     });
   });
 
@@ -96,13 +96,13 @@ describe('GET /metrics/goals', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -113,7 +113,7 @@ describe('GET /metrics/goals', () => {
         .limit(1);
       res.json({
         success: true,
-        data: goal || null
+        data: goal || null,
       });
     };
 
@@ -121,7 +121,7 @@ describe('GET /metrics/goals', () => {
 
     expect(mockRes.json).toHaveBeenCalledWith({
       success: true,
-      data: null
+      data: null,
     });
   });
 });
@@ -140,13 +140,13 @@ describe('POST /metrics/goals', () => {
         newProspectsGoal: 20,
         firstMeetingsGoal: 15,
         secondMeetingsGoal: 10,
-        newClientsGoal: 5
+        newClientsGoal: 5,
       },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -157,26 +157,26 @@ describe('POST /metrics/goals', () => {
       id: 'goal-new',
       ...mockReq.body,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([newGoal])
-      })
+        returning: vi.fn().mockResolvedValue([newGoal]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -195,10 +195,7 @@ describe('POST /metrics/goals', () => {
           .returning();
         result = updated;
       } else {
-        const [newGoal] = await db()
-          .insert(monthlyGoals)
-          .values(validated)
-          .returning();
+        const [newGoal] = await db().insert(monthlyGoals).values(validated).returning();
         result = newGoal;
       }
       res.json({ success: true, data: result });
@@ -213,34 +210,34 @@ describe('POST /metrics/goals', () => {
     const existing = {
       id: 'goal-1',
       month: 1,
-      year: 2024
+      year: 2024,
     };
 
     const updated = {
       ...existing,
       ...mockReq.body,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([updated])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -259,10 +256,7 @@ describe('POST /metrics/goals', () => {
           .returning();
         result = updated;
       } else {
-        const [newGoal] = await db()
-          .insert(monthlyGoals)
-          .values(validated)
-          .returning();
+        const [newGoal] = await db().insert(monthlyGoals).values(validated).returning();
         result = newGoal;
       }
       res.json({ success: true, data: result });
@@ -273,4 +267,3 @@ describe('POST /metrics/goals', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: updated });
   });
 });
-

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { 
-  DropdownMenu, 
-  DropdownMenuItem, 
+import {
+  DropdownMenu,
+  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-  DropdownMenuGroup
+  DropdownMenuGroup,
 } from './DropdownMenu';
 import Button from '../nav/Button';
 
@@ -263,11 +263,7 @@ describe('DropdownMenu Component', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty children', () => {
-      render(
-        <DropdownMenu trigger={<Button>Empty Menu</Button>}>
-          {null}
-        </DropdownMenu>
-      );
+      render(<DropdownMenu trigger={<Button>Empty Menu</Button>}>{null}</DropdownMenu>);
       expect(screen.getByText('Empty Menu')).toBeInTheDocument();
     });
 
@@ -312,4 +308,3 @@ describe('DropdownMenu Component', () => {
     });
   });
 });
-

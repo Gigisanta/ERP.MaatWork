@@ -47,7 +47,11 @@ const contactFormSchema = z.object({
   familia: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
   expectativas: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
   objetivos: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  requisitosPlanificacion: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
+  requisitosPlanificacion: z
+    .string()
+    .max(2000, 'Máximo 2000 caracteres')
+    .optional()
+    .or(z.literal('')),
 });
 
 interface FormData {
@@ -133,22 +137,28 @@ export default function NewContactPage() {
   }
 
   // Handler para cambios de campo con validación en tiempo real
-  const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    validateField(field, value);
-  }, [validateField]);
+  const handleInputChange = useCallback(
+    (field: keyof FormData, value: string) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      validateField(field, value);
+    },
+    [validateField]
+  );
 
   // Handler para onBlur - marca el campo como tocado
-  const handleFieldBlur = useCallback((field: keyof FormData) => {
-    touchField(field);
-    // Re-validar el campo al perder el foco
-    validateField(field, formData[field]);
-  }, [touchField, validateField, formData]);
+  const handleFieldBlur = useCallback(
+    (field: keyof FormData) => {
+      touchField(field);
+      // Re-validar el campo al perder el foco
+      validateField(field, formData[field]);
+    },
+    [touchField, validateField, formData]
+  );
 
   // Validar formulario antes de enviar
   const validateForm = useCallback((): boolean => {
     const isFormValid = validateAll(formData);
-    
+
     if (!isFormValid) {
       setError('Por favor corrige los errores en el formulario');
       return false;
@@ -265,9 +275,8 @@ export default function NewContactPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ minHeight: '100vh' }}>
-      <div className="max-w-4xl mx-auto p-4 md:p-5 min-h-screen">
-        {/* Breadcrumbs */}
+    <div className="max-w-4xl mx-auto p-4 md:p-5">
+      {/* Breadcrumbs */}
         <div className="mb-4">
           <Breadcrumbs items={breadcrumbItems} />
         </div>
@@ -334,7 +343,9 @@ export default function NewContactPage() {
                           className="w-full"
                           autoFocus
                           error={validationErrors.firstName?.message}
-                          {...(getFieldState('firstName').isValid && formData.firstName ? { rightIcon: 'check-circle' as const } : {})}
+                          {...(getFieldState('firstName').isValid && formData.firstName
+                            ? { rightIcon: 'check-circle' as const }
+                            : {})}
                         />
                       </div>
                       <div className="relative">
@@ -348,7 +359,9 @@ export default function NewContactPage() {
                           required
                           className="w-full"
                           error={validationErrors.lastName?.message}
-                          {...(getFieldState('lastName').isValid && formData.lastName ? { rightIcon: 'check-circle' as const } : {})}
+                          {...(getFieldState('lastName').isValid && formData.lastName
+                            ? { rightIcon: 'check-circle' as const }
+                            : {})}
                         />
                       </div>
                     </div>
@@ -363,7 +376,9 @@ export default function NewContactPage() {
                       disabled={loading}
                       className="w-full"
                       error={validationErrors.email?.message}
-                      {...(getFieldState('email').isValid && formData.email ? { rightIcon: 'check-circle' as const } : {})}
+                      {...(getFieldState('email').isValid && formData.email
+                        ? { rightIcon: 'check-circle' as const }
+                        : {})}
                     />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -567,7 +582,7 @@ export default function NewContactPage() {
                         </Text>
                       )}
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <Button
                         type="button"
@@ -578,9 +593,11 @@ export default function NewContactPage() {
                       >
                         Cancelar
                       </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={isLoading || submitLoading || Object.keys(validationErrors).length > 0} 
+                      <Button
+                        type="submit"
+                        disabled={
+                          isLoading || submitLoading || Object.keys(validationErrors).length > 0
+                        }
                         size="sm"
                       >
                         {submitLoading ? 'Creando...' : 'Crear Contacto'}
@@ -651,6 +668,5 @@ export default function NewContactPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

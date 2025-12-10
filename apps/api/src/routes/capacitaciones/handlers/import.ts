@@ -7,8 +7,12 @@ import type { Request, Response, NextFunction } from 'express';
 import { promises as fs } from 'node:fs';
 import { db, capacitaciones } from '@cactus/db';
 import { createAsyncHandler, HttpError } from '../../../utils/route-handler';
-import { transactionWithLogging } from '../../../utils/db-transactions';
-import { createCsvUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../../utils/file-upload';
+import { transactionWithLogging } from '../../../utils/database/db-transactions';
+import {
+  createCsvUpload,
+  handleMulterError,
+  DEFAULT_UPLOAD_DIR,
+} from '../../../utils/file/file-upload';
 import { parseCapacitacionesCSV } from '../utils';
 
 const uploadDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;

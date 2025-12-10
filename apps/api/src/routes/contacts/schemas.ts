@@ -4,8 +4,16 @@
  * Zod schemas for validating contacts CRUD operations
  */
 import { z } from 'zod';
-import { paginationQuerySchema } from '../../utils/common-schemas';
-import { optionalEmailSchema } from '../../utils/validation-common';
+import {
+  paginationQuerySchema,
+  nameSchema,
+  phoneSchema,
+  addressSchema,
+  notesSchema,
+  countryCodeSchema,
+  amountSchema
+} from '../../utils/validation/common-schemas';
+import { optionalEmailSchema } from '../../utils/validation/validation-common';
 
 // ==========================================================
 // Query Parameter Schemas
@@ -37,15 +45,15 @@ export const batchContactsQuerySchema = z.object({
 const optionalLongText = z.string().max(2000).trim().optional().nullable();
 
 export const createContactSchema = z.object({
-  firstName: z.string().min(1).max(255),
-  lastName: z.string().min(1).max(255),
+  firstName: nameSchema,
+  lastName: nameSchema,
   email: optionalEmailSchema,
-  phone: z.string().max(50).optional().nullable(),
-  phoneSecondary: z.string().max(50).optional().nullable(),
-  whatsapp: z.string().max(50).optional().nullable(),
-  address: z.string().optional().nullable(),
+  phone: phoneSchema,
+  phoneSecondary: phoneSchema,
+  whatsapp: phoneSchema,
+  address: addressSchema,
   city: z.string().optional().nullable(),
-  country: z.string().length(2).optional().nullable(),
+  country: countryCodeSchema,
   dateOfBirth: z.string().optional().nullable(), // ISO date
   dni: z.string().max(50).optional().nullable(),
   pipelineStageId: z.string().uuid().optional().nullable(),
@@ -54,7 +62,7 @@ export const createContactSchema = z.object({
   assignedAdvisorId: z.string().uuid().optional().nullable(),
   assignedTeamId: z.string().uuid().optional().nullable(),
   nextStep: z.string().max(500).optional().nullable(),
-  notes: z.string().optional().nullable(),
+  notes: notesSchema,
   queSeDedica: optionalLongText,
   familia: optionalLongText,
   expectativas: optionalLongText,
@@ -62,26 +70,8 @@ export const createContactSchema = z.object({
   requisitosPlanificacion: optionalLongText,
   prioridades: z.array(z.string().max(500)).optional().default([]),
   preocupaciones: z.array(z.string().max(500)).optional().default([]),
-  ingresos: z
-    .union([
-      z.number(),
-      z
-        .string()
-        .regex(/^\d+(\.\d{1,2})?$/)
-        .transform((val) => parseFloat(val)),
-    ])
-    .optional()
-    .nullable(),
-  gastos: z
-    .union([
-      z.number(),
-      z
-        .string()
-        .regex(/^\d+(\.\d{1,2})?$/)
-        .transform((val) => parseFloat(val)),
-    ])
-    .optional()
-    .nullable(),
+  ingresos: amountSchema,
+  gastos: amountSchema,
   excedente: z
     .union([
       z.number(),

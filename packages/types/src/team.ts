@@ -1,6 +1,6 @@
 /**
  * Team Types - Shared team-related types
- * 
+ *
  * These types are used by both API and Web applications.
  */
 
@@ -136,4 +136,3 @@ export interface TeamMemberMetrics {
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
 }
-

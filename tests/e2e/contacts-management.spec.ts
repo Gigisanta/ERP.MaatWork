@@ -1,6 +1,6 @@
 /**
  * E2E tests for contacts management
- * 
+ *
  * Tests complete CRUD operations and workflows for contacts
  */
 
@@ -11,8 +11,14 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page) {
   await page.goto('/login');
-  await page.getByLabel(/email|usuario|correo/i).first().fill(adminEmail);
-  await page.getByLabel(/contraseña|password/i).first().fill(adminPassword);
+  await page
+    .getByLabel(/email|usuario|correo/i)
+    .first()
+    .fill(adminEmail);
+  await page
+    .getByLabel(/contraseña|password/i)
+    .first()
+    .fill(adminPassword);
   await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
   await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
 }
@@ -27,7 +33,7 @@ test.describe('Contacts Management', () => {
 
     // Click new contact button
     const newButton = page.getByRole('button', { name: /nuevo|new|crear/i });
-    if (await newButton.count() === 0) {
+    if ((await newButton.count()) === 0) {
       test.skip();
       return;
     }
@@ -40,12 +46,21 @@ test.describe('Contacts Management', () => {
     const lastName = `Contact${timestamp}`;
     const email = `test${timestamp}@example.com`;
 
-    await page.getByLabel(/nombre|first name/i).first().fill(firstName);
-    await page.getByLabel(/apellido|last name/i).first().fill(lastName);
+    await page
+      .getByLabel(/nombre|first name/i)
+      .first()
+      .fill(firstName);
+    await page
+      .getByLabel(/apellido|last name/i)
+      .first()
+      .fill(lastName);
     await page.getByLabel(/email/i).first().fill(email);
 
     // Save contact
-    await page.getByRole('button', { name: /guardar|save|crear/i }).first().click();
+    await page
+      .getByRole('button', { name: /guardar|save|crear/i })
+      .first()
+      .click();
 
     // Should see success message or redirect to contact detail
     await expect(page.getByText(firstName)).toBeVisible({ timeout: 10000 });
@@ -56,7 +71,7 @@ test.describe('Contacts Management', () => {
 
     // Click on first contact
     const firstContact = page.locator('a[href*="/contacts/"]').first();
-    if (await firstContact.count() === 0) {
+    if ((await firstContact.count()) === 0) {
       test.skip();
       return;
     }
@@ -75,7 +90,7 @@ test.describe('Contacts Management', () => {
 
     // Click on first contact
     const firstContact = page.locator('a[href*="/contacts/"]').first();
-    if (await firstContact.count() === 0) {
+    if ((await firstContact.count()) === 0) {
       test.skip();
       return;
     }
@@ -84,7 +99,7 @@ test.describe('Contacts Management', () => {
 
     // Find edit button or inline edit
     const editButton = page.getByRole('button', { name: /editar|edit/i });
-    if (await editButton.count() > 0) {
+    if ((await editButton.count()) > 0) {
       await editButton.first().click();
     }
 
@@ -97,7 +112,10 @@ test.describe('Contacts Management', () => {
     await nameInput.fill(newName);
 
     // Save changes
-    await page.getByRole('button', { name: /guardar|save/i }).first().click();
+    await page
+      .getByRole('button', { name: /guardar|save/i })
+      .first()
+      .click();
 
     // Should see updated name
     await expect(page.getByText(newName)).toBeVisible({ timeout: 5000 });
@@ -108,7 +126,7 @@ test.describe('Contacts Management', () => {
 
     // Create a contact first
     const newButton = page.getByRole('button', { name: /nuevo|new|crear/i });
-    if (await newButton.count() === 0) {
+    if ((await newButton.count()) === 0) {
       test.skip();
       return;
     }
@@ -118,10 +136,16 @@ test.describe('Contacts Management', () => {
     const timestamp = Date.now();
     const firstName = `DeleteTest${timestamp}`;
 
-    await page.getByLabel(/nombre|first name/i).first().fill(firstName);
+    await page
+      .getByLabel(/nombre|first name/i)
+      .first()
+      .fill(firstName);
     await page.getByLabel(/email/i).first().fill(`delete${timestamp}@example.com`);
 
-    await page.getByRole('button', { name: /guardar|save|crear/i }).first().click();
+    await page
+      .getByRole('button', { name: /guardar|save|crear/i })
+      .first()
+      .click();
 
     // Wait for contact to be created
     await expect(page.getByText(firstName)).toBeVisible({ timeout: 10000 });
@@ -131,7 +155,7 @@ test.describe('Contacts Management', () => {
 
     // Find delete button
     const deleteButton = page.getByRole('button', { name: /eliminar|delete/i });
-    if (await deleteButton.count() === 0) {
+    if ((await deleteButton.count()) === 0) {
       test.skip();
       return;
     }
@@ -140,7 +164,7 @@ test.describe('Contacts Management', () => {
 
     // Confirm deletion
     const confirmButton = page.getByRole('button', { name: /confirmar|sí|si|delete/i });
-    if (await confirmButton.count() > 0) {
+    if ((await confirmButton.count()) > 0) {
       await confirmButton.first().click();
     }
 
@@ -156,7 +180,7 @@ test.describe('Contacts Management', () => {
 
     // Click on first contact
     const firstContact = page.locator('a[href*="/contacts/"]').first();
-    if (await firstContact.count() === 0) {
+    if ((await firstContact.count()) === 0) {
       test.skip();
       return;
     }
@@ -165,19 +189,19 @@ test.describe('Contacts Management', () => {
 
     // Find assign advisor section
     const assignSection = page.getByText(/asignar|assign|advisor/i);
-    if (await assignSection.count() === 0) {
+    if ((await assignSection.count()) === 0) {
       test.skip();
       return;
     }
 
     // Click assign button or open dropdown
     const assignButton = page.getByRole('button', { name: /asignar|assign/i });
-    if (await assignButton.count() > 0) {
+    if ((await assignButton.count()) > 0) {
       await assignButton.first().click();
 
       // Select advisor from dropdown
       const advisorOption = page.getByRole('option').first();
-      if (await advisorOption.count() > 0) {
+      if ((await advisorOption.count()) > 0) {
         await advisorOption.first().click();
       }
 
@@ -191,7 +215,7 @@ test.describe('Contacts Management', () => {
 
     // Find a contact card
     const contactCard = page.locator('[data-testid="contact-card"], .contact-card').first();
-    if (await contactCard.count() === 0) {
+    if ((await contactCard.count()) === 0) {
       test.skip();
       return;
     }
@@ -201,11 +225,13 @@ test.describe('Contacts Management', () => {
 
     // Drag and drop to different stage
     const targetStage = page.locator('[data-stage]').filter({ hasNot: contactCard }).first();
-    if (await targetStage.count() > 0) {
+    if ((await targetStage.count()) > 0) {
       await contactCard.dragTo(targetStage.first());
 
       // Should see contact in new stage
-      await expect(targetStage.getByText(contactCard.textContent() || '')).toBeVisible({ timeout: 5000 });
+      await expect(targetStage.getByText(contactCard.textContent() || '')).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -214,7 +240,7 @@ test.describe('Contacts Management', () => {
 
     // Click on first contact
     const firstContact = page.locator('a[href*="/contacts/"]').first();
-    if (await firstContact.count() === 0) {
+    if ((await firstContact.count()) === 0) {
       test.skip();
       return;
     }
@@ -223,14 +249,14 @@ test.describe('Contacts Management', () => {
 
     // Find notes section
     const notesSection = page.getByText(/notas|notes/i);
-    if (await notesSection.count() === 0) {
+    if ((await notesSection.count()) === 0) {
       test.skip();
       return;
     }
 
     // Click add note button
     const addNoteButton = page.getByRole('button', { name: /agregar nota|add note|nueva nota/i });
-    if (await addNoteButton.count() > 0) {
+    if ((await addNoteButton.count()) > 0) {
       await addNoteButton.first().click();
 
       // Fill note content
@@ -238,7 +264,10 @@ test.describe('Contacts Management', () => {
       await page.getByLabel(/nota|note|contenido/i).fill(noteContent);
 
       // Save note
-      await page.getByRole('button', { name: /guardar|save/i }).first().click();
+      await page
+        .getByRole('button', { name: /guardar|save/i })
+        .first()
+        .click();
 
       // Should see note in list
       await expect(page.getByText(noteContent)).toBeVisible({ timeout: 5000 });
@@ -250,7 +279,7 @@ test.describe('Contacts Management', () => {
 
     // Click on first contact
     const firstContact = page.locator('a[href*="/contacts/"]').first();
-    if (await firstContact.count() === 0) {
+    if ((await firstContact.count()) === 0) {
       test.skip();
       return;
     }
@@ -259,19 +288,19 @@ test.describe('Contacts Management', () => {
 
     // Find tags section
     const tagsSection = page.getByText(/etiquetas|tags/i);
-    if (await tagsSection.count() === 0) {
+    if ((await tagsSection.count()) === 0) {
       test.skip();
       return;
     }
 
     // Click add tag button or open tag selector
     const addTagButton = page.getByRole('button', { name: /agregar etiqueta|add tag/i });
-    if (await addTagButton.count() > 0) {
+    if ((await addTagButton.count()) > 0) {
       await addTagButton.first().click();
 
       // Select tag from dropdown
       const tagOption = page.getByRole('option').first();
-      if (await tagOption.count() > 0) {
+      if ((await tagOption.count()) > 0) {
         await tagOption.first().click();
       }
 
@@ -280,4 +309,3 @@ test.describe('Contacts Management', () => {
     }
   });
 });
-

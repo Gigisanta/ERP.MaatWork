@@ -1,6 +1,6 @@
 /**
  * AumPagination Component
- * 
+ *
  * AI_DECISION: Componente separado para controles de paginación
  * Justificación: Reutilizable y testeable independientemente
  * Impacto: Lógica de paginación encapsulada
@@ -40,7 +40,7 @@ export function AumPagination({
   hasNextPage,
   showSearchInfo = false,
   searchActive = false,
-  className = ''
+  className = '',
 }: AumPaginationProps) {
   const currentPage = Math.floor(offset / limit) + 1;
   const totalPages = Math.ceil(total / limit);
@@ -65,12 +65,7 @@ export function AumPagination({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPrevPage}
-            disabled={!hasPrevPage}
-          >
+          <Button variant="outline" size="sm" onClick={onPrevPage} disabled={!hasPrevPage}>
             ← Anterior
           </Button>
 
@@ -79,12 +74,7 @@ export function AumPagination({
             <span className="font-medium text-text">{totalPages || 1}</span>
           </Text>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onNextPage}
-            disabled={!hasNextPage}
-          >
+          <Button variant="outline" size="sm" onClick={onNextPage} disabled={!hasNextPage}>
             Siguiente →
           </Button>
         </div>

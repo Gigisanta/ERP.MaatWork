@@ -14,7 +14,11 @@ import { v4 as uuidv4 } from 'uuid';
 import compression from 'compression';
 import crypto from 'crypto';
 import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
-import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/rate-limiter';
+import {
+  RateLimiter,
+  RATE_LIMIT_PRESETS,
+  setupRateLimiterCleanup,
+} from './utils/performance/rate-limiter';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import contactsRouter from './routes/contacts';

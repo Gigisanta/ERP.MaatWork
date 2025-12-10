@@ -422,30 +422,3 @@ export function renderEmptyState(hasFilters: boolean): HTMLDivElement {
     : 'No hay logs registrados';
   return empty;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

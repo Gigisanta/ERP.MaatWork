@@ -1,8 +1,8 @@
 /**
  * E2E tests for complete pipeline workflow
- * 
+ *
  * Tests: Create contact → Move through stages → Add tasks → Complete
- * 
+ *
  * AI_DECISION: Tests E2E completos para workflow de pipeline
  * Justificación: Validación crítica de pipeline de ventas
  * Impacto: Prevenir errores en gestión de pipeline
@@ -15,8 +15,14 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page, email: string = adminEmail, password: string = adminPassword) {
   await page.goto('/login');
-  await page.getByLabel(/email|usuario|correo/i).first().fill(email);
-  await page.getByLabel(/contraseña|password/i).first().fill(password);
+  await page
+    .getByLabel(/email|usuario|correo/i)
+    .first()
+    .fill(email);
+  await page
+    .getByLabel(/contraseña|password/i)
+    .first()
+    .fill(password);
   await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
   await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
 }
@@ -29,9 +35,9 @@ test.describe('Pipeline Complete Workflow', () => {
   test('should create contact and move through pipeline stages', async ({ page }) => {
     // Step 1: Create contact
     await page.goto('/contacts');
-    
+
     const createButton = page.getByRole('button', { name: /crear|nuevo|add/i });
-    if (await createButton.count() > 0) {
+    if ((await createButton.count()) > 0) {
       await createButton.first().click();
 
       // Fill contact form
@@ -53,11 +59,11 @@ test.describe('Pipeline Complete Workflow', () => {
 
     // Step 3: Find contact in initial stage
     const contactCard = page.getByText('Test Contact').locator('..');
-    if (await contactCard.count() > 0) {
+    if ((await contactCard.count()) > 0) {
       // Drag to next stage
       const stages = page.locator('[data-stage-id]');
       const stageCount = await stages.count();
-      
+
       if (stageCount >= 2) {
         const sourceStage = stages.nth(0);
         const targetStage = stages.nth(1);
@@ -79,12 +85,12 @@ test.describe('Pipeline Complete Workflow', () => {
 
     // Find a contact
     const contactCard = page.locator('[data-contact-id]').first();
-    if (await contactCard.count() > 0) {
+    if ((await contactCard.count()) > 0) {
       await contactCard.first().click();
 
       // Add task button
       const addTaskButton = page.getByRole('button', { name: /tarea|task|agregar/i });
-      if (await addTaskButton.count() > 0) {
+      if ((await addTaskButton.count()) > 0) {
         await addTaskButton.first().click();
 
         // Fill task form
@@ -93,7 +99,7 @@ test.describe('Pipeline Complete Workflow', () => {
 
         // Save task
         const saveButton = page.getByRole('button', { name: /guardar|save/i });
-        if (await saveButton.count() > 0) {
+        if ((await saveButton.count()) > 0) {
           await saveButton.first().click();
         }
 
@@ -108,12 +114,12 @@ test.describe('Pipeline Complete Workflow', () => {
 
     // Find contact with task
     const contactCard = page.locator('[data-contact-id]').first();
-    if (await contactCard.count() > 0) {
+    if ((await contactCard.count()) > 0) {
       await contactCard.first().click();
 
       // Find task checkbox
       const taskCheckbox = page.getByRole('checkbox').first();
-      if (await taskCheckbox.count() > 0) {
+      if ((await taskCheckbox.count()) > 0) {
         await taskCheckbox.check();
 
         // Verify task is marked as complete
@@ -127,27 +133,27 @@ test.describe('Pipeline Complete Workflow', () => {
 
     // Select multiple contacts
     const selectAllCheckbox = page.getByLabel(/seleccionar todos|select all/i);
-    if (await selectAllCheckbox.count() > 0) {
+    if ((await selectAllCheckbox.count()) > 0) {
       await selectAllCheckbox.first().check();
 
       // Bulk move button
       const bulkMoveButton = page.getByRole('button', { name: /mover|move|bulk/i });
-      if (await bulkMoveButton.count() > 0) {
+      if ((await bulkMoveButton.count()) > 0) {
         await bulkMoveButton.first().click();
 
         // Select target stage
         const stageSelect = page.getByLabel(/etapa|stage/i);
-        if (await stageSelect.count() > 0) {
+        if ((await stageSelect.count()) > 0) {
           await stageSelect.first().click();
           const stageOption = page.getByRole('option').first();
-          if (await stageOption.count() > 0) {
+          if ((await stageOption.count()) > 0) {
             await stageOption.first().click();
           }
         }
 
         // Confirm move
         const confirmButton = page.getByRole('button', { name: /confirmar|confirm/i });
-        if (await confirmButton.count() > 0) {
+        if ((await confirmButton.count()) > 0) {
           await confirmButton.first().click();
         }
 
@@ -157,5 +163,3 @@ test.describe('Pipeline Complete Workflow', () => {
     }
   });
 });
-
-

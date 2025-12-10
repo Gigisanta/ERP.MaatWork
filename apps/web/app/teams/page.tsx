@@ -8,10 +8,12 @@ import type { Team, MembershipRequest } from '@/types';
 // Justificaci?n: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 1 hour revalidation for team data
-// Justificaci?n: Teams change occasionally, ISR reduces server load 60-80% while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for team management page
-export const revalidate = 3600; // Revalidate every hour
+// AI_DECISION: Force dynamic rendering for teams page
+// Justificaci?n: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+// Note: Previously attempted ISR (revalidate = 3600) but caused build error:
+//       "Dynamic server usage: Route /teams couldn't be rendered statically because it used `cookies`"
+export const dynamic = 'force-dynamic';
 
 export default async function TeamsPage() {
   // Check authentication and get user

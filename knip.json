@@ -46,52 +46,19 @@
   ],
   "workspaces": {
     ".": {
-      "entry": [
-        "scripts/**/*.{ts,js}"
-      ]
+      "entry": ["scripts/**/*.{ts,js}"]
     },
     "apps/api": {
-      "entry": [
-        "src/index.ts"
-      ]
+      "entry": ["src/index.ts"]
     },
     "apps/web": {
-      "entry": [
-        "app/**/*.{ts,tsx}",
-        "middleware.ts"
-      ]
+      "entry": ["app/**/*.{ts,tsx}", "middleware.ts"]
     },
     "packages/ui": {
-      "entry": [
-        "src/index.ts"
-      ]
+      "entry": ["src/index.ts"]
     },
     "packages/db": {
-      "entry": [
-        "src/index.ts"
-      ]
+      "entry": ["src/index.ts"]
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

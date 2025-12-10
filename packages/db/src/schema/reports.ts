@@ -14,7 +14,7 @@ import {
   numeric,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { users, teams } from './users';
 import { contacts } from './contacts';
@@ -33,14 +33,20 @@ export const scheduledReports = pgTable(
     timezone: text('timezone').notNull().default('America/Argentina/Buenos_Aires'),
     nextRunAt: timestamp('next_run_at', { withTimezone: true }),
     lastRunAt: timestamp('last_run_at', { withTimezone: true }),
-    ownerUserId: uuid('owner_user_id').notNull().references(() => users.id),
-    targets: jsonb('targets').notNull().default(sql`'{}'::jsonb`),
-    params: jsonb('params').notNull().default(sql`'{}'::jsonb`),
+    ownerUserId: uuid('owner_user_id')
+      .notNull()
+      .references(() => users.id),
+    targets: jsonb('targets')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    params: jsonb('params')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     enabled: boolean('enabled').notNull().default(true),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    schedReportsNextIdx: index('idx_sched_reports_next').on(table.enabled, table.nextRunAt)
+    schedReportsNextIdx: index('idx_sched_reports_next').on(table.enabled, table.nextRunAt),
   })
 );
 
@@ -50,11 +56,15 @@ export const scheduledReports = pgTable(
  */
 export const reportRuns = pgTable('report_runs', {
   id: uuid('id').defaultRandom().primaryKey(),
-  scheduledReportId: uuid('scheduled_report_id').notNull().references(() => scheduledReports.id, { onDelete: 'cascade' }),
+  scheduledReportId: uuid('scheduled_report_id')
+    .notNull()
+    .references(() => scheduledReports.id, { onDelete: 'cascade' }),
   runAt: timestamp('run_at', { withTimezone: true }).notNull().defaultNow(),
   status: text('status').notNull(), // success, failed
-  deliverySummary: jsonb('delivery_summary').notNull().default(sql`'{}'::jsonb`),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  deliverySummary: jsonb('delivery_summary')
+    .notNull()
+    .default(sql`'{}'::jsonb`),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**
@@ -65,16 +75,23 @@ export const activityEvents = pgTable(
   'activity_events',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
     advisorUserId: uuid('advisor_user_id').references(() => users.id),
     contactId: uuid('contact_id').references(() => contacts.id),
     type: text('type').notNull(), // note_created, meeting_added, task_completed, login, download, portfolio_alert
-    metadata: jsonb('metadata').notNull().default(sql`'{}'::jsonb`),
-    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull()
+    metadata: jsonb('metadata')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
   },
   (table) => ({
     activityByUserIdx: index('idx_activity_by_user').on(table.userId, table.occurredAt),
-    activityByAdvisorIdx: index('idx_activity_by_advisor').on(table.advisorUserId, table.occurredAt),
+    activityByAdvisorIdx: index('idx_activity_by_advisor').on(
+      table.advisorUserId,
+      table.occurredAt
+    ),
     // AI_DECISION: Add composite index for dashboard queries filtering by user and type
     // Justificación: Dashboard queries filter by user_id, type and order by occurred_at DESC
     // Impacto: Faster activity dashboard loading with proper filtering and ordering
@@ -82,7 +99,7 @@ export const activityEvents = pgTable(
       table.userId,
       table.type,
       table.occurredAt
-    )
+    ),
   })
 );
 
@@ -94,23 +111,29 @@ export const dailyMetricsUser = pgTable(
   'daily_metrics_user',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
     teamId: uuid('team_id').references(() => teams.id),
     date: date('date').notNull(),
     numNewProspects: integer('num_new_prospects').notNull().default(0),
     numContactsTouched: integer('num_contacts_touched').notNull().default(0),
     numNotes: integer('num_notes').notNull().default(0),
     numTasksCompleted: integer('num_tasks_completed').notNull().default(0),
-    aumTotal: numeric('aum_total', { precision: 18, scale: 6 }).notNull().default(sql`0`),
-    liquidBalanceTotal: numeric('liquid_balance_total', { precision: 18, scale: 6 }).notNull().default(sql`0`),
-    generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow()
+    aumTotal: numeric('aum_total', { precision: 18, scale: 6 })
+      .notNull()
+      .default(sql`0`),
+    liquidBalanceTotal: numeric('liquid_balance_total', { precision: 18, scale: 6 })
+      .notNull()
+      .default(sql`0`),
+    generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     dailyMetricsUserUnique: uniqueIndex('daily_metrics_user_unique').on(table.userId, table.date),
     // AI_DECISION: Add index for queries ordered by date DESC
     // Justificación: Dashboard carga métricas ordenadas por fecha DESC
     // Impacto: Faster metrics dashboard loading with proper ordering
-    dailyMetricsUserDateIdx: index('idx_daily_metrics_user_date').on(table.userId, table.date)
+    dailyMetricsUserDateIdx: index('idx_daily_metrics_user_date').on(table.userId, table.date),
   })
 );
 
@@ -129,10 +152,10 @@ export const monthlyGoals = pgTable(
     secondMeetingsGoal: integer('second_meetings_goal').notNull().default(0),
     newClientsGoal: integer('new_clients_goal').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    monthlyGoalsUnique: uniqueIndex('monthly_goals_unique').on(table.month, table.year)
+    monthlyGoalsUnique: uniqueIndex('monthly_goals_unique').on(table.month, table.year),
   })
 );
 
@@ -144,16 +167,20 @@ export const aumSnapshots = pgTable(
   'aum_snapshots',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id),
     date: date('date').notNull(),
-    aumTotal: numeric('aum_total', { precision: 18, scale: 6 }).notNull()
+    aumTotal: numeric('aum_total', { precision: 18, scale: 6 }).notNull(),
   },
   (table) => ({
     aumSnapshotsUnique: uniqueIndex('aum_snapshots_unique').on(table.contactId, table.date),
     // AI_DECISION: Add composite index for aggregations by contact ordered by date DESC
     // Justificación: Analytics queries agregan AUM por contacto ordenado por fecha DESC
     // Impacto: Faster AUM analytics queries with proper ordering
-    aumSnapshotsContactDateIdx: index('idx_aum_snapshots_contact_date').on(table.contactId, table.date)
+    aumSnapshotsContactDateIdx: index('idx_aum_snapshots_contact_date').on(
+      table.contactId,
+      table.date
+    ),
   })
 );
-

@@ -1,6 +1,6 @@
 /**
  * Tests para api-error
- * 
+ *
  * AI_DECISION: Tests unitarios para clase ApiError
  * Justificación: Validación crítica de manejo de errores
  * Impacto: Prevenir errores en manejo de errores de API
@@ -29,7 +29,7 @@ describe('ApiError', () => {
 
   it('debería incluir details cuando se proporcionan', () => {
     const error = new ApiError('Validation error', 400, {
-      details: ['Field 1 is required', 'Field 2 is invalid']
+      details: ['Field 1 is required', 'Field 2 is invalid'],
     });
     expect(error.details).toEqual(['Field 1 is required', 'Field 2 is invalid']);
   });
@@ -69,13 +69,15 @@ describe('ApiError', () => {
     expect(validationError.userMessage).toBe('Validation error');
 
     const serverError = new ApiError('Internal Server Error', 500);
-    expect(serverError.userMessage).toBe('Error en el servidor. Por favor, intenta nuevamente más tarde.');
+    expect(serverError.userMessage).toBe(
+      'Error en el servidor. Por favor, intenta nuevamente más tarde.'
+    );
   });
 
   it('debería serializar a JSON correctamente', () => {
     const error = new ApiError('Not found', 404, {
       details: 'Resource not found',
-      timestamp: '2024-01-01T00:00:00Z'
+      timestamp: '2024-01-01T00:00:00Z',
     });
     const json = error.toJSON();
     expect(json).toHaveProperty('name', 'ApiError');
@@ -92,8 +94,8 @@ describe('createApiErrorFromResponse', () => {
       statusText: 'Bad Request',
       json: async () => ({
         error: 'Validation failed',
-        details: ['Field 1 is required']
-      })
+        details: ['Field 1 is required'],
+      }),
     } as unknown as Response;
 
     const error = await createApiErrorFromResponse(mockResponse);
@@ -109,7 +111,7 @@ describe('createApiErrorFromResponse', () => {
       json: async () => {
         throw new Error('Not JSON');
       },
-      text: async () => 'Server error occurred'
+      text: async () => 'Server error occurred',
     } as unknown as Response;
 
     const error = await createApiErrorFromResponse(mockResponse);
@@ -121,11 +123,10 @@ describe('createApiErrorFromResponse', () => {
     const mockResponse = {
       status: 404,
       statusText: 'Not Found',
-      json: async () => ({})
+      json: async () => ({}),
     } as unknown as Response;
 
     const error = await createApiErrorFromResponse(mockResponse);
     expect(error.message).toBe('Not Found');
   });
 });
-

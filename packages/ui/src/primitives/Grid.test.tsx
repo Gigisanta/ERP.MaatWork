@@ -1,6 +1,6 @@
 /**
  * Tests para Grid primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para Grid y GridItem components
  * Justificación: Validación de componente de grid layout
  * Impacto: Prevenir errores en layouts de grid
@@ -99,7 +99,11 @@ describe('Grid', () => {
   });
 
   it('debería pasar props HTML adicionales', () => {
-    render(<Grid data-testid="grid" id="test-id">Test</Grid>);
+    render(
+      <Grid data-testid="grid" id="test-id">
+        Test
+      </Grid>
+    );
     const element = screen.getByTestId('grid');
     expect(element.id).toBe('test-id');
   });
@@ -176,17 +180,23 @@ describe('GridItem', () => {
   });
 
   it('debería pasar props HTML adicionales', () => {
-    render(<GridItem data-testid="grid-item" id="test-id">Test</GridItem>);
+    render(
+      <GridItem data-testid="grid-item" id="test-id">
+        Test
+      </GridItem>
+    );
     const element = screen.getByTestId('grid-item');
     expect(element.id).toBe('test-id');
   });
 
   it('debería combinar colSpan y rowSpan', () => {
-    render(<GridItem colSpan={3} rowSpan={2}>Test</GridItem>);
+    render(
+      <GridItem colSpan={3} rowSpan={2}>
+        Test
+      </GridItem>
+    );
     const element = screen.getByText('Test');
     expect(element.className).toContain('col-span-3');
     expect(element.className).toContain('row-span-2');
   });
 });
-
-

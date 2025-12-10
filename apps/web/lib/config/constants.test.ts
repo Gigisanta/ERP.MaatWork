@@ -7,7 +7,7 @@ import {
   FORM_LIMITS,
   CACHE_CONFIG,
   RETRY_CONFIG,
-  FORMAT_HELPERS
+  FORMAT_HELPERS,
 } from './constants';
 
 describe('constants', () => {
@@ -57,7 +57,7 @@ describe('constants', () => {
     });
 
     it('debería tener límites positivos', () => {
-      Object.values(UI_LIMITS).forEach(limit => {
+      Object.values(UI_LIMITS).forEach((limit) => {
         expect(limit).toBeGreaterThan(0);
       });
     });
@@ -71,8 +71,12 @@ describe('constants', () => {
     });
 
     it('debería tener MAX_UPLOAD_SIZE mayor que otros límites', () => {
-      expect(FILE_SIZE_LIMITS.MAX_UPLOAD_SIZE).toBeGreaterThan(FILE_SIZE_LIMITS.MAX_IMAGE_PREVIEW_SIZE);
-      expect(FILE_SIZE_LIMITS.MAX_UPLOAD_SIZE).toBeGreaterThan(FILE_SIZE_LIMITS.MAX_EXPORT_SIZE_WITHOUT_CONFIRM);
+      expect(FILE_SIZE_LIMITS.MAX_UPLOAD_SIZE).toBeGreaterThan(
+        FILE_SIZE_LIMITS.MAX_IMAGE_PREVIEW_SIZE
+      );
+      expect(FILE_SIZE_LIMITS.MAX_UPLOAD_SIZE).toBeGreaterThan(
+        FILE_SIZE_LIMITS.MAX_EXPORT_SIZE_WITHOUT_CONFIRM
+      );
     });
   });
 
@@ -134,4 +138,3 @@ describe('constants', () => {
     });
   });
 });
-

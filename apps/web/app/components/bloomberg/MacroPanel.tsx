@@ -180,7 +180,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
                   <YAxis
                     tick={{ fontSize: 12 }}
                     label={{
-                      value: selectedSeriesInfo?.units || 'Value',
+                      value: (selectedSeriesInfo?.units as string) || 'Value',
                       angle: -90,
                       position: 'insideLeft',
                     }}

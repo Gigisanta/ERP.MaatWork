@@ -1,6 +1,6 @@
 /**
  * Loading component for teams page
- * 
+ *
  * AI_DECISION: Use centralized SkeletonLoader for consistency
  * Justificación: Eliminates duplicate Skeleton definitions
  * Impacto: Better DRY, consistent skeleton-wave animation
@@ -22,13 +22,7 @@ export default function TeamsLoading() {
         {/* Teams grid skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard
-              key={i}
-              showHeader
-              contentLines={3}
-              showFooter
-              delay={100 + i * 75}
-            />
+            <SkeletonCard key={i} showHeader contentLines={3} showFooter delay={100 + i * 75} />
           ))}
         </div>
       </Stack>

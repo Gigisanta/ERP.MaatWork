@@ -84,12 +84,7 @@ describe('DataTable Component', () => {
 
     it('should show custom empty message', () => {
       render(
-        <DataTable
-          data={[]}
-          columns={mockColumns}
-          keyField="id"
-          emptyMessage="No results found"
-        />
+        <DataTable data={[]} columns={mockColumns} keyField="id" emptyMessage="No results found" />
       );
       expect(screen.getByText('No results found')).toBeInTheDocument();
     });
@@ -102,9 +97,7 @@ describe('DataTable Component', () => {
 
   describe('Sorting', () => {
     it('should show sort icons on sortable columns', () => {
-      render(
-        <DataTable data={mockData} columns={mockColumns} keyField="id" />
-      );
+      render(<DataTable data={mockData} columns={mockColumns} keyField="id" />);
       const nameHeader = screen.getByText('Name').closest('button');
       expect(nameHeader).toBeInTheDocument();
     });
@@ -252,7 +245,7 @@ describe('DataTable Component', () => {
       await user.click(checkbox);
 
       const row = checkbox.closest('tr');
-      expect(row).toHaveClass('bg-accent-subtle');
+      expect(row).toHaveClass('bg-primary-subtle');
     });
 
     it('should not select row when clicking stop propagation', async () => {
@@ -298,12 +291,7 @@ describe('DataTable Component', () => {
 
     it('should add cursor pointer when onRowClick provided', () => {
       render(
-        <DataTable
-          data={mockData}
-          columns={mockColumns}
-          keyField="id"
-          onRowClick={vi.fn()}
-        />
+        <DataTable data={mockData} columns={mockColumns} keyField="id" onRowClick={vi.fn()} />
       );
 
       const row = screen.getByText('Alice').closest('tr');
@@ -326,18 +314,14 @@ describe('DataTable Component', () => {
     });
 
     it('should apply center alignment', () => {
-      const columns: Column<TestData>[] = [
-        { key: 'name', header: 'Name', align: 'center' },
-      ];
+      const columns: Column<TestData>[] = [{ key: 'name', header: 'Name', align: 'center' }];
       render(<DataTable data={mockData} columns={columns} keyField="id" />);
       const header = screen.getByText('Name').closest('th');
       expect(header).toHaveClass('text-center');
     });
 
     it('should apply right alignment', () => {
-      const columns: Column<TestData>[] = [
-        { key: 'age', header: 'Age', align: 'right' },
-      ];
+      const columns: Column<TestData>[] = [{ key: 'age', header: 'Age', align: 'right' }];
       render(<DataTable data={mockData} columns={columns} keyField="id" />);
       const header = screen.getByText('Age').closest('th');
       expect(header).toHaveClass('text-right');
@@ -346,9 +330,7 @@ describe('DataTable Component', () => {
 
   describe('Column Width', () => {
     it('should apply custom column width', () => {
-      const columns: Column<TestData>[] = [
-        { key: 'name', header: 'Name', width: '200px' },
-      ];
+      const columns: Column<TestData>[] = [{ key: 'name', header: 'Name', width: '200px' }];
       render(<DataTable data={mockData} columns={columns} keyField="id" />);
       const header = screen.getByText('Name').closest('th');
       expect(header).toHaveStyle({ width: '200px' });
@@ -358,12 +340,7 @@ describe('DataTable Component', () => {
   describe('Styling', () => {
     it('should apply custom className', () => {
       const { container } = render(
-        <DataTable
-          data={mockData}
-          columns={mockColumns}
-          keyField="id"
-          className="custom-table"
-        />
+        <DataTable data={mockData} columns={mockColumns} keyField="id" className="custom-table" />
       );
       expect(container.firstChild).toHaveClass('custom-table');
     });
@@ -395,7 +372,7 @@ describe('DataTable Component', () => {
 
     it('should have accessible row select labels', () => {
       render(<DataTable data={mockData} columns={mockColumns} keyField="id" selectable />);
-      mockData.forEach(item => {
+      mockData.forEach((item) => {
         expect(screen.getByLabelText(`Select ${item.id}`)).toBeInTheDocument();
       });
     });
@@ -413,8 +390,12 @@ describe('DataTable Component', () => {
     });
 
     it('should handle missing column values', () => {
-      const dataWithMissing: Partial<TestData>[] = [{ id: '1', name: 'Alice', age: undefined, status: null as unknown as string }];
-      render(<DataTable data={dataWithMissing as TestData[]} columns={mockColumns} keyField="id" />);
+      const dataWithMissing: Partial<TestData>[] = [
+        { id: '1', name: 'Alice', age: undefined, status: null as unknown as string },
+      ];
+      render(
+        <DataTable data={dataWithMissing as TestData[]} columns={mockColumns} keyField="id" />
+      );
       expect(screen.getByText('Alice')).toBeInTheDocument();
     });
 
@@ -431,25 +412,29 @@ describe('DataTable Component', () => {
     });
 
     it('should handle long cell content', () => {
-      const longData = [{
-        id: '1',
-        name: 'Very Long Name That Might Overflow The Cell Width And Cause Layout Issues',
-        age: 30,
-        status: 'Active',
-      }];
+      const longData = [
+        {
+          id: '1',
+          name: 'Very Long Name That Might Overflow The Cell Width And Cause Layout Issues',
+          age: 30,
+          status: 'Active',
+        },
+      ];
       render(<DataTable data={longData} columns={mockColumns} keyField="id" />);
       expect(screen.getByText(/Very Long Name/)).toBeInTheDocument();
     });
 
     it('should handle special characters', () => {
-      const specialData = [{
-        id: '1',
-        name: 'Ñoño <O\'Brien>',
-        age: 30,
-        status: 'Active & "Special"',
-      }];
+      const specialData = [
+        {
+          id: '1',
+          name: "Ñoño <O'Brien>",
+          age: 30,
+          status: 'Active & "Special"',
+        },
+      ];
       render(<DataTable data={specialData} columns={mockColumns} keyField="id" />);
-      expect(screen.getByText('Ñoño <O\'Brien>')).toBeInTheDocument();
+      expect(screen.getByText("Ñoño <O'Brien>")).toBeInTheDocument();
     });
   });
 
@@ -470,4 +455,3 @@ describe('DataTable Component', () => {
     });
   });
 });
-

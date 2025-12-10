@@ -1,6 +1,6 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Icon, { type IconName } from '../Icon';
+import { cn } from '../../utils/cn.js';
+import Icon, { type IconName } from '../Icon.js';
 
 export interface NavItem {
   label: string;

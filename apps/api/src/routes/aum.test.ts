@@ -13,7 +13,9 @@ interface RouterLayer {
 describe('AUM modular router', () => {
   it('mounts upload, rows, commit and admin sub-routers', () => {
     const routerWithStack = aumRouter as { stack: RouterLayer[] };
-    const mountedLayers = routerWithStack.stack.filter((layer: RouterLayer) => layer.name === 'router');
+    const mountedLayers = routerWithStack.stack.filter(
+      (layer: RouterLayer) => layer.name === 'router'
+    );
     expect(mountedLayers).toHaveLength(4);
     const handles = mountedLayers.map((layer: RouterLayer) => layer.handle);
     expect(handles).toContain(uploadRouter);

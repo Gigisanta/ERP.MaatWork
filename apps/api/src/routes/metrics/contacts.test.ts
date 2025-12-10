@@ -1,6 +1,6 @@
 /**
  * Tests para metrics contacts routes
- * 
+ *
  * AI_DECISION: Tests unitarios para métricas de contactos
  * Justificación: Validación crítica de cálculos de métricas
  * Impacto: Prevenir errores en métricas del pipeline
@@ -29,16 +29,16 @@ vi.mock('@cactus/db', () => ({
   inArray: vi.fn(),
   desc: vi.fn(),
   asc: vi.fn(),
-  isNotNull: vi.fn()
+  isNotNull: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
-  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} }))
+  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} })),
 }));
 
 const mockDb = vi.mocked(db);
@@ -53,11 +53,11 @@ describe('GET /metrics/contacts', () => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -66,14 +66,14 @@ describe('GET /metrics/contacts', () => {
   it('debería retornar métricas del mes actual', async () => {
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const mockStages = [
       { id: 'stage-1', name: 'Contactado' },
       { id: 'stage-2', name: 'Primera reunion' },
       { id: 'stage-3', name: 'Segunda reunion' },
-      { id: 'stage-4', name: 'Cliente' }
+      { id: 'stage-4', name: 'Cliente' },
     ];
 
     let selectCallCount = 0;
@@ -83,22 +83,22 @@ describe('GET /metrics/contacts', () => {
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([mockStages[selectCallCount - 1] || null])
-            })
-          })
+              limit: vi.fn().mockResolvedValue([mockStages[selectCallCount - 1] || null]),
+            }),
+          }),
         };
       }
       return {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            groupBy: vi.fn().mockResolvedValue([])
-          })
-        })
+            groupBy: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       };
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -115,20 +115,20 @@ describe('GET /metrics/contacts', () => {
         businessLineClosures: {
           inversiones: 1,
           zurich: 1,
-          patrimonial: 0
+          patrimonial: 0,
         },
         transitionTimes: {
           prospectoToFirstMeeting: 5,
           firstToSecondMeeting: 10,
-          secondMeetingToClient: 15
-        }
+          secondMeetingToClient: 15,
+        },
       };
       res.json({
         success: true,
         data: {
           currentMonth: metrics,
-          history: [metrics]
-        }
+          history: [metrics],
+        },
       });
     };
 
@@ -141,9 +141,9 @@ describe('GET /metrics/contacts', () => {
           currentMonth: expect.objectContaining({
             newProspects: 10,
             firstMeetings: 5,
-            newClients: 2
-          })
-        })
+            newClients: 2,
+          }),
+        }),
       })
     );
   });
@@ -151,23 +151,27 @@ describe('GET /metrics/contacts', () => {
   it('debería retornar 500 cuando faltan etapas requeridas', async () => {
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
-      const [contactadoStage] = await db().select().from(pipelineStages).where({} as any).limit(1);
+      const [contactadoStage] = await db()
+        .select()
+        .from(pipelineStages)
+        .where({} as any)
+        .limit(1);
       if (!contactadoStage) {
         return res.status(500).json({ error: 'Pipeline stages not found' });
       }
@@ -180,4 +184,3 @@ describe('GET /metrics/contacts', () => {
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Pipeline stages not found' });
   });
 });
-

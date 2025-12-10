@@ -23,7 +23,9 @@ export const handleBatchComponents = createRouteHandler(async (req: Request) => 
   // AI_DECISION: Validación robusta de IDs en batch endpoint
   // Justificación: Prevenir DoS, validar formato UUID, eliminar duplicados
   // Impacto: Seguridad mejorada, mejor manejo de errores
-  const { validateBatchIds, BATCH_LIMITS } = await import('../../../utils/batch-validation');
+  const { validateBatchIds, BATCH_LIMITS } = await import(
+    '../../../utils/database/batch-validation'
+  );
 
   const validation = validateBatchIds(req.query.ids as string, {
     maxCount: BATCH_LIMITS.MAX_BENCHMARKS,

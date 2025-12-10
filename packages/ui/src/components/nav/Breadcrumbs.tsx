@@ -1,6 +1,6 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Icon from '../Icon';
+import { cn } from '../../utils/cn.js';
+import Icon from '../Icon.js';
 
 export interface BreadcrumbItem {
   label: string;
@@ -54,10 +54,7 @@ export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
             return (
               <li key={index} className="flex items-center">
                 {!isFirst && (
-                  <span 
-                    className="mx-2 text-text-muted"
-                    aria-hidden="true"
-                  >
+                  <span className="mx-2 text-text-muted" aria-hidden="true">
                     {separator || defaultSeparator}
                   </span>
                 )}
@@ -74,9 +71,7 @@ export const Breadcrumbs = React.forwardRef<HTMLElement, BreadcrumbsProps>(
                   )
                 ) : (
                   <span
-                    className={cn(
-                      isLast ? 'text-text font-medium' : 'text-text-secondary'
-                    )}
+                    className={cn(isLast ? 'text-text font-medium' : 'text-text-secondary')}
                     aria-current={isLast ? 'page' : undefined}
                   >
                     {item.label}

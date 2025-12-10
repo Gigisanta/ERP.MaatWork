@@ -1,10 +1,10 @@
 /**
  * Performance monitoring script
- * 
+ *
  * AI_DECISION: Create script for continuous performance monitoring
  * Justificación: Provides automated way to track performance metrics over time
  * Impacto: Early detection of performance regressions, data-driven optimization
- * 
+ *
  * Usage:
  *   node scripts/performance-check.js
  *   ANALYZE=true node scripts/performance-check.js  # Include bundle analysis
@@ -134,7 +134,9 @@ function main() {
         const diff = current.bundleSizes.totalJs - previous.bundleSizes.totalJs;
         const percentChange = ((diff / previous.bundleSizes.totalJs) * 100).toFixed(2);
         console.log('\n📈 Trend:');
-        console.log(`  Bundle size: ${diff > 0 ? '+' : ''}${(diff / 1024).toFixed(2)} KB (${percentChange}%)`);
+        console.log(
+          `  Bundle size: ${diff > 0 ? '+' : ''}${(diff / 1024).toFixed(2)} KB (${percentChange}%)`
+        );
       }
     }
   }
@@ -145,4 +147,3 @@ if (require.main === module) {
 }
 
 module.exports = { getBundleSizes, logPerformanceMetrics };
-

@@ -1,6 +1,6 @@
 /**
  * AumErrorBoundary Component
- * 
+ *
  * AI_DECISION: Error boundary específico para AUM con reintentos y mensajes contextuales
  * Justificación: Captura errores de SWR y componentes, evita crash de la aplicación
  * Impacto: Mejor UX, mensajes de error claros, opción de retry
@@ -39,13 +39,8 @@ function ErrorBoundaryActions({ onReset }: { onReset: () => void }) {
 
   return (
     <div className="flex gap-3 justify-center">
-      <Button onClick={onReset}>
-        🔄 Reintentar
-      </Button>
-      <Button
-        variant="outline"
-        onClick={handleGoToHub}
-      >
+      <Button onClick={onReset}>🔄 Reintentar</Button>
+      <Button variant="outline" onClick={handleGoToHub}>
         ← Volver al hub
       </Button>
     </div>
@@ -58,14 +53,14 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
     this.state = {
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     };
   }
 
   static getDerivedStateFromError(error: Error): Partial<AumErrorBoundaryState> {
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
@@ -74,13 +69,14 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
       error: error.message,
       errorStack: error.stack,
       errorInfo: errorInfo instanceof Error ? errorInfo.message : String(errorInfo),
-      componentStack: typeof errorInfo === 'object' && errorInfo !== null && 'componentStack' in errorInfo
-        ? String(errorInfo.componentStack)
-        : undefined
+      componentStack:
+        typeof errorInfo === 'object' && errorInfo !== null && 'componentStack' in errorInfo
+          ? String(errorInfo.componentStack)
+          : undefined,
     });
     this.setState({
       error,
-      errorInfo: errorInfo as unknown
+      errorInfo: errorInfo as unknown,
     });
   }
 
@@ -88,7 +84,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
     this.setState({
       hasError: false,
       error: null,
-      errorInfo: null
+      errorInfo: null,
     });
 
     if (this.props.onReset) {
@@ -111,7 +107,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
       }
 
       // Default error UI
-      const errorMessage = this.state.error 
+      const errorMessage = this.state.error
         ? parseErrorMessage(this.state.error)
         : 'Ha ocurrido un error inesperado';
 
@@ -120,9 +116,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
             <div className="text-center">
               <div className="text-6xl mb-4">⚠️</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Error en AUM Rows
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Error en AUM Rows</h2>
               <Text size="sm" className="text-gray-600 mb-6">
                 {errorMessage}
               </Text>
@@ -167,9 +161,7 @@ export function AumErrorFallback({ error, reset }: { error: Error; reset: () => 
       <div className="flex items-start gap-4">
         <div className="text-3xl">⚠️</div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Error cargando datos
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error cargando datos</h3>
           <Text size="sm" className="text-gray-600 mb-4">
             {errorMessage}
           </Text>
@@ -177,11 +169,7 @@ export function AumErrorFallback({ error, reset }: { error: Error; reset: () => 
             <Button size="sm" onClick={reset}>
               🔄 Reintentar
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleReload}
-            >
+            <Button size="sm" variant="outline" onClick={handleReload}>
               Recargar página
             </Button>
           </div>
@@ -190,4 +178,3 @@ export function AumErrorFallback({ error, reset }: { error: Error; reset: () => 
     </div>
   );
 }
-

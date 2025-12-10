@@ -17,7 +17,12 @@ import {
 } from '@cactus/ui';
 import dynamic from 'next/dynamic';
 import { PortfolioComposition } from './PortfolioComposition';
-import type { Benchmark, BenchmarkComponentForm, InstrumentSearchResult, PortfolioLine } from '@/types';
+import type {
+  Benchmark,
+  BenchmarkComponentForm,
+  InstrumentSearchResult,
+  PortfolioLine,
+} from '@/types';
 
 const AssetSearcher = dynamic(() => import('../../components/AssetSearcher'), {
   loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>,
@@ -32,12 +37,15 @@ interface BenchmarksSectionProps {
     code: string;
     components: BenchmarkComponentForm[];
   }) => Promise<void>;
-  onUpdate: (id: string, data: {
-    name: string;
-    description: string;
-    code: string;
-    components: BenchmarkComponentForm[];
-  }) => Promise<void>;
+  onUpdate: (
+    id: string,
+    data: {
+      name: string;
+      description: string;
+      code: string;
+      components: BenchmarkComponentForm[];
+    }
+  ) => Promise<void>;
   onDelete: (id: string) => void;
   isLoading?: boolean;
 }
@@ -79,8 +87,8 @@ export function BenchmarksSection({
         instrumentId: comp.instrumentId,
         instrumentSymbol: comp.instrumentSymbol || '',
         instrumentName: comp.instrumentName || '',
-        weight: (comp.weight * 100) || 0,
-        targetWeight: (comp.weight * 100) || 0,
+        weight: comp.weight * 100 || 0,
+        targetWeight: comp.weight * 100 || 0,
       }))
     );
     setShowForm(true);
@@ -113,7 +121,11 @@ export function BenchmarksSection({
   };
 
   const totalWeight = components.reduce((sum, comp) => sum + (comp.weight || 0), 0);
-  const isValid = formData.name.trim() !== '' && formData.code.trim() !== '' && components.length > 0 && Math.abs(totalWeight - 100) < 0.01;
+  const isValid =
+    formData.name.trim() !== '' &&
+    formData.code.trim() !== '' &&
+    components.length > 0 &&
+    Math.abs(totalWeight - 100) < 0.01;
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -156,8 +168,12 @@ export function BenchmarksSection({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-accent-text" />
-                <Text weight="semibold" size="sm">Benchmarks</Text>
-                <Text size="xs" color="secondary">({benchmarks.length})</Text>
+                <Text weight="semibold" size="sm">
+                  Benchmarks
+                </Text>
+                <Text size="xs" color="secondary">
+                  ({benchmarks.length})
+                </Text>
               </div>
               <Stack direction="row" gap="xs">
                 <Button
@@ -166,7 +182,11 @@ export function BenchmarksSection({
                   onClick={() => setIsCollapsed(!isCollapsed)}
                   className="h-7 w-7 p-0"
                 >
-                  {isCollapsed ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+                  {isCollapsed ? (
+                    <ChevronDown className="w-3 h-3" />
+                  ) : (
+                    <ChevronUp className="w-3 h-3" />
+                  )}
                 </Button>
                 <Button onClick={handleCreate} variant="primary" size="sm" className="h-7">
                   <Plus className="w-3 h-3 mr-1" />
@@ -176,87 +196,87 @@ export function BenchmarksSection({
             </div>
             {!isCollapsed && (
               <div>
-            {benchmarks.length > 0 ? (
-              <Grid cols={3} gap="lg">
-                {benchmarks.map((benchmark) => (
-                  <Card
-                    key={benchmark.id}
-                    className="hover:shadow-sm transition-shadow border border-border rounded-md hover:border-border-hover"
-                  >
-                    <CardContent className="p-4">
-                      <Stack direction="column" gap="sm">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <Heading level={5} className="truncate">
-                              {benchmark.name}
-                            </Heading>
-                            {benchmark.description && (
-                              <Text size="sm" color="secondary" className="mt-1 line-clamp-2">
-                                {benchmark.description}
-                              </Text>
-                            )}
-                            {benchmark.code && (
-                              <Text size="xs" color="muted" className="font-mono mt-1">
-                                {benchmark.code}
-                              </Text>
-                            )}
-                          </div>
-                          <Badge variant={benchmark.isSystem ? 'secondary' : 'success'}>
-                            {benchmark.isSystem ? 'Sistema' : 'Custom'}
-                          </Badge>
-                        </div>
+                {benchmarks.length > 0 ? (
+                  <Grid cols={3} gap="lg">
+                    {benchmarks.map((benchmark) => (
+                      <Card
+                        key={benchmark.id}
+                        className="hover:shadow-sm transition-shadow border border-border rounded-md hover:border-border-hover"
+                      >
+                        <CardContent className="p-4">
+                          <Stack direction="column" gap="sm">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <Heading level={5} className="truncate">
+                                  {benchmark.name}
+                                </Heading>
+                                {benchmark.description && (
+                                  <Text size="sm" color="secondary" className="mt-1 line-clamp-2">
+                                    {benchmark.description}
+                                  </Text>
+                                )}
+                                {benchmark.code && (
+                                  <Text size="xs" color="muted" className="font-mono mt-1">
+                                    {benchmark.code}
+                                  </Text>
+                                )}
+                              </div>
+                              <Badge variant={benchmark.isSystem ? 'secondary' : 'success'}>
+                                {benchmark.isSystem ? 'Sistema' : 'Custom'}
+                              </Badge>
+                            </div>
 
-                        <Stack direction="row" gap="sm" align="center">
-                          <TrendingUp className="w-4 h-4 text-foreground-tertiary" />
-                          <Text size="sm" color="secondary">
-                            {benchmark.components?.length || 0} componentes
-                          </Text>
-                        </Stack>
+                            <Stack direction="row" gap="sm" align="center">
+                              <TrendingUp className="w-4 h-4 text-foreground-tertiary" />
+                              <Text size="sm" color="secondary">
+                                {benchmark.components?.length || 0} componentes
+                              </Text>
+                            </Stack>
 
-                        <Stack direction="row" gap="sm" className="mt-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            <Eye className="w-4 h-4 mr-2" />
-                            Ver
-                          </Button>
-                          {!benchmark.isSystem && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1"
-                                onClick={() => handleEdit(benchmark)}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Editar
+                            <Stack direction="row" gap="sm" className="mt-2">
+                              <Button variant="outline" size="sm" className="flex-1">
+                                <Eye className="w-4 h-4 mr-2" />
+                                Ver
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => onDelete(benchmark.id)}
-                                className="text-error-500 hover:text-error-600"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                        </Stack>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Grid>
-            ) : (
-              <EmptyState
-                title="No hay benchmarks configurados"
-                description="Crea benchmarks para comparar el rendimiento de las carteras"
-                action={
-                  <Button onClick={handleCreate} variant="primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crear Primer Benchmark
-                  </Button>
-                }
-              />
-              )}
+                              {!benchmark.isSystem && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => handleEdit(benchmark)}
+                                  >
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onDelete(benchmark.id)}
+                                    className="text-error-500 hover:text-error-600"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </Stack>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Grid>
+                ) : (
+                  <EmptyState
+                    title="No hay benchmarks configurados"
+                    description="Crea benchmarks para comparar el rendimiento de las carteras"
+                    action={
+                      <Button onClick={handleCreate} variant="primary">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear Primer Benchmark
+                      </Button>
+                    }
+                  />
+                )}
               </div>
             )}
           </div>
@@ -337,25 +357,17 @@ export function BenchmarksSection({
 
           <div className="p-6 border-t border-border">
             <Stack direction="row" gap="sm" justify="end">
-              <Button
-                variant="outline"
-                onClick={() => setShowForm(false)}
-                disabled={isLoading}
-              >
+              <Button variant="outline" onClick={() => setShowForm(false)} disabled={isLoading}>
                 Cancelar
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleSubmit}
-                disabled={!isValid || isLoading}
-              >
+              <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isLoading}>
                 {isLoading
                   ? editingBenchmark
                     ? 'Guardando...'
                     : 'Creando...'
                   : editingBenchmark
-                  ? 'Guardar Cambios'
-                  : 'Crear Benchmark'}
+                    ? 'Guardar Cambios'
+                    : 'Crear Benchmark'}
               </Button>
             </Stack>
           </div>
@@ -364,4 +376,3 @@ export function BenchmarksSection({
     </>
   );
 }
-

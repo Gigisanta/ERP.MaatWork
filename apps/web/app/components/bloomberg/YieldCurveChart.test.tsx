@@ -1,6 +1,6 @@
 /**
  * Tests para YieldCurveChart component
- * 
+ *
  * AI_DECISION: Tests unitarios para gráfico de curva de rendimiento
  * Justificación: Validación crítica de visualización de curva de rendimiento
  * Impacto: Prevenir errores en análisis de tasas
@@ -14,7 +14,7 @@ import { getYieldCurve, getYieldSpreads } from '@/lib/api/bloomberg';
 // Mock dependencies
 vi.mock('@/lib/api/bloomberg', () => ({
   getYieldCurve: vi.fn(),
-  getYieldSpreads: vi.fn()
+  getYieldSpreads: vi.fn(),
 }));
 
 vi.mock('recharts', () => ({
@@ -26,12 +26,14 @@ vi.mock('recharts', () => ({
   Tooltip: () => null,
   Legend: () => null,
   ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
-  ReferenceLine: () => null
+  ReferenceLine: () => null,
 }));
 
 vi.mock('@cactus/ui', () => ({
   Card: ({ children, className }: any) => (
-    <div data-testid="card" className={className}>{children}</div>
+    <div data-testid="card" className={className}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
   CardHeader: ({ children }: any) => <div>{children}</div>,
@@ -39,23 +41,21 @@ vi.mock('@cactus/ui', () => ({
   Select: ({ value, onValueChange, items }: any) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item: any) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
       ))}
     </select>
   ),
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
   ),
-  Text: ({ children, size, color, weight, style }: any) => (
-    <span style={style}>{children}</span>
-  ),
-  Stack: ({ children, direction, gap, alignItems, justifyContent }: any) => (
-    <div>{children}</div>
-  ),
-  Badge: ({ children, variant }: any) => (
-    <span data-badge-variant={variant}>{children}</span>
-  )
+  Text: ({ children, size, color, weight, style }: any) => <span style={style}>{children}</span>,
+  Stack: ({ children, direction, gap, alignItems, justifyContent }: any) => <div>{children}</div>,
+  Badge: ({ children, variant }: any) => <span data-badge-variant={variant}>{children}</span>,
 }));
 
 describe('YieldCurveChart', () => {
@@ -91,22 +91,22 @@ describe('YieldCurveChart', () => {
         '2y': { value: 1.0 },
         '5y': { value: 1.5 },
         '10y': { value: 2.0 },
-        '30y': { value: 2.5 }
-      }
+        '30y': { value: 2.5 },
+      },
     };
 
     const mockSpreads = {
       '2s10s': 1.0,
-      '3m10y': 1.4
+      '3m10y': 1.4,
     };
 
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockCurve
+      data: mockCurve,
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<YieldCurveChart />);
@@ -124,22 +124,22 @@ describe('YieldCurveChart', () => {
       date: '2024-01-01',
       yields: {
         '2y': { value: 2.0 },
-        '10y': { value: 1.5 }
-      }
+        '10y': { value: 1.5 },
+      },
     };
 
     const mockSpreads = {
       '2s10s': -0.5,
-      '3m10y': 0.9
+      '3m10y': 0.9,
     };
 
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockCurve
+      data: mockCurve,
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: mockSpreads }
+      data: { spreads: mockSpreads },
     });
 
     render(<YieldCurveChart />);
@@ -150,17 +150,20 @@ describe('YieldCurveChart', () => {
 
     const invertedBadge = screen.getByText(/Inverted/);
     expect(invertedBadge).toBeInTheDocument();
-    expect(invertedBadge.closest('[data-badge-variant]')).toHaveAttribute('data-badge-variant', 'error');
+    expect(invertedBadge.closest('[data-badge-variant]')).toHaveAttribute(
+      'data-badge-variant',
+      'error'
+    );
   });
 
   it('debería mostrar error cuando falla la carga', async () => {
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: false,
-      error: 'Failed to fetch yield curve'
+      error: 'Failed to fetch yield curve',
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: false,
-      error: 'Failed to fetch spreads'
+      error: 'Failed to fetch spreads',
     });
 
     render(<YieldCurveChart />);
@@ -175,12 +178,8 @@ describe('YieldCurveChart', () => {
   });
 
   it('debería manejar errores de excepción', async () => {
-    (getYieldCurve as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('Network error')
-    );
-    (getYieldSpreads as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('Network error')
-    );
+    (getYieldCurve as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+    (getYieldSpreads as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
     render(<YieldCurveChart />);
 
@@ -196,17 +195,17 @@ describe('YieldCurveChart', () => {
     const mockCurve = {
       date: '2024-01-01',
       yields: {
-        '10y': { value: 2.0 }
-      }
+        '10y': { value: 2.0 },
+      },
     };
 
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockCurve
+      data: mockCurve,
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: {} }
+      data: { spreads: {} },
     });
 
     render(<YieldCurveChart />);
@@ -220,17 +219,17 @@ describe('YieldCurveChart', () => {
     const mockCurve = {
       date: '2024-01-01',
       yields: {
-        '10y': { value: 2.0 }
-      }
+        '10y': { value: 2.0 },
+      },
     };
 
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockCurve
+      data: mockCurve,
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: {} }
+      data: { spreads: {} },
     });
 
     render(<YieldCurveChart country="AR" />);
@@ -244,22 +243,20 @@ describe('YieldCurveChart', () => {
     const mockCurve = {
       date: '2024-01-01',
       yields: {
-        '10y': { value: 2.0 }
-      }
+        '10y': { value: 2.0 },
+      },
     };
 
     (getYieldCurve as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockCurve
+      data: mockCurve,
     });
     (getYieldSpreads as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: { spreads: {} }
+      data: { spreads: {} },
     });
 
-    const { container } = render(
-      <YieldCurveChart className="custom-class" height={500} />
-    );
+    const { container } = render(<YieldCurveChart className="custom-class" height={500} />);
 
     await waitFor(() => {
       expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
@@ -269,4 +266,3 @@ describe('YieldCurveChart', () => {
     expect(card).toHaveClass('custom-class');
   });
 });
-

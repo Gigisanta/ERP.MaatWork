@@ -9,36 +9,133 @@
 
 /* Spring Scale - Smooth pop effect */
 @keyframes springScale {
-  0% { transform: scale(0.95); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Spring Slide Up - Fresh entry */
 @keyframes springSlideUp {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Subtle Pop - For badges and small elements */
 @keyframes subtlePop {
-  0% { transform: scale(0.95); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* -----------------------------------------------------------------------------
    Standard Keyframes
    ----------------------------------------------------------------------------- */
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInLeft { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes fadeInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-@keyframes slideInFromBottom { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes slideInFromTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes slideInFromLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-@keyframes slideInFromRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
 
 /* -----------------------------------------------------------------------------
    Interaction Animations
@@ -46,32 +143,56 @@
 
 /* Soft Pulse - Breathing effect */
 @keyframes pulseSoft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 /* Glow Pulse - For highlights - Light Mode */
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.2); }
-  50% { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(139, 92, 246, 0);
+  }
 }
 
 /* Glow Pulse - Dark Mode Enhanced (Brighter/More Visible) */
 @keyframes pulseGlowDark {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(167, 139, 250, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(167, 139, 250, 0);
+  }
 }
 
 /* Float - Gentle levitation */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 /* Shimmer - Modern loading skeleton */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* -----------------------------------------------------------------------------
@@ -80,42 +201,72 @@
 
 /* Entry Animations with Spring Physics */
 .animate-enter {
-  animation: springSlideUp 0.6s cubic-bezier(0.2, 1.2, 0.2, 1) forwards;
+  animation: springSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-pop {
-  animation: springScale 0.5s cubic-bezier(0.2, 1.2, 0.2, 1) forwards;
+  animation: springScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* Standard Fades */
-.animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-.animate-fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-.animate-fade-in-down { animation: fadeInDown 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+/* Standard Fades with Spring Feel */
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
 
 /* Continuous Animations */
-.animate-pulse { animation: pulseSoft 2s ease-in-out infinite; }
-.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-pulse {
+  animation: pulseSoft 2s ease-in-out infinite;
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
 
 /* Skeleton Shimmer - Adaptive for Dark Mode */
 .animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 2s infinite linear;
 }
 
 /* Dark Mode Shimmer adjustment */
 .dark .animate-shimmer,
-[data-theme="dark"] .animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+[data-theme='dark'] .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 /* -----------------------------------------------------------------------------
    Transition Utilities (Smooth interactions)
    ----------------------------------------------------------------------------- */
 
-.transition-all-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.transition-transform-spring { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.transition-colors { transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease; }
+.transition-all-smooth {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.transition-transform-spring {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.transition-colors {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
 
 /* -----------------------------------------------------------------------------
    Hover Effects (Exquisite)
@@ -123,7 +274,9 @@
 
 /* Modern Lift - Subtle and smooth */
 .hover-lift {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .hover-lift:hover {
   transform: translateY(-3px);
@@ -132,13 +285,15 @@
 
 /* Dark mode lift shadow adjustment */
 .dark .hover-lift:hover,
-[data-theme="dark"] .hover-lift:hover {
+[data-theme='dark'] .hover-lift:hover {
   box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
 }
 
 /* Glow Lift - For primary actions */
 .hover-glow {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .hover-glow:hover {
   transform: translateY(-2px);
@@ -147,7 +302,7 @@
 
 /* Dark mode glow adjustment */
 .dark .hover-glow:hover,
-[data-theme="dark"] .hover-glow:hover {
+[data-theme='dark'] .hover-glow:hover {
   box-shadow: 0 10px 30px -4px rgba(167, 139, 250, 0.35);
 }
 
@@ -159,17 +314,40 @@
   transform: scale(1.03);
 }
 
+/* Active Press - Tactile feedback */
+.active-press:active {
+  transform: scale(0.98);
+}
+
 /* -----------------------------------------------------------------------------
    Stagger Delays
    ----------------------------------------------------------------------------- */
 
-.delay-0 { animation-delay: 0ms; }
-.delay-75 { animation-delay: 75ms; }
-.delay-100 { animation-delay: 100ms; }
-.delay-150 { animation-delay: 150ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-500 { animation-delay: 500ms; }
-.delay-700 { animation-delay: 700ms; }
+.delay-0 {
+  animation-delay: 0ms;
+}
+.delay-75 {
+  animation-delay: 75ms;
+}
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-150 {
+  animation-delay: 150ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+.delay-500 {
+  animation-delay: 500ms;
+}
+.delay-700 {
+  animation-delay: 700ms;
+}
 
-.stagger-item { opacity: 0; } /* Start hidden for staggered lists */
+.stagger-item {
+  opacity: 0;
+} /* Start hidden for staggered lists */

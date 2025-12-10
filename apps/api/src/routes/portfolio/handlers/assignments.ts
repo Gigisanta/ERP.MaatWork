@@ -13,7 +13,7 @@ import {
   lookupAssetClass,
 } from '@cactus/db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
-import { createDrizzleLogger, createOperationName } from '../../../utils/db-logger';
+import { createDrizzleLogger, createOperationName } from '../../../utils/database/db-logger';
 import { UserRole } from '../../../auth/types';
 import { HttpError } from '../../../utils/route-handler';
 import { getAssignmentWithAccessCheck } from '../../../services/portfolio-service';

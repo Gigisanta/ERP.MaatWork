@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { benchmarkDefinitions, benchmarkComponents, instruments } from '@cactus/db/schema';
 import { eq, desc, sum } from 'drizzle-orm';
-import { benchmarkComponentsCacheUtil, normalizeCacheKey } from '../../../utils/cache';
+import { benchmarkComponentsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import type { BenchmarkComponent } from '../types';
 

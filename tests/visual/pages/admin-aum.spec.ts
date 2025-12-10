@@ -28,4 +28,3 @@ test.describe('Admin AUM Page Visual Regression', () => {
     await expect(page).toHaveScreenshot('admin-aum-page.png', { fullPage: true });
   });
 });
-

@@ -12,6 +12,7 @@ import request from 'supertest';
 import mappingRouter from './mapping';
 import { signUserToken } from '../../../auth/jwt';
 import multer from 'multer';
+import { createTestApp } from '../../../__tests__/helpers/test-server';
 
 // Mock multer before importing the route
 vi.mock('multer', () => {
@@ -85,7 +86,7 @@ vi.mock('../../../config/aum-limits', () => ({
   },
 }));
 
-vi.mock('../../../utils/aum-normalization', () => ({
+vi.mock('../../../utils/aum/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
@@ -104,7 +105,10 @@ vi.mock('node:fs', () => ({
 import { db } from '@cactus/db';
 import { advisorAccountMapping, advisorAliases, eq } from '@cactus/db';
 import { parseAumFile } from '../../../services/aumParser';
-import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../../utils/aum-normalization';
+import {
+  normalizeAccountNumber,
+  normalizeAdvisorAlias,
+} from '../../../utils/aum/aum-normalization';
 import { promises as fs } from 'node:fs';
 import multer from 'multer';
 
@@ -116,12 +120,8 @@ const mockNormalizeAdvisorAlias = vi.mocked(normalizeAdvisorAlias);
 const mockFs = vi.mocked(fs);
 
 describe('AUM Admin - Mapping Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', mappingRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/admin/aum', router: mappingRouter }]);
 
   let adminToken: string;
 
@@ -211,7 +211,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -295,7 +295,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -374,7 +374,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -397,7 +397,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -421,7 +421,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -441,7 +441,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -464,7 +464,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -486,7 +486,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -507,7 +507,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -574,7 +574,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -640,7 +640,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -705,7 +705,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockRejectedValue(new Error('File not found'));
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       // Should still succeed even if cleanup fails
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
@@ -724,7 +724,7 @@ describe('AUM Admin - Mapping Routes', () => {
         next();
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -742,7 +742,7 @@ describe('AUM Admin - Mapping Routes', () => {
       });
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)

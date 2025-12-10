@@ -15,10 +15,10 @@ import {
   ensureUploadDir,
   MIME_TYPES,
   DEFAULT_UPLOAD_DIR,
-} from '../utils/file-upload';
+} from '../utils/file/file-upload';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';
 import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
-import { idParamSchema, uuidSchema } from '../utils/common-schemas';
+import { idParamSchema, uuidSchema } from '../utils/validation/common-schemas';
 
 const router = Router();
 
@@ -140,7 +140,10 @@ router.post(
       newAttachments.push(newAttachment);
     }
 
-    req.log.info({ count: newAttachments.length, entity, entityId }, 'Archivos subidos exitosamente');
+    req.log.info(
+      { count: newAttachments.length, entity, entityId },
+      'Archivos subidos exitosamente'
+    );
 
     return res.status(201).json({
       success: true,
@@ -191,7 +194,10 @@ router.get(
     try {
       await fs.access(attachment.filePath);
     } catch {
-      req.log.error({ attachmentId: id, path: attachment.filePath }, 'Archivo no encontrado en disco');
+      req.log.error(
+        { attachmentId: id, path: attachment.filePath },
+        'Archivo no encontrado en disco'
+      );
       throw new HttpError(404, 'Archivo no encontrado en el servidor');
     }
 

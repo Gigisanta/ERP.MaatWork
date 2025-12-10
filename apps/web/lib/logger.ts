@@ -10,7 +10,14 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  * Tipo para valores de contexto en logs
  * Permite cualquier valor JSON-serializable
  */
-export type LogContextValue = string | number | boolean | null | undefined | LogContextValue[] | { [key: string]: LogContextValue };
+export type LogContextValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | LogContextValue[]
+  | { [key: string]: LogContextValue };
 
 /**
  * Convierte un valor desconocido a LogContextValue de forma segura
@@ -78,7 +85,7 @@ class ClientLogger {
   constructor() {
     // Generar sessionId único para esta sesión del navegador
     this.sessionId = this.generateSessionId();
-    
+
     // Intentar obtener datos de usuario del localStorage
     if (typeof window !== 'undefined') {
       try {
@@ -113,7 +120,7 @@ class ClientLogger {
       url: typeof window !== 'undefined' ? window.location.href : undefined,
       userId: this.userId || undefined,
       userRole: this.userRole || undefined,
-      sessionId: this.sessionId
+      sessionId: this.sessionId,
     };
   }
 
@@ -140,7 +147,7 @@ class ClientLogger {
     try {
       // Importar apiClient dinámicamente para evitar ciclos de dependencia
       const { apiClient } = await import('./api-client');
-      
+
       // Usar apiClient.post() con timeout configurado y sin retries para logs
       // AI_DECISION: Usar apiClient en lugar de fetch directo
       // Justificación: Aprovecha retry logic, manejo de errores y timeout del cliente centralizado
@@ -148,9 +155,9 @@ class ClientLogger {
       await apiClient.post('/v1/logs/client', entry, {
         timeout: 5000, // 5 segundos timeout para logs
         retries: 0, // No retry para logs para evitar spam
-        requireAuth: false // Los logs pueden enviarse sin autenticación
+        requireAuth: false, // Los logs pueden enviarse sin autenticación
       });
-      
+
       // Si fue exitoso, resetear contador de errores
       this.backendErrorCount = 0;
     } catch (error) {
@@ -159,7 +166,10 @@ class ClientLogger {
       // Solo usar console.error directamente sin pasar por el logger
       if (this.backendErrorCount < this.MAX_BACKEND_ERRORS) {
         // Solo mostrar error las primeras veces
-        console.error('[Logger] Failed to send log to backend (will disable after 3 failures):', error);
+        console.error(
+          '[Logger] Failed to send log to backend (will disable after 3 failures):',
+          error
+        );
       }
     } finally {
       this.isSendingLog = false;
@@ -187,18 +197,18 @@ class ClientLogger {
 
     const entry = this.createLogEntry(level, message, context);
     const isProduction = process.env.NODE_ENV === 'production';
-    
+
     // AI_DECISION: Formato compacto de logs - solo información esencial
     // Justificación: Timestamp ISO completo, sessionId, userAgent, url generan demasiado ruido
     // Impacto: Logs 60-70% más compactos, más legibles
-    
+
     // En producción: solo errores y warnings, formato mínimo
     if (isProduction) {
       if (level === 'error' || level === 'warn') {
         const time = this.formatTime(entry.timestamp);
         const prefix = `${time} [${level.toUpperCase()}]`;
         const minimalContext: Record<string, LogContextValue> = {};
-        
+
         // Solo incluir contexto relevante en errores
         if (level === 'error' && context) {
           if (context.error || context.err) {
@@ -207,8 +217,11 @@ class ClientLogger {
           if (context.requestId) minimalContext.requestId = context.requestId;
           if (context.url) minimalContext.url = context.url;
         }
-        
-        console[level](`${prefix} ${message}`, Object.keys(minimalContext).length > 0 ? minimalContext : undefined);
+
+        console[level](
+          `${prefix} ${message}`,
+          Object.keys(minimalContext).length > 0 ? minimalContext : undefined
+        );
       }
       // Enviar al backend solo errores críticos
       if (level === 'error' && this.backendErrorCount < this.MAX_BACKEND_ERRORS) {
@@ -216,14 +229,14 @@ class ClientLogger {
       }
       return;
     }
-    
+
     // En desarrollo: reducir verbosidad - solo mostrar logs críticos por defecto
     // AI_DECISION: Reducir verbosidad en desarrollo para limpiar consola
     // Justificación: Logs de info y debug generan demasiado ruido en consola durante desarrollo
     // Impacto: Consola más limpia, solo información crítica visible
     const time = this.formatTime(entry.timestamp);
     const prefix = `${time} [${level.toUpperCase()}]`;
-    
+
     // Construir contexto mínimo (sin metadata redundante)
     const logContext: Record<string, LogContextValue> = {};
     if (context) {
@@ -233,24 +246,36 @@ class ClientLogger {
     if (entry.userId && (level === 'error' || level === 'warn')) {
       logContext.userId = entry.userId;
     }
-    
+
     // Solo mostrar logs críticos (error, warn) en consola por defecto
     // Los logs de info y debug se pueden habilitar con flag de entorno si es necesario
     const verboseLogs = process.env.NEXT_PUBLIC_VERBOSE_LOGS === 'true';
-    
+
     if (level === 'error') {
-      console.error(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+      console.error(
+        `${prefix} ${message}`,
+        Object.keys(logContext).length > 0 ? logContext : undefined
+      );
       if (context?.error || context?.err) {
         console.error('→', context.error || context.err);
       }
     } else if (level === 'warn') {
-      console.warn(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+      console.warn(
+        `${prefix} ${message}`,
+        Object.keys(logContext).length > 0 ? logContext : undefined
+      );
     } else if (level === 'debug' && verboseLogs) {
       // Solo mostrar debug si está habilitado explícitamente
-      console.debug(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+      console.debug(
+        `${prefix} ${message}`,
+        Object.keys(logContext).length > 0 ? logContext : undefined
+      );
     } else if (level === 'info' && verboseLogs) {
       // Solo mostrar info si está habilitado explícitamente
-      console.log(`${prefix} ${message}`, Object.keys(logContext).length > 0 ? logContext : undefined);
+      console.log(
+        `${prefix} ${message}`,
+        Object.keys(logContext).length > 0 ? logContext : undefined
+      );
     }
     // Si no es verbose, los logs de info y debug se omiten en consola (pero se pueden enviar al backend si es necesario)
   }
@@ -304,7 +329,7 @@ class ClientLogger {
       ...context,
       requestId,
       method,
-      url
+      url,
     });
   }
 
@@ -326,7 +351,7 @@ class ClientLogger {
       method,
       url,
       status,
-      duration
+      duration,
     });
   }
 
@@ -348,8 +373,8 @@ class ClientLogger {
       error: {
         name: error.name,
         message: error.message,
-        stack: error.stack
-      }
+        stack: error.stack,
+      },
     });
   }
 }

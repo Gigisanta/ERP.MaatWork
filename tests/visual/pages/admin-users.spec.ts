@@ -28,4 +28,3 @@ test.describe('Admin Users Page Visual Regression', () => {
     await expect(page).toHaveScreenshot('admin-users-page.png', { fullPage: true });
   });
 });
-

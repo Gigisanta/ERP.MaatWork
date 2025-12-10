@@ -1,6 +1,6 @@
 /**
  * AUM Admin - Purge Operations Routes
- * 
+ *
  * Handles destructive purge and cleanup operations
  */
 
@@ -10,7 +10,7 @@ import { sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '@/auth/middlewares';
 import { validate } from '@/utils/validation';
 import { createRouteHandler } from '@/utils/route-handler';
-import { aumPurgeAllQuerySchema } from '@/utils/aum-validation';
+import { aumPurgeAllQuerySchema } from '../../../utils/aum/aum-validation';
 
 const router = Router();
 
@@ -18,7 +18,8 @@ const router = Router();
  * DELETE /admin/aum/purge-all
  * Destructive: purge all AUM and broker data
  */
-router.delete('/purge-all',
+router.delete(
+  '/purge-all',
   requireAuth,
   requireRole(['admin']),
   validate({ query: aumPurgeAllQuerySchema.optional() }),
@@ -45,7 +46,8 @@ router.delete('/purge-all',
  * POST /admin/aum/cleanup-duplicates
  * Clean up duplicate rows, keeping only the most recent per broker+accountNumber
  */
-router.post('/cleanup-duplicates',
+router.post(
+  '/cleanup-duplicates',
   requireAuth,
   requireRole(['admin', 'manager']),
   createRouteHandler(async (req: Request) => {
@@ -96,7 +98,8 @@ router.post('/cleanup-duplicates',
  * POST /admin/aum/reset-all
  * Destructive: reset entire AUM system
  */
-router.post('/reset-all',
+router.post(
+  '/reset-all',
   requireAuth,
   requireRole(['admin', 'manager']),
   createRouteHandler(async (req: Request) => {
@@ -118,4 +121,3 @@ router.post('/reset-all',
 );
 
 export default router;
-

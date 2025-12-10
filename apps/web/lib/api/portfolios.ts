@@ -1,6 +1,6 @@
 /**
  * API methods para portfolios
- * 
+ *
  * AI_DECISION: Separar métodos de API por dominio
  * Justificación: Mantiene archivos pequeños, fácil de encontrar métodos
  * Impacto: Mejor organización del código
@@ -34,14 +34,18 @@ export async function getPortfolioById(id: string): Promise<ApiResponse<Portfoli
 /**
  * Obtener líneas de portfolio
  */
-export async function getPortfolioLines(id: string): Promise<ApiResponse<{ lines: PortfolioLine[] }>> {
+export async function getPortfolioLines(
+  id: string
+): Promise<ApiResponse<{ lines: PortfolioLine[] }>> {
   return apiClient.get<{ lines: PortfolioLine[] }>(`/v1/portfolios/templates/${id}/lines`);
 }
 
 /**
  * Obtener líneas de múltiples portfolios (batch)
  */
-export async function getPortfolioLinesBatch(ids: string[]): Promise<ApiResponse<Record<string, PortfolioLine[]>>> {
+export async function getPortfolioLinesBatch(
+  ids: string[]
+): Promise<ApiResponse<Record<string, PortfolioLine[]>>> {
   return apiClient.get<Record<string, PortfolioLine[]>>(
     `/v1/portfolios/templates/lines/batch?ids=${ids.join(',')}`
   );
@@ -50,7 +54,9 @@ export async function getPortfolioLinesBatch(ids: string[]): Promise<ApiResponse
 /**
  * Crear portfolio
  */
-export async function createPortfolio(data: CreatePortfolioRequest): Promise<ApiResponse<Portfolio>> {
+export async function createPortfolio(
+  data: CreatePortfolioRequest
+): Promise<ApiResponse<Portfolio>> {
   return apiClient.post<Portfolio>('/v1/portfolios/templates', data);
 }
 
@@ -78,10 +84,7 @@ export async function addPortfolioLine(
   portfolioId: string,
   data: AddPortfolioLineRequest
 ): Promise<ApiResponse<PortfolioLine>> {
-  return apiClient.post<PortfolioLine>(
-    `/v1/portfolios/templates/${portfolioId}/lines`,
-    data
-  );
+  return apiClient.post<PortfolioLine>(`/v1/portfolios/templates/${portfolioId}/lines`, data);
 }
 
 /**
@@ -105,8 +108,5 @@ export async function deletePortfolioLine(
   portfolioId: string,
   lineId: string
 ): Promise<ApiResponse<void>> {
-  return apiClient.delete<void>(
-    `/v1/portfolios/templates/${portfolioId}/lines/${lineId}`
-  );
+  return apiClient.delete<void>(`/v1/portfolios/templates/${portfolioId}/lines/${lineId}`);
 }
-

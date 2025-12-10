@@ -10,7 +10,7 @@
 import type { Request, Response } from 'express';
 import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { validateUuidParam } from '../../../utils/validation/common-schemas';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 
 /**

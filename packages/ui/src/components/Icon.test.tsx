@@ -40,9 +40,9 @@ describe('Icon Component', () => {
     it('should apply size as width and height', () => {
       const { container } = render(<Icon name="Home" size={32} />);
       const icon = container.querySelector('span');
-      expect(icon).toHaveStyle({ 
+      expect(icon).toHaveStyle({
         width: '32px',
-        height: '32px'
+        height: '32px',
       });
     });
 
@@ -117,4 +117,3 @@ describe('Icon Component', () => {
     });
   });
 });
-

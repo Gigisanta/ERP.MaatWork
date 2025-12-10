@@ -1,6 +1,6 @@
 /**
  * AUM Admin Routes - Main Entry Point
- * 
+ *
  * Combines all admin route modules
  */
 
@@ -17,4 +17,3 @@ router.use(purgeRouter);
 router.use(mappingRouter);
 
 export default router;
-

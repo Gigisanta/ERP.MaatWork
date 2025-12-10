@@ -81,11 +81,7 @@ export function AumVirtualTable({
   // Justificación: useVirtualizer necesita un contenedor con scroll para calcular items visibles
   // El contenedor DEBE tener altura fija o calculada para que el virtualizer funcione
   return (
-    <div
-      ref={parentRef}
-      className="w-full h-full overflow-auto"
-      data-testid="aum-table-scroll"
-    >
+    <div ref={parentRef} className="w-full h-full overflow-auto" data-testid="aum-table-scroll">
       <table
         className="table-fixed border-collapse w-full"
         style={{
@@ -179,15 +175,18 @@ export function AumVirtualTable({
           )}
 
           {/* Fallback: render all rows if virtualizer has no items (e.g. container height issue) */}
-          {!isLoading && hasData && !hasVirtualItems && rows.map((row, index) => (
-            <AumTableRow
-              key={`fallback-${row.id}-${index}`}
-              row={row}
-              onOpenAdvisorModal={onOpenAdvisorModal}
-              onShowDuplicates={onShowDuplicates}
-              {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
-            />
-          ))}
+          {!isLoading &&
+            hasData &&
+            !hasVirtualItems &&
+            rows.map((row, index) => (
+              <AumTableRow
+                key={`fallback-${row.id}-${index}`}
+                row={row}
+                onOpenAdvisorModal={onOpenAdvisorModal}
+                onShowDuplicates={onShowDuplicates}
+                {...(onAdvisorUpdated ? { onAdvisorUpdated } : {})}
+              />
+            ))}
         </tbody>
       </table>
     </div>

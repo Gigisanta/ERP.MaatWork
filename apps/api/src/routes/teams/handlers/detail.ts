@@ -13,7 +13,7 @@ import {
 } from '@cactus/db/schema';
 import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
-import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/cache';
+import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { HttpError } from '../../../utils/route-handler';
 
 /**
@@ -39,49 +39,47 @@ export async function getTeamDetail(req: Request) {
     throw new HttpError(404, 'Team not found');
   }
 
-    // Get team members
-    const teamMembers = await db()
-      .select({
-        id: users.id,
-        email: users.email,
-        fullName: users.fullName,
-        role: teamMembership.role,
-        teamId: teamMembership.teamId,
-        userId: teamMembership.userId,
-      })
-      .from(users)
-      .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
-      .where(eq(teamMembership.teamId, id));
+  // Get team members
+  const teamMembers = await db()
+    .select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      role: teamMembership.role,
+      teamId: teamMembership.teamId,
+      userId: teamMembership.userId,
+    })
+    .from(users)
+    .innerJoin(teamMembership, eq(users.id, teamMembership.userId))
+    .where(eq(teamMembership.teamId, id));
 
-    // Get metrics (reuse logic from metrics endpoint)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const todayStr = today.toISOString().split('T')[0];
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+  // Get metrics (reuse logic from metrics endpoint)
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const todayStr = today.toISOString().split('T')[0];
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-    // AI_DECISION: Use cache + materialized view for team metrics
-    // Justificación: Caching reduces DB load, materialized view pre-calculates metrics
-    // Impacto: 70-90% reduction in query time for team metrics
-    const cacheKey = normalizeCacheKey('team', 'metrics', id);
-    const cachedResult = teamMetricsCacheUtil.get(cacheKey);
+  // AI_DECISION: Use cache + materialized view for team metrics
+  // Justificación: Caching reduces DB load, materialized view pre-calculates metrics
+  // Impacto: 70-90% reduction in query time for team metrics
+  const cacheKey = normalizeCacheKey('team', 'metrics', id);
+  const cachedResult = teamMetricsCacheUtil.get(cacheKey);
 
-    let basicMetricsResult: {
-      rows: Array<{ memberCount: number; clientCount: number; portfolioCount: number }>;
+  let basicMetricsResult: {
+    rows: Array<{ memberCount: number; clientCount: number; portfolioCount: number }>;
+  };
+
+  if (cachedResult) {
+    req.log.info({ cacheKey }, 'Serving team metrics from cache');
+    basicMetricsResult = {
+      rows: [cachedResult as { memberCount: number; clientCount: number; portfolioCount: number }],
     };
-
-    if (cachedResult) {
-      req.log.info({ cacheKey }, 'Serving team metrics from cache');
-      basicMetricsResult = {
-        rows: [
-          cachedResult as { memberCount: number; clientCount: number; portfolioCount: number },
-        ],
-      };
-    } else {
-      // AI_DECISION: Try materialized view first, fallback to direct query if MV doesn't exist
-      // Justificación: Resilience - code works even if migration hasn't been applied
-      // Impacto: Graceful degradation with slightly slower queries when MV is missing
-      try {
-        const result = await db().execute(sql`
+  } else {
+    // AI_DECISION: Try materialized view first, fallback to direct query if MV doesn't exist
+    // Justificación: Resilience - code works even if migration hasn't been applied
+    // Impacto: Graceful degradation with slightly slower queries when MV is missing
+    try {
+      const result = await db().execute(sql`
             SELECT 
               member_count AS "memberCount",
               client_count AS "clientCount",
@@ -89,18 +87,18 @@ export async function getTeamDetail(req: Request) {
             FROM mv_team_metrics_daily
             WHERE team_id = ${id}
           `);
-        basicMetricsResult = result;
+      basicMetricsResult = result;
 
-        // Cache the result
-        if (result.rows.length > 0) {
-          teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
-        }
-      } catch (mvError) {
-        // Fallback: Calculate metrics directly if materialized view doesn't exist (code 42P01)
-        const pgError = mvError as { code?: string };
-        if (pgError.code === '42P01') {
-          req.log.warn('mv_team_metrics_daily not found, using fallback query');
-          const fallbackResult = await db().execute(sql`
+      // Cache the result
+      if (result.rows.length > 0) {
+        teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
+      }
+    } catch (mvError) {
+      // Fallback: Calculate metrics directly if materialized view doesn't exist (code 42P01)
+      const pgError = mvError as { code?: string };
+      if (pgError.code === '42P01') {
+        req.log.warn('mv_team_metrics_daily not found, using fallback query');
+        const fallbackResult = await db().execute(sql`
               SELECT 
                 COUNT(DISTINCT tm.user_id) AS "memberCount",
                 COUNT(DISTINCT CASE WHEN c.deleted_at IS NULL THEN c.id END) AS "clientCount",
@@ -113,65 +111,62 @@ export async function getTeamDetail(req: Request) {
               WHERE t.id = ${id}
               GROUP BY t.id
             `);
-          basicMetricsResult = fallbackResult;
+        basicMetricsResult = fallbackResult;
 
-          if (fallbackResult.rows.length > 0) {
-            teamMetricsCacheUtil.set(cacheKey, fallbackResult.rows[0]);
-          }
-        } else {
-          throw mvError;
+        if (fallbackResult.rows.length > 0) {
+          teamMetricsCacheUtil.set(cacheKey, fallbackResult.rows[0]);
         }
+      } else {
+        throw mvError;
       }
     }
+  }
 
-    // Execute remaining queries in parallel (AUM queries need separate handling due to date filters)
-    const [aumResult, riskDistributionResult, aumTrendResult] = await Promise.all([
-      // Get AUM total del equipo
-      db()
-        .select({
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), eq(aumSnapshots.date, todayStr)))
-        .limit(1),
+  // Execute remaining queries in parallel (AUM queries need separate handling due to date filters)
+  const [aumResult, riskDistributionResult, aumTrendResult] = await Promise.all([
+    // Get AUM total del equipo
+    db()
+      .select({
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), eq(aumSnapshots.date, todayStr)))
+      .limit(1),
 
-      // Get risk distribution
-      db()
-        .select({
-          riskLevel: portfolioTemplates.riskLevel,
-          count: count(),
-        })
-        .from(contacts)
-        .innerJoin(
-          clientPortfolioAssignments,
-          eq(clientPortfolioAssignments.contactId, contacts.id)
-        )
-        .innerJoin(
-          portfolioTemplates,
-          eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
-        )
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
-        .groupBy(portfolioTemplates.riskLevel),
+    // Get risk distribution
+    db()
+      .select({
+        riskLevel: portfolioTemplates.riskLevel,
+        count: count(),
+      })
+      .from(contacts)
+      .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
+      .innerJoin(
+        portfolioTemplates,
+        eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+      )
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
+      .groupBy(portfolioTemplates.riskLevel),
 
-      // Get AUM trend (last 30 days)
-      db()
-        .select({
-          date: aumSnapshots.date,
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), gte(aumSnapshots.date, thirtyDaysAgoStr)))
-        .groupBy(aumSnapshots.date)
-        .orderBy(aumSnapshots.date),
-    ]);
+    // Get AUM trend (last 30 days)
+    db()
+      .select({
+        date: aumSnapshots.date,
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), gte(aumSnapshots.date, thirtyDaysAgoStr)))
+      .groupBy(aumSnapshots.date)
+      .orderBy(aumSnapshots.date),
+  ]);
 
   return {
     team: {

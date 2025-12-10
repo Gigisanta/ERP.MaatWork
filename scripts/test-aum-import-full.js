@@ -1,11 +1,11 @@
 /**
  * Script de Prueba End-to-End del Sistema AUM
- * 
+ *
  * Prueba todo el flujo de importación sin interacción del usuario:
  * 1. Verifica CSVs
  * 2. Intenta verificar datos en la API (si está disponible)
  * 3. Genera reporte completo
- * 
+ *
  * Uso: node scripts/test-aum-import-full.js
  */
 
@@ -29,9 +29,16 @@ function parseNumeric(value) {
   if (strValue === '' || strValue === '-' || strValue === '--' || strValue === '—') {
     return null;
   }
-  if (strValue === '0' || strValue === '0.00' || strValue === '0,00' || 
-      strValue === '0.0' || strValue === '0,0' || strValue === '0.000000' ||
-      strValue === '0,000000' || /^0+([.,]0+)?$/.test(strValue)) {
+  if (
+    strValue === '0' ||
+    strValue === '0.00' ||
+    strValue === '0,00' ||
+    strValue === '0.0' ||
+    strValue === '0,0' ||
+    strValue === '0.000000' ||
+    strValue === '0,000000' ||
+    /^0+([.,]0+)?$/.test(strValue)
+  ) {
     return 0;
   }
   const parsed = parseFloat(strValue.replace(',', '.'));
@@ -62,7 +69,7 @@ function readCSV(filePath) {
     trim: true,
     bom: true,
     relax_quotes: true,
-    cast: false
+    cast: false,
   });
   return records;
 }
@@ -70,9 +77,13 @@ function readCSV(filePath) {
 function mapCSVRow(record, isCSV1) {
   const idCuenta = normalizeString(record.idCuenta || record['idCuenta']);
   const comitente = normalizeString(record.comitente || record['comitente']);
-  const cuenta = normalizeString(record.cuenta || record.Descripcion || record['cuenta'] || record['Descripcion']);
-  const asesor = normalizeString(record.Asesor || record['Asesor'] || record.asesor || record['asesor']);
-  
+  const cuenta = normalizeString(
+    record.cuenta || record.Descripcion || record['cuenta'] || record['Descripcion']
+  );
+  const asesor = normalizeString(
+    record.Asesor || record['Asesor'] || record.asesor || record['asesor']
+  );
+
   return {
     idCuenta,
     accountNumber: comitente,
@@ -85,7 +96,7 @@ function mapCSVRow(record, isCSV1) {
     pesos: parseNumeric(record.pesos || record['pesos']),
     mep: parseNumeric(record.mep || record['mep']),
     cable: parseNumeric(record.cable || record['cable']),
-    cv7000: parseNumeric(record.cv7000 || record['cv7000'])
+    cv7000: parseNumeric(record.cv7000 || record['cv7000']),
   };
 }
 
@@ -107,7 +118,7 @@ async function checkAPIConnection() {
   try {
     const response = await fetch(`${API_BASE_URL}/health`, {
       method: 'GET',
-      timeout: 5000
+      timeout: 5000,
     });
     return response.ok;
   } catch (error) {
@@ -133,8 +144,8 @@ async function fetchAllAumRows() {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       clearTimeout(timeoutId);
@@ -166,7 +177,7 @@ async function fetchAllAumRows() {
         throw error;
       }
       console.log(`   ⚠️  Intento ${attempts} fallido, reintentando...`);
-      await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
     }
   }
 
@@ -184,7 +195,7 @@ async function main() {
   // 1. Verificar que los archivos existan
   const filesExist = {
     csv1: fs.existsSync(CSV1_PATH),
-    csv2: fs.existsSync(CSV2_PATH)
+    csv2: fs.existsSync(CSV2_PATH),
   };
 
   if (!filesExist.csv1 || !filesExist.csv2) {
@@ -222,22 +233,34 @@ async function main() {
   const csvStats = {
     csv1Total: csv1Mapped.length,
     csv2Total: csv2Mapped.length,
-    csv1WithAdvisor: csv1Mapped.filter(r => r.advisorRaw).length,
-    csv2WithAdvisor: csv2Mapped.filter(r => r.advisorRaw).length,
-    csv1WithAccount: csv1Mapped.filter(r => r.accountNumber).length,
-    csv2WithAccount: csv2Mapped.filter(r => r.accountNumber).length,
-    csv1WithIdCuenta: csv1Mapped.filter(r => r.idCuenta).length,
-    csv2WithIdCuenta: csv2Mapped.filter(r => r.idCuenta).length,
-    csv1WithFinancialData: csv1Mapped.filter(r => 
-      r.aumDollars !== null || r.bolsaArg !== null || r.fondosArg !== null || 
-      r.bolsaBci !== null || r.pesos !== null || r.mep !== null || 
-      r.cable !== null || r.cv7000 !== null
+    csv1WithAdvisor: csv1Mapped.filter((r) => r.advisorRaw).length,
+    csv2WithAdvisor: csv2Mapped.filter((r) => r.advisorRaw).length,
+    csv1WithAccount: csv1Mapped.filter((r) => r.accountNumber).length,
+    csv2WithAccount: csv2Mapped.filter((r) => r.accountNumber).length,
+    csv1WithIdCuenta: csv1Mapped.filter((r) => r.idCuenta).length,
+    csv2WithIdCuenta: csv2Mapped.filter((r) => r.idCuenta).length,
+    csv1WithFinancialData: csv1Mapped.filter(
+      (r) =>
+        r.aumDollars !== null ||
+        r.bolsaArg !== null ||
+        r.fondosArg !== null ||
+        r.bolsaBci !== null ||
+        r.pesos !== null ||
+        r.mep !== null ||
+        r.cable !== null ||
+        r.cv7000 !== null
     ).length,
-    csv2WithFinancialData: csv2Mapped.filter(r => 
-      r.aumDollars !== null || r.bolsaArg !== null || r.fondosArg !== null || 
-      r.bolsaBci !== null || r.pesos !== null || r.mep !== null || 
-      r.cable !== null || r.cv7000 !== null
-    ).length
+    csv2WithFinancialData: csv2Mapped.filter(
+      (r) =>
+        r.aumDollars !== null ||
+        r.bolsaArg !== null ||
+        r.fondosArg !== null ||
+        r.bolsaBci !== null ||
+        r.pesos !== null ||
+        r.mep !== null ||
+        r.cable !== null ||
+        r.cv7000 !== null
+    ).length,
   };
 
   console.log('📊 Estadísticas de CSVs:');
@@ -263,7 +286,7 @@ async function main() {
   try {
     console.log(`🌐 Intentando conectar con API: ${API_BASE_URL}...`);
     apiAvailable = await checkAPIConnection();
-    
+
     if (apiAvailable) {
       console.log('✅ API está disponible\n');
       console.log('📥 Obteniendo datos de la base de datos...');
@@ -334,7 +357,7 @@ async function main() {
       csv2Found: 0,
       csv2Missing: 0,
       advisorPreserved: 0,
-      advisorLost: 0
+      advisorLost: 0,
     };
 
     for (const [key, csv1Entries] of csv1Index.entries()) {
@@ -345,7 +368,7 @@ async function main() {
         const csv1Row = csv1Entries[0];
         const csv2Entries = csv2Index.get(key);
         const dbRow = dbEntries[0];
-        
+
         if (csv1Row.advisorRaw && csv2Entries) {
           const csv2Row = csv2Entries[0];
           if (!csv2Row.advisorRaw && dbRow.advisorRaw === csv1Row.advisorRaw) {
@@ -391,7 +414,7 @@ async function main() {
     apiAvailable,
     apiError,
     dbRowCount: dbRows.length,
-    comparisonResults
+    comparisonResults,
   };
 
   // Guardar reporte
@@ -421,8 +444,7 @@ async function main() {
 }
 
 // Ejecutar
-main().catch(error => {
+main().catch((error) => {
   console.error('❌ Error:', error);
   process.exit(1);
 });
-

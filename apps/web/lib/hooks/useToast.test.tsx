@@ -16,11 +16,11 @@ describe('useToast', () => {
     it('debería lanzar error si se usa fuera del provider', () => {
       // Suprimir console.error para este test
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       expect(() => {
         renderHook(() => useToast());
       }).toThrow('useToast must be used within ToastProvider');
-      
+
       consoleSpy.mockRestore();
     });
 
@@ -123,4 +123,3 @@ describe('useToast', () => {
     });
   });
 });
-

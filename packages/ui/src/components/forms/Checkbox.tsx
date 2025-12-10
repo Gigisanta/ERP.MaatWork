@@ -1,9 +1,13 @@
 import React from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check, Minus } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
-export interface CheckboxProps extends Omit<React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>, 'className' | 'id' | 'onCheckedChange'> {
+export interface CheckboxProps
+  extends Omit<
+    React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
+    'className' | 'id' | 'onCheckedChange'
+  > {
   label?: string;
   helperText?: string;
   error?: string;
@@ -17,15 +21,7 @@ export interface CheckboxProps extends Omit<React.ComponentPropsWithoutRef<typeo
 export const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   CheckboxProps
->(({
-  label,
-  helperText,
-  error,
-  className,
-  id,
-  indeterminate,
-  ...props
-}, ref) => {
+>(({ label, helperText, error, className, id, indeterminate, ...props }, ref) => {
   const checkboxId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
   const helperId = helperText ? `${checkboxId}-helper` : undefined;
   const errorId = error ? `${checkboxId}-error` : undefined;
@@ -54,7 +50,7 @@ export const Checkbox = React.forwardRef<
             {indeterminate ? <Minus className="h-3 w-3" /> : <Check className="h-3 w-3" />}
           </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
-        
+
         {label && (
           <label
             htmlFor={checkboxId}

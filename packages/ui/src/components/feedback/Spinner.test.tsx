@@ -185,18 +185,17 @@ describe('LoadingOverlay Component', () => {
           <div>Content</div>
         </LoadingOverlay>
       );
-      
+
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
-      
+
       rerender(
         <LoadingOverlay loading={true}>
           <div>Content</div>
         </LoadingOverlay>
       );
-      
+
       // getAllByText because there are 2 instances when loading
       expect(screen.getAllByText('Loading...')).toHaveLength(2);
     });
   });
 });
-

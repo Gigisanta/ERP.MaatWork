@@ -7,10 +7,10 @@ import type { Portfolio } from '@/types';
 // Justificación: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 30 min revalidation for portfolio lists
-// Justificación: Portfolio lists change occasionally, ISR reduces server load while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for portfolio management page
-export const revalidate = 1800; // Revalidate every 30 minutes
+// AI_DECISION: Force dynamic rendering for portfolios page
+// Justificación: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+export const dynamic = 'force-dynamic';
 
 export default async function PortfoliosPage() {
   // Check authentication and get user
@@ -45,7 +45,5 @@ export default async function PortfoliosPage() {
     error = err instanceof Error ? err.message : 'Error al cargar carteras';
   }
 
-  return (
-    <PortfoliosClient initialPortfolios={portfolios} />
-  );
+  return <PortfoliosClient initialPortfolios={portfolios} />;
 }

@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { getUserCareerProgress } from '@/lib/api/career-plan';
 import type { UserCareerProgress } from '@/types/career-plan';
-import { formatProgressPercentage, formatAnnualGoal, formatLevelPercentage } from '@/lib/utils/career-plan';
+import {
+  formatProgressPercentage,
+  formatAnnualGoal,
+  formatLevelPercentage,
+} from '@/lib/utils/career-plan';
 
 // Fetcher para SWR usando la función del cliente API
 const fetcher = async (): Promise<UserCareerProgress> => {
@@ -18,23 +22,19 @@ const fetcher = async (): Promise<UserCareerProgress> => {
 
 /**
  * Career Progress Bar - Shows user's career level progress
- * 
+ *
  * AI_DECISION: Made fully responsive with different layouts for different screen sizes
  * Justificación: Progress bar needs to adapt to available space without breaking layout
  * Impacto: Works well on tablets and larger screens where it's displayed
  */
 export default function CareerProgressBar() {
   const router = useRouter();
-  const { data, error } = useSWR<UserCareerProgress>(
-    'career-plan-user-progress',
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 60000, // Cache por 60 segundos
-      shouldRetryOnError: false
-    }
-  );
+  const { data, error } = useSWR<UserCareerProgress>('career-plan-user-progress', fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    dedupingInterval: 60000, // Cache por 60 segundos
+    shouldRetryOnError: false,
+  });
 
   const handleClick = useCallback(() => {
     router.push('/plandecarrera');
@@ -56,7 +56,7 @@ export default function CareerProgressBar() {
   const levelName = displayLevel?.level || 'Sin nivel';
   const goalUsd = displayLevel?.annualGoalUsd || 0;
   const commissionPercentage = displayLevel?.percentage || '0';
-  
+
   // Calcular porcentaje visual (cap at 100% para la barra, pero mostrar el real)
   const visualProgressPercentage = Math.min(progress.progressPercentage, 100);
 
@@ -97,7 +97,8 @@ export default function CareerProgressBar() {
 
       {/* Info condensada - oculta en pantallas medianas, visible en grandes */}
       <span className="hidden lg:inline text-xs text-text-muted whitespace-nowrap truncate">
-        {formatLevelPercentage(commissionPercentage)} • {formatProgressPercentage(progress.progressPercentage)}
+        {formatLevelPercentage(commissionPercentage)} •{' '}
+        {formatProgressPercentage(progress.progressPercentage)}
       </span>
 
       {/* Info completa - solo en pantallas extra grandes */}
@@ -107,4 +108,3 @@ export default function CareerProgressBar() {
     </button>
   );
 }
-

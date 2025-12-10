@@ -35,11 +35,7 @@ export async function createAdminUser(options = {}) {
     }
 
     // Verificar si hay algún usuario admin en la base de datos
-    const adminUsers = await db()
-      .select()
-      .from(users)
-      .where(eq(users.role, 'admin'))
-      .limit(1);
+    const adminUsers = await db().select().from(users).where(eq(users.role, 'admin')).limit(1);
 
     if (adminUsers.length > 0) {
       console.log('ℹ️  Ya existe un usuario admin en la base de datos');
@@ -90,10 +86,10 @@ export async function createAdminUser(options = {}) {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const emailArg = args.find(arg => arg.startsWith('--email='));
-  const fullNameArg = args.find(arg => arg.startsWith('--fullName='));
-  const passwordArg = args.find(arg => arg.startsWith('--password='));
-  
+  const emailArg = args.find((arg) => arg.startsWith('--email='));
+  const fullNameArg = args.find((arg) => arg.startsWith('--fullName='));
+  const passwordArg = args.find((arg) => arg.startsWith('--password='));
+
   const email = emailArg ? emailArg.split('=')[1] : undefined;
   const fullName = fullNameArg ? fullNameArg.split('=')[1] : undefined;
   const password = passwordArg ? passwordArg.split('=')[1] : undefined;
@@ -134,9 +130,3 @@ if (import.meta.url === `file://${process.argv[1]}` || require.main === module) 
       process.exit(1);
     });
 }
-
-
-
-
-
-

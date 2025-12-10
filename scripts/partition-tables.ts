@@ -1,17 +1,17 @@
 #!/usr/bin/env tsx
 /**
  * Script para Aplicar Particionamiento de Tablas de Forma Segura
- * 
+ *
  * Este script aplica particionamiento a tablas grandes de forma segura:
  * 1. Crea tabla particionada nueva
  * 2. Migra datos en batches
  * 3. Verifica integridad
  * 4. Intercambia tablas (requiere confirmación)
  * 5. Limpia tabla antigua
- * 
+ *
  * Uso:
  *   pnpm tsx scripts/partition-tables.ts --table broker_transactions --strategy monthly --date-column trade_date
- * 
+ *
  * Advertencia: Este script modifica la estructura de la base de datos.
  * Siempre hacer backup antes de ejecutar.
  */
@@ -41,12 +41,14 @@ function getArgs(): PartitionConfig {
       'date-column': { type: 'string', short: 'd' },
       strategy: { type: 'string', short: 's' },
       'start-date': { type: 'string' },
-      'end-date': { type: 'string' }
-    }
+      'end-date': { type: 'string' },
+    },
   });
 
   if (!values.table || !values['date-column']) {
-    console.error('Uso: pnpm tsx scripts/partition-tables.ts --table TABLE_NAME --date-column COLUMN_NAME [--strategy monthly|quarterly] [--start-date YYYY-MM-DD] [--end-date YYYY-MM-DD]');
+    console.error(
+      'Uso: pnpm tsx scripts/partition-tables.ts --table TABLE_NAME --date-column COLUMN_NAME [--strategy monthly|quarterly] [--start-date YYYY-MM-DD] [--end-date YYYY-MM-DD]'
+    );
     process.exit(1);
   }
 
@@ -55,7 +57,7 @@ function getArgs(): PartitionConfig {
     dateColumn: values['date-column'],
     strategy: (values.strategy as 'monthly' | 'quarterly') || 'monthly',
     startDate: values['start-date'] ? new Date(values['start-date']) : undefined,
-    endDate: values['end-date'] ? new Date(values['end-date']) : undefined
+    endDate: values['end-date'] ? new Date(values['end-date']) : undefined,
   };
 }
 
@@ -97,13 +99,15 @@ async function verifyTable(config: PartitionConfig): Promise<{
   }
 
   // Obtener conteo de filas y rango de fechas
-  const stats = await db().execute(sql.raw(`
+  const stats = await db().execute(
+    sql.raw(`
     SELECT 
       COUNT(*) as row_count,
       MIN("${config.dateColumn}") as min_date,
       MAX("${config.dateColumn}") as max_date
     FROM "${config.tableName}"
-  `));
+  `)
+  );
 
   const row = stats.rows[0] as {
     row_count: string;
@@ -116,8 +120,8 @@ async function verifyTable(config: PartitionConfig): Promise<{
     rowCount: parseInt(row.row_count, 10),
     dateRange: {
       min: row.min_date ? new Date(row.min_date) : null,
-      max: row.max_date ? new Date(row.max_date) : null
-    }
+      max: row.max_date ? new Date(row.max_date) : null,
+    },
   };
 }
 
@@ -126,15 +130,17 @@ async function verifyTable(config: PartitionConfig): Promise<{
  */
 async function createPartitionedTable(config: PartitionConfig): Promise<string> {
   const partitionedTableName = `${config.tableName}_partitioned`;
-  
+
   logger.info({ table: partitionedTableName }, 'Creando tabla particionada...');
 
   // Crear tabla particionada usando LIKE para copiar estructura
-  await db().execute(sql.raw(`
+  await db().execute(
+    sql.raw(`
     CREATE TABLE IF NOT EXISTS "${partitionedTableName}" (
       LIKE "${config.tableName}" INCLUDING ALL
     ) PARTITION BY RANGE (${config.dateColumn})
-  `));
+  `)
+  );
 
   logger.info({ table: partitionedTableName }, 'Tabla particionada creada');
   return partitionedTableName;
@@ -160,18 +166,22 @@ async function createPartitions(
   `);
 
   if (!(functionExists.rows[0] as { exists: boolean }).exists) {
-    throw new Error('Función create_partitions_for_range no existe. Ejecutar migración 0029 primero.');
+    throw new Error(
+      'Función create_partitions_for_range no existe. Ejecutar migración 0029 primero.'
+    );
   }
 
   // Crear particiones usando la función helper
-  await db().execute(sql.raw(`
+  await db().execute(
+    sql.raw(`
     SELECT create_partitions_for_range(
       '${partitionedTableName}',
       '${startDate.toISOString().split('T')[0]}'::date,
       '${endDate.toISOString().split('T')[0]}'::date,
       '${config.strategy}'
     )
-  `));
+  `)
+  );
 
   logger.info('Particiones creadas');
 }
@@ -188,9 +198,11 @@ async function migrateData(
   logger.info({ sourceTable, targetTable, batchSize }, 'Iniciando migración de datos...');
 
   // Obtener conteo total
-  const totalCount = await db().execute(sql.raw(`
+  const totalCount = await db().execute(
+    sql.raw(`
     SELECT COUNT(*) as count FROM "${sourceTable}"
-  `));
+  `)
+  );
   const total = parseInt((totalCount.rows[0] as { count: string }).count, 10);
 
   logger.info({ total }, 'Total de filas a migrar');
@@ -200,17 +212,22 @@ async function migrateData(
 
   while (offset < total) {
     // Migrar batch
-    await db().execute(sql.raw(`
+    await db().execute(
+      sql.raw(`
       INSERT INTO "${targetTable}"
       SELECT * FROM "${sourceTable}"
       ORDER BY "${config.dateColumn}"
       LIMIT ${batchSize} OFFSET ${offset}
-    `));
+    `)
+    );
 
     migrated += batchSize;
     offset += batchSize;
 
-    logger.info({ migrated, total, progress: ((migrated / total) * 100).toFixed(2) + '%' }, 'Migración en progreso...');
+    logger.info(
+      { migrated, total, progress: ((migrated / total) * 100).toFixed(2) + '%' },
+      'Migración en progreso...'
+    );
   }
 
   logger.info({ total: migrated }, 'Migración completada');
@@ -219,20 +236,21 @@ async function migrateData(
 /**
  * Verificar integridad de datos migrados
  */
-async function verifyIntegrity(
-  sourceTable: string,
-  targetTable: string
-): Promise<boolean> {
+async function verifyIntegrity(sourceTable: string, targetTable: string): Promise<boolean> {
   logger.info('Verificando integridad...');
 
-  const sourceCount = await db().execute(sql.raw(`
+  const sourceCount = await db().execute(
+    sql.raw(`
     SELECT COUNT(*) as count FROM "${sourceTable}"
-  `));
+  `)
+  );
   const sourceTotal = parseInt((sourceCount.rows[0] as { count: string }).count, 10);
 
-  const targetCount = await db().execute(sql.raw(`
+  const targetCount = await db().execute(
+    sql.raw(`
     SELECT COUNT(*) as count FROM "${targetTable}"
-  `));
+  `)
+  );
   const targetTotal = parseInt((targetCount.rows[0] as { count: string }).count, 10);
 
   if (sourceTotal !== targetTotal) {
@@ -247,10 +265,7 @@ async function verifyIntegrity(
 /**
  * Intercambiar tablas (requiere downtime)
  */
-async function swapTables(
-  oldTable: string,
-  newTable: string
-): Promise<void> {
+async function swapTables(oldTable: string, newTable: string): Promise<void> {
   logger.warn('⚠️  INTERCAMBIO DE TABLAS - Esto requiere downtime');
   logger.info({ oldTable, newTable }, 'Intercambiando tablas...');
 
@@ -299,7 +314,10 @@ async function main(): Promise<void> {
     const integrityOk = await verifyIntegrity(config.tableName, partitionedTableName);
     if (!integrityOk) {
       logger.error('Integridad fallida. Abortando intercambio de tablas.');
-      logger.info({ partitionedTable: partitionedTableName }, 'Tabla particionada creada pero no intercambiada. Revisar manualmente.');
+      logger.info(
+        { partitionedTable: partitionedTableName },
+        'Tabla particionada creada pero no intercambiada. Revisar manualmente.'
+      );
       return;
     }
 
@@ -308,13 +326,12 @@ async function main(): Promise<void> {
     logger.info('Esto requiere downtime. ¿Continuar? (S/N)');
     // En producción, esto debería requerir confirmación interactiva
     // Por ahora, solo logueamos la advertencia
-    
+
     logger.info('Para completar el proceso, ejecutar manualmente:');
     logger.info(`ALTER TABLE "${config.tableName}" RENAME TO "${config.tableName}_old"`);
     logger.info(`ALTER TABLE "${partitionedTableName}" RENAME TO "${config.tableName}"`);
 
     logger.info('✅ Particionamiento completado (pendiente intercambio de tablas)');
-
   } catch (error) {
     logger.error({ err: error }, 'Error en particionamiento');
     throw error;
@@ -331,4 +348,3 @@ main()
     logger.error({ error }, 'Error en script');
     process.exit(1);
   });
-

@@ -10,7 +10,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
-import { idParamSchema, uuidSchema } from '../../utils/common-schemas';
+import { idParamSchema, uuidSchema } from '../../utils/validation/common-schemas';
 import { cache } from '../../middleware/cache';
 import { REDIS_TTL } from '../../config/redis';
 import { buildCacheKey } from '../../config/redis';

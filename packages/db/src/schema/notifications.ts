@@ -12,7 +12,7 @@ import {
   integer,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { contacts } from './contacts';
@@ -33,19 +33,20 @@ export const notificationTemplates = pgTable(
     subjectTemplate: text('subject_template'), // Para email
     bodyTemplate: text('body_template').notNull(), // Mustache/Handlebars template
     pushTemplate: text('push_template'), // Template específico para push
-    variables: jsonb('variables').notNull().default(sql`'[]'::jsonb`), // Lista de variables disponibles
+    variables: jsonb('variables')
+      .notNull()
+      .default(sql`'[]'::jsonb`), // Lista de variables disponibles
     defaultChannel: text('default_channel').notNull().default('in_app'), // in_app, email, push, whatsapp
     isActive: boolean('is_active').notNull().default(true),
     createdByUserId: uuid('created_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    notificationTemplatesCodeVersionUnique: uniqueIndex('notification_templates_code_version_unique').on(
-      table.code,
-      table.version
-    ),
-    notificationTemplatesActiveIdx: index('idx_notification_templates_active').on(table.isActive)
+    notificationTemplatesCodeVersionUnique: uniqueIndex(
+      'notification_templates_code_version_unique'
+    ).on(table.code, table.version),
+    notificationTemplatesActiveIdx: index('idx_notification_templates_active').on(table.isActive),
   })
 );
 
@@ -61,21 +62,30 @@ export const notifications = pgTable(
   'notifications',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id),
-    type: text('type').notNull().references(() => lookupNotificationType.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    type: text('type')
+      .notNull()
+      .references(() => lookupNotificationType.id),
     templateId: uuid('template_id').references(() => notificationTemplates.id),
     severity: text('severity').notNull(), // info, warning, critical
     contactId: uuid('contact_id').references(() => contacts.id),
     taskId: uuid('task_id'), // Reference without FK to avoid circular dependency
-    payload: jsonb('payload').notNull().default(sql`'{}'::jsonb`),
+    payload: jsonb('payload')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
     renderedSubject: text('rendered_subject'),
     renderedBody: text('rendered_body').notNull(),
-    deliveredChannels: text('delivered_channels').array().notNull().default(sql`'{}'::text[]`),
+    deliveredChannels: text('delivered_channels')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     readAt: timestamp('read_at', { withTimezone: true }),
     snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
     processed: boolean('processed').notNull().default(false),
     clickedAt: timestamp('clicked_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     notificationsUnreadIdx: index('idx_notifications_unread')
@@ -93,7 +103,7 @@ export const notifications = pgTable(
     // Note: Time filtering done at query level, not index level (NOW() is not IMMUTABLE)
     notificationsUnreadRecentIdx: index('idx_notifications_unread_recent')
       .on(table.userId, table.createdAt)
-      .where(sql`${table.readAt} IS NULL`)
+      .where(sql`${table.readAt} IS NULL`),
   })
 );
 
@@ -105,14 +115,19 @@ export const userChannelPreferences = pgTable(
   'user_channel_preferences',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
     channel: text('channel').notNull(), // email, whatsapp, push
     enabled: boolean('enabled').notNull().default(true),
     address: jsonb('address'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    userChannelUnique: uniqueIndex('user_channel_preferences_unique').on(table.userId, table.channel)
+    userChannelUnique: uniqueIndex('user_channel_preferences_unique').on(
+      table.userId,
+      table.channel
+    ),
   })
 );
 
@@ -132,7 +147,7 @@ export const messageLog = pgTable(
     providerMessageId: text('provider_message_id'),
     error: text('error'),
     relatedNotificationId: uuid('related_notification_id').references(() => notifications.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     // AI_DECISION: Add indexes for log table queries
@@ -145,7 +160,6 @@ export const messageLog = pgTable(
       table.channel,
       table.status,
       table.createdAt
-    )
+    ),
   })
 );
-

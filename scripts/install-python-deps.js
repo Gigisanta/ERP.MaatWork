@@ -25,10 +25,8 @@ const info = chalk.blue;
  * Encontrar comando Python disponible (3.10+)
  */
 function findPythonCommand() {
-  const pythonCommands = isWindows 
-    ? ['python', 'py', 'python3']
-    : ['python3', 'python'];
-  
+  const pythonCommands = isWindows ? ['python', 'py', 'python3'] : ['python3', 'python'];
+
   for (const cmd of pythonCommands) {
     try {
       const version = execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
@@ -66,7 +64,7 @@ function findPipCommand(pythonCmd) {
   const pipCommands = isWindows
     ? ['pip', 'pip3', 'python -m pip', 'py -m pip']
     : ['pip3', 'pip', 'python3 -m pip', 'python -m pip'];
-  
+
   for (const cmd of pipCommands) {
     try {
       execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
@@ -99,19 +97,19 @@ function installDependencies(pipCmd) {
   try {
     // Actualizar pip primero
     console.log(info('  ⬆️  Actualizando pip...'));
-    execSync(`${pipCmd} install --upgrade pip`, { 
-      encoding: 'utf8', 
+    execSync(`${pipCmd} install --upgrade pip`, {
+      encoding: 'utf8',
       stdio: 'inherit',
-      cwd: analyticsServicePath 
+      cwd: analyticsServicePath,
     });
     console.log('');
 
     // Instalar dependencias
     console.log(info('  📥 Instalando paquetes...'));
-    execSync(`${pipCmd} install -r "${requirementsPath}"`, { 
-      encoding: 'utf8', 
+    execSync(`${pipCmd} install -r "${requirementsPath}"`, {
+      encoding: 'utf8',
       stdio: 'inherit',
-      cwd: analyticsServicePath 
+      cwd: analyticsServicePath,
     });
 
     return true;
@@ -159,7 +157,9 @@ function main() {
   if (!python) {
     console.log(warning('⚠️  Python 3.10+ no está instalado o no está en PATH'));
     console.log(warning('   El servicio de analytics no estará disponible'));
-    console.log(warning('   Para habilitarlo, instala Python desde https://www.python.org/downloads/'));
+    console.log(
+      warning('   Para habilitarlo, instala Python desde https://www.python.org/downloads/')
+    );
     console.log('');
     console.log(warning('   Continuando sin dependencias Python...'));
     process.exit(0); // No bloquear pnpm install
@@ -219,31 +219,3 @@ function main() {
 
 // Ejecutar
 main();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

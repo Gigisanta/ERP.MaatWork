@@ -15,8 +15,8 @@ import {
   benchmarksCacheUtil,
   benchmarkComponentsCacheUtil,
   normalizeCacheKey,
-} from '../../../utils/cache';
-import { createAsyncHandler, createRouteHandler, HttpError } from '../../../utils/route-handler';
+} from '../../../utils/performance/cache';
+import { createAsyncHandler, createRouteHandler, HttpError } from '@/utils/route-handler';
 import { addComponentSchema, updateComponentSchema } from '../schemas';
 import type { ComponentWithWeight } from '../types';
 
@@ -119,10 +119,7 @@ export const handleUpdateComponent = createRouteHandler(async (req: Request) => 
     .select({ weight: benchmarkComponents.weight })
     .from(benchmarkComponents)
     .where(
-      and(
-        eq(benchmarkComponents.id, componentId),
-        eq(benchmarkComponents.benchmarkId, benchmarkId)
-      )
+      and(eq(benchmarkComponents.id, componentId), eq(benchmarkComponents.benchmarkId, benchmarkId))
     )
     .limit(1);
 
@@ -157,10 +154,7 @@ export const handleUpdateComponent = createRouteHandler(async (req: Request) => 
       weight,
     })
     .where(
-      and(
-        eq(benchmarkComponents.id, componentId),
-        eq(benchmarkComponents.benchmarkId, benchmarkId)
-      )
+      and(eq(benchmarkComponents.id, componentId), eq(benchmarkComponents.benchmarkId, benchmarkId))
     )
     .returning();
 
@@ -198,10 +192,7 @@ export const handleDeleteComponent = createRouteHandler(async (req: Request) => 
   await db()
     .delete(benchmarkComponents)
     .where(
-      and(
-        eq(benchmarkComponents.id, componentId),
-        eq(benchmarkComponents.benchmarkId, benchmarkId)
-      )
+      and(eq(benchmarkComponents.id, componentId), eq(benchmarkComponents.benchmarkId, benchmarkId))
     );
 
   // Invalidate cache when component is deleted

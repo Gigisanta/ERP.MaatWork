@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Visual style variant */
@@ -12,7 +12,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 /**
  * Card component with brand styling.
- * 
+ *
  * @example
  * ```tsx
  * <Card variant="outlined">
@@ -25,14 +25,19 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
  * ```
  */
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ variant = 'outlined', padding = 'md', animated = false, children, className, ...props }, ref) => {
+  (
+    { variant = 'outlined', padding = 'md', animated = false, children, className, ...props },
+    ref
+  ) => {
     const variantClasses = {
       outlined: 'border border-border bg-background',
       elevated: 'shadow-md bg-background border-0',
-      interactive: 'border border-border bg-background hover:shadow-lg hover:border-secondary/30 transition-all duration-200 cursor-pointer',
+      interactive:
+        'border border-border bg-background hover:shadow-lg hover:border-secondary/30 transition-all-smooth cursor-pointer',
       highlight: 'border-l-4 border-l-secondary border border-border bg-background',
       // New animated variant with enhanced hover effects
-      animated: 'border border-border bg-background hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer',
+      animated:
+        'border border-border bg-background hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 transition-all-smooth cursor-pointer',
     };
 
     const paddingClasses = {
@@ -43,7 +48,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     };
 
     // Animated prop adds hover-lift effect to any variant
-    const animatedClasses = animated 
+    const animatedClasses = animated
       ? 'hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300'
       : '';
 
@@ -74,11 +79,7 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 export const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
   ({ children, className, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={cn('mb-4', className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('mb-4', className)} {...props}>
         {children}
       </div>
     );
@@ -134,11 +135,7 @@ export interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
 export const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
   ({ children, className, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={cn('font-body', className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('font-body', className)} {...props}>
         {children}
       </div>
     );
@@ -154,11 +151,7 @@ export interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
 export const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
   ({ children, className, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={cn('mt-4 pt-4 border-t border-border', className)}
-        {...props}
-      >
+      <div ref={ref} className={cn('mt-4 pt-4 border-t border-border', className)} {...props}>
         {children}
       </div>
     );

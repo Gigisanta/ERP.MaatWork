@@ -33,9 +33,7 @@ describe('mapApiErrorToFields', () => {
 
     it('should use field mappings when provided', () => {
       const error = new ApiError('Validation failed', 400, {
-        details: [
-          { path: 'first_name', message: 'El nombre es requerido' },
-        ],
+        details: [{ path: 'first_name', message: 'El nombre es requerido' }],
       });
 
       const result = mapApiErrorToFields(error, {
@@ -60,9 +58,7 @@ describe('mapApiErrorToFields', () => {
   describe('Plain Error handling', () => {
     it('should handle plain Error with JSON message', () => {
       const errorDetails = {
-        details: [
-          { path: 'firstName', message: 'Required' },
-        ],
+        details: [{ path: 'firstName', message: 'Required' }],
       };
       const error = new Error(JSON.stringify(errorDetails));
 
@@ -89,9 +85,7 @@ describe('mapApiErrorToFields', () => {
     it('should handle error object with details', () => {
       const error = {
         error: 'Validation failed',
-        details: [
-          { path: 'email', message: 'Invalid email format' },
-        ],
+        details: [{ path: 'email', message: 'Invalid email format' }],
       };
 
       const result = mapApiErrorToFields(error);
@@ -119,9 +113,7 @@ describe('mapApiErrorToFields', () => {
   describe('Options', () => {
     it('should use default message when none provided', () => {
       const error = new ApiError('', 400, {
-        details: [
-          { path: 'field', message: '' },
-        ],
+        details: [{ path: 'field', message: '' }],
       });
 
       const result = mapApiErrorToFields(error, {
@@ -146,47 +138,47 @@ describe('mapApiErrorToFields', () => {
 describe('getErrorMessage', () => {
   it('should extract message from ApiError', () => {
     const error = new ApiError('API error message', 400);
-    
+
     const message = getErrorMessage(error);
-    
+
     expect(message).toContain('error');
   });
 
   it('should extract message from plain Error', () => {
     const error = new Error('Plain error message');
-    
+
     const message = getErrorMessage(error);
-    
+
     expect(message).toBe('Plain error message');
   });
 
   it('should extract message from object', () => {
     const error = { message: 'Object error message' };
-    
+
     const message = getErrorMessage(error);
-    
+
     expect(message).toBe('Object error message');
   });
 
   it('should extract error property from object', () => {
     const error = { error: 'Error property message' };
-    
+
     const message = getErrorMessage(error);
-    
+
     expect(message).toBe('Error property message');
   });
 
   it('should return string error directly', () => {
     const error = 'String error';
-    
+
     const message = getErrorMessage(error);
-    
+
     expect(message).toBe('String error');
   });
 
   it('should return default message for unknown types', () => {
     const message = getErrorMessage(null, 'Default message');
-    
+
     expect(message).toBe('Default message');
   });
 });
@@ -194,19 +186,19 @@ describe('getErrorMessage', () => {
 describe('isValidationError', () => {
   it('should return true for ApiError with 400 status', () => {
     const error = new ApiError('Validation error', 400);
-    
+
     expect(isValidationError(error)).toBe(true);
   });
 
   it('should return true for object with status 400', () => {
     const error = { status: 400 };
-    
+
     expect(isValidationError(error)).toBe(true);
   });
 
   it('should return false for non-400 status', () => {
     const error = new ApiError('Server error', 500);
-    
+
     expect(isValidationError(error)).toBe(false);
   });
 });
@@ -214,19 +206,19 @@ describe('isValidationError', () => {
 describe('isAuthError', () => {
   it('should return true for ApiError with 401 status', () => {
     const error = new ApiError('Unauthorized', 401);
-    
+
     expect(isAuthError(error)).toBe(true);
   });
 
   it('should return true for object with status 401', () => {
     const error = { status: 401 };
-    
+
     expect(isAuthError(error)).toBe(true);
   });
 
   it('should return false for non-401 status', () => {
     const error = new ApiError('Forbidden', 403);
-    
+
     expect(isAuthError(error)).toBe(false);
   });
 });
@@ -234,19 +226,19 @@ describe('isAuthError', () => {
 describe('isServerError', () => {
   it('should return true for ApiError with 500 status', () => {
     const error = new ApiError('Server error', 500);
-    
+
     expect(isServerError(error)).toBe(true);
   });
 
   it('should return true for object with 5xx status', () => {
     const error = { status: 503 };
-    
+
     expect(isServerError(error)).toBe(true);
   });
 
   it('should return false for non-5xx status', () => {
     const error = new ApiError('Not found', 404);
-    
+
     expect(isServerError(error)).toBe(false);
   });
 });
@@ -255,16 +247,14 @@ describe('createFormErrorHandler', () => {
   it('should set field errors correctly', () => {
     const setErrors = vi.fn();
     const setGeneralError = vi.fn();
-    
+
     const handler = createFormErrorHandler({
       setErrors,
       setGeneralError,
     });
 
     const error = new ApiError('Validation failed', 400, {
-      details: [
-        { path: 'firstName', message: 'Required' },
-      ],
+      details: [{ path: 'firstName', message: 'Required' }],
     });
 
     handler(error);
@@ -278,7 +268,7 @@ describe('createFormErrorHandler', () => {
   it('should set general error when no field errors', () => {
     const setErrors = vi.fn();
     const setGeneralError = vi.fn();
-    
+
     const handler = createFormErrorHandler({
       setErrors,
       setGeneralError,
@@ -294,16 +284,14 @@ describe('createFormErrorHandler', () => {
 
   it('should use field mappings', () => {
     const setErrors = vi.fn();
-    
+
     const handler = createFormErrorHandler({
       setErrors,
       fieldMappings: { first_name: 'firstName' },
     });
 
     const error = new ApiError('Validation failed', 400, {
-      details: [
-        { path: 'first_name', message: 'Required' },
-      ],
+      details: [{ path: 'first_name', message: 'Required' }],
     });
 
     handler(error);

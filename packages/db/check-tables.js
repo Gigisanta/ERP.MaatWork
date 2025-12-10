@@ -19,16 +19,15 @@ async function checkTables() {
       WHERE schemaname = 'public'
       ORDER BY tablename
     `);
-    
+
     console.log(`\n📊 Tablas en la base de datos: ${tables.rows.length}\n`);
     tables.rows.forEach((row, idx) => {
       console.log(`${idx + 1}. ${row.tablename}`);
     });
-    
+
     if (tables.rows.length === 0) {
       console.log('\n✅ La base de datos está vacía - lista para aplicar migraciones');
     }
-    
   } catch (error) {
     console.error('❌ Error:', error.message);
   } finally {
@@ -37,4 +36,3 @@ async function checkTables() {
 }
 
 checkTables();
-

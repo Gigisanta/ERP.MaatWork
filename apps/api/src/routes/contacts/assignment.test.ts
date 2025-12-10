@@ -1,6 +1,6 @@
 /**
  * Tests para contacts assignment routes
- * 
+ *
  * AI_DECISION: Tests unitarios para asignación de contactos
  * Justificación: Validación crítica de asignaciones
  * Impacto: Prevenir errores en asignación de contactos
@@ -18,11 +18,11 @@ vi.mock('@cactus/db', () => ({
   contactFieldHistory: {},
   eq: vi.fn(),
   and: vi.fn(),
-  isNull: vi.fn()
+  isNull: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -37,11 +37,11 @@ describe('PATCH /contacts/:id/next-step', () => {
       user: { id: 'user-123', role: 'advisor' },
       params: { id: 'contact-123' },
       body: { nextStep: 'Follow up next week' },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -50,39 +50,39 @@ describe('PATCH /contacts/:id/next-step', () => {
   it('debería actualizar nextStep del contacto', async () => {
     const existing = {
       id: 'contact-123',
-      nextStep: 'Old next step'
+      nextStep: 'Old next step',
     };
 
     const updated = {
       ...existing,
       nextStep: 'Follow up next week',
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existing])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existing]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([updated])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue([])
+      values: vi.fn().mockResolvedValue([]),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
       update: mockUpdate,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -102,13 +102,15 @@ describe('PATCH /contacts/:id/next-step', () => {
         .where({} as any)
         .returning();
       if (existing.nextStep !== nextStep) {
-        await db().insert(contactFieldHistory).values({
-          contactId: id,
-          fieldName: 'nextStep',
-          oldValue: existing.nextStep || '',
-          newValue: nextStep || '',
-          changedByUserId: req.user!.id
-        });
+        await db()
+          .insert(contactFieldHistory)
+          .values({
+            contactId: id,
+            fieldName: 'nextStep',
+            oldValue: existing.nextStep || '',
+            newValue: nextStep || '',
+            changedByUserId: req.user!.id,
+          });
       }
       res.json({ success: true, data: updated });
     };
@@ -122,13 +124,13 @@ describe('PATCH /contacts/:id/next-step', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -148,4 +150,3 @@ describe('PATCH /contacts/:id/next-step', () => {
     expect(mockRes.status).toHaveBeenCalledWith(404);
   });
 });
-

@@ -87,6 +87,12 @@ export default function TeamDetailsPage() {
     variant: 'success',
   });
 
+  // Check if user can manage this team (admin or manager of this specific team)
+  // AI_DECISION: Verificar si el usuario es manager del equipo específico, no solo rol global
+  // Justificación: Solo el manager asignado al equipo puede gestionar configuraciones y ver actividad
+  // Impacto: Mejora seguridad y control de acceso granular por equipo
+  const canManageTeam = user && team && (user.role === 'admin' || (user.role === 'manager' && team.managerUserId === user.id));
+
   useEffect(() => {
     if (!user) return;
     if (!['manager', 'admin'].includes(user.role)) {
@@ -278,20 +284,22 @@ export default function TeamDetailsPage() {
             </Button>
             <Heading level={2}>{team?.name || 'Equipo'}</Heading>
           </div>
-          <Stack direction="row" gap="sm">
-            <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
-              <Icon name="edit" size={16} className="mr-2" />
-              Editar
-            </Button>
-            <Button variant="secondary" onClick={() => setDeleteConfirmOpen(true)}>
-              <Icon name="trash-2" size={16} className="mr-2" />
-              Eliminar
-            </Button>
-            <Button onClick={openLinkModal}>
-              <Icon name="plus" size={16} className="mr-2" />
-              Vincular asesores
-            </Button>
-          </Stack>
+          {canManageTeam && (
+            <Stack direction="row" gap="sm">
+              <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
+                <Icon name="edit" size={16} className="mr-2" />
+                Editar
+              </Button>
+              <Button variant="secondary" onClick={() => setDeleteConfirmOpen(true)}>
+                <Icon name="trash-2" size={16} className="mr-2" />
+                Eliminar
+              </Button>
+              <Button onClick={openLinkModal}>
+                <Icon name="plus" size={16} className="mr-2" />
+                Agregar miembros
+              </Button>
+            </Stack>
+          )}
         </div>
 
         {error && (
@@ -366,21 +374,25 @@ export default function TeamDetailsPage() {
         )}
 
         {/* Members & Activity Tabs */}
-        <Tabs defaultValue="activity" className="w-full">
+        <Tabs defaultValue={canManageTeam ? "activity" : "members"} className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="activity">
-              <Icon name="Activity" size={16} className="mr-2" />
-              Control de Actividad
-            </TabsTrigger>
+            {canManageTeam && (
+              <TabsTrigger value="activity">
+                <Icon name="Activity" size={16} className="mr-2" />
+                Control de Actividad
+              </TabsTrigger>
+            )}
             <TabsTrigger value="members">
               <Icon name="Users" size={16} className="mr-2" />
               Miembros ({members.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="activity">
-            <TeamActivityTable teamId={teamId} teamName={team?.name} />
-          </TabsContent>
+          {canManageTeam && (
+            <TabsContent value="activity">
+              <TeamActivityTable teamId={teamId} teamName={team?.name} />
+            </TabsContent>
+          )}
 
           <TabsContent value="members">
             {members.length === 0 ? (
@@ -459,26 +471,36 @@ export default function TeamDetailsPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Modal vincular asesores */}
+        {/* Modal agregar miembros */}
         <Modal open={linkModalOpen} onOpenChange={setLinkModalOpen}>
           <ModalHeader>
-            <ModalTitle>Vincular asesores a {team?.name}</ModalTitle>
+            <ModalTitle>Agregar miembros a {team?.name}</ModalTitle>
             <ModalDescription>
-              Selecciona asesores para enviar invitación al equipo.
+              Selecciona miembros (asesores, managers o administrativos) para enviar invitación al equipo.
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
             <Stack direction="column" gap="sm">
               {advisorCandidates.length === 0 && (
-                <Text color="secondary">No hay asesores disponibles para invitar.</Text>
+                <Text color="secondary">No hay usuarios disponibles para invitar.</Text>
               )}
               {advisorCandidates.map((a: TeamAdvisor) => (
                 <div
                   key={String(a.id)}
                   className="flex items-center justify-between border rounded-md px-3 py-2"
                 >
-                  <div>
-                    <Text weight="medium">{a.fullName || a.email}</Text>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Text weight="medium">{a.fullName || a.email}</Text>
+                      <Badge variant="default" className="text-xs">
+                        {a.role || 'N/A'}
+                      </Badge>
+                      {a.currentTeamId && (
+                        <Badge variant="outline" className="text-xs">
+                          En otro equipo
+                        </Badge>
+                      )}
+                    </div>
                     <Text size="sm" color="secondary">
                       {a.email}
                     </Text>

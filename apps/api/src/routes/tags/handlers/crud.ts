@@ -12,7 +12,7 @@ import { db, tags } from '@cactus/db';
 import { eq, and, sql } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
-import { idParamSchema } from '../../../utils/common-schemas';
+import { idParamSchema } from '../../../utils/validation/common-schemas';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { PAGINATION_LIMITS } from '../../../config/api-limits';
 import { listTagsQuerySchema, createTagSchema, updateTagSchema } from '../schemas';

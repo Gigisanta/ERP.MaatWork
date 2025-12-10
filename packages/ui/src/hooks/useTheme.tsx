@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { Theme } from '../tokens';
+import type { Theme } from '../tokens/index.js';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'light'
+  defaultTheme = 'light',
 }: {
   children: React.ReactNode;
   defaultTheme?: Theme;

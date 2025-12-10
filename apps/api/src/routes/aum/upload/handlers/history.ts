@@ -15,7 +15,7 @@ import { db, aumImportFiles } from '@cactus/db';
 import { eq, inArray } from 'drizzle-orm';
 import { getUserAccessScope } from '@/auth/authorization';
 import { createRouteHandler, HttpError } from '@/utils/route-handler';
-import type { AumHistoryQuery } from '@/utils/aum-validation';
+import type { AumHistoryQuery } from '../../../../utils/aum/aum-validation';
 
 /**
  * GET /admin/aum/uploads/history

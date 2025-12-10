@@ -107,4 +107,3 @@ describe('Label Component', () => {
     });
   });
 });
-

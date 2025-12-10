@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import HistoryView from './HistoryView';
 
@@ -11,4 +11,3 @@ export default function HistoryPage() {
 
   return <HistoryView />;
 }
-

@@ -1,6 +1,6 @@
 import React from 'react';
 import * as SwitchPrimitive from '@radix-ui/react-switch';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface SwitchProps
   extends Omit<React.ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>, 'className' | 'id'> {
@@ -39,7 +39,7 @@ export const Switch = React.forwardRef<React.ElementRef<typeof SwitchPrimitive.R
           >
             <SwitchPrimitive.Thumb
               className={cn(
-                'pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform',
+                'pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform-spring',
                 'data-[state=checked]:translate-x-4',
                 'data-[state=unchecked]:translate-x-0'
               )}

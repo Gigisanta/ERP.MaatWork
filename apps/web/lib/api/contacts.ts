@@ -9,9 +9,13 @@ import type {
   CreateContactRequest,
   UpdateContactRequest,
   ContactFieldValue,
-  ContactFieldUpdate
+  ContactFieldUpdate,
 } from '@/types/contact';
-import type { AssignPortfolioRequest, AssignPortfolioResponse, PortfolioAssignment } from '@/types/portfolio-assignment';
+import type {
+  AssignPortfolioRequest,
+  AssignPortfolioResponse,
+  PortfolioAssignment,
+} from '@/types/portfolio-assignment';
 
 // ==========================================================
 // API Methods
@@ -80,7 +84,7 @@ export async function updateContactField(
   value: ContactFieldValue
 ): Promise<ApiResponse<Contact>> {
   return apiClient.patch<Contact>(`/v1/contacts/${contactId}`, {
-    fields: [{ field, value }]
+    fields: [{ field, value }],
   });
 }
 
@@ -93,7 +97,7 @@ export async function assignPortfolioToContact(
 ): Promise<ApiResponse<AssignPortfolioResponse>> {
   return apiClient.post<AssignPortfolioResponse>('/v1/portfolios/assignments', {
     ...data,
-    contactId
+    contactId,
   });
 }
 
@@ -111,7 +115,9 @@ export async function updatePortfolioAssignmentStatus(
   assignmentId: string,
   status: 'active' | 'paused' | 'ended'
 ): Promise<ApiResponse<PortfolioAssignment>> {
-  return apiClient.patch<PortfolioAssignment>(`/v1/portfolios/assignments/${assignmentId}`, { status });
+  return apiClient.patch<PortfolioAssignment>(`/v1/portfolios/assignments/${assignmentId}`, {
+    status,
+  });
 }
 
 /**
@@ -142,7 +148,6 @@ export async function sendContactsToWebhook(
   return apiClient.post<WebhookResult>('/v1/contacts/webhook', {
     webhookUrl,
     contacts,
-    metadata
+    metadata,
   });
 }
-

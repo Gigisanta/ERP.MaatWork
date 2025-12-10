@@ -1,8 +1,8 @@
 /**
  * Contacts Routes - Module Index
- * 
+ *
  * Combines all contact-related routes into a single router.
- * 
+ *
  * Routes:
  * - GET /contacts - List contacts with filters (list.ts)
  * - GET /contacts/batch - Get multiple contacts (batch.ts)
@@ -31,15 +31,15 @@ const router = Router();
 
 // Mount routes in order of specificity
 // IMPORTANT: Specific routes (/batch, /webhook) must come before parameterized routes (/:id)
-router.use(batchRouter);      // GET /contacts/batch
-router.use(webhookRouter);    // POST /contacts/webhook
-router.use(listRouter);       // GET /contacts
-router.use(historyRouter);    // GET /contacts/:id/history (must come before getRouter)
+router.use(batchRouter); // GET /contacts/batch
+router.use(webhookRouter); // POST /contacts/webhook
+router.use(listRouter); // GET /contacts
+router.use(historyRouter); // GET /contacts/:id/history (must come before getRouter)
 router.use(assignmentRouter); // PATCH /contacts/:id/next-step (must come before updateRouter)
-router.use(getRouter);        // GET /contacts/:id, GET /contacts/:id/detail
-router.use(createRouter);     // POST /contacts
-router.use(updateRouter);     // PUT /contacts/:id, PATCH /contacts/:id
-router.use(deleteRouter);     // DELETE /contacts/:id
+router.use(getRouter); // GET /contacts/:id, GET /contacts/:id/detail
+router.use(createRouter); // POST /contacts
+router.use(updateRouter); // PUT /contacts/:id, PATCH /contacts/:id
+router.use(deleteRouter); // DELETE /contacts/:id
 
 export default router;
 
@@ -53,5 +53,5 @@ export {
   patchContactSchema,
   type CreateContactInput,
   type UpdateContactInput,
-  type PatchContactInput
+  type PatchContactInput,
 } from './schemas';

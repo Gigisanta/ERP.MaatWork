@@ -1,6 +1,6 @@
 /**
  * Bloomberg Terminal API client
- * 
+ *
  * AI_DECISION: Centralized API client for Bloomberg Terminal data
  * Justificación: Consistent API access pattern, error handling, type safety
  * Impacto: Easier to maintain and extend Bloomberg Terminal features
@@ -105,7 +105,7 @@ export async function getOHLCV(
   const params = new URLSearchParams({ timeframe });
   if (from) params.append('from', from);
   if (to) params.append('to', to);
-  
+
   return apiClient.get<OHLCVPoint[]>(`/v1/bloomberg/assets/${symbol}/ohlcv?${params}`);
 }
 
@@ -120,7 +120,7 @@ export async function getMacroSeries(
   const params = new URLSearchParams();
   if (from) params.append('from', from);
   if (to) params.append('to', to);
-  
+
   const query = params.toString();
   return apiClient.get<{ series: MacroSeries; points: MacroSeriesPoint[] }>(
     `/v1/macro/${seriesId}${query ? `?${query}` : ''}`
@@ -136,7 +136,7 @@ export async function getYieldCurve(
 ): Promise<ApiResponse<YieldCurve>> {
   const params = new URLSearchParams({ country });
   if (date) params.append('date', date);
-  
+
   return apiClient.get<YieldCurve>(`/v1/yields?${params}`);
 }
 
@@ -146,13 +146,23 @@ export async function getYieldCurve(
 export async function getYieldSpreads(
   country: string = 'US',
   date?: string
-): Promise<ApiResponse<{ date: string; country: string; spreads: Record<string, number>; yields: Record<string, number> }>> {
+): Promise<
+  ApiResponse<{
+    date: string;
+    country: string;
+    spreads: Record<string, number>;
+    yields: Record<string, number>;
+  }>
+> {
   const params = new URLSearchParams({ country });
   if (date) params.append('date', date);
-  
-  return apiClient.get<{ date: string; country: string; spreads: Record<string, number>; yields: Record<string, number> }>(
-    `/v1/yields/spreads?${params}`
-  );
+
+  return apiClient.get<{
+    date: string;
+    country: string;
+    spreads: Record<string, number>;
+    yields: Record<string, number>;
+  }>(`/v1/yields/spreads?${params}`);
 }
 
 /**
@@ -167,10 +177,7 @@ export async function getMacroSeriesList(
   if (provider) params.append('provider', provider);
   if (country) params.append('country', country);
   if (category) params.append('category', category);
-  
+
   const query = params.toString();
   return apiClient.get<MacroSeriesListItem[]>(`/v1/macro/series${query ? `?${query}` : ''}`);
 }
-
-
-

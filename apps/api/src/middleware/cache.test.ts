@@ -1,6 +1,6 @@
 /**
  * Tests para cache middleware
- * 
+ *
  * AI_DECISION: Tests unitarios para middleware de cache Redis
  * Justificación: Validación crítica de caching para performance
  * Impacto: Prevenir errores en cache que afecten performance

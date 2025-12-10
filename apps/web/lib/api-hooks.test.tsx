@@ -1,6 +1,6 @@
 /**
  * Tests para api-hooks (SWR hooks)
- * 
+ *
  * AI_DECISION: Tests unitarios para hooks SWR
  * Justificación: Validación crítica de hooks de datos y cache invalidation
  * Impacto: Prevenir errores en fetching de datos y gestión de cache
@@ -24,21 +24,21 @@ import {
   useAumRows,
   useInvalidateContactsCache,
   useCapacitaciones,
-  useInvalidateCapacitacionesCache
+  useInvalidateCapacitacionesCache,
 } from './api-hooks';
 import { API_BASE_URL } from './api-url';
 
 // Mock dependencies
 vi.mock('./api-url', () => ({
-  API_BASE_URL: 'http://localhost:3001'
+  API_BASE_URL: 'http://localhost:3001',
 }));
 
 vi.mock('./fetch-client', () => ({
-  fetchJson: vi.fn()
+  fetchJson: vi.fn(),
 }));
 
 vi.mock('../app/auth/AuthContext', () => ({
-  useAuth: vi.fn()
+  useAuth: vi.fn(),
 }));
 
 vi.mock('swr', async () => {
@@ -46,7 +46,7 @@ vi.mock('swr', async () => {
   return {
     ...actual,
     default: vi.fn(),
-    useSWRConfig: vi.fn()
+    useSWRConfig: vi.fn(),
   };
 });
 
@@ -59,7 +59,7 @@ describe('api-hooks', () => {
     id: 'user-123',
     email: 'test@example.com',
     role: 'advisor' as const,
-    fullName: 'Test User'
+    fullName: 'Test User',
   };
 
   const mockMutate = vi.fn();
@@ -69,7 +69,7 @@ describe('api-hooks', () => {
     vi.clearAllMocks();
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({ user: mockUser });
     (useSWRConfig as ReturnType<typeof vi.fn>).mockReturnValue({
-      mutate: mockMutateGlobal
+      mutate: mockMutateGlobal,
     });
   });
 
@@ -77,14 +77,14 @@ describe('api-hooks', () => {
     it('debería retornar contacts cuando hay usuario autenticado', () => {
       const mockData = {
         success: true,
-        data: [{ id: '1', firstName: 'John' }]
+        data: [{ id: '1', firstName: 'John' }],
       };
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: mockData,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useContacts());
@@ -100,7 +100,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useContacts());
@@ -113,7 +113,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useContacts('advisor-123'));
@@ -124,7 +124,7 @@ describe('api-hooks', () => {
         expect.objectContaining({
           revalidateOnFocus: false,
           revalidateOnReconnect: false,
-          revalidateIfStale: false
+          revalidateIfStale: false,
         })
       );
     });
@@ -135,7 +135,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: mockError,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useContacts());
@@ -149,14 +149,14 @@ describe('api-hooks', () => {
     it('debería retornar stages cuando hay usuario', () => {
       const mockData = {
         success: true,
-        data: [{ id: '1', name: 'Stage 1' }]
+        data: [{ id: '1', name: 'Stage 1' }],
       };
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: mockData,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => usePipelineStages());
@@ -166,7 +166,7 @@ describe('api-hooks', () => {
         `${API_BASE_URL}/v1/pipeline/stages`,
         expect.any(Function),
         expect.objectContaining({
-          dedupingInterval: 30000
+          dedupingInterval: 30000,
         })
       );
     });
@@ -177,7 +177,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => usePipelineStages());
@@ -190,14 +190,14 @@ describe('api-hooks', () => {
     it('debería retornar advisors cuando hay usuario', () => {
       const mockData = {
         success: true,
-        data: [{ id: '1', email: 'advisor@example.com' }]
+        data: [{ id: '1', email: 'advisor@example.com' }],
       };
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: mockData,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useAdvisors());
@@ -207,7 +207,7 @@ describe('api-hooks', () => {
         `${API_BASE_URL}/v1/users/advisors`,
         expect.any(Function),
         expect.objectContaining({
-          dedupingInterval: 30000
+          dedupingInterval: 30000,
         })
       );
     });
@@ -219,7 +219,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useTags());
@@ -236,7 +236,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useTags('task'));
@@ -253,14 +253,14 @@ describe('api-hooks', () => {
     it('debería retornar contact cuando hay usuario e id', () => {
       const mockData = {
         success: true,
-        data: { id: 'contact-123', firstName: 'John' }
+        data: { id: 'contact-123', firstName: 'John' },
       };
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: mockData,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useContactDetail('contact-123'));
@@ -279,7 +279,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useContactDetail('contact-123'));
@@ -294,7 +294,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useBrokerAccounts('contact-123'));
@@ -313,7 +313,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => usePortfolioAssignments('contact-123'));
@@ -332,7 +332,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useTasks('contact-123'));
@@ -351,7 +351,7 @@ describe('api-hooks', () => {
         data: { success: true, data: [] },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useNotes('contact-123'));
@@ -368,14 +368,14 @@ describe('api-hooks', () => {
     it('debería retornar stages del board', () => {
       const mockData = {
         success: true,
-        data: [{ id: '1', contacts: [] }]
+        data: [{ id: '1', contacts: [] }],
       };
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: mockData,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => usePipelineBoard());
@@ -385,7 +385,7 @@ describe('api-hooks', () => {
         `${API_BASE_URL}/v1/pipeline/board`,
         expect.any(Function),
         expect.objectContaining({
-          dedupingInterval: 30000
+          dedupingInterval: 30000,
         })
       );
     });
@@ -395,14 +395,14 @@ describe('api-hooks', () => {
     it('debería construir key con portfolioIds y benchmarkIds', () => {
       const mockPostFetcher = vi.fn().mockResolvedValue({
         success: true,
-        data: { results: [] }
+        data: { results: [] },
       });
-      
+
       (useSWR as ReturnType<typeof vi.fn>).mockReturnValue({
         data: { success: true, data: { results: [] } },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => usePortfolioComparison(['p1', 'p2'], ['b1'], '1Y'));
@@ -410,11 +410,11 @@ describe('api-hooks', () => {
       expect(useSWR).toHaveBeenCalledWith(
         expect.arrayContaining([
           `${API_BASE_URL}/v1/analytics/compare`,
-          { portfolioIds: ['p1', 'p2'], benchmarkIds: ['b1'], period: '1Y' }
+          { portfolioIds: ['p1', 'p2'], benchmarkIds: ['b1'], period: '1Y' },
         ]),
         expect.any(Function),
         expect.objectContaining({
-          revalidateIfStale: true
+          revalidateIfStale: true,
         })
       );
     });
@@ -424,7 +424,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => usePortfolioComparison([], [], '1Y'));
@@ -440,12 +440,12 @@ describe('api-hooks', () => {
           success: true,
           data: {
             rows: [],
-            pagination: { total: 0, limit: 50, offset: 0, hasMore: false }
-          }
+            pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+          },
         },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useAumRows({ limit: 10, offset: 20 }));
@@ -468,12 +468,12 @@ describe('api-hooks', () => {
           success: true,
           data: {
             rows: [],
-            pagination: { total: 0, limit: 50, offset: 0, hasMore: false }
-          }
+            pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+          },
         },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useAumRows());
@@ -490,12 +490,12 @@ describe('api-hooks', () => {
         data: {
           success: true,
           data: {
-            rows: [{ id: '1' }]
-          }
+            rows: [{ id: '1' }],
+          },
         },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useAumRows());
@@ -509,7 +509,7 @@ describe('api-hooks', () => {
         total: 0,
         limit: 50,
         offset: 0,
-        hasMore: false
+        hasMore: false,
       });
     });
   });
@@ -531,11 +531,11 @@ describe('api-hooks', () => {
         data: {
           success: true,
           data: [],
-          pagination: { total: 0, limit: 50, offset: 0, hasMore: false }
+          pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
         },
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       renderHook(() => useCapacitaciones({ tema: 'test', search: 'query', limit: 10, offset: 0 }));
@@ -557,7 +557,7 @@ describe('api-hooks', () => {
         data: undefined,
         error: null,
         isLoading: false,
-        mutate: mockMutate
+        mutate: mockMutate,
       });
 
       const { result } = renderHook(() => useCapacitaciones());
@@ -567,7 +567,7 @@ describe('api-hooks', () => {
         total: 0,
         limit: 50,
         offset: 0,
-        hasMore: false
+        hasMore: false,
       });
     });
   });
@@ -583,4 +583,3 @@ describe('api-hooks', () => {
     });
   });
 });
-

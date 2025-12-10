@@ -1,6 +1,6 @@
 /**
  * Tags Router - Main Entry Point
- * 
+ *
  * Combines all tag-related handlers into a single router:
  * - /tags/* - Tag CRUD operations
  * - Contact-tag relationships

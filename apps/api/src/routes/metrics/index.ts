@@ -1,6 +1,6 @@
 /**
  * Metrics Routes - Main Entry Point
- * 
+ *
  * Combines all metrics route modules
  */
 
@@ -15,4 +15,3 @@ router.use(contactsRouter);
 router.use(goalsRouter);
 
 export default router;
-

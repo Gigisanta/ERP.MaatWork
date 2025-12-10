@@ -8,7 +8,7 @@
 import { Router, type Request, type Response } from 'express';
 import { sql } from 'drizzle-orm';
 import { db } from '@cactus/db';
-import { getCacheHealth } from '../utils/cache';
+import { getCacheHealth } from '../utils/performance/cache';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';
 
@@ -16,7 +16,7 @@ const router = Router();
 
 /**
  * GET /health - Basic health check (public)
- * 
+ *
  * AI_DECISION: Mantener createAsyncHandler para formato de respuesta personalizado
  * Justificación: Health check usa formato específico { status, timestamp, database } que difiere del formato estándar { success, data }
  * Impacto: Mantiene compatibilidad con sistemas de monitoreo que esperan este formato
@@ -82,7 +82,7 @@ router.get(
 
 /**
  * GET /health/database - Database health check (admin only)
- * 
+ *
  * AI_DECISION: Migrar a createRouteHandler ya que retorna formato estándar { success, data }
  * Justificación: El handler retorna formato estándar, no necesita control directo de res
  * Impacto: Consistencia con otros endpoints y manejo automático de errores

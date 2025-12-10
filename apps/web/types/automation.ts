@@ -57,4 +57,3 @@ export interface UpdateAutomationConfigRequest extends UpdateRequest<AutomationC
   enabled?: boolean;
   config?: AutomationConfigData;
 }
-

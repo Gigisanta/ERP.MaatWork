@@ -11,7 +11,7 @@ import { db } from '@cactus/db';
 import { benchmarkDefinitions, benchmarkComponents } from '@cactus/db/schema';
 import { sql } from 'drizzle-orm';
 import { UserRole } from '@/auth/types';
-import { benchmarksCacheUtil, normalizeCacheKey } from '@/utils/cache';
+import { benchmarksCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { HttpError, createRouteHandler } from '@/utils/route-handler';
 import type { BenchmarkListItem } from '../types';
 import { cache } from '@/middleware/cache';

@@ -1,6 +1,6 @@
 /**
  * Visual regression tests para página de analytics
- * 
+ *
  * AI_DECISION: Tests visuales para analytics
  * Justificación: Detectar cambios visuales no intencionales
  * Impacto: Prevenir regresiones visuales
@@ -39,4 +39,3 @@ test.describe('Analytics Page Visual Regression', () => {
     await expect(page).toHaveScreenshot('analytics-with-data.png', { fullPage: true });
   });
 });
-

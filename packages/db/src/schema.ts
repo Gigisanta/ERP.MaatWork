@@ -1,14 +1,14 @@
 /**
  * Schema exports - Mantiene compatibilidad con imports existentes
- * 
+ *
  * AI_DECISION: Refactorización de schema.ts monolítico (1759 líneas) a módulos por dominio
  * Justificación: Mejor organización, navegabilidad y mantenibilidad del código
  * Impacto: Los imports existentes siguen funcionando - este archivo ahora re-exporta desde schema/
- * 
+ *
  * AI_DECISION: Eliminar barrel exports (export *) para mejorar tree-shaking
  * Justificación: Los barrel exports rompen tree-shaking y aumentan el bundle size
  * Impacto: Mejor optimización de bundle, imports más explícitos
- * 
+ *
  * Estructura modular:
  * - schema/lookups.ts - Catálogos (lookup tables)
  * - schema/users.ts - Usuarios, equipos, membresías
@@ -31,7 +31,7 @@ export {
   lookupAssetClass,
   lookupTaskStatus,
   lookupPriority,
-  lookupNotificationType
+  lookupNotificationType,
 } from './schema/lookups';
 
 // Usuarios, equipos y configuraciones
@@ -41,7 +41,7 @@ export {
   teamMembership,
   teamMembershipRequests,
   advisorAliases,
-  careerPlanLevels
+  careerPlanLevels,
 } from './schema/users';
 
 // Contactos, pipeline, etiquetas y segmentos
@@ -54,7 +54,7 @@ export {
   tagRules,
   segments,
   segmentMembers,
-  contactTags
+  contactTags,
 } from './schema/contacts';
 
 // Notas, archivos de audio, adjuntos, tareas
@@ -64,7 +64,7 @@ export {
   attachments,
   noteTags,
   taskRecurrences,
-  tasks
+  tasks,
 } from './schema/notes-tasks';
 
 // Notificaciones y mensajería
@@ -72,14 +72,11 @@ export {
   notificationTemplates,
   notifications,
   userChannelPreferences,
-  messageLog
+  messageLog,
 } from './schema/notifications';
 
 // Instrumentos financieros
-export {
-  instruments,
-  instrumentAliases
-} from './schema/instruments';
+export { instruments, instrumentAliases } from './schema/instruments';
 
 // Integración Broker
 export {
@@ -90,7 +87,7 @@ export {
   brokerAccounts,
   brokerBalances,
   brokerTransactions,
-  brokerPositions
+  brokerPositions,
 } from './schema/broker';
 
 // AUM Imports
@@ -98,7 +95,7 @@ export {
   aumImportFiles,
   aumImportRows,
   advisorAccountMapping,
-  aumMonthlySnapshots
+  aumMonthlySnapshots,
 } from './schema/aum';
 
 // Carteras
@@ -108,7 +105,7 @@ export {
   clientPortfolioAssignments,
   clientPortfolioOverrides,
   portfolioMonitoringSnapshot,
-  portfolioMonitoringDetails
+  portfolioMonitoringDetails,
 } from './schema/portfolios';
 
 // Reportes y métricas
@@ -118,14 +115,11 @@ export {
   activityEvents,
   dailyMetricsUser,
   monthlyGoals,
-  aumSnapshots
+  aumSnapshots,
 } from './schema/reports';
 
 // Auditoría y alertas
-export {
-  auditLogs,
-  alertPolicies
-} from './schema/audit';
+export { auditLogs, alertPolicies } from './schema/audit';
 
 // Benchmarks y precios
 export {
@@ -134,7 +128,7 @@ export {
   priceSnapshots,
   pricesDaily,
   pricesIntraday,
-  metricDefinitions
+  metricDefinitions,
 } from './schema/benchmarks';
 
 // Capacitaciones

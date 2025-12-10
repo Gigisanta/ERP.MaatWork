@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Script de verificaciones pre-commit
- * 
+ *
  * Ejecuta verificaciones rápidas en archivos staged para prevenir código muerto
  * y problemas comunes antes de commit
  */
@@ -24,8 +24,8 @@ function getStagedFiles(): string[] {
     });
     return result
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
   } catch (error) {
     console.warn('Could not get staged files:', error);
     return [];
@@ -40,11 +40,9 @@ function checkUnusedImports(files: string[]): CheckResult {
     errors: [],
   };
 
-  const tsFiles = files.filter(
-    f => f.endsWith('.ts') || f.endsWith('.tsx')
-  ).filter(
-    f => !f.includes('.test.') && !f.includes('.spec.')
-  );
+  const tsFiles = files
+    .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'))
+    .filter((f) => !f.includes('.test.') && !f.includes('.spec.'));
 
   if (tsFiles.length === 0) {
     return result;
@@ -78,11 +76,9 @@ function checkDeadCode(files: string[]): CheckResult {
     errors: [],
   };
 
-  const tsFiles = files.filter(
-    f => f.endsWith('.ts') || f.endsWith('.tsx')
-  ).filter(
-    f => !f.includes('.test.') && !f.includes('.spec.')
-  );
+  const tsFiles = files
+    .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'))
+    .filter((f) => !f.includes('.test.') && !f.includes('.spec.'));
 
   if (tsFiles.length === 0) {
     return result;
@@ -100,7 +96,9 @@ function checkDeadCode(files: string[]): CheckResult {
           { encoding: 'utf-8', cwd: process.cwd(), stdio: 'pipe' }
         );
         // Si hay salida, hay código muerto potencial
-        result.warnings.push('Se encontró código muerto potencial. Ejecuta "pnpm audit:dead-code" para detalles.');
+        result.warnings.push(
+          'Se encontró código muerto potencial. Ejecuta "pnpm audit:dead-code" para detalles.'
+        );
       } catch (error) {
         // ts-prune puede fallar si no encuentra código muerto o hay errores
         // No es crítico en pre-commit
@@ -122,8 +120,11 @@ function checkUnusedDependencies(files: string[]): CheckResult {
   };
 
   // Solo verificar si package.json cambió
-  const packageJsonChanged = files.some(f => 
-    f.includes('package.json') && !f.includes('package-lock.json') && !f.includes('pnpm-lock.yaml')
+  const packageJsonChanged = files.some(
+    (f) =>
+      f.includes('package.json') &&
+      !f.includes('package-lock.json') &&
+      !f.includes('pnpm-lock.yaml')
   );
 
   if (!packageJsonChanged) {
@@ -132,14 +133,19 @@ function checkUnusedDependencies(files: string[]): CheckResult {
 
   try {
     // Ejecutar depcheck solo si package.json cambió
-    const output = execSync('npx depcheck --ignores="@types/*,eslint*,prettier,vitest,@vitest/*,playwright,@playwright/*,turbo,husky,lint-staged,@changesets/*,@lhci/*,rimraf,chalk,ts-prune,knip,unimport" 2>&1', {
-      encoding: 'utf-8',
-      cwd: process.cwd(),
-      stdio: 'pipe',
-    });
+    const output = execSync(
+      'npx depcheck --ignores="@types/*,eslint*,prettier,vitest,@vitest/*,playwright,@playwright/*,turbo,husky,lint-staged,@changesets/*,@lhci/*,rimraf,chalk,ts-prune,knip,unimport" 2>&1',
+      {
+        encoding: 'utf-8',
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      }
+    );
 
     if (output && output.trim().length > 0 && !output.includes('No depcheck issue')) {
-      result.warnings.push('Se encontraron dependencias no usadas. Ejecuta "pnpm audit:deps" para detalles.');
+      result.warnings.push(
+        'Se encontraron dependencias no usadas. Ejecuta "pnpm audit:deps" para detalles.'
+      );
     }
   } catch (error) {
     // depcheck puede fallar, no es crítico
@@ -157,21 +163,25 @@ function checkDeprecatedImports(files: string[]): CheckResult {
   };
 
   const tsFiles = files.filter(
-    f => (f.endsWith('.ts') || f.endsWith('.tsx')) && 
-    !f.includes('.test.') && !f.includes('.spec.')
+    (f) =>
+      (f.endsWith('.ts') || f.endsWith('.tsx')) && !f.includes('.test.') && !f.includes('.spec.')
   );
 
   for (const file of tsFiles) {
     try {
       const content = readFileSync(file, 'utf-8');
-      
+
       // Buscar imports de código deprecado conocido
-      if (content.includes("from './debug-console'") || 
-          content.includes("from '../lib/debug-console'") ||
-          content.includes("from '@/lib/debug-console'")) {
-        if (!content.includes("from './debug-console/index'") &&
-            !content.includes("from '../lib/debug-console/index'") &&
-            !content.includes("from '@/lib/debug-console/index'")) {
+      if (
+        content.includes("from './debug-console'") ||
+        content.includes("from '../lib/debug-console'") ||
+        content.includes("from '@/lib/debug-console'")
+      ) {
+        if (
+          !content.includes("from './debug-console/index'") &&
+          !content.includes("from '../lib/debug-console/index'") &&
+          !content.includes("from '@/lib/debug-console/index'")
+        ) {
           result.errors.push(`${file}: Usa './debug-console/index' en lugar de './debug-console'`);
           result.passed = false;
         }
@@ -246,25 +256,3 @@ if (require.main === module) {
 }
 
 export { checkDeprecatedImports, checkUnusedImports, checkDeadCode, checkUnusedDependencies };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

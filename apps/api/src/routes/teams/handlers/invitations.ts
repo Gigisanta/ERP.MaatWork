@@ -12,7 +12,7 @@ import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactu
 import { eq, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { validateUuidParam } from '../../../utils/validation/common-schemas';
 import type { PendingInvite } from '../../../types/teams';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 
@@ -71,11 +71,9 @@ export const acceptInvitation = createRouteHandler(async (req: Request) => {
       resolvedByUserId: teamMembershipRequests.resolvedByUserId,
       teamId: teams.id,
       teamName: teams.name,
-      teamDescription: teams.description,
       teamManagerUserId: teams.managerUserId,
       teamCalendarUrl: teams.calendarUrl,
       teamCreatedAt: teams.createdAt,
-      teamUpdatedAt: teams.updatedAt,
     })
     .from(teamMembershipRequests)
     .leftJoin(teams, eq(teams.managerUserId, teamMembershipRequests.managerId))
@@ -109,11 +107,9 @@ export const acceptInvitation = createRouteHandler(async (req: Request) => {
     ? {
         id: row.teamId,
         name: row.teamName,
-        description: row.teamDescription,
         managerUserId: row.teamManagerUserId,
         calendarUrl: row.teamCalendarUrl,
         createdAt: row.teamCreatedAt,
-        updatedAt: row.teamUpdatedAt,
       }
     : null;
   if (!managerTeam) {
@@ -225,17 +221,23 @@ export const createInvitation = createAsyncHandler(async (req: Request, res: Res
     .returning();
 
   req.log.info({ teamId: id, userId, managerId }, 'team invitation created');
-  return res
-    .status(201)
-    .json({
-      success: true,
-      data: reqRow || { created: false, reason: 'already_exists' },
-      requestId: req.requestId,
-    });
+  return res.status(201).json({
+    success: true,
+    data: reqRow || { created: false, reason: 'already_exists' },
+    requestId: req.requestId,
+  });
 });
 
 /**
- * GET /teams/:id/advisors - List advisors eligible (no team, no pending invite to this manager)
+ * GET /teams/:id/advisors - List eligible users (managers, advisors, admins) that can be added to this team
+ * 
+ * AI_DECISION: Allow adding users of different roles, not just advisors
+ * Justificación: Teams should be able to include managers, administratives, and advisors
+ * Impacto: More flexible team composition, allows cross-functional teams
+ * 
+ * AI_DECISION: Only exclude users already in THIS team, allow users in other teams
+ * Justificación: Users can be moved between teams or be part of multiple teams
+ * Impacto: More flexible team management, allows reassignment
  */
 export const listEligibleAdvisors = createRouteHandler(async (req: Request) => {
   let teamId: string;
@@ -261,17 +263,19 @@ export const listEligibleAdvisors = createRouteHandler(async (req: Request) => {
   // Justificación: Reducir de 5 queries secuenciales a 2-3 queries en paralelo
   // Impacto: Reduce latencia significativamente al ejecutar queries independientes simultáneamente
 
-  // Get team info and members in parallel
-  const [teamRow, teamMembers, allMembers] = await Promise.all([
+  // Get team info, members of THIS team, and all team memberships (to show if user is in another team)
+  const [teamRow, teamMembers, allTeamMemberships] = await Promise.all([
     // Manager of this team
     dbi.select().from(teams).where(eq(teams.id, teamId)).limit(1),
-    // Members of this team
+    // Members of THIS team only
     dbi
       .select({ userId: teamMembership.userId })
       .from(teamMembership)
       .where(eq(teamMembership.teamId, teamId)),
-    // Users that are in any team (enforce one-team policy)
-    dbi.select({ userId: teamMembership.userId }).from(teamMembership),
+    // All team memberships (to check if user is in another team)
+    dbi
+      .select({ userId: teamMembership.userId, teamId: teamMembership.teamId })
+      .from(teamMembership),
   ]);
 
   type TeamMemberWithUserId = {
@@ -280,13 +284,19 @@ export const listEligibleAdvisors = createRouteHandler(async (req: Request) => {
   const teamMemberIds = new Set<string>(
     teamMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id)
   );
-  const anyTeamMemberIds = new Set<string>(
-    allMembers.map((r: TeamMemberWithUserId) => r.userId || '').filter((id: string) => id)
-  );
+  
+  // Map of userId -> teamId for users in other teams (to show in UI)
+  const userTeamMap = new Map<string, string>();
+  for (const membership of allTeamMemberships) {
+    if (membership.userId && membership.teamId && membership.teamId !== teamId) {
+      userTeamMap.set(membership.userId, membership.teamId);
+    }
+  }
+  
   const managerId = teamRow[0]?.managerUserId as string | undefined;
 
-  // Get pending invites and advisors in parallel
-  const [pendingInvites, advisors] = await Promise.all([
+  // Get pending invites and eligible users (managers, advisors, admins) in parallel
+  const [pendingInvites, eligibleUsers] = await Promise.all([
     // Users with pending invite to this manager
     managerId
       ? dbi
@@ -295,27 +305,58 @@ export const listEligibleAdvisors = createRouteHandler(async (req: Request) => {
           .where(
             and(
               eq(teamMembershipRequests.managerId, managerId),
-              eq(teamMembershipRequests.status, 'pending')
+              inArray(teamMembershipRequests.status, ['pending', 'invited'])
             )
           )
       : Promise.resolve([]),
-    // All advisors
+    // All active users with roles that can be added to teams (advisor, manager, admin)
+    // AI_DECISION: Include multiple roles, not just advisors
+    // Justificación: Teams can include managers, administratives, and advisors
+    // Impacto: More flexible team composition
     dbi
-      .select({ id: users.id, email: users.email, fullName: users.fullName })
+      .select({ 
+        id: users.id, 
+        email: users.email, 
+        fullName: users.fullName,
+        role: users.role,
+        isActive: users.isActive,
+      })
       .from(users)
-      .where(eq(users.role, 'advisor'))
+      .where(
+        and(
+          inArray(users.role, ['advisor', 'manager', 'admin']),
+          eq(users.isActive, true)
+        )
+      )
       .limit(500),
   ]);
 
   const pendingInviteIds = new Set<string>(pendingInvites.map((p: PendingInvite) => p.userId));
 
-  type Advisor = {
+  type EligibleUser = {
     id: string;
+    email: string;
+    fullName: string | null;
+    role: string;
+    isActive: boolean;
   };
-  const eligible = advisors.filter(
-    (a: Advisor) =>
-      !anyTeamMemberIds.has(a.id) && !pendingInviteIds.has(a.id) && !teamMemberIds.has(a.id)
-  );
+  
+  // Filter: exclude only users already in THIS team or with pending invite
+  // Allow users in other teams (they can be moved/reassigned)
+  const eligible = eligibleUsers
+    .filter(
+      (u: EligibleUser) =>
+        !teamMemberIds.has(u.id) && !pendingInviteIds.has(u.id)
+    )
+    .map((u: EligibleUser) => ({
+      id: u.id,
+      email: u.email,
+      fullName: u.fullName,
+      role: u.role,
+      isActive: u.isActive,
+      // Include info about whether user is in another team
+      currentTeamId: userTeamMap.get(u.id) || null,
+    }));
 
   return eligible;
 });

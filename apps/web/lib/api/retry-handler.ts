@@ -114,12 +114,12 @@ function defaultShouldRetry(error: unknown): boolean {
   if (error instanceof ApiError) {
     return shouldRetry(error);
   }
-  
+
   // Retry on network errors
   if (error instanceof TypeError && error.message.includes('fetch')) {
     return true;
   }
-  
+
   // Check for status in error-like objects
   if (typeof error === 'object' && error !== null) {
     const status = (error as { status?: number }).status;
@@ -127,21 +127,21 @@ function defaultShouldRetry(error: unknown): boolean {
       return status >= 500 || status === 504 || status === 429;
     }
   }
-  
+
   return false;
 }
 
 /**
  * Execute a function with automatic retry and exponential backoff
- * 
+ *
  * AI_DECISION: Implementar retry automático con exponential backoff
  * Justificación: Mejora la resiliencia ante errores transitorios de servidor
  * Impacto: Menos errores visibles al usuario, mejor experiencia general
- * 
+ *
  * @param fn - Async function to execute
  * @param options - Retry options
  * @returns Promise resolving to function result or rejecting after max retries
- * 
+ *
  * @example
  * ```tsx
  * const result = await retryWithBackoff(
@@ -219,13 +219,13 @@ export async function retryWithBackoff<T>(
 
 /**
  * Creates a wrapper function that automatically retries on failure
- * 
+ *
  * @example
  * ```tsx
  * const fetchWithRetry = withRetry(async (id: string) => {
  *   return await fetchContact(id);
  * }, { maxRetries: 2 });
- * 
+ *
  * const contact = await fetchWithRetry('123');
  * ```
  */
@@ -248,19 +248,21 @@ export interface RetryStatus {
 
 /**
  * Creates a retry controller for use with hooks
- * 
+ *
  * @example
  * ```tsx
  * const retryController = createRetryController({
  *   onStatusChange: setRetryStatus
  * });
- * 
+ *
  * await retryController.execute(() => fetchData());
  * ```
  */
-export function createRetryController(options: {
-  onStatusChange?: (status: RetryStatus) => void;
-} & RetryWithBackoffOptions = {}) {
+export function createRetryController(
+  options: {
+    onStatusChange?: (status: RetryStatus) => void;
+  } & RetryWithBackoffOptions = {}
+) {
   const { onStatusChange, ...retryOptions } = options;
 
   let currentStatus: RetryStatus = {

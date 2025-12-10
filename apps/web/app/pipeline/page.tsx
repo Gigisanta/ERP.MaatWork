@@ -12,7 +12,7 @@ export default async function PipelinePage() {
   // Check authentication via cookies (middleware handles redirect, but we verify here too)
   const cookieStore = await cookies();
   const tokenCookie = cookieStore.get('token');
-  
+
   if (!tokenCookie) {
     redirect('/login');
   }
@@ -20,7 +20,7 @@ export default async function PipelinePage() {
   // Fetch data server-side
   let initialStages: PipelineStageWithContacts[] | null = null;
   let error: string | null = null;
-  
+
   try {
     const response = await getPipelineBoard();
     if (!response.success || !response.data) {

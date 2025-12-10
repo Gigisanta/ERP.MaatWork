@@ -82,8 +82,3 @@ export class AuthManager {
     return true;
   }
 }
-
-
-
-
-

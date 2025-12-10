@@ -1,6 +1,6 @@
 /**
  * Tests para BusinessLineChart component
- * 
+ *
  * AI_DECISION: Tests unitarios para gráfico de líneas de negocio
  * Justificación: Validación crítica de visualización de datos por línea de negocio
  * Impacto: Prevenir errores en análisis de líneas de negocio
@@ -14,21 +14,23 @@ import type { MonthlyMetrics } from '@/types/metrics';
 // Mock dependencies
 vi.mock('recharts', () => ({
   BarChart: ({ children, data }: any) => (
-    <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>{children}</div>
+    <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
+      {children}
+    </div>
   ),
   Bar: () => null,
   XAxis: () => null,
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>
+  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
 }));
 
 describe('BusinessLineChart', () => {
   const mockBusinessLineClosures: MonthlyMetrics['businessLineClosures'] = {
     inversiones: 5,
     zurich: 3,
-    patrimonial: 2
+    patrimonial: 2,
   };
 
   beforeEach(() => {
@@ -54,7 +56,7 @@ describe('BusinessLineChart', () => {
     const zeroData: MonthlyMetrics['businessLineClosures'] = {
       inversiones: 0,
       zurich: 0,
-      patrimonial: 0
+      patrimonial: 0,
     };
 
     const { container } = render(<BusinessLineChart businessLineClosures={zeroData} />);
@@ -63,4 +65,3 @@ describe('BusinessLineChart', () => {
     expect(chart).toBeInTheDocument();
   });
 });
-

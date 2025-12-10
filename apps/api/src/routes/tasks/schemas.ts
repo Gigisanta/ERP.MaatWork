@@ -7,7 +7,13 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema, paginationQuerySchema, dateSchema } from '../../utils/common-schemas';
+import {
+  uuidSchema,
+  paginationQuerySchema,
+  dateSchema,
+  titleSchema,
+  descriptionSchema,
+} from '../../utils/validation/common-schemas';
 
 // Query parameter schemas
 // AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects
@@ -34,19 +40,15 @@ export const exportTasksQuerySchema = z.object({
 
 // Body schemas
 export const createTaskSchema = z.object({
-  contactId: z.string().uuid(),
-  meetingId: z.string().uuid().optional().nullable(),
-  title: z.string().min(1).max(500),
-  description: z.string().optional().nullable(),
+  contactId: uuidSchema,
+  meetingId: uuidSchema.optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   status: z.string(), // Referencia a lookupTaskStatus
   dueDate: z.string().optional().nullable(), // ISO date
-  dueTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional()
-    .nullable(), // HH:MM
+  dueTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(), // HH:MM
   priority: z.string(), // Referencia a lookupPriority
-  assignedToUserId: z.string().uuid(),
+  assignedToUserId: uuidSchema,
   recurrence: z
     .object({
       rrule: z.string(),

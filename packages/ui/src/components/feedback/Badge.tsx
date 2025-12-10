@@ -1,9 +1,17 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Visual style variant */
-  variant?: 'default' | 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error' | 'outline';
+  variant?:
+    | 'default'
+    | 'primary'
+    | 'secondary'
+    | 'accent'
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'outline';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
   className?: string;
@@ -11,7 +19,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 /**
  * Badge component with brand styling.
- * 
+ *
  * @example
  * ```tsx
  * <Badge variant="primary">New</Badge>

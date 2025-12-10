@@ -2,7 +2,7 @@
 
 /**
  * Asset Detail Page - Bloomberg Terminal style asset analysis
- * 
+ *
  * AI_DECISION: Dedicated page for detailed asset analysis
  * Justificación: Full-screen asset analysis with all Bloomberg Terminal features
  * Impacto: Better UX for deep-dive analysis
@@ -14,7 +14,22 @@ import { useRequireAuth } from '../../auth/useRequireAuth';
 import { usePageTitle } from '../../components/PageTitleContext';
 import dynamic from 'next/dynamic';
 import { ArrowLeft } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Heading, Text, Stack, Tabs, TabsList, TabsTrigger, TabsContent, Spinner, Alert } from '@cactus/ui';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Heading,
+  Text,
+  Stack,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Spinner,
+  Alert,
+} from '@cactus/ui';
 import AssetSnapshot from '../../components/bloomberg/AssetSnapshot';
 // AI_DECISION: Lazy load OHLCVChart to reduce initial bundle size
 // Justificación: OHLCVChart includes heavy chart rendering logic, loading it async reduces initial bundle by 40-60KB
@@ -25,7 +40,7 @@ const OHLCVChart = dynamic(() => import('../../components/bloomberg/OHLCVChart')
       <Spinner size="md" />
     </div>
   ),
-  ssr: false
+  ssr: false,
 });
 
 // AI_DECISION: Lazy load heavy Bloomberg components that are not immediately visible
@@ -33,33 +48,33 @@ const OHLCVChart = dynamic(() => import('../../components/bloomberg/OHLCVChart')
 // Impacto: Reduces initial bundle size by ~50-100KB, faster page load
 const YieldCurveChart = dynamic(() => import('../../components/bloomberg/YieldCurveChart'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 const MacroPanel = dynamic(() => import('../../components/bloomberg/MacroPanel'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 
 // Lazy load heavy components
 const FundamentalsTab = dynamic(() => import('../../components/bloomberg/FundamentalsTab'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 const EventsTab = dynamic(() => import('../../components/bloomberg/EventsTab'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 const TechnicalSignals = dynamic(() => import('../../components/bloomberg/TechnicalSignals'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 const RiskMetrics = dynamic(() => import('../../components/bloomberg/RiskMetrics'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 const SocialFeed = dynamic(() => import('../../components/bloomberg/SocialFeed'), {
   loading: () => <Spinner size="md" />,
-  ssr: false
+  ssr: false,
 });
 
 export default function AssetDetailPage() {
@@ -67,9 +82,9 @@ export default function AssetDetailPage() {
   const params = useParams();
   const router = useRouter();
   const symbol = params.symbol as string;
-  
+
   usePageTitle(`${symbol} - Bloomberg Terminal`);
-  
+
   const [activeTab, setActiveTab] = useState('overview');
 
   if (loading) {
@@ -92,10 +107,7 @@ export default function AssetDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={() => router.push('/portfolios')}
-        >
+        <Button variant="outline" onClick={() => router.push('/portfolios')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver
         </Button>
@@ -162,4 +174,3 @@ export default function AssetDetailPage() {
     </div>
   );
 }
-

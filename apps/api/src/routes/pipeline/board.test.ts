@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline board routes
- * 
+ *
  * AI_DECISION: Tests unitarios para board kanban
  * Justificación: Validación crítica de board view con contactos
  * Impacto: Prevenir errores en visualización de pipeline
@@ -20,20 +20,20 @@ vi.mock('@cactus/db', () => ({
   eq: vi.fn(),
   and: vi.fn(),
   isNull: vi.fn(),
-  inArray: vi.fn()
+  inArray: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
-  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} }))
+  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} })),
 }));
 
 vi.mock('../../utils/pipeline-stages', () => ({
-  ensureDefaultPipelineStages: vi.fn()
+  ensureDefaultPipelineStages: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -48,11 +48,11 @@ describe('GET /pipeline/board', () => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -61,35 +61,36 @@ describe('GET /pipeline/board', () => {
   it('debería retornar board con stages y contactos agrupados', async () => {
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const mockStages = [
       { id: 'stage-1', name: 'Stage 1', order: 1, isActive: true },
-      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true }
+      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true },
     ];
 
     const mockContacts = [
       { id: 'contact-1', pipelineStageId: 'stage-1', firstName: 'John' },
-      { id: 'contact-2', pipelineStageId: 'stage-1', firstName: 'Jane' }
+      { id: 'contact-2', pipelineStageId: 'stage-1', firstName: 'Jane' },
     ];
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue(mockStages)
-          })
-        })
+            orderBy: vi.fn().mockResolvedValue(mockStages),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(mockContacts)
-        })
+          where: vi.fn().mockResolvedValue(mockContacts),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -103,10 +104,10 @@ describe('GET /pipeline/board', () => {
           contactsByStageId.set(contact.pipelineStageId, existing);
         }
       }
-      const board = stages.map(stage => ({
+      const board = stages.map((stage) => ({
         ...stage,
         contacts: contactsByStageId.get(stage.id) || [],
-        currentCount: (contactsByStageId.get(stage.id) || []).length
+        currentCount: (contactsByStageId.get(stage.id) || []).length,
       }));
       res.json({ success: true, data: board });
     };
@@ -119,12 +120,10 @@ describe('GET /pipeline/board', () => {
         data: expect.arrayContaining([
           expect.objectContaining({
             id: 'stage-1',
-            contacts: expect.arrayContaining([
-              expect.objectContaining({ id: 'contact-1' })
-            ]),
-            currentCount: 2
-          })
-        ])
+            contacts: expect.arrayContaining([expect.objectContaining({ id: 'contact-1' })]),
+            currentCount: 2,
+          }),
+        ]),
       })
     );
   });
@@ -133,7 +132,7 @@ describe('GET /pipeline/board', () => {
     mockReq.query = { assignedAdvisorId: 'advisor-123' };
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -147,4 +146,3 @@ describe('GET /pipeline/board', () => {
     expect(mockRes.json).toHaveBeenCalled();
   });
 });
-

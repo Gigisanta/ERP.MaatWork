@@ -90,8 +90,14 @@ export const listTeams = createRouteHandler(async (req: Request) => {
       throw new Error(`Team details not found for team ${team.id}`);
     }
 
+    // AI_DECISION: Explicitly include calendarUrl for all members
+    // Justificación: Ensure calendarUrl is available to all team members, not just managers
+    // Impacto: Calendar widget can be displayed for any team member
+    const teamWithCalendarUrl: Team = teamDetails;
+    
     return {
-      ...teamDetails,
+      ...teamWithCalendarUrl,
+      calendarUrl: teamWithCalendarUrl.calendarUrl ?? null,
       role: team.role,
       members,
     } as TeamWithMembers;

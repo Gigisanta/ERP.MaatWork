@@ -12,8 +12,8 @@
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "Node16",
+    "moduleResolution": "node16",
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
@@ -28,11 +28,6 @@
     },
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "node"]
   },
-  "include": ["src/**/*", "src/tailwind-preset.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
-  "exclude": [
-    "node_modules", 
-    "dist", 
-    "tests", 
-    "**/*.stories.tsx"
-  ]
+  "include": ["src/**/*", "src/tailwind-preset.ts"],
+  "exclude": ["node_modules", "dist", "tests", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx"]
 }

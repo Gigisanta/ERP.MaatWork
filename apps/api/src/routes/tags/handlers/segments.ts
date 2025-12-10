@@ -1,12 +1,12 @@
 /**
  * Segments Handlers
- * 
+ *
  * GET /segments - List segments
  * POST /segments - Create segment
  * POST /segments/:id/refresh - Refresh dynamic segment
  * GET /segments/:id/contacts - List segment contacts
  * GET /segments/:id/export - Export segment to CSV
- * 
+ *
  * AI_DECISION: Migrado a createRouteHandler/createAsyncHandler para manejo automático de errores
  * Justificación: Consistencia con otros handlers, manejo automático de errores y formato de respuesta
  * Impacto: Código más limpio, menos duplicación, mejor manejo de errores
@@ -18,15 +18,20 @@ import { eq, desc, sql, and, inArray, type InferSelectModel } from 'drizzle-orm'
 import { requireAuth } from '../../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';
 import { validate } from '../../../utils/validation';
-import { idParamSchema } from '../../../utils/common-schemas';
+import { idParamSchema } from '../../../utils/validation/common-schemas';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { PAGINATION_LIMITS } from '../../../config/api-limits';
-import { listSegmentsQuerySchema, segmentContactsQuerySchema, createSegmentSchema } from '../schemas';
+import {
+  listSegmentsQuerySchema,
+  segmentContactsQuerySchema,
+  createSegmentSchema,
+} from '../schemas';
 
 const router = Router();
 
 // GET /segments - List segments
-router.get('/', 
+router.get(
+  '/',
   requireAuth,
   validate({ query: listSegmentsQuerySchema }),
   createRouteHandler(async (req: Request) => {
@@ -44,7 +49,8 @@ router.get('/',
 );
 
 // POST /segments - Create new segment
-router.post('/', 
+router.post(
+  '/',
   requireAuth,
   validate({ body: createSegmentSchema }),
   createAsyncHandler(async (req: Request, res: Response) => {
@@ -56,7 +62,7 @@ router.post('/',
       .values({
         ...validated,
         ownerId: userId,
-        contactCount: 0
+        contactCount: 0,
       })
       .returning();
 
@@ -66,7 +72,8 @@ router.post('/',
 );
 
 // POST /segments/:id/refresh - Refresh dynamic segment
-router.post('/:id/refresh', 
+router.post(
+  '/:id/refresh',
   requireAuth,
   validate({ params: idParamSchema }),
   createRouteHandler(async (req: Request) => {
@@ -77,11 +84,7 @@ router.post('/:id/refresh',
     const accessScope = await getUserAccessScope(userId, userRole);
     const accessFilter = buildContactAccessFilter(accessScope);
 
-    const [segment] = await db()
-      .select()
-      .from(segments)
-      .where(eq(segments.id, id))
-      .limit(1);
+    const [segment] = await db().select().from(segments).where(eq(segments.id, id)).limit(1);
 
     if (!segment) {
       throw new HttpError(404, 'Segment not found');
@@ -90,15 +93,13 @@ router.post('/:id/refresh',
     if (!segment.isDynamic) {
       throw new HttpError(400, 'Segment is not dynamic');
     }
-    
+
     // AI_DECISION: Evaluación de filtros de segmentos pendiente de implementación
     // Justificación: Funcionalidad compleja que requiere evaluación de condiciones dinámicas contra contactos
     // Impacto: Los segmentos dinámicos actualmente no evalúan filtros automáticamente
     // Estado: Funcionalidad futura - actualmente retorna lista vacía como stub
     // Referencias: Requiere diseño de motor de evaluación de condiciones dinámicas
-    await db()
-      .delete(segmentMembers)
-      .where(eq(segmentMembers.segmentId, id));
+    await db().delete(segmentMembers).where(eq(segmentMembers.segmentId, id));
 
     const matchedContactIds: string[] = [];
 
@@ -107,25 +108,26 @@ router.post('/:id/refresh',
       .update(segments)
       .set({
         contactCount: matchedContactIds.length,
-        lastRefreshedAt: new Date()
+        lastRefreshedAt: new Date(),
       })
       .where(eq(segments.id, id));
 
     req.log.info({ segmentId: id, contacts: matchedContactIds.length }, 'segment refreshed');
-    
+
     return {
       segmentId: id,
-      contactCount: matchedContactIds.length
+      contactCount: matchedContactIds.length,
     };
   })
 );
 
 // GET /segments/:id/contacts - List segment contacts
-router.get('/:id/contacts', 
+router.get(
+  '/:id/contacts',
   requireAuth,
-  validate({ 
+  validate({
     params: idParamSchema,
-    query: segmentContactsQuerySchema 
+    query: segmentContactsQuerySchema,
   }),
   createRouteHandler(async (req: Request) => {
     const { id } = req.params;
@@ -151,24 +153,22 @@ router.get('/:id/contacts',
       contactsList = await db()
         .select()
         .from(contacts)
-        .where(and(
-          inArray(contacts.id, contactIds),
-          accessFilter.whereClause
-        ));
+        .where(and(inArray(contacts.id, contactIds), accessFilter.whereClause));
     }
 
     return {
       data: contactsList,
       meta: {
         limit: parseInt(limit as string),
-        offset: parseInt(offset as string)
-      }
+        offset: parseInt(offset as string),
+      },
     };
   })
 );
 
 // GET /segments/:id/export - Export segment to CSV
-router.get('/:id/export', 
+router.get(
+  '/:id/export',
   requireAuth,
   validate({ params: idParamSchema }),
   createAsyncHandler(async (req: Request, res: Response) => {
@@ -192,21 +192,23 @@ router.get('/:id/export',
       contactsList = await db()
         .select()
         .from(contacts)
-        .where(and(
-          inArray(contacts.id, contactIds),
-          accessFilter.whereClause
-        ));
+        .where(and(inArray(contacts.id, contactIds), accessFilter.whereClause));
     }
 
     // Convert to simple CSV
     const headers = ['id', 'fullName', 'email', 'phone', 'pipelineStageId', 'assignedAdvisorId'];
     const csv = [
       headers.join(','),
-      ...contactsList.map((item) => headers.map(h => item[h as keyof typeof item] || '').join(','))
+      ...contactsList.map((item) =>
+        headers.map((h) => item[h as keyof typeof item] || '').join(',')
+      ),
     ].join('\n');
 
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="segment_export_${id}_${new Date().toISOString()}.csv"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="segment_export_${id}_${new Date().toISOString()}.csv"`
+    );
     res.send(csv);
 
     req.log.info({ segmentId: id, count: contactsList.length }, 'segment exported');
@@ -214,4 +216,3 @@ router.get('/:id/export',
 );
 
 export default router;
-

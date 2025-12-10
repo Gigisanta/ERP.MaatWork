@@ -99,7 +99,7 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
   return (
     <div className="flex flex-col gap-6">
       {/* Cards de KPIs principales */}
-      <div 
+      <div
         className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 transition-all duration-500 ease-out ${
           mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
@@ -287,7 +287,7 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
 
       {/* Distribución de Riesgo para Owner - Vista visual */}
       {role === 'owner' && riskDistribution && riskDistribution.length > 0 && (
-        <div 
+        <div
           className={`p-5 bg-surface border border-border rounded-xl shadow-sm transition-all duration-500 ease-out ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}

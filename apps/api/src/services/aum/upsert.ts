@@ -6,8 +6,8 @@
  * Impacto: Reducción de tiempo de procesamiento en 40-50% y mejor confiabilidad
  */
 
-import { AUM_LIMITS } from '../../config/aum-limits';
-import { logger } from '../../utils/logger';
+import { AUM_LIMITS } from '@/config/aum-limits';
+import { logger } from '@/utils/logger';
 import { findExistingRow } from './find-existing';
 import { updateExistingRow } from './update-row';
 import { insertNewRow } from './insert-row';
@@ -99,34 +99,7 @@ export async function upsertAumRows(rows: AumRowInsert[], broker: string): Promi
   );
 
   return {
-    success: stats.errors === 0 || stats.inserted + stats.updated > 0,
+    success: stats.errors === 0,
     stats,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

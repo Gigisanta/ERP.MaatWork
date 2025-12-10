@@ -1,14 +1,14 @@
 /**
  * Job de Reporte Semanal de Performance
- * 
+ *
  * Genera reporte semanal comparando métricas semana a semana.
  * Identifica tendencias de degradación y mejoras.
- * 
+ *
  * Se ejecuta semanalmente (domingos) vía cron job.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
-import { getCacheHealth } from '../utils/cache';
+import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/database/db-logger';
+import { getCacheHealth } from '../utils/performance/cache';
 import { analyzeQueries, generateTextReport } from '../utils/query-analyzer';
 import pino from 'pino';
 import { writeFileSync } from 'fs';
@@ -48,7 +48,7 @@ export class WeeklyPerformanceReportJob {
       // Calcular cache hit rate general
       const cacheHealth = getCacheHealth();
       const cacheStats = Object.values(cacheHealth);
-      
+
       // Type for cache stats from NodeCache
       interface CacheStatsEntry {
         hits: number;
@@ -58,12 +58,17 @@ export class WeeklyPerformanceReportJob {
         vsize: number;
         hitRate: number;
       }
-      
-      const totalHits = cacheStats.reduce((sum: number, stats: CacheStatsEntry) => sum + (stats.hits || 0), 0);
-      const totalMisses = cacheStats.reduce((sum: number, stats: CacheStatsEntry) => sum + (stats.misses || 0), 0);
-      const overallCacheHitRate = totalHits + totalMisses > 0 
-        ? (totalHits / (totalHits + totalMisses)) * 100 
-        : 0;
+
+      const totalHits = cacheStats.reduce(
+        (sum: number, stats: CacheStatsEntry) => sum + (stats.hits || 0),
+        0
+      );
+      const totalMisses = cacheStats.reduce(
+        (sum: number, stats: CacheStatsEntry) => sum + (stats.misses || 0),
+        0
+      );
+      const overallCacheHitRate =
+        totalHits + totalMisses > 0 ? (totalHits / (totalHits + totalMisses)) * 100 : 0;
 
       // Crear reporte
       const report = {
@@ -76,19 +81,27 @@ export class WeeklyPerformanceReportJob {
           summary: {
             totalQueries: currentMetrics.totalQueries,
             slowQueriesCount: currentMetrics.slowQueriesCount,
-            nPlusOneQueriesCount: currentMetrics.nPlusOneQueriesCount
-          }
+            nPlusOneQueriesCount: currentMetrics.nPlusOneQueriesCount,
+          },
         },
-        textReport
+        textReport,
       };
 
       // Guardar reporte JSON
-      const reportPath = join(process.cwd(), 'docs', `WEEKLY_PERFORMANCE_REPORT_${this.getCurrentWeek()}.json`);
+      const reportPath = join(
+        process.cwd(),
+        'docs',
+        `WEEKLY_PERFORMANCE_REPORT_${this.getCurrentWeek()}.json`
+      );
       writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf-8');
       logger.info(`✅ Reporte JSON guardado en: ${reportPath}`);
 
       // Guardar reporte de texto
-      const textReportPath = join(process.cwd(), 'docs', `WEEKLY_PERFORMANCE_REPORT_${this.getCurrentWeek()}.txt`);
+      const textReportPath = join(
+        process.cwd(),
+        'docs',
+        `WEEKLY_PERFORMANCE_REPORT_${this.getCurrentWeek()}.txt`
+      );
       writeFileSync(textReportPath, textReport, 'utf-8');
       logger.info(`✅ Reporte de texto guardado en: ${textReportPath}`);
 
@@ -99,7 +112,6 @@ export class WeeklyPerformanceReportJob {
       }
 
       logger.info('✅ Reporte semanal generado exitosamente');
-
     } catch (error) {
       logger.error({ err: error }, '❌ Error generando reporte semanal');
       throw error;
@@ -121,11 +133,11 @@ export class WeeklyPerformanceReportJob {
       slowQueriesCount: slowQueries.length,
       nPlusOneQueriesCount: nPlusOneQueries.length,
       overallCacheHitRate: 0, // Se calculará después
-      topSlowQueries: slowQueries.slice(0, 10).map(q => ({
+      topSlowQueries: slowQueries.slice(0, 10).map((q) => ({
         operation: q.operationBase,
         p95Duration: q.p95Duration,
-        count: q.count
-      }))
+        count: q.count,
+      })),
     };
   }
 
@@ -153,15 +165,20 @@ export class WeeklyPerformanceReportJob {
     try {
       const { readFileSync } = await import('fs');
       const previousWeek = this.getPreviousWeek();
-      const previousReportPath = join(process.cwd(), 'docs', `WEEKLY_PERFORMANCE_REPORT_${previousWeek}.json`);
-      
+      const previousReportPath = join(
+        process.cwd(),
+        'docs',
+        `WEEKLY_PERFORMANCE_REPORT_${previousWeek}.json`
+      );
+
       const previousReportContent = readFileSync(previousReportPath, 'utf-8');
       const previousReport = JSON.parse(previousReportContent) as { metrics: WeeklyMetrics };
 
       return {
         slowQueriesChange: current.slowQueriesCount - previousReport.metrics.slowQueriesCount,
         nPlusOneChange: current.nPlusOneQueriesCount - previousReport.metrics.nPlusOneQueriesCount,
-        cacheHitRateChange: current.overallCacheHitRate - previousReport.metrics.overallCacheHitRate
+        cacheHitRateChange:
+          current.overallCacheHitRate - previousReport.metrics.overallCacheHitRate,
       };
     } catch (error) {
       // No hay reporte anterior, es la primera semana
@@ -182,4 +199,3 @@ export class WeeklyPerformanceReportJob {
     return `${now.getFullYear()}-W${weekNumber.toString().padStart(2, '0')}`;
   }
 }
-

@@ -170,7 +170,8 @@ describe('Tooltip Component', () => {
     });
 
     it('should handle long content', () => {
-      const longContent = 'This is a very long tooltip text that might wrap to multiple lines in some cases depending on the viewport width';
+      const longContent =
+        'This is a very long tooltip text that might wrap to multiple lines in some cases depending on the viewport width';
       render(
         <Tooltip content={longContent}>
           <button>Long tooltip</button>
@@ -228,4 +229,3 @@ describe('Tooltip Component', () => {
     });
   });
 });
-

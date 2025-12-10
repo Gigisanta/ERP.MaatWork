@@ -61,7 +61,8 @@ export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {}
 /**
  * Request para agregar componente de benchmark
  */
-export interface AddBenchmarkComponentRequest extends Pick<BenchmarkComponent, 'instrumentId' | 'weight'> {}
+export interface AddBenchmarkComponentRequest
+  extends Pick<BenchmarkComponent, 'instrumentId' | 'weight'> {}
 
 /**
  * Benchmark con componentes completos

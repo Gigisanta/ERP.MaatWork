@@ -182,7 +182,9 @@ describe('AlertDescription Component', () => {
   });
 
   it('should accept custom className', () => {
-    const { container } = render(<AlertDescription className="custom-desc">Description</AlertDescription>);
+    const { container } = render(
+      <AlertDescription className="custom-desc">Description</AlertDescription>
+    );
     const description = container.firstChild as HTMLElement;
     expect(description).toHaveClass('custom-desc');
   });
@@ -202,7 +204,7 @@ describe('Alert Composition', () => {
         <AlertDescription>Your changes have been saved.</AlertDescription>
       </Alert>
     );
-    
+
     expect(screen.getByText('Success!')).toBeInTheDocument();
     expect(screen.getByText('Your changes have been saved.')).toBeInTheDocument();
   });
@@ -216,10 +218,9 @@ describe('Alert Composition', () => {
         </AlertDescription>
       </Alert>
     );
-    
+
     expect(screen.getByText('Information')).toBeInTheDocument();
     expect(screen.getByText('First paragraph')).toBeInTheDocument();
     expect(screen.getByText('Second paragraph')).toBeInTheDocument();
   });
 });
-

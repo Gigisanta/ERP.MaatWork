@@ -1,6 +1,6 @@
 /**
  * Seed Tasks and Notes
- * 
+ *
  * Seeds tasks and notes for contacts using actual schema structure.
  * Tasks use: status (FK to lookup), priority (FK to lookup), assignedToUserId, createdByUserId, createdFrom
  * Notes use: authorUserId, source (ai/manual/import), noteType (general/summary/action_items)
@@ -19,7 +19,7 @@ const TASK_TITLES = [
   'Actualizar perfil de riesgo',
   'Enviar reporte mensual',
   'Confirmar transferencia',
-  'Revisar cartera'
+  'Revisar cartera',
 ];
 
 const CREATED_FROM_OPTIONS = ['ai', 'manual', 'automation'];
@@ -35,7 +35,7 @@ const NOTE_CONTENTS = [
   'Solicitó reporte detallado de rendimientos YTD.',
   'Mencionó posible referido. Enviar información adicional.',
   'Revisar vencimientos de bonos en cartera.',
-  'Cliente satisfecho con el servicio. Potencial para aumentar inversión.'
+  'Cliente satisfecho con el servicio. Potencial para aumentar inversión.',
 ];
 
 const NOTE_SOURCES = ['manual', 'ai', 'import'];
@@ -45,8 +45,8 @@ const NOTE_TYPES = ['general', 'summary', 'action_items'];
  * Seed tasks for contacts
  */
 export async function seedTasks(
-  contactsList: typeof contacts.$inferSelect[],
-  advisorUsers: typeof users.$inferSelect[]
+  contactsList: (typeof contacts.$inferSelect)[],
+  advisorUsers: (typeof users.$inferSelect)[]
 ) {
   console.log('📋 Seeding tasks...');
 
@@ -65,12 +65,12 @@ export async function seedTasks(
     return [];
   }
 
-  const createdTasks: typeof tasks.$inferSelect[] = [];
+  const createdTasks: (typeof tasks.$inferSelect)[] = [];
 
   // Create 2-3 tasks per advisor
   for (const advisor of advisorUsers) {
     const numTasks = Math.floor(Math.random() * 2) + 2;
-    const advisorContacts = contactsList.filter(c => c.assignedAdvisorId === advisor.id);
+    const advisorContacts = contactsList.filter((c) => c.assignedAdvisorId === advisor.id);
     if (advisorContacts.length === 0) continue;
 
     for (let i = 0; i < numTasks; i++) {
@@ -81,21 +81,25 @@ export async function seedTasks(
       const createdFrom = getRandomElement(CREATED_FROM_OPTIONS);
 
       // Due date: some past (overdue), some future as string (date type)
-      const dueDate = Math.random() > 0.3
-        ? getRandomDateOnly(-7, 14) // Future or recent
-        : getRandomDateOnly(-30, -1); // Overdue
+      const dueDate =
+        Math.random() > 0.3
+          ? getRandomDateOnly(-7, 14) // Future or recent
+          : getRandomDateOnly(-30, -1); // Overdue
 
-      const [task] = await db().insert(tasks).values({
-        title,
-        description: `Seguimiento: ${title} para ${contact.fullName}`,
-        dueDate,
-        contactId: contact.id,
-        assignedToUserId: advisor.id,
-        createdByUserId: advisor.id,
-        status: status.id,
-        priority: priority.id,
-        createdFrom
-      }).returning();
+      const [task] = await db()
+        .insert(tasks)
+        .values({
+          title,
+          description: `Seguimiento: ${title} para ${contact.fullName}`,
+          dueDate,
+          contactId: contact.id,
+          assignedToUserId: advisor.id,
+          createdByUserId: advisor.id,
+          status: status.id,
+          priority: priority.id,
+          createdFrom,
+        })
+        .returning();
 
       createdTasks.push(task);
     }
@@ -109,8 +113,8 @@ export async function seedTasks(
  * Seed notes for contacts
  */
 export async function seedNotes(
-  contactsList: typeof contacts.$inferSelect[],
-  advisorUsers: typeof users.$inferSelect[]
+  contactsList: (typeof contacts.$inferSelect)[],
+  advisorUsers: (typeof users.$inferSelect)[]
 ) {
   console.log('📝 Seeding notes...');
 
@@ -120,28 +124,32 @@ export async function seedNotes(
     return existingNotes;
   }
 
-  const createdNotes: typeof notes.$inferSelect[] = [];
+  const createdNotes: (typeof notes.$inferSelect)[] = [];
 
   // Create 1-3 notes per contact (for some contacts)
   const contactsForNotes = contactsList.filter(() => Math.random() > 0.3);
-  
+
   for (const contact of contactsForNotes) {
     const numNotes = Math.floor(Math.random() * 3) + 1;
-    const advisor = advisorUsers.find(a => a.id === contact.assignedAdvisorId)
-      ?? getRandomElement(advisorUsers);
+    const advisor =
+      advisorUsers.find((a) => a.id === contact.assignedAdvisorId) ??
+      getRandomElement(advisorUsers);
 
     for (let i = 0; i < numNotes; i++) {
       const content = getRandomElement(NOTE_CONTENTS);
       const source = getRandomElement(NOTE_SOURCES);
       const noteType = getRandomElement(NOTE_TYPES);
 
-      const [note] = await db().insert(notes).values({
-        content,
-        contactId: contact.id,
-        authorUserId: advisor.id,
-        source,
-        noteType
-      }).returning();
+      const [note] = await db()
+        .insert(notes)
+        .values({
+          content,
+          contactId: contact.id,
+          authorUserId: advisor.id,
+          source,
+          noteType,
+        })
+        .returning();
 
       createdNotes.push(note);
     }

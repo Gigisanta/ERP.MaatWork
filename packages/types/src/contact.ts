@@ -1,6 +1,6 @@
 /**
  * Contact Types - Shared contact-related types
- * 
+ *
  * These types are used by both API and Web applications.
  */
 
@@ -75,7 +75,7 @@ export interface ContactWithTags extends Contact {
 /**
  * Contact field names for updates
  */
-export type ContactFieldName = 
+export type ContactFieldName =
   | 'firstName'
   | 'lastName'
   | 'email'
@@ -136,4 +136,3 @@ export interface UpdateContactRequest {
   fields?: ContactFieldUpdate[];
   [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
 }
-

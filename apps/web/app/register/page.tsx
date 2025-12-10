@@ -148,7 +148,9 @@ export default function RegisterPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-subtle rounded-2xl mx-auto mb-2">
                   <span className="text-3xl">✓</span>
                 </div>
-                <Heading level={2} className="text-secondary">¡Registro exitoso!</Heading>
+                <Heading level={2} className="text-secondary">
+                  ¡Registro exitoso!
+                </Heading>
                 <Alert variant="warning" title="Pendiente de aprobación">
                   Tu cuenta ha sido creada pero necesita ser aprobada por un administrador antes de
                   que puedas iniciar sesión.
@@ -169,12 +171,12 @@ export default function RegisterPage() {
     <div className="auth-page">
       {/* Animated gradient overlay */}
       <div className="auth-gradient-bg" aria-hidden="true" />
-      
+
       {/* Dot pattern overlay */}
       <div className="auth-dot-pattern" aria-hidden="true" />
 
       {/* Register card */}
-      <div 
+      <div
         className={`
           w-full max-w-md relative z-10
           transition-all duration-700 ease-out
@@ -185,7 +187,7 @@ export default function RegisterPage() {
           <CardHeader className="pb-2">
             <div className="text-center">
               {/* Logo with animation */}
-              <div 
+              <div
                 className={`
                   inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4
                   bg-primary shadow-lg shadow-primary/30
@@ -196,9 +198,9 @@ export default function RegisterPage() {
               >
                 <span className="text-3xl">⚖️</span>
               </div>
-              
+
               {/* Title */}
-              <div 
+              <div
                 className={`
                   transition-all duration-500 ease-out
                   ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -209,8 +211,8 @@ export default function RegisterPage() {
                   Maat
                 </Heading>
               </div>
-              
-              <div 
+
+              <div
                 className={`
                   transition-all duration-500 ease-out
                   ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -228,7 +230,7 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit}>
               <Stack direction="column" gap="lg">
                 {/* Username Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -248,7 +250,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Full Name Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -268,7 +270,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Email Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -289,7 +291,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Password Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -312,7 +314,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Role Select */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -347,7 +349,7 @@ export default function RegisterPage() {
 
                 {/* Manager Select (only for advisors) */}
                 {role === 'advisor' && (
-                  <div 
+                  <div
                     className={`
                       transition-all duration-500 ease-out
                       ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -382,7 +384,7 @@ export default function RegisterPage() {
                 )}
 
                 {/* Submit Button */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -409,7 +411,7 @@ export default function RegisterPage() {
             </form>
 
             {/* Divider */}
-            <div 
+            <div
               className={`
                 mt-8 pt-6 border-t border-border
                 transition-all duration-500 ease-out
@@ -430,10 +432,10 @@ export default function RegisterPage() {
                     </Link>
                   </Text>
                 </div>
-                
+
                 <div>
-                  <Link 
-                    href="/home" 
+                  <Link
+                    href="/home"
                     className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
                   >
                     ← Volver al inicio
@@ -445,7 +447,7 @@ export default function RegisterPage() {
         </Card>
 
         {/* Footer text */}
-        <div 
+        <div
           className={`
             text-center mt-6 transition-all duration-500 ease-out
             ${mounted ? 'opacity-100' : 'opacity-0'}

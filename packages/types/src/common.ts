@@ -1,10 +1,10 @@
 /**
  * Common Types - Shared across all domains
- * 
+ *
  * AI_DECISION: Consolidar tipos base en @cactus/types para eliminar duplicación
  * Justificación: Evita divergencia de tipos entre frontend y backend, facilita mantenimiento
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
- * 
+ *
  * These are foundational types used throughout the application.
  */
 
@@ -17,7 +17,7 @@ export interface BaseEntity {
 
 /**
  * Timestamped entity - common pattern for all database entities
- * 
+ *
  * Uses Date | string to support both:
  * - Backend: Drizzle can return Date objects
  * - Frontend: JSON APIs always return strings
@@ -53,19 +53,24 @@ export interface VersionedEntity extends SoftDeletableEntity {
  * Utility type para crear tipos de Request a partir de entidades
  * Omite campos automáticos (id, createdAt, updatedAt, version) y hace opcionales los campos opcionales
  */
-export type CreateRequest<T extends BaseEntity> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'version'> & {
+export type CreateRequest<T extends BaseEntity> = Omit<
+  T,
+  'id' | 'createdAt' | 'updatedAt' | 'version'
+> & {
   [K in keyof T]?: T[K] extends string | number | boolean | null | undefined
     ? T[K]
     : T[K] extends Date
-    ? string | Date
-    : T[K];
+      ? string | Date
+      : T[K];
 };
 
 /**
  * Utility type para actualizar entidades
  * Hace todos los campos opcionales excepto los que se deben mantener requeridos
  */
-export type UpdateRequest<T extends BaseEntity> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+export type UpdateRequest<T extends BaseEntity> = Partial<
+  Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+>;
 
 /**
  * API Response wrapper
@@ -105,4 +110,3 @@ export type RiskProfile = 'low' | 'mid' | 'high';
  */
 export type ActiveStatus = 'active' | 'inactive';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
-

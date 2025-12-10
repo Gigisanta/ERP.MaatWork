@@ -22,10 +22,13 @@ const PerformanceChart = dynamic(() => import('../../components/PerformanceChart
 // Impacto: Resuelve errores de webpack, mejor compatibilidad con resolución de módulos workspace
 import PortfolioAssetsSnapshot from '../../components/bloomberg/PortfolioAssetsSnapshot';
 
-const PortfolioPerformanceMetrics = dynamic(() => import('../../components/bloomberg/PortfolioPerformanceMetrics'), {
-  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Cargando...</div>,
-  ssr: false,
-});
+const PortfolioPerformanceMetrics = dynamic(
+  () => import('../../components/bloomberg/PortfolioPerformanceMetrics'),
+  {
+    loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Cargando...</div>,
+    ssr: false,
+  }
+);
 
 interface PortfolioDashboardProps {
   portfolios: Portfolio[];
@@ -80,8 +83,12 @@ export function PortfolioDashboard({
       try {
         // Buscar instrumento existente por símbolo
         const searchResponse = await getInstruments({ search: symbol, limit: 1 });
-        
-        if (searchResponse.success && searchResponse.data?.instruments && searchResponse.data.instruments.length > 0) {
+
+        if (
+          searchResponse.success &&
+          searchResponse.data?.instruments &&
+          searchResponse.data.instruments.length > 0
+        ) {
           const instrument = searchResponse.data.instruments.find((inst) => inst.symbol === symbol);
           if (instrument) {
             setBenchmarkInstrumentId(instrument.id);
@@ -107,7 +114,10 @@ export function PortfolioDashboard({
             onBenchmarkSymbolSelect(symbol);
           }
         } else {
-          logger.error('Failed to create instrument for benchmark', toLogContext({ symbol, createResponse }));
+          logger.error(
+            'Failed to create instrument for benchmark',
+            toLogContext({ symbol, createResponse })
+          );
         }
       } catch (err) {
         logger.error('Error handling benchmark selection', toLogContext({ err, symbol }));
@@ -128,7 +138,9 @@ export function PortfolioDashboard({
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-accent-text" />
-                  <Text weight="semibold" size="sm">Precios de Activos</Text>
+                  <Text weight="semibold" size="sm">
+                    Precios de Activos
+                  </Text>
                 </div>
                 <Stack direction="row" gap="xs" align="center" className="flex-wrap">
                   <div className="min-w-[160px]">
@@ -168,7 +180,9 @@ export function PortfolioDashboard({
                   <div className="flex items-center justify-center h-full py-8">
                     <Stack direction="column" gap="xs" align="center">
                       <BarChart3 className="w-10 h-10 text-foreground-tertiary" />
-                      <Text size="sm" color="secondary">Selecciona una cartera</Text>
+                      <Text size="sm" color="secondary">
+                        Selecciona una cartera
+                      </Text>
                     </Stack>
                   </div>
                 ) : (
@@ -193,7 +207,9 @@ export function PortfolioDashboard({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <LineChart className="w-4 h-4 text-accent-text" />
-                  <Text weight="semibold" size="sm">Bloomberg</Text>
+                  <Text weight="semibold" size="sm">
+                    Bloomberg
+                  </Text>
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -218,7 +234,9 @@ export function PortfolioDashboard({
               <div style={{ minHeight: '300px' }}>
                 {displayedPortfolios.length === 0 ? (
                   <div className="flex items-center justify-center h-full py-8">
-                    <Text size="sm" color="secondary">No hay carteras disponibles</Text>
+                    <Text size="sm" color="secondary">
+                      No hay carteras disponibles
+                    </Text>
                   </div>
                 ) : bloombergTab === 'market' ? (
                   <PortfolioAssetsSnapshot portfolios={displayedPortfolios} />
@@ -230,8 +248,6 @@ export function PortfolioDashboard({
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
-

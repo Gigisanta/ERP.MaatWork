@@ -48,7 +48,6 @@ export function PortfolioPriceChart({
     })),
   ];
 
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -93,7 +92,9 @@ export function PortfolioPriceChart({
             <div className="flex items-center justify-center">
               <Stack direction="column" gap="sm" align="center">
                 <BarChart3 className="w-12 h-12 text-foreground-tertiary" />
-                <Text color="secondary">Selecciona una cartera para ver los precios de sus activos</Text>
+                <Text color="secondary">
+                  Selecciona una cartera para ver los precios de sus activos
+                </Text>
               </Stack>
             </div>
           </CardContent>
@@ -109,4 +110,3 @@ export function PortfolioPriceChart({
     </div>
   );
 }
-

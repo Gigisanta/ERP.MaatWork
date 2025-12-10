@@ -1,14 +1,14 @@
 /**
  * Job de Alertas de Performance de Queries
- * 
+ *
  * Detecta queries degradadas, sequential scans nuevos y cache hit rate bajo.
  * Envía notificaciones a admins cuando se detectan problemas.
- * 
+ *
  * Se ejecuta diariamente vía cron job.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
-import { getCacheHealth } from '../utils/cache';
+import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/database/db-logger';
+import { getCacheHealth } from '../utils/performance/cache';
 import pino from 'pino';
 import { db } from '@cactus/db';
 import { notifications } from '@cactus/db/schema';
@@ -49,12 +49,12 @@ export class QueryPerformanceAlertsJob {
           type: 'slow_query',
           message: `Se detectaron ${slowQueries.length} queries lentas (p95 > ${this.SLOW_QUERY_THRESHOLD_MS}ms)`,
           details: {
-            queries: slowQueries.slice(0, 10).map(q => ({
+            queries: slowQueries.slice(0, 10).map((q) => ({
               operation: q.operationBase,
               p95Duration: q.p95Duration,
-              count: q.count
-            }))
-          }
+              count: q.count,
+            })),
+          },
         });
       }
 
@@ -66,12 +66,12 @@ export class QueryPerformanceAlertsJob {
           type: 'n_plus_one',
           message: `Se detectaron ${nPlusOneQueries.length} patrones N+1`,
           details: {
-            queries: nPlusOneQueries.map(q => ({
+            queries: nPlusOneQueries.map((q) => ({
               operation: q.operationBase,
               nPlusOneCount: q.nPlusOneCount,
-              totalCount: q.count
-            }))
-          }
+              totalCount: q.count,
+            })),
+          },
         });
       }
 
@@ -88,8 +88,8 @@ export class QueryPerformanceAlertsJob {
               cacheName: name,
               hitRate: stats.hitRate,
               hits: stats.hits,
-              misses: stats.misses
-            }
+              misses: stats.misses,
+            },
           });
         }
       }
@@ -101,7 +101,6 @@ export class QueryPerformanceAlertsJob {
       } else {
         logger.info('✅ No se detectaron problemas de performance');
       }
-
     } catch (error) {
       logger.error({ err: error }, '❌ Error en análisis de performance');
       throw error;
@@ -134,8 +133,8 @@ export class QueryPerformanceAlertsJob {
             avgDuration: metric.avgDuration,
             p95Duration: metric.p95Duration,
             degradationFactor: (currentP95 / baseline).toFixed(2),
-            count: metric.count
-          }
+            count: metric.count,
+          },
         });
       }
     }
@@ -160,8 +159,8 @@ export class QueryPerformanceAlertsJob {
       }
 
       // Agrupar alertas por severidad
-      const criticalAlerts = alerts.filter(a => a.severity === 'critical');
-      const warningAlerts = alerts.filter(a => a.severity === 'warning');
+      const criticalAlerts = alerts.filter((a) => a.severity === 'critical');
+      const warningAlerts = alerts.filter((a) => a.severity === 'warning');
 
       // Crear notificaciones para cada admin
       for (const admin of adminUsers) {
@@ -175,7 +174,7 @@ export class QueryPerformanceAlertsJob {
               type: sql`(SELECT id FROM lookup_notification_type WHERE id = 'critical')`,
               severity: 'critical',
               renderedBody: this.formatAlertMessage(criticalAlerts, 'critical'),
-              payload: { alerts: criticalAlerts }
+              payload: { alerts: criticalAlerts },
             });
         }
 
@@ -187,17 +186,19 @@ export class QueryPerformanceAlertsJob {
               type: sql`(SELECT id FROM lookup_notification_type WHERE id = 'info')`,
               severity: 'warning',
               renderedBody: this.formatAlertMessage(warningAlerts, 'warning'),
-              payload: { alerts: warningAlerts }
+              payload: { alerts: warningAlerts },
             });
         }
       }
 
-      logger.info({ 
-        adminCount: adminUsers.length,
-        criticalCount: criticalAlerts.length,
-        warningCount: warningAlerts.length
-      }, 'Alertas enviadas a administradores');
-
+      logger.info(
+        {
+          adminCount: adminUsers.length,
+          criticalCount: criticalAlerts.length,
+          warningCount: warningAlerts.length,
+        },
+        'Alertas enviadas a administradores'
+      );
     } catch (error) {
       logger.error({ err: error }, 'Error enviando alertas');
       throw error;
@@ -222,4 +223,3 @@ export class QueryPerformanceAlertsJob {
     return message;
   }
 }
-

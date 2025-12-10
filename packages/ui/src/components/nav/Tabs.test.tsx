@@ -44,7 +44,9 @@ describe('Tabs Component', () => {
     });
 
     it('should render enclosed variant', () => {
-      const { container } = render(<Tabs items={mockItems} defaultValue="tab1" variant="enclosed" />);
+      const { container } = render(
+        <Tabs items={mockItems} defaultValue="tab1" variant="enclosed" />
+      );
       const tabsList = container.querySelector('[role="tablist"]');
       expect(tabsList).toHaveClass('border', 'border-border', 'rounded-lg');
     });
@@ -54,7 +56,7 @@ describe('Tabs Component', () => {
     it('should switch between tabs when clicked', async () => {
       const user = userEvent.setup();
       render(<Tabs items={mockItems} defaultValue="tab1" />);
-      
+
       expect(screen.getByText('Content 1')).toBeInTheDocument();
       expect(screen.queryByText('Content 2')).not.toBeInTheDocument();
 
@@ -69,12 +71,12 @@ describe('Tabs Component', () => {
     it('should not activate disabled tabs', async () => {
       const user = userEvent.setup();
       render(<Tabs items={mockItems} defaultValue="tab1" />);
-      
+
       const disabledTab = screen.getByText('Tab 3');
       expect(disabledTab).toHaveAttribute('disabled');
-      
+
       await user.click(disabledTab);
-      
+
       // Tab 1 should still be active
       const tab1 = screen.getByRole('tab', { name: 'Tab 1' });
       expect(tab1).toHaveAttribute('data-state', 'active');
@@ -83,7 +85,9 @@ describe('Tabs Component', () => {
 
   describe('Styling', () => {
     it('should apply custom className', () => {
-      const { container } = render(<Tabs items={mockItems} defaultValue="tab1" className="custom-tabs" />);
+      const { container } = render(
+        <Tabs items={mockItems} defaultValue="tab1" className="custom-tabs" />
+      );
       expect(container.firstChild).toHaveClass('custom-tabs');
     });
 
@@ -126,9 +130,9 @@ describe('Tabs Component', () => {
   describe('Accessibility', () => {
     it('should have proper ARIA attributes', () => {
       render(<Tabs items={mockItems} defaultValue="tab1" />);
-      
+
       const tabs = screen.getAllByRole('tab');
-      tabs.forEach(tab => {
+      tabs.forEach((tab) => {
         expect(tab).toHaveAttribute('aria-selected');
       });
     });
@@ -141,10 +145,10 @@ describe('Tabs Component', () => {
 
     it('should be keyboard navigable', () => {
       render(<Tabs items={mockItems} defaultValue="tab1" />);
-      
+
       const tab1 = screen.getByRole('tab', { name: 'Tab 1' });
       tab1.focus();
-      
+
       expect(tab1).toHaveFocus();
     });
   });
@@ -152,9 +156,9 @@ describe('Tabs Component', () => {
   describe('Edge Cases', () => {
     it('should handle single tab', () => {
       const singleItem: TabItem[] = [
-        { value: 'tab1', label: 'Only Tab', content: <div>Only Content</div> }
+        { value: 'tab1', label: 'Only Tab', content: <div>Only Content</div> },
       ];
-      
+
       render(<Tabs items={singleItem} defaultValue="tab1" />);
       expect(screen.getByText('Only Tab')).toBeInTheDocument();
       expect(screen.getByText('Only Content')).toBeInTheDocument();
@@ -172,9 +176,8 @@ describe('Tabs Component', () => {
           <div>Custom Content</div>
         </Tabs>
       );
-      
+
       expect(screen.getByText('Custom Content')).toBeInTheDocument();
     });
   });
 });
-

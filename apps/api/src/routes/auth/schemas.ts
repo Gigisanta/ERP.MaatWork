@@ -4,7 +4,7 @@
  * Zod schemas for validating authentication operations
  */
 import { z } from 'zod';
-import { emailSchema } from '../../utils/common-schemas';
+import { emailSchema } from '../../utils/validation/common-schemas';
 
 // Username case-insensitive [a-z0-9._-], 3-20 chars
 const usernameRegex = /^[a-z0-9._-]{3,20}$/;

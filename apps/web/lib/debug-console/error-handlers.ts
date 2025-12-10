@@ -149,30 +149,3 @@ export function setupAllErrorHandlers(logCallback: LogCallback, isLogging: () =>
   setupConsoleErrorInterceptor(logCallback, isLogging);
   setupConsoleWarnInterceptor(logCallback, isLogging);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

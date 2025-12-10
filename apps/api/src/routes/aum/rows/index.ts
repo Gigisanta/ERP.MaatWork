@@ -28,7 +28,7 @@ import {
   aumRowIdParamsSchema,
   aumAdvisorSummaryQuerySchema,
   aumAvailablePeriodsQuerySchema,
-} from '../../../utils/aum-validation';
+} from '../../../utils/aum/aum-validation';
 
 // Handlers
 import { listAllRows } from './handlers/list';

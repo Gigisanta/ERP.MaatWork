@@ -18,7 +18,7 @@ import { validate } from '../../../utils/validation';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { PAGINATION_LIMITS } from '../../../config/api-limits';
 import { listRulesQuerySchema, createTagRuleSchema } from '../schemas';
-import { idParamSchema } from '../../../utils/common-schemas';
+import { idParamSchema } from '../../../utils/validation/common-schemas';
 
 const router = Router();
 

@@ -67,8 +67,11 @@ async function getHomePageData() {
         goalsData = goalsResponse.data;
       }
 
-      // Get team calendar URL
-      if (teamsResponse.success && teamsResponse.data) {
+      // Get team calendar URL - find first team where user is a member that has calendarUrl configured
+      // AI_DECISION: getTeamsServer() already returns only teams where user is a member/manager
+      // Justificación: Since getTeamsServer() filters to user's teams, we just need to find first with calendarUrl
+      // Impacto: Calendar will show for any team the user belongs to that has calendarUrl configured
+      if (teamsResponse.success && teamsResponse.data && teamsResponse.data.length > 0) {
         const teamWithCalendar = teamsResponse.data.find((team) => team.calendarUrl);
         teamCalendarUrl = teamWithCalendar?.calendarUrl || null;
       }

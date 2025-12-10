@@ -1,6 +1,6 @@
 /**
  * E2E tests for complete authentication flow
- * 
+ *
  * Tests login, logout, session management, and protected routes
  */
 
@@ -11,8 +11,14 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page, email: string = adminEmail, password: string = adminPassword) {
   await page.goto('/login');
-  await page.getByLabel(/email|usuario|correo/i).first().fill(email);
-  await page.getByLabel(/contraseña|password/i).first().fill(password);
+  await page
+    .getByLabel(/email|usuario|correo/i)
+    .first()
+    .fill(email);
+  await page
+    .getByLabel(/contraseña|password/i)
+    .first()
+    .fill(password);
   await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
   await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
 }
@@ -35,8 +41,14 @@ test.describe('Authentication Flow', () => {
 
   test('should reject login with invalid credentials', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/email|usuario|correo/i).first().fill('invalid@example.com');
-    await page.getByLabel(/contraseña|password/i).first().fill('wrong-password');
+    await page
+      .getByLabel(/email|usuario|correo/i)
+      .first()
+      .fill('invalid@example.com');
+    await page
+      .getByLabel(/contraseña|password/i)
+      .first()
+      .fill('wrong-password');
     await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
 
     // Should show error or stay on login page
@@ -49,7 +61,7 @@ test.describe('Authentication Flow', () => {
     // Find and click logout button
     // This might be in a menu or header
     const logoutButton = page.getByRole('button', { name: /logout|cerrar sesión|salir/i });
-    if (await logoutButton.count() > 0) {
+    if ((await logoutButton.count()) > 0) {
       await logoutButton.first().click();
     } else {
       // Alternative: navigate to logout endpoint
@@ -103,7 +115,7 @@ test.describe('Authentication Flow', () => {
     // Look for user info in header or profile
     // This depends on your UI implementation
     const userInfo = page.getByText(adminEmail.split('@')[0], { exact: false });
-    if (await userInfo.count() > 0) {
+    if ((await userInfo.count()) > 0) {
       await expect(userInfo.first()).toBeVisible();
     }
   });
@@ -112,10 +124,10 @@ test.describe('Authentication Flow', () => {
 test.describe('Password Recovery Flow', () => {
   test.skip('should show password recovery form', async ({ page }) => {
     await page.goto('/login');
-    
+
     // Look for "Forgot password?" link
     const forgotPasswordLink = page.getByText(/olvidé|forgot|recuperar/i);
-    if (await forgotPasswordLink.count() > 0) {
+    if ((await forgotPasswordLink.count()) > 0) {
       await forgotPasswordLink.first().click();
       await expect(page).toHaveURL(/\/recover|\/reset-password/);
     }
@@ -124,15 +136,15 @@ test.describe('Password Recovery Flow', () => {
   test.skip('should send recovery email', async ({ page }) => {
     // This test requires email service to be configured
     await page.goto('/login');
-    
+
     const forgotPasswordLink = page.getByText(/olvidé|forgot|recuperar/i);
-    if (await forgotPasswordLink.count() > 0) {
+    if ((await forgotPasswordLink.count()) > 0) {
       await forgotPasswordLink.first().click();
-      
+
       // Fill recovery form
       await page.getByLabel(/email/i).fill(adminEmail);
       await page.getByRole('button', { name: /enviar|send/i }).click();
-      
+
       // Should show success message
       await expect(page.getByText(/enviado|sent|revisa tu email/i)).toBeVisible();
     }
@@ -178,7 +190,7 @@ test.describe('Session Management', () => {
 
     // Logout in first tab
     const logoutButton = page1.getByRole('button', { name: /logout|cerrar sesión|salir/i });
-    if (await logoutButton.count() > 0) {
+    if ((await logoutButton.count()) > 0) {
       await logoutButton.first().click();
     } else {
       await page1.goto('/api/auth/logout');
@@ -200,7 +212,7 @@ test.describe('Role-Based Access Control', () => {
 
     // Try to access admin route
     await page.goto('/admin');
-    
+
     // Should not redirect to login (admin has access)
     const currentUrl = page.url();
     expect(currentUrl).not.toContain('/login');
@@ -213,7 +225,7 @@ test.describe('Role-Based Access Control', () => {
 
     // Try to access admin route
     await page.goto('/admin/users');
-    
+
     // Should either redirect or show forbidden
     const currentUrl = page.url();
     // If user is not admin, should redirect or show error
@@ -226,7 +238,7 @@ test.describe('Role-Based Access Control', () => {
 
     // Admin should see admin menu items
     const adminMenu = page.getByText(/admin|administración/i);
-    if (await adminMenu.count() > 0) {
+    if ((await adminMenu.count()) > 0) {
       await expect(adminMenu.first()).toBeVisible();
     }
 
@@ -234,4 +246,3 @@ test.describe('Role-Based Access Control', () => {
     // This depends on role detection in UI
   });
 });
-

@@ -144,7 +144,7 @@ export default function AumRowsPage() {
   // El scroll se maneja solo dentro de cada tabla con altura fija
   return (
     <AumErrorBoundary onReset={() => mutate()}>
-      <div className="flex flex-col h-screen -m-6 overflow-hidden bg-gray-50">
+      <div className="flex flex-col h-screen -m-6 overflow-hidden">
         {/* Header y Admin Actions - Fijo */}
         <section className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0 z-30">
           <div className="px-6 py-1.5">
@@ -152,7 +152,7 @@ export default function AumRowsPage() {
             <div className="mb-1">
               <Breadcrumbs items={breadcrumbItems} />
             </div>
-            
+
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold text-gray-900">

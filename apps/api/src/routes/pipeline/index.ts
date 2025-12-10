@@ -1,6 +1,6 @@
 /**
  * Pipeline Routes - Main Entry Point
- * 
+ *
  * Combines all pipeline route modules
  */
 
@@ -19,4 +19,3 @@ router.use(moveRouter);
 router.use(metricsRouter);
 
 export default router;
-

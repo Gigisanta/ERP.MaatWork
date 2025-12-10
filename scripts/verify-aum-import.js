@@ -1,9 +1,9 @@
 /**
  * Script de verificación de importación AUM
- * 
+ *
  * Compara los datos de los CSVs con los datos cargados en la base de datos
  * para asegurar que la importación fue correcta.
- * 
+ *
  * Uso: node scripts/verify-aum-import.js
  */
 
@@ -27,9 +27,16 @@ function parseNumeric(value) {
   if (strValue === '' || strValue === '-' || strValue === '--' || strValue === '—') {
     return null;
   }
-  if (strValue === '0' || strValue === '0.00' || strValue === '0,00' || 
-      strValue === '0.0' || strValue === '0,0' || strValue === '0.000000' ||
-      strValue === '0,000000' || /^0+([.,]0+)?$/.test(strValue)) {
+  if (
+    strValue === '0' ||
+    strValue === '0.00' ||
+    strValue === '0,00' ||
+    strValue === '0.0' ||
+    strValue === '0,0' ||
+    strValue === '0.000000' ||
+    strValue === '0,000000' ||
+    /^0+([.,]0+)?$/.test(strValue)
+  ) {
     return 0;
   }
   const parsed = parseFloat(strValue.replace(',', '.'));
@@ -60,7 +67,7 @@ function readCSV(filePath) {
     trim: true,
     bom: true,
     relax_quotes: true,
-    cast: false
+    cast: false,
   });
   return records;
 }
@@ -69,9 +76,13 @@ function readCSV(filePath) {
 function mapCSVRow(record, isCSV1) {
   const idCuenta = normalizeString(record.idCuenta || record['idCuenta']);
   const comitente = normalizeString(record.comitente || record['comitente']);
-  const cuenta = normalizeString(record.cuenta || record.Descripcion || record['cuenta'] || record['Descripcion']);
-  const asesor = normalizeString(record.Asesor || record['Asesor'] || record.asesor || record['asesor']);
-  
+  const cuenta = normalizeString(
+    record.cuenta || record.Descripcion || record['cuenta'] || record['Descripcion']
+  );
+  const asesor = normalizeString(
+    record.Asesor || record['Asesor'] || record.asesor || record['asesor']
+  );
+
   return {
     idCuenta,
     accountNumber: comitente,
@@ -84,7 +95,7 @@ function mapCSVRow(record, isCSV1) {
     pesos: parseNumeric(record.pesos || record['pesos']),
     mep: parseNumeric(record.mep || record['mep']),
     cable: parseNumeric(record.cable || record['cable']),
-    cv7000: parseNumeric(record.cv7000 || record['cv7000'])
+    cv7000: parseNumeric(record.cv7000 || record['cv7000']),
   };
 }
 
@@ -100,8 +111,8 @@ async function fetchAllAumRows() {
       const url = `${API_ENDPOINT}?limit=${limit}&offset=${offset}&preferredOnly=false`;
       const response = await fetch(url, {
         headers: {
-          'Cookie': process.env.AUTH_COOKIE || '' // Necesitarás autenticación
-        }
+          Cookie: process.env.AUTH_COOKIE || '', // Necesitarás autenticación
+        },
       });
 
       if (!response.ok) {
@@ -152,7 +163,7 @@ function compareRows(csvRow, dbRow, source) {
       field: 'accountNumber',
       csv: csvRow.accountNumber,
       db: dbRow.accountNumber,
-      source
+      source,
     });
   }
 
@@ -161,7 +172,7 @@ function compareRows(csvRow, dbRow, source) {
       field: 'idCuenta',
       csv: csvRow.idCuenta,
       db: dbRow.idCuenta,
-      source
+      source,
     });
   }
 
@@ -170,31 +181,45 @@ function compareRows(csvRow, dbRow, source) {
       field: 'holderName',
       csv: csvRow.holderName,
       db: dbRow.holderName,
-      source
+      source,
     });
   }
 
   // Comparar valores financieros
-  const financialFields = ['aumDollars', 'bolsaArg', 'fondosArg', 'bolsaBci', 'pesos', 'mep', 'cable', 'cv7000'];
+  const financialFields = [
+    'aumDollars',
+    'bolsaArg',
+    'fondosArg',
+    'bolsaBci',
+    'pesos',
+    'mep',
+    'cable',
+    'cv7000',
+  ];
   for (const field of financialFields) {
     if (!compareNumbers(csvRow[field], dbRow[field])) {
       discrepancies.push({
         field,
         csv: csvRow[field],
         db: dbRow[field],
-        source
+        source,
       });
     }
   }
 
   // Comparar asesor (solo si CSV1 tiene asesor, CSV2 no lo tiene)
-  if (source === 'CSV1' && csvRow.advisorRaw && dbRow.advisorRaw && csvRow.advisorRaw !== dbRow.advisorRaw) {
+  if (
+    source === 'CSV1' &&
+    csvRow.advisorRaw &&
+    dbRow.advisorRaw &&
+    csvRow.advisorRaw !== dbRow.advisorRaw
+  ) {
     discrepancies.push({
       field: 'advisorRaw',
       csv: csvRow.advisorRaw,
       db: dbRow.advisorRaw,
       source,
-      note: 'Asesor debería preservarse del CSV1'
+      note: 'Asesor debería preservarse del CSV1',
     });
   }
 
@@ -214,8 +239,8 @@ async function main() {
 
   // 2. Mapear CSVs
   console.log('🔄 Mapeando datos de CSVs...');
-  const csv1Mapped = csv1Rows.map(r => mapCSVRow(r, true));
-  const csv2Mapped = csv2Rows.map(r => mapCSVRow(r, false));
+  const csv1Mapped = csv1Rows.map((r) => mapCSVRow(r, true));
+  const csv2Mapped = csv2Rows.map((r) => mapCSVRow(r, false));
   console.log(`   CSV1 mapeado: ${csv1Mapped.length} filas`);
   console.log(`   CSV2 mapeado: ${csv2Mapped.length} filas\n`);
 
@@ -279,14 +304,14 @@ async function main() {
     csv1Missing: 0,
     csv2Missing: 0,
     csv1Discrepancies: 0,
-    csv2Discrepancies: 0
+    csv2Discrepancies: 0,
   };
 
   // Comparar CSV1 con DB
   console.log('📊 Comparando CSV1 con DB...');
   for (const [key, csv1Entries] of csv1Index.entries()) {
     const dbEntries = dbIndex.get(key) || [];
-    
+
     if (dbEntries.length === 0) {
       stats.csv1Missing++;
       discrepancies.push({
@@ -294,7 +319,7 @@ async function main() {
         source: 'CSV1',
         key,
         csvRow: csv1Entries[0].row,
-        csvLine: csv1Entries[0].originalIndex
+        csvLine: csv1Entries[0].originalIndex,
       });
     } else {
       stats.csv1Found++;
@@ -302,7 +327,7 @@ async function main() {
       const csvRow = csv1Entries[0].row;
       const dbRow = dbEntries[0].row;
       const rowDiscrepancies = compareRows(csvRow, dbRow, 'CSV1');
-      
+
       if (rowDiscrepancies.length > 0) {
         stats.csv1Discrepancies++;
         discrepancies.push({
@@ -312,7 +337,7 @@ async function main() {
           csvRow,
           dbRow,
           csvLine: csv1Entries[0].originalIndex,
-          discrepancies: rowDiscrepancies
+          discrepancies: rowDiscrepancies,
         });
       }
     }
@@ -322,7 +347,7 @@ async function main() {
   console.log('📊 Comparando CSV2 con DB...');
   for (const [key, csv2Entries] of csv2Index.entries()) {
     const dbEntries = dbIndex.get(key) || [];
-    
+
     if (dbEntries.length === 0) {
       stats.csv2Missing++;
       discrepancies.push({
@@ -330,14 +355,14 @@ async function main() {
         source: 'CSV2',
         key,
         csvRow: csv2Entries[0].row,
-        csvLine: csv2Entries[0].originalIndex
+        csvLine: csv2Entries[0].originalIndex,
       });
     } else {
       stats.csv2Found++;
       const csvRow = csv2Entries[0].row;
       const dbRow = dbEntries[0].row;
       const rowDiscrepancies = compareRows(csvRow, dbRow, 'CSV2');
-      
+
       if (rowDiscrepancies.length > 0) {
         stats.csv2Discrepancies++;
         discrepancies.push({
@@ -347,7 +372,7 @@ async function main() {
           csvRow,
           dbRow,
           csvLine: csv2Entries[0].originalIndex,
-          discrepancies: rowDiscrepancies
+          discrepancies: rowDiscrepancies,
         });
       }
     }
@@ -380,7 +405,7 @@ async function main() {
           csv2Advisor: csv2Row.advisorRaw,
           dbAdvisor: dbRow.advisorRaw,
           csv1Line: csv1Entries[0].originalIndex,
-          csv2Line: csv2Entries[0].originalIndex
+          csv2Line: csv2Entries[0].originalIndex,
         });
       }
     }
@@ -414,9 +439,9 @@ async function main() {
     console.log('='.repeat(80));
 
     // Agrupar por tipo
-    const missing = discrepancies.filter(d => d.type === 'missing');
-    const mismatches = discrepancies.filter(d => d.type === 'mismatch');
-    const advisorLost = discrepancies.filter(d => d.type === 'advisor_lost');
+    const missing = discrepancies.filter((d) => d.type === 'missing');
+    const mismatches = discrepancies.filter((d) => d.type === 'mismatch');
+    const advisorLost = discrepancies.filter((d) => d.type === 'advisor_lost');
 
     if (missing.length > 0) {
       console.log(`\n❌ Filas faltantes (${missing.length}):`);
@@ -437,7 +462,7 @@ async function main() {
       mismatches.slice(0, 10).forEach((d, idx) => {
         console.log(`\n   ${idx + 1}. ${d.source} - Línea ${d.csvLine}`);
         console.log(`      Key: ${d.key}`);
-        d.discrepancies.forEach(disc => {
+        d.discrepancies.forEach((disc) => {
           console.log(`      ${disc.field}: CSV="${disc.csv}" DB="${disc.db}"`);
         });
       });
@@ -462,11 +487,18 @@ async function main() {
 
     // Guardar reporte completo en archivo
     const reportPath = path.join(__dirname, '..', 'aum-verification-report.json');
-    fs.writeFileSync(reportPath, JSON.stringify({
-      timestamp: new Date().toISOString(),
-      stats,
-      discrepancies
-    }, null, 2));
+    fs.writeFileSync(
+      reportPath,
+      JSON.stringify(
+        {
+          timestamp: new Date().toISOString(),
+          stats,
+          discrepancies,
+        },
+        null,
+        2
+      )
+    );
     console.log(`\n📄 Reporte completo guardado en: ${reportPath}`);
   } else {
     console.log('\n✅ ¡No se encontraron discrepancias! Todos los datos coinciden correctamente.');
@@ -476,8 +508,7 @@ async function main() {
 }
 
 // Ejecutar
-main().catch(error => {
+main().catch((error) => {
   console.error('❌ Error:', error);
   process.exit(1);
 });
-

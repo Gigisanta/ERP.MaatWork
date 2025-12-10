@@ -1,6 +1,6 @@
 /**
  * Tests para Stack primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para Stack component
  * Justificación: Validación de componente de layout
  * Impacto: Prevenir errores en layouts flex
@@ -139,7 +139,11 @@ describe('Stack', () => {
   });
 
   it('debería pasar props HTML adicionales', () => {
-    render(<Stack data-testid="stack" id="test-id">Test</Stack>);
+    render(
+      <Stack data-testid="stack" id="test-id">
+        Test
+      </Stack>
+    );
     const element = screen.getByTestId('stack');
     expect(element.id).toBe('test-id');
   });
@@ -155,5 +159,3 @@ describe('Stack', () => {
     expect(screen.getByText('Child 2')).toBeInTheDocument();
   });
 });
-
-

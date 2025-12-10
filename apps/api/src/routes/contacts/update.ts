@@ -9,11 +9,11 @@ import { db, contacts, contactFieldHistory, pipelineStageHistory, users } from '
 import { eq, and, isNull, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
 import { canAccessContact, canAssignContactTo } from '../../auth/authorization';
-import { transactionWithLogging } from '../../utils/db-transactions';
+import { transactionWithLogging } from '../../utils/database/db-transactions';
 import { validate } from '../../utils/validation';
-import { idParamSchema } from '../../utils/common-schemas';
+import { idParamSchema } from '../../utils/validation/common-schemas';
 import { type ContactUpdateFields } from '../../types/contacts';
-import { contactsListCacheUtil } from '../../utils/cache';
+import { contactsListCacheUtil } from '../../utils/performance/cache';
 import { updateContactSchema, patchContactSchema } from './schemas';
 import { invalidateCache } from '../../middleware/cache';
 

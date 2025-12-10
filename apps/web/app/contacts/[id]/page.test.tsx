@@ -1,6 +1,6 @@
 /**
  * Tests for Contact Detail Page
- * 
+ *
  * Covers:
  * - Data loading and rendering
  * - 404 error handling
@@ -12,7 +12,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { notFound } from 'next/navigation';
 import ContactDetailPage from './page';
-import type { Contact, PipelineStage, Advisor, BrokerAccount, PortfolioAssignment, Task, Note } from '@/types';
+import type {
+  Contact,
+  PipelineStage,
+  Advisor,
+  BrokerAccount,
+  PortfolioAssignment,
+  Task,
+  Note,
+} from '@/types';
 
 // Mock Next.js navigation
 vi.mock('next/navigation', () => ({
@@ -131,14 +139,16 @@ describe('ContactDetailPage', () => {
 
   it('should render all sections when data is available', async () => {
     const { apiCall } = await import('@/lib/api-server');
-    const mockBrokerAccounts: BrokerAccount[] = [{
-      id: 'account-1',
-      contactId: 'test-contact-id',
-      broker: 'IBKR',
-      accountNumber: '123456',
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    }];
+    const mockBrokerAccounts: BrokerAccount[] = [
+      {
+        id: 'account-1',
+        contactId: 'test-contact-id',
+        broker: 'IBKR',
+        accountNumber: '123456',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    ];
 
     vi.mocked(apiCall).mockResolvedValueOnce({ data: mockContact });
     vi.mocked(apiCall).mockResolvedValueOnce({ data: mockStage });
@@ -153,9 +163,10 @@ describe('ContactDetailPage', () => {
 
     await waitFor(() => {
       // Verify sections are rendered
-      expect(container.querySelector('[data-testid="broker-accounts-section"]') || 
-             container.textContent?.includes('Cuentas')).toBeTruthy();
+      expect(
+        container.querySelector('[data-testid="broker-accounts-section"]') ||
+          container.textContent?.includes('Cuentas')
+      ).toBeTruthy();
     });
   });
 });
-

@@ -4,7 +4,7 @@
  * Funciones para parsear, validar y formatear respuestas de paginación
  */
 
-import { paginationQuerySchema } from './common-schemas';
+import { paginationQuerySchema } from './validation/common-schemas';
 import type { z } from 'zod';
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
@@ -157,13 +157,3 @@ export function applyPagination<T extends { limit: (n: number) => T; offset: (n:
 ): T {
   return query.limit(params.limit).offset(params.offset);
 }
-
-
-
-
-
-
-
-
-
-

@@ -12,7 +12,7 @@ import {
   lookupAssetClass,
 } from '@cactus/db/schema';
 import { eq, and, sql, desc, inArray } from 'drizzle-orm';
-import { createDrizzleLogger, createOperationName } from '../../../utils/db-logger';
+import { createDrizzleLogger, createOperationName } from '../../../utils/database/db-logger';
 import { calculateTotalWeight, isValidTotalWeight } from '../../../utils/portfolio-utils';
 import { HttpError } from '../../../utils/route-handler';
 import { getPortfolioTemplateLines } from '../../../services/portfolio-service';
@@ -148,7 +148,9 @@ export async function updateTemplate(req: Request) {
  * Obtener líneas de múltiples plantillas (batch)
  */
 export async function getTemplateLinesBatch(req: Request) {
-  const { validateBatchIds, BATCH_LIMITS } = await import('../../../utils/batch-validation');
+  const { validateBatchIds, BATCH_LIMITS } = await import(
+    '../../../utils/database/batch-validation'
+  );
 
   const validation = validateBatchIds(req.query.ids as string, {
     maxCount: BATCH_LIMITS.MAX_PORTFOLIOS,

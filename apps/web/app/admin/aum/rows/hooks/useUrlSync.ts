@@ -1,6 +1,6 @@
 /**
  * useUrlSync Hook
- * 
+ *
  * AI_DECISION: Sincronización unidireccional URL → Estado simple sin refs ni flags
  * Justificación: Elimina loops infinitos y hace el flujo de datos predecible
  * Impacto: Código más simple, sin bugs de sincronización
@@ -15,7 +15,7 @@ export interface UseUrlSyncOptions {
 
 /**
  * Hook to sync URL query params with component state
- * 
+ *
  * Uses unidirectional data flow:
  * - URL → State: Automatic on mount and URL changes
  * - State → URL: Manual via updateUrl function
@@ -37,23 +37,26 @@ export function useUrlSync(options: UseUrlSyncOptions = {}) {
   }, [fileIdFromUrl, onFileIdChange]);
 
   // Update URL (State → URL)
-  const updateUrl = useCallback((params: { fileId?: string | null }) => {
-    const currentParams = new URLSearchParams(searchParams.toString());
+  const updateUrl = useCallback(
+    (params: { fileId?: string | null }) => {
+      const currentParams = new URLSearchParams(searchParams.toString());
 
-    // Update or remove fileId
-    if (params.fileId) {
-      currentParams.set('fileId', params.fileId);
-    } else if (params.fileId === null) {
-      currentParams.delete('fileId');
-    }
+      // Update or remove fileId
+      if (params.fileId) {
+        currentParams.set('fileId', params.fileId);
+      } else if (params.fileId === null) {
+        currentParams.delete('fileId');
+      }
 
-    // Navigate to new URL
-    const newUrl = currentParams.toString()
-      ? `${pathname}?${currentParams.toString()}`
-      : pathname;
+      // Navigate to new URL
+      const newUrl = currentParams.toString()
+        ? `${pathname}?${currentParams.toString()}`
+        : pathname;
 
-    router.push(newUrl);
-  }, [router, searchParams, pathname]);
+      router.push(newUrl);
+    },
+    [router, searchParams, pathname]
+  );
 
   // Clear all URL params
   const clearUrl = useCallback(() => {
@@ -63,7 +66,6 @@ export function useUrlSync(options: UseUrlSyncOptions = {}) {
   return {
     fileIdFromUrl,
     updateUrl,
-    clearUrl
+    clearUrl,
   };
 }
-

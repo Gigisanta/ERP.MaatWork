@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { memo } from 'react';
 import { Button, Badge, Text } from '@cactus/ui';
 import { Trash2 } from 'lucide-react';
@@ -16,9 +16,7 @@ const PortfolioLineRow = memo<PortfolioLineRowProps>(({ line, onDelete }) => {
   return (
     <tr className="border-b border-border">
       <td className="p-3">
-        <Badge 
-          variant={line.targetType === 'assetClass' ? 'default' : 'success'}
-        >
+        <Badge variant={line.targetType === 'assetClass' ? 'default' : 'success'}>
           {line.targetType === 'assetClass' ? 'Clase' : 'Instrumento'}
         </Badge>
       </td>
@@ -35,9 +33,7 @@ const PortfolioLineRow = memo<PortfolioLineRowProps>(({ line, onDelete }) => {
         </div>
       </td>
       <td className="p-3 text-right">
-        <Badge variant="default">
-          {(Number(line.targetWeight) * 100).toFixed(2)}%
-        </Badge>
+        <Badge variant="default">{(Number(line.targetWeight) * 100).toFixed(2)}%</Badge>
       </td>
       <td className="p-3 text-center">
         <Button
@@ -56,4 +52,3 @@ const PortfolioLineRow = memo<PortfolioLineRowProps>(({ line, onDelete }) => {
 PortfolioLineRow.displayName = 'PortfolioLineRow';
 
 export default PortfolioLineRow;
-

@@ -15,27 +15,27 @@ import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 import { promises as fs } from 'node:fs';
 import { db, aumImportFiles, aumImportRows } from '@cactus/db';
 import { sql } from 'drizzle-orm';
-import { normalizeAccountNumber } from '@/utils/aum-normalization';
+import { normalizeAccountNumber } from '../../../../utils/aum/aum-normalization';
 import { parseAumFile } from '@/services/aumParser';
 import {
   matchContactByAccountNumber,
   matchContactByHolderName,
   matchAdvisor,
-} from '@/services/aumMatcher';
+} from '@/services/aum-matcher';
 import {
   upsertAumRows,
   applyAdvisorAccountMapping,
   type AumRowInsert,
   upsertAumMonthlySnapshots,
   type AumMonthlySnapshotInsert,
-} from '@/services/aumUpsert';
+} from '@/services/aum-upsert';
 import {
   inheritAdvisorFromExisting,
   inheritMatchedUserIdFromExisting,
   shouldFlagConflict,
   type ExistingAumAccountSnapshot,
-} from '@/services/aumConflictResolution';
-import { detectAumFileMetadata } from '@/utils/aum-file-detection';
+} from '@/services/aum-conflict-resolution';
+import { detectAumFileMetadata } from '../../../../utils/aum/aum-file-detection';
 import { validateParsedRows, calculateValidationPercentages } from '../validation';
 import type { TotalsRow } from '../types';
 

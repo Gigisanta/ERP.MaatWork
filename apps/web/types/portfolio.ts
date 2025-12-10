@@ -2,7 +2,13 @@
  * Tipos relacionados con portfolios/carteras
  */
 
-import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase, RiskLevel } from './common';
+import type {
+  TimestampedEntity,
+  UpdateRequest,
+  CreateRequest,
+  ComponentBase,
+  RiskLevel,
+} from './common';
 
 /**
  * Portfolio base - extiende TimestampedEntity

@@ -1,6 +1,6 @@
 /**
  * Vitest config for integration tests
- * 
+ *
  * Integration tests use a real database connection and require:
  * - TEST_DATABASE_URL environment variable (or DATABASE_URL)
  * - Database migrations run before tests
@@ -49,4 +49,3 @@ export default defineConfig({
     },
   },
 });
-

@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, render as rtlRender, screen as rtlScreen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Header, Header as HeaderComponent, type HeaderProps, type NavItem, type User } from './Header';
+import {
+  Header,
+  Header as HeaderComponent,
+  type HeaderProps,
+  type NavItem,
+  type User,
+} from './Header';
 
 describe('Header - Profile item', () => {
   function renderHeader(extraProps: Partial<HeaderProps> = {}) {
@@ -291,7 +297,9 @@ describe('Header Component', () => {
       const longNameUser = { ...mockUser, name: 'Very Long Name That Might Overflow' };
       render(<Header user={longNameUser} />);
       // Header solo muestra la inicial, no el nombre completo
-      expect(screen.getByLabelText(/menú de usuario: very long name that might overflow/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/menú de usuario: very long name that might overflow/i)
+      ).toBeInTheDocument();
       expect(screen.getByText('V')).toBeInTheDocument(); // Initial
     });
 
@@ -306,7 +314,7 @@ describe('Header Component', () => {
     });
 
     it('should handle special characters in user name', () => {
-      const specialUser = { ...mockUser, name: 'Ñoño O\'Brien' };
+      const specialUser = { ...mockUser, name: "Ñoño O'Brien" };
       render(<Header user={specialUser} />);
       // Header solo muestra la inicial, no el nombre completo
       expect(screen.getByLabelText(/menú de usuario: ñoño o'brien/i)).toBeInTheDocument();
@@ -347,4 +355,3 @@ describe('Header Component', () => {
     });
   });
 });
-

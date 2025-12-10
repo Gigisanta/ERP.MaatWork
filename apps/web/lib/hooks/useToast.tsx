@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 /**
  * useToast Hook
- * 
+ *
  * AI_DECISION: Centralized toast notification system
  * Justificación: Provides consistent UX across the app, reduces code duplication
  * Impacto: Better maintainability, consistent user feedback
@@ -42,23 +42,26 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const [toast, setToast] = useState<ToastState>({
     show: false,
     title: '',
-    variant: 'info'
+    variant: 'info',
   });
 
-  const showToast = useCallback((title: string, description?: string, variant: ToastVariant = 'info') => {
-    const toastState: ToastState = {
-      show: true,
-      title,
-      variant
-    };
-    if (description) {
-      toastState.description = description;
-    }
-    setToast(toastState);
-  }, []);
+  const showToast = useCallback(
+    (title: string, description?: string, variant: ToastVariant = 'info') => {
+      const toastState: ToastState = {
+        show: true,
+        title,
+        variant,
+      };
+      if (description) {
+        toastState.description = description;
+      }
+      setToast(toastState);
+    },
+    []
+  );
 
   const hideToast = useCallback(() => {
-    setToast(prev => ({ ...prev, show: false }));
+    setToast((prev) => ({ ...prev, show: false }));
   }, []);
 
   return (
@@ -79,4 +82,3 @@ export function ToastProvider({ children }: ToastProviderProps) {
     </ToastContext.Provider>
   );
 }
-

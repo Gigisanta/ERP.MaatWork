@@ -6,14 +6,14 @@ export default function AdminHubPage() {
       title: 'Usuarios y cuentas',
       description: 'Administra usuarios, roles, permisos y cuentas del sistema.',
       href: '/admin/users',
-      icon: '👥'
+      icon: '👥',
     },
     {
       title: 'AUM y Brokers',
       description: 'Sincroniza y normaliza datos reales de brokers con el CRM.',
       href: '/admin/aum',
-      icon: '📊'
-    }
+      icon: '📊',
+    },
   ];
 
   return (
@@ -28,7 +28,9 @@ export default function AdminHubPage() {
           <Link key={c.href} href={c.href} className="block group">
             <div className="h-full rounded-lg border border-border bg-surface p-5 shadow-sm transition-all group-hover:shadow-md group-hover:border-primary/30">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl" aria-hidden>{c.icon}</span>
+                <span className="text-2xl" aria-hidden>
+                  {c.icon}
+                </span>
                 <h2 className="text-lg font-medium text-text">{c.title}</h2>
               </div>
               <p className="text-sm text-text-secondary">{c.description}</p>

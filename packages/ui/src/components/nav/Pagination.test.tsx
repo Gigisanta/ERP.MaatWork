@@ -25,7 +25,9 @@ describe('Pagination Component', () => {
     });
 
     it('should not render when totalPages is 1 or less', () => {
-      const { container } = render(<Pagination currentPage={1} totalPages={1} onPageChange={mockOnPageChange} />);
+      const { container } = render(
+        <Pagination currentPage={1} totalPages={1} onPageChange={mockOnPageChange} />
+      );
       expect(container.firstChild).toBeNull();
     });
 
@@ -60,7 +62,7 @@ describe('Pagination Component', () => {
     it('should call onPageChange when page button is clicked', async () => {
       const user = userEvent.setup();
       render(<Pagination currentPage={1} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       await user.click(screen.getByRole('button', { name: 'Go to page 2' }));
       expect(mockOnPageChange).toHaveBeenCalledWith(2);
     });
@@ -68,7 +70,7 @@ describe('Pagination Component', () => {
     it('should call onPageChange when Previous is clicked', async () => {
       const user = userEvent.setup();
       render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       await user.click(screen.getByRole('button', { name: /previous/i }));
       expect(mockOnPageChange).toHaveBeenCalledWith(2);
     });
@@ -76,7 +78,7 @@ describe('Pagination Component', () => {
     it('should call onPageChange when Next is clicked', async () => {
       const user = userEvent.setup();
       render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       await user.click(screen.getByRole('button', { name: /next/i }));
       expect(mockOnPageChange).toHaveBeenCalledWith(4);
     });
@@ -84,7 +86,7 @@ describe('Pagination Component', () => {
     it('should call onPageChange when First is clicked', async () => {
       const user = userEvent.setup();
       render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       await user.click(screen.getByRole('button', { name: /first/i }));
       expect(mockOnPageChange).toHaveBeenCalledWith(1);
     });
@@ -92,7 +94,7 @@ describe('Pagination Component', () => {
     it('should call onPageChange when Last is clicked', async () => {
       const user = userEvent.setup();
       render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       await user.click(screen.getByRole('button', { name: /last/i }));
       expect(mockOnPageChange).toHaveBeenCalledWith(5);
     });
@@ -101,21 +103,21 @@ describe('Pagination Component', () => {
   describe('Disabled States', () => {
     it('should disable Previous and First on first page', () => {
       render(<Pagination currentPage={1} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       expect(screen.getByRole('button', { name: /previous/i })).toBeDisabled();
       expect(screen.getByRole('button', { name: /first/i })).toBeDisabled();
     });
 
     it('should disable Next and Last on last page', () => {
       render(<Pagination currentPage={5} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
       expect(screen.getByRole('button', { name: /last/i })).toBeDisabled();
     });
 
     it('should enable all buttons on middle pages', () => {
       render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       expect(screen.getByRole('button', { name: /previous/i })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: /next/i })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: /first/i })).not.toBeDisabled();
@@ -131,34 +133,62 @@ describe('Pagination Component', () => {
     });
 
     it('should not show ellipsis when all pages fit', () => {
-      render(<Pagination currentPage={3} totalPages={5} onPageChange={mockOnPageChange} maxVisiblePages={5} />);
+      render(
+        <Pagination
+          currentPage={3}
+          totalPages={5}
+          onPageChange={mockOnPageChange}
+          maxVisiblePages={5}
+        />
+      );
       expect(screen.queryByText('...')).not.toBeInTheDocument();
     });
   });
 
   describe('Options', () => {
     it('should hide first/last buttons when showFirstLast is false', () => {
-      render(<Pagination currentPage={2} totalPages={5} onPageChange={mockOnPageChange} showFirstLast={false} />);
-      
+      render(
+        <Pagination
+          currentPage={2}
+          totalPages={5}
+          onPageChange={mockOnPageChange}
+          showFirstLast={false}
+        />
+      );
+
       expect(screen.queryByRole('button', { name: /first/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /last/i })).not.toBeInTheDocument();
     });
 
     it('should hide prev/next buttons when showPrevNext is false', () => {
-      render(<Pagination currentPage={2} totalPages={5} onPageChange={mockOnPageChange} showPrevNext={false} />);
-      
+      render(
+        <Pagination
+          currentPage={2}
+          totalPages={5}
+          onPageChange={mockOnPageChange}
+          showPrevNext={false}
+        />
+      );
+
       expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
     });
 
     it('should limit visible pages based on maxVisiblePages', () => {
-      render(<Pagination currentPage={5} totalPages={10} onPageChange={mockOnPageChange} maxVisiblePages={3} />);
-      
-      // Should show limited number of page buttons
-      const pageButtons = screen.getAllByRole('button').filter(btn => 
-        btn.getAttribute('aria-label')?.startsWith('Go to page')
+      render(
+        <Pagination
+          currentPage={5}
+          totalPages={10}
+          onPageChange={mockOnPageChange}
+          maxVisiblePages={3}
+        />
       );
-      
+
+      // Should show limited number of page buttons
+      const pageButtons = screen
+        .getAllByRole('button')
+        .filter((btn) => btn.getAttribute('aria-label')?.startsWith('Go to page'));
+
       // Exact count depends on ellipsis logic, but should be limited
       expect(pageButtons.length).toBeLessThan(10);
     });
@@ -178,7 +208,7 @@ describe('Pagination Component', () => {
 
     it('should have descriptive aria-labels', () => {
       render(<Pagination currentPage={2} totalPages={5} onPageChange={mockOnPageChange} />);
-      
+
       expect(screen.getByRole('button', { name: /previous page, page 1/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /next page, page 3/i })).toBeInTheDocument();
     });
@@ -198,11 +228,15 @@ describe('Pagination Component', () => {
 
     it('should apply custom className', () => {
       const { container } = render(
-        <Pagination currentPage={1} totalPages={5} onPageChange={mockOnPageChange} className="custom-pagination" />
+        <Pagination
+          currentPage={1}
+          totalPages={5}
+          onPageChange={mockOnPageChange}
+          className="custom-pagination"
+        />
       );
       const nav = container.querySelector('nav');
       expect(nav).toHaveClass('custom-pagination');
     });
   });
 });
-

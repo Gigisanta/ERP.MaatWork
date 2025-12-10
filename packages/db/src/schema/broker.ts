@@ -14,7 +14,7 @@ import {
   numeric,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { contacts } from './contacts';
@@ -29,10 +29,12 @@ export const integrationAccounts = pgTable('integration_accounts', {
   broker: text('broker').notNull(), // balanz
   maskedUsername: text('masked_username').notNull(),
   authType: text('auth_type').notNull(), // password, otp, token, cookies
-  config: jsonb('config').notNull().default(sql`'{}'::jsonb`),
+  config: jsonb('config')
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   status: text('status').notNull(), // active, disabled
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**
@@ -45,7 +47,9 @@ export const integrationJobs = pgTable('integration_jobs', {
   scheduleCron: text('schedule_cron').notNull(),
   enabled: boolean('enabled').notNull().default(true),
   lastRunAt: timestamp('last_run_at', { withTimezone: true }),
-  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id)
+  createdByUserId: uuid('created_by_user_id')
+    .notNull()
+    .references(() => users.id),
 });
 
 /**
@@ -56,15 +60,19 @@ export const integrationRuns = pgTable(
   'integration_runs',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    jobId: uuid('job_id').notNull().references(() => integrationJobs.id),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => integrationJobs.id),
     startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
     status: text('status').notNull(), // success, warning, failed
     error: text('error'),
-    stats: jsonb('stats').notNull().default(sql`'{}'::jsonb`)
+    stats: jsonb('stats')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
   },
   (table) => ({
-    integrationRunsJobIdx: index('idx_integration_runs_job').on(table.jobId, table.startedAt)
+    integrationRunsJobIdx: index('idx_integration_runs_job').on(table.jobId, table.startedAt),
   })
 );
 
@@ -74,12 +82,14 @@ export const integrationRuns = pgTable(
  */
 export const integrationFiles = pgTable('integration_files', {
   id: uuid('id').defaultRandom().primaryKey(),
-  runId: uuid('run_id').notNull().references(() => integrationRuns.id, { onDelete: 'cascade' }),
+  runId: uuid('run_id')
+    .notNull()
+    .references(() => integrationRuns.id, { onDelete: 'cascade' }),
   fileType: text('file_type').notNull(),
   path: text('path').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
   checksum: text('checksum'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**
@@ -93,14 +103,19 @@ export const brokerAccounts = pgTable(
     broker: text('broker').notNull(), // balanz
     accountNumber: text('account_number').notNull(),
     holderName: text('holder_name'),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id),
     status: text('status').notNull(), // active, closed
     lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    brokerAccountUnique: uniqueIndex('broker_accounts_unique').on(table.broker, table.accountNumber),
+    brokerAccountUnique: uniqueIndex('broker_accounts_unique').on(
+      table.broker,
+      table.accountNumber
+    ),
     // AI_DECISION: Add index for contact + status + deletedAt queries
     // Justificación: Contact detail page carga broker accounts filtradas por contacto
     // Impacto: Faster broker accounts loading in contact detail page
@@ -108,7 +123,7 @@ export const brokerAccounts = pgTable(
       table.contactId,
       table.status,
       table.deletedAt
-    )
+    ),
   })
 );
 
@@ -120,11 +135,13 @@ export const brokerBalances = pgTable(
   'broker_balances',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    brokerAccountId: uuid('broker_account_id').notNull().references(() => brokerAccounts.id, { onDelete: 'cascade' }),
+    brokerAccountId: uuid('broker_account_id')
+      .notNull()
+      .references(() => brokerAccounts.id, { onDelete: 'cascade' }),
     asOfDate: date('as_of_date').notNull(),
     currency: text('currency').notNull(),
     liquidBalance: numeric('liquid_balance', { precision: 18, scale: 6 }).notNull(),
-    totalBalance: numeric('total_balance', { precision: 18, scale: 6 }).notNull()
+    totalBalance: numeric('total_balance', { precision: 18, scale: 6 }).notNull(),
   },
   (table) => ({
     brokerBalancesUnique: uniqueIndex('broker_balances_unique').on(
@@ -132,7 +149,10 @@ export const brokerBalances = pgTable(
       table.asOfDate,
       table.currency
     ),
-    brokerBalancesLatestIdx: index('idx_broker_balances_latest').on(table.brokerAccountId, table.asOfDate)
+    brokerBalancesLatestIdx: index('idx_broker_balances_latest').on(
+      table.brokerAccountId,
+      table.asOfDate
+    ),
   })
 );
 
@@ -144,7 +164,9 @@ export const brokerTransactions = pgTable(
   'broker_transactions',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    brokerAccountId: uuid('broker_account_id').notNull().references(() => brokerAccounts.id, { onDelete: 'cascade' }),
+    brokerAccountId: uuid('broker_account_id')
+      .notNull()
+      .references(() => brokerAccounts.id, { onDelete: 'cascade' }),
     tradeDate: date('trade_date').notNull(),
     settleDate: date('settle_date'),
     type: text('type').notNull(), // buy, sell, coupon, dividend, transfer_in, transfer_out, deposit, withdrawal, fee, interest
@@ -157,10 +179,13 @@ export const brokerTransactions = pgTable(
     reference: text('reference'),
     externalRef: text('external_ref'),
     rawRef: jsonb('raw_ref'),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    btxAccountSettleIdx: index('idx_btx_account_settle').on(table.brokerAccountId, table.settleDate),
+    btxAccountSettleIdx: index('idx_btx_account_settle').on(
+      table.brokerAccountId,
+      table.settleDate
+    ),
     btxAccountTradeIdx: index('idx_btx_account_trade').on(table.brokerAccountId, table.tradeDate),
     btxTypeTradeIdx: index('idx_btx_type_trade').on(table.type, table.tradeDate),
     // AI_DECISION: Add composite index for transaction history queries
@@ -178,7 +203,7 @@ export const brokerTransactions = pgTable(
       table.brokerAccountId,
       table.type,
       table.tradeDate
-    )
+    ),
   })
 );
 
@@ -190,12 +215,16 @@ export const brokerPositions = pgTable(
   'broker_positions',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    brokerAccountId: uuid('broker_account_id').notNull().references(() => brokerAccounts.id, { onDelete: 'cascade' }),
+    brokerAccountId: uuid('broker_account_id')
+      .notNull()
+      .references(() => brokerAccounts.id, { onDelete: 'cascade' }),
     asOfDate: date('as_of_date').notNull(),
-    instrumentId: uuid('instrument_id').notNull().references(() => instruments.id),
+    instrumentId: uuid('instrument_id')
+      .notNull()
+      .references(() => instruments.id),
     quantity: numeric('quantity', { precision: 28, scale: 8 }).notNull(),
     avgPrice: numeric('avg_price', { precision: 18, scale: 6 }),
-    marketValue: numeric('market_value', { precision: 18, scale: 6 })
+    marketValue: numeric('market_value', { precision: 18, scale: 6 }),
   },
   (table) => ({
     brokerPositionsUnique: uniqueIndex('broker_positions_unique').on(
@@ -211,7 +240,6 @@ export const brokerPositions = pgTable(
       table.brokerAccountId,
       table.instrumentId,
       table.asOfDate
-    )
+    ),
   })
 );
-

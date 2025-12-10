@@ -1,6 +1,6 @@
 /**
  * Tests para PortfolioPerformanceMetrics component
- * 
+ *
  * AI_DECISION: Tests unitarios para métricas de rendimiento de carteras
  * Justificación: Validación crítica de cálculo y visualización de métricas financieras
  * Impacto: Prevenir errores en análisis de rendimiento
@@ -14,12 +14,14 @@ import type { Portfolio } from '@/types';
 
 // Mock dependencies
 vi.mock('@/lib/api/analytics', () => ({
-  getPortfolioPerformance: vi.fn()
+  getPortfolioPerformance: vi.fn(),
 }));
 
 vi.mock('@cactus/ui', () => ({
   Card: ({ children, className }: any) => (
-    <div data-testid="card" className={className}>{children}</div>
+    <div data-testid="card" className={className}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
   CardHeader: ({ children }: any) => <div>{children}</div>,
@@ -53,20 +55,18 @@ vi.mock('@cactus/ui', () => ({
   Text: ({ children, size, weight, color, className }: any) => (
     <span className={className}>{children}</span>
   ),
-  Stack: ({ children, direction, gap, align, justify }: any) => (
-    <div>{children}</div>
-  ),
+  Stack: ({ children, direction, gap, align, justify }: any) => <div>{children}</div>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  Alert: ({ children, variant }: any) => (
-    <div role="alert">{children}</div>
-  ),
+  Alert: ({ children, variant }: any) => <div role="alert">{children}</div>,
   Select: ({ value, onValueChange, items }: any) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item: any) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
       ))}
     </select>
-  )
+  ),
 }));
 
 describe('PortfolioPerformanceMetrics', () => {
@@ -76,15 +76,15 @@ describe('PortfolioPerformanceMetrics', () => {
       name: 'Portfolio 1',
       riskLevel: 'moderate',
       createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
+      updatedAt: '2024-01-01',
     },
     {
       id: '2',
       name: 'Portfolio 2',
       riskLevel: 'aggressive',
       createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    }
+      updatedAt: '2024-01-01',
+    },
   ];
 
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('PortfolioPerformanceMetrics', () => {
     );
 
     render(<PortfolioPerformanceMetrics portfolios={mockPortfolios} />);
-    
+
     // El componente muestra spinners dentro de las filas cuando están cargando
     // Esperar a que se muestren los spinners en las filas
     await waitFor(() => {
@@ -121,9 +121,9 @@ describe('PortfolioPerformanceMetrics', () => {
             volatility: 0.12,
             sharpeRatio: 1.25,
             maxDrawdown: -0.08,
-            annualizedReturn: 0.18
-          }
-        }
+            annualizedReturn: 0.18,
+          },
+        },
       })
       .mockResolvedValueOnce({
         success: true,
@@ -133,9 +133,9 @@ describe('PortfolioPerformanceMetrics', () => {
             volatility: 0.18,
             sharpeRatio: 1.22,
             maxDrawdown: -0.12,
-            annualizedReturn: 0.25
-          }
-        }
+            annualizedReturn: 0.25,
+          },
+        },
       });
 
     render(<PortfolioPerformanceMetrics portfolios={mockPortfolios} />);
@@ -153,7 +153,7 @@ describe('PortfolioPerformanceMetrics', () => {
     (getPortfolioPerformance as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce({
         success: false,
-        error: 'Failed to fetch metrics'
+        error: 'Failed to fetch metrics',
       })
       .mockResolvedValueOnce({
         success: true,
@@ -163,9 +163,9 @@ describe('PortfolioPerformanceMetrics', () => {
             volatility: 0.12,
             sharpeRatio: 1.25,
             maxDrawdown: -0.08,
-            annualizedReturn: 0.18
-          }
-        }
+            annualizedReturn: 0.18,
+          },
+        },
       });
 
     render(<PortfolioPerformanceMetrics portfolios={mockPortfolios} />);
@@ -189,9 +189,9 @@ describe('PortfolioPerformanceMetrics', () => {
             volatility: 0.12,
             sharpeRatio: 1.25,
             maxDrawdown: -0.08,
-            annualizedReturn: 0.18
-          }
-        }
+            annualizedReturn: 0.18,
+          },
+        },
       });
 
     render(<PortfolioPerformanceMetrics portfolios={mockPortfolios} />);
@@ -212,9 +212,9 @@ describe('PortfolioPerformanceMetrics', () => {
           volatility: 0.12,
           sharpeRatio: 1.25,
           maxDrawdown: -0.08,
-          annualizedReturn: 0.18
-        }
-      }
+          annualizedReturn: 0.18,
+        },
+      },
     });
 
     render(<PortfolioPerformanceMetrics portfolios={mockPortfolios} period="1Y" />);
@@ -236,9 +236,9 @@ describe('PortfolioPerformanceMetrics', () => {
           volatility: 0.12,
           sharpeRatio: 1.25,
           maxDrawdown: -0.08,
-          annualizedReturn: 0.18
-        }
-      }
+          annualizedReturn: 0.18,
+        },
+      },
     });
 
     render(<PortfolioPerformanceMetrics portfolios={[mockPortfolios[0]]} />);
@@ -260,9 +260,9 @@ describe('PortfolioPerformanceMetrics', () => {
           volatility: NaN,
           sharpeRatio: NaN,
           maxDrawdown: NaN,
-          annualizedReturn: NaN
-        }
-      }
+          annualizedReturn: NaN,
+        },
+      },
     });
 
     render(<PortfolioPerformanceMetrics portfolios={[mockPortfolios[0]]} />);
@@ -283,9 +283,9 @@ describe('PortfolioPerformanceMetrics', () => {
           volatility: 0.12,
           sharpeRatio: 1.25,
           maxDrawdown: -0.08,
-          annualizedReturn: 0.18
-        }
-      }
+          annualizedReturn: 0.18,
+        },
+      },
     });
 
     const { container } = render(
@@ -296,4 +296,3 @@ describe('PortfolioPerformanceMetrics', () => {
     expect(card).toHaveClass('custom-class');
   });
 });
-

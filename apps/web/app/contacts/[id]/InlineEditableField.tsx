@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Text, Spinner, Input } from '@cactus/ui';
 
@@ -18,7 +18,7 @@ interface InlineEditableFieldProps {
 
 /**
  * InlineEditableField - Client Island for inline text editing
- * 
+ *
  * @example
  * <InlineEditableField
  *   label="Email"
@@ -27,14 +27,14 @@ interface InlineEditableFieldProps {
  *   onSave={handleSave}
  * />
  */
-export default function InlineEditableField({ 
-  label, 
-  value, 
-  field, 
-  onSave, 
-  placeholder, 
-  emptyText = "Sin especificar", 
-  type = 'text' 
+export default function InlineEditableField({
+  label,
+  value,
+  field,
+  onSave,
+  placeholder,
+  emptyText = 'Sin especificar',
+  type = 'text',
 }: InlineEditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value || '');
@@ -49,7 +49,7 @@ export default function InlineEditableField({
       setIsEditing(false);
       return;
     }
-    
+
     setSaving(true);
     try {
       await onSave(field, localValue);
@@ -93,9 +93,10 @@ export default function InlineEditableField({
       className="cursor-pointer hover:bg-gray-50 px-2 py-1 rounded"
       onClick={() => setIsEditing(true)}
     >
-      <Text size="sm" weight="medium" color="secondary">{label}</Text>
+      <Text size="sm" weight="medium" color="secondary">
+        {label}
+      </Text>
       <Text className="mt-1">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
     </div>
   );
 }
-

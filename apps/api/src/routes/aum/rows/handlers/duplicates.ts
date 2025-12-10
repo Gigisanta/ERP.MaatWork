@@ -9,7 +9,7 @@
 import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '@/utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../../../../utils/aum/aum-normalization';
 import type { AumRowResultDuplicate } from '../types';
 import { createRouteHandler } from '@/utils/route-handler';
 

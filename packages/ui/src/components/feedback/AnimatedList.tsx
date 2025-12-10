@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Children, isValidElement } from 'react';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface AnimatedListProps {
   /** Children to animate */

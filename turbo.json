@@ -3,11 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**"
-      ],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
@@ -24,10 +20,7 @@
     },
     "typecheck": {
       "dependsOn": ["^build"],
-      "outputs": [
-        ".tsbuildinfo",
-        "tsconfig.tsbuildinfo"
-      ],
+      "outputs": [".tsbuildinfo", "tsconfig.tsbuildinfo"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
@@ -42,17 +35,8 @@
     },
     "build:clean": {
       "dependsOn": ["^build:clean"],
-      "outputs": [
-        "dist/**",
-        ".next/**"
-      ],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "app/**/*.tsx",
-        "package.json",
-        "tsconfig.json"
-      ]
+      "outputs": ["dist/**", ".next/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "app/**/*.tsx", "package.json", "tsconfig.json"]
     },
     "dev": {
       "persistent": true,

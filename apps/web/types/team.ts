@@ -37,9 +37,28 @@ export interface TeamMember {
 }
 
 /**
- * Advisor candidato para equipo
+ * Usuario candidato para equipo (puede ser advisor, manager, o admin)
+ * 
+ * AI_DECISION: Rename from TeamAdvisor to reflect that it's not just advisors
+ * Justificación: Teams can now include managers, administratives, and advisors
+ * Impacto: More accurate type naming, better reflects actual usage
+ * 
+ * AI_DECISION: Use isActive instead of active to match API response format
+ * Justificación: Backend returns isActive (from UserApiResponse), not active (from User)
+ * Impacto: Type matches actual API response structure
  */
-export interface TeamAdvisor extends Pick<User, 'id' | 'email' | 'fullName' | 'role' | 'active'> {}
+export interface TeamAdvisor {
+  id: string;
+  email: string;
+  fullName: string | null;
+  role: string;
+  isActive: boolean;
+  /**
+   * ID del equipo actual del usuario (si está en otro equipo)
+   * null si el usuario no está en ningún equipo
+   */
+  currentTeamId?: string | null;
+}
 
 /**
  * Estado de solicitud de membresía

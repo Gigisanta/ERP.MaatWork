@@ -2,19 +2,16 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Search, Plus } from 'lucide-react';
-import {
-  Input,
-  Button,
-  Text,
-  Stack,
-  Alert,
-  Spinner,
-  Card,
-  CardContent,
-} from '@cactus/ui';
+import { Input, Button, Text, Stack, Alert, Spinner, Card, CardContent } from '@cactus/ui';
 import { useAuth } from '../auth/AuthContext';
 import { logger, toLogContext } from '@/lib/logger';
-import type { InstrumentSearchResult, Currency, AssetType, ApiError, ApiResponseWithHint } from '@/types';
+import type {
+  InstrumentSearchResult,
+  Currency,
+  AssetType,
+  ApiError,
+  ApiResponseWithHint,
+} from '@/types';
 
 interface AssetSearcherProps {
   onAssetSelect: (asset: InstrumentSearchResult) => void;
@@ -32,7 +29,10 @@ interface SearchResult {
   industry?: string;
 }
 
-const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholder = "Buscar por símbolo o nombre (ej: AAPL, Apple)" }) => {
+const AssetSearcher: React.FC<AssetSearcherProps> = ({
+  onAssetSelect,
+  placeholder = 'Buscar por símbolo o nombre (ej: AAPL, Apple)',
+}) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,16 +47,16 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         setError(null);
         return;
       }
-      
+
       if (!user) {
         setError('Debes iniciar sesión para buscar activos');
         setSearchResults([]);
         return;
       }
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         const { searchInstruments } = await import('@/lib/api');
         const response = await searchInstruments(searchQuery);
@@ -65,14 +65,16 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
           // Verificar si hay resultados
           if (Array.isArray(response.data) && response.data.length > 0) {
             // Convertir InstrumentSearchResult[] a SearchResult[]
-            const convertedResults: SearchResult[] = response.data.map((item: InstrumentSearchResult) => ({
-              symbol: item.symbol,
-              name: item.name || item.symbol,
-              shortName: item.name,
-              exchange: 'Unknown', // InstrumentSearchResult no tiene exchange
-              currency: item.currency || 'USD',
-              type: item.type || 'EQUITY',
-            }));
+            const convertedResults: SearchResult[] = response.data.map(
+              (item: InstrumentSearchResult) => ({
+                symbol: item.symbol,
+                name: item.name || item.symbol,
+                shortName: item.name,
+                exchange: 'Unknown', // InstrumentSearchResult no tiene exchange
+                currency: item.currency || 'USD',
+                type: item.type || 'EQUITY',
+              })
+            );
             setSearchResults(convertedResults);
             setError(null);
           } else {
@@ -89,13 +91,15 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
           // Respuesta con error del backend
           const errorResponse = response as ApiResponseWithHint<InstrumentSearchResult[]>;
           const errorMsg = errorResponse.error || 'Error al buscar activos';
-          const details = Array.isArray(errorResponse.details) 
-            ? errorResponse.details.join(', ') 
+          const details = Array.isArray(errorResponse.details)
+            ? errorResponse.details.join(', ')
             : errorResponse.details || '';
-          
+
           // Detectar si es error de servicio no disponible (503)
           if (errorResponse.status === 503 || errorMsg.includes('temporarily unavailable')) {
-            setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
+            setError(
+              'El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.'
+            );
             // Intentar buscar en BD como fallback (ya debería estar hecho en backend)
             setSearchResults([]);
           } else {
@@ -105,25 +109,45 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
         }
       } catch (err: unknown) {
         logger.error('Error searching instruments', toLogContext({ err, query: searchQuery }));
-        
+
         // Detectar tipo de error específico
         const apiError = err as ApiError;
         const errorStatus = apiError.status || apiError.response?.status;
         const errorMessage = err instanceof Error ? err.message : String(err);
-        const errorDetails = apiError.details 
-          ? (Array.isArray(apiError.details) ? apiError.details.join(', ') : apiError.details)
-          : apiError.response?.data?.details 
-            ? (Array.isArray(apiError.response.data.details) 
-              ? apiError.response.data.details.join(', ') 
-              : apiError.response.data.details)
+        const errorDetails = apiError.details
+          ? Array.isArray(apiError.details)
+            ? apiError.details.join(', ')
+            : apiError.details
+          : apiError.response?.data?.details
+            ? Array.isArray(apiError.response.data.details)
+              ? apiError.response.data.details.join(', ')
+              : apiError.response.data.details
             : '';
-        
-        if (errorStatus === 503 || errorMessage.includes('temporarily unavailable') || errorMessage.includes('Service Unavailable')) {
-          setError('El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.');
-        } else if (errorStatus === 504 || errorMessage.includes('timeout') || errorMessage.includes('Gateway Timeout')) {
-          setError('La búsqueda está tardando demasiado. Intenta con un término más específico o usa el símbolo directo.');
-        } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
-          setError('No se pudo conectar con el servicio de búsqueda. Verifica tu conexión o intenta más tarde.');
+
+        if (
+          errorStatus === 503 ||
+          errorMessage.includes('temporarily unavailable') ||
+          errorMessage.includes('Service Unavailable')
+        ) {
+          setError(
+            'El servicio de búsqueda externa no está disponible. Se están usando resultados de la base de datos local.'
+          );
+        } else if (
+          errorStatus === 504 ||
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('Gateway Timeout')
+        ) {
+          setError(
+            'La búsqueda está tardando demasiado. Intenta con un término más específico o usa el símbolo directo.'
+          );
+        } else if (
+          errorMessage.includes('ECONNREFUSED') ||
+          errorMessage.includes('Failed to fetch') ||
+          errorMessage.includes('NetworkError')
+        ) {
+          setError(
+            'No se pudo conectar con el servicio de búsqueda. Verifica tu conexión o intenta más tarde.'
+          );
         } else if (errorDetails) {
           setError(errorDetails);
         } else {
@@ -140,12 +164,12 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    
+
     // Debounce: cancelar búsqueda anterior
     if (debounceTimeout.current) {
       clearTimeout(debounceTimeout.current);
     }
-    
+
     // Nueva búsqueda después de 300ms
     debounceTimeout.current = setTimeout(() => {
       search(value);
@@ -161,7 +185,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       currency: (asset.currency || 'USD') as Currency,
       type: (asset.type || 'EQUITY') as AssetType,
     };
-    
+
     onAssetSelect(instrument);
     setQuery('');
     setSearchResults([]);
@@ -172,14 +196,14 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       const symbol = query.trim().toUpperCase();
       let validationFailed = false;
       let errorMessage = '';
-      
+
       // Validar símbolo directamente
       try {
         setLoading(true);
         setError(null);
         const { validateSymbol } = await import('@/lib/api');
         const response = await validateSymbol(symbol);
-        
+
         if (response.success && response.data?.isValid) {
           const instrument: InstrumentSearchResult = {
             symbol: symbol,
@@ -188,7 +212,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             currency: 'USD' as Currency,
             type: 'EQUITY' as AssetType,
           };
-          
+
           onAssetSelect(instrument);
           setQuery('');
           setSearchResults([]);
@@ -206,12 +230,12 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       } catch (err: unknown) {
         logger.error('Error validating symbol', toLogContext({ err, symbol }));
         validationFailed = true;
-        
+
         // Detectar tipo de error
         const apiError = err as ApiError;
         const errorStatus = apiError.status || apiError.response?.status;
         const errorMsg = err instanceof Error ? err.message : String(err);
-        
+
         if (errorStatus === 503 || errorMsg.includes('temporarily unavailable')) {
           errorMessage = `El servicio de validación no está disponible. Se agregará "${symbol}" sin validar.`;
         } else if (errorStatus === 504 || errorMsg.includes('timeout')) {
@@ -222,7 +246,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
       } finally {
         setLoading(false);
       }
-      
+
       // Si la validación falla o no está disponible, usar símbolo directo después de un breve delay
       if (validationFailed) {
         setError(errorMessage);
@@ -234,7 +258,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             currency: 'USD' as Currency,
             type: 'EQUITY' as AssetType,
           };
-          
+
           onAssetSelect(instrument);
           setQuery('');
           setSearchResults([]);
@@ -267,20 +291,22 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             </Button>
           )}
         </div>
-        
+
         {loading && (
           <Stack direction="row" gap="sm" align="center">
             <Spinner size="sm" />
-            <Text size="sm" color="secondary">Buscando activos...</Text>
+            <Text size="sm" color="secondary">
+              Buscando activos...
+            </Text>
           </Stack>
         )}
-        
+
         {error && (
           <Alert variant="error">
             <Text size="sm">{error}</Text>
           </Alert>
         )}
-        
+
         {!loading && searchResults.length > 0 && (
           <Card className="max-h-60 overflow-y-auto">
             <CardContent className="p-0">
@@ -302,12 +328,20 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
                         </span>
                       )}
                     </Stack>
-                    <Text size="sm" color="secondary">{asset.name || asset.shortName || asset.symbol}</Text>
+                    <Text size="sm" color="secondary">
+                      {asset.name || asset.shortName || asset.symbol}
+                    </Text>
                     {asset.sector && (
-                      <Text size="xs" color="muted">{asset.sector} • {asset.industry || ''}</Text>
+                      <Text size="xs" color="muted">
+                        {asset.sector} • {asset.industry || ''}
+                      </Text>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm" className="text-accent-text hover:bg-accent-subtle">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-accent-text hover:bg-accent-subtle"
+                  >
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
@@ -315,29 +349,25 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({ onAssetSelect, placeholde
             </CardContent>
           </Card>
         )}
-        
+
         {!loading && !error && query.length >= 2 && searchResults.length === 0 && (
           <Alert variant="warning">
-            <Text size="sm">
-              No se encontraron resultados para &quot;{query}&quot;.
-            </Text>
+            <Text size="sm">No se encontraron resultados para &quot;{query}&quot;.</Text>
             <Text size="xs" color="muted" className="mt-1">
               Puedes usar el símbolo directo (botón +) o probar con términos más generales.
             </Text>
           </Alert>
         )}
-        
+
         {error && !loading && query.length >= 2 && (
           <Alert variant="info">
             <Text size="sm">{error}</Text>
           </Alert>
         )}
-        
+
         {query.length > 0 && query.length < 2 && (
           <Alert variant="info">
-            <Text size="sm">
-              Escribe al menos 2 caracteres para buscar activos.
-            </Text>
+            <Text size="sm">Escribe al menos 2 caracteres para buscar activos.</Text>
           </Alert>
         )}
       </Stack>

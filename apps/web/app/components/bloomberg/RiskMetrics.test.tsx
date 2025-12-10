@@ -1,6 +1,6 @@
 /**
  * Tests para RiskMetrics component
- * 
+ *
  * AI_DECISION: Tests unitarios para métricas de riesgo
  * Justificación: Validación crítica de visualización de métricas de riesgo
  * Impacto: Prevenir errores en análisis de riesgo
@@ -17,10 +17,12 @@ vi.mock('@cactus/ui', () => ({
   Text: ({ children, color }: any) => <span>{children}</span>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
   ),
   Stack: ({ children, direction, gap }: any) => <div>{children}</div>,
-  Heading: ({ children, level }: any) => <h2>{children}</h2>
+  Heading: ({ children, level }: any) => <h2>{children}</h2>,
 }));
 
 describe('RiskMetrics', () => {
@@ -35,7 +37,7 @@ describe('RiskMetrics', () => {
 
   it('debería mostrar el símbolo en el título', async () => {
     render(<RiskMetrics symbol="AAPL" />);
-    
+
     // Esperar a que termine el loading
     await waitFor(() => {
       expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
@@ -73,9 +75,8 @@ describe('RiskMetrics', () => {
   it('debería mostrar error cuando hay error', () => {
     // Simular estado de error (aunque el componente actual no lo maneja completamente)
     render(<RiskMetrics symbol="AAPL" />);
-    
+
     // El componente actualmente no tiene manejo de error visible, pero verificamos estructura
     expect(screen.getByTestId('card')).toBeInTheDocument();
   });
 });
-

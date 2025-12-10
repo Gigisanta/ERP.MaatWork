@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import {
   Card,
@@ -38,21 +38,21 @@ interface BrokerAccountsSectionProps {
 
 /**
  * BrokerAccountsSection - Client Island for broker account management
- * 
+ *
  * @example
  * <BrokerAccountsSection
  *   contactId={contact.id}
  *   initialBrokerAccounts={brokerAccounts}
  * />
  */
-export default function BrokerAccountsSection({ 
-  contactId, 
-  initialBrokerAccounts 
+export default function BrokerAccountsSection({
+  contactId,
+  initialBrokerAccounts,
 }: BrokerAccountsSectionProps) {
   const { brokerAccounts, error, isLoading, mutate } = useBrokerAccounts(contactId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   // Estado para ConfirmDialog
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -63,14 +63,14 @@ export default function BrokerAccountsSection({
   }>({
     open: false,
     title: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
   const [newAccount, setNewAccount] = useState({
     broker: '',
     accountNumber: '',
     holderName: '',
-    status: 'active' as 'active' | 'closed'
+    status: 'active' as 'active' | 'closed',
   });
 
   const handleCreateAccount = async () => {
@@ -78,14 +78,17 @@ export default function BrokerAccountsSection({
     try {
       await createBrokerAccount({
         ...newAccount,
-        contactId
+        contactId,
       });
 
       await mutate(); // Refresh data
       setShowCreateModal(false);
       setNewAccount({ broker: '', accountNumber: '', holderName: '', status: 'active' });
     } catch (err) {
-      logger.error('Error creating broker account', toLogContext({ err, contactId, account: newAccount }));
+      logger.error(
+        'Error creating broker account',
+        toLogContext({ err, contactId, account: newAccount })
+      );
     } finally {
       setSaving(false);
     }
@@ -104,22 +107,21 @@ export default function BrokerAccountsSection({
         } catch (err) {
           logger.error('Error deleting broker account', toLogContext({ err, accountId }));
         }
-      }
+      },
     });
   };
 
-  const accounts = Array.isArray(brokerAccounts) && brokerAccounts.length > 0 ? brokerAccounts : initialBrokerAccounts;
+  const accounts =
+    Array.isArray(brokerAccounts) && brokerAccounts.length > 0
+      ? brokerAccounts
+      : initialBrokerAccounts;
 
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Cuentas de Broker</CardTitle>
-          <Button 
-            variant="primary" 
-            size="sm"
-            onClick={() => setShowCreateModal(true)}
-          >
+          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
             Agregar Cuenta
           </Button>
         </div>
@@ -146,9 +148,7 @@ export default function BrokerAccountsSection({
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <Heading size="sm">{account.broker}</Heading>
-                      <Badge variant="default">
-                        Activa
-                      </Badge>
+                      <Badge variant="default">Activa</Badge>
                     </div>
                     <Text size="sm" color="secondary">
                       Número: {account.accountNumber}
@@ -176,54 +176,60 @@ export default function BrokerAccountsSection({
         <ModalContent>
           <Stack direction="column" gap="md">
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Broker</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Broker
+              </Text>
               <Input
                 value={newAccount.broker}
-                onChange={(e) => setNewAccount(prev => ({ ...prev, broker: e.target.value }))}
+                onChange={(e) => setNewAccount((prev) => ({ ...prev, broker: e.target.value }))}
                 placeholder="Ej: Balanz, IOL, etc."
               />
             </div>
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Número de Cuenta</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Número de Cuenta
+              </Text>
               <Input
                 value={newAccount.accountNumber}
-                onChange={(e) => setNewAccount(prev => ({ ...prev, accountNumber: e.target.value }))}
+                onChange={(e) =>
+                  setNewAccount((prev) => ({ ...prev, accountNumber: e.target.value }))
+                }
                 placeholder="Número de cuenta"
               />
             </div>
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Titular (opcional)</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Titular (opcional)
+              </Text>
               <Input
                 value={newAccount.holderName}
-                onChange={(e) => setNewAccount(prev => ({ ...prev, holderName: e.target.value }))}
+                onChange={(e) => setNewAccount((prev) => ({ ...prev, holderName: e.target.value }))}
                 placeholder="Nombre del titular"
               />
             </div>
             <div>
-              <Text size="sm" weight="medium" className="mb-1">Estado</Text>
+              <Text size="sm" weight="medium" className="mb-1">
+                Estado
+              </Text>
               <Select
                 value={newAccount.status}
-                onValueChange={(value: string) => 
-                  setNewAccount(prev => ({ ...prev, status: value as 'active' | 'closed' }))
+                onValueChange={(value: string) =>
+                  setNewAccount((prev) => ({ ...prev, status: value as 'active' | 'closed' }))
                 }
                 items={[
                   { value: 'active', label: 'Activa' },
-                  { value: 'closed', label: 'Cerrada' }
+                  { value: 'closed', label: 'Cerrada' },
                 ]}
               />
             </div>
           </Stack>
         </ModalContent>
         <ModalFooter>
-          <Button 
-            variant="secondary" 
-            onClick={() => setShowCreateModal(false)}
-            disabled={saving}
-          >
+          <Button variant="secondary" onClick={() => setShowCreateModal(false)} disabled={saving}>
             Cancelar
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onClick={handleCreateAccount}
             disabled={saving || !newAccount.broker || !newAccount.accountNumber}
           >
@@ -235,7 +241,7 @@ export default function BrokerAccountsSection({
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

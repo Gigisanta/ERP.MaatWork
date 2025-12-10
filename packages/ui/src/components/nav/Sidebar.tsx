@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { cn } from '../../utils/cn';
-import Button from './Button';
-import Icon, { type IconName } from '../Icon';
-import { Text } from '../../primitives/Text';
-import { VisuallyHidden } from '../../primitives/VisuallyHidden';
-import { Tooltip } from '../feedback/Tooltip';
+import { cn } from '../../utils/cn.js';
+import Button from './Button.js';
+import Icon, { type IconName } from '../Icon.js';
+import { Text } from '../../primitives/Text.js';
+import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
+import { Tooltip } from '../feedback/Tooltip.js';
 
 export interface SidebarSection {
   title?: string;

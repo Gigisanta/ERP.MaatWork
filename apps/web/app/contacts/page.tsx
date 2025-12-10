@@ -2,9 +2,15 @@
 /**
  * Contacts Page
  *
- * Main contacts listing with table/kanban views, filters, and inline editing.
+ * Main contacts listing with table view, filters, and inline editing.
  * REFACTORED: Logic extracted to hooks (useContactsFilters, useTagManagement, useContactActions)
- * and components (ContactsToolbar, ContactKanbanView, TagManagementModal, DeleteContactModal)
+ * and components (ContactsToolbar, TagManagementModal, DeleteContactModal)
+ *
+ * AI_DECISION: Eliminada vista kanban local, agregado botón a /pipeline
+ * Justificación: Había dos vistas kanban (local en /contacts y /pipeline), causando confusión.
+ *                /pipeline es la vista kanban real con drag & drop optimizada.
+ * Impacto: Navegación más clara: /contacts = tabla, /pipeline = kanban.
+ *          Eliminado estado viewMode de useContactsFilters, código más simple.
  */
 
 import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react';
@@ -19,7 +25,6 @@ import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
 import ContactsToolbar from './components/ContactsToolbar';
-import ContactKanbanView from './components/ContactKanbanView';
 import DeleteContactModal from './components/DeleteContactModal';
 import TagManagementModal from './components/TagManagementModal';
 import dynamic from 'next/dynamic';
@@ -422,8 +427,6 @@ export default function ContactsPage() {
             onStageChange={filters.setSelectedStage}
             onTagToggle={filters.handleTagToggle}
             onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-            viewMode={filters.viewMode}
-            onViewModeChange={filters.setViewMode}
             advisorIdFilter={filters.advisorIdFilter}
             filteredAdvisor={filters.filteredAdvisor}
             onClearAdvisorFilter={filters.clearAdvisorFilter}
@@ -431,76 +434,67 @@ export default function ContactsPage() {
           />
         </div>
 
-        {/* Table or Kanban view */}
+        {/* Table view */}
         <div
           className={`transition-all duration-500 ease-out ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
           style={{ transitionDelay: '100ms' }}
         >
-          {filters.viewMode === 'table' ? (
-            <Card className="rounded-md border border-border" padding="sm">
-              <CardHeader className="p-2 md:p-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm md:text-base">
-                    Contactos ({filteredContacts.length})
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleExportCSV}
-                    title="Descargar contactos como CSV"
-                    disabled={filteredContacts.length === 0}
-                    className="h-7 px-2 text-xs"
-                  >
-                    <Icon name="download" size={14} className="mr-1" />
-                    <span className="hidden sm:inline">Descargar CSV</span>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-2 md:p-3 pt-0">
-                {isMd ? (
-                  // Mobile view
-                  <MobileContactList
-                    contacts={filteredContacts}
-                    pipelineStages={
-                      Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
-                    }
-                    allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
-                    savingContactId={contactActions.savingContactId}
-                    onStageChange={contactActions.handleStageChange}
-                    onTagsChange={contactActions.handleTagsChange}
-                    onTextInputSave={contactActions.handleTextInputSave}
-                    onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-                    mutateContacts={mutateContacts}
-                    showToast={showToast}
-                    hasActiveFilters={hasActiveFilters}
-                    onClearFilters={filters.clearAllFilters}
-                  />
-                ) : (
-                  <DataTable
-                    data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
-                    columns={columns as unknown as Column<Record<string, unknown>>[]}
-                    keyField="id"
-                    emptyMessage={
-                      hasActiveFilters
-                        ? 'No se encontraron contactos con los filtros aplicados.'
-                        : 'Comienza agregando tu primer contacto al sistema.'
-                    }
-                    virtualized={true}
-                    virtualizedHeight={600}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <ContactKanbanView
-              contacts={filteredContacts}
-              pipelineStages={
-                Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
-              }
-            />
-          )}
+          <Card className="rounded-md border border-border" padding="sm">
+            <CardHeader className="p-2 md:p-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm md:text-base">
+                  Contactos ({filteredContacts.length})
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExportCSV}
+                  title="Descargar contactos como CSV"
+                  disabled={filteredContacts.length === 0}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Icon name="download" size={14} className="mr-1" />
+                  <span className="hidden sm:inline">Descargar CSV</span>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-2 md:p-3 pt-0">
+              {isMd ? (
+                // Mobile view
+                <MobileContactList
+                  contacts={filteredContacts}
+                  pipelineStages={
+                    Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
+                  }
+                  allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+                  savingContactId={contactActions.savingContactId}
+                  onStageChange={contactActions.handleStageChange}
+                  onTagsChange={contactActions.handleTagsChange}
+                  onTextInputSave={contactActions.handleTextInputSave}
+                  onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
+                  mutateContacts={mutateContacts}
+                  showToast={showToast}
+                  hasActiveFilters={hasActiveFilters}
+                  onClearFilters={filters.clearAllFilters}
+                />
+              ) : (
+                <DataTable
+                  data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
+                  columns={columns as unknown as Column<Record<string, unknown>>[]}
+                  keyField="id"
+                  emptyMessage={
+                    hasActiveFilters
+                      ? 'No se encontraron contactos con los filtros aplicados.'
+                      : 'Comienza agregando tu primer contacto al sistema.'
+                  }
+                  virtualized={true}
+                  virtualizedHeight={600}
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Modals */}

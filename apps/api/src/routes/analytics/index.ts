@@ -1,6 +1,6 @@
 /**
  * Analytics Routes - Main Entry Point
- * 
+ *
  * Combines all analytics route modules
  */
 
@@ -19,4 +19,3 @@ router.use(performanceRouter);
 router.use(comparisonRouter);
 
 export default router;
-

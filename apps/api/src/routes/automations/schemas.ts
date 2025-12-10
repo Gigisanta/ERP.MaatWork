@@ -4,7 +4,7 @@
  * Zod schemas for validating automation config CRUD operations
  */
 import { z } from 'zod';
-import { idParamSchema } from '../../utils/common-schemas';
+import { idParamSchema } from '../../utils/validation/common-schemas';
 
 // ==========================================================
 // Body Schemas

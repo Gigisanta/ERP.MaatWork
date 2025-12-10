@@ -93,64 +93,66 @@ export function PortfoliosGrid({
             className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-border rounded-md hover:border-primary/30 cursor-pointer hover-lift-glow"
             onClick={() => onSelect?.(portfolio)}
           >
-          <CardContent className="p-3">
-            <Stack direction="column" gap="xs">
-              <div className="flex items-start justify-between gap-2">
-                <Heading level={6} className="truncate flex-1 text-sm">
-                  {portfolio.name}
-                </Heading>
-                <Badge variant={getRiskLevelVariant(portfolio.riskLevel)} className="text-xs shrink-0">
-                  {getRiskLevelLabel(portfolio.riskLevel)}
-                </Badge>
-              </div>
+            <CardContent className="p-3">
+              <Stack direction="column" gap="xs">
+                <div className="flex items-start justify-between gap-2">
+                  <Heading level={6} className="truncate flex-1 text-sm">
+                    {portfolio.name}
+                  </Heading>
+                  <Badge
+                    variant={getRiskLevelVariant(portfolio.riskLevel)}
+                    className="text-xs shrink-0"
+                  >
+                    {getRiskLevelLabel(portfolio.riskLevel)}
+                  </Badge>
+                </div>
 
-              <Stack direction="row" gap="xs" align="center">
-                <PieChart className="w-3 h-3 text-foreground-tertiary" />
-                <Text size="xs" color="secondary">
-                  {portfolio.lines?.length || 0} activos
-                </Text>
-              </Stack>
+                <Stack direction="row" gap="xs" align="center">
+                  <PieChart className="w-3 h-3 text-foreground-tertiary" />
+                  <Text size="xs" color="secondary">
+                    {portfolio.lines?.length || 0} activos
+                  </Text>
+                </Stack>
 
-              <Stack direction="row" gap="xs" className="mt-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 h-7 text-xs"
-                  onClick={() => {
-                    router.push(`/portfolios/${portfolio.id}`);
-                  }}
-                >
-                  <Eye className="w-3 h-3 mr-1" />
-                  Ver
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 h-7 text-xs"
-                  onClick={() => {
-                    onEdit(portfolio);
-                  }}
-                >
-                  <Edit className="w-3 h-3 mr-1" />
-                  Editar
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 text-error-500 hover:text-error-600"
-                  onClick={() => {
-                    onDelete(portfolio.id);
-                  }}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </Button>
+                <Stack direction="row" gap="xs" className="mt-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-7 text-xs"
+                    onClick={() => {
+                      router.push(`/portfolios/${portfolio.id}`);
+                    }}
+                  >
+                    <Eye className="w-3 h-3 mr-1" />
+                    Ver
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-7 text-xs"
+                    onClick={() => {
+                      onEdit(portfolio);
+                    }}
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-error-500 hover:text-error-600"
+                    onClick={() => {
+                      onDelete(portfolio.id);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </Stack>
               </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         </div>
       ))}
     </Grid>
   );
 }
-

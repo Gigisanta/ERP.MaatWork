@@ -4,7 +4,11 @@
  * Zod schemas for validating capacitaciones CRUD operations
  */
 import { z } from 'zod';
-import { paginationQuerySchema, urlSchema, idParamSchema } from '../../utils/common-schemas';
+import {
+  paginationQuerySchema,
+  urlSchema,
+  idParamSchema,
+} from '../../utils/validation/common-schemas';
 
 // ==========================================================
 // Body Schemas

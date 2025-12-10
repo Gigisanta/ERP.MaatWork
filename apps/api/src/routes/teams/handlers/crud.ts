@@ -12,13 +12,9 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { HttpError } from '../../../utils/route-handler';
 import { invalidateAccessScope } from '../../../auth/cache';
-import { teamMetricsCacheUtil } from '../../../utils/cache';
+import { teamMetricsCacheUtil } from '../../../utils/performance/cache';
 import { createTeamSchema, updateTeamSchema } from '../schemas';
-import {
-  checkTeamAccess,
-  requireTeamManageAccessOrThrow,
-  getTeamMembers,
-} from './utils';
+import { checkTeamAccess, requireTeamManageAccessOrThrow, getTeamMembers } from './utils';
 
 /**
  * GET /teams/:id - Obtener equipo individual con sus miembros

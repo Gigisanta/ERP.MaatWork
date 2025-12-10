@@ -1,6 +1,6 @@
 /**
  * Error Mapper Utility
- * 
+ *
  * AI_DECISION: Centralizar mapeo de errores de API a campos de formulario
  * Justificación: Proporciona experiencia de usuario consistente al mostrar errores
  * Impacto: Mejor UX al identificar exactamente qué campos tienen problemas
@@ -76,11 +76,11 @@ function getDetailCode(detail: BackendErrorDetail): string | undefined {
 
 /**
  * Maps API error responses to form field errors
- * 
+ *
  * @param error - The error to map (ApiError, Error, or unknown)
  * @param options - Mapping options
  * @returns Object with field names as keys and FieldError objects as values
- * 
+ *
  * @example
  * ```tsx
  * try {
@@ -93,7 +93,7 @@ function getDetailCode(detail: BackendErrorDetail): string | undefined {
  *       'email': 'email'
  *     }
  *   });
- *   
+ *
  *   // fieldErrors = { firstName: { message: 'El nombre es requerido' } }
  *   setErrors(fieldErrors);
  * }
@@ -124,14 +124,14 @@ export function mapApiErrorToFields<T extends string = string>(
         }
         continue;
       }
-      
+
       // Handle object details
       if (isBackendErrorDetail(detail)) {
         const fieldPath = getFieldPath(detail);
         const fieldName = fieldMappings[fieldPath] || fieldPath;
         const detailMsg = getDetailMessage(detail, defaultMessage);
         const detailCode = getDetailCode(detail);
-        
+
         if (fieldName) {
           const fieldError: FieldError = { message: detailMsg };
           if (detailCode !== undefined) {
@@ -181,7 +181,7 @@ export function mapApiErrorToFields<T extends string = string>(
   // Handle unknown error types
   else if (typeof error === 'object' && error !== null) {
     const errorObj = error as ApiErrorResponse;
-    
+
     if (errorObj.details) {
       if (typeof errorObj.details === 'string') {
         if (includeGeneralErrors) {
@@ -209,7 +209,7 @@ export function mapApiErrorToFields<T extends string = string>(
 
 /**
  * Extracts a human-readable error message from any error type
- * 
+ *
  * @param error - The error to extract message from
  * @param defaultMessage - Default message if extraction fails
  * @returns Human-readable error message
@@ -285,7 +285,7 @@ export function isServerError(error: unknown): boolean {
 
 /**
  * Creates a standardized error handler for forms
- * 
+ *
  * @example
  * ```tsx
  * const handleFormError = createFormErrorHandler({
@@ -293,7 +293,7 @@ export function isServerError(error: unknown): boolean {
  *   setGeneralError,
  *   fieldMappings: { firstName: 'firstName' }
  * });
- * 
+ *
  * try {
  *   await submitForm(data);
  * } catch (error) {
@@ -328,7 +328,9 @@ export function createFormErrorHandler<T extends string = string>(options: {
     const mappedErrors = mapApiErrorToFields<T>(error, mapperOptions);
 
     // Separate field errors from general error
-    const { _general, ...fieldErrors } = mappedErrors as MappedFormErrors<T> & { _general?: FieldError };
+    const { _general, ...fieldErrors } = mappedErrors as MappedFormErrors<T> & {
+      _general?: FieldError;
+    };
 
     // Set field errors (cast is safe because we're just removing _general)
     setErrors(fieldErrors as unknown as MappedFormErrors<T>);

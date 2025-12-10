@@ -1,6 +1,6 @@
 /**
  * Tests para createErrorResponse utility
- * 
+ *
  * AI_DECISION: Tests unitarios para error handling seguro
  * Justificación: Prevenir fuga de información sensible en producción
  * Impacto: Seguridad y privacidad de datos
@@ -33,7 +33,7 @@ describe('createErrorResponse', () => {
       const error = new Error('Internal database error');
       const result = createErrorResponse({
         error,
-        userMessage: 'No pudimos procesar tu solicitud'
+        userMessage: 'No pudimos procesar tu solicitud',
       });
 
       expect(result.error).toBe('No pudimos procesar tu solicitud');
@@ -44,7 +44,7 @@ describe('createErrorResponse', () => {
       const error = new Error('Error');
       const result = createErrorResponse({
         error,
-        requestId: 'req-123'
+        requestId: 'req-123',
       });
 
       expect(result.requestId).toBe('req-123');
@@ -94,7 +94,7 @@ describe('createErrorResponse', () => {
       const error = new Error('Internal error');
       const result = createErrorResponse({
         error,
-        userMessage: 'User-friendly message'
+        userMessage: 'User-friendly message',
       });
 
       expect(result.error).toBe('User-friendly message');
@@ -104,7 +104,7 @@ describe('createErrorResponse', () => {
       const error = new Error('Error');
       const result = createErrorResponse({
         error,
-        requestId: 'dev-req-456'
+        requestId: 'dev-req-456',
       });
 
       expect(result.requestId).toBe('dev-req-456');
@@ -177,7 +177,7 @@ describe('createErrorResponse', () => {
     it('NO debería exponer stack traces en producción', () => {
       const error = new Error('Error');
       error.stack = 'Error: Test\n  at /app/src/sensitive-file.ts:42:10';
-      
+
       const result = createErrorResponse({ error });
 
       expect(result).not.toHaveProperty('stack');
@@ -197,7 +197,7 @@ describe('createErrorResponse', () => {
 
       // requestId siempre está en el objeto (incluso si es undefined)
       expect('requestId' in result).toBe(true);
-      
+
       // Si se proporciona, debe ser string
       const resultWithId = createErrorResponse({ error: new Error('Test'), requestId: 'abc123' });
       expect(resultWithId.requestId).toBe('abc123');
@@ -253,4 +253,3 @@ describe('createErrorResponse', () => {
     });
   });
 });
-

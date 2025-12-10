@@ -1,8 +1,8 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Button from './Button';
-import Icon from '../Icon';
-import { VisuallyHidden } from '../../primitives/VisuallyHidden';
+import { cn } from '../../utils/cn.js';
+import Button from './Button.js';
+import Icon from '../Icon.js';
+import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
 
 export interface PaginationProps {
   currentPage: number;

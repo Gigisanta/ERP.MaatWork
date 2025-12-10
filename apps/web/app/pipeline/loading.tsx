@@ -1,6 +1,6 @@
 /**
  * Loading component for pipeline page
- * 
+ *
  * AI_DECISION: Create loading.tsx for streaming SSR
  * Justificación: Provides instant loading state while data is being fetched
  * Impacto: Better perceived performance, reduced layout shift
@@ -35,7 +35,7 @@ export default function PipelineLoading() {
                 <div className="space-y-3 py-2">
                   {/* Contact cards skeleton */}
                   {Array.from({ length: 3 }).map((_, j) => (
-                    <SkeletonCard 
+                    <SkeletonCard
                       key={j}
                       showHeader={false}
                       contentLines={2}
@@ -53,4 +53,3 @@ export default function PipelineLoading() {
     </main>
   );
 }
-

@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Icon, { type IconName } from '../Icon';
-import Button from '../nav/Button';
+import { cn } from '../../utils/cn.js';
+import Icon, { type IconName } from '../Icon.js';
+import Button from '../nav/Button.js';
 
 export type ErrorStateVariant = 'error' | 'warning' | 'info' | 'network';
 export type ErrorStateSize = 'sm' | 'md' | 'lg';
@@ -37,7 +37,10 @@ export interface ErrorStateProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-const variantConfig: Record<ErrorStateVariant, { icon: IconName; iconColor: string; bgColor: string }> = {
+const variantConfig: Record<
+  ErrorStateVariant,
+  { icon: IconName; iconColor: string; bgColor: string }
+> = {
   error: {
     icon: 'x-circle',
     iconColor: 'text-error',
@@ -80,11 +83,11 @@ const sizeConfig: Record<ErrorStateSize, { iconSize: number; padding: string; ga
 
 /**
  * ErrorState component for displaying error states with retry functionality.
- * 
+ *
  * AI_DECISION: Componente centralizado para estados de error
  * Justificación: Proporciona UX consistente para todos los errores en la app
  * Impacto: Mejor experiencia de usuario, código más mantenible
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
@@ -93,7 +96,7 @@ const sizeConfig: Record<ErrorStateSize, { iconSize: number; padding: string; ga
  *   description="No se pudieron cargar los contactos."
  *   onRetry={() => refetch()}
  * />
- * 
+ *
  * // With action text and secondary action
  * <ErrorState
  *   title="Sesión expirada"
@@ -103,7 +106,7 @@ const sizeConfig: Record<ErrorStateSize, { iconSize: number; padding: string; ga
  *   secondaryActionText="Iniciar sesión"
  *   variant="warning"
  * />
- * 
+ *
  * // Network error with retry
  * <ErrorState
  *   title="Error de conexión"
@@ -115,24 +118,27 @@ const sizeConfig: Record<ErrorStateSize, { iconSize: number; padding: string; ga
  * ```
  */
 export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
-  ({
-    title,
-    description,
-    actionText,
-    onRetry,
-    retryText = 'Reintentar',
-    isRetrying = false,
-    onSecondaryAction,
-    secondaryActionText,
-    icon,
-    variant = 'error',
-    size = 'md',
-    requestId,
-    showRequestId = process.env.NODE_ENV === 'development',
-    className,
-    children,
-    ...props
-  }, ref) => {
+  (
+    {
+      title,
+      description,
+      actionText,
+      onRetry,
+      retryText = 'Reintentar',
+      isRetrying = false,
+      onSecondaryAction,
+      secondaryActionText,
+      icon,
+      variant = 'error',
+      size = 'md',
+      requestId,
+      showRequestId = process.env.NODE_ENV === 'development',
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const config = variantConfig[variant];
     const sizeStyles = sizeConfig[size];
     const iconName = icon || config.icon;
@@ -153,49 +159,53 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
       >
         <div className={cn('flex flex-col items-center text-center', sizeStyles.gap)}>
           {/* Icon */}
-          <div className={cn(
-            'rounded-full p-3',
-            variant === 'error' && 'bg-error/10',
-            variant === 'warning' && 'bg-warning/10',
-            variant === 'info' && 'bg-info/10',
-            variant === 'network' && 'bg-error/10'
-          )}>
-            <Icon
-              name={iconName}
-              size={sizeStyles.iconSize}
-              className={config.iconColor}
-            />
+          <div
+            className={cn(
+              'rounded-full p-3',
+              variant === 'error' && 'bg-error/10',
+              variant === 'warning' && 'bg-warning/10',
+              variant === 'info' && 'bg-info/10',
+              variant === 'network' && 'bg-error/10'
+            )}
+          >
+            <Icon name={iconName} size={sizeStyles.iconSize} className={config.iconColor} />
           </div>
 
           {/* Text content */}
           <div className="space-y-1">
-            <h3 className={cn(
-              'font-semibold text-text',
-              size === 'sm' && 'text-sm',
-              size === 'md' && 'text-base',
-              size === 'lg' && 'text-lg'
-            )}>
+            <h3
+              className={cn(
+                'font-semibold text-text',
+                size === 'sm' && 'text-sm',
+                size === 'md' && 'text-base',
+                size === 'lg' && 'text-lg'
+              )}
+            >
               {title}
             </h3>
-            
+
             {description && (
-              <p className={cn(
-                'text-text-secondary',
-                size === 'sm' && 'text-xs',
-                size === 'md' && 'text-sm',
-                size === 'lg' && 'text-base'
-              )}>
+              <p
+                className={cn(
+                  'text-text-secondary',
+                  size === 'sm' && 'text-xs',
+                  size === 'md' && 'text-sm',
+                  size === 'lg' && 'text-base'
+                )}
+              >
                 {description}
               </p>
             )}
 
             {actionText && (
-              <p className={cn(
-                'text-text-muted italic',
-                size === 'sm' && 'text-xs',
-                size === 'md' && 'text-xs',
-                size === 'lg' && 'text-sm'
-              )}>
+              <p
+                className={cn(
+                  'text-text-muted italic',
+                  size === 'sm' && 'text-xs',
+                  size === 'md' && 'text-xs',
+                  size === 'lg' && 'text-sm'
+                )}
+              >
                 {actionText}
               </p>
             )}
@@ -240,9 +250,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
 
           {/* Request ID for debugging */}
           {showRequestId && requestId && (
-            <p className="text-xs text-text-muted font-mono">
-              Request ID: {requestId}
-            </p>
+            <p className="text-xs text-text-muted font-mono">Request ID: {requestId}</p>
           )}
 
           {/* Custom content */}
@@ -281,7 +289,7 @@ export const InlineErrorState = React.forwardRef<HTMLDivElement, InlineErrorStat
           <Icon name="alert-circle" size={16} className="text-error flex-shrink-0" />
           <span className="text-sm text-text-secondary">{message}</span>
         </div>
-        
+
         {onRetry && (
           <Button
             variant="ghost"

@@ -378,9 +378,12 @@ describe('useFormValidation', () => {
         result.current.validateField('firstName', '');
       });
 
-      expect(onValidationChange).toHaveBeenCalledWith(false, expect.objectContaining({
-        firstName: expect.objectContaining({ message: 'El nombre es requerido' }),
-      }));
+      expect(onValidationChange).toHaveBeenCalledWith(
+        false,
+        expect.objectContaining({
+          firstName: expect.objectContaining({ message: 'El nombre es requerido' }),
+        })
+      );
     });
   });
 });

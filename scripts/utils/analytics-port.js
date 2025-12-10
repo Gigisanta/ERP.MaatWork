@@ -35,7 +35,7 @@ const isPortBusy = (port) => {
   try {
     const { stdout } = spawnSync(process.execPath, ['-e', probeScript], {
       encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore']
+      stdio: ['ignore', 'pipe', 'ignore'],
     });
     return (stdout || '').trim() !== 'FREE';
   } catch {
@@ -53,15 +53,13 @@ const resolveAnalyticsPort = (options = {}) => {
     return envOverride;
   }
 
-  const preferred =
-    ensureNumberPort(options.preferredPort) ?? DEFAULT_ANALYTICS_PORT;
+  const preferred = ensureNumberPort(options.preferredPort) ?? DEFAULT_ANALYTICS_PORT;
 
   if (!isPortBusy(preferred)) {
     return preferred;
   }
 
-  const scanRange =
-    ensureNumberPort(options.scanRange) ?? PORT_PROBE_RANGE;
+  const scanRange = ensureNumberPort(options.scanRange) ?? PORT_PROBE_RANGE;
 
   for (let offset = 1; offset <= scanRange; offset += 1) {
     const candidate = preferred + offset;
@@ -73,21 +71,10 @@ const resolveAnalyticsPort = (options = {}) => {
   return preferred;
 };
 
-const buildAnalyticsServiceUrl = (port) =>
-  `http://localhost:${port}`;
+const buildAnalyticsServiceUrl = (port) => `http://localhost:${port}`;
 
 module.exports = {
   DEFAULT_ANALYTICS_PORT,
   resolveAnalyticsPort,
-  buildAnalyticsServiceUrl
+  buildAnalyticsServiceUrl,
 };
-
-
-
-
-
-
-
-
-
-

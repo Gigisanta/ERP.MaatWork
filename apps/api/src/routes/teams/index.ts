@@ -17,10 +17,10 @@
  */
 
 import { Router } from 'express';
-import { requireAuth } from '../../auth/middlewares';
-import { validate } from '../../utils/validation';
-import { createRouteHandler, createAsyncHandler } from '../../utils/route-handler';
-import { idParamSchema } from '../../utils/common-schemas';
+import { requireAuth } from '@/auth/middlewares';
+import { validate } from '@/utils/validation';
+import { createRouteHandler, createAsyncHandler } from '@/utils/route-handler';
+import { idParamSchema } from '@/utils/validation/common-schemas';
 
 // Import handlers
 import { listTeams, getMyTeams } from './handlers/list';
@@ -64,26 +64,46 @@ router.get('/my-teams', requireAuth, getMyTeams);
 // ==========================================================
 router.get('/membership-requests', requireAuth, listMembershipRequests);
 router.post('/membership-requests/approve-all', requireAuth, approveAllRequests);
-router.post('/membership-requests/:id/approve', requireAuth, approveRequest);
-router.post('/membership-requests/:id/reject', requireAuth, rejectRequest);
-router.delete('/membership-requests/:id', requireAuth, deleteRequest);
+router.post(
+  '/membership-requests/:id/approve',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  approveRequest
+);
+router.post(
+  '/membership-requests/:id/reject',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  rejectRequest
+);
+router.delete(
+  '/membership-requests/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  deleteRequest
+);
 
 // ==========================================================
 // Invitations Routes (user perspective)
 // ==========================================================
 router.get('/invitations/pending', requireAuth, listPendingInvitations);
-router.post('/invitations/:id/accept', requireAuth, acceptInvitation);
-router.post('/invitations/:id/reject', requireAuth, rejectInvitation);
+router.post(
+  '/invitations/:id/accept',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  acceptInvitation
+);
+router.post(
+  '/invitations/:id/reject',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  rejectInvitation
+);
 
 // ==========================================================
 // Team CRUD Routes
 // ==========================================================
-router.get(
-  '/:id',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  createRouteHandler(getTeam)
-);
+router.get('/:id', requireAuth, validate({ params: idParamSchema }), createRouteHandler(getTeam));
 router.post(
   '/',
   requireAuth,
@@ -109,22 +129,21 @@ router.delete(
 // ==========================================================
 // Team Members Routes
 // ==========================================================
-router.get('/:id/members',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  getTeamMembers
-);
-router.get('/:id/members/:memberId',
+router.get('/:id/members', requireAuth, validate({ params: idParamSchema }), getTeamMembers);
+router.get(
+  '/:id/members/:memberId',
   requireAuth,
   validate({ params: teamMemberParamsSchema }),
   getTeamMember
 );
-router.post('/:id/members',
+router.post(
+  '/:id/members',
   requireAuth,
   validate({ params: idParamSchema, body: addMemberSchema }),
   addTeamMember
 );
-router.delete('/:id/members/:userId',
+router.delete(
+  '/:id/members/:userId',
   requireAuth,
   validate({ params: teamMemberDeleteParamsSchema }),
   removeTeamMember
@@ -139,14 +158,20 @@ router.get(
   validate({ params: idParamSchema }),
   createRouteHandler(getTeamDetail)
 );
-router.get('/:id/metrics', requireAuth, getTeamMetrics);
-router.get('/:id/members-activity', requireAuth, getTeamMembersActivity);
+router.get('/:id/metrics', requireAuth, validate({ params: idParamSchema }), getTeamMetrics);
+router.get(
+  '/:id/members-activity',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  getTeamMembersActivity
+);
 router.get('/:id/members/:memberId/metrics', requireAuth, getMemberMetrics);
 
 // ==========================================================
 // Team Invitations Routes (manager perspective)
 // ==========================================================
-router.post('/:id/invitations',
+router.post(
+  '/:id/invitations',
   requireAuth,
   validate({ body: createInvitationSchema }),
   createInvitation

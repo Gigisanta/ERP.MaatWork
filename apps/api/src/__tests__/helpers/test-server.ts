@@ -10,6 +10,10 @@ import { vi } from 'vitest';
 import { db } from '@cactus/db';
 import { initializeDatabase } from '../../db-init';
 
+// Re-export common test utilities
+export * from './test-mocks';
+export * from './test-setup';
+
 let testServer: Server | null = null;
 let testApp: Express | null = null;
 
@@ -17,7 +21,18 @@ let testApp: Express | null = null;
  * Create a test Express app
  * Minimal setup without all production middleware
  */
-export function createTestApp(): Express {
+export function createTestApp(): Express;
+
+/**
+ * Create a test Express app with custom routes
+ * @param routes Array of route configurations to add to the app
+ */
+export function createTestApp(routes: Array<{ path: string; router: any }>): Express;
+
+/**
+ * Create a test Express app with optional custom routes
+ */
+export function createTestApp(routes?: Array<{ path: string; router: any }>): Express {
   const app = express();
 
   // Basic middleware
@@ -28,6 +43,13 @@ export function createTestApp(): Express {
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok' });
   });
+
+  // Add custom routes if provided
+  if (routes && routes.length > 0) {
+    routes.forEach(({ path, router }) => {
+      app.use(path, router);
+    });
+  }
 
   return app;
 }

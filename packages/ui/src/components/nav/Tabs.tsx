@@ -1,6 +1,6 @@
 import React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { cn } from '../../utils/cn';
+import { cn } from '../../utils/cn.js';
 
 export interface TabItem {
   value: string;

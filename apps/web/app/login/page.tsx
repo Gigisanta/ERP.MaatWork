@@ -48,7 +48,7 @@ function LoginPageContent() {
 
     if (user) {
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/';
+      const redirectTo = searchParams.get('redirect') || '/home';
       router.replace(redirectTo);
     }
   }, [user, initialized, router, searchParams]);
@@ -81,7 +81,7 @@ function LoginPageContent() {
 
       await login(identifier, password, rememberMe);
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/';
+      const redirectTo = searchParams.get('redirect') || '/home';
       router.replace(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
@@ -95,12 +95,12 @@ function LoginPageContent() {
     <div className="auth-page">
       {/* Animated gradient overlay */}
       <div className="auth-gradient-bg" aria-hidden="true" />
-      
+
       {/* Dot pattern overlay */}
       <div className="auth-dot-pattern" aria-hidden="true" />
 
       {/* Login card */}
-      <div 
+      <div
         className={`
           w-full max-w-md relative z-10
           transition-all duration-700 ease-out
@@ -111,7 +111,7 @@ function LoginPageContent() {
           <CardHeader className="pb-2">
             <div className="text-center">
               {/* Logo with animation - Purple gradient */}
-              <div 
+              <div
                 className={`
                   inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4
                   bg-primary shadow-lg shadow-primary/30
@@ -122,9 +122,9 @@ function LoginPageContent() {
               >
                 <span className="text-3xl">⚖️</span>
               </div>
-              
+
               {/* Title with stagger animation */}
-              <div 
+              <div
                 className={`
                   transition-all duration-500 ease-out
                   ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -135,8 +135,8 @@ function LoginPageContent() {
                   Maat
                 </Heading>
               </div>
-              
-              <div 
+
+              <div
                 className={`
                   transition-all duration-500 ease-out
                   ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -155,7 +155,7 @@ function LoginPageContent() {
             <form onSubmit={handleSubmit}>
               <Stack direction="column" gap="lg">
                 {/* Email Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -187,7 +187,7 @@ function LoginPageContent() {
                 </div>
 
                 {/* Password Input */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
@@ -219,7 +219,7 @@ function LoginPageContent() {
                 </div>
 
                 {/* Remember me & Forgot password */}
-                <div 
+                <div
                   className={`
                     flex items-center justify-between text-sm
                     transition-all duration-500 ease-out
@@ -246,7 +246,11 @@ function LoginPageContent() {
                   <div className="animate-fade-in">
                     <Alert
                       variant={error.includes('pendiente de aprobación') ? 'warning' : 'error'}
-                      title={error.includes('pendiente de aprobación') ? 'Cuenta pendiente' : 'Error de autenticación'}
+                      title={
+                        error.includes('pendiente de aprobación')
+                          ? 'Cuenta pendiente'
+                          : 'Error de autenticación'
+                      }
                     >
                       {error}
                     </Alert>
@@ -254,17 +258,17 @@ function LoginPageContent() {
                 )}
 
                 {/* Submit Button - Purple primary */}
-                <div 
+                <div
                   className={`
                     transition-all duration-500 ease-out
                     ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
                   `}
                   style={{ transitionDelay: '600ms' }}
                 >
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
-                    disabled={loading} 
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={loading}
                     className="w-full h-12 text-base font-semibold"
                   >
                     {loading ? (
@@ -281,7 +285,7 @@ function LoginPageContent() {
             </form>
 
             {/* Divider */}
-            <div 
+            <div
               className={`
                 mt-8 pt-6 border-t border-border
                 transition-all duration-500 ease-out
@@ -302,10 +306,10 @@ function LoginPageContent() {
                     </Link>
                   </Text>
                 </div>
-                
+
                 <div>
-                  <Link 
-                    href="/home" 
+                  <Link
+                    href="/home"
                     className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
                   >
                     ← Volver al inicio
@@ -317,7 +321,7 @@ function LoginPageContent() {
         </Card>
 
         {/* Footer text */}
-        <div 
+        <div
           className={`
             text-center mt-6 transition-all duration-500 ease-out
             ${mounted ? 'opacity-100' : 'opacity-0'}
@@ -342,7 +346,9 @@ export default function LoginPage() {
           <div className="auth-dot-pattern" aria-hidden="true" />
           <div className="text-center relative z-10">
             <Spinner size="lg" variant="secondary" />
-            <Text color="secondary" className="mt-4">Cargando...</Text>
+            <Text color="secondary" className="mt-4">
+              Cargando...
+            </Text>
           </div>
         </div>
       }

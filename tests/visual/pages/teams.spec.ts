@@ -28,4 +28,3 @@ test.describe('Teams Page Visual Regression', () => {
     await expect(page).toHaveScreenshot('teams-page.png', { fullPage: true });
   });
 });
-

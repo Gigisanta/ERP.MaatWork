@@ -1,6 +1,6 @@
 /**
  * Tests para ConfirmDialog component
- * 
+ *
  * AI_DECISION: Tests para componente de confirmación reutilizable
  * Justificación: Validar comportamiento de modal de confirmación
  * Impacto: Prevenir errores en confirmaciones críticas

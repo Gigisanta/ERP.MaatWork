@@ -1,7 +1,7 @@
-export { Box, type BoxProps } from './Box';
-export { Stack, type StackProps } from './Stack';
-export { Grid, GridItem, type GridProps, type GridItemProps } from './Grid';
-export { Text, type TextProps } from './Text';
-export { Heading, type HeadingProps } from './Heading';
-export { VisuallyHidden, type VisuallyHiddenProps } from './VisuallyHidden';
-export { FocusRing, type FocusRingProps } from './FocusRing';
+export { Box, type BoxProps } from './Box.js';
+export { Stack, type StackProps } from './Stack.js';
+export { Grid, GridItem, type GridProps, type GridItemProps } from './Grid.js';
+export { Text, type TextProps } from './Text.js';
+export { Heading, type HeadingProps } from './Heading.js';
+export { VisuallyHidden, type VisuallyHiddenProps } from './VisuallyHidden.js';
+export { FocusRing, type FocusRingProps } from './FocusRing.js';

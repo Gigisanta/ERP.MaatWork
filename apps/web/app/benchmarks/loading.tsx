@@ -1,16 +1,13 @@
 /**
  * Loading component for benchmarks page
- * 
+ *
  * AI_DECISION: Create loading.tsx for streaming SSR
  * Justificación: Provides instant loading state while Server Component fetches data
  * Impacto: Better perceived performance, reduced layout shift
  */
 
 import { Card, CardContent } from '@cactus/ui';
-import { 
-  SkeletonPageHeader, 
-  SkeletonTable 
-} from '../components/SkeletonLoader';
+import { SkeletonPageHeader, SkeletonTable } from '../components/SkeletonLoader';
 
 export default function BenchmarksLoading() {
   return (
@@ -27,4 +24,3 @@ export default function BenchmarksLoading() {
     </main>
   );
 }
-

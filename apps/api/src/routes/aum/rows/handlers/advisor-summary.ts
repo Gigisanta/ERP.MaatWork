@@ -4,7 +4,7 @@
  * AI_DECISION: Endpoint dedicado para agregación de datos financieros por asesor
  * Justificación: Permite visualizar totales de AUM por asesor con filtro mensual
  * Impacto: Habilita análisis de performance de asesores y seguimiento mensual de AUM
- * 
+ *
  * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
  * Justificación: Consistencia con otros handlers, manejo de errores centralizado
  * Impacto: Código más limpio, mejor logging de errores, requestId automático
@@ -14,7 +14,10 @@ import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
 import { parseNumeric } from '../utils';
-import type { AumAdvisorSummaryQuery, AumAvailablePeriodsQuery } from '@/utils/aum-validation';
+import type {
+  AumAdvisorSummaryQuery,
+  AumAvailablePeriodsQuery,
+} from '../../../../utils/aum/aum-validation';
 import { createRouteHandler } from '@/utils/route-handler';
 
 /**
@@ -58,43 +61,43 @@ export const getAdvisorSummary = createRouteHandler(async (req: Request) => {
   const reportYear = query.reportYear;
   const broker = query.broker;
 
-    req.log?.info?.(
-      {
-        reportMonth,
-        reportYear,
-        broker,
-      },
-      'AUM advisor summary GET: Parámetros de query recibidos'
-    );
+  req.log?.info?.(
+    {
+      reportMonth,
+      reportYear,
+      broker,
+    },
+    'AUM advisor summary GET: Parámetros de query recibidos'
+  );
 
-    const dbi = db();
+  const dbi = db();
 
-    // Build WHERE conditions
-    const conditions: SQL[] = [];
+  // Build WHERE conditions
+  const conditions: SQL[] = [];
 
-    // Solo filas preferidas para evitar duplicados
-    conditions.push(sql`r.is_preferred = true`);
+  // Solo filas preferidas para evitar duplicados
+  conditions.push(sql`r.is_preferred = true`);
 
-    if (broker) {
-      conditions.push(sql`f.broker = ${broker}`);
-    }
+  if (broker) {
+    conditions.push(sql`f.broker = ${broker}`);
+  }
 
-    if (reportMonth !== undefined) {
-      conditions.push(sql`f.report_month = ${reportMonth}`);
-    }
+  if (reportMonth !== undefined) {
+    conditions.push(sql`f.report_month = ${reportMonth}`);
+  }
 
-    if (reportYear !== undefined) {
-      conditions.push(sql`f.report_year = ${reportYear}`);
-    }
+  if (reportYear !== undefined) {
+    conditions.push(sql`f.report_year = ${reportYear}`);
+  }
 
-    const whereClause =
-      conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
+  const whereClause =
+    conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
 
-    // Query para agregar datos por asesor
-    // AI_DECISION: Agrupar por advisor_raw del archivo de importación
-    // Justificación: Muestra TODOS los asesores del archivo, estén o no matcheados con usuarios de la app
-    // Impacto: Visibilidad completa de asesores incluyendo aquellos sin cuenta en el sistema
-    const summaryResult = await dbi.execute(sql`
+  // Query para agregar datos por asesor
+  // AI_DECISION: Agrupar por advisor_raw del archivo de importación
+  // Justificación: Muestra TODOS los asesores del archivo, estén o no matcheados con usuarios de la app
+  // Impacto: Visibilidad completa de asesores incluyendo aquellos sin cuenta en el sistema
+  const summaryResult = await dbi.execute(sql`
       SELECT 
         r.matched_user_id::text as advisor_id,
         COALESCE(u.full_name, NULLIF(TRIM(r.advisor_raw), ''), 'Sin asignar') as advisor_name,
@@ -123,59 +126,59 @@ export const getAdvisorSummary = createRouteHandler(async (req: Request) => {
         COALESCE(SUM(CAST(r.aum_dollars AS DECIMAL(18,6))), 0) DESC
     `);
 
-    // Mapear resultados
-    const advisorSummary = ((summaryResult.rows || []) as AdvisorSummaryRow[]).map((row) => ({
-      advisorId: row.advisor_id,
-      advisorName: row.advisor_name,
-      advisorEmail: row.advisor_email,
-      isMatched: row.is_matched,
-      clientCount: Number(row.client_count),
-      aumDollars: parseNumeric(row.aum_dollars),
-      bolsaArg: parseNumeric(row.bolsa_arg),
-      fondosArg: parseNumeric(row.fondos_arg),
-      bolsaBci: parseNumeric(row.bolsa_bci),
-      pesos: parseNumeric(row.pesos),
-      mep: parseNumeric(row.mep),
-      cable: parseNumeric(row.cable),
-      cv7000: parseNumeric(row.cv7000),
-    }));
+  // Mapear resultados
+  const advisorSummary = ((summaryResult.rows || []) as AdvisorSummaryRow[]).map((row) => ({
+    advisorId: row.advisor_id,
+    advisorName: row.advisor_name,
+    advisorEmail: row.advisor_email,
+    isMatched: row.is_matched,
+    clientCount: Number(row.client_count),
+    aumDollars: parseNumeric(row.aum_dollars),
+    bolsaArg: parseNumeric(row.bolsa_arg),
+    fondosArg: parseNumeric(row.fondos_arg),
+    bolsaBci: parseNumeric(row.bolsa_bci),
+    pesos: parseNumeric(row.pesos),
+    mep: parseNumeric(row.mep),
+    cable: parseNumeric(row.cable),
+    cv7000: parseNumeric(row.cv7000),
+  }));
 
-    // Calcular totales generales
-    const totals = advisorSummary.reduce(
-      (acc, row) => ({
-        clientCount: acc.clientCount + row.clientCount,
-        aumDollars: acc.aumDollars + (row.aumDollars || 0),
-        bolsaArg: acc.bolsaArg + (row.bolsaArg || 0),
-        fondosArg: acc.fondosArg + (row.fondosArg || 0),
-        bolsaBci: acc.bolsaBci + (row.bolsaBci || 0),
-        pesos: acc.pesos + (row.pesos || 0),
-        mep: acc.mep + (row.mep || 0),
-        cable: acc.cable + (row.cable || 0),
-        cv7000: acc.cv7000 + (row.cv7000 || 0),
-      }),
-      {
-        clientCount: 0,
-        aumDollars: 0,
-        bolsaArg: 0,
-        fondosArg: 0,
-        bolsaBci: 0,
-        pesos: 0,
-        mep: 0,
-        cable: 0,
-        cv7000: 0,
-      }
-    );
+  // Calcular totales generales
+  const totals = advisorSummary.reduce(
+    (acc, row) => ({
+      clientCount: acc.clientCount + row.clientCount,
+      aumDollars: acc.aumDollars + (row.aumDollars || 0),
+      bolsaArg: acc.bolsaArg + (row.bolsaArg || 0),
+      fondosArg: acc.fondosArg + (row.fondosArg || 0),
+      bolsaBci: acc.bolsaBci + (row.bolsaBci || 0),
+      pesos: acc.pesos + (row.pesos || 0),
+      mep: acc.mep + (row.mep || 0),
+      cable: acc.cable + (row.cable || 0),
+      cv7000: acc.cv7000 + (row.cv7000 || 0),
+    }),
+    {
+      clientCount: 0,
+      aumDollars: 0,
+      bolsaArg: 0,
+      fondosArg: 0,
+      bolsaBci: 0,
+      pesos: 0,
+      mep: 0,
+      cable: 0,
+      cv7000: 0,
+    }
+  );
 
-    req.log?.info?.(
-      {
-        reportMonth,
-        reportYear,
-        advisorCount: advisorSummary.length,
-        totalClients: totals.clientCount,
-        totalAumDollars: totals.aumDollars,
-      },
-      'AUM advisor summary GET: Resumen obtenido'
-    );
+  req.log?.info?.(
+    {
+      reportMonth,
+      reportYear,
+      advisorCount: advisorSummary.length,
+      totalClients: totals.clientCount,
+      totalAumDollars: totals.aumDollars,
+    },
+    'AUM advisor summary GET: Resumen obtenido'
+  );
 
   // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
   // Mantenemos formato { ok: true, summary, totals, filters } para compatibilidad con frontend
@@ -194,7 +197,7 @@ export const getAdvisorSummary = createRouteHandler(async (req: Request) => {
 /**
  * GET /admin/aum/rows/available-periods
  * Get list of available report periods (month/year combinations)
- * 
+ *
  * Query params están validados por middleware validate() con aumAvailablePeriodsQuerySchema
  */
 export const getAvailablePeriods = createRouteHandler(async (req: Request) => {
@@ -202,24 +205,24 @@ export const getAvailablePeriods = createRouteHandler(async (req: Request) => {
   const query = req.query as unknown as AumAvailablePeriodsQuery;
   const broker = query.broker;
 
-    const dbi = db();
+  const dbi = db();
 
-    // Build WHERE conditions
-    const conditions: SQL[] = [];
+  // Build WHERE conditions
+  const conditions: SQL[] = [];
 
-    // Solo archivos mensuales con período definido
-    conditions.push(sql`f.report_month IS NOT NULL`);
-    conditions.push(sql`f.report_year IS NOT NULL`);
+  // Solo archivos mensuales con período definido
+  conditions.push(sql`f.report_month IS NOT NULL`);
+  conditions.push(sql`f.report_year IS NOT NULL`);
 
-    if (broker) {
-      conditions.push(sql`f.broker = ${broker}`);
-    }
+  if (broker) {
+    conditions.push(sql`f.broker = ${broker}`);
+  }
 
-    const whereClause =
-      conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
+  const whereClause =
+    conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
 
-    // Query para obtener períodos disponibles
-    const periodsResult = await dbi.execute(sql`
+  // Query para obtener períodos disponibles
+  const periodsResult = await dbi.execute(sql`
       SELECT 
         f.report_month,
         f.report_year,
@@ -230,20 +233,20 @@ export const getAvailablePeriods = createRouteHandler(async (req: Request) => {
       ORDER BY f.report_year DESC, f.report_month DESC
     `);
 
-    const periods = ((periodsResult.rows || []) as AvailablePeriodRow[]).map((row) => ({
-      month: row.report_month,
-      year: row.report_year,
-      fileCount: row.file_count,
-      label: `${getMonthName(row.report_month)} ${row.report_year}`,
-    }));
+  const periods = ((periodsResult.rows || []) as AvailablePeriodRow[]).map((row) => ({
+    month: row.report_month,
+    year: row.report_year,
+    fileCount: row.file_count,
+    label: `${getMonthName(row.report_month)} ${row.report_year}`,
+  }));
 
-    req.log?.info?.(
-      {
-        periodsCount: periods.length,
-        broker,
-      },
-      'AUM available periods GET: Períodos obtenidos'
-    );
+  req.log?.info?.(
+    {
+      periodsCount: periods.length,
+      broker,
+    },
+    'AUM available periods GET: Períodos obtenidos'
+  );
 
   // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
   // Mantenemos formato { ok: true, periods } para compatibilidad con frontend

@@ -8,8 +8,8 @@ import * as apiIndex from './bloomberg';
 vi.mock('../api-client', () => {
   return {
     apiClient: {
-      get: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      get: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -32,7 +32,9 @@ describe('bloomberg api client endpoints', () => {
 
   it('calls get OHLCV endpoint with date range', async () => {
     await apiIndex.getOHLCV('AAPL', '1d', '2024-01-01', '2024-01-31');
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/bloomberg/assets/AAPL/ohlcv?timeframe=1d&from=2024-01-01&to=2024-01-31');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/bloomberg/assets/AAPL/ohlcv?timeframe=1d&from=2024-01-01&to=2024-01-31'
+    );
   });
 
   it('calls get macro series endpoint', async () => {
@@ -67,7 +69,8 @@ describe('bloomberg api client endpoints', () => {
 
   it('calls get macro series list endpoint with filters', async () => {
     await apiIndex.getMacroSeriesList('bloomberg', 'US', 'gdp');
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/macro/series?provider=bloomberg&country=US&category=gdp');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/macro/series?provider=bloomberg&country=US&category=gdp'
+    );
   });
 });
-

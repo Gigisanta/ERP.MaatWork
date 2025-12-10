@@ -1,6 +1,6 @@
 /**
  * AUM API Response Validation
- * 
+ *
  * AI_DECISION: Validar respuestas de API en runtime con Zod
  * Justificación: Runtime validation previene errores por cambios en API
  * Impacto: Mayor robustez, mejor debugging, mensajes de error claros
@@ -20,11 +20,14 @@ export const aumTotalsSchema = z.object({
   unmatched: z.number(),
   inserts: z.number().optional(),
   updates: z.number().optional(),
-  monthlySnapshots: z.object({
-    inserted: z.number(),
-    updated: z.number(),
-    errors: z.number()
-  }).nullable().optional()
+  monthlySnapshots: z
+    .object({
+      inserted: z.number(),
+      updated: z.number(),
+      errors: z.number(),
+    })
+    .nullable()
+    .optional(),
 });
 
 // File
@@ -40,23 +43,27 @@ export const aumFileSchema = z.object({
   totalMatched: z.number().optional(),
   totalUnmatched: z.number().optional(),
   totals: aumTotalsSchema.optional(),
-  createdAt: z.string()
+  createdAt: z.string(),
 });
 
 // Contact info
-export const aumContactInfoSchema = z.object({
-  id: z.string().uuid(),
-  fullName: z.string(),
-  firstName: z.string(),
-  lastName: z.string()
-}).nullable();
+export const aumContactInfoSchema = z
+  .object({
+    id: z.string().uuid(),
+    fullName: z.string(),
+    firstName: z.string(),
+    lastName: z.string(),
+  })
+  .nullable();
 
 // User info
-export const aumUserInfoSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  email: z.string().email()
-}).nullable();
+export const aumUserInfoSchema = z
+  .object({
+    id: z.string().uuid(),
+    name: z.string(),
+    email: z.string().email(),
+  })
+  .nullable();
 
 // AUM Row
 export const aumRowSchema = z.object({
@@ -77,11 +84,13 @@ export const aumRowSchema = z.object({
   rowCreatedAt: z.string(),
   rowUpdatedAt: z.string().optional(),
   isUpdated: z.boolean().optional(),
-  updatedByFile: z.object({
-    id: z.string().uuid(),
-    name: z.string(),
-    createdAt: z.string()
-  }).optional(),
+  updatedByFile: z
+    .object({
+      id: z.string().uuid(),
+      name: z.string(),
+      createdAt: z.string(),
+    })
+    .optional(),
   // Financial columns
   aumDollars: z.number().nullable(),
   bolsaArg: z.number().nullable(),
@@ -97,7 +106,7 @@ export const aumRowSchema = z.object({
   user: aumUserInfoSchema.optional(),
   raw: z.record(z.unknown()).optional(),
   createdAt: z.string(),
-  updatedAt: z.string().optional()
+  updatedAt: z.string().optional(),
 });
 
 // Upload response
@@ -109,13 +118,17 @@ export const aumUploadResponseSchema = z.object({
   reportMonth: z.number().optional(),
   reportYear: z.number().optional(),
   confirmationsRequired: z.number().optional(),
-  confirmations: z.array(z.object({
-    rowId: z.string().uuid(),
-    idCuenta: z.string().nullable(),
-    newAccountNumber: z.string().nullable(),
-    reason: z.string()
-  })).optional(),
-  warnings: z.array(z.string()).optional()
+  confirmations: z
+    .array(
+      z.object({
+        rowId: z.string().uuid(),
+        idCuenta: z.string().nullable(),
+        newAccountNumber: z.string().nullable(),
+        reason: z.string(),
+      })
+    )
+    .optional(),
+  warnings: z.array(z.string()).optional(),
 });
 
 // Rows response
@@ -126,8 +139,8 @@ export const aumRowsResponseSchema = z.object({
     total: z.number(),
     limit: z.number(),
     offset: z.number(),
-    hasMore: z.boolean()
-  })
+    hasMore: z.boolean(),
+  }),
 });
 
 // History response
@@ -136,15 +149,15 @@ export const aumHistoryResponseSchema = z.object({
   pagination: z.object({
     limit: z.number(),
     offset: z.number(),
-    total: z.number()
-  })
+    total: z.number(),
+  }),
 });
 
 // Match row response
 export const aumMatchRowResponseSchema = z.object({
   success: z.boolean(),
   row: aumRowSchema.optional(),
-  message: z.string().optional()
+  message: z.string().optional(),
 });
 
 // Export inferred types
@@ -152,4 +165,3 @@ export type AumUploadResponse = z.infer<typeof aumUploadResponseSchema>;
 export type AumRowsResponse = z.infer<typeof aumRowsResponseSchema>;
 export type AumHistoryResponse = z.infer<typeof aumHistoryResponseSchema>;
 export type AumMatchRowResponse = z.infer<typeof aumMatchRowResponseSchema>;
-

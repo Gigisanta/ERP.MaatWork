@@ -1,6 +1,6 @@
 /**
  * Tests para Heading primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para Heading component
  * Justificación: Validación de componente de headings
  * Impacto: Prevenir errores en jerarquía de headings
@@ -57,13 +57,21 @@ describe('Heading', () => {
 
   describe('as prop', () => {
     it('debería usar as prop cuando está definida', () => {
-      render(<Heading as="h2" level={1}>Test</Heading>);
+      render(
+        <Heading as="h2" level={1}>
+          Test
+        </Heading>
+      );
       const element = screen.getByText('Test');
       expect(element.tagName).toBe('H2');
     });
 
     it('debería priorizar as sobre level', () => {
-      render(<Heading as="h3" level={1}>Test</Heading>);
+      render(
+        <Heading as="h3" level={1}>
+          Test
+        </Heading>
+      );
       const element = screen.getByText('Test');
       expect(element.tagName).toBe('H3');
     });
@@ -120,7 +128,11 @@ describe('Heading', () => {
   });
 
   it('debería pasar props adicionales', () => {
-    render(<Heading data-testid="heading" id="test-id">Test</Heading>);
+    render(
+      <Heading data-testid="heading" id="test-id">
+        Test
+      </Heading>
+    );
     const element = screen.getByTestId('heading');
     expect(element.id).toBe('test-id');
   });
@@ -130,5 +142,3 @@ describe('Heading', () => {
     expect(screen.getByText('Child content')).toBeInTheDocument();
   });
 });
-
-

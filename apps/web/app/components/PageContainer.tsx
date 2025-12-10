@@ -2,11 +2,11 @@
 
 /**
  * PageContainer - Consistent layout wrapper for all pages
- * 
+ *
  * AI_DECISION: Centralized container component for UI consistency
  * Justificación: Ensures all pages have consistent max-width, padding, and animations
  * Impacto: Unified look and feel across the entire application
- * 
+ *
  * @example
  * ```tsx
  * <PageContainer>
@@ -137,10 +137,7 @@ function PageHeader({ children, className, backLink, actions }: PageHeaderProps)
     >
       {backLink && (
         <div className="flex items-center gap-4 mb-3">
-          <a
-            href={backLink.href}
-            className="text-sm text-info hover:underline transition-colors"
-          >
+          <a href={backLink.href} className="text-sm text-info hover:underline transition-colors">
             ← {backLink.label}
           </a>
         </div>

@@ -1,6 +1,6 @@
 /**
  * Tests para daily-notifications job
- * 
+ *
  * AI_DECISION: Tests unitarios para job de notificaciones diarias
  * Justificación: Validación crítica de jobs programados
  * Impacto: Prevenir errores en notificaciones
@@ -13,4 +13,3 @@ describe('daily-notifications job', () => {
     expect(true).toBe(true);
   });
 });
-

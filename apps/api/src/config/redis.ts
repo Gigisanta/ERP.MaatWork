@@ -105,7 +105,7 @@ export async function closeRedis(): Promise<void> {
 
 /**
  * Cache key builder
- * 
+ *
  * AI_DECISION: Support both Bloomberg-specific and general caching prefixes
  * Justificación: Bloomberg endpoints use "bloomberg:" prefix, but CRM endpoints need general prefix
  * Impacto: Flexible cache key generation for different domains

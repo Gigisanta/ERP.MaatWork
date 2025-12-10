@@ -9,11 +9,11 @@
 import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '@/utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../../../../utils/aum/aum-normalization';
 import { getCacheKey, getCachedCount, setCachedCount } from '../cache';
 import { parseNumeric, QUERY_TIMEOUT_MS } from '../utils';
 import type { AumRowResult } from '../types';
-import type { AumRowsAllQuery } from '@/utils/aum-validation';
+import type { AumRowsAllQuery } from '../../../../utils/aum/aum-validation';
 import { createRouteHandler } from '@/utils/route-handler';
 
 /**

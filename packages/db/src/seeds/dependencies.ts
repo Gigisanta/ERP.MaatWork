@@ -1,6 +1,6 @@
 /**
  * Seed Dependencies
- * 
+ *
  * Seeds lookup tables and pipeline stages that other seeds depend on.
  * Uses actual schema: lookup tables have `id` (text PK) and `label` columns.
  */
@@ -11,7 +11,7 @@ import {
   lookupTaskStatus,
   lookupPriority,
   lookupNotificationType,
-  pipelineStages
+  pipelineStages,
 } from '../schema';
 import { eq } from 'drizzle-orm';
 
@@ -22,21 +22,21 @@ const ASSET_CLASSES = [
   { id: 'cash', label: 'Efectivo' },
   { id: 'real_estate', label: 'Bienes Raíces' },
   { id: 'commodities', label: 'Commodities' },
-  { id: 'crypto', label: 'Criptomonedas' }
+  { id: 'crypto', label: 'Criptomonedas' },
 ];
 
 const TASK_STATUSES = [
   { id: 'pending', label: 'Pendiente' },
   { id: 'in_progress', label: 'En Progreso' },
   { id: 'completed', label: 'Completado' },
-  { id: 'cancelled', label: 'Cancelado' }
+  { id: 'cancelled', label: 'Cancelado' },
 ];
 
 const PRIORITIES = [
   { id: 'low', label: 'Baja' },
   { id: 'medium', label: 'Media' },
   { id: 'high', label: 'Alta' },
-  { id: 'urgent', label: 'Urgente' }
+  { id: 'urgent', label: 'Urgente' },
 ];
 
 const NOTIFICATION_TYPES = [
@@ -44,7 +44,7 @@ const NOTIFICATION_TYPES = [
   { id: 'warning', label: 'Advertencia' },
   { id: 'error', label: 'Error' },
   { id: 'success', label: 'Éxito' },
-  { id: 'reminder', label: 'Recordatorio' }
+  { id: 'reminder', label: 'Recordatorio' },
 ];
 
 const PIPELINE_STAGES = [
@@ -54,7 +54,7 @@ const PIPELINE_STAGES = [
   { name: 'Segunda reunion', order: 4, color: '#EC4899' },
   { name: 'Cliente', order: 5, color: '#10B981' },
   { name: 'Cuenta vacia', order: 6, color: '#F59E0B' },
-  { name: 'Caido', order: 7, color: '#EF4444' }
+  { name: 'Caido', order: 7, color: '#EF4444' },
 ];
 
 /**
@@ -62,7 +62,7 @@ const PIPELINE_STAGES = [
  */
 export async function seedAssetClasses() {
   console.log('  📋 Seeding asset classes...');
-  
+
   for (const item of ASSET_CLASSES) {
     const existing = await db()
       .select()
@@ -81,7 +81,7 @@ export async function seedAssetClasses() {
  */
 export async function seedTaskStatuses() {
   console.log('  📋 Seeding task statuses...');
-  
+
   for (const item of TASK_STATUSES) {
     const existing = await db()
       .select()
@@ -100,7 +100,7 @@ export async function seedTaskStatuses() {
  */
 export async function seedPriorities() {
   console.log('  📋 Seeding priorities...');
-  
+
   for (const item of PRIORITIES) {
     const existing = await db()
       .select()
@@ -119,7 +119,7 @@ export async function seedPriorities() {
  */
 export async function seedNotificationTypes() {
   console.log('  📋 Seeding notification types...');
-  
+
   for (const item of NOTIFICATION_TYPES) {
     const existing = await db()
       .select()
@@ -138,7 +138,7 @@ export async function seedNotificationTypes() {
  */
 export async function seedPipelineStages() {
   console.log('  🔄 Seeding pipeline stages...');
-  const results: typeof pipelineStages.$inferSelect[] = [];
+  const results: (typeof pipelineStages.$inferSelect)[] = [];
 
   for (const stage of PIPELINE_STAGES) {
     const existing = await db()
@@ -148,11 +148,14 @@ export async function seedPipelineStages() {
       .limit(1);
 
     if (existing.length === 0) {
-      const [created] = await db().insert(pipelineStages).values({
-        name: stage.name,
-        order: stage.order,
-        color: stage.color
-      }).returning();
+      const [created] = await db()
+        .insert(pipelineStages)
+        .values({
+          name: stage.name,
+          order: stage.order,
+          color: stage.color,
+        })
+        .returning();
       results.push(created);
     } else {
       results.push(existing[0]!);

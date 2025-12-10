@@ -1,7 +1,7 @@
 import React from 'react';
 import * as ToastPrimitive from '@radix-ui/react-toast';
-import Icon, { type IconName } from '../Icon';
-import { cn } from '../../utils/cn';
+import Icon, { type IconName } from '../Icon.js';
+import { cn } from '../../utils/cn.js';
 
 export type ToastVariant = 'info' | 'success' | 'warning' | 'error';
 

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useMemo } from 'react';
 import { useAuth } from '../auth/AuthContext';
@@ -48,7 +48,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
   const { user } = useAuth();
   const canImport = canImportFiles(user);
   const canEdit = canEditSharedResources(user);
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTema, setSelectedTema] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -67,7 +67,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
   }>({
     open: false,
     title: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
   // AI_DECISION: Remove client-side filtering - backend already filters by search parameter
@@ -85,7 +85,9 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
   // Impacto: Faster initial load with server data, automatic revalidation for updates
   const { capacitaciones, pagination, isLoading, error, mutate } = useCapacitaciones(
     queryParams,
-    initialData ? { data: initialData.data, success: true, pagination: initialData.pagination } : undefined
+    initialData
+      ? { data: initialData.data, success: true, pagination: initialData.pagination }
+      : undefined
   );
   const invalidateCache = useInvalidateCapacitacionesCache();
 
@@ -105,7 +107,11 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
       setShowCreateModal(false);
       showToast('Capacitación creada', 'La capacitación se ha creado exitosamente.', 'success');
     } catch (err) {
-      showToast('Error', err instanceof Error ? err.message : 'Error al crear la capacitación', 'error');
+      showToast(
+        'Error',
+        err instanceof Error ? err.message : 'Error al crear la capacitación',
+        'error'
+      );
     }
   };
 
@@ -114,9 +120,17 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
       await updateCapacitacion(id, data);
       await invalidateCache();
       setEditingCapacitacion(null);
-      showToast('Capacitación actualizada', 'La capacitación se ha actualizado exitosamente.', 'success');
+      showToast(
+        'Capacitación actualizada',
+        'La capacitación se ha actualizado exitosamente.',
+        'success'
+      );
     } catch (err) {
-      showToast('Error', err instanceof Error ? err.message : 'Error al actualizar la capacitación', 'error');
+      showToast(
+        'Error',
+        err instanceof Error ? err.message : 'Error al actualizar la capacitación',
+        'error'
+      );
     }
   };
 
@@ -124,9 +138,17 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
     try {
       await deleteCapacitacion(capacitacion.id);
       await invalidateCache();
-      showToast('Capacitación eliminada', 'La capacitación se ha eliminado exitosamente.', 'success');
+      showToast(
+        'Capacitación eliminada',
+        'La capacitación se ha eliminado exitosamente.',
+        'success'
+      );
     } catch (err) {
-      showToast('Error', err instanceof Error ? err.message : 'Error al eliminar la capacitación', 'error');
+      showToast(
+        'Error',
+        err instanceof Error ? err.message : 'Error al eliminar la capacitación',
+        'error'
+      );
     }
   };
 
@@ -146,9 +168,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
         key: 'tema',
         header: 'Tema',
         sortable: true,
-        render: (row) => (
-          <Badge>{row.tema}</Badge>
-        ),
+        render: (row) => <Badge>{row.tema}</Badge>,
       },
       {
         key: 'fecha',
@@ -204,7 +224,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
                   onConfirm: () => {
                     handleDelete(row);
                     setConfirmDialog({ open: false, title: '', onConfirm: () => {} });
-                  }
+                  },
                 });
               }}
               className="text-red-600"
@@ -221,14 +241,11 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
   }, [canEdit]);
 
   // Use initialError if available, otherwise use SWR error
-  const displayError = initialError || (error instanceof Error ? error.message : error ? String(error) : null);
-  
+  const displayError =
+    initialError || (error instanceof Error ? error.message : error ? String(error) : null);
+
   if (displayError) {
-    return (
-      <Alert variant="error">
-        Error al cargar capacitaciones: {displayError}
-      </Alert>
-    );
+    return <Alert variant="error">Error al cargar capacitaciones: {displayError}</Alert>;
   }
 
   return (
@@ -285,9 +302,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
 
       <Card>
         <CardHeader>
-          <CardTitle>
-            Capacitaciones ({capacitaciones.length})
-          </CardTitle>
+          <CardTitle>Capacitaciones ({capacitaciones.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -318,9 +333,10 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
             setShowCreateModal(false);
             setEditingCapacitacion(null);
           }}
-          onSubmit={editingCapacitacion
-            ? (data) => handleUpdate(editingCapacitacion.id, data)
-            : handleCreate
+          onSubmit={
+            editingCapacitacion
+              ? (data) => handleUpdate(editingCapacitacion.id, data)
+              : handleCreate
           }
         />
       )}
@@ -332,7 +348,11 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
           onSuccess={async () => {
             await invalidateCache();
             setShowImportModal(false);
-            showToast('Importación exitosa', 'Las capacitaciones se han importado correctamente.', 'success');
+            showToast(
+              'Importación exitosa',
+              'Las capacitaciones se han importado correctamente.',
+              'success'
+            );
           }}
         />
       )}
@@ -355,8 +375,6 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
           }}
         />
       )}
-
     </>
   );
 }
-

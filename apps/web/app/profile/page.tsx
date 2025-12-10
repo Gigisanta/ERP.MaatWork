@@ -121,6 +121,7 @@ export default function ProfilePage() {
     setTeams,
     setUserInfo,
     fetchUserInfo,
+    router,
   });
 
   // Hook de aliases

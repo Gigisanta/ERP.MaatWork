@@ -1,17 +1,13 @@
 /**
  * Loading component for analytics page
- * 
+ *
  * AI_DECISION: Create loading.tsx for streaming SSR
  * Justificación: Provides instant loading state while Server Component fetches data
  * Impacto: Better perceived performance, reduced layout shift
  */
 
 import { Card, CardContent, Stack } from '@cactus/ui';
-import { 
-  Skeleton, 
-  SkeletonPageHeader, 
-  SkeletonCard 
-} from '../components/SkeletonLoader';
+import { Skeleton, SkeletonPageHeader, SkeletonCard } from '../components/SkeletonLoader';
 
 export default function AnalyticsLoading() {
   return (
@@ -33,16 +29,10 @@ export default function AnalyticsLoading() {
         {/* Metrics grid skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonCard 
-              key={i} 
-              showHeader={false}
-              contentLines={3}
-              delay={150 + i * 75}
-            />
+            <SkeletonCard key={i} showHeader={false} contentLines={3} delay={150 + i * 75} />
           ))}
         </div>
       </Stack>
     </main>
   );
 }
-

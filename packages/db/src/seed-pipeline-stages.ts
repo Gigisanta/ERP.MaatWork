@@ -23,50 +23,50 @@ async function seedPipelineStages() {
       description: 'Contacto inicial identificado',
       order: 1,
       color: '#3b82f6', // Azul
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Contactado',
       description: 'Primer contacto realizado',
       order: 2,
       color: '#8b5cf6', // Morado
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Primera reunion',
       description: 'Primera reunión agendada o realizada',
       order: 3,
       color: '#f59e0b', // Amarillo/Naranja
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Segunda reunion',
       description: 'Segunda reunión agendada o realizada',
       order: 4,
       color: '#f97316', // Naranja
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Cliente',
       description: 'Cliente activo',
       order: 5,
       color: '#10b981', // Verde
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Cuenta vacia',
       description: 'Cliente sin saldo',
       order: 6,
       color: '#6b7280', // Gris
-      wipLimit: null
+      wipLimit: null,
     },
     {
       name: 'Caido',
       description: 'Cliente perdido o inactivo',
       order: 7,
       color: '#ef4444', // Rojo
-      wipLimit: null
-    }
+      wipLimit: null,
+    },
   ];
 
   for (const stage of stages) {
@@ -88,23 +88,21 @@ async function seedPipelineStages() {
             color: stage.color,
             wipLimit: stage.wipLimit,
             isActive: true,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(pipelineStages.id, existing[0].id));
 
         console.log(`✅ Updated stage: ${stage.name}`);
       } else {
         // Crear nueva etapa
-        await db()
-          .insert(pipelineStages)
-          .values({
-            name: stage.name,
-            description: stage.description,
-            order: stage.order,
-            color: stage.color,
-            wipLimit: stage.wipLimit,
-            isActive: true
-          });
+        await db().insert(pipelineStages).values({
+          name: stage.name,
+          description: stage.description,
+          order: stage.order,
+          color: stage.color,
+          wipLimit: stage.wipLimit,
+          isActive: true,
+        });
 
         console.log(`✅ Created stage: ${stage.name}`);
       }
@@ -126,4 +124,3 @@ seedPipelineStages()
     console.error('Error seeding pipeline stages:', error);
     process.exit(1);
   });
-

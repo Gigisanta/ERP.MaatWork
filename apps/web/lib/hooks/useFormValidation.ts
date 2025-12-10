@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 /**
  * useFormValidation Hook
- * 
+ *
  * AI_DECISION: Centralized form validation with Zod and debounce support
  * Justificación: Provides consistent real-time validation across forms
  * Impacto: Better UX with immediate feedback, reduced code duplication
@@ -66,7 +66,7 @@ export interface UseFormValidationReturn<T extends Record<string, unknown>> {
 
 /**
  * Hook for form validation with Zod schemas and debounce support
- * 
+ *
  * @example
  * ```tsx
  * const contactSchema = z.object({
@@ -74,7 +74,7 @@ export interface UseFormValidationReturn<T extends Record<string, unknown>> {
  *   lastName: z.string().min(1, 'El apellido es requerido'),
  *   email: z.string().email('Email inválido').optional(),
  * });
- * 
+ *
  * function ContactForm() {
  *   const {
  *     errors,
@@ -87,12 +87,12 @@ export interface UseFormValidationReturn<T extends Record<string, unknown>> {
  *     schema: contactSchema,
  *     debounceMs: 300
  *   });
- * 
+ *
  *   const handleChange = (field: string, value: string) => {
  *     setFormData(prev => ({ ...prev, [field]: value }));
  *     validateField(field, value);
  *   };
- * 
+ *
  *   return (
  *     <Input
  *       error={errors.firstName?.message}
@@ -113,7 +113,7 @@ export function useFormValidation<T extends Record<string, unknown>>({
   const [errors, setErrorsState] = useState<FormErrors<T>>({});
   const [touchedFields, setTouchedFields] = useState<Set<keyof T>>(new Set());
   const [currentValues, setCurrentValues] = useState<Partial<T>>(initialValues ?? {});
-  
+
   // Refs for debounce management
   const debounceTimersRef = useRef<Map<keyof T, NodeJS.Timeout>>(new Map());
   const pendingValidationsRef = useRef<Set<keyof T>>(new Set());
@@ -146,125 +146,139 @@ export function useFormValidation<T extends Record<string, unknown>>({
   /**
    * Validate a single field using Zod partial validation
    */
-  const validateFieldImmediate = useCallback((field: keyof T, value?: unknown): FieldError | null => {
-    try {
-      // Get the shape of the schema to validate just the field
-      // Use unknown first to satisfy TypeScript's strict type checking
-      const fieldSchema = (schema as unknown as z.ZodObject<z.ZodRawShape>).shape[field as string];
-      
-      if (!fieldSchema) {
-        // Field not in schema, skip validation
+  const validateFieldImmediate = useCallback(
+    (field: keyof T, value?: unknown): FieldError | null => {
+      try {
+        // Get the shape of the schema to validate just the field
+        // Use unknown first to satisfy TypeScript's strict type checking
+        const fieldSchema = (schema as unknown as z.ZodObject<z.ZodRawShape>).shape[
+          field as string
+        ];
+
+        if (!fieldSchema) {
+          // Field not in schema, skip validation
+          return null;
+        }
+
+        // Parse the field value
+        fieldSchema.parse(value);
+
+        // Validation passed, remove error
+        setErrorsState((prev) => {
+          const { [field]: _, ...rest } = prev;
+          return rest as FormErrors<T>;
+        });
+
+        return null;
+      } catch (error) {
+        if (error instanceof ZodError) {
+          const fieldError: FieldError = {
+            message: error.errors[0]?.message || 'Campo inválido',
+            code: error.errors[0]?.code,
+          };
+
+          setErrorsState((prev) => ({
+            ...prev,
+            [field]: fieldError,
+          }));
+
+          return fieldError;
+        }
+
         return null;
       }
-
-      // Parse the field value
-      fieldSchema.parse(value);
-      
-      // Validation passed, remove error
-      setErrorsState((prev) => {
-        const { [field]: _, ...rest } = prev;
-        return rest as FormErrors<T>;
-      });
-      
-      return null;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const fieldError: FieldError = {
-          message: error.errors[0]?.message || 'Campo inválido',
-          code: error.errors[0]?.code,
-        };
-        
-        setErrorsState((prev) => ({
-          ...prev,
-          [field]: fieldError,
-        }));
-        
-        return fieldError;
-      }
-      
-      return null;
-    }
-  }, [schema]);
+    },
+    [schema]
+  );
 
   /**
    * Validate a single field with debounce
    */
-  const validateField = useCallback((field: keyof T, value?: unknown): FieldError | null => {
-    // Update current values
-    if (value !== undefined) {
-      setCurrentValues((prev) => ({ ...prev, [field]: value }));
-    }
+  const validateField = useCallback(
+    (field: keyof T, value?: unknown): FieldError | null => {
+      // Update current values
+      if (value !== undefined) {
+        setCurrentValues((prev) => ({ ...prev, [field]: value }));
+      }
 
-    // Clear existing timer for this field
-    const existingTimer = debounceTimersRef.current.get(field);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
+      // Clear existing timer for this field
+      const existingTimer = debounceTimersRef.current.get(field);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
 
-    // Mark as pending validation
-    pendingValidationsRef.current.add(field);
+      // Mark as pending validation
+      pendingValidationsRef.current.add(field);
 
-    // If no debounce, validate immediately
-    if (debounceMs === 0) {
-      const result = validateFieldImmediate(field, value ?? currentValues[field]);
-      pendingValidationsRef.current.delete(field);
-      return result;
-    }
+      // If no debounce, validate immediately
+      if (debounceMs === 0) {
+        const result = validateFieldImmediate(field, value ?? currentValues[field]);
+        pendingValidationsRef.current.delete(field);
+        return result;
+      }
 
-    // Set new debounce timer
-    const timer = setTimeout(() => {
-      validateFieldImmediate(field, value ?? currentValues[field]);
-      pendingValidationsRef.current.delete(field);
-      debounceTimersRef.current.delete(field);
-    }, debounceMs);
+      // Set new debounce timer
+      const timer = setTimeout(() => {
+        validateFieldImmediate(field, value ?? currentValues[field]);
+        pendingValidationsRef.current.delete(field);
+        debounceTimersRef.current.delete(field);
+      }, debounceMs);
 
-    debounceTimersRef.current.set(field, timer);
-    
-    // Return current error (may be stale until debounce completes)
-    return errors[field] ?? null;
-  }, [debounceMs, validateFieldImmediate, currentValues, errors]);
+      debounceTimersRef.current.set(field, timer);
+
+      // Return current error (may be stale until debounce completes)
+      return errors[field] ?? null;
+    },
+    [debounceMs, validateFieldImmediate, currentValues, errors]
+  );
 
   /**
    * Validate all fields immediately (no debounce)
    */
-  const validateAllImmediate = useCallback((values: Partial<T>): boolean => {
-    try {
-      schema.parse(values);
-      setErrorsState({});
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const newErrors: FormErrors<T> = {};
-        
-        error.errors.forEach((err) => {
-          const field = err.path[0] as keyof T;
-          if (field && !newErrors[field]) {
-            newErrors[field] = {
-              message: err.message,
-              code: err.code,
-            };
-          }
-        });
-        
-        setErrorsState(newErrors);
+  const validateAllImmediate = useCallback(
+    (values: Partial<T>): boolean => {
+      try {
+        schema.parse(values);
+        setErrorsState({});
+        return true;
+      } catch (error) {
+        if (error instanceof ZodError) {
+          const newErrors: FormErrors<T> = {};
+
+          error.errors.forEach((err) => {
+            const field = err.path[0] as keyof T;
+            if (field && !newErrors[field]) {
+              newErrors[field] = {
+                message: err.message,
+                code: err.code,
+              };
+            }
+          });
+
+          setErrorsState(newErrors);
+          return false;
+        }
         return false;
       }
-      return false;
-    }
-  }, [schema]);
+    },
+    [schema]
+  );
 
   /**
    * Validate all fields at once
    */
-  const validateAll = useCallback((values: Partial<T>): boolean => {
-    // Clear all pending debounce timers
-    debounceTimersRef.current.forEach((timer) => clearTimeout(timer));
-    debounceTimersRef.current.clear();
-    pendingValidationsRef.current.clear();
+  const validateAll = useCallback(
+    (values: Partial<T>): boolean => {
+      // Clear all pending debounce timers
+      debounceTimersRef.current.forEach((timer) => clearTimeout(timer));
+      debounceTimersRef.current.clear();
+      pendingValidationsRef.current.clear();
 
-    setCurrentValues(values);
-    return validateAllImmediate(values);
-  }, [validateAllImmediate]);
+      setCurrentValues(values);
+      return validateAllImmediate(values);
+    },
+    [validateAllImmediate]
+  );
 
   /**
    * Clear all errors
@@ -324,16 +338,19 @@ export function useFormValidation<T extends Record<string, unknown>>({
   /**
    * Get field validation state
    */
-  const getFieldState = useCallback((field: keyof T) => {
-    const error = errors[field] ?? null;
-    const isTouched = touchedFields.has(field);
-    
-    return {
-      error,
-      isTouched,
-      isValid: !error,
-    };
-  }, [errors, touchedFields]);
+  const getFieldState = useCallback(
+    (field: keyof T) => {
+      const error = errors[field] ?? null;
+      const isTouched = touchedFields.has(field);
+
+      return {
+        error,
+        isTouched,
+        isValid: !error,
+      };
+    },
+    [errors, touchedFields]
+  );
 
   return {
     errors,
@@ -354,7 +371,7 @@ export function useFormValidation<T extends Record<string, unknown>>({
 
 /**
  * Helper function to create a field change handler
- * 
+ *
  * @example
  * ```tsx
  * const handleChange = createFieldChangeHandler(
@@ -362,7 +379,7 @@ export function useFormValidation<T extends Record<string, unknown>>({
  *   validateField,
  *   touchField
  * );
- * 
+ *
  * <Input
  *   onChange={(e) => handleChange('firstName', e.target.value)}
  * />
@@ -379,4 +396,3 @@ export function createFieldChangeHandler<T extends Record<string, unknown>>(
     touchField?.(field);
   };
 }
-

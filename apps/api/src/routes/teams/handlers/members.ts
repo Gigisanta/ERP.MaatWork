@@ -12,7 +12,7 @@ import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';
 import { invalidateAccessScope } from '../../../auth/cache';
-import { teamMetricsCacheUtil } from '../../../utils/cache';
+import { teamMetricsCacheUtil } from '../../../utils/performance/cache';
 import { addMemberSchema } from '../schemas';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 

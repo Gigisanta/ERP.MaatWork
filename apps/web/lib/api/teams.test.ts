@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -118,4 +118,3 @@ describe('teams api client endpoints', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/v1/teams/team-123/members/member-456/metrics');
   });
 });
-

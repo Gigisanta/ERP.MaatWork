@@ -1,6 +1,6 @@
 /**
  * Tests para Box primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para Box component
  * Justificación: Validación de componente base del sistema
  * Impacto: Prevenir errores en componente fundamental
@@ -60,7 +60,11 @@ describe('Box', () => {
   });
 
   it('debería pasar props adicionales al elemento', () => {
-    render(<Box data-testid="box" id="test-id">Test</Box>);
+    render(
+      <Box data-testid="box" id="test-id">
+        Test
+      </Box>
+    );
     const element = screen.getByTestId('box');
     expect(element.id).toBe('test-id');
   });
@@ -76,5 +80,3 @@ describe('Box', () => {
     expect(screen.getByText('Child 2')).toBeInTheDocument();
   });
 });
-
-

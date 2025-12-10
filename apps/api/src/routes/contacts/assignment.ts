@@ -9,7 +9,7 @@ import { db, contacts, contactFieldHistory } from '@cactus/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
-import { idParamSchema } from '../../utils/common-schemas';
+import { idParamSchema } from '../../utils/validation/common-schemas';
 import { createRouteHandler, HttpError } from '../../utils/route-handler';
 import { z } from 'zod';
 

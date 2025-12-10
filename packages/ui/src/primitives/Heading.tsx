@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../utils/cn';
+import { cn } from '../utils/cn.js';
 
 export interface HeadingProps {
   as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
@@ -15,20 +15,20 @@ export interface HeadingProps {
 /**
  * Heading component using Poppins font (display font).
  * Used for all headings and titles in the application.
- * 
+ *
  * @example
  * ```tsx
  * <Heading level={1}>Page Title</Heading>
  * <Heading level={2} color="secondary">Section Title</Heading>
  * ```
  */
-export function Heading({ 
-  as, 
-  className, 
-  children, 
-  level = 1, 
+export function Heading({
+  as,
+  className,
+  children,
+  level = 1,
   color = 'default',
-  ...props 
+  ...props
 }: HeadingProps) {
   const Component = as || (`h${level}` as keyof React.JSX.IntrinsicElements);
 

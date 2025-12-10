@@ -8,7 +8,7 @@ import type {
   CareerPlanLevel,
   CareerPlanLevelCreateRequest,
   CareerPlanLevelUpdateRequest,
-  UserCareerProgress
+  UserCareerProgress,
 } from '@/types/career-plan';
 
 // ==========================================================
@@ -61,4 +61,3 @@ export async function deleteCareerPlanLevel(id: string): Promise<ApiResponse<voi
 export async function getUserCareerProgress(): Promise<ApiResponse<UserCareerProgress>> {
   return apiClient.get<UserCareerProgress>('/v1/career-plan/user-progress');
 }
-
