@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Card } from '@cactus/ui';
 import { logger } from '@/lib/logger';
@@ -52,7 +52,7 @@ export default function PerformanceDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(500);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -74,13 +74,15 @@ export default function PerformanceDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [threshold]);
 
   useEffect(() => {
     void fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      void fetchMetrics();
+    }, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [fetchMetrics, threshold]);
+  }, [fetchMetrics]);
 
   if (loading && !data) {
     return (

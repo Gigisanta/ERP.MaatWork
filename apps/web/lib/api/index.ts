@@ -1,21 +1,21 @@
 /**
  * API Module - Barrel Export
- * 
+ *
  * Exports all API functions and the ApiClient:
- * 
+ *
  * Client components (refactored from api-client.ts):
  * - client.ts - Main ApiClient class
  * - auth-manager.ts - Token refresh management
  * - retry-handler.ts - Retry logic with exponential backoff
  * - request-builder.ts - Header building, body serialization
  * - types.ts - Shared types
- * 
+ *
  * Domain-specific API functions:
  * - analytics.ts, aum.ts, automations.ts, benchmarks.ts, bloomberg.ts
  * - broker-accounts.ts, capacitaciones.ts, career-plan.ts, contacts.ts
  * - instruments.ts, metrics.ts, notes.ts, notifications.ts, pipeline.ts
  * - portfolios.ts, settings.ts, tags.ts, tasks.ts, teams.ts, users.ts
- * 
+ *
  * AI_DECISION: Reemplazar export * con exports específicos
  * Justificación: Mejora tree-shaking, reduce bundle size, cumple reglas ESLint
  * Impacto: Mejor optimización de bundle, imports más explícitos
@@ -36,11 +36,7 @@ export const apiClient = new ApiClient();
 // ==========================================================
 // Analytics API
 // ==========================================================
-export {
-  getDashboardKPIs,
-  getPortfolioPerformance,
-  comparePortfolios,
-} from './analytics';
+export { getDashboardKPIs, getPortfolioPerformance, comparePortfolios } from './analytics';
 
 // ==========================================================
 // AUM API
@@ -135,11 +131,7 @@ export {
 // ==========================================================
 // Broker Accounts API
 // ==========================================================
-export {
-  getBrokerAccounts,
-  createBrokerAccount,
-  deleteBrokerAccount,
-} from './broker-accounts';
+export { getBrokerAccounts, createBrokerAccount, deleteBrokerAccount } from './broker-accounts';
 
 // ==========================================================
 // Capacitaciones API
@@ -199,21 +191,12 @@ export {
 // ==========================================================
 // Metrics API
 // ==========================================================
-export {
-  getContactsMetrics,
-  getMonthlyGoals,
-  saveMonthlyGoals,
-} from './metrics';
+export { getContactsMetrics, getMonthlyGoals, saveMonthlyGoals } from './metrics';
 
 // ==========================================================
 // Notes API
 // ==========================================================
-export {
-  getNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-} from './notes';
+export { getNotes, createNote, updateNote, deleteNote } from './notes';
 
 // ==========================================================
 // Pipeline API
@@ -268,12 +251,7 @@ export {
 // ==========================================================
 // Tasks API
 // ==========================================================
-export {
-  getTasks,
-  createTask,
-  updateTask,
-  deleteTask,
-} from './tasks';
+export { getTasks, createTask, updateTask, deleteTask } from './tasks';
 
 // ==========================================================
 // Teams API

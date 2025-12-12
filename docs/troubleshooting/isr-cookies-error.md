@@ -166,3 +166,4 @@ export default async function Page() {
 - [Next.js: Dynamic Functions](https://nextjs.org/docs/app/building-your-application/rendering/server-components#dynamic-functions)
 - [Next.js: ISR](https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating#revalidating-data)
 - Error fix commit: Cambio de ISR a dynamic rendering en páginas autenticadas
+

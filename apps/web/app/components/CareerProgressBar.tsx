@@ -29,18 +29,43 @@ const fetcher = async (): Promise<UserCareerProgress> => {
  */
 export default function CareerProgressBar() {
   const router = useRouter();
-  const { data, error } = useSWR<UserCareerProgress>('career-plan-user-progress', fetcher, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    dedupingInterval: 60000, // Cache por 60 segundos
-    shouldRetryOnError: false,
-  });
+  const { data, error, isLoading } = useSWR<UserCareerProgress>(
+    'career-plan-user-progress',
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 60000, // Cache por 60 segundos
+      shouldRetryOnError: false,
+    }
+  );
 
   const handleClick = useCallback(() => {
     router.push('/plandecarrera');
   }, [router]);
 
-  if (error || !data) {
+  // Mostrar estado de carga sutil
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+        <div className="h-1.5 sm:h-2 w-12 xs:w-14 sm:w-16 bg-border rounded-full overflow-hidden animate-pulse">
+          <div className="h-full w-1/2 bg-primary/30 rounded-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Si hay error, mostrar barra vacía como indicador visual (mejor UX que desaparecer)
+  if (error) {
+    return (
+      <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 opacity-50">
+        <div className="h-1.5 sm:h-2 w-12 xs:w-14 sm:w-16 bg-border rounded-full overflow-hidden" />
+      </div>
+    );
+  }
+
+  // Si no hay datos, no mostrar nada
+  if (!data) {
     return null;
   }
 
@@ -65,29 +90,29 @@ export default function CareerProgressBar() {
       onClick={handleClick}
       className={[
         // Base styles
-        'flex items-center gap-2',
+        'flex items-center gap-1 sm:gap-1.5 md:gap-2',
         'hover:opacity-80 active:scale-[0.98]',
         'transition-all duration-200',
         'cursor-pointer',
         // Focus styles
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         'rounded-lg',
-        // Padding for touch target
-        'py-1 px-2',
+        // Padding for touch target - más compacto en móvil
+        'py-0.5 px-1 sm:py-1 sm:px-2',
         // Responsive layout
-        'min-w-0 overflow-hidden',
+        'min-w-0',
       ].join(' ')}
       aria-label={`Plan de carrera: ${levelName}, ${formatProgressPercentage(progress.progressPercentage)} completado`}
       type="button"
     >
-      {/* Nivel actual - siempre visible */}
-      <span className="text-xs font-semibold whitespace-nowrap text-text-secondary shrink-0">
+      {/* Nivel actual - oculto en pantallas muy pequeñas, visible desde sm */}
+      <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap text-text-secondary shrink-0">
         {levelName}
       </span>
 
-      {/* Barra de progreso visual - responsive width */}
-      <div className="flex items-center w-16 md:w-20 lg:w-24 flex-shrink-0">
-        <div className="relative w-full h-2 bg-border rounded-full overflow-hidden">
+      {/* Barra de progreso visual - responsive width, siempre visible */}
+      <div className="flex items-center w-12 xs:w-14 sm:w-16 md:w-20 lg:w-24 flex-shrink-0">
+        <div className="relative w-full h-1.5 sm:h-2 bg-border rounded-full overflow-hidden">
           <div
             className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500 ease-out"
             style={{ width: `${visualProgressPercentage}%` }}

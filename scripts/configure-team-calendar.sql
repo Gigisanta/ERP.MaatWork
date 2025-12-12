@@ -141,3 +141,4 @@ WHERE u.is_active = true
 GROUP BY u.id, u.email, u.full_name
 HAVING COUNT(CASE WHEN t.calendar_url IS NOT NULL THEN 1 END) = 0
 ORDER BY u.full_name;
+

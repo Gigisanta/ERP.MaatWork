@@ -63,3 +63,4 @@ echo ""
 echo "Puedes reiniciar el servidor de desarrollo con:"
 echo "  pnpm dev"
 echo ""
+

@@ -16,6 +16,13 @@ export default defineConfig({
       '@cactus/db': resolve(__dirname, '../../packages/db/src/index.ts'),
       '@cactus/db/schema': resolve(__dirname, '../../packages/db/src/schema.ts'),
       '@cactus/ui': resolve(__dirname, '../../packages/ui/src/index.ts'),
+      '@/utils': resolve(__dirname, './src/utils'),
+      '@/routes': resolve(__dirname, './src/routes'),
+      '@/services': resolve(__dirname, './src/services'),
+      '@/config': resolve(__dirname, './src/config'),
+      '@/types': resolve(__dirname, './src/types'),
+      '@/auth': resolve(__dirname, './src/auth'),
+      '@/middleware': resolve(__dirname, './src/middleware'),
     },
   },
   test: {

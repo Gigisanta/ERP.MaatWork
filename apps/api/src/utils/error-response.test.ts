@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createErrorResponse } from './error-response';
+import { createErrorResponse, getStatusCodeFromError } from './error-response';
 
 describe('createErrorResponse', () => {
   const originalEnv = process.env.NODE_ENV;
@@ -214,8 +214,6 @@ describe('createErrorResponse', () => {
   });
 
   describe('getStatusCodeFromError', () => {
-    const { getStatusCodeFromError } = require('./error-response');
-
     it('debería retornar 404 para errores "not found"', () => {
       const error = new Error('Resource not found');
       expect(getStatusCodeFromError(error)).toBe(404);

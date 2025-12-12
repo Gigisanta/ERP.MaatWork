@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -365,26 +365,31 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     return null;
   }
 
-  // AI_DECISION: Logo optimizado para responsive
+  // AI_DECISION: Logo optimizado para responsive con barra de progreso visible
   // Justificación: El logo debe adaptarse a diferentes tamaños de pantalla sin romper el layout
-  // Impacto: Mejor experiencia en dispositivos móviles y tablets
-  const logo = (
-    <div className="flex items-center gap-2 min-w-0 w-full">
-      {/* Logo icon - always visible */}
-      <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
-        ⚖️
-      </span>
-      {/* Logo text - hidden on very small screens */}
-      <span className="text-lg sm:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
-        Maat
-      </span>
-      {/* Career Progress Bar - only on larger screens */}
-      {user && (
-        <div className="hidden md:flex items-center min-w-0 flex-1 ml-2">
-          <CareerProgressBar />
-        </div>
-      )}
-    </div>
+  // La barra de progreso debe ser siempre visible cuando hay usuario
+  // Impacto: Mejor experiencia en dispositivos móviles y tablets, progreso siempre visible
+  // Memoizado para evitar re-renders infinitos - solo depende de si user existe, no del objeto completo
+  const logo = useMemo(
+    () => (
+      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+        {/* Logo icon - always visible */}
+        <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
+          ⚖️
+        </span>
+        {/* Logo text - hidden on very small screens */}
+        <span className="text-base sm:text-lg md:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
+          Maat
+        </span>
+        {/* Career Progress Bar - always visible when user exists */}
+        {user && (
+          <div className="flex items-center min-w-0 flex-1 ml-1 sm:ml-2">
+            <CareerProgressBar />
+          </div>
+        )}
+      </div>
+    ),
+    [!!user] // Solo depende de si user existe, no del objeto completo
   );
 
   // Empty navItems - navigation moved to sidebar

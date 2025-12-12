@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { AppRouterInstance } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   respondToInvitation,
   createTeam,
@@ -30,7 +30,7 @@ interface UseProfileActionsProps {
   setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
   setUserInfo: React.Dispatch<React.SetStateAction<User | null>>;
   fetchUserInfo: () => Promise<void>;
-  router?: AppRouterInstance;
+  router?: ReturnType<typeof useRouter>;
 }
 
 interface PasswordForm {
@@ -91,7 +91,7 @@ export function useProfileActions({
       setError(null);
       await respondToInvitation(id, action);
       setInvitations((prev) => prev.filter((r) => r.id !== id));
-      
+
       // Si se acepta la invitación, actualizar la lista de equipos y mostrar toast
       if (action === 'accept') {
         showToast(
@@ -99,7 +99,7 @@ export function useProfileActions({
           'Ahora eres miembro del equipo. Puedes verlo en la página de equipos.',
           'success'
         );
-        
+
         // Actualizar la lista de equipos para reflejar el cambio
         try {
           const teamsResponse = await getTeams();
@@ -113,7 +113,7 @@ export function useProfileActions({
           );
           // No es crítico, el usuario puede refrescar manualmente
         }
-        
+
         // Invalidar el cache del router para que /teams se actualice automáticamente
         if (router) {
           router.refresh();

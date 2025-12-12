@@ -6,7 +6,7 @@
  * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
 import { normalizeAdvisorAlias } from '../../../../utils/aum/aum-normalization';
@@ -14,7 +14,7 @@ import { getCacheKey, getCachedCount, setCachedCount } from '../cache';
 import { parseNumeric, QUERY_TIMEOUT_MS } from '../utils';
 import type { AumRowResult } from '../types';
 import type { AumRowsAllQuery } from '../../../../utils/aum/aum-validation';
-import { createRouteHandler } from '@/utils/route-handler';
+import { createAsyncHandler } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/all
@@ -22,7 +22,7 @@ import { createRouteHandler } from '@/utils/route-handler';
  *
  * Query params están validados por middleware validate() con aumRowsAllQuerySchema
  */
-export const listAllRows = createRouteHandler(async (req: Request) => {
+export const listAllRows = createAsyncHandler(async (req: Request, res: Response) => {
   // req.query ya está validado y tipado por el middleware validate()
   const query = req.query as unknown as AumRowsAllQuery;
   const limit = query.limit ?? 50;
@@ -298,9 +298,8 @@ export const listAllRows = createRouteHandler(async (req: Request) => {
       : null,
   }));
 
-  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
   // Mantenemos formato { ok: true, rows, pagination } para compatibilidad con frontend
-  return {
+  return res.json({
     ok: true,
     rows,
     pagination: {
@@ -309,5 +308,5 @@ export const listAllRows = createRouteHandler(async (req: Request) => {
       offset,
       hasMore: Number(offset) + rows.length < total,
     },
-  };
+  });
 });

@@ -154,3 +154,4 @@ GROUP BY t.id, t.name, t.calendar_url;
 - Página: `apps/web/app/home/page.tsx`
 - Schema BD: `packages/db/src/schema/users.ts` (tabla `teams`)
 - API: `apps/api/src/routes/teams/handlers/list.ts`
+

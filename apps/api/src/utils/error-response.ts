@@ -168,14 +168,13 @@ export function createErrorResponse(options: ErrorResponseOptions): ErrorRespons
   // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
   // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
   // Impacto: Cumple con las reglas estrictas de TypeScript
+  // AI_DECISION: Incluir requestId siempre (incluso si es undefined) para consistencia en tests
+  // Justificación: Los tests esperan que requestId esté presente en el objeto, aunque sea undefined
+  // Impacto: Cumple con las expectativas de los tests y mantiene estructura consistente
   const response: Record<string, unknown> = {
     error: errorMessage,
+    requestId: requestId,
   };
-
-  // Solo incluir requestId si está definido
-  if (requestId !== undefined) {
-    response.requestId = requestId;
-  }
 
   // Solo incluir detalles en desarrollo
   if (!isProduction && error instanceof Error) {

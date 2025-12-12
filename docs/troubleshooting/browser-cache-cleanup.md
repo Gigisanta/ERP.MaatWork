@@ -180,3 +180,4 @@ Este procedimiento es **crítico** después de:
 - Error de webpack: `docs/troubleshooting/webpack-skeleton-error.md`
 - Script de limpieza: `scripts/clean-webpack-cache.sh`
 - Plan de fix: `fix-webpack-and-auth-issues.plan.md`
+

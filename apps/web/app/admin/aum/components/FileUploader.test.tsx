@@ -4,7 +4,21 @@ import { vi } from 'vitest';
 import FileUploader from './FileUploader';
 
 vi.mock('@/lib/api', () => ({
-  uploadAumFile: vi.fn().mockResolvedValue({ success: true }),
+  uploadAumFile: vi.fn().mockResolvedValue({
+    success: true,
+    data: {
+      ok: true,
+      fileId: 'test-file-id-123',
+      filename: 'test.csv',
+      totals: {
+        parsed: 10,
+        matched: 8,
+        ambiguous: 1,
+        conflicts: 0,
+        unmatched: 1,
+      },
+    },
+  }),
 }));
 
 describe('FileUploader', () => {
@@ -35,7 +49,8 @@ describe('FileUploader', () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
 
       expect(screen.getByText('test-data.csv')).toBeInTheDocument();
-      expect(screen.getByText('8.0 B')).toBeInTheDocument();
+      // File size is 7 bytes, formatted as "7 B" (no decimals for bytes < 1024)
+      expect(screen.getByText('7 B')).toBeInTheDocument();
       expect(screen.getByText('📄 Cambiar archivo')).toBeInTheDocument();
     });
 

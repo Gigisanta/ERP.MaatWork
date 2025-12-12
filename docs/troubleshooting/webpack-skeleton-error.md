@@ -80,3 +80,4 @@ Este script:
 ## Nota Técnica
 
 El `SkeletonLoader.tsx` ya tiene una solución implementada (AI_DECISION en líneas 21-24) para evitar problemas de resolución de módulos webpack creando una función `cn` local en lugar de importarla de `@cactus/ui`. Sin embargo, el caché corrupto aún puede causar problemas que requieren limpieza manual.
+

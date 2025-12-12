@@ -179,15 +179,16 @@ describe('useFormValidation', () => {
         })
       );
 
-      const isValid = act(() =>
-        result.current.validateAll({
+      let isValid: boolean;
+      act(() => {
+        isValid = result.current.validateAll({
           firstName: '',
           lastName: '',
           email: 'invalid',
-        })
-      );
+        });
+      });
 
-      expect(isValid).toBe(false);
+      expect(isValid!).toBe(false);
       expect(result.current.errors.firstName).toBeDefined();
       expect(result.current.errors.lastName).toBeDefined();
       expect(result.current.errors.email).toBeDefined();
@@ -201,15 +202,16 @@ describe('useFormValidation', () => {
         })
       );
 
-      const isValid = act(() =>
-        result.current.validateAll({
+      let isValid: boolean;
+      act(() => {
+        isValid = result.current.validateAll({
           firstName: 'John',
           lastName: 'Doe',
           email: 'john@example.com',
-        })
-      );
+        });
+      });
 
-      expect(isValid).toBe(true);
+      expect(isValid!).toBe(true);
       expect(result.current.errors).toEqual({});
     });
   });

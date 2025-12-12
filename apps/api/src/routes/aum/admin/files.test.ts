@@ -60,12 +60,14 @@ import { aumImportFiles, aumImportRows, eq, sql } from '@cactus/db';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { createTestApp } from '../../../__tests__/helpers/test-server';
+import { requireAuth } from '../../../auth/middlewares';
 
 const mockDb = vi.mocked(db);
 const mockEq = vi.mocked(eq);
 const mockSql = vi.mocked(sql);
 const mockFs = vi.mocked(fs);
 const mockJoin = vi.mocked(join);
+const mockRequireAuth = vi.mocked(requireAuth);
 
 describe('AUM Admin - Files Routes', () => {
   const createTestAppWithRoutes = () =>
@@ -81,6 +83,15 @@ describe('AUM Admin - Files Routes', () => {
       role: 'admin',
     });
     mockJoin.mockImplementation((...args) => args.join('/'));
+    // Reset requireAuth mock to default behavior (sets user)
+    mockRequireAuth.mockImplementation((req, res, next) => {
+      req.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'admin',
+      };
+      next();
+    });
   });
 
   describe('DELETE /admin/aum/uploads/:fileId', () => {
@@ -484,8 +495,7 @@ describe('AUM Admin - Files Routes', () => {
 
     it('debería retornar 401 cuando no hay usuario autenticado', async () => {
       // Mock requireAuth to not set req.user (simulating unauthenticated request)
-      const { requireAuth: originalRequireAuth } = await import('../../../auth/middlewares');
-      vi.mocked(originalRequireAuth).mockImplementationOnce((req, res, next) => {
+      mockRequireAuth.mockImplementationOnce((req, res, next) => {
         // Don't set req.user to simulate unauthenticated request
         next();
       });

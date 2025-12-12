@@ -154,11 +154,25 @@ export const aumHistoryResponseSchema = z.object({
 });
 
 // Match row response
-export const aumMatchRowResponseSchema = z.object({
-  success: z.boolean(),
-  row: aumRowSchema.optional(),
-  message: z.string().optional(),
-});
+export const aumMatchRowResponseSchema = z
+  .object({
+    success: z.boolean(),
+    row: aumRowSchema.optional(),
+    message: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // If success is true, row must be present
+      if (data.success === true) {
+        return data.row !== undefined;
+      }
+      return true;
+    },
+    {
+      message: 'Row is required when success is true',
+      path: ['row'],
+    }
+  );
 
 // Export inferred types
 export type AumUploadResponse = z.infer<typeof aumUploadResponseSchema>;

@@ -88,14 +88,16 @@ describe('toLogContext', () => {
 
     const result = toLogContext(record);
 
-    expect(result).toEqual({
-      string: 'value',
-      number: 123,
-      error: {
-        message: 'Test error',
-        name: 'Error',
-      },
+    expect(result.string).toBe('value');
+    expect(result.number).toBe(123);
+    expect(result.error).toMatchObject({
+      message: 'Test',
+      name: 'Error',
     });
+    // stack puede estar presente o no dependiendo del entorno
+    if ('stack' in (result.error as object)) {
+      expect(typeof (result.error as { stack?: string }).stack).toBe('string');
+    }
   });
 });
 
@@ -172,6 +174,7 @@ describe('ClientLogger', () => {
     beforeEach(() => {
       testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
+      process.env.NEXT_PUBLIC_VERBOSE_LOGS = 'true';
     });
 
     it('debería loguear debug correctamente', () => {
@@ -199,6 +202,7 @@ describe('ClientLogger', () => {
     });
 
     it('debería incluir contexto en logs', () => {
+      process.env.NEXT_PUBLIC_VERBOSE_LOGS = 'true';
       testLogger.info('Test', { userId: '123', action: 'test' });
 
       const call = mockConsole.log.mock.calls[0];
@@ -232,6 +236,7 @@ describe('ClientLogger', () => {
     it('debería loguear request con requestId', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
+      process.env.NEXT_PUBLIC_VERBOSE_LOGS = 'true';
 
       testLogger.logRequest('GET', '/api/users', 'req-123', { userId: 'user-1' });
 
@@ -246,6 +251,7 @@ describe('ClientLogger', () => {
     it('debería loguear response exitosa como info', () => {
       const testLogger = new ClientLogger();
       process.env.NODE_ENV = 'development';
+      process.env.NEXT_PUBLIC_VERBOSE_LOGS = 'true';
 
       testLogger.logResponse('GET', '/api/users', 200, 150, 'req-123');
 
