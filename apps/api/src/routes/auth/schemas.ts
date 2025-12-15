@@ -4,7 +4,6 @@
  * Zod schemas for validating authentication operations
  */
 import { z } from 'zod';
-import { emailSchema } from '../../utils/validation/common-schemas';
 
 // Username case-insensitive [a-z0-9._-], 3-20 chars
 const usernameRegex = /^[a-z0-9._-]{3,20}$/;
@@ -22,7 +21,7 @@ export const loginSchema = z.object({
 // Justificación: Usuarios pueden registrarse con roles operativos, admin es exclusivo
 // Impacto: Todos los roles excepto admin disponibles en registro con aprobación
 export const registerSchema = z.object({
-  email: emailSchema,
+  email: z.string().email(),
   fullName: z.string().min(1).max(255),
   username: z.string().regex(usernameRegex, 'Username inválido').optional(),
   password: z.string().min(6),

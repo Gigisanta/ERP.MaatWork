@@ -3,263 +3,221 @@
 @tailwind utilities;
 
 /* =============================================================================
-   Maat Design System v2.3.0 - Global Styles (Clean, Fresh, Modern)
-   Typography: Outfit (Display) + Plus Jakarta Sans (Body)
-   Colors: Primary (Soft Purple), Joy (Warm Amber), Accent (Fresh Teal)
+   Maat Design System v2.0 - Global Styles
+   Typography: Poppins (Display) + Open Sans (Body)
+   Colors: Primary #5900FF (Purple), Secondary #000000 (Black), Accent #00E676
    
-   AI_DECISION: Adopted "Clean & Fresh" aesthetic with improved dark mode
-   Justificación: Refined palette with Teal accent and Obsidian dark mode for better harmony.
-   Impacto: High-readability, modern look, and reduced eye strain in dark mode.
+   AI_DECISION: Added responsive utilities and safe area support
+   Justificación: Better support for mobile devices, especially with notches
+   Impacto: Improved UX on all modern mobile devices
    ============================================================================= */
 
 :root {
   /* ============================================================
-     Brand Color Variables (Mapped from UI Package)
+     Brand Color Variables
      ============================================================ */
+  
+  /* Primary Brand Colors (Purple - Action, Highlights, CTAs) */
+  --color-primary: #5900ff;
+  --color-primary-hover: #4700cc;
+  --color-primary-active: #3600a3;
+  --color-primary-light: #771eff;
+  --color-primary-subtle: #f3e8ff;
 
-  /* Primary Brand Colors (Soft Purple) */
-  --color-primary: #8b5cf6;
-  --color-primary-hover: #7c3aed;
-  --color-primary-active: #6d28d9;
-  --color-primary-light: #a78bfa;
-  --color-primary-subtle: #f5f3ff;
+  /* Secondary Brand Colors (Black - Professional, Base) */
+  --color-secondary: #000000;
+  --color-secondary-hover: #1e1e1e;
+  --color-secondary-light: #3c3c3c;
+  --color-secondary-subtle: #f5f5f5;
 
-  /* Secondary Brand Colors (Warm Stone) */
-  --color-secondary: #1c1917;
-  --color-secondary-hover: #292524;
-  --color-secondary-light: #44403c;
-  --color-secondary-subtle: #fafaf9;
-
-  /* Accent Colors (Fresh Teal) - Changed from Green to Teal for freshness */
-  --color-accent: #14b8a6;
-  --color-accent-hover: #0f766e;
-  --color-accent-light: #2dd4bf;
-  --color-accent-subtle: #f0fdfa;
-
-  /* Joy Colors (Warm Amber) */
-  --color-joy: #f59e0b;
-  --color-joy-hover: #d97706;
-  --color-joy-light: #fbbf24;
-  --color-joy-subtle: #fffbeb;
+  /* Accent Colors (Green - Growth, Success) */
+  --color-accent: #00e676;
+  --color-accent-hover: #00c858;
+  --color-accent-light: #3cffb2;
+  --color-accent-subtle: #e8fff3;
 
   /* ============================================================
      Semantic Color Variables
      ============================================================ */
-
-  --color-success: #22c55e;
-  --color-success-hover: #16a34a;
-  --color-success-subtle: #f0fdf4;
-
-  --color-error: #ef4444;
-  --color-error-hover: #dc2626;
-  --color-error-subtle: #fef2f2;
-
-  --color-warning: #f97316;
-  --color-warning-hover: #ea580c;
-  --color-warning-subtle: #fff7ed;
-
-  --color-info: #3b82f6;
-  --color-info-hover: #2563eb;
-  --color-info-subtle: #eff6ff;
-
-  /* ============================================================
-     Surface & Background Colors (Cream Palette)
-     ============================================================ */
-
-  --color-background: #fdfcf8; /* Cream base */
-  --color-surface: #ffffff; /* Pure white for cleaner look */
-  --color-surface-hover: #fafaf9;
-  --color-border: #e5e5e5; /* Lighter, cleaner border */
-  --color-border-hover: #d4d4d4;
+  
+  --color-success: #4caf50;
+  --color-success-hover: #43a047;
+  --color-success-subtle: #e8f5e9;
+  
+  --color-error: #f44336;
+  --color-error-hover: #e53935;
+  --color-error-subtle: #ffebee;
+  
+  --color-warning: #ffc107;
+  --color-warning-hover: #ffb300;
+  --color-warning-subtle: #fff8e1;
+  
+  --color-info: #2196f3;
+  --color-info-hover: #1976d2;
+  --color-info-subtle: #e3f2fd;
 
   /* ============================================================
-     Text Colors (High Contrast Warm Grays)
+     Surface & Background Colors
      ============================================================ */
+  
+  --color-background: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-hover: #f5f5f5;
+  --color-border: #e0e0e0;
+  --color-border-hover: #bdbdbd;
 
-  --color-text: #18181b; /* Zinc 900 */
-  --color-text-secondary: #3f3f46; /* Zinc 700 */
-  --color-text-muted: #71717a; /* Zinc 500 */
+  /* ============================================================
+     Text Colors
+     ============================================================ */
+  
+  --color-text: #000000;
+  --color-text-secondary: #424242;
+  --color-text-muted: #757575;
   --color-text-inverse: #ffffff;
 
   /* ============================================================
      Chart Colors for Data Visualization
      ============================================================ */
-
-  --color-chart-1: #8b5cf6; /* Soft Purple */
-  --color-chart-2: #14b8a6; /* Fresh Teal */
-  --color-chart-3: #f59e0b; /* Warm Amber */
-  --color-chart-4: #ef4444; /* Soft Red */
-  --color-chart-5: #3b82f6; /* Soft Blue */
-  --color-chart-6: #ec4899; /* Pink */
+  
+  --color-chart-1: #5900ff; /* Primary Purple */
+  --color-chart-2: #00e676; /* Accent Green */
+  --color-chart-3: #ffc107; /* Warning Yellow */
+  --color-chart-4: #f44336; /* Error Red */
+  --color-chart-5: #2196f3; /* Info Blue */
+  --color-chart-6: #9c27b0; /* Deep Purple */
 
   /* ============================================================
      Design Tokens
      ============================================================ */
-
-  /* Shadows - Refined for "Clean" look */
+  
+  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-
-  /* Primary Glow Shadow - Smoother */
-  --shadow-primary: 0 4px 20px -2px rgba(139, 92, 246, 0.25);
-  --shadow-primary-lg: 0 10px 30px -4px rgba(139, 92, 246, 0.35);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  
+  /* Purple glow shadow */
+  --shadow-primary: 0 4px 14px 0 rgba(89, 0, 255, 0.25);
+  --shadow-primary-lg: 0 10px 25px -3px rgba(89, 0, 255, 0.3);
 
   /* Border Radius */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.75rem; /* Slightly rounder for modern feel */
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
   --radius-full: 9999px;
 
-  /* Transitions - Spring Physics Base */
-  --transition-fast: 150ms;
-  --transition-base: 250ms;
-  --transition-slow: 350ms;
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* ============================================================
-     Auth Page Gradients (Centralized Configuration)
-     ============================================================ */
-
-  /* RGB values for gradients with opacity */
-  --auth-primary-rgb: 139, 92, 246; /* --color-primary */
-  --auth-accent-rgb: 20, 184, 166; /* --color-accent */
-  --auth-joy-rgb: 245, 158, 11; /* --color-joy */
-
-  /* Light mode gradient opacities */
-  --auth-gradient-opacity-primary: 0.15;
-  --auth-gradient-opacity-accent: 0.12;
-  --auth-gradient-opacity-joy: 0.1;
-  --auth-radial-opacity-primary: 0.2;
-  --auth-radial-opacity-accent: 0.15;
-  --auth-radial-opacity-joy: 0.1;
-  --auth-dot-opacity: 0.3;
-  --auth-dot-color-opacity: 0.1;
+  /* Transitions */
+  --transition-fast: 100ms;
+  --transition-base: 150ms;
+  --transition-slow: 300ms;
 
   /* ============================================================
      shadcn Compatibility Variables (mapped to semantic colors)
      ============================================================ */
-
+  
   --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  --foreground: 0 0% 0%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 0 0% 0%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 263 90% 66%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 263 100% 50%; /* HSL for #5900FF - Purple */
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 173 80% 40%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 263 90% 66%;
-  --radius: 0.75rem;
+  --secondary: 0 0% 0%; /* HSL for #000000 - Black */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 98%;
+  --muted-foreground: 0 0% 26%;
+  --accent: 145 100% 45%; /* HSL for #00E676 */
+  --accent-foreground: 0 0% 0%;
+  --destructive: 4 90% 58%; /* HSL for #F44336 */
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 263 100% 50%; /* Primary Purple for focus rings */
+  --radius: 0.5rem;
 }
 
 /* ============================================================
-   Dark Mode Theme - "Deep Obsidian"
+   Dark Mode Theme - Supports both .dark class and data-theme attribute
    ============================================================ */
 
 .dark,
-[data-theme='dark'] {
-  --color-primary: #a78bfa;
-  --color-primary-hover: #c4b5fd;
-  --color-primary-active: #ddd6fe;
-  --color-primary-light: #8b5cf6;
-  --color-primary-subtle: #2e1065;
+[data-theme="dark"] {
+  /* Primary stays purple but lighter in dark mode */
+  --color-primary: #771eff;
+  --color-primary-hover: #953cff;
+  --color-primary-active: #b77fff;
+  --color-primary-light: #c9a0ff;
+  --color-primary-subtle: #1a0033;
 
-  --color-secondary: #fafaf9;
-  --color-secondary-hover: #f5f5f4;
-  --color-secondary-light: #d6d3d1;
-  --color-secondary-subtle: #27272a;
+  /* Secondary inverted for dark mode */
+  --color-secondary: #ffffff;
+  --color-secondary-hover: #e0e0e0;
+  --color-secondary-light: #bdbdbd;
+  --color-secondary-subtle: #2d2d2d;
 
-  --color-accent: #2dd4bf;
-  --color-accent-hover: #5eead4;
-  --color-accent-light: #14b8a6;
-  --color-accent-subtle: #134e4a;
+  /* Accent stays vibrant */
+  --color-accent: #00e676;
+  --color-accent-hover: #3cffb2;
+  --color-accent-light: #88ffcc;
+  --color-accent-subtle: #002211;
 
-  --color-joy: #fbbf24;
-  --color-joy-hover: #fcd34d;
-  --color-joy-light: #f59e0b;
-  --color-joy-subtle: #451a03;
+  /* Semantic colors adjusted for dark mode */
+  --color-success: #66bb6a;
+  --color-success-hover: #81c784;
+  --color-success-subtle: #1b3d1c;
 
-  --color-success: #4ade80;
-  --color-success-hover: #86efac;
-  --color-success-subtle: #14532d;
+  --color-error: #ef5350;
+  --color-error-hover: #e57373;
+  --color-error-subtle: #3d1414;
 
-  --color-error: #f87171;
-  --color-error-hover: #fca5a5;
-  --color-error-subtle: #450a0a;
+  --color-warning: #ffca28;
+  --color-warning-hover: #ffd54f;
+  --color-warning-subtle: #3d3000;
 
-  --color-warning: #fb923c;
-  --color-warning-hover: #fdba74;
-  --color-warning-subtle: #431407;
+  --color-info: #42a5f5;
+  --color-info-hover: #64b5f6;
+  --color-info-subtle: #0d2137;
 
-  --color-info: #60a5fa;
-  --color-info-hover: #93c5fd;
-  --color-info-subtle: #172554;
+  /* Dark surfaces */
+  --color-background: #0a0a0a;
+  --color-surface: #141414;
+  --color-surface-hover: #1e1e1e;
+  --color-border: #2d2d2d;
+  --color-border-hover: #424242;
 
-  /* Dark surfaces (Deep Obsidian) */
-  --color-background: #0f0f12; /* Rich Obsidian */
-  --color-surface: #18181b; /* Zinc 900 */
-  --color-surface-hover: #27272a; /* Zinc 800 */
-  --color-border: #27272a;
-  --color-border-hover: #3f3f46;
-
-  /* Inverted text - Crisp & Clean */
-  --color-text: #f4f4f5; /* Zinc 100 */
-  --color-text-secondary: #a1a1aa; /* Zinc 400 */
-  --color-text-muted: #71717a; /* Zinc 500 */
-  --color-text-inverse: #09090b;
+  /* Inverted text */
+  --color-text: #ffffff;
+  --color-text-secondary: #b0b0b0;
+  --color-text-muted: #757575;
+  --color-text-inverse: #000000;
 
   /* Purple glow for dark mode */
-  --shadow-primary: 0 4px 20px -2px rgba(167, 139, 250, 0.25);
-  --shadow-primary-lg: 0 10px 30px -4px rgba(167, 139, 250, 0.35);
+  --shadow-primary: 0 4px 14px 0 rgba(119, 30, 255, 0.35);
+  --shadow-primary-lg: 0 10px 25px -3px rgba(119, 30, 255, 0.4);
 
   /* shadcn dark mode variables */
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 263 90% 75%;
+  --background: 0 0% 4%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 270 100% 56%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 173 60% 50%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 263 90% 75%;
-
-  /* Dark mode RGB values (using light variants) */
-  --auth-primary-rgb: 167, 139, 250; /* --color-primary (dark mode) */
-  --auth-accent-rgb: 45, 212, 191; /* --color-accent-light (dark mode) */
-  --auth-joy-rgb: 251, 191, 36; /* --color-joy-light (dark mode) */
-
-  /* Dark mode gradient opacities (slightly reduced) */
-  --auth-gradient-opacity-primary: 0.12;
-  --auth-gradient-opacity-accent: 0.1;
-  --auth-gradient-opacity-joy: 0.08;
-  --auth-radial-opacity-primary: 0.15;
-  --auth-radial-opacity-accent: 0.12;
-  --auth-radial-opacity-joy: 0.08;
-  --auth-dot-opacity: 0.2;
-  --auth-dot-color-opacity: 0.08;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 69%;
+  --accent: 145 100% 45%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 4 78% 63%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 270 100% 56%;
 }
 
 /* ============================================================
@@ -271,216 +229,835 @@
 }
 
 html {
+  /* Prevent horizontal scroll */
   overflow-x: hidden;
 }
 
 body {
   color: var(--color-text);
-  /* Typography: Plus Jakarta Sans for body (Modern & Clean) */
-  font-family:
-    var(--font-body),
-    'Plus Jakarta Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  /* Primary body font: Open Sans */
+  font-family: var(--font-body), 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 1rem;
-  line-height: 1.6;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* App-wide background - Modern Gradients */
+  /* Layout: flex column container for proper stacking of app components */
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  /* App-wide gradient background - enhanced visibility */
   min-height: 100vh;
-  background-color: var(--color-background);
+  background-color: #f5f7fa;
   background-image: 
-    /* Primary Purple Orb */
+    /* Primary purple orb - top right - MORE VISIBLE */
     radial-gradient(
-      circle at 85% 5%,
-      rgba(139, 92, 246, 0.08) 0%,
-      rgba(167, 139, 250, 0.03) 30%,
+      ellipse 70% 60% at 95% 0%,
+      rgba(89, 0, 255, 0.18) 0%,
+      rgba(139, 92, 246, 0.12) 25%,
+      rgba(167, 139, 250, 0.06) 50%,
+      transparent 70%
+    ),
+    /* Secondary purple orb - top center */
+    radial-gradient(
+      ellipse 50% 40% at 60% 5%,
+      rgba(89, 0, 255, 0.1) 0%,
+      rgba(139, 92, 246, 0.05) 40%,
+      transparent 70%
+    ),
+    /* Accent green orb - bottom left - MORE VISIBLE */
+    radial-gradient(
+      ellipse 70% 60% at 5% 100%,
+      rgba(0, 230, 118, 0.14) 0%,
+      rgba(16, 185, 129, 0.08) 25%,
+      rgba(52, 211, 153, 0.04) 50%,
+      transparent 70%
+    ),
+    /* Secondary green orb - bottom center */
+    radial-gradient(
+      ellipse 50% 40% at 40% 95%,
+      rgba(0, 230, 118, 0.08) 0%,
+      rgba(16, 185, 129, 0.04) 40%,
+      transparent 70%
+    ),
+    /* Center subtle glow */
+    radial-gradient(
+      ellipse 100% 80% at 50% 50%,
+      rgba(89, 0, 255, 0.03) 0%,
       transparent 60%
     ),
-    /* Accent Teal Orb */
-      radial-gradient(
-        circle at 10% 15%,
-        rgba(20, 184, 166, 0.08) 0%,
-        rgba(45, 212, 191, 0.03) 30%,
-        transparent 60%
-      ),
-    /* Joy Amber Orb */
-      radial-gradient(
-        circle at 5% 90%,
-        rgba(245, 158, 11, 0.06) 0%,
-        rgba(251, 191, 36, 0.02) 30%,
-        transparent 60%
-      );
+    /* Base gradient */
+    linear-gradient(
+      135deg,
+      #f8f9fc 0%,
+      #ffffff 30%,
+      #f9f7ff 50%,
+      #f7fff9 70%,
+      #ffffff 100%
+    );
   background-attachment: fixed;
 }
 
-/* Dark mode body background */
+/* Dark mode body background - enhanced */
 .dark body,
-[data-theme='dark'] body {
-  background-color: var(--color-background);
+[data-theme="dark"] body {
+  background-color: #0a0a0c;
   background-image: 
-    /* Primary Purple Glow */
+    /* Primary purple orb - top right - dark */
     radial-gradient(
-      circle at 85% 5%,
-      rgba(139, 92, 246, 0.12) 0%,
-      rgba(109, 40, 217, 0.05) 40%,
+      ellipse 70% 60% at 95% 0%,
+      rgba(119, 30, 255, 0.25) 0%,
+      rgba(139, 92, 246, 0.15) 25%,
+      rgba(167, 139, 250, 0.08) 50%,
       transparent 70%
     ),
-    /* Accent Teal Glow */
-      radial-gradient(
-        circle at 10% 15%,
-        rgba(20, 184, 166, 0.1) 0%,
-        rgba(13, 148, 136, 0.04) 40%,
-        transparent 70%
-      );
+    /* Secondary purple orb - top center - dark */
+    radial-gradient(
+      ellipse 50% 40% at 60% 5%,
+      rgba(119, 30, 255, 0.12) 0%,
+      rgba(139, 92, 246, 0.06) 40%,
+      transparent 70%
+    ),
+    /* Accent green orb - bottom left - dark */
+    radial-gradient(
+      ellipse 70% 60% at 5% 100%,
+      rgba(0, 230, 118, 0.18) 0%,
+      rgba(16, 185, 129, 0.1) 25%,
+      rgba(52, 211, 153, 0.05) 50%,
+      transparent 70%
+    ),
+    /* Secondary green orb - bottom center - dark */
+    radial-gradient(
+      ellipse 50% 40% at 40% 95%,
+      rgba(0, 230, 118, 0.1) 0%,
+      rgba(16, 185, 129, 0.05) 40%,
+      transparent 70%
+    ),
+    /* Center subtle glow - dark */
+    radial-gradient(
+      ellipse 100% 80% at 50% 50%,
+      rgba(89, 0, 255, 0.05) 0%,
+      transparent 60%
+    ),
+    /* Base dark gradient */
+    linear-gradient(
+      135deg,
+      #0a0a0c 0%,
+      #0c0a10 30%,
+      #0a0c0a 70%,
+      #0a0a0c 100%
+    );
 }
 
 /* ============================================================
    App-wide Visual Enhancements
    ============================================================ */
 
-/* Glass effect - Clean & Frosted */
+/* Glass effect for cards over gradient background */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 4px 20px -2px rgba(0, 0, 0, 0.05),
-    0 2px 4px -2px rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -2px rgba(0, 0, 0, 0.03);
 }
 
-/* Dark Mode Glass */
 .dark .glass-card,
-[data-theme='dark'] .glass-card {
-  background: rgba(24, 24, 27, 0.75); /* Zinc 900 */
-  backdrop-filter: blur(16px);
+[data-theme="dark"] .glass-card {
+  background: rgba(20, 20, 20, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 10px 30px -4px rgba(0, 0, 0, 0.3),
-    0 4px 10px -2px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -2px rgba(0, 0, 0, 0.2);
 }
 
-/* Sidebar - Glass */
-aside,
+/* Subtle shadow with brand color */
+.shadow-brand {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(89, 0, 255, 0.05);
+}
+
+.dark .shadow-brand,
+[data-theme="dark"] .shadow-brand {
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(119, 30, 255, 0.15);
+}
+
+/* Enhanced card styling */
+[class*="card"],
+[class*="Card"] {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dark [class*="card"],
+.dark [class*="Card"],
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="Card"] {
+  background: rgba(20, 20, 20, 0.95);
+}
+
+/* Sidebar enhancements */
+aside, 
 nav:not(.header-nav) {
-  background: rgba(253, 252, 248, 0.95) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .dark aside,
 .dark nav:not(.header-nav),
-[data-theme='dark'] aside,
-[data-theme='dark'] nav:not(.header-nav) {
-  background: rgba(24, 24, 27, 0.9) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+[data-theme="dark"] aside,
+[data-theme="dark"] nav:not(.header-nav) {
+  background: rgba(15, 15, 18, 0.95) !important;
 }
 
-/* Header - Glass */
+/* Header enhancements */
 header,
-[role='banner'] {
+[role="banner"] {
   background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(89, 0, 255, 0.08);
 }
 
 .dark header,
-.dark [role='banner'],
-[data-theme='dark'] header,
-[data-theme='dark'] [role='banner'] {
-  background: rgba(24, 24, 27, 0.9) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.dark [role="banner"],
+[data-theme="dark"] header,
+[data-theme="dark"] [role="banner"] {
+  background: rgba(15, 15, 18, 0.95) !important;
+  border-bottom: 1px solid rgba(119, 30, 255, 0.15);
 }
 
 /* Primary button enhancements */
-button[class*='primary'],
-[class*='btn-primary'],
+button[class*="primary"],
+[class*="btn-primary"],
 .cactus-button-primary {
-  box-shadow: var(--shadow-primary);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 4px 14px rgba(89, 0, 255, 0.35),
+    0 2px 6px rgba(89, 0, 255, 0.2);
+  transition: all 0.2s ease;
 }
 
-button[class*='primary']:hover,
-[class*='btn-primary']:hover,
+button[class*="primary"]:hover,
+[class*="btn-primary"]:hover,
 .cactus-button-primary:hover {
-  box-shadow: var(--shadow-primary-lg);
-  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 20px rgba(89, 0, 255, 0.45),
+    0 3px 8px rgba(89, 0, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Input field enhancements */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+[role="combobox"] {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select,
+.dark [role="combobox"],
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] [role="combobox"] {
+  background: rgba(25, 25, 30, 0.95);
+}
+
+/* Table enhancements */
+table,
+[role="table"],
+[role="grid"] {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.dark table,
+.dark [role="table"],
+.dark [role="grid"],
+[data-theme="dark"] table,
+[data-theme="dark"] [role="table"],
+[data-theme="dark"] [role="grid"] {
+  background: rgba(20, 20, 25, 0.9);
+}
+
+/* Modal/Dialog enhancements */
+[role="dialog"],
+[class*="modal"],
+[class*="Modal"] {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(89, 0, 255, 0.05);
+}
+
+.dark [role="dialog"],
+.dark [class*="modal"],
+.dark [class*="Modal"],
+[data-theme="dark"] [role="dialog"],
+[data-theme="dark"] [class*="modal"],
+[data-theme="dark"] [class*="Modal"] {
+  background: rgba(20, 20, 25, 0.98) !important;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(119, 30, 255, 0.15);
+}
+
+/* Dropdown/Popover enhancements */
+[role="listbox"],
+[role="menu"],
+[class*="dropdown"],
+[class*="popover"] {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(89, 0, 255, 0.08);
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 4px 10px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dark [role="listbox"],
+.dark [role="menu"],
+.dark [class*="dropdown"],
+.dark [class*="popover"],
+[data-theme="dark"] [role="listbox"],
+[data-theme="dark"] [role="menu"],
+[data-theme="dark"] [class*="dropdown"],
+[data-theme="dark"] [class*="popover"] {
+  background: rgba(25, 25, 30, 0.98);
+  border: 1px solid rgba(119, 30, 255, 0.15);
 }
 
 /* ============================================================
    Typography Classes
    ============================================================ */
 
-/* Headings use Outfit - Modern Geometric */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.heading,
-.font-display {
-  font-family:
-    var(--font-display),
-    'Outfit',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  letter-spacing: -0.01em;
-  font-weight: 700;
+/* Headings use Poppins */
+h1, h2, h3, h4, h5, h6,
+.heading, .font-display {
+  font-family: var(--font-display), 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-/* Body text uses Plus Jakarta Sans - Modern & Readable */
-p,
-span,
-div,
-li,
-td,
-th,
-.body,
-.font-body {
-  font-family:
-    var(--font-body),
-    'Plus Jakarta Sans',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+/* Body text uses Open Sans */
+p, span, div, li, td, th,
+.body, .font-body {
+  font-family: var(--font-body), 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* ============================================================
-   Animation Utility Classes (From animations.css)
+   Focus Ring Styles (using Primary Purple)
    ============================================================ */
 
-/* Entry Animations */
-.animate-enter {
-  animation: springSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-.animate-pop {
-  animation: springScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-/* Continuous Animations */
-.animate-pulse-soft {
-  animation: pulseSoft 2s ease-in-out infinite;
-}
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+@layer utilities {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+  
+  .focus-ring-accent {
+    @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2;
+  }
 }
 
-/* Transitions */
-.transition-spring {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* ============================================================
+   Scrollbar Styling
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-hover);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* ============================================================
+   Selection Styling (using Primary Purple)
+   ============================================================ */
+
+::selection {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.dark ::selection,
+[data-theme="dark"] ::selection {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+/* ============================================================
+   Animation Keyframes
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes progressGrow {
+  from { width: 0%; }
+}
+
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes purpleGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(89, 0, 255, 0.3); }
+  50% { box-shadow: 0 0 30px rgba(89, 0, 255, 0.5); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { 
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes auth-gradient-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ============================================================
+   Authentication Pages Background Styles
+   
+   AI_DECISION: Use simple, robust CSS for auth pages
+   Justificación: Fixed positioning with proper overflow handling
+   Impacto: Full viewport coverage without scroll issues
+   ============================================================ */
+
+/* Main auth page wrapper - enhanced with more visible gradients */
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: hidden;
+  /* Multi-layer background with MORE VISIBLE gradients */
+  background-color: #f5f7fa;
+  background-image: 
+    /* Primary purple orb top-right - ENHANCED */
+    radial-gradient(
+      ellipse 90% 90% at 90% 10%,
+      rgba(89, 0, 255, 0.28) 0%,
+      rgba(139, 92, 246, 0.18) 20%,
+      rgba(167, 139, 250, 0.1) 40%,
+      rgba(196, 181, 253, 0.05) 60%,
+      transparent 80%
+    ),
+    /* Secondary purple glow */
+    radial-gradient(
+      ellipse 60% 50% at 70% 20%,
+      rgba(89, 0, 255, 0.12) 0%,
+      rgba(139, 92, 246, 0.06) 50%,
+      transparent 80%
+    ),
+    /* Primary green orb bottom-left - ENHANCED */
+    radial-gradient(
+      ellipse 90% 90% at 10% 90%,
+      rgba(0, 230, 118, 0.22) 0%,
+      rgba(16, 185, 129, 0.14) 20%,
+      rgba(52, 211, 153, 0.08) 40%,
+      rgba(110, 231, 183, 0.04) 60%,
+      transparent 80%
+    ),
+    /* Secondary green glow */
+    radial-gradient(
+      ellipse 60% 50% at 30% 80%,
+      rgba(0, 230, 118, 0.1) 0%,
+      rgba(16, 185, 129, 0.05) 50%,
+      transparent 80%
+    ),
+    /* Base gradient with subtle color tints */
+    linear-gradient(
+      135deg,
+      #f8f7ff 0%,
+      #ffffff 20%,
+      #f3edff 40%,
+      #edfff5 60%,
+      #ffffff 80%,
+      #f8fff9 100%
+    );
+  background-attachment: fixed;
+  background-size: 100% 100%;
+}
+
+/* Animated gradient overlay for subtle movement */
+.auth-gradient-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(89, 0, 255, 0.08) 0%,
+    transparent 25%,
+    rgba(139, 92, 246, 0.06) 50%,
+    transparent 75%,
+    rgba(0, 230, 118, 0.05) 100%
+  );
+  background-size: 300% 300%;
+  animation: auth-gradient-flow 20s ease infinite;
+  pointer-events: none;
+}
+
+/* Dot pattern overlay - more visible */
+.auth-dot-pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(89, 0, 255, 0.04) 1px,
+    transparent 0
+  );
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* Hide the old orb classes - background now handles this */
+.auth-orb {
+  display: none;
+}
+
+.auth-orb-primary,
+.auth-orb-accent {
+  display: none;
+}
+
+/* Dark mode authentication styles - ENHANCED */
+.dark .auth-page,
+[data-theme="dark"] .auth-page {
+  background-color: #0a0a0c;
+  background-image: 
+    /* Primary purple orb top-right - dark ENHANCED */
+    radial-gradient(
+      ellipse 90% 90% at 90% 10%,
+      rgba(119, 30, 255, 0.35) 0%,
+      rgba(139, 92, 246, 0.22) 20%,
+      rgba(167, 139, 250, 0.12) 40%,
+      rgba(196, 181, 253, 0.06) 60%,
+      transparent 80%
+    ),
+    /* Secondary purple glow - dark */
+    radial-gradient(
+      ellipse 60% 50% at 70% 20%,
+      rgba(119, 30, 255, 0.15) 0%,
+      rgba(139, 92, 246, 0.08) 50%,
+      transparent 80%
+    ),
+    /* Primary green orb bottom-left - dark ENHANCED */
+    radial-gradient(
+      ellipse 90% 90% at 10% 90%,
+      rgba(0, 230, 118, 0.28) 0%,
+      rgba(16, 185, 129, 0.18) 20%,
+      rgba(52, 211, 153, 0.1) 40%,
+      rgba(110, 231, 183, 0.05) 60%,
+      transparent 80%
+    ),
+    /* Secondary green glow - dark */
+    radial-gradient(
+      ellipse 60% 50% at 30% 80%,
+      rgba(0, 230, 118, 0.12) 0%,
+      rgba(16, 185, 129, 0.06) 50%,
+      transparent 80%
+    ),
+    /* Dark base gradient */
+    linear-gradient(
+      135deg,
+      #0c0a12 0%,
+      #0a0a0a 20%,
+      #100a18 40%,
+      #0a120c 60%,
+      #0a0a0a 80%,
+      #0a0c0a 100%
+    );
+}
+
+.dark .auth-gradient-bg,
+[data-theme="dark"] .auth-gradient-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(119, 30, 255, 0.1) 0%,
+    transparent 25%,
+    rgba(139, 92, 246, 0.08) 50%,
+    transparent 75%,
+    rgba(0, 230, 118, 0.06) 100%
+  );
+}
+
+.dark .auth-dot-pattern,
+[data-theme="dark"] .auth-dot-pattern {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 0
+  );
+}
+
+/* ============================================================
+   Animation Utility Classes
+   ============================================================ */
+
+@layer utilities {
+  /* Fade animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+
+  .animate-fade-in-down {
+    animation: fadeInDown 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  /* Loading states */
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-surface) 0%,
+      var(--color-surface-hover) 50%,
+      var(--color-surface) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-progress {
+    animation: progressGrow 0.6s ease-out forwards;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientFlow 4s ease infinite;
+  }
+
+  .animate-purple-glow {
+    animation: purpleGlow 2s ease-in-out infinite;
+  }
+
+  /* Animation delays for staggered effects */
+  .delay-0 { animation-delay: 0ms; }
+  .delay-75 { animation-delay: 75ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  /* Initial state for staggered animations */
+  .stagger-item {
+    opacity: 0;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-colors-smooth {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+}
+
+/* ============================================================
+   Interactive States & Hover Effects
+   ============================================================ */
+
+/* Card hover lift effect with purple glow */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(89, 0, 255, 0.2);
+}
+
+/* Subtle scale effect */
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Purple glow effect on hover */
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(89, 0, 255, 0.25);
+}
+
+/* Border glow on focus/hover */
+.hover-border-glow {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.hover-border-glow:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+/* Active press effect */
+.active-press:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* ============================================================
+   Page & Content Animations
+   ============================================================ */
+
+/* Page content entrance */
+.page-enter {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Section reveal */
+.section-reveal {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Card entrance animation */
+.card-enter {
+  animation: scaleIn 0.3s ease-out forwards;
 }
 
 /* ============================================================
@@ -495,94 +1072,369 @@ th,
     var(--color-surface) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
+  animation: shimmer 1.5s ease-in-out infinite;
   border-radius: var(--radius-md);
+}
+
+.skeleton-text {
+  height: 1em;
+  margin-bottom: 0.5em;
+}
+
+.skeleton-circle {
+  border-radius: 50%;
 }
 
 /* ============================================================
    Modern Visual Effects
    ============================================================ */
 
+/* Glassmorphism effect */
 .glass {
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.dark .glass,
+[data-theme="dark"] .glass {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient backgrounds */
 .gradient-primary {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
 }
-.gradient-joy {
-  background: linear-gradient(135deg, var(--color-joy) 0%, var(--color-joy-hover) 100%);
+
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-hover) 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+}
+
+/* Purple brand gradient */
+.gradient-brand {
+  background: linear-gradient(135deg, #5900ff 0%, #8b5cf6 50%, #a855f7 100%);
+}
+
+/* Purple to black gradient */
+.gradient-purple-dark {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+}
+
+/* Subtle background pattern */
+.pattern-dots {
+  background-image: radial-gradient(var(--color-border) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 /* ============================================================
-   Mobile Improvements
+   Smooth Scroll Behavior
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   Enhanced Link Styles
+   ============================================================ */
+
+a {
+  transition: color 0.2s ease;
+}
+
+/* ============================================================
+   Input & Form Enhancements
+   ============================================================ */
+
+input, textarea, select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+/* ============================================================
+   Button Press Feedback
+   ============================================================ */
+
+button, [role="button"] {
+  transition: transform 0.1s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:active:not(:disabled), 
+[role="button"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ============================================================
+   Safe Area Utilities for Notched Devices
    ============================================================ */
 
 @layer utilities {
+  /* Safe area padding utilities */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  
+  .safe-area-inset-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+  
+  .safe-area-inset-y {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  .safe-area-all {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+  }
+}
+
+/* ============================================================
+   Mobile-First Touch Improvements
+   ============================================================ */
+
+@layer utilities {
+  /* Larger touch targets for interactive elements */
   .touch-target {
     min-width: 44px;
     min-height: 44px;
   }
+  
+  .touch-target-sm {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  /* Better scrolling on mobile */
   .scroll-touch {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
+  
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Prevent tap highlight on iOS */
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* ============================================================
-   Auth Pages Layout (Login & Register)
+   Extra Small Breakpoint Fallback (xs: 475px)
+   Note: These are fallbacks - Tailwind preset provides proper support
    ============================================================ */
 
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  padding: 1rem;
-  overflow: hidden;
+/* These utilities are provided as fallbacks in case Tailwind doesn't pick them up */
+@media (min-width: 475px) {
+  /* Display utilities */
+  .xs\:inline { display: inline; }
+  .xs\:hidden { display: none; }
+  .xs\:flex { display: flex; }
+  .xs\:block { display: block; }
+  .xs\:grid { display: grid; }
+  
+  /* Padding utilities */
+  .xs\:px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+  .xs\:px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .xs\:px-4 { padding-left: 1rem; padding-right: 1rem; }
+  .xs\:py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .xs\:py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+  .xs\:p-4 { padding: 1rem; }
+  
+  /* Gap utilities */
+  .xs\:gap-2 { gap: 0.5rem; }
+  .xs\:gap-3 { gap: 0.75rem; }
+  .xs\:gap-4 { gap: 1rem; }
+  
+  /* Text utilities */
+  .xs\:text-xs { font-size: 0.75rem; line-height: 1rem; }
+  .xs\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .xs\:text-base { font-size: 1rem; line-height: 1.5rem; }
+  
+  /* Width utilities */
+  .xs\:w-auto { width: auto; }
+  .xs\:w-full { width: 100%; }
+  .xs\:w-\[280px\] { width: 280px; }
+  .xs\:min-w-0 { min-width: 0; }
+  
+  /* Flex utilities */
+  .xs\:flex-row { flex-direction: row; }
+  .xs\:flex-col { flex-direction: column; }
+  .xs\:items-center { align-items: center; }
+  .xs\:justify-between { justify-content: space-between; }
+  .xs\:flex-1 { flex: 1 1 0%; }
+  .xs\:shrink-0 { flex-shrink: 0; }
 }
 
-.auth-gradient-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--auth-primary-rgb) / var(--auth-gradient-opacity-primary)) 0%,
-    rgb(var(--auth-accent-rgb) / var(--auth-gradient-opacity-accent)) 50%,
-    rgb(var(--auth-joy-rgb) / var(--auth-gradient-opacity-joy)) 100%
-  );
-  background-image:
-    radial-gradient(
-      circle at 20% 30%,
-      rgb(var(--auth-primary-rgb) / var(--auth-radial-opacity-primary)) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 80% 70%,
-      rgb(var(--auth-accent-rgb) / var(--auth-radial-opacity-accent)) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      rgb(var(--auth-joy-rgb) / var(--auth-radial-opacity-joy)) 0%,
-      transparent 70%
-    );
+/* ============================================================
+   Responsive Container Queries Support
+   ============================================================ */
+
+@supports (container-type: inline-size) {
+  .container-query {
+    container-type: inline-size;
+  }
+  
+  @container (min-width: 400px) {
+    .cq-sm\:flex {
+      display: flex;
+    }
+    
+    .cq-sm\:hidden {
+      display: none;
+    }
+  }
+  
+  @container (min-width: 600px) {
+    .cq-md\:flex {
+      display: flex;
+    }
+    
+    .cq-md\:hidden {
+      display: none;
+    }
+  }
 }
 
-.auth-dot-pattern {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  opacity: var(--auth-dot-opacity);
-  background-image: radial-gradient(
-    circle,
-    rgb(var(--auth-primary-rgb) / var(--auth-dot-color-opacity)) 1px,
-    transparent 1px
-  );
-  background-size: 24px 24px;
+/* ============================================================
+   Mobile Navigation Improvements
+   ============================================================ */
+
+/* Smoother navigation animations */
+@media (prefers-reduced-motion: no-preference) {
+  .nav-item-enter {
+    animation: navItemEnter 0.2s ease-out forwards;
+  }
+  
+  @keyframes navItemEnter {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Better drawer backdrop blur on supported browsers */
+@supports (backdrop-filter: blur(8px)) {
+  .drawer-backdrop {
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* ============================================================
+   Responsive Typography Adjustments
+   ============================================================ */
+
+/* Smaller base font size on mobile */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+  
+  h1, .h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  
+  h2, .h2 {
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+  
+  h3, .h3 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+}
+
+/* ============================================================
+   Dark Mode Sidebar Enhancements
+   ============================================================ */
+
+.dark nav,
+[data-theme="dark"] nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.dark nav::-webkit-scrollbar,
+[data-theme="dark"] nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dark nav::-webkit-scrollbar-track,
+[data-theme="dark"] nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark nav::-webkit-scrollbar-thumb,
+[data-theme="dark"] nav::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   Print Styles - Hide Navigation
+   ============================================================ */
+
+@media print {
+  nav,
+  aside,
+  .drawer-backdrop,
+  button[aria-label*="menu"],
+  button[aria-label*="menú"] {
+    display: none !important;
+  }
+  
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
 }

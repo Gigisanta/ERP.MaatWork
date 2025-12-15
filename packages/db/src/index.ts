@@ -134,20 +134,26 @@ export {
  *
  * REGLA CURSOR: Mantener patrón singleton - no exponer createDb directamente
  */
-// AI_DECISION: Optimize PostgreSQL connection pool configuration
-// Justificación: Default pool (10 connections) is a bottleneck under load. Increasing to 20 with proper recycling reduces connection wait times.
-// Impacto: ~50% reduction in connection timeouts, better handling of concurrent requests
+// AI_DECISION: Optimize PostgreSQL connection pool configuration for memory efficiency
+// Justificación: Reducing connections from 20 to 15 reduces memory per connection (~25% reduction).
+//                Shorter idle timeout (20s vs 30s) releases connections faster, preventing memory accumulation.
+//                Statement timeout prevents hung queries from holding connections indefinitely.
+// Impacto: ~25% reduction in connection pool memory usage, faster connection recycling
 function createDb() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is required');
   }
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    max: 20, // Increase from default 10 to 20 connections
-    idleTimeoutMillis: 30000, // Close idle connections after 30s
+    max: 15, // Reduced from 20 to 15 connections (less memory per connection)
+    idleTimeoutMillis: 20000, // Close idle connections after 20s (reduced from 30s)
     connectionTimeoutMillis: 5000, // Timeout after 5s when acquiring connection
     maxUses: 7500, // Recycle connections after 7500 uses to prevent leak accumulation
     allowExitOnIdle: false, // Keep pool alive when idle
+    // AI_DECISION: Add statement timeout to prevent hung queries
+    // Justificación: Prevents queries from holding connections indefinitely, freeing memory faster
+    // Impacto: Prevents memory leaks from hung queries
+    statement_timeout: 30000, // 30 seconds max query execution time
   });
   return drizzle(pool, { schema });
 }

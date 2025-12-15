@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -307,17 +307,6 @@ function getStaffSections(): SidebarSection[] {
   ];
 }
 
-function NavigationSkeleton() {
-  return (
-    <>
-      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top h-[3.5rem] flex items-center px-4">
-        <span className="text-secondary text-sm">Cargando navegación...</span>
-      </div>
-      <aside className="hidden lg:flex fixed left-0 top-[3rem] sm:top-[3.5rem] h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] z-30 w-52 border-r border-border" />
-    </>
-  );
-}
-
 export default function NavigationNew({ onToggleSidebar, sidebarOpen }: NavigationNewProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useSidebar();
@@ -325,6 +314,21 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   const { user, logout, initialized } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  // AI_DECISION: Logging temporal para diagnosticar problemas de renderizado
+  // Justificación: Necesario para identificar por qué los componentes no se muestran
+  // Impacto: Ayuda a diagnosticar problemas de inicialización y renderizado
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('[NavigationNew] Render state:', {
+        hasUser: !!user,
+        initialized,
+        pathname,
+        sidebarCollapsed,
+        open,
+      });
+    }
+  }, [user, initialized, pathname, sidebarCollapsed, open]);
 
   // Memoized toggle function
   const handleToggle = useCallback(() => {
@@ -357,39 +361,68 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     router.push('/login');
   }, [logout, router]);
 
+  // AI_DECISION: Mostrar skeleton mientras se inicializa autenticación en lugar de retornar null
+  // Justificación: Retornar null hace que el componente desaparezca completamente, causando layout shift
+  // Impacto: Mejor UX durante la carga inicial, evita parpadeos
   if (!initialized) {
-    return <NavigationSkeleton />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  // AI_DECISION: Logo optimizado para responsive con barra de progreso visible
-  // Justificación: El logo debe adaptarse a diferentes tamaños de pantalla sin romper el layout
-  // La barra de progreso debe ser siempre visible cuando hay usuario
-  // Impacto: Mejor experiencia en dispositivos móviles y tablets, progreso siempre visible
-  // Memoizado para evitar re-renders infinitos - solo depende de si user existe, no del objeto completo
-  const logo = useMemo(
-    () => (
-      <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-        {/* Logo icon - always visible */}
-        <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
-          ⚖️
-        </span>
-        {/* Logo text - hidden on very small screens */}
-        <span className="text-base sm:text-lg md:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
-          Maat
-        </span>
-        {/* Career Progress Bar - always visible when user exists */}
-        {user && (
-          <div className="flex items-center min-w-0 flex-1 ml-1 sm:ml-2">
-            <CareerProgressBar />
+    // Mostrar skeleton del header mientras se carga
+    return (
+      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top">
+        <div className="flex h-12 sm:h-14 items-center justify-between px-2 xs:px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-8 h-8 bg-border rounded animate-pulse" />
+            <div className="w-24 h-4 bg-border rounded animate-pulse hidden xs:block" />
           </div>
-        )}
+        </div>
       </div>
-    ),
-    [!!user] // Solo depende de si user existe, no del objeto completo
+    );
+  }
+
+  // AI_DECISION: Siempre renderizar estructura básica incluso sin usuario para debugging
+  // Justificación: Retornar null hace imposible diagnosticar problemas de renderizado
+  // Impacto: Permite ver qué está pasando incluso cuando no hay usuario autenticado
+  if (!user) {
+    // Usuario no autenticado - mostrar estructura mínima para debugging
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.warn('[NavigationNew] No user found, but initialized:', initialized);
+    }
+    // En producción, no mostrar nada si no hay usuario
+    if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+    // En desarrollo, mostrar estructura básica para debugging
+    return (
+      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top">
+        <div className="flex h-12 sm:h-14 items-center justify-between px-2 xs:px-3 sm:px-4 lg:px-6">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="text-xs text-error">⚠️ No user - Debug mode</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // AI_DECISION: Logo optimizado para responsive
+  // Justificación: El logo debe adaptarse a diferentes tamaños de pantalla sin romper el layout
+  // Impacto: Mejor experiencia en dispositivos móviles y tablets
+  const logo = (
+    <div className="flex items-center gap-2 min-w-0 w-full">
+      {/* Logo icon - always visible */}
+      <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
+        ⚖️
+      </span>
+      {/* Logo text - hidden on very small screens */}
+      <span className="text-lg sm:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
+        Maat
+      </span>
+      {/* Career Progress Bar - only on larger screens */}
+      {/* AI_DECISION: Renderizar siempre el contenedor, ocultarlo con CSS en lugar de condicionalmente */}
+      {/* Justificación: Asegura que el componente siempre se monte, mejor debugging */}
+      {/* Impacto: Componente siempre disponible, evita problemas de renderizado condicional */}
+      <div className="hidden md:flex items-center min-w-0 flex-1 ml-2">
+        <CareerProgressBar />
+      </div>
+    </div>
   );
 
   // Empty navItems - navigation moved to sidebar
@@ -445,7 +478,13 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
 
       {/* Desktop Sidebar - Expandable */}
       {/* AI_DECISION: Altura ajustada para header responsive (3rem mobile, 3.5rem desktop) */}
-      <aside className="hidden lg:flex fixed left-0 top-[3rem] sm:top-[3.5rem] h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] z-30">
+      {/* AI_DECISION: Renderizar sidebar siempre, ocultarlo con CSS en lugar de condicionalmente */}
+      {/* Justificación: Asegura que el componente siempre se monte, evitando problemas de hidratación */}
+      {/* Impacto: Sidebar siempre disponible, mejor debugging, evita problemas de renderizado */}
+      <aside
+        className="hidden lg:flex fixed left-0 top-[3rem] sm:top-[3.5rem] h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] z-30"
+        aria-label="Navegación principal"
+      >
         <Sidebar
           sections={sidebarSections}
           logo={null}
@@ -459,6 +498,9 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
       </aside>
 
       {/* Mobile Drawer - Solo visible en pantallas < lg */}
+      {/* AI_DECISION: Renderizar drawer siempre, controlado por estado open */}
+      {/* Justificación: Asegura que el componente siempre se monte para mejor debugging */}
+      {/* Impacto: Drawer siempre disponible, mejor manejo de estados */}
       <Drawer open={open} onOpenChange={handleDrawerClose} side="left">
         <Sidebar
           sections={sidebarSections}

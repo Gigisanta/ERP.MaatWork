@@ -7,8 +7,8 @@
  * Se ejecuta semanalmente (domingos) vía cron job.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/database/db-logger';
-import { getCacheHealth } from '../utils/performance/cache';
+import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
+import { getCacheHealth } from '../utils/cache';
 import { analyzeQueries, generateTextReport } from '../utils/query-analyzer';
 import pino from 'pino';
 import { writeFileSync } from 'fs';
@@ -47,7 +47,7 @@ export class WeeklyPerformanceReportJob {
 
       // Calcular cache hit rate general
       const cacheHealth = getCacheHealth();
-      const cacheStats = Object.values(cacheHealth);
+      const cacheEntries = Object.entries(cacheHealth);
 
       // Type for cache stats from NodeCache
       interface CacheStatsEntry {
@@ -59,14 +59,25 @@ export class WeeklyPerformanceReportJob {
         hitRate: number;
       }
 
-      const totalHits = cacheStats.reduce(
-        (sum: number, stats: CacheStatsEntry) => sum + (stats.hits || 0),
-        0
-      );
-      const totalMisses = cacheStats.reduce(
-        (sum: number, stats: CacheStatsEntry) => sum + (stats.misses || 0),
-        0
-      );
+      // Filter out totalMemoryBytes and maxMemoryBytes, and ensure stats have hits/misses
+      const validCacheStats = cacheEntries.filter((entry): entry is [string, CacheStatsEntry] => {
+        const [name, stats] = entry;
+        return (
+          name !== 'totalMemoryBytes' &&
+          name !== 'maxMemoryBytes' &&
+          typeof stats === 'object' &&
+          stats !== null &&
+          'hits' in stats &&
+          'misses' in stats
+        );
+      });
+
+      const totalHits = validCacheStats.reduce((sum: number, [, stats]) => {
+        return sum + (stats.hits || 0);
+      }, 0);
+      const totalMisses = validCacheStats.reduce((sum: number, [, stats]) => {
+        return sum + (stats.misses || 0);
+      }, 0);
       const overallCacheHitRate =
         totalHits + totalMisses > 0 ? (totalHits / (totalHits + totalMisses)) * 100 : 0;
 

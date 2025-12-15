@@ -1,6 +1,6 @@
 /**
  * Team Types - Shared team-related types
- *
+ * 
  * These types are used by both API and Web applications.
  */
 
@@ -39,13 +39,6 @@ export interface TeamMember {
     fullName: string;
     role: UserRole;
   };
-}
-
-/**
- * Team with resolved member list
- */
-export interface TeamWithMembers extends Team {
-  members: TeamMember[];
 }
 
 /**
@@ -136,3 +129,41 @@ export interface TeamMemberMetrics {
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

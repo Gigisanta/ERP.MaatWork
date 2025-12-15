@@ -87,14 +87,48 @@ export class ApiClient {
         if (!response.ok) {
           const error = await createApiErrorFromResponse(response);
 
-          // Handle 401 with automatic token refresh (only on first attempt)
-          if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
-            try {
-              await this.authManager.handle401();
-              // Retry original request after successful refresh
-              return this.requestWithRetry<T>(url, { ...options, retries: 0 });
-            } catch {
-              throw error;
+          // Handle 401/403 authentication errors
+          if (response.status === 401 || response.status === 403) {
+            // Try to refresh token on 401 (only on first attempt)
+            if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
+              try {
+                const refreshed = await this.authManager.handle401();
+                if (refreshed) {
+                  // Emit event to notify AuthContext of successful refresh
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('auth:token-refreshed'));
+                  }
+                  // Retry original request after successful refresh
+                  return this.requestWithRetry<T>(url, { ...options, retries: 0 });
+                }
+              } catch (refreshError) {
+                // Refresh failed, emit auth error event
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(
+                    new CustomEvent('auth:session-expired', {
+                      detail: {
+                        error:
+                          refreshError instanceof Error
+                            ? refreshError.message
+                            : String(refreshError),
+                      },
+                    })
+                  );
+                }
+                throw error;
+              }
+            }
+
+            // 403 or 401 after refresh failed - emit session expired event
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('auth:session-expired', {
+                  detail: {
+                    status: response.status,
+                    message: response.status === 403 ? 'Forbidden' : 'Unauthorized',
+                  },
+                })
+              );
             }
           }
 

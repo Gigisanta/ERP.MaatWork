@@ -14,7 +14,7 @@ import {
   buildContactAccessFilter,
 } from '../../../auth/authorization';
 import { validate } from '../../../utils/validation';
-import { idParamSchema } from '../../../utils/validation/common-schemas';
+import { idParamSchema } from '../../../utils/common-schemas';
 import {
   assignTagsSchema,
   updateContactTagsSchema,
@@ -125,7 +125,7 @@ router.get(
   validate({ query: batchContactTagsQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { validateBatchIds } = await import('../../../utils/database/batch-validation');
+      const { validateBatchIds } = await import('../../../utils/batch-validation');
 
       const validation = validateBatchIds(req.query.contactIds as string, {
         maxCount: 50,

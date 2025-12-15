@@ -82,6 +82,48 @@ export const memoryUsage = new Gauge({
   registers: [register],
 });
 
+// AI_DECISION: Add detailed memory metrics for better monitoring
+// Justificación: More granular memory metrics help identify memory issues and leaks
+// Impacto: Better visibility into memory usage patterns
+export const nodejsHeapUsedBytes = new Gauge({
+  name: 'nodejs_heap_used_bytes',
+  help: 'Node.js heap used memory in bytes',
+  registers: [register],
+});
+
+export const nodejsHeapTotalBytes = new Gauge({
+  name: 'nodejs_heap_total_bytes',
+  help: 'Node.js heap total memory in bytes',
+  registers: [register],
+});
+
+export const nodejsExternalMemoryBytes = new Gauge({
+  name: 'nodejs_external_memory_bytes',
+  help: 'Node.js external memory in bytes',
+  registers: [register],
+});
+
+export const nodejsRssBytes = new Gauge({
+  name: 'nodejs_rss_bytes',
+  help: 'Node.js resident set size (RSS) in bytes',
+  registers: [register],
+});
+
+// Cache size metrics (estimated)
+export const cacheSizeBytes = new Gauge({
+  name: 'cache_size_bytes',
+  help: 'Estimated cache size in bytes',
+  labelNames: ['cache_type'],
+  registers: [register],
+});
+
+export const cacheKeyCount = new Gauge({
+  name: 'cache_key_count',
+  help: 'Number of keys in cache',
+  labelNames: ['cache_type'],
+  registers: [register],
+});
+
 export const activeConnections = new Gauge({
   name: 'active_connections',
   help: 'Number of active connections',
@@ -97,6 +139,12 @@ register.registerMetric(dbQueryDuration);
 register.registerMetric(dbQueriesTotal);
 register.registerMetric(httpErrorsTotal);
 register.registerMetric(memoryUsage);
+register.registerMetric(nodejsHeapUsedBytes);
+register.registerMetric(nodejsHeapTotalBytes);
+register.registerMetric(nodejsExternalMemoryBytes);
+register.registerMetric(nodejsRssBytes);
+register.registerMetric(cacheSizeBytes);
+register.registerMetric(cacheKeyCount);
 register.registerMetric(activeConnections);
 
 /**
@@ -104,6 +152,70 @@ register.registerMetric(activeConnections);
  */
 export async function getMetrics(): Promise<string> {
   return register.metrics();
+}
+
+/**
+ * Update memory metrics
+ * AI_DECISION: Add function to update memory metrics periodically
+ * Justificación: Memory metrics should be updated regularly for accurate monitoring
+ * Impacto: Better visibility into memory usage trends
+ */
+export function updateMemoryMetrics(): void {
+  const memUsage = process.memoryUsage();
+  const memUsageWithExternal = memUsage as typeof memUsage & { external?: number };
+
+  // Update detailed memory metrics
+  nodejsHeapUsedBytes.set(memUsage.heapUsed);
+  nodejsHeapTotalBytes.set(memUsage.heapTotal);
+  nodejsExternalMemoryBytes.set(memUsageWithExternal.external || 0);
+  nodejsRssBytes.set(memUsage.rss);
+
+  // Update legacy memoryUsage metric for backward compatibility
+  memoryUsage.set({ type: 'rss' }, memUsage.rss);
+  memoryUsage.set({ type: 'heapUsed' }, memUsage.heapUsed);
+  memoryUsage.set({ type: 'heapTotal' }, memUsage.heapTotal);
+  memoryUsage.set({ type: 'external' }, memUsageWithExternal.external || 0);
+}
+
+/**
+ * Update cache metrics
+ * AI_DECISION: Add function to update cache size metrics
+ * Justificación: Cache size monitoring helps identify memory issues from cache bloat
+ * Impacto: Better visibility into cache memory consumption
+ */
+export function updateCacheMetrics(
+  cacheHealth: ReturnType<typeof import('./cache').getCacheHealth>
+): void {
+  // Update cache metrics for each cache type
+  const cacheTypes = [
+    'pipeline',
+    'instruments',
+    'benchmarks',
+    'lookupTables',
+    'benchmarkComponents',
+    'contactsList',
+    'teamMetrics',
+    'portfolioAssignments',
+    'aumAggregations',
+    'pipelineMetrics',
+    'taskStatistics',
+    'dashboardKpis',
+  ] as const;
+
+  for (const cacheType of cacheTypes) {
+    const stats = cacheHealth[cacheType];
+    if (
+      stats &&
+      typeof stats === 'object' &&
+      stats !== null &&
+      'sizeBytes' in stats &&
+      'keyCount' in stats
+    ) {
+      const cacheStats = stats as { sizeBytes: number; keyCount: number };
+      cacheSizeBytes.set({ cache_type: cacheType }, cacheStats.sizeBytes);
+      cacheKeyCount.set({ cache_type: cacheType }, cacheStats.keyCount);
+    }
+  }
 }
 
 /**

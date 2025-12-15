@@ -67,27 +67,11 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
       req.log.info({ userId: adminUserRows[0].id }, 'Admin user created');
     }
 
-    let adminUser = adminUserRows[0];
+    const adminUser = adminUserRows[0];
 
     // Verificar contraseña para admin
     if (!adminUser.passwordHash || !(await bcrypt.compare(password, adminUser.passwordHash))) {
       throw new HttpError(401, 'Usuario o contraseña incorrectos');
-    }
-
-    // AI_DECISION: Mantener rol admin en DB si el usuario existe con rol diferente
-    // Justificación: Evita mismatch tokenRole vs dbRole que genera warnings en logs
-    // Impacto: Tokens y DB alineados para el usuario admin temporal
-    if (adminUser.role !== 'admin' || adminUser.isActive === false) {
-      const [updated] = await db()
-        .update(users)
-        .set({ role: 'admin', isActive: true })
-        .where(eq(users.id, adminUser.id))
-        .returning();
-      adminUser = updated ?? adminUser;
-      req.log.warn(
-        { userId: adminUser.id, previousRole: adminUserRows[0].role, fixedRole: 'admin' },
-        'Admin user role corrected to admin'
-      );
     }
 
     const token = await signUserToken(

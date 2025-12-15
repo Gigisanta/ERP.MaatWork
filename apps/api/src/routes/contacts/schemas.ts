@@ -4,16 +4,7 @@
  * Zod schemas for validating contacts CRUD operations
  */
 import { z } from 'zod';
-import {
-  paginationQuerySchema,
-  nameSchema,
-  phoneSchema,
-  addressSchema,
-  notesSchema,
-  countryCodeSchema,
-  amountSchema
-} from '../../utils/validation/common-schemas';
-import { optionalEmailSchema } from '../../utils/validation/validation-common';
+import { paginationQuerySchema } from '../../utils/common-schemas';
 
 // ==========================================================
 // Query Parameter Schemas
@@ -45,15 +36,15 @@ export const batchContactsQuerySchema = z.object({
 const optionalLongText = z.string().max(2000).trim().optional().nullable();
 
 export const createContactSchema = z.object({
-  firstName: nameSchema,
-  lastName: nameSchema,
-  email: optionalEmailSchema,
-  phone: phoneSchema,
-  phoneSecondary: phoneSchema,
-  whatsapp: phoneSchema,
-  address: addressSchema,
+  firstName: z.string().min(1).max(255),
+  lastName: z.string().min(1).max(255),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().max(50).optional().nullable(),
+  phoneSecondary: z.string().max(50).optional().nullable(),
+  whatsapp: z.string().max(50).optional().nullable(),
+  address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
-  country: countryCodeSchema,
+  country: z.string().length(2).optional().nullable(),
   dateOfBirth: z.string().optional().nullable(), // ISO date
   dni: z.string().max(50).optional().nullable(),
   pipelineStageId: z.string().uuid().optional().nullable(),
@@ -62,7 +53,7 @@ export const createContactSchema = z.object({
   assignedAdvisorId: z.string().uuid().optional().nullable(),
   assignedTeamId: z.string().uuid().optional().nullable(),
   nextStep: z.string().max(500).optional().nullable(),
-  notes: notesSchema,
+  notes: z.string().optional().nullable(),
   queSeDedica: optionalLongText,
   familia: optionalLongText,
   expectativas: optionalLongText,
@@ -70,8 +61,26 @@ export const createContactSchema = z.object({
   requisitosPlanificacion: optionalLongText,
   prioridades: z.array(z.string().max(500)).optional().default([]),
   preocupaciones: z.array(z.string().max(500)).optional().default([]),
-  ingresos: amountSchema,
-  gastos: amountSchema,
+  ingresos: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
+  gastos: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
   excedente: z
     .union([
       z.number(),

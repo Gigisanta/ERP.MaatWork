@@ -12,7 +12,7 @@ import {
   integer,
   numeric,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -24,7 +24,7 @@ export const teams = pgTable('teams', {
   name: text('name').notNull(),
   managerUserId: uuid('manager_user_id'),
   calendarUrl: text('calendar_url'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 /**
@@ -49,7 +49,7 @@ export const users = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     lastLogin: timestamp('last_login'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
-    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow()
   },
   (table) => {
     return {
@@ -61,7 +61,7 @@ export const users = pgTable(
       usersUsernameNormalizedIdx: index('idx_users_username_normalized')
         .on(table.usernameNormalized)
         .where(sql`${table.usernameNormalized} is not null`),
-      roleIdx: index('idx_users_role').on(table.role),
+      roleIdx: index('idx_users_role').on(table.role)
     };
   }
 );
@@ -74,17 +74,13 @@ export const teamMembership = pgTable(
   'team_membership',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    teamId: uuid('team_id')
-      .notNull()
-      .references(() => teams.id),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
+    teamId: uuid('team_id').notNull().references(() => teams.id),
+    userId: uuid('user_id').notNull().references(() => users.id),
     role: text('role').notNull(), // member, lead
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    teamUserUnique: uniqueIndex('team_membership_unique').on(table.teamId, table.userId),
+    teamUserUnique: uniqueIndex('team_membership_unique').on(table.teamId, table.userId)
   })
 );
 
@@ -96,22 +92,15 @@ export const teamMembershipRequests = pgTable(
   'team_membership_requests',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
-    managerId: uuid('manager_id')
-      .notNull()
-      .references(() => users.id),
+    userId: uuid('user_id').notNull().references(() => users.id),
+    managerId: uuid('manager_id').notNull().references(() => users.id),
     status: text('status').notNull().default('pending'), // pending, approved, rejected
     createdAt: timestamp('created_at').notNull().defaultNow(),
     resolvedAt: timestamp('resolved_at'),
-    resolvedByUserId: uuid('resolved_by_user_id').references(() => users.id),
+    resolvedByUserId: uuid('resolved_by_user_id').references(() => users.id)
   },
   (table) => ({
-    teamMembershipRequestsUnique: uniqueIndex('team_membership_requests_unique').on(
-      table.userId,
-      table.managerId
-    ),
+    teamMembershipRequestsUnique: uniqueIndex('team_membership_requests_unique').on(table.userId, table.managerId)
   })
 );
 
@@ -126,14 +115,12 @@ export const advisorAliases = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     aliasRaw: text('alias_raw').notNull(),
     aliasNormalized: text('alias_normalized').notNull(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    userId: uuid('user_id').notNull().references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     advisorAliasUnique: uniqueIndex('advisor_aliases_normalized_unique').on(table.aliasNormalized),
-    advisorAliasUserIdx: index('idx_advisor_aliases_user').on(table.userId),
+    advisorAliasUserIdx: index('idx_advisor_aliases_user').on(table.userId)
   })
 );
 
@@ -154,15 +141,49 @@ export const careerPlanLevels = pgTable(
     annualGoalUsd: integer('annual_goal_usd').notNull(), // Objetivo anual en USD (sin comas)
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    careerPlanLevelsLevelNumberUnique: uniqueIndex('career_plan_levels_level_number_unique').on(
-      table.levelNumber
-    ),
-    careerPlanLevelsLevelNumberIdx: index('idx_career_plan_levels_level_number').on(
-      table.levelNumber
-    ),
-    careerPlanLevelsIsActiveIdx: index('idx_career_plan_levels_is_active').on(table.isActive),
+    careerPlanLevelsLevelNumberUnique: uniqueIndex('career_plan_levels_level_number_unique').on(table.levelNumber),
+    careerPlanLevelsLevelNumberIdx: index('idx_career_plan_levels_level_number').on(table.levelNumber),
+    careerPlanLevelsIsActiveIdx: index('idx_career_plan_levels_is_active').on(table.isActive)
   })
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,7 +13,7 @@ import {
   numeric,
   jsonb,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { contacts } from './contacts';
@@ -30,9 +30,7 @@ export const aumImportFiles = pgTable(
     originalFilename: text('original_filename').notNull(),
     mimeType: text('mime_type').notNull(),
     sizeBytes: integer('size_bytes').notNull(),
-    uploadedByUserId: uuid('uploaded_by_user_id')
-      .notNull()
-      .references(() => users.id),
+    uploadedByUserId: uuid('uploaded_by_user_id').notNull().references(() => users.id),
     status: text('status').notNull(), // uploaded, parsed, committed, failed
     totalParsed: integer('total_parsed').notNull().default(0),
     totalMatched: integer('total_matched').notNull().default(0),
@@ -43,24 +41,17 @@ export const aumImportFiles = pgTable(
     fileType: text('file_type').notNull().default('monthly'), // 'master' | 'monthly'
     reportMonth: integer('report_month'), // 1-12, nullable para archivos master
     reportYear: integer('report_year'), // nullable para archivos master
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     // AI_DECISION: Índice compuesto para optimizar queries filtradas por broker y ordenadas por fecha
     // Justificación: Mejora performance de queries que filtran por broker y ordenan por created_at DESC
     // Impacto: Reducción de 50-70% en tiempo de query cuando se filtra por broker
-    aumFilesBrokerCreatedIdx: index('idx_aum_files_broker_created').on(
-      table.broker,
-      table.createdAt
-    ),
+    aumFilesBrokerCreatedIdx: index('idx_aum_files_broker_created').on(table.broker, table.createdAt),
     // AI_DECISION: Índice compuesto para queries mensuales
     // Justificación: Optimiza búsqueda de archivos por mes/año y tipo
     // Impacto: Mejora performance al filtrar archivos mensuales por período
-    aumFilesMonthYearIdx: index('idx_aum_files_month_year').on(
-      table.fileType,
-      table.reportMonth,
-      table.reportYear
-    ),
+    aumFilesMonthYearIdx: index('idx_aum_files_month_year').on(table.fileType, table.reportMonth, table.reportYear)
   })
 );
 
@@ -72,12 +63,8 @@ export const aumImportRows = pgTable(
   'aum_import_rows',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    fileId: uuid('file_id')
-      .notNull()
-      .references(() => aumImportFiles.id, { onDelete: 'cascade' }),
-    raw: jsonb('raw')
-      .notNull()
-      .default(sql`'{}'::jsonb`),
+    fileId: uuid('file_id').notNull().references(() => aumImportFiles.id, { onDelete: 'cascade' }),
+    raw: jsonb('raw').notNull().default(sql`'{}'::jsonb`),
     accountNumber: text('account_number'),
     holderName: text('holder_name'),
     idCuenta: text('id_cuenta'),
@@ -102,34 +89,22 @@ export const aumImportRows = pgTable(
     cable: numeric('cable', { precision: 18, scale: 6 }),
     cv7000: numeric('cv7000', { precision: 18, scale: 6 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     aumRowsAccountIdx: index('idx_aum_rows_account').on(table.accountNumber),
     aumRowsFileIdx: index('idx_aum_rows_file').on(table.fileId),
-    aumRowsFileStatusPreferredIdx: index('idx_aum_rows_file_status_preferred').on(
-      table.fileId,
-      table.matchStatus,
-      table.isPreferred
-    ),
+    aumRowsFileStatusPreferredIdx: index('idx_aum_rows_file_status_preferred').on(table.fileId, table.matchStatus, table.isPreferred),
     aumRowsCreatedAtIdx: index('idx_aum_rows_created_at').on(table.createdAt),
     aumRowsIdCuentaIdx: index('idx_aum_rows_id_cuenta').on(table.idCuenta),
     // AI_DECISION: Índices compuestos optimizados para queries principales de AUM rows
     // Justificación: Mejora performance de queries que filtran por file_id + match_status y ordenan por created_at DESC
     // Impacto: Reducción de 50-70% en tiempo de query cuando se filtra por file_id y status
-    aumRowsFileStatusCreatedIdx: index('idx_aum_rows_file_status_created').on(
-      table.fileId,
-      table.matchStatus,
-      table.createdAt
-    ),
+    aumRowsFileStatusCreatedIdx: index('idx_aum_rows_file_status_created').on(table.fileId, table.matchStatus, table.createdAt),
     // AI_DECISION: Índice compuesto para filtros comunes por status y preferred
     // Justificación: Optimiza queries que filtran por match_status e is_preferred ordenadas por fecha
     // Impacto: Reducción significativa en tiempo de query para filtros de estado
-    aumRowsStatusPreferredCreatedIdx: index('idx_aum_rows_status_preferred_created').on(
-      table.matchStatus,
-      table.isPreferred,
-      table.createdAt
-    ),
+    aumRowsStatusPreferredCreatedIdx: index('idx_aum_rows_status_preferred_created').on(table.matchStatus, table.isPreferred, table.createdAt),
     // AI_DECISION: Add composite index for matching queries
     // Justificación: Queries de matching filtran por status + accountNumber frecuentemente
     // Impacto: Faster AUM matching operations
@@ -137,7 +112,7 @@ export const aumImportRows = pgTable(
       table.matchStatus,
       table.accountNumber,
       table.isPreferred
-    ),
+    )
   })
 );
 
@@ -154,22 +129,18 @@ export const advisorAccountMapping = pgTable(
     advisorRaw: text('advisor_raw'), // Normalizado para matching
     matchedUserId: uuid('matched_user_id').references(() => users.id), // User ID si se matchea automáticamente
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    advisorAccountMappingUnique: uniqueIndex('advisor_account_mapping_account_unique').on(
-      table.accountNumber
-    ),
-    advisorAccountMappingAccountIdx: index('idx_advisor_account_mapping_account').on(
-      table.accountNumber
-    ),
+    advisorAccountMappingUnique: uniqueIndex('advisor_account_mapping_account_unique').on(table.accountNumber),
+    advisorAccountMappingAccountIdx: index('idx_advisor_account_mapping_account').on(table.accountNumber)
   })
 );
 
 /**
  * aum_monthly_snapshots
  * Snapshots mensuales de valores financieros AUM preservando historial por mes/año.
- *
+ * 
  * AI_DECISION: Tabla separada para preservar historial mensual
  * Justificación: Permite mantener valores históricos sin sobrescribir datos de meses anteriores
  * Impacto: Habilita análisis temporal y comparación de AUM entre meses
@@ -182,9 +153,7 @@ export const aumMonthlySnapshots = pgTable(
     idCuenta: text('id_cuenta'),
     reportMonth: integer('report_month').notNull(), // 1-12
     reportYear: integer('report_year').notNull(),
-    fileId: uuid('file_id')
-      .notNull()
-      .references(() => aumImportFiles.id, { onDelete: 'cascade' }),
+    fileId: uuid('file_id').notNull().references(() => aumImportFiles.id, { onDelete: 'cascade' }),
     // Campos financieros del snapshot mensual
     aumDollars: numeric('aum_dollars', { precision: 18, scale: 6 }),
     bolsaArg: numeric('bolsa_arg', { precision: 18, scale: 6 }),
@@ -195,7 +164,7 @@ export const aumMonthlySnapshots = pgTable(
     cable: numeric('cable', { precision: 18, scale: 6 }),
     cv7000: numeric('cv7000', { precision: 18, scale: 6 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     // AI_DECISION: Unique constraint para evitar duplicados por cuenta/mes/año
@@ -210,20 +179,56 @@ export const aumMonthlySnapshots = pgTable(
     // AI_DECISION: Índices para búsquedas comunes
     // Justificación: Optimiza queries por cuenta, mes/año y archivo
     // Impacto: Mejora performance de consultas históricas
-    aumMonthlySnapshotsAccountIdx: index('idx_aum_monthly_snapshots_account').on(
-      table.accountNumber
-    ),
+    aumMonthlySnapshotsAccountIdx: index('idx_aum_monthly_snapshots_account').on(table.accountNumber),
     aumMonthlySnapshotsIdCuentaIdx: index('idx_aum_monthly_snapshots_id_cuenta').on(table.idCuenta),
-    aumMonthlySnapshotsMonthYearIdx: index('idx_aum_monthly_snapshots_month_year').on(
-      table.reportMonth,
-      table.reportYear
-    ),
+    aumMonthlySnapshotsMonthYearIdx: index('idx_aum_monthly_snapshots_month_year').on(table.reportMonth, table.reportYear),
     aumMonthlySnapshotsFileIdx: index('idx_aum_monthly_snapshots_file').on(table.fileId),
     // AI_DECISION: Índice compuesto para queries de historial por cuenta
     // Justificación: Optimiza consultas que buscan todos los meses de una cuenta
     // Impacto: Mejora performance al obtener historial completo de una cuenta
-    aumMonthlySnapshotsAccountMonthYearIdx: index(
-      'idx_aum_monthly_snapshots_account_month_year'
-    ).on(table.accountNumber, table.idCuenta, table.reportYear, table.reportMonth),
+    aumMonthlySnapshotsAccountMonthYearIdx: index('idx_aum_monthly_snapshots_account_month_year').on(
+      table.accountNumber,
+      table.idCuenta,
+      table.reportYear,
+      table.reportMonth
+    )
   })
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

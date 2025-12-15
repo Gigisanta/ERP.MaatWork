@@ -2,7 +2,7 @@
  * AUM Upsert Service - Helper Functions
  */
 
-import { normalizeAccountNumber } from '../../utils/aum/aum-normalization';
+import { normalizeAccountNumber } from '../../utils/aum-normalization';
 
 /**
  * Detect if accountNumber (comitente) changed for the same idCuenta

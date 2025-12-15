@@ -7,12 +7,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { promises as fs } from 'node:fs';
 import { db, capacitaciones } from '@cactus/db';
 import { createAsyncHandler, HttpError } from '../../../utils/route-handler';
-import { transactionWithLogging } from '../../../utils/database/db-transactions';
-import {
-  createCsvUpload,
-  handleMulterError,
-  DEFAULT_UPLOAD_DIR,
-} from '../../../utils/file/file-upload';
+import { transactionWithLogging } from '../../../utils/db-transactions';
+import { createCsvUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../../utils/file-upload';
 import { parseCapacitacionesCSV } from '../utils';
 
 const uploadDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
@@ -43,10 +39,7 @@ export const handleImportCapacitaciones = [
       throw new HttpError(401, 'Unauthorized');
     }
 
-    // AI_DECISION: Acceso a req.file después de multer middleware
-    // Justificación: Multer agrega la propiedad 'file' al Request, pero TypeScript no la conoce por defecto
-    // Impacto: Type safety mejorado usando type assertion específica en lugar de 'any'
-    const file = (req as Request & { file?: Express.Multer.File }).file;
+    const file = (req as any).file as Express.Multer.File | undefined;
     if (!file) {
       req.log?.warn?.({ userId }, 'Upload request sin archivo');
       throw new HttpError(400, 'No file uploaded');

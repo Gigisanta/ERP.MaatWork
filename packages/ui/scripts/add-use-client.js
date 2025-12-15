@@ -5,11 +5,9 @@
  * TypeScript no preserva las directivas "use client" de Next.js, así que las agregamos post-build
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(__dirname, '../src');
 const distDir = path.join(__dirname, '../dist');
 

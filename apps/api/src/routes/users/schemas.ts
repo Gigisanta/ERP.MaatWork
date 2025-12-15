@@ -4,18 +4,14 @@
  * Zod schemas for validating users CRUD operations
  */
 import { z } from 'zod';
-import {
-  paginationQuerySchema,
-  idParamSchema,
-  emailSchema,
-} from '../../utils/validation/common-schemas';
+import { paginationQuerySchema, idParamSchema } from '../../utils/common-schemas';
 
 // ==========================================================
 // Body Schemas
 // ==========================================================
 
 export const createUserSchema = z.object({
-  email: emailSchema,
+  email: z.string().email(),
   fullName: z.string().min(1).max(255),
   role: z.enum(['admin', 'manager', 'advisor', 'owner', 'staff']),
   isActive: z.boolean().default(true),
@@ -43,7 +39,7 @@ export const changePasswordSchema = z.object({
 });
 
 export const createUserWithPasswordSchema = z.object({
-  email: emailSchema,
+  email: z.string().email(),
   fullName: z.string().min(1).max(255),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   role: z.enum(['admin', 'manager', 'advisor', 'owner', 'staff']),

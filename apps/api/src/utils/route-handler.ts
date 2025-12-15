@@ -30,7 +30,6 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createErrorResponse, getStatusCodeFromError } from './error-response';
-import { canAccessContact } from '../auth/authorization';
 
 /**
  * Tipo para handlers que retornan datos directamente
@@ -101,18 +100,11 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
       }
 
       // Enviar respuesta exitosa estandarizada
-      // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
-      // Justificación: Con exactOptionalPropertyTypes: true, debemos construir el objeto condicionalmente
-      // Impacto: Cumple con las reglas estrictas de TypeScript
       const response: SuccessResponse<T> = {
         success: true,
         data: result,
+        ...(req.requestId && { requestId: req.requestId }),
       };
-
-      // Solo incluir requestId si está definido
-      if (req.requestId !== undefined) {
-        response.requestId = req.requestId;
-      }
 
       res.json(response);
     } catch (error) {
@@ -129,22 +121,12 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
       );
 
       // Determinar codigo de estado y generar respuesta de error
-      // AI_DECISION: Construir objeto condicionalmente para exactOptionalPropertyTypes
-      // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
-      // Impacto: Cumple con las reglas estrictas de TypeScript
       const statusCode = getStatusCodeFromError(error);
-      const errorOptions: {
-        error: unknown;
-        requestId?: string;
-        userMessage: string;
-      } = {
+      const errorResponse = createErrorResponse({
         error,
+        requestId: req.requestId,
         userMessage: getDefaultUserMessage(statusCode),
-      };
-      if (req.requestId !== undefined) {
-        errorOptions.requestId = req.requestId;
-      }
-      const errorResponse = createErrorResponse(errorOptions);
+      });
 
       res.status(statusCode).json(errorResponse);
     }
@@ -263,22 +245,12 @@ export function createAsyncHandler(handler: AsyncHandlerFn) {
       }
 
       // Determinar codigo de estado y generar respuesta de error
-      // AI_DECISION: Construir objeto condicionalmente para exactOptionalPropertyTypes
-      // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
-      // Impacto: Cumple con las reglas estrictas de TypeScript
       const statusCode = getStatusCodeFromError(error);
-      const errorOptions: {
-        error: unknown;
-        requestId?: string;
-        userMessage: string;
-      } = {
+      const errorResponse = createErrorResponse({
         error,
+        requestId: req.requestId,
         userMessage: getDefaultUserMessage(statusCode),
-      };
-      if (req.requestId !== undefined) {
-        errorOptions.requestId = req.requestId;
-      }
-      const errorResponse = createErrorResponse(errorOptions);
+      });
 
       res.status(statusCode).json(errorResponse);
     }
@@ -322,20 +294,15 @@ export function isHttpError(error: unknown, statusCode: number): boolean {
  * ```typescript
  * throw new HttpError(404, 'Contact not found');
  * throw new HttpError(403, 'You do not have permission to access this resource');
- * throw new HttpError(400, 'Invalid request', { field: 'email', code: 'INVALID_EMAIL' });
  * ```
  */
 export class HttpError extends Error {
-  public readonly details?: unknown;
-
   constructor(
     public readonly statusCode: number,
-    message: string,
-    details?: unknown
+    message: string
   ) {
     super(message);
     this.name = 'HttpError';
-    this.details = details;
   }
 }
 
@@ -346,65 +313,4 @@ export function getStatusCode(error: unknown): number {
     return error.statusCode;
   }
   return originalGetStatusCode(error);
-}
-
-/**
- * Verifica acceso a un contacto y lanza HttpError si no tiene permisos
- *
- * AI_DECISION: Centralizar verificación de acceso a contactos
- * Justificación: Elimina duplicación de lógica de permisos en múltiples handlers
- * Impacto: Consistencia en manejo de permisos, menos código duplicado, mejor mantenibilidad
- *
- * @param userId - ID del usuario que solicita acceso
- * @param userRole - Rol del usuario
- * @param contactId - ID del contacto al que se quiere acceder
- * @param action - Acción que se está intentando realizar (para logging)
- * @param req - Request object para logging
- *
- * @example
- * ```typescript
- * // En un handler
- * export const handleUpdateContact = createRouteHandler(async (req) => {
- *   const { id } = req.params;
- *   const userId = req.user!.id;
- *   const userRole = req.user!.role;
- *
- *   await requireContactAccess(userId, userRole, id, 'update_contact', req);
- *
- *   // Continuar con la lógica del handler...
- * });
- * ```
- */
-export async function requireContactAccess(
-  userId: string,
-  userRole: 'advisor' | 'manager' | 'admin' | 'owner' | 'staff',
-  contactId: string,
-  action: string,
-  req: Request
-): Promise<void> {
-  const hasAccess = await canAccessContact(userId, userRole, contactId);
-
-  if (!hasAccess) {
-    req.log?.warn?.(
-      {
-        contactId,
-        userId,
-        userRole,
-        action: `${action}_denied`,
-      },
-      `User attempted ${action} on inaccessible contact`
-    );
-
-    throw new HttpError(404, 'Contact not found');
-  }
-
-  req.log?.info?.(
-    {
-      contactId,
-      userId,
-      userRole,
-      action: `${action}_access_granted`,
-    },
-    `Contact access granted for ${action}`
-  );
 }

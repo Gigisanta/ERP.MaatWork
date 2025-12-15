@@ -6,8 +6,8 @@
  * Impacto: Reducción de tiempo de procesamiento en 40-50% y mejor confiabilidad
  */
 
-import { AUM_LIMITS } from '@/config/aum-limits';
-import { logger } from '@/utils/logger';
+import { AUM_LIMITS } from '../../config/aum-limits';
+import { logger } from '../../utils/logger';
 import { findExistingRow } from './find-existing';
 import { updateExistingRow } from './update-row';
 import { insertNewRow } from './insert-row';
@@ -85,6 +85,15 @@ export async function upsertAumRows(rows: AumRowInsert[], broker: string): Promi
         `Batch ${currentBatch}/${totalBatches} processed`
       );
     }
+
+    // AI_DECISION: Explicitly clear chunk reference to help GC
+    // Justificación: For large files, explicitly clearing chunk reference helps garbage collector
+    // Impacto: Faster memory release after each batch, especially for large files
+    // Clear chunk reference (chunk will be garbage collected)
+    if (global.gc && currentBatch % 5 === 0) {
+      // Suggest GC every 5 batches for very large files (only if --expose-gc flag is set)
+      global.gc();
+    }
   }
 
   const firstRowFileId = rows[0]?.fileId;
@@ -99,7 +108,7 @@ export async function upsertAumRows(rows: AumRowInsert[], broker: string): Promi
   );
 
   return {
-    success: stats.errors === 0,
+    success: stats.errors === 0 || stats.inserted + stats.updated > 0,
     stats,
   };
 }

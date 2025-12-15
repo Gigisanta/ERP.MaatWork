@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema, paginationQuerySchema } from '../../utils/validation/common-schemas';
+import { uuidSchema, paginationQuerySchema } from '../../utils/common-schemas';
 import { VALIDATION_LIMITS, PAGINATION_LIMITS } from '../../config/api-limits';
 
 // Query parameter schemas

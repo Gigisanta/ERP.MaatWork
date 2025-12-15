@@ -58,10 +58,7 @@ export interface ErrorResponseOptions {
   /** El error capturado (puede ser Error, string, o cualquier valor) */
   error: unknown;
   /** ID de la request para trazabilidad (de req.requestId) */
-  // AI_DECISION: Permitir explícitamente undefined para exactOptionalPropertyTypes
-  // Justificación: Con exactOptionalPropertyTypes: true, debemos ser explícitos sobre undefined
-  // Impacto: Permite pasar req.requestId directamente sin errores de tipo
-  requestId?: string | undefined;
+  requestId?: string;
   /** Mensaje amigable para el usuario (no expone detalles internos) */
   userMessage?: string;
   /** Contexto adicional para debugging (solo visible en desarrollo) */
@@ -149,31 +146,10 @@ export function createErrorResponse(options: ErrorResponseOptions): ErrorRespons
   const { error, requestId, userMessage, context } = options;
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // AI_DECISION: Usar mensaje del error directamente si es HttpError (tiene statusCode)
-  // Justificación: HttpError ya contiene mensajes seguros para el usuario, no necesitan ser sobrescritos
-  // Impacto: Los errores HTTP (404, 400, etc.) muestran su mensaje original en lugar de un mensaje genérico
-  let errorMessage = userMessage || 'Internal server error';
-  if (
-    error &&
-    typeof error === 'object' &&
-    'statusCode' in error &&
-    typeof (error as { statusCode: unknown }).statusCode === 'number' &&
-    error instanceof Error
-  ) {
-    // Es un HttpError o error similar con statusCode - usar su mensaje
-    errorMessage = error.message || errorMessage;
-  }
-
   // Respuesta base (segura para produccion)
-  // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
-  // Justificación: Con exactOptionalPropertyTypes: true, debemos manejar undefined explícitamente
-  // Impacto: Cumple con las reglas estrictas de TypeScript
-  // AI_DECISION: Incluir requestId siempre (incluso si es undefined) para consistencia en tests
-  // Justificación: Los tests esperan que requestId esté presente en el objeto, aunque sea undefined
-  // Impacto: Cumple con las expectativas de los tests y mantiene estructura consistente
   const response: Record<string, unknown> = {
-    error: errorMessage,
-    requestId: requestId,
+    error: userMessage || 'Internal server error',
+    ...(requestId && { requestId }),
   };
 
   // Solo incluir detalles en desarrollo
@@ -185,9 +161,6 @@ export function createErrorResponse(options: ErrorResponseOptions): ErrorRespons
     }
   }
 
-  // AI_DECISION: Cast explícito a través de unknown para satisfacer exactOptionalPropertyTypes
-  // Justificación: TypeScript necesita cast explícito cuando los tipos no se superponen completamente
-  // Impacto: Cumple con las reglas estrictas de TypeScript
   return response as unknown as ErrorResponse;
 }
 
@@ -293,24 +266,11 @@ export function createValidationErrorResponse(
   requestId?: string;
   details: Array<{ field: string; message: string }>;
 } {
-  // AI_DECISION: Manejar requestId explícitamente para exactOptionalPropertyTypes
-  // Justificación: Con exactOptionalPropertyTypes: true, debemos construir el objeto condicionalmente
-  // Impacto: Cumple con las reglas estrictas de TypeScript
-  const response: {
-    error: string;
-    requestId?: string;
-    details: Array<{ field: string; message: string }>;
-  } = {
+  return {
     error: 'Validation error',
+    ...(requestId && { requestId }),
     details: validationErrors,
   };
-
-  // Solo incluir requestId si está definido
-  if (requestId !== undefined) {
-    response.requestId = requestId;
-  }
-
-  return response;
 }
 
 /**
@@ -348,35 +308,3 @@ export const isValidationError = (error: unknown): boolean =>
 
 export const isConflictError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.CONFLICT);
-
-/**
- * Helper para crear ErrorResponseOptions con requestId manejado correctamente
- *
- * AI_DECISION: Helper para manejar requestId con exactOptionalPropertyTypes
- * Justificación: Simplifica el uso de createErrorResponse cuando requestId puede ser undefined
- * Impacto: Evita errores de tipo y reduce código repetitivo
- *
- * @param options - Opciones para generar la respuesta (sin requestId)
- * @param requestId - ID de la request (puede ser undefined)
- * @returns ErrorResponseOptions con requestId manejado correctamente
- *
- * @example
- * ```typescript
- * const response = createErrorResponseWithRequestId(
- *   { error, userMessage: 'Failed to process' },
- *   req.requestId
- * );
- * ```
- */
-export function createErrorResponseOptions(
-  options: Omit<ErrorResponseOptions, 'requestId'>,
-  requestId?: string | undefined
-): ErrorResponseOptions {
-  const result: ErrorResponseOptions = {
-    ...options,
-  };
-  if (requestId !== undefined) {
-    result.requestId = requestId;
-  }
-  return result;
-}

@@ -7,13 +7,7 @@
  */
 
 import { z } from 'zod';
-import {
-  uuidSchema,
-  paginationQuerySchema,
-  dateSchema,
-  titleSchema,
-  descriptionSchema,
-} from '../../utils/validation/common-schemas';
+import { uuidSchema, paginationQuerySchema, dateSchema } from '../../utils/common-schemas';
 
 // Query parameter schemas
 // AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects
@@ -40,15 +34,19 @@ export const exportTasksQuerySchema = z.object({
 
 // Body schemas
 export const createTaskSchema = z.object({
-  contactId: uuidSchema,
-  meetingId: uuidSchema.optional().nullable(),
-  title: titleSchema,
-  description: descriptionSchema,
+  contactId: z.string().uuid(),
+  meetingId: z.string().uuid().optional().nullable(),
+  title: z.string().min(1).max(500),
+  description: z.string().optional().nullable(),
   status: z.string(), // Referencia a lookupTaskStatus
   dueDate: z.string().optional().nullable(), // ISO date
-  dueTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(), // HH:MM
+  dueTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional()
+    .nullable(), // HH:MM
   priority: z.string(), // Referencia a lookupPriority
-  assignedToUserId: uuidSchema,
+  assignedToUserId: z.string().uuid(),
   recurrence: z
     .object({
       rrule: z.string(),
@@ -61,19 +59,10 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = createTaskSchema.omit({ contactId: true }).partial();
 
-// AI_DECISION: Params específicos por tipo de acción para type safety
-// Justificación: Evita usar z.any() y proporciona validación específica según la acción
-// Impacto: Mejor type safety y validación en tiempo de ejecución
 export const bulkActionSchema = z.object({
   taskIds: z.array(z.string().uuid()).min(1),
   action: z.enum(['complete', 'delete', 'reassign', 'change_status']),
-  params: z
-    .union([
-      z.object({ assignedToUserId: z.string().uuid() }),
-      z.object({ status: z.string() }),
-      z.undefined(),
-    ])
-    .optional(),
+  params: z.record(z.any()).optional(),
 });
 
 export const taskIdParamsSchema = z.object({ id: uuidSchema });

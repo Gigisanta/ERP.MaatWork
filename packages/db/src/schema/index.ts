@@ -1,6 +1,6 @@
 /**
  * Schema barrel export - mantiene compatibilidad con imports existentes
- *
+ * 
  * AI_DECISION: Refactorización de schema.ts monolítico (1759 líneas) en módulos por dominio
  * Justificación: Mejor organización, navegabilidad y mantenibilidad del código
  * Impacto: Los imports existentes siguen funcionando vía barrel exports
@@ -11,7 +11,7 @@ export {
   lookupAssetClass,
   lookupTaskStatus,
   lookupPriority,
-  lookupNotificationType,
+  lookupNotificationType
 } from './lookups';
 
 // Usuarios, equipos y configuraciones
@@ -21,7 +21,7 @@ export {
   teamMembership,
   teamMembershipRequests,
   advisorAliases,
-  careerPlanLevels,
+  careerPlanLevels
 } from './users';
 
 // Contactos, pipeline, etiquetas y segmentos
@@ -34,22 +34,32 @@ export {
   tagRules,
   segments,
   segmentMembers,
-  contactTags,
+  contactTags
 } from './contacts';
 
 // Notas, archivos de audio, adjuntos, tareas
-export { audioFiles, notes, attachments, noteTags, taskRecurrences, tasks } from './notes-tasks';
+export {
+  audioFiles,
+  notes,
+  attachments,
+  noteTags,
+  taskRecurrences,
+  tasks
+} from './notes-tasks';
 
 // Notificaciones y mensajería
 export {
   notificationTemplates,
   notifications,
   userChannelPreferences,
-  messageLog,
+  messageLog
 } from './notifications';
 
 // Instrumentos financieros
-export { instruments, instrumentAliases } from './instruments';
+export {
+  instruments,
+  instrumentAliases
+} from './instruments';
 
 // Integración Broker
 export {
@@ -60,11 +70,16 @@ export {
   brokerAccounts,
   brokerBalances,
   brokerTransactions,
-  brokerPositions,
+  brokerPositions
 } from './broker';
 
 // AUM Imports
-export { aumImportFiles, aumImportRows, advisorAccountMapping, aumMonthlySnapshots } from './aum';
+export {
+  aumImportFiles,
+  aumImportRows,
+  advisorAccountMapping,
+  aumMonthlySnapshots
+} from './aum';
 
 // Carteras
 export {
@@ -73,7 +88,7 @@ export {
   clientPortfolioAssignments,
   clientPortfolioOverrides,
   portfolioMonitoringSnapshot,
-  portfolioMonitoringDetails,
+  portfolioMonitoringDetails
 } from './portfolios';
 
 // Reportes y métricas
@@ -83,11 +98,14 @@ export {
   activityEvents,
   dailyMetricsUser,
   monthlyGoals,
-  aumSnapshots,
+  aumSnapshots
 } from './reports';
 
 // Auditoría y alertas
-export { auditLogs, alertPolicies } from './audit';
+export {
+  auditLogs,
+  alertPolicies
+} from './audit';
 
 // Benchmarks y precios
 export {
@@ -96,7 +114,7 @@ export {
   priceSnapshots,
   pricesDaily,
   pricesIntraday,
-  metricDefinitions,
+  metricDefinitions
 } from './benchmarks';
 
 // Capacitaciones
@@ -104,3 +122,41 @@ export { capacitaciones } from './capacitaciones';
 
 // Automatizaciones
 export { automationConfigs } from './automations';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,7 +13,7 @@ import {
   integer,
   jsonb,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { contacts } from './contacts';
@@ -34,19 +34,17 @@ export const audioFiles = pgTable(
     durationSeconds: integer('duration_seconds'),
     storagePath: text('storage_path').notNull(),
     checksum: text('checksum'),
-    uploadedByUserId: uuid('uploaded_by_user_id')
-      .notNull()
-      .references(() => users.id),
+    uploadedByUserId: uuid('uploaded_by_user_id').notNull().references(() => users.id),
     transcriptionText: text('transcription_text'),
     transcriptionModel: text('transcription_model'),
     transcriptionError: text('transcription_error'),
     transcribedAt: timestamp('transcribed_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     audioFilesUploadedByIdx: index('idx_audio_files_uploaded_by').on(table.uploadedByUserId),
-    audioFilesTranscribedIdx: index('idx_audio_files_transcribed').on(table.transcribedAt),
+    audioFilesTranscribedIdx: index('idx_audio_files_transcribed').on(table.transcribedAt)
   })
 );
 
@@ -58,25 +56,20 @@ export const notes = pgTable(
   'notes',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id')
-      .notNull()
-      .references(() => contacts.id),
+    contactId: uuid('contact_id').notNull().references(() => contacts.id),
     authorUserId: uuid('author_user_id').references(() => users.id),
     source: text('source').notNull(), // ai, manual, import
     noteType: text('note_type').notNull(), // general, summary, action_items
     content: text('content').notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     notesContactCreatedIdx: index('idx_notes_contact_created').on(table.contactId, table.createdAt),
     // AI_DECISION: Add index optimized for DESC ordering (PostgreSQL can use index backwards)
     // Justificación: Query de timeline ordena por createdAt DESC, este índice optimiza esa ordenación
     // Impacto: Faster timeline loading when sorting by createdAt DESC
-    notesContactCreatedDescIdx: index('idx_notes_contact_created_desc').on(
-      table.contactId,
-      table.createdAt
-    ),
+    notesContactCreatedDescIdx: index('idx_notes_contact_created_desc').on(table.contactId, table.createdAt),
     // AI_DECISION: Add composite index for timeline queries with deletedAt filter
     // Justificación: Timeline queries filter by contactId + deletedAt and order by createdAt DESC
     // Impacto: Faster timeline loading when filtering by deletedAt and sorting by createdAt DESC
@@ -84,7 +77,7 @@ export const notes = pgTable(
       table.contactId,
       table.deletedAt,
       table.createdAt
-    ),
+    )
   })
 );
 
@@ -105,15 +98,13 @@ export const attachments = pgTable(
     // Polimórfico: puede estar asociado a contacto, nota o reunión
     contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'cascade' }),
     noteId: uuid('note_id').references(() => notes.id, { onDelete: 'cascade' }),
-    uploadedByUserId: uuid('uploaded_by_user_id')
-      .notNull()
-      .references(() => users.id),
+    uploadedByUserId: uuid('uploaded_by_user_id').notNull().references(() => users.id),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     attachmentsContactIdx: index('idx_attachments_contact').on(table.contactId),
-    attachmentsNoteIdx: index('idx_attachments_note').on(table.noteId),
+    attachmentsNoteIdx: index('idx_attachments_note').on(table.noteId)
   })
 );
 
@@ -125,14 +116,12 @@ export const noteTags = pgTable(
   'note_tags',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    noteId: uuid('note_id')
-      .notNull()
-      .references(() => notes.id, { onDelete: 'cascade' }),
+    noteId: uuid('note_id').notNull().references(() => notes.id, { onDelete: 'cascade' }),
     tagId: uuid('tag_id').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    noteTagUnique: uniqueIndex('note_tags_unique').on(table.noteId, table.tagId),
+    noteTagUnique: uniqueIndex('note_tags_unique').on(table.noteId, table.tagId)
   })
 );
 
@@ -151,13 +140,10 @@ export const taskRecurrences = pgTable(
     nextOccurrence: date('next_occurrence'),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
-    taskRecurrencesNextIdx: index('idx_task_recurrences_next').on(
-      table.nextOccurrence,
-      table.isActive
-    ),
+    taskRecurrencesNextIdx: index('idx_task_recurrences_next').on(table.nextOccurrence, table.isActive)
   })
 );
 
@@ -170,25 +156,15 @@ export const tasks = pgTable(
   'tasks',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id')
-      .notNull()
-      .references(() => contacts.id),
+    contactId: uuid('contact_id').notNull().references(() => contacts.id),
     title: text('title').notNull(),
     description: text('description'),
-    status: text('status')
-      .notNull()
-      .references(() => lookupTaskStatus.id),
+    status: text('status').notNull().references(() => lookupTaskStatus.id),
     dueDate: date('due_date'),
     dueTime: text('due_time'), // HH:MM para hora específica
-    priority: text('priority')
-      .notNull()
-      .references(() => lookupPriority.id),
-    assignedToUserId: uuid('assigned_to_user_id')
-      .notNull()
-      .references(() => users.id),
-    createdByUserId: uuid('created_by_user_id')
-      .notNull()
-      .references(() => users.id),
+    priority: text('priority').notNull().references(() => lookupPriority.id),
+    assignedToUserId: uuid('assigned_to_user_id').notNull().references(() => users.id),
+    createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
     createdFrom: text('created_from').notNull(), // ai, manual, automation
     originRef: jsonb('origin_ref'),
     recurrenceId: uuid('recurrence_id').references(() => taskRecurrences.id),
@@ -197,7 +173,7 @@ export const tasks = pgTable(
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     tasksAssignedStatusDueIdx: index('idx_tasks_assigned_status_due').on(
@@ -205,9 +181,9 @@ export const tasks = pgTable(
       table.status,
       table.dueDate
     ),
-    tasksOpenDuePartialIdx: index('idx_tasks_open_due')
-      .on(table.dueDate)
-      .where(sql`${table.status} in ('open','in_progress')`),
+    tasksOpenDuePartialIdx: index('idx_tasks_open_due').on(table.dueDate).where(
+      sql`${table.status} in ('open','in_progress')`
+    ),
     tasksRecurrenceIdx: index('idx_tasks_recurrence').on(table.recurrenceId),
     // AI_DECISION: Add composite index for contact-based task queries
     // Justificación: Contact detail pages query all tasks for a contact filtered by status/dueDate
@@ -220,9 +196,10 @@ export const tasks = pgTable(
     // AI_DECISION: Add partial index for open tasks by user
     // Justificación: Dashboard de tareas filtra frecuentemente por usuario + estado abierto
     // Impacto: Faster task dashboard loading for open tasks
-    tasksOpenByUserIdx: index('idx_tasks_open_by_user')
-      .on(table.assignedToUserId, table.dueDate)
-      .where(sql`${table.status} IN ('open', 'in_progress') AND ${table.deletedAt} IS NULL`),
+    tasksOpenByUserIdx: index('idx_tasks_open_by_user').on(
+      table.assignedToUserId,
+      table.dueDate
+    ).where(sql`${table.status} IN ('open', 'in_progress') AND ${table.deletedAt} IS NULL`),
     // AI_DECISION: Add composite index for timeline queries
     // Justificación: Timeline queries filter by contactId + deletedAt and order by createdAt DESC
     // Impacto: Faster timeline loading when sorting by createdAt DESC
@@ -243,6 +220,44 @@ export const tasks = pgTable(
     // Impacto: Faster dashboard metrics loading
     tasksAssignedStatusCreatedIdx: index('idx_tasks_assigned_status_created')
       .on(table.assignedToUserId, table.status, table.createdAt)
-      .where(sql`${table.deletedAt} IS NULL`),
+      .where(sql`${table.deletedAt} IS NULL`)
   })
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

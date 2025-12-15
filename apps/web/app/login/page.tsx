@@ -48,7 +48,7 @@ function LoginPageContent() {
 
     if (user) {
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/home';
+      const redirectTo = searchParams.get('redirect') || '/';
       router.replace(redirectTo);
     }
   }, [user, initialized, router, searchParams]);
@@ -79,10 +79,55 @@ function LoginPageContent() {
       setLoading(true);
       setError(null);
 
+      // Perform login (this now includes session verification)
       await login(identifier, password, rememberMe);
+
+      // Wait for session to be established and user state to update (max 5 seconds)
+      const maxWaitTime = 5000;
+      const startTime = Date.now();
+      const checkInterval = 100; // Check every 100ms
+
+      const waitForSession = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          const checkSession = () => {
+            // Check if user is available and context is initialized
+            if (user && initialized) {
+              resolve();
+              return;
+            }
+
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= maxWaitTime) {
+              // If initialized but no user, session verification might have failed
+              if (initialized && !user) {
+                reject(
+                  new Error(
+                    'La sesión no se pudo verificar después del login. Por favor, intenta nuevamente.'
+                  )
+                );
+              } else {
+                reject(
+                  new Error('La sesión no se estableció a tiempo. Por favor, intenta nuevamente.')
+                );
+              }
+              return;
+            }
+
+            setTimeout(checkSession, checkInterval);
+          };
+
+          // Start checking immediately
+          checkSession();
+        });
+      };
+
+      // Wait for session confirmation
+      await waitForSession();
+
+      // Session confirmed, redirect
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/home';
-      router.replace(redirectTo);
+      const redirectTo = searchParams.get('redirect') || '/';
+      router.push(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
       hasRedirectedRef.current = false;

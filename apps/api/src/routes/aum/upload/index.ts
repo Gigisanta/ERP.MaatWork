@@ -10,26 +10,20 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
 import { AUM_LIMITS } from '../../../config/aum-limits';
-import {
-  createAumUpload,
-  handleMulterError,
-  DEFAULT_UPLOAD_DIR,
-} from '../../../utils/file/file-upload';
+import { createAumUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../../utils/file-upload';
 import {
   aumFileIdParamsSchema,
   aumUploadQuerySchema,
   aumPreviewQuerySchema,
   aumHistoryQuerySchema,
   aumExportQuerySchema,
-} from '../../../utils/aum/aum-validation';
+} from '../../../utils/aum-validation';
 
 // Import handlers
 import { handleUpload } from './handlers/upload';
 import { handlePreview } from './handlers/preview';
 import { handleHistory } from './handlers/history';
 import { handleExport } from './handlers/export';
-import { matchRow } from '../rows/handlers/match';
-import { aumMatchRowBodySchema } from '../../../utils/aum/aum-validation';
 
 const router = Router();
 
@@ -100,17 +94,6 @@ router.get(
   requireAuth,
   validate({ params: aumFileIdParamsSchema, query: aumExportQuerySchema }),
   handleExport
-);
-
-/**
- * POST /admin/aum/uploads/:fileId/match
- * Manually match a row with contact and/or advisor
- */
-router.post(
-  '/uploads/:fileId/match',
-  requireAuth,
-  validate({ params: aumFileIdParamsSchema, body: aumMatchRowBodySchema }),
-  matchRow
 );
 
 export default router;

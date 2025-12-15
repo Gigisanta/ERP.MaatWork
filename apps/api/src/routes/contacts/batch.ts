@@ -8,7 +8,7 @@ import { db, contacts, contactTags, tags } from '@cactus/db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
-import { createDrizzleLogger } from '../../utils/database/db-logger';
+import { createDrizzleLogger } from '../../utils/db-logger';
 import { validate } from '../../utils/validation';
 import {
   type Contact,
@@ -29,7 +29,7 @@ router.get(
   validate({ query: batchContactsQuerySchema }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { validateBatchIds } = require('../../utils/database/batch-validation');
+      const { validateBatchIds } = require('../../utils/batch-validation');
 
       const validation = validateBatchIds(req.query.contactIds as string, {
         maxCount: 50,

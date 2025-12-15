@@ -28,8 +28,10 @@ const HOST = process.env.ANALYTICS_HOST || '0.0.0.0';
  * Encontrar comando Python disponible (3.10+)
  */
 function findPythonCommand() {
-  const pythonCommands = isWindows ? ['python', 'py', 'python3'] : ['python3', 'python'];
-
+  const pythonCommands = isWindows 
+    ? ['python', 'py', 'python3']
+    : ['python3', 'python'];
+  
   for (const cmd of pythonCommands) {
     try {
       const version = execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
@@ -68,7 +70,7 @@ function checkUvicorn(pythonCmd) {
 function checkDependencies(pythonCmd) {
   const pipCmd = `${pythonCmd} -m pip`;
   const criticalPackages = ['fastapi', 'uvicorn', 'yfinance'];
-
+  
   for (const pkg of criticalPackages) {
     try {
       execSync(`${pipCmd} show ${pkg}`, { encoding: 'utf8', stdio: 'pipe' });
@@ -84,7 +86,7 @@ function checkDependencies(pythonCmd) {
  */
 function runService(pythonCmd) {
   const port = resolveAnalyticsPort();
-
+  
   console.log(info(`🚀 Iniciando analytics-service en http://${HOST}:${port}`));
   console.log(info(`   Directorio: ${analyticsServicePath}`));
   console.log('');
@@ -93,14 +95,11 @@ function runService(pythonCmd) {
 
   // Preparar comando uvicorn
   const uvicornArgs = [
-    '-m',
-    'uvicorn',
+    '-m', 'uvicorn',
     'main:app',
-    '--host',
-    HOST,
-    '--port',
-    String(port),
-    '--reload',
+    '--host', HOST,
+    '--port', String(port),
+    '--reload'
   ];
 
   // Spawn el proceso
@@ -110,8 +109,8 @@ function runService(pythonCmd) {
     shell: isWindows,
     env: {
       ...process.env,
-      PYTHONUNBUFFERED: '1',
-    },
+      PYTHONUNBUFFERED: '1'
+    }
   });
 
   // Manejar señales de terminación
@@ -182,3 +181,37 @@ function main() {
 
 // Ejecutar
 main();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -13,7 +13,7 @@ import type {
 } from '../../../types/python-service';
 import { isConnectionError } from '../../../types/python-service';
 import { PAGINATION_LIMITS } from '../../../config/api-limits';
-import { instrumentsSearchCache } from '../../../utils/performance/cache';
+import { instrumentsSearchCache } from '../../../utils/cache';
 import { PYTHON_SERVICE_URL } from '../utils';
 
 /**

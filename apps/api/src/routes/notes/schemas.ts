@@ -4,11 +4,7 @@
  * Zod schemas for validating notes CRUD operations
  */
 import { z } from 'zod';
-import {
-  paginationQuerySchema,
-  uuidSchema,
-  idParamSchema,
-} from '../../utils/validation/common-schemas';
+import { paginationQuerySchema, uuidSchema, idParamSchema } from '../../utils/common-schemas';
 
 // ==========================================================
 // Body Schemas

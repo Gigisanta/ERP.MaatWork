@@ -5,11 +5,9 @@
  * Reemplaza copyfiles que tiene problemas de compatibilidad con Node.js 22
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.join(__dirname, '../src/styles');
 const destDir = path.join(__dirname, '../dist/styles');
 
