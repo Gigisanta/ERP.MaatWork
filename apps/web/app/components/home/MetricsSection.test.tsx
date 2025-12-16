@@ -1,6 +1,6 @@
 /**
  * Tests para MetricsSection component
- * 
+ *
  * AI_DECISION: Tests unitarios para sección de métricas
  * Justificación: Validación crítica de visualización de métricas y gráficos
  * Impacto: Prevenir errores en dashboard de métricas
@@ -18,7 +18,7 @@ vi.mock('./Charts/GoalsComparisonChart', () => ({
     <div data-testid="goals-chart">
       Goals Chart - Prospects: {currentMonth.newProspects}, Goal: {goals?.newProspectsGoal ?? 0}
     </div>
-  )
+  ),
 }));
 
 vi.mock('./Charts/BusinessLineChart', () => ({
@@ -26,7 +26,7 @@ vi.mock('./Charts/BusinessLineChart', () => ({
     <div data-testid="business-line-chart">
       Business Line Chart - Inversiones: {businessLineClosures.inversiones}
     </div>
-  )
+  ),
 }));
 
 vi.mock('./Charts/TransitionTimesChart', () => ({
@@ -34,7 +34,7 @@ vi.mock('./Charts/TransitionTimesChart', () => ({
     <div data-testid="transition-times-chart">
       Transition Times Chart - Prospecto to First: {transitionTimes.prospectoToFirstMeeting ?? 0}
     </div>
-  )
+  ),
 }));
 
 vi.mock('./MetricCard', () => ({
@@ -42,7 +42,7 @@ vi.mock('./MetricCard', () => ({
     <div data-testid={`metric-card-${title}`}>
       {title}: {actual} / {goal}
     </div>
-  )
+  ),
 }));
 
 vi.mock('@cactus/ui', () => ({
@@ -52,7 +52,9 @@ vi.mock('@cactus/ui', () => ({
   CardContent: ({ children }: any) => <div>{children}</div>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
   ),
   Text: ({ children, color }: any) => <span>{children}</span>,
   Stack: ({ children, direction, gap, align, justify, className }: any) => (
@@ -61,12 +63,14 @@ vi.mock('@cactus/ui', () => ({
   Select: ({ items, value, onValueChange }: any) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item: any) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
       ))}
     </select>
   ),
   Grid: ({ children, cols, gap }: any) => <div>{children}</div>,
-  GridItem: ({ children }: any) => <div>{children}</div>
+  GridItem: ({ children }: any) => <div>{children}</div>,
 }));
 
 describe('MetricsSection', () => {
@@ -78,20 +82,20 @@ describe('MetricsSection', () => {
     businessLineClosures: {
       inversiones: 2,
       zurich: 1,
-      patrimonial: 0
+      patrimonial: 0,
     },
     transitionTimes: {
       prospectoToFirstMeeting: 5,
       firstToSecondMeeting: 7,
-      secondMeetingToClient: 10
-    }
+      secondMeetingToClient: 10,
+    },
   };
 
   const mockGoalsData: MonthlyGoal = {
     newProspectsGoal: 15,
     firstMeetingsGoal: 12,
     secondMeetingsGoal: 8,
-    newClientsGoal: 5
+    newClientsGoal: 5,
   };
 
   beforeEach(() => {
@@ -178,16 +182,10 @@ describe('MetricsSection', () => {
 
   it('debería usar valores por defecto cuando goalsData es null', () => {
     render(
-      <MetricsSection
-        metricsData={mockMetricsData}
-        goalsData={null}
-        loading={false}
-        error={null}
-      />
+      <MetricsSection metricsData={mockMetricsData} goalsData={null} loading={false} error={null} />
     );
 
     const nuevosContactosCard = screen.getByTestId('metric-card-Nuevos Contactos');
     expect(nuevosContactosCard).toHaveTextContent('Nuevos Contactos: 10 / 0');
   });
 });
-

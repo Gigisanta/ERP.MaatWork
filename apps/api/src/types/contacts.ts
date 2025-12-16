@@ -5,7 +5,7 @@
 
 import { type InferSelectModel } from 'drizzle-orm';
 import { contacts, tags, contactTags, tasks } from '@cactus/db/schema';
-import type { BaseEntity } from './common';
+import type { BaseEntity } from '@cactus/types';
 
 /**
  * Contacto base inferido del schema
@@ -39,6 +39,7 @@ export interface ContactTagWithInfo extends BaseEntity {
  */
 export type ContactWithTags = Contact & {
   tags: ContactTag[];
+  interactionCount?: number | null;
 };
 
 /**

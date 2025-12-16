@@ -15,6 +15,7 @@ import {
   index,
   uniqueIndex
 } from 'drizzle-orm/pg-core';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { users, teams } from './users';
 
 /**
@@ -77,6 +78,8 @@ export const contacts = pgTable(
     contactLastTouchAt: timestamp('contact_last_touch_at', { withTimezone: true }),
     pipelineStageUpdatedAt: timestamp('pipeline_stage_updated_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    meetingStatus: jsonb('meeting_status').default(sql`'{}'::jsonb`), // { firstMeeting: {...}, secondMeeting: {...} }
+    normalizedFullName: text('normalized_full_name'), // Nombre normalizado para búsqueda rápida
     version: integer('version').notNull().default(1),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
@@ -109,7 +112,9 @@ export const contacts = pgTable(
     // Impacto: Faster active contact list loading, smaller index size (only active contacts)
     contactsActiveByAdvisorIdx: index('idx_contacts_active_by_advisor')
       .on(table.assignedAdvisorId, table.updatedAt)
-      .where(sql`${table.deletedAt} IS NULL`)
+      .where(sql`${table.deletedAt} IS NULL`),
+    // AI_DECISION: Index for normalized name search
+    contactsNormalizedNameIdx: index('idx_contacts_normalized_full_name').on(table.normalizedFullName)
   })
 );
 
@@ -274,6 +279,12 @@ export const contactTags = pgTable(
   })
 );
 
+// Zod Schemas
+export const insertContactSchema = createInsertSchema(contacts);
+export const selectContactSchema = createSelectSchema(contacts);
+
+export const insertTagSchema = createInsertSchema(tags);
+export const selectTagSchema = createSelectSchema(tags);
 
 
 

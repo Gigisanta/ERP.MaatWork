@@ -2,7 +2,7 @@
 
 /**
  * FundamentalsTab - Display SEC EDGAR fundamentals data
- * 
+ *
  * AI_DECISION: Client component for fundamentals display
  * Justificación: Interactive tab with data fetching
  * Impacto: Better UX for fundamental analysis
@@ -20,10 +20,10 @@ export default function FundamentalsTab({ symbol }: FundamentalsTabProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // FUTURE_FEATURE: Requires integration with fundamental data providers
-    // Metrics needed: P/E, EV/EBITDA, ROE, Revenue Growth, Margins
-    // Dependencies: SEC EDGAR XBRL parsing, or third-party fundamentals API (Alpha Vantage, Polygon)
-    // Status: Placeholder UI ready, awaiting backend endpoints
+    // AI_DECISION: Placeholder para datos fundamentales (P/E, EV/EBITDA, ROE, Revenue Growth, Margins)
+    // Justificación: UI lista, requiere integración con proveedores de datos fundamentales (SEC EDGAR, Alpha Vantage, Polygon)
+    // Dependencies: Parsing XBRL de SEC EDGAR o integración con APIs de terceros, endpoints backend
+    // Impacto: Mejora análisis fundamental una vez implementada integración con fuentes de datos
     setLoading(false);
   }, [symbol]);
 
@@ -48,7 +48,3 @@ export default function FundamentalsTab({ symbol }: FundamentalsTabProps) {
     </Card>
   );
 }
-
-
-
-

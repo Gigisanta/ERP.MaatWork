@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema } from '../../utils/common-schemas';
+import { uuidSchema } from '../../utils/validation/common-schemas';
 
 // ==========================================================
 // Zod Validation Schemas

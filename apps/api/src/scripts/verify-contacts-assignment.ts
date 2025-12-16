@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * Script de verificación: Asignación de Contactos
- * 
+ *
  * Verifica que todos los contactos estén correctamente asignados a asesores.
- * 
+ *
  * Uso: pnpm -F @cactus/api verify-contacts-assignment
  */
 
@@ -23,7 +23,12 @@ interface VerificationResult {
   invalidAssignments: number;
   unassignedList: Array<{ id: string; fullName: string | null; email: string | null }>;
   invalidAssignmentIds: string[];
-  contactsByAdvisor: Array<{ advisorId: string; advisorName: string; advisorEmail: string; count: number }>;
+  contactsByAdvisor: Array<{
+    advisorId: string;
+    advisorName: string;
+    advisorEmail: string;
+    count: number;
+  }>;
 }
 
 async function verifyContactsAssignment(): Promise<VerificationResult> {
@@ -31,106 +36,102 @@ async function verifyContactsAssignment(): Promise<VerificationResult> {
   console.log('VERIFICACIÓN: ASIGNACIÓN DE CONTACTOS');
   console.log('='.repeat(80));
   console.log('');
-  
+
   try {
     // Estadísticas generales
     const totalContacts = await db()
       .select({ count: sql<number>`count(*)` })
       .from(contacts)
       .where(isNull(contacts.deletedAt));
-    
+
     const assignedContacts = await db()
       .select({ count: sql<number>`count(*)` })
       .from(contacts)
-      .where(and(
-        sql`${contacts.assignedAdvisorId} IS NOT NULL`,
-        isNull(contacts.deletedAt)
-      ));
-    
+      .where(and(sql`${contacts.assignedAdvisorId} IS NOT NULL`, isNull(contacts.deletedAt)));
+
     const unassignedContacts = await db()
       .select({ count: sql<number>`count(*)` })
       .from(contacts)
       .where(and(isNull(contacts.assignedAdvisorId), isNull(contacts.deletedAt)));
-    
+
     const total = Number(totalContacts[0]?.count || 0);
     const assigned = Number(assignedContacts[0]?.count || 0);
     const unassigned = Number(unassignedContacts[0]?.count || 0);
-    
+
     // Obtener lista de contactos sin asignar
     const unassignedList = await db()
       .select({
         id: contacts.id,
         fullName: contacts.fullName,
-        email: contacts.email
+        email: contacts.email,
       })
       .from(contacts)
       .where(and(isNull(contacts.assignedAdvisorId), isNull(contacts.deletedAt)))
       .limit(10);
-    
+
     // Estadísticas por advisor
     const contactsByAdvisor = await db()
       .select({
         advisorId: contacts.assignedAdvisorId,
-        count: sql<number>`count(*)`
+        count: sql<number>`count(*)`,
       })
       .from(contacts)
-      .where(and(
-        sql`${contacts.assignedAdvisorId} IS NOT NULL`,
-        isNull(contacts.deletedAt)
-      ))
+      .where(and(sql`${contacts.assignedAdvisorId} IS NOT NULL`, isNull(contacts.deletedAt)))
       .groupBy(contacts.assignedAdvisorId);
-    
+
     // Verificar contactos con assignedAdvisorId inválido
     const allAssignedContacts = await db()
       .select({
         contactId: contacts.id,
-        assignedAdvisorId: contacts.assignedAdvisorId
+        assignedAdvisorId: contacts.assignedAdvisorId,
       })
       .from(contacts)
-      .where(and(
-        sql`${contacts.assignedAdvisorId} IS NOT NULL`,
-        isNull(contacts.deletedAt)
-      ))
+      .where(and(sql`${contacts.assignedAdvisorId} IS NOT NULL`, isNull(contacts.deletedAt)))
       .limit(100);
-    
+
     const invalidAssignments: string[] = [];
     for (const contact of allAssignedContacts) {
       if (!contact.assignedAdvisorId) continue;
-      
+
       const advisor = await db()
         .select({ id: users.id })
         .from(users)
         .where(eq(users.id, contact.assignedAdvisorId))
         .limit(1);
-      
+
       if (advisor.length === 0) {
         invalidAssignments.push(contact.contactId);
       }
     }
-    
-    const contactsByAdvisorList: Array<{ advisorId: string; advisorName: string; advisorEmail: string; count: number }> = [];
+
+    const contactsByAdvisorList: Array<{
+      advisorId: string;
+      advisorName: string;
+      advisorEmail: string;
+      count: number;
+    }> = [];
     for (const row of contactsByAdvisor) {
       const advisorId = row.advisorId;
       const count = Number(row.count || 0);
-      
+
       const advisor = await db()
         .select({
           id: users.id,
           fullName: users.fullName,
           email: users.email,
-          role: users.role
+          role: users.role,
         })
         .from(users)
         .where(eq(users.id, advisorId!))
         .limit(1);
-      
+
       if (advisor.length > 0) {
         const a = advisor[0];
         contactsByAdvisorList.push({
           advisorId: a.id,
           advisorName: a.fullName || 'Sin nombre',
           advisorEmail: a.email,
-          count
+          count,
         });
       }
     }
@@ -140,13 +141,15 @@ async function verifyContactsAssignment(): Promise<VerificationResult> {
       assignedContacts: assigned,
       unassignedContacts: unassigned,
       invalidAssignments: invalidAssignments.length,
-      unassignedList: unassignedList.map((c: { id: string; fullName: string | null; email: string | null }) => ({
-        id: c.id,
-        fullName: c.fullName,
-        email: c.email
-      })),
+      unassignedList: unassignedList.map(
+        (c: { id: string; fullName: string | null; email: string | null }) => ({
+          id: c.id,
+          fullName: c.fullName,
+          email: c.email,
+        })
+      ),
       invalidAssignmentIds: invalidAssignments,
-      contactsByAdvisor: contactsByAdvisorList
+      contactsByAdvisor: contactsByAdvisorList,
     };
   } catch (err) {
     console.error('❌ Error al verificar contactos:', err);
@@ -171,7 +174,9 @@ function printReport(result: VerificationResult): void {
     console.log('\n⚠️  CONTACTOS SIN ASIGNAR:');
     console.log(`   Total: ${result.unassignedContacts}`);
     result.unassignedList.slice(0, 10).forEach((c, i) => {
-      console.log(`   ${i + 1}. ${c.fullName || 'Sin nombre'} (${c.email || 'Sin email'}) - ID: ${c.id}`);
+      console.log(
+        `   ${i + 1}. ${c.fullName || 'Sin nombre'} (${c.email || 'Sin email'}) - ID: ${c.id}`
+      );
     });
     if (result.unassignedContacts > 10) {
       console.log(`   ... y ${result.unassignedContacts - 10} más`);
@@ -197,7 +202,7 @@ function printReport(result: VerificationResult): void {
   // Estadísticas por advisor
   if (result.contactsByAdvisor.length > 0) {
     console.log('\n📊 ESTADÍSTICAS POR ADVISOR:');
-    result.contactsByAdvisor.forEach(a => {
+    result.contactsByAdvisor.forEach((a) => {
       console.log(`   ${a.advisorName} (${a.advisorEmail}): ${a.count} contactos`);
     });
   }
@@ -243,5 +248,3 @@ async function main() {
 }
 
 main();
-
-

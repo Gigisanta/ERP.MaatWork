@@ -41,11 +41,13 @@ import { useProfileData, useProfileActions, useAliases } from './hooks';
 // Componentes especializados
 import {
   PersonalInfoSection,
+  ThemeSelectorSection,
   AliasesSection,
   TeamsSection,
   InvitationsSection,
   TeamMembersSection,
   ProfileModals,
+  GoogleCalendarSection,
 } from './components';
 
 export default function ProfilePage() {
@@ -89,9 +91,6 @@ export default function ProfilePage() {
   // Hook de acciones del perfil
   const {
     actionLoading,
-    calendarUrls,
-    setCalendarUrls,
-    calendarLoading,
     passwordForm,
     setPasswordForm,
     teamForm,
@@ -109,7 +108,6 @@ export default function ProfilePage() {
     handleCreateTeam,
     handleAddMember,
     handleLeaveTeam,
-    handleUpdateCalendarUrl,
     handleSavePhone,
     handleCancelEditPhone,
   } = useProfileActions({
@@ -120,6 +118,7 @@ export default function ProfilePage() {
     setTeams,
     setUserInfo,
     fetchUserInfo,
+    router,
   });
 
   // Hook de aliases
@@ -140,29 +139,18 @@ export default function ProfilePage() {
     }
   }, [userInfo, setPhoneValue]);
 
-  // Initialize calendar URLs from teams
-  useEffect(() => {
-    const initialUrls: Record<string, string> = {};
-    teams.forEach((team) => {
-      if (team.calendarUrl) {
-        initialUrls[team.id] = team.calendarUrl;
-      }
-    });
-    setCalendarUrls(initialUrls);
-  }, [teams, setCalendarUrls]);
-
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center h-64">
           <Text>Cargando información del perfil...</Text>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
       <Stack direction="column" gap="md">
         <div>
           <Heading level={2}>Mi Perfil</Heading>
@@ -197,8 +185,14 @@ export default function ProfilePage() {
                 {/* Separador visual */}
                 <div className="border-t border-border my-3" />
 
+                {/* Selector de Tema */}
+                <ThemeSelectorSection />
+
                 {/* Secciones integradas en Grid */}
                 <Grid cols={{ base: 1, md: 2 }} gap="sm">
+                  {/* Google Calendar */}
+                  <GoogleCalendarSection />
+
                   {/* Aliases AUM */}
                   <AliasesSection
                     aliases={aliases}
@@ -214,12 +208,6 @@ export default function ProfilePage() {
                   <TeamsSection
                     user={user}
                     teams={teams}
-                    calendarUrls={calendarUrls}
-                    calendarLoading={calendarLoading}
-                    onCalendarUrlChange={(teamId, url) =>
-                      setCalendarUrls((prev) => ({ ...prev, [teamId]: url }))
-                    }
-                    onUpdateCalendarUrl={handleUpdateCalendarUrl}
                     onShowTeamForm={() => setShowTeamForm(true)}
                   />
                 </Grid>
@@ -295,6 +283,6 @@ export default function ProfilePage() {
         confirmLabel="Confirmar"
         cancelLabel="Cancelar"
       />
-    </div>
+    </main>
   );
 }

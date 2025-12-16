@@ -1,5 +1,5 @@
 'use client';
-import { useRequireAuth } from '../../../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { getTeamById, getTeamMemberById, getTeamMemberMetrics } from '@/lib/api';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';

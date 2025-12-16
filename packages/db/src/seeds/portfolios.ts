@@ -1,6 +1,6 @@
 /**
  * Seed Portfolios
- * 
+ *
  * Seeds portfolio templates and client portfolio assignments.
  * Uses actual schema:
  * - portfolioTemplates: name, description, riskLevel, createdByUserId
@@ -14,7 +14,7 @@ import {
   portfolioTemplateLines,
   clientPortfolioAssignments,
   contacts,
-  users
+  users,
 } from '../schema';
 import { eq } from 'drizzle-orm';
 import { getRandomElement, getRandomDateOnly } from './helpers';
@@ -28,8 +28,8 @@ const PORTFOLIO_TEMPLATES = [
     lines: [
       { assetClass: 'fixed_income', targetWeight: '0.6000' },
       { assetClass: 'equity', targetWeight: '0.2000' },
-      { assetClass: 'cash', targetWeight: '0.2000' }
-    ]
+      { assetClass: 'cash', targetWeight: '0.2000' },
+    ],
   },
   {
     name: 'Moderado',
@@ -39,8 +39,8 @@ const PORTFOLIO_TEMPLATES = [
       { assetClass: 'equity', targetWeight: '0.4000' },
       { assetClass: 'fixed_income', targetWeight: '0.4000' },
       { assetClass: 'cash', targetWeight: '0.1000' },
-      { assetClass: 'real_estate', targetWeight: '0.1000' }
-    ]
+      { assetClass: 'real_estate', targetWeight: '0.1000' },
+    ],
   },
   {
     name: 'Agresivo',
@@ -50,32 +50,34 @@ const PORTFOLIO_TEMPLATES = [
       { assetClass: 'equity', targetWeight: '0.7000' },
       { assetClass: 'fixed_income', targetWeight: '0.1500' },
       { assetClass: 'crypto', targetWeight: '0.1000' },
-      { assetClass: 'cash', targetWeight: '0.0500' }
-    ]
-  }
+      { assetClass: 'cash', targetWeight: '0.0500' },
+    ],
+  },
 ];
 
 /**
  * Seed portfolio templates and assign to contacts
  */
 export async function seedPortfolios(
-  contactsList: typeof contacts.$inferSelect[],
-  advisorUsers: typeof users.$inferSelect[]
+  contactsList: (typeof contacts.$inferSelect)[],
+  advisorUsers: (typeof users.$inferSelect)[]
 ) {
   console.log('💼 Seeding portfolios...');
 
-  const createdTemplates: typeof portfolioTemplates.$inferSelect[] = [];
+  const createdTemplates: (typeof portfolioTemplates.$inferSelect)[] = [];
 
   // Check for existing templates
   const existingTemplates = await db().select().from(portfolioTemplates).limit(5);
   if (existingTemplates.length >= 3) {
-    console.log(`  ⊙ Portfolio templates already seeded: ${existingTemplates.length} templates found`);
-    
+    console.log(
+      `  ⊙ Portfolio templates already seeded: ${existingTemplates.length} templates found`
+    );
+
     // Still try to assign to contacts if needed
     if (contactsList.length > 0) {
       await assignPortfoliosToContacts(existingTemplates, contactsList, advisorUsers);
     }
-    
+
     console.log(`✅ Portfolios seeded\n`);
     return existingTemplates;
   }
@@ -99,24 +101,30 @@ export async function seedPortfolios(
       continue;
     }
 
-    const [template] = await db().insert(portfolioTemplates).values({
-      name: templateData.name,
-      riskLevel: templateData.riskLevel,
-      description: templateData.description,
-      createdByUserId: adminUser.id
-    }).returning();
+    const [template] = await db()
+      .insert(portfolioTemplates)
+      .values({
+        name: templateData.name,
+        riskLevel: templateData.riskLevel,
+        description: templateData.description,
+        createdByUserId: adminUser.id,
+      })
+      .returning();
 
     createdTemplates.push(template);
     console.log(`  ✓ Created template: ${templateData.name}`);
 
     // Create template lines
     for (const line of templateData.lines) {
-      await db().insert(portfolioTemplateLines).values({
-        templateId: template.id,
-        targetType: 'asset_class',
-        assetClass: line.assetClass,
-        targetWeight: line.targetWeight
-      }).onConflictDoNothing();
+      await db()
+        .insert(portfolioTemplateLines)
+        .values({
+          templateId: template.id,
+          targetType: 'asset_class',
+          assetClass: line.assetClass,
+          targetWeight: line.targetWeight,
+        })
+        .onConflictDoNothing();
     }
   }
 
@@ -133,9 +141,9 @@ export async function seedPortfolios(
  * Assign portfolio templates to contacts
  */
 async function assignPortfoliosToContacts(
-  templates: typeof portfolioTemplates.$inferSelect[],
-  contactsList: typeof contacts.$inferSelect[],
-  advisorUsers: typeof users.$inferSelect[]
+  templates: (typeof portfolioTemplates.$inferSelect)[],
+  contactsList: (typeof contacts.$inferSelect)[],
+  advisorUsers: (typeof users.$inferSelect)[]
 ): Promise<void> {
   console.log('  📊 Assigning portfolios to contacts...');
 
@@ -155,25 +163,29 @@ async function assignPortfoliosToContacts(
     // Match template to contact's risk profile
     let template: typeof portfolioTemplates.$inferSelect;
     if (contact.riskProfile === 'low') {
-      template = templates.find(t => t.riskLevel === 'low') ?? getRandomElement(templates);
+      template = templates.find((t) => t.riskLevel === 'low') ?? getRandomElement(templates);
     } else if (contact.riskProfile === 'high') {
-      template = templates.find(t => t.riskLevel === 'high') ?? getRandomElement(templates);
+      template = templates.find((t) => t.riskLevel === 'high') ?? getRandomElement(templates);
     } else {
-      template = templates.find(t => t.riskLevel === 'mid') ?? getRandomElement(templates);
+      template = templates.find((t) => t.riskLevel === 'mid') ?? getRandomElement(templates);
     }
 
-    const advisor = advisorUsers.find(a => a.id === contact.assignedAdvisorId)
-      ?? getRandomElement(advisorUsers);
+    const advisor =
+      advisorUsers.find((a) => a.id === contact.assignedAdvisorId) ??
+      getRandomElement(advisorUsers);
 
     const startDate = getRandomDateOnly(90, 0);
 
-    await db().insert(clientPortfolioAssignments).values({
-      contactId: contact.id,
-      templateId: template.id,
-      status: 'active',
-      startDate,
-      createdByUserId: advisor.id
-    }).onConflictDoNothing();
+    await db()
+      .insert(clientPortfolioAssignments)
+      .values({
+        contactId: contact.id,
+        templateId: template.id,
+        status: 'active',
+        startDate,
+        createdByUserId: advisor.id,
+      })
+      .onConflictDoNothing();
 
     assignmentsCreated++;
   }

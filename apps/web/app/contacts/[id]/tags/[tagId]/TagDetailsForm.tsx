@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import {
-  Input,
-  Button,
-  Stack,
-  Text,
-  Spinner,
-  Alert,
-} from '@cactus/ui';
+import { Input, Button, Stack, Text, Spinner, Alert } from '@cactus/ui';
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';
@@ -21,14 +14,8 @@ import { logger, toLogContext } from '@/lib/logger';
 // Justificación: z.number().positive().nullable() falla porque null no pasa la validación de positive()
 // Impacto: Permite null y números positivos, pero rechaza números negativos o cero
 const contactTagFormSchema = z.object({
-  monthlyPremium: z.union([
-    z.number().int().positive(),
-    z.null()
-  ]).optional(),
-  policyNumber: z.union([
-    z.string().max(100),
-    z.null()
-  ]).optional()
+  monthlyPremium: z.union([z.number().int().positive(), z.null()]).optional(),
+  policyNumber: z.union([z.string().max(100), z.null()]).optional(),
 });
 
 interface TagDetailsFormProps {
@@ -40,19 +27,15 @@ interface TagDetailsFormProps {
   };
 }
 
-export default function TagDetailsForm({
-  contactId,
-  tagId,
-  initialData,
-}: TagDetailsFormProps) {
+export default function TagDetailsForm({ contactId, tagId, initialData }: TagDetailsFormProps) {
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [formData, setFormData] = useState<UpdateContactTagRequest>({
     monthlyPremium: initialData.monthlyPremium ?? null,
     policyNumber: initialData.policyNumber ?? null,
   });
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{
     monthlyPremium?: string;
@@ -69,10 +52,10 @@ export default function TagDetailsForm({
 
   const handleMonthlyPremiumChange = (value: string) => {
     const trimmedValue = value.trim();
-    
+
     if (trimmedValue === '') {
-      setFormData(prev => ({ ...prev, monthlyPremium: null }));
-      setErrors(prev => {
+      setFormData((prev) => ({ ...prev, monthlyPremium: null }));
+      setErrors((prev) => {
         const { monthlyPremium, ...rest } = prev;
         return rest;
       });
@@ -80,19 +63,19 @@ export default function TagDetailsForm({
     }
 
     const numValue = parseInt(trimmedValue, 10);
-    
+
     if (isNaN(numValue)) {
-      setErrors(prev => ({ ...prev, monthlyPremium: 'Debe ser un número entero' }));
+      setErrors((prev) => ({ ...prev, monthlyPremium: 'Debe ser un número entero' }));
       return;
     }
 
     if (numValue <= 0) {
-      setErrors(prev => ({ ...prev, monthlyPremium: 'Debe ser un número positivo' }));
+      setErrors((prev) => ({ ...prev, monthlyPremium: 'Debe ser un número positivo' }));
       return;
     }
 
-    setFormData(prev => ({ ...prev, monthlyPremium: numValue }));
-    setErrors(prev => {
+    setFormData((prev) => ({ ...prev, monthlyPremium: numValue }));
+    setErrors((prev) => {
       const { monthlyPremium, ...rest } = prev;
       return rest;
     });
@@ -100,10 +83,10 @@ export default function TagDetailsForm({
 
   const handlePolicyNumberChange = (value: string) => {
     const trimmedValue = value.trim();
-    
+
     if (trimmedValue === '') {
-      setFormData(prev => ({ ...prev, policyNumber: null }));
-      setErrors(prev => {
+      setFormData((prev) => ({ ...prev, policyNumber: null }));
+      setErrors((prev) => {
         const { policyNumber, ...rest } = prev;
         return rest;
       });
@@ -111,12 +94,12 @@ export default function TagDetailsForm({
     }
 
     if (trimmedValue.length > 100) {
-      setErrors(prev => ({ ...prev, policyNumber: 'Máximo 100 caracteres' }));
+      setErrors((prev) => ({ ...prev, policyNumber: 'Máximo 100 caracteres' }));
       return;
     }
 
-    setFormData(prev => ({ ...prev, policyNumber: trimmedValue }));
-    setErrors(prev => {
+    setFormData((prev) => ({ ...prev, policyNumber: trimmedValue }));
+    setErrors((prev) => {
       const { policyNumber, ...rest } = prev;
       return rest;
     });
@@ -125,21 +108,27 @@ export default function TagDetailsForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    logger.debug('handleSubmit llamado', toLogContext({ contactId, tagId, hasErrors: Object.keys(errors).length > 0 }));
-    
+
+    logger.debug(
+      'handleSubmit llamado',
+      toLogContext({ contactId, tagId, hasErrors: Object.keys(errors).length > 0 })
+    );
+
     // Limpiar errores previos
     setErrors({});
-    
+
     // Validar con Zod
     const validationResult = contactTagFormSchema.safeParse(formData);
-    
+
     if (!validationResult.success) {
-      logger.warn('Validación Zod falló', toLogContext({
-        contactId,
-        tagId,
-        errors: validationResult.error.errors.map(e => ({ path: e.path, message: e.message }))
-      }));
+      logger.warn(
+        'Validación Zod falló',
+        toLogContext({
+          contactId,
+          tagId,
+          errors: validationResult.error.errors.map((e) => ({ path: e.path, message: e.message })),
+        })
+      );
       const zodErrors: typeof errors = {};
       validationResult.error.errors.forEach((error) => {
         if (error.path[0] === 'monthlyPremium') {
@@ -158,22 +147,26 @@ export default function TagDetailsForm({
     try {
       // Preparar datos para enviar (solo incluir campos que tienen valores o null explícito)
       const payload: UpdateContactTagRequest = {};
-      
+
       if (formData.monthlyPremium !== undefined) {
         payload.monthlyPremium = formData.monthlyPremium;
       }
       if (formData.policyNumber !== undefined) {
         payload.policyNumber = formData.policyNumber;
       }
-      
+
       logger.debug('Enviando datos de contact tag', toLogContext({ contactId, tagId, payload }));
-      
+
       const response = await updateContactTag(contactId, tagId, payload);
-      
+
       logger.info('Contact tag actualizado exitosamente', toLogContext({ contactId, tagId }));
-      
+
       if (response.success && response.data) {
-        showToast('Datos guardados', 'La información de la póliza se ha actualizado correctamente', 'success');
+        showToast(
+          'Datos guardados',
+          'La información de la póliza se ha actualizado correctamente',
+          'success'
+        );
         // Actualizar datos locales con la respuesta del servidor
         setFormData({
           monthlyPremium: response.data.monthlyPremium ?? null,
@@ -181,28 +174,34 @@ export default function TagDetailsForm({
         });
       } else {
         const errorMsg = response.error || 'Error al guardar los datos';
-        logger.error('Error en respuesta de updateContactTag', toLogContext({
-          contactId,
-          tagId,
-          error: errorMsg,
-          response
-        }));
+        logger.error(
+          'Error en respuesta de updateContactTag',
+          toLogContext({
+            contactId,
+            tagId,
+            error: errorMsg,
+            response,
+          })
+        );
         throw new Error(errorMsg);
       }
     } catch (err) {
-      logger.error('Error al guardar contact tag', toLogContext({
-        error: err instanceof Error ? err.message : String(err),
-        contactId,
-        tagId
-      }));
+      logger.error(
+        'Error al guardar contact tag',
+        toLogContext({
+          error: err instanceof Error ? err.message : String(err),
+          contactId,
+          tagId,
+        })
+      );
       let errorMessage = 'Error desconocido al guardar';
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (typeof err === 'object' && err !== null && 'message' in err) {
         errorMessage = String(err.message);
       }
-      
+
       showToast('Error al guardar', errorMessage, 'error');
     } finally {
       setIsSaving(false);
@@ -257,10 +256,7 @@ export default function TagDetailsForm({
           >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            disabled={isSaving}
-          >
+          <Button type="submit" disabled={isSaving}>
             {isSaving ? (
               <>
                 <Spinner size="sm" className="mr-2" />
@@ -275,4 +271,3 @@ export default function TagDetailsForm({
     </form>
   );
 }
-

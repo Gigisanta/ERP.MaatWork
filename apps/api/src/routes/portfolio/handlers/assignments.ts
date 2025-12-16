@@ -2,7 +2,7 @@
  * Handlers para Portfolio Assignments
  */
 
-import { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import {
   portfolioTemplates,
@@ -13,137 +13,121 @@ import {
   lookupAssetClass,
 } from '@cactus/db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
-import { createDrizzleLogger, createOperationName } from '../../../utils/db-logger';
+import { createDrizzleLogger, createOperationName } from '../../../utils/database/db-logger';
 import { UserRole } from '../../../auth/types';
+import { HttpError } from '../../../utils/route-handler';
 import { getAssignmentWithAccessCheck } from '../../../services/portfolio-service';
 
 /**
  * GET /portfolios/assignments
  * Listar asignaciones de carteras por contacto
  */
-export async function listAssignments(req: Request, res: Response) {
-  try {
-    const contactId = (req as any).contactId || (req.query.contactId as string);
-    const dbLogger = createDrizzleLogger(req.log);
+export async function listAssignments(req: Request) {
+  const contactId = req.contactId || (req.query.contactId as string);
+  const dbLogger = createDrizzleLogger(req.log);
 
-    const assignmentsOperationName = createOperationName('get_portfolio_assignments', contactId);
-    const assignments = await dbLogger.select(assignmentsOperationName, () =>
-      db()
-        .select({
-          id: clientPortfolioAssignments.id,
-          contactId: clientPortfolioAssignments.contactId,
-          templateId: clientPortfolioAssignments.templateId,
-          templateName: portfolioTemplates.name,
-          status: clientPortfolioAssignments.status,
-          startDate: clientPortfolioAssignments.startDate,
-          endDate: clientPortfolioAssignments.endDate,
-          notes: clientPortfolioAssignments.notes,
-          createdAt: clientPortfolioAssignments.createdAt,
-        })
-        .from(clientPortfolioAssignments)
-        .leftJoin(
-          portfolioTemplates,
-          eq(clientPortfolioAssignments.templateId, portfolioTemplates.id)
-        )
-        .where(eq(clientPortfolioAssignments.contactId, contactId))
-        .orderBy(desc(clientPortfolioAssignments.createdAt))
-    );
+  const assignmentsOperationName = createOperationName('get_portfolio_assignments', contactId);
+  const assignments = await dbLogger.select(assignmentsOperationName, () =>
+    db()
+      .select({
+        id: clientPortfolioAssignments.id,
+        contactId: clientPortfolioAssignments.contactId,
+        templateId: clientPortfolioAssignments.templateId,
+        templateName: portfolioTemplates.name,
+        status: clientPortfolioAssignments.status,
+        startDate: clientPortfolioAssignments.startDate,
+        endDate: clientPortfolioAssignments.endDate,
+        notes: clientPortfolioAssignments.notes,
+        createdAt: clientPortfolioAssignments.createdAt,
+      })
+      .from(clientPortfolioAssignments)
+      .leftJoin(
+        portfolioTemplates,
+        eq(clientPortfolioAssignments.templateId, portfolioTemplates.id)
+      )
+      .where(eq(clientPortfolioAssignments.contactId, contactId))
+      .orderBy(desc(clientPortfolioAssignments.createdAt))
+  );
 
-    res.json({
-      success: true,
-      data: assignments,
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error fetching portfolio assignments');
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
+  return assignments;
 }
 
 /**
  * POST /portfolios/assignments
  * Asignar cartera a contacto
  */
-export async function createAssignment(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id!;
-    const { contactId, templateId, startDate, notes } = req.body;
+export async function createAssignment(req: Request) {
+  const userId = req.user?.id!;
+  const { contactId, templateId, startDate, notes } = req.body;
 
-    // Verificar que la plantilla existe
-    const template = await db()
-      .select({ id: portfolioTemplates.id })
-      .from(portfolioTemplates)
-      .where(eq(portfolioTemplates.id, templateId))
-      .limit(1);
+  // Verificar que la plantilla existe
+  const template = await db()
+    .select({ id: portfolioTemplates.id })
+    .from(portfolioTemplates)
+    .where(eq(portfolioTemplates.id, templateId))
+    .limit(1);
 
-    if (template.length === 0) {
-      return res.status(404).json({ error: 'Plantilla no encontrada' });
-    }
-
-    // Desactivar asignaciones previas del contacto
-    await db()
-      .update(clientPortfolioAssignments)
-      .set({ status: 'ended' })
-      .where(
-        and(
-          eq(clientPortfolioAssignments.contactId, contactId),
-          eq(clientPortfolioAssignments.status, 'active')
-        )
-      );
-
-    // Crear nueva asignación
-    const [assignment] = await db()
-      .insert(clientPortfolioAssignments)
-      .values({
-        contactId,
-        templateId,
-        status: 'active',
-        startDate,
-        notes,
-        createdByUserId: userId,
-      })
-      .returning();
-
-    res.status(201).json({
-      success: true,
-      data: assignment,
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error assigning portfolio');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (template.length === 0) {
+    throw new HttpError(404, 'Plantilla no encontrada');
   }
+
+  // Desactivar asignaciones previas del contacto
+  await db()
+    .update(clientPortfolioAssignments)
+    .set({ status: 'ended' })
+    .where(
+      and(
+        eq(clientPortfolioAssignments.contactId, contactId),
+        eq(clientPortfolioAssignments.status, 'active')
+      )
+    );
+
+  // Crear nueva asignación
+  const [assignment] = await db()
+    .insert(clientPortfolioAssignments)
+    .values({
+      contactId,
+      templateId,
+      status: 'active',
+      startDate,
+      notes,
+      createdByUserId: userId,
+    })
+    .returning();
+
+  return assignment;
 }
 
 /**
  * GET /contacts/:id/portfolio
  * Obtener cartera activa de un contacto
  */
-export async function getContactPortfolio(req: Request, res: Response) {
-  try {
-    const contactId = req.params.id;
-    const dbLogger = createDrizzleLogger(req.log);
+export async function getContactPortfolio(req: Request) {
+  const contactId = req.params.id;
+  const dbLogger = createDrizzleLogger(req.log);
 
-    const operationName = createOperationName('get_contact_portfolio', contactId);
+  const operationName = createOperationName('get_contact_portfolio', contactId);
 
-    type PortfolioResult = {
-      rows: Array<{
-        assignment: {
-          id: string;
-          templateId: string;
-          status: string;
-          startDate: string;
-          endDate: string | null;
-          notes: string | null;
-          templateName: string;
-          templateDescription: string | null;
-          riskLevel: string;
-        };
-        template_lines: unknown;
-        overrides: unknown;
-      }>;
-    };
+  type PortfolioResult = {
+    rows: Array<{
+      assignment: {
+        id: string;
+        templateId: string;
+        status: string;
+        startDate: string;
+        endDate: string | null;
+        notes: string | null;
+        templateName: string;
+        templateDescription: string | null;
+        riskLevel: string;
+      };
+      template_lines: unknown;
+      overrides: unknown;
+    }>;
+  };
 
-    const result = (await dbLogger.select(operationName, () =>
-      db().execute(sql`
+  const result = (await dbLogger.select(operationName, () =>
+    db().execute(sql`
         WITH assignment_data AS (
           SELECT 
             cpa.id,
@@ -217,184 +201,149 @@ export async function getContactPortfolio(req: Request, res: Response) {
         LEFT JOIN template_lines_data tld ON ad.template_id = tld.template_id
         LEFT JOIN overrides_data od ON ad.id = od.assignment_id
       `)
-    )) as PortfolioResult;
+  )) as PortfolioResult;
 
-    if (!result.rows || result.rows.length === 0) {
-      return res.json({
-        success: true,
-        data: null,
-        message: 'No hay cartera asignada',
-      });
-    }
-
-    const row = result.rows[0] as {
-      assignment: {
-        id: string;
-        templateId: string;
-        status: string;
-        startDate: string;
-        endDate: string | null;
-        notes: string | null;
-        templateName: string;
-        templateDescription: string | null;
-        riskLevel: string | null;
-      };
-      template_lines: Array<{
-        id: string;
-        targetType: string;
-        assetClass: string | null;
-        instrumentId: string | null;
-        targetWeight: string;
-        instrumentName: string | null;
-        instrumentSymbol: string | null;
-        assetClassName: string | null;
-      }>;
-      overrides: Array<{
-        id: string;
-        targetType: string;
-        assetClass: string | null;
-        instrumentId: string | null;
-        targetWeight: string;
-      }>;
-    };
-
-    res.json({
-      success: true,
-      data: {
-        assignment: row.assignment,
-        templateLines: row.template_lines || [],
-        overrides: row.overrides || [],
-      },
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error fetching contact portfolio');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (!result.rows || result.rows.length === 0) {
+    return null;
   }
+
+  const row = result.rows[0] as {
+    assignment: {
+      id: string;
+      templateId: string;
+      status: string;
+      startDate: string;
+      endDate: string | null;
+      notes: string | null;
+      templateName: string;
+      templateDescription: string | null;
+      riskLevel: string | null;
+    };
+    template_lines: Array<{
+      id: string;
+      targetType: string;
+      assetClass: string | null;
+      instrumentId: string | null;
+      targetWeight: string;
+      instrumentName: string | null;
+      instrumentSymbol: string | null;
+      assetClassName: string | null;
+    }>;
+    overrides: Array<{
+      id: string;
+      targetType: string;
+      assetClass: string | null;
+      instrumentId: string | null;
+      targetWeight: string;
+    }>;
+  };
+
+  return {
+    assignment: row.assignment,
+    templateLines: row.template_lines || [],
+    overrides: row.overrides || [],
+  };
 }
 
 /**
  * PUT /portfolios/assignments/:id/overrides
  * Actualizar overrides de asignación
  */
-export async function updateAssignmentOverrides(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id!;
-    const role = req.user?.role as UserRole;
-    const assignmentId = req.params.id;
+export async function updateAssignmentOverrides(req: Request) {
+  const userId = req.user?.id!;
+  const role = req.user?.role as UserRole;
+  const assignmentId = req.params.id;
 
-    const { overrides } = req.body;
+  const { overrides } = req.body;
 
-    if (!Array.isArray(overrides)) {
-      return res.status(400).json({ error: 'Overrides debe ser un array' });
-    }
-
-    const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
-
-    if (!assignment) {
-      return res.status(404).json({ error: 'Asignación no encontrada o sin acceso' });
-    }
-
-    await db().transaction(async (tx: ReturnType<typeof db>) => {
-      await tx
-        .delete(clientPortfolioOverrides)
-        .where(eq(clientPortfolioOverrides.assignmentId, assignmentId));
-
-      if (overrides.length > 0) {
-        await tx.insert(clientPortfolioOverrides).values(
-          overrides.map(
-            (override: {
-              targetType: string;
-              assetClass?: string;
-              instrumentId?: string;
-              targetWeight: number;
-            }) => ({
-              assignmentId,
-              targetType: override.targetType,
-              assetClass: override.assetClass,
-              instrumentId: override.instrumentId,
-              targetWeight: override.targetWeight,
-            })
-          )
-        );
-      }
-    });
-
-    res.json({
-      success: true,
-      message: 'Overrides actualizados correctamente',
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error updating portfolio overrides');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (!Array.isArray(overrides)) {
+    throw new HttpError(400, 'Overrides debe ser un array');
   }
+
+  const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
+
+  if (!assignment) {
+    throw new HttpError(404, 'Asignación no encontrada o sin acceso');
+  }
+
+  await db().transaction(async (tx: ReturnType<typeof db>) => {
+    await tx
+      .delete(clientPortfolioOverrides)
+      .where(eq(clientPortfolioOverrides.assignmentId, assignmentId));
+
+    if (overrides.length > 0) {
+      await tx.insert(clientPortfolioOverrides).values(
+        overrides.map(
+          (override: {
+            targetType: string;
+            assetClass?: string;
+            instrumentId?: string;
+            targetWeight: number;
+          }) => ({
+            assignmentId,
+            targetType: override.targetType,
+            assetClass: override.assetClass,
+            instrumentId: override.instrumentId,
+            targetWeight: override.targetWeight,
+          })
+        )
+      );
+    }
+  });
+
+  return { message: 'Overrides actualizados correctamente' };
 }
 
 /**
  * PATCH /portfolios/assignments/:id
  * Actualizar estado de asignación de portfolio
  */
-export async function updateAssignmentStatus(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id!;
-    const role = req.user?.role as UserRole;
-    const assignmentId = req.params.id;
-    const { status } = req.body;
+export async function updateAssignmentStatus(req: Request) {
+  const userId = req.user?.id!;
+  const role = req.user?.role as UserRole;
+  const assignmentId = req.params.id;
+  const { status } = req.body;
 
-    const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
+  const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
 
-    if (!assignment) {
-      return res.status(404).json({ error: 'Asignación no encontrada o sin acceso' });
-    }
-
-    const [updated] = await db()
-      .update(clientPortfolioAssignments)
-      .set({
-        status,
-        ...(status === 'ended' ? { endDate: new Date() } : {}),
-      })
-      .where(eq(clientPortfolioAssignments.id, assignmentId))
-      .returning();
-
-    res.json({
-      success: true,
-      data: updated,
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error updating portfolio assignment status');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (!assignment) {
+    throw new HttpError(404, 'Asignación no encontrada o sin acceso');
   }
+
+  const [updated] = await db()
+    .update(clientPortfolioAssignments)
+    .set({
+      status,
+      ...(status === 'ended' ? { endDate: new Date() } : {}),
+    })
+    .where(eq(clientPortfolioAssignments.id, assignmentId))
+    .returning();
+
+  return updated;
 }
 
 /**
  * DELETE /portfolios/assignments/:id
  * Eliminar asignación de portfolio (soft delete marcando como ended)
  */
-export async function deleteAssignment(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id!;
-    const role = req.user?.role as UserRole;
-    const assignmentId = req.params.id;
+export async function deleteAssignment(req: Request) {
+  const userId = req.user?.id!;
+  const role = req.user?.role as UserRole;
+  const assignmentId = req.params.id;
 
-    const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
+  const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);
 
-    if (!assignment) {
-      return res.status(404).json({ error: 'Asignación no encontrada o sin acceso' });
-    }
-
-    await db()
-      .update(clientPortfolioAssignments)
-      .set({
-        status: 'ended',
-        endDate: new Date(),
-      })
-      .where(eq(clientPortfolioAssignments.id, assignmentId));
-
-    res.json({
-      success: true,
-      message: 'Asignación eliminada correctamente',
-    });
-  } catch (error) {
-    req.log.error({ err: error }, 'Error deleting portfolio assignment');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (!assignment) {
+    throw new HttpError(404, 'Asignación no encontrada o sin acceso');
   }
+
+  await db()
+    .update(clientPortfolioAssignments)
+    .set({
+      status: 'ended',
+      endDate: new Date(),
+    })
+    .where(eq(clientPortfolioAssignments.id, assignmentId));
+
+  return { message: 'Asignación eliminada correctamente' };
 }

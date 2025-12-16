@@ -1,10 +1,10 @@
 /**
  * Helper para llamadas API en Server Components
- * 
+ *
  * AI_DECISION: Usar cookies httpOnly en lugar de Bearer token para consistencia
  * Justificación: Alinea Server Components con el patrón principal de autenticación
  * Impacto: Consistencia en toda la aplicación, más seguro
- * 
+ *
  * AI_DECISION: Mantener fetch directo en lugar de apiClient
  * Justificación: Server Components de Next.js necesitan acceso a cookies() de Next.js
  *                 que solo está disponible en el contexto del servidor. apiClient está
@@ -18,11 +18,11 @@ import { cookies } from 'next/headers';
 
 /**
  * Cliente API para Server Components que usa cookies automáticamente
- * 
+ *
  * AI_DECISION: Priorizar cookies sobre token explícito
  * Justificación: Consistencia con patrón principal de autenticación
  * Impacto: Server Components usan el mismo método de auth que Client Components
- * 
+ *
  * NOTA: Este archivo usa fetch directo porque necesita acceso a cookies() de Next.js
  *       que solo está disponible en Server Components. apiClient no puede usarse aquí.
  */
@@ -57,43 +57,57 @@ export async function apiCall<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
 
-  // AI_DECISION: Use force-cache when revalidate is specified, otherwise no-store
-  // Justificación: Next.js revalidate requires cache to be enabled. Default to no-store for fresh data when no revalidate.
-  // Impacto: Enables proper caching with revalidation for optimized requests
-  const shouldCache = options.revalidate !== undefined && options.revalidate !== false;
-  const cacheStrategy: RequestCache = options.cache ?? (shouldCache ? 'force-cache' : 'no-store');
+  // AI_DECISION: Don't set cache when revalidate is specified
+  // Justificación: Next.js warns when both cache and revalidate are specified. When revalidate is used,
+  //                 Next.js handles caching automatically. Only set cache when revalidate is not specified.
+  // Impacto: Eliminates Next.js warnings and uses proper caching strategy
+  const hasRevalidate = options.revalidate !== undefined && options.revalidate !== false;
 
   const fetchOptions: RequestInit & { next?: { revalidate: number | false } } = {
     method: options.method || 'GET',
     headers,
-    cache: cacheStrategy,
     signal: controller.signal,
   };
-  
-  // Next.js revalidate option
-  if (shouldCache && typeof options.revalidate === 'number') {
+
+  // Only set cache if revalidate is not specified (Next.js handles cache when revalidate is used)
+  if (!hasRevalidate) {
+    fetchOptions.cache = options.cache ?? 'no-store';
+  }
+
+  // Next.js revalidate option (Next.js will handle cache automatically)
+  if (hasRevalidate && typeof options.revalidate === 'number') {
     fetchOptions.next = { revalidate: options.revalidate };
   }
-  
+
   if (options.body !== undefined) {
     fetchOptions.body = JSON.stringify(options.body);
   }
   let response: Response;
   try {
     response = await fetch(url, fetchOptions);
+  } catch (fetchError) {
+    clearTimeout(timeout);
+    // Network error (ECONNREFUSED, timeout, etc.)
+    const error = new Error(fetchError instanceof Error ? fetchError.message : 'Network error');
+    // Mark as network error (no status code)
+    (error as Error & { status?: number; isNetworkError?: boolean }).isNetworkError = true;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+    const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+    const error = new Error(errorMessage);
+    // Attach status code to error for better error handling
+    (error as Error & { status?: number }).status = response.status;
+    throw error;
   }
 
   const data = await response.json();
   return data;
 }
-
 
 /**
  * Helper para obtener contacto en Server Components
@@ -119,9 +133,20 @@ export async function getTeams(): Promise<ApiResponse<import('@/types/team').Tea
 }
 
 /**
+ * Helper para obtener dashboard del miembro en Server Components
+ */
+export async function getMemberDashboard(): Promise<
+  ApiResponse<import('@/lib/api/teams').MemberDashboardResponse>
+> {
+  return apiCall('/v1/teams/member-dashboard');
+}
+
+/**
  * Helper para obtener solicitudes de membresía en Server Components
  */
-export async function getMembershipRequests(): Promise<ApiResponse<import('@/types/team').MembershipRequest[]>> {
+export async function getMembershipRequests(): Promise<
+  ApiResponse<import('@/types/team').MembershipRequest[]>
+> {
   return apiCall('/v1/teams/membership-requests');
 }
 
@@ -134,7 +159,7 @@ export async function getPortfolios(): Promise<ApiResponse<import('@/types').Por
 
 /**
  * Helper para obtener usuario actual en Server Components
- * 
+ *
  * AI_DECISION: Usar /v1/users/me en lugar de /v1/auth/me para información completa
  * Justificación: /v1/users/me retorna información completa del usuario desde DB (phone, isActive, createdAt, etc.)
  *                 mientras que /v1/auth/me solo retorna AuthUser básico del token
@@ -173,7 +198,8 @@ export async function getCapacitaciones(params?: {
 /**
  * Helper para obtener pipeline board en Server Components
  */
-export async function getPipelineBoard(): Promise<ApiResponse<import('@/types/pipeline').PipelineStageWithContacts[]>> {
+export async function getPipelineBoard(): Promise<
+  ApiResponse<import('@/types/pipeline').PipelineStageWithContacts[]>
+> {
   return apiCall('/v1/pipeline/board');
 }
-

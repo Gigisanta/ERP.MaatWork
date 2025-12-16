@@ -1,32 +1,22 @@
-// AI_DECISION: Agregar lint rules para prevenir console.log en runtime
-// Justificación: Prevenir logs no estructurados en producción
-// Impacto: Fuerza uso de logger estructurado (lib/logger.ts)
+import rootConfig from '../../eslint.config.mjs';
 
 export default [
+  ...rootConfig,
   {
-    ignores: ['.next/**', 'node_modules/**']
+    ignores: ['.next/**'],
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    files: ['**/*.ts', '**/*.tsx'],
     rules: {
-      'no-console': ['error', { 
-        allow: ['error'] // Solo permitir console.error para casos críticos
-      }],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        ignoreRestSiblings: true,
-        caughtErrorsIgnorePattern: '^_'
-      }],
+      // Web specific overrides
+      'react-hooks/exhaustive-deps': 'off', // Keep existing preference
       'no-restricted-syntax': [
         'error',
         {
           selector: 'ExportAllDeclaration',
-          message: 'Barrel exports forbidden - breaks tree-shaking. Use specific exports instead.'
-        }
-      ]
-    }
-  }
+          message: 'Barrel exports forbidden in web app - breaks tree-shaking.',
+        },
+      ],
+    },
+  },
 ];
-

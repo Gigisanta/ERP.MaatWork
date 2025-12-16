@@ -6,12 +6,12 @@ import {
   getCareerPlanLevels,
   createCareerPlanLevel,
   updateCareerPlanLevel,
-  deleteCareerPlanLevel
+  deleteCareerPlanLevel,
 } from '@/lib/api/career-plan';
 import type {
   CareerPlanLevel,
   CareerPlanLevelCreateRequest,
-  CareerPlanLevelUpdateRequest
+  CareerPlanLevelUpdateRequest,
 } from '@/types/career-plan';
 import {
   Card,
@@ -35,7 +35,7 @@ import {
   Icon,
   type Column,
   Badge,
-  Switch
+  Switch,
 } from '@cactus/ui';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../../lib/hooks/useToast';
@@ -47,13 +47,13 @@ import { isAdmin } from '@/lib/auth-helpers';
 export default function PlanDeCarreraPage() {
   const { user, loading } = useRequireAuth();
   const { showToast } = useToast();
-  
+
   usePageTitle('Plan de Carrera');
 
   const [levels, setLevels] = useState<CareerPlanLevel[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingLevel, setEditingLevel] = useState<CareerPlanLevel | null>(null);
   const [formData, setFormData] = useState<CareerPlanLevelCreateRequest>({
@@ -63,7 +63,7 @@ export default function PlanDeCarreraPage() {
     index: '1.0',
     percentage: '0',
     annualGoalUsd: 0,
-    isActive: true
+    isActive: true,
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -77,7 +77,7 @@ export default function PlanDeCarreraPage() {
   }>({
     open: false,
     title: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
   const canEdit = isAdmin(user);
@@ -117,11 +117,11 @@ export default function PlanDeCarreraPage() {
     setFormData({
       category: '',
       level: '',
-      levelNumber: levels.length > 0 ? Math.max(...levels.map(l => l.levelNumber)) + 1 : 1,
+      levelNumber: levels.length > 0 ? Math.max(...levels.map((l) => l.levelNumber)) + 1 : 1,
       index: '1.0',
       percentage: '0',
       annualGoalUsd: 0,
-      isActive: true
+      isActive: true,
     });
     setFormErrors({});
     setShowFormModal(true);
@@ -140,7 +140,7 @@ export default function PlanDeCarreraPage() {
       index: level.index,
       percentage: level.percentage,
       annualGoalUsd: level.annualGoalUsd,
-      isActive: level.isActive
+      isActive: level.isActive,
     });
     setFormErrors({});
     setShowFormModal(true);
@@ -164,13 +164,13 @@ export default function PlanDeCarreraPage() {
         } catch (err) {
           showToast('Error', 'No se pudo eliminar el nivel', 'error');
         }
-      }
+      },
     });
   };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
+
     if (!formData.category.trim()) {
       errors.category = 'La categoría es requerida';
     }
@@ -183,7 +183,11 @@ export default function PlanDeCarreraPage() {
     if (!formData.index || parseFloat(formData.index.toString()) <= 0) {
       errors.index = 'El índice debe ser mayor a 0';
     }
-    if (!formData.percentage || parseFloat(formData.percentage.toString()) < 0 || parseFloat(formData.percentage.toString()) > 100) {
+    if (
+      !formData.percentage ||
+      parseFloat(formData.percentage.toString()) < 0 ||
+      parseFloat(formData.percentage.toString()) > 100
+    ) {
       errors.percentage = 'El porcentaje debe estar entre 0 y 100';
     }
     if (formData.annualGoalUsd < 0) {
@@ -212,9 +216,12 @@ export default function PlanDeCarreraPage() {
           level: formData.level,
           levelNumber: formData.levelNumber,
           index: typeof formData.index === 'string' ? formData.index : formData.index.toString(),
-          percentage: typeof formData.percentage === 'string' ? formData.percentage : formData.percentage.toString(),
+          percentage:
+            typeof formData.percentage === 'string'
+              ? formData.percentage
+              : formData.percentage.toString(),
           annualGoalUsd: formData.annualGoalUsd,
-          ...(formData.isActive !== undefined && { isActive: formData.isActive })
+          ...(formData.isActive !== undefined && { isActive: formData.isActive }),
         };
         await updateCareerPlanLevel(editingLevel.id, updateData);
         showToast('Nivel actualizado', undefined, 'success');
@@ -238,35 +245,35 @@ export default function PlanDeCarreraPage() {
         key: 'levelNumber',
         header: 'N°',
         sortable: true,
-        width: '60px'
+        width: '60px',
       },
       {
         key: 'category',
         header: 'Categoría',
-        sortable: true
+        sortable: true,
       },
       {
         key: 'level',
         header: 'Nivel',
-        sortable: true
+        sortable: true,
       },
       {
         key: 'index',
         header: 'Índice',
         sortable: true,
-        render: (level) => <Text size="sm">{level.index}</Text>
+        render: (level) => <Text size="sm">{level.index}</Text>,
       },
       {
         key: 'percentage',
         header: 'Porcentaje',
         sortable: true,
-        render: (level) => <Text size="sm">{formatLevelPercentage(level.percentage)}</Text>
+        render: (level) => <Text size="sm">{formatLevelPercentage(level.percentage)}</Text>,
       },
       {
         key: 'annualGoalUsd',
         header: 'Objetivo Anual (USD)',
         sortable: true,
-        render: (level) => <Text size="sm">{formatAnnualGoal(level.annualGoalUsd)}</Text>
+        render: (level) => <Text size="sm">{formatAnnualGoal(level.annualGoalUsd)}</Text>,
       },
       {
         key: 'isActive',
@@ -275,8 +282,8 @@ export default function PlanDeCarreraPage() {
           <Badge variant={level.isActive ? 'success' : 'error'}>
             {level.isActive ? 'Activo' : 'Inactivo'}
           </Badge>
-        )
-      }
+        ),
+      },
     ];
 
     // Solo agregar columna de acciones si el usuario es admin
@@ -305,7 +312,7 @@ export default function PlanDeCarreraPage() {
               <Icon name="trash-2" size={14} />
             </Button>
           </div>
-        )
+        ),
       });
     }
 
@@ -329,7 +336,7 @@ export default function PlanDeCarreraPage() {
           <div>
             <Heading level={2}>Plan de Carrera Comercial</Heading>
             <Text size="sm" color="secondary">
-              {canEdit 
+              {canEdit
                 ? 'Configura los niveles del plan de carrera por objetivos'
                 : 'Visualiza los niveles del plan de carrera por objetivos'}
             </Text>
@@ -342,11 +349,7 @@ export default function PlanDeCarreraPage() {
           )}
         </div>
 
-        {error && (
-          <Alert variant="error">
-            {error}
-          </Alert>
-        )}
+        {error && <Alert variant="error">{error}</Alert>}
 
         <Card>
           <CardHeader>
@@ -508,17 +511,16 @@ export default function PlanDeCarreraPage() {
           >
             Cancelar
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={saving}
-          >
+          <Button onClick={handleSubmit} disabled={saving}>
             {saving ? (
               <>
                 <Spinner size="sm" className="mr-2" />
                 Guardando...
               </>
+            ) : editingLevel ? (
+              'Actualizar'
             ) : (
-              editingLevel ? 'Actualizar' : 'Crear'
+              'Crear'
             )}
           </Button>
         </ModalFooter>
@@ -527,7 +529,7 @@ export default function PlanDeCarreraPage() {
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}
@@ -538,4 +540,3 @@ export default function PlanDeCarreraPage() {
     </div>
   );
 }
-

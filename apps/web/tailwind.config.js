@@ -15,4 +15,4 @@ module.exports = {
     '../../packages/ui/dist/**/*.{js,ts,jsx,tsx}',
   ],
   plugins: [],
-}
+};

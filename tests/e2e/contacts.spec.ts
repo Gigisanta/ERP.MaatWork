@@ -5,8 +5,14 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page) {
   await page.goto('/login');
-  await page.getByLabel(/email|usuario|correo/i).first().fill(adminEmail);
-  await page.getByLabel(/contraseña|password/i).first().fill(adminPassword);
+  await page
+    .getByLabel(/email|usuario|correo/i)
+    .first()
+    .fill(adminEmail);
+  await page
+    .getByLabel(/contraseña|password/i)
+    .first()
+    .fill(adminPassword);
   await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
   await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
 }
@@ -17,11 +23,14 @@ test.describe('Contacts CRUD happy path', () => {
 
     await page.goto('/contacts');
     const newBtn = page.getByRole('button', { name: /nuevo|new|crear/i });
-    if (await newBtn.count() === 0) test.skip();
+    if ((await newBtn.count()) === 0) test.skip();
     await newBtn.first().click();
 
     const fullName = `Test User ${Date.now()}`;
-    await page.getByLabel(/nombre|full name|nombre completo/i).first().fill(fullName);
+    await page
+      .getByLabel(/nombre|full name|nombre completo/i)
+      .first()
+      .fill(fullName);
     const emailField = page.getByLabel(/email/i).first();
     if (await emailField.count()) {
       await emailField.fill(`test${Date.now()}@example.com`);
@@ -44,8 +53,3 @@ test.describe('Contacts CRUD happy path', () => {
     }
   });
 });
-
-
-
-
-

@@ -33,19 +33,25 @@ describe('Button Component', () => {
     it('should apply secondary variant classes', () => {
       render(<Button variant="secondary">Secondary</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-surface-hover', 'text-text');
+      expect(button).toHaveClass('bg-secondary', 'text-text-inverse');
     });
 
     it('should apply outline variant classes', () => {
       render(<Button variant="outline">Outline</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border', 'border-border', 'bg-background');
+      expect(button).toHaveClass('border', 'border-border', 'bg-transparent');
     });
 
     it('should apply ghost variant classes', () => {
       render(<Button variant="ghost">Ghost</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('text-text', 'hover:bg-surface');
+      expect(button).toHaveClass('text-text', 'hover:bg-primary-subtle');
+    });
+
+    it('should apply joy variant classes', () => {
+      render(<Button variant="joy">Joy</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-joy', 'hover:bg-joy-hover');
     });
   });
 
@@ -73,9 +79,9 @@ describe('Button Component', () => {
     it('should call onClick when clicked', async () => {
       const handleClick = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Button onClick={handleClick}>Click me</Button>);
-      
+
       await user.click(screen.getByRole('button'));
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
@@ -83,9 +89,13 @@ describe('Button Component', () => {
     it('should not call onClick when disabled', async () => {
       const handleClick = vi.fn();
       const user = userEvent.setup();
-      
-      render(<Button onClick={handleClick} disabled>Click me</Button>);
-      
+
+      render(
+        <Button onClick={handleClick} disabled>
+          Click me
+        </Button>
+      );
+
       await user.click(screen.getByRole('button'));
       expect(handleClick).not.toHaveBeenCalled();
     });
@@ -117,13 +127,13 @@ describe('Button Component', () => {
     it('should be keyboard accessible', async () => {
       const handleClick = vi.fn();
       const user = userEvent.setup();
-      
+
       render(<Button onClick={handleClick}>Accessible</Button>);
-      
+
       const button = screen.getByRole('button');
       button.focus();
       expect(button).toHaveFocus();
-      
+
       await user.keyboard('{Enter}');
       expect(handleClick).toHaveBeenCalled();
     });
@@ -135,4 +145,3 @@ describe('Button Component', () => {
     });
   });
 });
-

@@ -1,6 +1,14 @@
-"use client";
+'use client';
 
-import { Modal, ModalHeader, ModalFooter, ModalTitle, ModalDescription, ModalContent, Button } from '@cactus/ui';
+import {
+  Modal,
+  ModalHeader,
+  ModalFooter,
+  ModalTitle,
+  ModalDescription,
+  ModalContent,
+  Button,
+} from '@cactus/ui';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -15,7 +23,7 @@ export interface ConfirmDialogProps {
 
 /**
  * ConfirmDialog - Componente reutilizable para confirmaciones
- * 
+ *
  * Reemplaza confirm() nativo con Modal del design system
  * Siguiendo patrones de .cursor/rules/
  */
@@ -27,7 +35,7 @@ export default function ConfirmDialog({
   description,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
-  variant = 'default'
+  variant = 'default',
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
@@ -42,10 +50,7 @@ export default function ConfirmDialog({
           {description && <ModalDescription>{description}</ModalDescription>}
         </ModalHeader>
         <ModalFooter>
-          <Button
-            variant="secondary"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>
           <Button
@@ -60,4 +65,3 @@ export default function ConfirmDialog({
     </Modal>
   );
 }
-

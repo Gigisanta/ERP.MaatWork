@@ -10,12 +10,19 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, contacts, pipelineStageHistory } from '@cactus/db';
+import {
+  db,
+  contacts,
+  pipelineStageHistory,
+  contactStageInteractions,
+  pipelineStages,
+} from '@cactus/db';
 import { and, isNull, sql, desc, eq } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../../utils/validation';
+import { createErrorResponse } from '../../../utils/error-response';
 import { getPipelineStagesByNames } from './helpers';
 import { calculateMonthlyMetrics } from './calculate-monthly';
 import type { PipelineStageIds } from './types';
@@ -85,7 +92,13 @@ router.get(
           },
           'Required pipeline stages not found'
         );
-        return res.status(500).json({ error: 'Pipeline stages not found' });
+        return res.status(500).json(
+          createErrorResponse({
+            error: new Error('Pipeline stages not found'),
+            requestId: req.requestId,
+            userMessage: 'Etapas de pipeline requeridas no encontradas',
+          })
+        );
       }
 
       const stageIds: PipelineStageIds = {
@@ -192,11 +205,49 @@ router.get(
         (m): m is Awaited<ReturnType<typeof calculateMonthlyMetrics>> => m !== null
       );
 
+      // Calculate average interactions per stage
+      // AI_DECISION: Calcular promedio de interacciones por etapa
+      // Justificación: Métrica útil para entender engagement promedio por etapa del pipeline
+      // Impacto: Permite identificar etapas con bajo engagement
+      req.log.debug({ userId, userRole }, 'Calculating average interactions per stage');
+      const averageInteractionsRaw = await db()
+        .select({
+          stageId: contactStageInteractions.pipelineStageId,
+          stageName: pipelineStages.name,
+          averageInteractions: sql<number>`COALESCE(AVG(${contactStageInteractions.interactionCount})::numeric, 0)`,
+        })
+        .from(contactStageInteractions)
+        .innerJoin(pipelineStages, eq(contactStageInteractions.pipelineStageId, pipelineStages.id))
+        .innerJoin(contacts, eq(contactStageInteractions.contactId, contacts.id))
+        .where(and(isNull(contacts.deletedAt), accessFilter.whereClause))
+        .groupBy(contactStageInteractions.pipelineStageId, pipelineStages.name);
+
+      // Transform to ensure numeric values
+      const averageInteractions = averageInteractionsRaw.map(
+        (item: { stageId: string | null; stageName: string; averageInteractions: number }) => ({
+          stageId: item.stageId || '',
+          stageName: item.stageName,
+          averageInteractions: Number(item.averageInteractions) || 0,
+        })
+      );
+
+      req.log.info(
+        {
+          userId,
+          userRole,
+          averageInteractionsCount: averageInteractions.length,
+          month: targetMonth,
+          year: targetYear,
+        },
+        'Metrics calculated successfully including average interactions'
+      );
+
       res.json({
         success: true,
         data: {
           currentMonth: currentMonthMetrics,
           history: historyMetrics,
+          averageInteractions,
         },
       });
     } catch (err) {

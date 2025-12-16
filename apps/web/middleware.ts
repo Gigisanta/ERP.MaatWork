@@ -37,6 +37,7 @@ const protectedRoutes = [
 // Rutas públicas que no requieren autenticación
 const publicRoutes = ['/', '/login', '/register'];
 
+// ts-prune-ignore-next: Next.js middleware entrypoint discovered by filename
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -49,11 +50,25 @@ export async function middleware(request: NextRequest) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
         const secret = new TextEncoder().encode(JWT_SECRET);
-        await jwtVerify(token, secret);
-        const redirect = request.nextUrl.searchParams.get('redirect') || '/home';
-        return NextResponse.redirect(new URL(redirect, baseUrl));
+        const { payload } = await jwtVerify(token, secret);
+
+        // Verificar que el token no haya expirado
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp >= now) {
+          // Token válido y no expirado, redirigir a /home
+          const redirect = request.nextUrl.searchParams.get('redirect') || '/home';
+          return NextResponse.redirect(new URL(redirect, baseUrl));
+        } else {
+          // Token expirado, limpiar cookie
+          const response = NextResponse.next();
+          response.cookies.delete('token');
+          return response;
+        }
       } catch {
-        // si el token es inválido/expirado, seguimos al login normal
+        // Token inválido/expirado, limpiar cookie y continuar al login
+        const response = NextResponse.next();
+        response.cookies.delete('token');
+        return response;
       }
     }
   }
@@ -131,6 +146,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// ts-prune-ignore-next: Next.js middleware matcher consumed by framework
 export const config = {
   matcher: [
     /*

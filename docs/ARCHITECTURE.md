@@ -39,12 +39,13 @@
 
 // AI_DECISION: Feature flags para funcionalidades incompletas
 // Justificación: Evitar rutas “mock” en producción
-// Impacto: `TAGS_RULES_ENABLED` desactiva evaluación/refresh
+// Impacto: Feature flags permiten desactivar funcionalidades en desarrollo
 
 ## Backend (API)
 - Express 5, middlewares en orden: CORS → compression → requestId → helmet → pino-http → routes → error/404
 - Error handler devuelve JSON y oculta detalles en prod
 - Shutdown graceful (SIGTERM/SIGINT) con timeout de 10s
+- **Versionado de API:** Todas las rutas deben usar el prefijo `/v1/` obligatoriamente (ej: `/v1/contacts`, `/v1/users`)
 
 ### Utilidades Compartidas
 
@@ -65,6 +66,16 @@
 - `createErrorResponse`: Crea respuestas de error estandarizadas
 - `getStatusCodeFromError`: Determina código HTTP apropiado
 - Todas las rutas deben usar `createErrorResponse` para consistencia
+
+#### Route Handlers (`apps/api/src/utils/route-handler.ts`)
+- `createRouteHandler`: Wrapper estándar para handlers que retornan datos
+  - Envuelve automáticamente en `{ success: true, data: ... }`
+  - Maneja errores automáticamente con `createErrorResponse`
+  - Incluye `requestId` en respuestas
+  - **Usar para la mayoría de casos**
+- `createAsyncHandler`: Wrapper para casos especiales que necesitan control directo de `res`
+  - Usar SOLO para: status 201, cookies, headers personalizados, streaming, campos adicionales
+  - **Usar solo cuando es necesario**
 
 ### Estructura de Módulos Refactorizados
 
@@ -132,7 +143,7 @@ portfolios/[id]/
 
 ### Portfolio Templates (CRM Legacy - Activo)
 - **Propósito:** Modelos de inversión predefinidos para asignar a clientes
-- **Ubicación Backend:** `apps/api/src/routes/portfolio.ts` (endpoints `/portfolios/templates`)
+- **Ubicación Backend:** `apps/api/src/routes/portfolio/index.ts` (endpoints `/portfolios/templates`)
 - **DB Tables:** `portfolioTemplates`, `portfolioTemplateLines`, `clientPortfolioAssignments`
 - **Usado por:** Advisors/Managers para asignar estrategias de inversión a contactos
 - **Features:**
@@ -158,7 +169,7 @@ GET    /portfolios/assignments/:contactId # Ver asignaciones de contacto
 
 ### Portfolios & Benchmarks (Epic-D - Activo)
 - **Propósito:** Sistema de analytics para performance y comparación de instrumentos
-- **Ubicación Backend:** `apps/api/src/routes/benchmarks.ts`, `apps/api/src/routes/instruments.ts`
+- **Ubicación Backend:** `apps/api/src/routes/benchmarks/index.ts`, `apps/api/src/routes/instruments/index.ts`
 - **DB Tables:** `instruments`, `benchmarks`, `benchmark_components`, `metrics`
 - **Usado por:** Sistema de analytics para cálculos financieros
 - **Features:**
@@ -261,9 +272,11 @@ apps/api/src/
 **Ejemplo - Rutas API:**
 ```typescript
 // apps/api/src/routes/contacts/crud.ts
-import { Router, type Request, type Response } from 'express';
+import { Router } from 'express';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
+import { createRouteHandler, createAsyncHandler, HttpError } from '../../utils/route-handler';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -277,9 +290,32 @@ const createContactSchema = z.object({ /* ... */ });
 // Routes
 // ==========================================================
 
-router.post('/', requireAuth, validate({ body: createContactSchema }), async (req, res) => {
-  // Handler implementation
-});
+// GET - Usar createRouteHandler (retorna datos directamente)
+router.get('/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(async (req) => {
+    const contact = await getContact(req.params.id);
+    if (!contact) {
+      throw new HttpError(404, 'Contact not found');
+    }
+    return contact; // Se envuelve en { success: true, data: contact }
+  })
+);
+
+// POST - Usar createAsyncHandler para status 201
+router.post('/',
+  requireAuth,
+  validate({ body: createContactSchema }),
+  createAsyncHandler(async (req, res) => {
+    const contact = await createContact(req.body);
+    return res.status(201).json({ 
+      success: true, 
+      data: contact, 
+      requestId: req.requestId 
+    });
+  })
+);
 
 export default router;
 ```
@@ -305,7 +341,7 @@ import { notFound } from 'next/navigation';
 import { apiServer } from '@/lib/api-server';
 
 export default async function ContactDetailPage({ params }: { params: { id: string } }) {
-  const contact = await apiServer.get(`/contacts/${params.id}`);
+  const contact = await apiServer.get(`/v1/contacts/${params.id}`);
   if (!contact) notFound();
   
   return <ContactDetail contact={contact} />;
@@ -405,6 +441,22 @@ lib/hooks/
 - ✅ Componentes accesibles (`aria-*`) y tamaños acotados
 - ✅ Tipos exportados explícitamente (`type ComponentProps`)
 - ✅ Build genera `dist/` con `.js` y `.d.ts`
+
+## Mejoras Recientes de Consistencia
+
+### Optimización de Imports y Exports
+- **Exports nombrados específicos**: Convertidos exports barrel (`export *`) en módulos críticos (`utils/database/`, `utils/file/`, `utils/http/`) para mejor tree-shaking y reducción de bundle size
+- **Aliases de importación**: Estandarizados imports relativos largos a aliases `@/` (`@/utils/*`, `@/routes/*`, `@/services/*`, etc.) para mejor mantenibilidad
+- **Nomenclatura de archivos**: Renombrados archivos de servicios a convención kebab-case (`aum-conflict-resolution.ts`, `aum-matcher.ts`, `aum-upsert.ts`)
+
+### Documentación y Comentarios
+- **AI_DECISION comments**: Agregados comentarios explicativos a funciones complejas (`validate()`, `RATE_LIMIT_PRESETS`) siguiendo el patrón establecido
+- **Justificación e impacto**: Cada AI_DECISION incluye por qué se tomó la decisión y qué impacto tiene
+
+### Calidad de Código Verificada
+- **Typecheck**: Configuración TypeScript estricta con `exactOptionalPropertyTypes: true`
+- **Linting**: Reglas ESLint que previenen `any` types, `console.*`, y barrel exports
+- **Tests**: Cobertura de tests unitarios en módulos críticos con patrones de mocking consistentes
 
 ## Variables de entorno
 - API: `DATABASE_URL`, `PORT`, `LOG_LEVEL`, `CORS_ORIGINS`, `CSP_ENABLED`, `JWT_SECRET`, `JWT_EXPIRES_IN`

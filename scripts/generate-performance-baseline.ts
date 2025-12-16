@@ -1,11 +1,15 @@
 /**
  * Script para generar baseline de performance de queries
- * 
+ *
  * Ejecuta análisis completo de queries existentes y genera reporte baseline
  * para comparación futura después de optimizaciones.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../apps/api/src/utils/db-logger';
+import {
+  getQueryMetrics,
+  getSlowQueries,
+  getNPlusOneQueries,
+} from '../apps/api/src/utils/db-logger';
 import { analyzeQueries, generateTextReport } from '../apps/api/src/utils/query-analyzer';
 import { getCacheHealth } from '../apps/api/src/utils/cache';
 import { writeFileSync } from 'fs';
@@ -30,10 +34,11 @@ async function generateBaseline() {
     // Calcular hit rate general de caché
     const cacheStats = Object.values(cacheHealth);
     const totalHits = cacheStats.reduce((sum: number, stats: any) => sum + (stats.hits || 0), 0);
-    const totalMisses = cacheStats.reduce((sum: number, stats: any) => sum + (stats.misses || 0), 0);
-    const overallHitRate = totalHits + totalMisses > 0 
-      ? totalHits / (totalHits + totalMisses) 
-      : 0;
+    const totalMisses = cacheStats.reduce(
+      (sum: number, stats: any) => sum + (stats.misses || 0),
+      0
+    );
+    const overallHitRate = totalHits + totalMisses > 0 ? totalHits / (totalHits + totalMisses) : 0;
 
     // Crear objeto de baseline
     const baseline = {
@@ -42,30 +47,30 @@ async function generateBaseline() {
         totalQueries: allMetrics.length,
         slowQueriesCount: slowQueries.length,
         nPlusOneQueriesCount: nPlusOneQueries.length,
-        cacheHitRate: overallHitRate
+        cacheHitRate: overallHitRate,
       },
-      topSlowQueries: slowQueries.slice(0, 20).map(m => ({
+      topSlowQueries: slowQueries.slice(0, 20).map((m) => ({
         operation: m.operationBase,
         count: m.count,
         avgDuration: m.avgDuration,
         p95Duration: m.p95Duration,
-        p99Duration: m.p99Duration
+        p99Duration: m.p99Duration,
       })),
       topFrequentQueries: allMetrics
-        .filter(m => m.count > 100)
+        .filter((m) => m.count > 100)
         .sort((a, b) => b.count - a.count)
         .slice(0, 20)
-        .map(m => ({
+        .map((m) => ({
           operation: m.operationBase,
           count: m.count,
           avgDuration: m.avgDuration,
-          p95Duration: m.p95Duration
+          p95Duration: m.p95Duration,
         })),
-      nPlusOneQueries: nPlusOneQueries.map(m => ({
+      nPlusOneQueries: nPlusOneQueries.map((m) => ({
         operation: m.operationBase,
         count: m.count,
         nPlusOneCount: m.nPlusOneCount,
-        avgDuration: m.avgDuration
+        avgDuration: m.avgDuration,
       })),
       cacheHealth: {
         overallHitRate: overallHitRate,
@@ -74,10 +79,10 @@ async function generateBaseline() {
           hitRate: stats.hitRate || 0,
           hits: stats.hits || 0,
           misses: stats.misses || 0,
-          keys: stats.keys || 0
-        }))
+          keys: stats.keys || 0,
+        })),
       },
-      recommendations: analysis.recommendations
+      recommendations: analysis.recommendations,
     };
 
     // Guardar baseline JSON
@@ -103,14 +108,18 @@ async function generateBaseline() {
       console.log('\n🐌 TOP 5 QUERIES MÁS LENTAS:');
       baseline.topSlowQueries.slice(0, 5).forEach((q, i) => {
         console.log(`${i + 1}. ${q.operation}`);
-        console.log(`   Promedio: ${q.avgDuration.toFixed(2)}ms | P95: ${q.p95Duration.toFixed(2)}ms | Ejecuciones: ${q.count}`);
+        console.log(
+          `   Promedio: ${q.avgDuration.toFixed(2)}ms | P95: ${q.p95Duration.toFixed(2)}ms | Ejecuciones: ${q.count}`
+        );
       });
     }
 
     if (baseline.nPlusOneQueries.length > 0) {
       console.log('\n⚠️  QUERIES N+1 DETECTADAS:');
-      baseline.nPlusOneQueries.forEach(q => {
-        console.log(`- ${q.operation}: ${q.nPlusOneCount} ocurrencias N+1 de ${q.count} ejecuciones totales`);
+      baseline.nPlusOneQueries.forEach((q) => {
+        console.log(
+          `- ${q.operation}: ${q.nPlusOneCount} ocurrencias N+1 de ${q.count} ejecuciones totales`
+        );
       });
     }
 
@@ -131,4 +140,3 @@ generateBaseline()
     console.error('\n❌ Error:', error);
     process.exit(1);
   });
-

@@ -51,7 +51,7 @@ export function TeamMembersSection({
         key: 'role',
         header: 'Rol',
         render: (member) => (
-          <Badge variant={member.role === 'lead' ? 'brand' : 'default'}>{member.role}</Badge>
+          <Badge variant={member.role === 'lead' ? 'secondary' : 'default'}>{member.role}</Badge>
         ),
       },
       {

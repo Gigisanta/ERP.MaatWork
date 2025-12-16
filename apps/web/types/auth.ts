@@ -2,7 +2,7 @@
  * Tipos relacionados con autenticación y usuarios
  */
 
-import type { TimestampedEntity } from './common';
+import type { TimestampedEntity } from '@cactus/types/common';
 
 /**
  * Rol de usuario
@@ -24,6 +24,7 @@ export interface User extends TimestampedEntity {
   phone?: string | null;
   role: UserRole;
   active: boolean;
+  isGoogleConnected?: boolean;
 }
 
 /**
@@ -31,6 +32,7 @@ export interface User extends TimestampedEntity {
  * Usa isActive en lugar de active
  */
 export interface UserApiResponse extends Omit<User, 'role' | 'active' | 'createdAt' | 'updatedAt'> {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   role: UserRole; // advisor, manager, admin
   isActive: boolean; // Usa isActive en lugar de active
 }

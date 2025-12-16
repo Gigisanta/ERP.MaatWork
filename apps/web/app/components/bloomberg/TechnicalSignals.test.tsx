@@ -14,17 +14,17 @@ describe('TechnicalSignals', () => {
 
   it('debería mostrar contenido después de cargar', async () => {
     render(<TechnicalSignals symbol="AAPL" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Technical Signals - AAPL/i)).toBeInTheDocument();
     });
-    
+
     expect(screen.getByText(/Technical indicators/i)).toBeInTheDocument();
   });
 
   it('debería mostrar symbol en el heading', async () => {
     render(<TechnicalSignals symbol="MSFT" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Technical Signals - MSFT/i)).toBeInTheDocument();
     });
@@ -32,7 +32,7 @@ describe('TechnicalSignals', () => {
 
   it('debería mostrar mensaje sobre indicadores técnicos', async () => {
     render(<TechnicalSignals symbol="AAPL" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/SMA/i)).toBeInTheDocument();
       expect(screen.getByText(/EMA/i)).toBeInTheDocument();
@@ -44,16 +44,15 @@ describe('TechnicalSignals', () => {
 
   it('debería manejar diferentes symbols', async () => {
     const { rerender } = render(<TechnicalSignals symbol="GOOGL" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Technical Signals - GOOGL/i)).toBeInTheDocument();
     });
-    
+
     rerender(<TechnicalSignals symbol="TSLA" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Technical Signals - TSLA/i)).toBeInTheDocument();
     });
   });
 });
-

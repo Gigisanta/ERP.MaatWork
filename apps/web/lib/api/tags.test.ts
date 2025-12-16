@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -65,7 +65,7 @@ describe('tags api client endpoints', () => {
     await apiIndex.updateContactTags('contact-123', ['tag-1', 'tag-2'], ['tag-3']);
     expect(apiClient.put).toHaveBeenCalledWith('/v1/tags/contacts/contact-123', {
       add: ['tag-1', 'tag-2'],
-      remove: ['tag-3']
+      remove: ['tag-3'],
     });
   });
 
@@ -80,4 +80,3 @@ describe('tags api client endpoints', () => {
     expect(apiClient.put).toHaveBeenCalledWith('/v1/tags/contacts/contact-123/tags/tag-456', data);
   });
 });
-

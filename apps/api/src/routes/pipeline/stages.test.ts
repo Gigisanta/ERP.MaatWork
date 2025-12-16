@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline stages routes
- * 
+ *
  * AI_DECISION: Tests unitarios para CRUD de pipeline stages
  * Justificación: Validación crítica de etapas y cache
  * Impacto: Prevenir errores en gestión de pipeline
@@ -11,7 +11,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { db, pipelineStages, contacts } from '@cactus/db';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
-import { pipelineStagesCache } from '../../utils/cache';
+import { pipelineStagesCache } from '../../utils/performance/cache';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -22,29 +22,29 @@ vi.mock('@cactus/db', () => ({
   and: vi.fn(),
   isNull: vi.fn(),
   count: vi.fn(),
-  inArray: vi.fn()
+  inArray: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
-  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} }))
+  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} })),
 }));
 
-vi.mock('../../utils/cache', () => ({
+vi.mock('../../utils/performance/cache', () => ({
   pipelineStagesCache: {
     get: vi.fn(),
     set: vi.fn(),
-    invalidate: vi.fn()
-  }
+    invalidate: vi.fn(),
+  },
 }));
 
 vi.mock('../../utils/pipeline-stages', () => ({
-  ensureDefaultPipelineStages: vi.fn()
+  ensureDefaultPipelineStages: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -59,11 +59,11 @@ describe('GET /pipeline/stages', () => {
   beforeEach(() => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -91,43 +91,42 @@ describe('GET /pipeline/stages', () => {
     mockPipelineStagesCache.get.mockReturnValue(null);
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const mockStages = [
       { id: 'stage-1', name: 'Stage 1', order: 1, isActive: true },
-      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true }
+      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true },
     ];
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue(mockStages)
-          })
-        })
+            orderBy: vi.fn().mockResolvedValue(mockStages),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            groupBy: vi.fn().mockResolvedValue([
-              { pipelineStageId: 'stage-1', count: 5 }
-            ])
-          })
-        })
+            groupBy: vi.fn().mockResolvedValue([{ pipelineStageId: 'stage-1', count: 5 }]),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
       const stages = mockStages;
       const stageCounts = [{ pipelineStageId: 'stage-1', count: 5 }];
-      const countsMap = new Map(stageCounts.map(sc => [sc.pipelineStageId, Number(sc.count)]));
-      const stagesWithCounts = stages.map(stage => ({
+      const countsMap = new Map(stageCounts.map((sc) => [sc.pipelineStageId, Number(sc.count)]));
+      const stagesWithCounts = stages.map((stage) => ({
         ...stage,
-        contactCount: countsMap.get(stage.id) || 0
+        contactCount: countsMap.get(stage.id) || 0,
       }));
       res.json({ success: true, data: stagesWithCounts });
     };
@@ -137,9 +136,7 @@ describe('GET /pipeline/stages', () => {
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({ id: 'stage-1', contactCount: 5 })
-        ])
+        data: expect.arrayContaining([expect.objectContaining({ id: 'stage-1', contactCount: 5 })]),
       })
     );
   });
@@ -158,13 +155,13 @@ describe('POST /pipeline/stages', () => {
         description: 'Description',
         order: 3,
         color: '#FF0000',
-        wipLimit: 10
+        wipLimit: 10,
       },
-      log: { error: vi.fn(), info: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -174,19 +171,16 @@ describe('POST /pipeline/stages', () => {
     const newStage = { id: 'stage-new', ...mockReq.body };
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([newStage])
-      })
+        returning: vi.fn().mockResolvedValue([newStage]),
+      }),
     });
 
     mockDb.mockReturnValue({
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
-      const [newStage] = await db()
-        .insert(pipelineStages)
-        .values(req.body)
-        .returning();
+      const [newStage] = await db().insert(pipelineStages).values(req.body).returning();
       pipelineStagesCache.invalidate();
       res.status(201).json({ data: newStage });
     };
@@ -208,11 +202,11 @@ describe('PUT /pipeline/stages/:id', () => {
       user: { id: 'user-123', role: 'admin' },
       params: { id: 'stage-123' },
       body: { name: 'Updated Stage' },
-      log: { error: vi.fn(), info: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -223,13 +217,13 @@ describe('PUT /pipeline/stages/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([updated])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -255,13 +249,13 @@ describe('PUT /pipeline/stages/:id', () => {
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -281,4 +275,3 @@ describe('PUT /pipeline/stages/:id', () => {
     expect(mockRes.status).toHaveBeenCalledWith(404);
   });
 });
-

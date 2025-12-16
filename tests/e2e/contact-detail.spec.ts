@@ -19,5 +19,3 @@ test('contact detail page renders from contacts list', async ({ page }) => {
   const heading = page.getByRole('heading');
   await expect(heading).toBeVisible();
 });
-
-

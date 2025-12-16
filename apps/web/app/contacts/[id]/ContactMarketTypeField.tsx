@@ -89,7 +89,7 @@ export default function ContactMarketTypeField({ value, contactId }: ContactMark
             onValueChange={handleMainTypeChange}
             items={MARKET_TYPE_OPTIONS}
             placeholder="Seleccionar tipo"
-            className="flex-1 bg-white"
+            className="flex-1"
           />
 
           {showColdSubtypeSelector && (
@@ -98,7 +98,7 @@ export default function ContactMarketTypeField({ value, contactId }: ContactMark
               onValueChange={setEditSubType}
               items={COLD_MARKET_SUBTYPE_OPTIONS}
               placeholder="Seleccionar origen"
-              className="flex-1 bg-white"
+              className="flex-1"
             />
           )}
 
@@ -108,14 +108,14 @@ export default function ContactMarketTypeField({ value, contactId }: ContactMark
               type="button"
               onClick={handleSave}
               disabled={isPending || (editMainType === 'frio' && !editSubType)}
-              className="text-xs text-blue-600 hover:text-blue-700 px-2 py-1 disabled:opacity-50"
+              className="text-xs text-primary hover:text-primary/80 px-2 py-1 disabled:opacity-50"
             >
               Guardar
             </button>
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+              className="text-xs text-text-secondary hover:text-text px-2 py-1"
             >
               Cancelar
             </button>
@@ -127,14 +127,14 @@ export default function ContactMarketTypeField({ value, contactId }: ContactMark
 
   return (
     <div
-      className="cursor-pointer hover:bg-gray-50 px-1.5 py-0.5 rounded"
+      className="cursor-pointer hover:bg-surface-hover px-1.5 py-0.5 rounded"
       onClick={handleStartEdit}
     >
       <Text size="xs" weight="medium" color="secondary">
         Tipo de Mercado
       </Text>
       <Text size="sm" className="mt-0.5">
-        {displayValue || <span className="text-gray-400">Sin especificar</span>}
+        {displayValue || <span className="text-text-muted">Sin especificar</span>}
       </Text>
     </div>
   );

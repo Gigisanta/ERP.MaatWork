@@ -309,7 +309,7 @@ curl http://$ALB_DNS:3002/health
 
 1. **Desarrollo local**:
    ```bash
-   pnpm dev  # TMUX con todos los servicios
+   pnpm dev  # Consola única con logs coloreados
    ```
 
 2. **Crear feature branch**:

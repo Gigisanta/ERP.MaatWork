@@ -1,16 +1,20 @@
 /**
  * Pipeline Board Routes
- * 
+ *
  * Handles kanban board operations
  */
 
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request } from 'express';
 import { db, pipelineStages, contacts } from '@cactus/db';
 import { eq, and, isNull, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
+import { cache } from '../../middleware/cache';
+import { REDIS_TTL } from '../../config/redis';
+import { buildCacheKey } from '../../config/redis';
+import { createRouteHandler } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -22,7 +26,7 @@ type PipelineStage = InferSelectModel<typeof pipelineStages>;
 
 const boardQuerySchema = z.object({
   assignedAdvisorId: z.string().uuid().optional(),
-  assignedTeamId: z.string().uuid().optional()
+  assignedTeamId: z.string().uuid().optional(),
 });
 
 // ==========================================================
@@ -32,11 +36,23 @@ const boardQuerySchema = z.object({
 /**
  * GET /pipeline/board - Obtener board kanban completo
  */
-router.get('/board', 
+router.get(
+  '/board',
   requireAuth,
   validate({ query: boardQuerySchema }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  cache({
+    ttl: REDIS_TTL.PIPELINE,
+    keyPrefix: 'pipeline:board',
+    keyBuilder: (req) => {
+      const userId = req.user!.id;
+      const { assignedAdvisorId, assignedTeamId } = req.query;
+      const assignedAdvisorIdStr =
+        typeof assignedAdvisorId === 'string' ? assignedAdvisorId : 'all';
+      const assignedTeamIdStr = typeof assignedTeamId === 'string' ? assignedTeamId : 'all';
+      return buildCacheKey('pipeline:board', userId, assignedAdvisorIdStr, assignedTeamIdStr);
+    },
+  }),
+  createRouteHandler(async (req: Request) => {
     const { assignedAdvisorId, assignedTeamId } = req.query;
 
     // AI_DECISION: Garantizar etapas por defecto antes de consultar
@@ -67,7 +83,7 @@ router.get('/board',
     const conditions = [
       inArray(contacts.pipelineStageId, stageIds),
       isNull(contacts.deletedAt),
-      accessFilter.whereClause
+      accessFilter.whereClause,
     ];
 
     if (assignedAdvisorId) {
@@ -100,16 +116,12 @@ router.get('/board',
       return {
         ...stage,
         contacts: contactsInStage,
-        currentCount: contactsInStage.length
+        currentCount: contactsInStage.length,
       };
     });
 
-    res.json({ success: true, data: board });
-  } catch (err) {
-    req.log.error({ err }, 'failed to get pipeline board');
-    next(err);
-  }
-});
+    return board;
+  })
+);
 
 export default router;
-

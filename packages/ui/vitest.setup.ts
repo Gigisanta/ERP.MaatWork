@@ -4,13 +4,17 @@ import '@testing-library/jest-dom/vitest';
 
 // Extender tipos de vitest con jest-dom matchers
 declare module 'vitest' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Assertion<T = unknown> extends jest.Matchers<void, T> {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface AsymmetricMatchersContaining extends jest.Matchers<void, unknown> {}
 }
 
 // Cleanup after each test
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  // Wait a bit for any async callbacks to complete
+  await new Promise((resolve) => setTimeout(resolve, 0));
 });
 
 // Suppress React 18 act() warnings and Radix UI accessibility warnings in tests

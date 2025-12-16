@@ -13,7 +13,7 @@ const migrationsDir = resolve(import.meta.dirname, './migrations');
 
 async function resetMigrations() {
   console.log('🗑️  Eliminando migraciones existentes...\n');
-  
+
   // Eliminar todas las migraciones SQL
   if (existsSync(migrationsDir)) {
     try {
@@ -34,11 +34,15 @@ async function resetMigrations() {
       mkdirSync(metaDir, { recursive: true });
       writeFileSync(
         resolve(metaDir, '_journal.json'),
-        JSON.stringify({
-          version: '7',
-          dialect: 'postgresql',
-          entries: []
-        }, null, 2)
+        JSON.stringify(
+          {
+            version: '7',
+            dialect: 'postgresql',
+            entries: [],
+          },
+          null,
+          2
+        )
       );
       console.log('✓ Directorio de migraciones limpiado');
     } catch (error) {
@@ -49,31 +53,34 @@ async function resetMigrations() {
     mkdirSync(resolve(migrationsDir, 'meta'), { recursive: true });
     writeFileSync(
       resolve(migrationsDir, 'meta', '_journal.json'),
-      JSON.stringify({
-        version: '7',
-        dialect: 'postgresql',
-        entries: []
-      }, null, 2)
+      JSON.stringify(
+        {
+          version: '7',
+          dialect: 'postgresql',
+          entries: [],
+        },
+        null,
+        2
+      )
     );
   }
-  
+
   console.log('\n🔄 Regenerando migraciones desde el schema actual...\n');
-  
+
   try {
     // Generar nueva migración inicial desde el schema
-    execSync('pnpm generate', { 
-      cwd: import.meta.dirname, 
+    execSync('pnpm generate', {
+      cwd: import.meta.dirname,
       stdio: 'inherit',
-      env: process.env
+      env: process.env,
     });
-    
+
     console.log('\n✅ Migraciones regeneradas exitosamente!\n');
-    
+
     console.log('📝 Próximos pasos:');
     console.log('  1. Ejecutar: pnpm -F @cactus/db db:reset');
     console.log('  2. Iniciar el servidor: pnpm dev');
     console.log('  3. El servidor aplicará automáticamente las migraciones limpias\n');
-    
   } catch (error) {
     console.error('\n❌ Error al regenerar migraciones:', error.message);
     process.exit(1);
@@ -81,4 +88,3 @@ async function resetMigrations() {
 }
 
 resetMigrations();
-

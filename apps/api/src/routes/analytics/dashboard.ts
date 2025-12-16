@@ -20,7 +20,7 @@ import {
 } from '@cactus/db/schema';
 import { eq, desc, and, gte, sql, count, sum } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
-import { dashboardKpisCacheUtil, normalizeCacheKey } from '../../utils/cache';
+import { dashboardKpisCacheUtil, normalizeCacheKey } from '../../utils/performance/cache';
 
 const router = Router();
 

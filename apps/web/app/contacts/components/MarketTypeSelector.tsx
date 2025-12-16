@@ -134,7 +134,7 @@ export default function MarketTypeSelector({
         disabled={disabled}
         items={MARKET_TYPE_OPTIONS}
         placeholder="Seleccionar tipo de mercado"
-        className="w-full bg-white border-gray-300 shadow-sm"
+        className="w-full"
       />
 
       {showColdSubtypeSelector && (
@@ -145,7 +145,7 @@ export default function MarketTypeSelector({
           disabled={disabled}
           items={COLD_MARKET_SUBTYPE_OPTIONS}
           placeholder="Seleccionar origen"
-          className="w-full bg-white border-gray-300 shadow-sm"
+          className="w-full"
         />
       )}
     </div>

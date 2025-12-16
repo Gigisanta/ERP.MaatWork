@@ -48,10 +48,22 @@ describe('Badge Component', () => {
       expect(badge).toHaveClass('bg-error-subtle', 'text-error');
     });
 
-    it('should apply brand variant classes', () => {
-      render(<Badge variant="brand">Brand</Badge>);
-      const badge = screen.getByText('Brand');
-      expect(badge).toHaveClass('bg-primary', 'text-text-inverse');
+    it('should apply primary variant classes', () => {
+      render(<Badge variant="primary">Primary</Badge>);
+      const badge = screen.getByText('Primary');
+      expect(badge).toHaveClass('bg-primary-subtle', 'text-primary');
+    });
+
+    it('should apply secondary variant classes', () => {
+      render(<Badge variant="secondary">Secondary</Badge>);
+      const badge = screen.getByText('Secondary');
+      expect(badge).toHaveClass('bg-secondary-subtle', 'text-secondary');
+    });
+
+    it('should apply accent variant classes', () => {
+      render(<Badge variant="accent">Accent</Badge>);
+      const badge = screen.getByText('Accent');
+      expect(badge).toHaveClass('bg-accent-subtle', 'text-accent-hover');
     });
   });
 
@@ -89,7 +101,11 @@ describe('Badge Component', () => {
     });
 
     it('should accept HTML span attributes', () => {
-      render(<Badge data-testid="custom-badge" aria-label="Status badge">Active</Badge>);
+      render(
+        <Badge data-testid="custom-badge" aria-label="Status badge">
+          Active
+        </Badge>
+      );
       const badge = screen.getByTestId('custom-badge');
       expect(badge).toHaveAttribute('aria-label', 'Status badge');
     });
@@ -103,9 +119,13 @@ describe('Badge Component', () => {
     });
 
     it('should combine all classes correctly', () => {
-      render(<Badge variant="success" size="lg" className="extra-class">Combined</Badge>);
+      render(
+        <Badge variant="success" size="lg" className="extra-class">
+          Combined
+        </Badge>
+      );
       const badge = screen.getByText('Combined');
-      
+
       // Base classes
       expect(badge).toHaveClass('inline-flex', 'items-center', 'rounded-full');
       // Variant classes
@@ -125,10 +145,13 @@ describe('Badge Component', () => {
     });
 
     it('should support ARIA attributes', () => {
-      render(<Badge role="status" aria-live="polite">Live Status</Badge>);
+      render(
+        <Badge role="status" aria-live="polite">
+          Live Status
+        </Badge>
+      );
       const badge = screen.getByRole('status');
       expect(badge).toHaveAttribute('aria-live', 'polite');
     });
   });
 });
-

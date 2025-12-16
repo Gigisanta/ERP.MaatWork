@@ -1,20 +1,24 @@
-import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, attachments, contacts } from '@cactus/db';
-import { eq, and, isNull, desc, type InferInsertModel } from 'drizzle-orm';
+import { Router, type Request, type Response } from 'express';
+import { db, attachments } from '@cactus/db';
+import { eq, and, isNull, desc } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
+import { validate } from '../utils/validation';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
 import { z } from 'zod';
 import { logger } from '../utils/logger';
-import { 
-  sanitizeFilename, 
-  validateExtensionVsMimeType, 
+import {
+  sanitizeFilename,
+  validateExtensionVsMimeType,
   ensureUploadDir,
   MIME_TYPES,
-  DEFAULT_UPLOAD_DIR
-} from '../utils/file-upload';
+  DEFAULT_UPLOAD_DIR,
+} from '../utils/file/file-upload';
+import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';
+import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
+import { idParamSchema, uuidSchema } from '../utils/validation/common-schemas';
 
 const router = Router();
 
@@ -22,7 +26,7 @@ const router = Router();
 const uploadsDir = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
 
 // Asegurar que el directorio de uploads existe
-ensureUploadDir(uploadsDir).catch(err => {
+ensureUploadDir(uploadsDir).catch((err) => {
   logger.error({ err }, 'Error creando directorio uploads');
 });
 
@@ -50,7 +54,7 @@ const storage = multer.diskStorage({
 // File filter using centralized MIME types and validation
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Verificar MIME type permitido
-  if (!MIME_TYPES.ATTACHMENTS.includes(file.mimetype as typeof MIME_TYPES.ATTACHMENTS[number])) {
+  if (!MIME_TYPES.ATTACHMENTS.includes(file.mimetype as (typeof MIME_TYPES.ATTACHMENTS)[number])) {
     return cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`));
   }
 
@@ -77,7 +81,7 @@ const upload = multer({
 // Schema de validación
 const uploadSchema = z.object({
   entity: z.enum(['contact', 'note', 'meeting']),
-  entityId: z.string().uuid(),
+  entityId: uuidSchema,
   description: z.string().optional(),
 });
 
@@ -86,82 +90,75 @@ router.post(
   '/upload',
   requireAuth,
   upload.array('files', 10), // Máximo 10 archivos a la vez
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-        return res.status(400).json({ message: 'No se recibieron archivos' });
-      }
+  validate({ body: uploadSchema }), // Validar después de multer procese el form-data
+  createAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      throw new HttpError(400, 'No se recibieron archivos');
+    }
 
-      const { entity, entityId, description } = uploadSchema.parse(req.body);
-      const userId = req.user!.id;
+    const { entity, entityId } = req.body as z.infer<typeof uploadSchema>;
+    const userId = req.user!.id;
 
-      // Verificar que la entidad existe y user has access
-      if (entity === 'contact') {
-        const userRole = req.user!.role;
-        const hasAccess = await canAccessContact(userId, userRole, entityId);
+    // Verificar que la entidad existe y user has access
+    if (entity === 'contact') {
+      const userRole = req.user!.role;
+      const hasAccess = await canAccessContact(userId, userRole, entityId);
 
-        if (!hasAccess) {
-          req.log.warn(
-            {
-              contactId: entityId,
-              userId,
-              userRole,
-            },
-            'user attempted to upload attachment to inaccessible contact'
-          );
+      if (!hasAccess) {
+        req.log.warn(
+          {
+            contactId: entityId,
+            userId,
+            userRole,
+          },
+          'user attempted to upload attachment to inaccessible contact'
+        );
 
-          // Limpiar archivos subidos
-          for (const file of req.files) {
-            await fs.unlink(file.path).catch(() => {});
-          }
-          return res.status(404).json({ message: 'Contacto no encontrado' });
-        }
-      }
-
-      // Crear registros de adjuntos en la base de datos
-      const newAttachments = [];
-      for (const file of req.files) {
-        const attachmentData: Omit<InferInsertModel<typeof attachments>, 'id' | 'createdAt'> = {
-          filename: path.basename(file.path),
-          originalFilename: file.originalname,
-          mimeType: file.mimetype,
-          sizeBytes: file.size,
-          storagePath: file.path,
-          uploadedByUserId: userId,
-        };
-
-        if (entity === 'contact') {
-          attachmentData.contactId = entityId;
-        } else if (entity === 'note') {
-          attachmentData.noteId = entityId;
-        }
-
-        const [newAttachment] = await db().insert(attachments).values(attachmentData).returning();
-        newAttachments.push(newAttachment);
-      }
-
-      req.log.info(
-        { count: newAttachments.length, entity, entityId },
-        'Archivos subidos exitosamente'
-      );
-
-      res.status(201).json(newAttachments);
-    } catch (err) {
-      // Limpiar archivos en caso de error
-      if (req.files && Array.isArray(req.files)) {
+        // Limpiar archivos subidos
         for (const file of req.files) {
           await fs.unlink(file.path).catch(() => {});
         }
+        throw new HttpError(404, 'Contacto no encontrado');
       }
-      req.log.error({ err }, 'Error al subir archivos');
-      next(err);
     }
-  }
+
+    // Crear registros de adjuntos en la base de datos
+    const newAttachments = [];
+    for (const file of req.files) {
+      const attachmentData = {
+        filename: path.basename(file.path),
+        originalFilename: file.originalname,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        storagePath: file.path,
+        uploadedByUserId: userId,
+        ...(entity === 'contact' ? { contactId: entityId } : {}),
+        ...(entity === 'note' ? { noteId: entityId } : {}),
+      };
+
+      const [newAttachment] = await db().insert(attachments).values(attachmentData).returning();
+      newAttachments.push(newAttachment);
+    }
+
+    req.log.info(
+      { count: newAttachments.length, entity, entityId },
+      'Archivos subidos exitosamente'
+    );
+
+    return res.status(201).json({
+      success: true,
+      data: newAttachments,
+      requestId: req.requestId,
+    });
+  })
 );
 
 // GET /attachments/:id - Obtener metadata de un adjunto
-router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
+router.get(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(async (req: Request) => {
     const { id } = req.params;
     const attachment = await db().query.attachments.findFirst({
       where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
@@ -171,85 +168,88 @@ router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFu
     });
 
     if (!attachment) {
-      return res.status(404).json({ message: 'Adjunto no encontrado' });
+      throw new HttpError(404, 'Adjunto no encontrado');
     }
 
-    res.json(attachment);
-  } catch (err) {
-    req.log.error({ err }, 'Error al obtener adjunto');
-    next(err);
-  }
-});
+    return attachment;
+  })
+);
 
 // GET /attachments/:id/download - Descargar archivo
 router.get(
   '/:id/download',
   requireAuth,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-      const attachment = await db().query.attachments.findFirst({
-        where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
-      });
-
-      if (!attachment) {
-        return res.status(404).json({ message: 'Adjunto no encontrado' });
-      }
-
-      // Verificar que el archivo existe
-      try {
-        await fs.access(attachment.filePath);
-      } catch {
-        req.log.error(
-          { attachmentId: id, path: attachment.filePath },
-          'Archivo no encontrado en disco'
-        );
-        return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
-      }
-
-      // Establecer headers para descarga
-      res.setHeader('Content-Type', attachment.mimeType);
-      res.setHeader('Content-Disposition', `attachment; filename="${attachment.fileName}"`);
-      res.setHeader('Content-Length', attachment.fileSize.toString());
-
-      // Stream del archivo
-      const fileStream = (await import('fs')).createReadStream(attachment.filePath);
-      fileStream.pipe(res);
-
-      fileStream.on('error', (err) => {
-        req.log.error({ err, attachmentId: id }, 'Error al streamear archivo');
-        if (!res.headersSent) {
-          res.status(500).json({ message: 'Error al descargar archivo' });
-        }
-      });
-    } catch (err) {
-      req.log.error({ err }, 'Error al descargar adjunto');
-      next(err);
-    }
-  }
-);
-
-// GET /attachments/:id/preview - Vista previa (solo imágenes)
-router.get('/:id/preview', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  validate({ params: idParamSchema }),
+  createAsyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     const attachment = await db().query.attachments.findFirst({
       where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
     });
 
     if (!attachment) {
-      return res.status(404).json({ message: 'Adjunto no encontrado' });
+      throw new HttpError(404, 'Adjunto no encontrado');
+    }
+
+    // Verificar que el archivo existe
+    try {
+      await fs.access(attachment.filePath);
+    } catch {
+      req.log.error(
+        { attachmentId: id, path: attachment.filePath },
+        'Archivo no encontrado en disco'
+      );
+      throw new HttpError(404, 'Archivo no encontrado en el servidor');
+    }
+
+    // Establecer headers para descarga
+    res.setHeader('Content-Type', attachment.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${attachment.fileName}"`);
+    res.setHeader('Content-Length', attachment.fileSize.toString());
+
+    // Stream del archivo
+    const fileStream = (await import('fs')).createReadStream(attachment.filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      req.log.error({ err, attachmentId: id }, 'Error al streamear archivo');
+      if (!res.headersSent) {
+        const statusCode = getStatusCodeFromError(err);
+        return res.status(statusCode).json(
+          createErrorResponse({
+            error: err,
+            requestId: req.requestId,
+            userMessage: 'Error al descargar archivo',
+          })
+        );
+      }
+    });
+  })
+);
+
+// GET /attachments/:id/preview - Vista previa (solo imágenes)
+router.get(
+  '/:id/preview',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createAsyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const attachment = await db().query.attachments.findFirst({
+      where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
+    });
+
+    if (!attachment) {
+      throw new HttpError(404, 'Adjunto no encontrado');
     }
 
     // Solo permitir preview de imágenes
     if (!attachment.mimeType.startsWith('image/')) {
-      return res.status(400).json({ message: 'Preview solo disponible para imágenes' });
+      throw new HttpError(400, 'Preview solo disponible para imágenes');
     }
 
     try {
       await fs.access(attachment.filePath);
     } catch {
-      return res.status(404).json({ message: 'Archivo no encontrado en el servidor' });
+      throw new HttpError(404, 'Archivo no encontrado en el servidor');
     }
 
     res.setHeader('Content-Type', attachment.mimeType);
@@ -261,25 +261,32 @@ router.get('/:id/preview', requireAuth, async (req: Request, res: Response, next
     fileStream.on('error', (err) => {
       req.log.error({ err, attachmentId: id }, 'Error al streamear preview');
       if (!res.headersSent) {
-        res.status(500).json({ message: 'Error al generar preview' });
+        const statusCode = getStatusCodeFromError(err);
+        return res.status(statusCode).json(
+          createErrorResponse({
+            error: err,
+            requestId: req.requestId,
+            userMessage: 'Error al generar preview',
+          })
+        );
       }
     });
-  } catch (err) {
-    req.log.error({ err }, 'Error al generar preview');
-    next(err);
-  }
-});
+  })
+);
 
 // DELETE /attachments/:id - Soft delete de adjunto
-router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
-  try {
+router.delete(
+  '/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(async (req: Request) => {
     const { id } = req.params;
     const attachment = await db().query.attachments.findFirst({
       where: and(eq(attachments.id, id), isNull(attachments.deletedAt)),
     });
 
     if (!attachment) {
-      return res.status(404).json({ message: 'Adjunto no encontrado' });
+      throw new HttpError(404, 'Adjunto no encontrado');
     }
 
     // Soft delete
@@ -287,59 +294,51 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response, next: Nex
 
     req.log.info({ attachmentId: id }, 'Adjunto eliminado (soft delete)');
 
-    res.status(204).send();
-  } catch (err) {
-    req.log.error({ err }, 'Error al eliminar adjunto');
-    next(err);
-  }
-});
+    return { deleted: true };
+  })
+);
 
 // GET /attachments/entity/:entity/:entityId - Listar adjuntos de una entidad
 router.get(
   '/entity/:entity/:entityId',
   requireAuth,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { entity, entityId } = req.params;
-      const userId = req.user!.id;
-      const userRole = req.user!.role;
+  createRouteHandler(async (req: Request) => {
+    const { entity, entityId } = req.params;
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
 
-      let whereClause;
-      if (entity === 'contact') {
-        // Verify user has access to this contact
-        const hasAccess = await canAccessContact(userId, userRole, entityId);
-        if (!hasAccess) {
-          req.log.warn(
-            {
-              contactId: entityId,
-              userId,
-              userRole,
-            },
-            'user attempted to list attachments for inaccessible contact'
-          );
-          return res.status(404).json({ message: 'Contacto no encontrado' });
-        }
-        whereClause = and(eq(attachments.contactId, entityId), isNull(attachments.deletedAt));
-      } else if (entity === 'note') {
-        whereClause = and(eq(attachments.noteId, entityId), isNull(attachments.deletedAt));
-      } else {
-        return res.status(400).json({ message: 'Entidad no válida' });
+    let whereClause;
+    if (entity === 'contact') {
+      // Verify user has access to this contact
+      const hasAccess = await canAccessContact(userId, userRole, entityId);
+      if (!hasAccess) {
+        req.log.warn(
+          {
+            contactId: entityId,
+            userId,
+            userRole,
+          },
+          'user attempted to list attachments for inaccessible contact'
+        );
+        throw new HttpError(404, 'Contacto no encontrado');
       }
-
-      const entityAttachments = await db().query.attachments.findMany({
-        where: whereClause,
-        with: {
-          uploadedByUser: true,
-        },
-        orderBy: desc(attachments.createdAt),
-      });
-
-      res.json(entityAttachments);
-    } catch (err) {
-      req.log.error({ err }, 'Error al listar adjuntos de entidad');
-      next(err);
+      whereClause = and(eq(attachments.contactId, entityId), isNull(attachments.deletedAt));
+    } else if (entity === 'note') {
+      whereClause = and(eq(attachments.noteId, entityId), isNull(attachments.deletedAt));
+    } else {
+      throw new HttpError(400, 'Entidad no válida');
     }
-  }
+
+    const entityAttachments = await db().query.attachments.findMany({
+      where: whereClause,
+      with: {
+        uploadedByUser: true,
+      },
+      orderBy: desc(attachments.createdAt),
+    });
+
+    return entityAttachments;
+  })
 );
 
 export default router;

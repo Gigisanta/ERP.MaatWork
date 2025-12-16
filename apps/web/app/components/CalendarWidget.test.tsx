@@ -1,6 +1,6 @@
 /**
  * Tests para CalendarWidget component
- * 
+ *
  * AI_DECISION: Tests unitarios para widget de calendario
  * Justificación: Validación crítica de normalización de URLs y carga de iframe
  * Impacto: Prevenir errores en visualización de calendarios
@@ -18,17 +18,19 @@ vi.mock('@cactus/ui', () => ({
   CardContent: ({ children }: any) => <div>{children}</div>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
   ),
   Text: ({ children, size, weight, color, className }: any) => (
     <span className={className}>{children}</span>
   ),
   Stack: ({ children, direction, gap, align }: any) => <div>{children}</div>,
-  Button: ({ children, variant, size }: any) => <button>{children}</button>
+  Button: ({ children, variant, size }: any) => <button>{children}</button>,
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: any) => <a href={href}>{children}</a>
+  default: ({ children, href }: any) => <a href={href}>{children}</a>,
 }));
 
 describe('CalendarWidget', () => {
@@ -123,4 +125,3 @@ describe('CalendarWidget', () => {
     expect(card).toBeInTheDocument();
   });
 });
-

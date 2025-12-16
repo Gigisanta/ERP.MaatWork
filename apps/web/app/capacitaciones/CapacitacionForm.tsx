@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import type { Capacitacion, CreateCapacitacionRequest } from '@/types';
@@ -21,7 +21,11 @@ interface CapacitacionFormProps {
   onSubmit: (data: CreateCapacitacionRequest) => Promise<void>;
 }
 
-export default function CapacitacionForm({ capacitacion, onClose, onSubmit }: CapacitacionFormProps) {
+export default function CapacitacionForm({
+  capacitacion,
+  onClose,
+  onSubmit,
+}: CapacitacionFormProps) {
   const [formData, setFormData] = useState<CreateCapacitacionRequest>({
     titulo: '',
     tema: '',
@@ -92,11 +96,7 @@ export default function CapacitacionForm({ capacitacion, onClose, onSubmit }: Ca
       <form onSubmit={handleSubmit}>
         <ModalContent>
           <Stack direction="column" gap="md">
-            {error && (
-              <Alert variant="error">
-                {error}
-              </Alert>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
             <Input
               label="Título"
@@ -143,4 +143,3 @@ export default function CapacitacionForm({ capacitacion, onClose, onSubmit }: Ca
     </Modal>
   );
 }
-

@@ -1,6 +1,6 @@
 /**
  * Hook para extraer símbolos únicos de instrumentos de las carteras
- * 
+ *
  * AI_DECISION: Hook personalizado para lógica de extracción de activos
  * Justificación: Reutilizable y testeable, separa lógica de presentación
  * Impacto: Código más limpio y mantenible
@@ -24,7 +24,7 @@ export function usePortfolioAssets(portfolios: Portfolio[]): PortfolioAsset[] {
   return useMemo(() => {
     const assetMap = new Map<string, PortfolioAsset>();
 
-    portfolios.forEach(portfolio => {
+    portfolios.forEach((portfolio) => {
       if (!portfolio.lines || portfolio.lines.length === 0) {
         return;
       }
@@ -33,7 +33,7 @@ export function usePortfolioAssets(portfolios: Portfolio[]): PortfolioAsset[] {
         // Solo procesar líneas de tipo instrument (no assetClass)
         if (line.targetType === 'instrument' && line.instrumentSymbol) {
           const symbol = line.instrumentSymbol.toUpperCase();
-          
+
           if (assetMap.has(symbol)) {
             const asset = assetMap.get(symbol)!;
             asset.portfolios.push(portfolio.id);
@@ -43,7 +43,7 @@ export function usePortfolioAssets(portfolios: Portfolio[]): PortfolioAsset[] {
               symbol,
               instrumentId: line.instrumentId,
               portfolios: [portfolio.id],
-              totalWeight: line.targetWeight
+              totalWeight: line.targetWeight,
             };
             if (line.instrumentName) {
               asset.name = line.instrumentName;
@@ -55,9 +55,6 @@ export function usePortfolioAssets(portfolios: Portfolio[]): PortfolioAsset[] {
     });
 
     // Convertir a array y ordenar por símbolo
-    return Array.from(assetMap.values()).sort((a, b) => 
-      a.symbol.localeCompare(b.symbol)
-    );
+    return Array.from(assetMap.values()).sort((a, b) => a.symbol.localeCompare(b.symbol));
   }, [portfolios]);
 }
-

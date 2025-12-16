@@ -2,22 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import {
-  Drawer,
-  Stack,
-  Heading,
-  Text,
-  Input,
-  Select,
-  Button,
-} from '@cactus/ui';
+import { Drawer, Stack, Heading, Input, Select, Button } from '@cactus/ui';
 import { PortfolioComposition } from './PortfolioComposition';
-import type {
-  Portfolio,
-  PortfolioLine,
-  RiskLevel,
-  InstrumentSearchResult,
-} from '@/types';
+import type { Portfolio, PortfolioLine, RiskLevel, InstrumentSearchResult } from '@/types';
 
 interface PortfolioFormProps {
   open: boolean;
@@ -48,15 +35,19 @@ export function PortfolioForm({
 
   useEffect(() => {
     if (portfolio) {
-      setName(portfolio.name);
+      setName(portfolio.name || '');
       setDescription(portfolio.description || '');
-      setRiskLevel(portfolio.riskLevel);
+      // Ensure riskLevel is valid, fallback to moderate
+      setRiskLevel(portfolio.riskLevel || 'moderate');
       setLines(portfolio.lines || []);
     } else {
-      setName('');
-      setDescription('');
-      setRiskLevel('moderate');
-      setLines([]);
+      // Reset form when opening in create mode
+      if (open) {
+        setName('');
+        setDescription('');
+        setRiskLevel('moderate');
+        setLines([]);
+      }
     }
   }, [portfolio, open]);
 
@@ -81,9 +72,7 @@ export function PortfolioForm({
 
   const handleUpdateWeight = (lineId: string, weight: number) => {
     setLines((prevLines) =>
-      prevLines.map((line) =>
-        line.id === lineId ? { ...line, targetWeight: weight / 100 } : line
-      )
+      prevLines.map((line) => (line.id === lineId ? { ...line, targetWeight: weight / 100 } : line))
     );
   };
 
@@ -111,11 +100,9 @@ export function PortfolioForm({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} side="right" className="w-full max-w-2xl">
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <Heading level={2}>
-            {isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}
-          </Heading>
+      <div className="flex flex-col h-full bg-background">
+        <div className="flex items-center justify-between p-6 border-b border-border bg-surface">
+          <Heading level={2}>{isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}</Heading>
           <Button
             variant="ghost"
             size="sm"
@@ -143,7 +130,7 @@ export function PortfolioForm({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full min-h-[80px] px-3 py-2 border border-border bg-surface text-foreground-base rounded-md focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full min-h-[80px] px-3 py-2 border border-border bg-surface text-foreground-base rounded-md focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed resize-none"
                 placeholder="Descripción de la estrategia de inversión"
                 disabled={isLoading}
               />
@@ -171,27 +158,19 @@ export function PortfolioForm({
           </Stack>
         </div>
 
-        <div className="p-6 border-t border-border">
+        <div className="p-6 border-t border-border bg-surface">
           <Stack direction="row" gap="sm" justify="end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={!isValid || isLoading}
-            >
+            <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isLoading}>
               {isLoading
                 ? isEditing
                   ? 'Guardando...'
                   : 'Creando...'
                 : isEditing
-                ? 'Guardar Cambios'
-                : 'Crear Cartera'}
+                  ? 'Guardar Cambios'
+                  : 'Crear Cartera'}
             </Button>
           </Stack>
         </div>
@@ -199,4 +178,3 @@ export function PortfolioForm({
     </Drawer>
   );
 }
-

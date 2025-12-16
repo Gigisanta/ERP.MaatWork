@@ -1,6 +1,6 @@
 /**
  * Tests para página de login
- * 
+ *
  * AI_DECISION: Tests unitarios para página de login
  * Justificación: Validación crítica de autenticación y UX
  * Impacto: Prevenir errores en flujo de autenticación
@@ -95,15 +95,23 @@ describe('LoginPage', () => {
 
   it('debería redirigir cuando login es exitoso', async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockUser = { id: 'user-123', email: 'test@example.com', role: 'advisor' as const };
+
+    // Start with no user, then set user after login
+    let currentUser: typeof mockUser | null = null;
+
     mockUseAuth.mockReturnValue({
       login: mockLogin,
       logout: vi.fn(),
-      user: null,
+      get user() {
+        return currentUser;
+      },
       initialized: true,
       loading: false,
     } as any);
 
     mockSearchParams.get.mockReturnValue(null);
+    mockRouter.push.mockImplementation(() => {});
 
     render(<LoginPage />);
 
@@ -113,15 +121,39 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
+    // Simulate login completing and user being set
     fireEvent.click(submitButton);
 
+    // Wait for login to be called
     await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith('/');
+      expect(mockLogin).toHaveBeenCalled();
     });
+
+    // Simulate user being set after login
+    currentUser = mockUser;
+
+    // Re-render to trigger useEffect
+    mockUseAuth.mockReturnValue({
+      login: mockLogin,
+      logout: vi.fn(),
+      user: mockUser,
+      initialized: true,
+      loading: false,
+    } as any);
+
+    await waitFor(
+      () => {
+        expect(mockRouter.push).toHaveBeenCalledWith('/');
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('debería redirigir a URL de redirect cuando está presente', async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockUser = { id: 'user-123', email: 'test@example.com', role: 'advisor' as const };
+
     mockUseAuth.mockReturnValue({
       login: mockLogin,
       logout: vi.fn(),
@@ -131,6 +163,7 @@ describe('LoginPage', () => {
     } as any);
 
     mockSearchParams.get.mockReturnValue('/contacts');
+    mockRouter.push.mockImplementation(() => {});
 
     render(<LoginPage />);
 
@@ -140,11 +173,29 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
+
     fireEvent.click(submitButton);
 
+    // Wait for login to be called
     await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith('/contacts');
+      expect(mockLogin).toHaveBeenCalled();
     });
+
+    // Simulate user being set after login
+    mockUseAuth.mockReturnValue({
+      login: mockLogin,
+      logout: vi.fn(),
+      user: mockUser,
+      initialized: true,
+      loading: false,
+    } as any);
+
+    await waitFor(
+      () => {
+        expect(mockRouter.push).toHaveBeenCalledWith('/contacts');
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('debería mostrar error cuando login falla', async () => {
@@ -182,6 +233,7 @@ describe('LoginPage', () => {
     } as any);
 
     mockSearchParams.get.mockReturnValue(null);
+    mockRouter.replace.mockImplementation(() => {});
 
     render(<LoginPage />);
 
@@ -217,4 +269,3 @@ describe('LoginPage', () => {
     });
   });
 });
-

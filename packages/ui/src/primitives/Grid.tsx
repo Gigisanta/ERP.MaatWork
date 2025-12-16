@@ -1,7 +1,7 @@
 import React from 'react';
-import { cn } from '../utils/cn';
-import { type ResponsiveProp } from '../tokens/breakpoints';
-import { buildResponsiveClasses } from '../utils/responsive';
+import { cn } from '../utils/cn.js';
+import { type ResponsiveProp } from '../tokens/breakpoints.js';
+import { buildResponsiveClasses } from '../utils/responsive.js';
 
 export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
   cols?: ResponsiveProp<1 | 2 | 3 | 4 | 5 | 6 | 12>;
@@ -15,37 +15,39 @@ export interface GridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export function Grid({ 
-  className, 
-  children, 
-  cols = 1,
-  gap = 'md',
-  ...props 
-}: GridProps) {
+export function Grid({ className, children, cols = 1, gap = 'md', ...props }: GridProps) {
   return (
-    <div 
+    <div
       className={cn(
         'grid',
         buildResponsiveClasses(cols, (c) =>
           c === 1
             ? 'grid-cols-1'
             : c === 2
-            ? 'grid-cols-2'
-            : c === 3
-            ? 'grid-cols-3'
-            : c === 4
-            ? 'grid-cols-4'
-            : c === 5
-            ? 'grid-cols-5'
-            : c === 6
-            ? 'grid-cols-6'
-            : 'grid-cols-12'
+              ? 'grid-cols-2'
+              : c === 3
+                ? 'grid-cols-3'
+                : c === 4
+                  ? 'grid-cols-4'
+                  : c === 5
+                    ? 'grid-cols-5'
+                    : c === 6
+                      ? 'grid-cols-6'
+                      : 'grid-cols-12'
         ),
         buildResponsiveClasses(gap, (g) =>
-          g === 'xs' ? 'gap-1' : g === 'sm' ? 'gap-2' : g === 'md' ? 'gap-4' : g === 'lg' ? 'gap-6' : 'gap-8'
+          g === 'xs'
+            ? 'gap-1'
+            : g === 'sm'
+              ? 'gap-2'
+              : g === 'md'
+                ? 'gap-4'
+                : g === 'lg'
+                  ? 'gap-6'
+                  : 'gap-8'
         ),
         className
-      )} 
+      )}
       {...props}
     >
       {children}
@@ -53,15 +55,15 @@ export function Grid({
   );
 }
 
-export function GridItem({ 
-  className, 
-  children, 
+export function GridItem({
+  className,
+  children,
   colSpan = 1,
   rowSpan = 1,
-  ...props 
+  ...props
 }: GridItemProps) {
   return (
-    <div 
+    <div
       className={cn(
         {
           'col-span-1': colSpan === 1,
@@ -81,12 +83,10 @@ export function GridItem({
           'row-span-6': rowSpan === 6,
         },
         className
-      )} 
+      )}
       {...props}
     >
       {children}
     </div>
   );
 }
-
-

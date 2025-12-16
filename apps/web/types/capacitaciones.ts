@@ -8,6 +8,7 @@ import type { TimestampedEntity, UpdateRequest, CreateRequest } from './common';
  * Capacitación base - extiende TimestampedEntity
  */
 export interface Capacitacion extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   titulo: string;
   tema: string;
   link: string;
@@ -18,7 +19,10 @@ export interface Capacitacion extends TimestampedEntity {
 /**
  * Request para crear capacitación - usando utility type CreateRequest
  */
-export interface CreateCapacitacionRequest extends Omit<CreateRequest<Capacitacion>, 'createdByUserId' | 'fecha'> {
+export interface CreateCapacitacionRequest extends Omit<
+  CreateRequest<Capacitacion>,
+  'createdByUserId' | 'fecha'
+> {
   titulo: string;
   tema: string;
   link: string;
@@ -63,4 +67,3 @@ export interface CapacitacionesListResponse {
     hasMore: boolean;
   };
 }
-

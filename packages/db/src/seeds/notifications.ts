@@ -1,6 +1,6 @@
 /**
  * Seed Notifications
- * 
+ *
  * Seeds notifications for users using actual schema structure.
  * notifications: userId, type (FK to lookup), severity, renderedBody, etc.
  */
@@ -19,21 +19,23 @@ const NOTIFICATION_MESSAGES = [
   { severity: 'info', body: 'Un nuevo prospecto ha sido asignado a tu cartera' },
   { severity: 'warning', body: 'Hay vencimientos de inversión próximos en tu cartera' },
   { severity: 'success', body: 'El reporte mensual está disponible para descarga' },
-  { severity: 'critical', body: 'Alerta: Cliente VIP requiere atención urgente' }
+  { severity: 'critical', body: 'Alerta: Cliente VIP requiere atención urgente' },
 ];
 
 /**
  * Seed notifications for users
  */
 export async function seedNotifications(
-  advisorUsers: typeof users.$inferSelect[],
-  contactsList: typeof contacts.$inferSelect[]
+  advisorUsers: (typeof users.$inferSelect)[],
+  contactsList: (typeof contacts.$inferSelect)[]
 ) {
   console.log('🔔 Seeding notifications...');
 
   const existingNotifications = await db().select().from(notifications).limit(10);
   if (existingNotifications.length >= 10) {
-    console.log(`  ⊙ Notifications already seeded: ${existingNotifications.length} notifications found\n`);
+    console.log(
+      `  ⊙ Notifications already seeded: ${existingNotifications.length} notifications found\n`
+    );
     return existingNotifications;
   }
 
@@ -44,12 +46,12 @@ export async function seedNotifications(
     return [];
   }
 
-  const createdNotifications: typeof notifications.$inferSelect[] = [];
+  const createdNotifications: (typeof notifications.$inferSelect)[] = [];
 
   // Create 3-5 notifications per advisor
   for (const advisor of advisorUsers) {
     const numNotifications = Math.floor(Math.random() * 3) + 3;
-    const advisorContacts = contactsList.filter(c => c.assignedAdvisorId === advisor.id);
+    const advisorContacts = contactsList.filter((c) => c.assignedAdvisorId === advisor.id);
 
     for (let i = 0; i < numNotifications; i++) {
       const notifData = getRandomElement(NOTIFICATION_MESSAGES);
@@ -57,15 +59,18 @@ export async function seedNotifications(
       const isRead = Math.random() > 0.6;
       const contact = advisorContacts.length > 0 ? getRandomElement(advisorContacts) : null;
 
-      const [notification] = await db().insert(notifications).values({
-        userId: advisor.id,
-        type: notifType.id,
-        severity: notifData.severity,
-        renderedBody: notifData.body,
-        contactId: contact?.id ?? null,
-        readAt: isRead ? new Date() : null,
-        processed: false
-      }).returning();
+      const [notification] = await db()
+        .insert(notifications)
+        .values({
+          userId: advisor.id,
+          type: notifType.id,
+          severity: notifData.severity,
+          renderedBody: notifData.body,
+          contactId: contact?.id ?? null,
+          readAt: isRead ? new Date() : null,
+          processed: false,
+        })
+        .returning();
 
       createdNotifications.push(notification);
     }

@@ -1,76 +1,85 @@
 /**
  * Handler para listar todas las filas AUM
+ *
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
 import type { Request, Response } from 'express';
 import { db } from '@cactus/db';
 import { sql, type SQL } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '../../../../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../../../../utils/aum/aum-normalization';
 import { getCacheKey, getCachedCount, setCachedCount } from '../cache';
 import { parseNumeric, QUERY_TIMEOUT_MS } from '../utils';
 import type { AumRowResult } from '../types';
+import type { AumRowsAllQuery } from '../../../../utils/aum/aum-validation';
+import { createAsyncHandler } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/all
  * Get all imported rows with pagination and filters
+ *
+ * Query params están validados por middleware validate() con aumRowsAllQuerySchema
  */
-export async function listAllRows(req: Request, res: Response) {
-  try {
-    const limit = (req.query.limit as unknown as number) ?? 50;
-    const offset = (req.query.offset as unknown as number) ?? 0;
-    const broker = req.query.broker as string | undefined;
-    const status = req.query.status as 'matched' | 'ambiguous' | 'unmatched' | undefined;
-    const fileId = req.query.fileId as string | undefined;
-    const preferredOnly = (req.query.preferredOnly as unknown as boolean) ?? false;
-    const search = req.query.search as string | undefined;
-    const onlyUpdated = (req.query.onlyUpdated as unknown as boolean) ?? false;
-    const reportMonth = req.query.reportMonth as number | undefined;
-    const reportYear = req.query.reportYear as number | undefined;
+export const listAllRows = createAsyncHandler(async (req: Request, res: Response) => {
+  // req.query ya está validado y tipado por el middleware validate()
+  const query = req.query as unknown as AumRowsAllQuery;
+  const limit = query.limit ?? 50;
+  const offset = query.offset ?? 0;
+  const broker = query.broker;
+  const status = query.status;
+  const fileId = query.fileId;
+  const preferredOnly = query.preferredOnly ?? false;
+  const search = query.search;
+  const onlyUpdated = query.onlyUpdated ?? false;
+  const reportMonth = query.reportMonth;
+  const reportYear = query.reportYear;
 
-    req.log?.info?.(
-      {
-        fileId,
-        preferredOnly,
-        broker,
-        status,
-        search,
-        onlyUpdated,
-        reportMonth,
-        reportYear,
-        limit,
-        offset,
-      },
-      'AUM rows GET: Parámetros de query recibidos'
-    );
+  req.log?.info?.(
+    {
+      fileId,
+      preferredOnly,
+      broker,
+      status,
+      search,
+      onlyUpdated,
+      reportMonth,
+      reportYear,
+      limit,
+      offset,
+    },
+    'AUM rows GET: Parámetros de query recibidos'
+  );
 
-    const dbi = db();
+  const dbi = db();
 
-    // Build WHERE conditions
-    const conditions: SQL[] = [];
-    if (broker) {
-      conditions.push(sql`f.broker = ${broker}`);
-    }
-    if (status) {
-      conditions.push(sql`r.match_status = ${status}`);
-    }
-    if (fileId) {
-      conditions.push(sql`r.file_id = ${fileId}`);
-    }
-    if (preferredOnly) {
-      conditions.push(sql`r.is_preferred = true`);
-    }
-    if (onlyUpdated) {
-      conditions.push(sql`EXTRACT(EPOCH FROM (r.updated_at - r.created_at)) > 1`);
-    }
-    if (reportMonth !== undefined) {
-      conditions.push(sql`f.report_month = ${reportMonth}`);
-    }
-    if (reportYear !== undefined) {
-      conditions.push(sql`f.report_year = ${reportYear}`);
-    }
-    if (search) {
-      const searchPattern = `%${search}%`;
-      conditions.push(sql`(
+  // Build WHERE conditions
+  const conditions: SQL[] = [];
+  if (broker) {
+    conditions.push(sql`f.broker = ${broker}`);
+  }
+  if (status) {
+    conditions.push(sql`r.match_status = ${status}`);
+  }
+  if (fileId) {
+    conditions.push(sql`r.file_id = ${fileId}`);
+  }
+  if (preferredOnly) {
+    conditions.push(sql`r.is_preferred = true`);
+  }
+  if (onlyUpdated) {
+    conditions.push(sql`EXTRACT(EPOCH FROM (r.updated_at - r.created_at)) > 1`);
+  }
+  if (reportMonth !== undefined) {
+    conditions.push(sql`f.report_month = ${reportMonth}`);
+  }
+  if (reportYear !== undefined) {
+    conditions.push(sql`f.report_year = ${reportYear}`);
+  }
+  if (search) {
+    const searchPattern = `%${search}%`;
+    conditions.push(sql`(
         r.account_number ILIKE ${searchPattern} OR
         r.id_cuenta ILIKE ${searchPattern} OR
         r.holder_name ILIKE ${searchPattern} OR
@@ -79,92 +88,92 @@ export async function listAllRows(req: Request, res: Response) {
         u.full_name ILIKE ${searchPattern} OR
         u.email ILIKE ${searchPattern}
       )`);
-    }
-    const whereClause =
-      conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
+  }
+  const whereClause =
+    conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
 
-    // Count total rows (only when needed)
-    let total = 0;
-    const needsCount = offset === 0 || limit + offset < 1000;
+  // Count total rows (only when needed)
+  let total = 0;
+  const needsCount = offset === 0 || limit + offset < 1000;
 
-    if (needsCount) {
-      const cacheKey = getCacheKey({
-        ...(broker !== undefined && { broker }),
-        ...(status !== undefined && { status }),
-        ...(fileId !== undefined && { fileId }),
-        preferredOnly,
-        ...(search !== undefined && { search }),
-        onlyUpdated,
-        ...(reportMonth !== undefined && { reportMonth }),
-        ...(reportYear !== undefined && { reportYear }),
-      });
+  if (needsCount) {
+    const cacheKey = getCacheKey({
+      ...(broker !== undefined && { broker }),
+      ...(status !== undefined && { status }),
+      ...(fileId !== undefined && { fileId }),
+      preferredOnly,
+      ...(search !== undefined && { search }),
+      onlyUpdated,
+      ...(reportMonth !== undefined && { reportMonth }),
+      ...(reportYear !== undefined && { reportYear }),
+    });
 
-      const cachedTotal = getCachedCount(cacheKey);
-      if (cachedTotal !== null) {
-        total = cachedTotal;
-        req.log?.info?.(
-          {
-            fileId,
-            preferredOnly,
-            total,
-            cached: true,
-            conditionsCount: conditions.length,
-          },
-          'AUM rows GET: Conteo obtenido del cache'
-        );
-      } else {
-        const needsSearchJoin = !!search;
+    const cachedTotal = getCachedCount(cacheKey);
+    if (cachedTotal !== null) {
+      total = cachedTotal;
+      req.log?.info?.(
+        {
+          fileId,
+          preferredOnly,
+          total,
+          cached: true,
+          conditionsCount: conditions.length,
+        },
+        'AUM rows GET: Conteo obtenido del cache'
+      );
+    } else {
+      const needsSearchJoin = !!search;
 
-        const countJoins = needsSearchJoin
-          ? sql`
+      const countJoins = needsSearchJoin
+        ? sql`
             LEFT JOIN contacts c ON r.matched_contact_id = c.id
             LEFT JOIN users u ON r.matched_user_id = u.id
             LEFT JOIN advisor_aliases aa ON r.matched_user_id IS NULL 
               AND r.advisor_raw IS NOT NULL 
               AND LOWER(TRIM(r.advisor_raw)) = aa.alias_normalized
           `
-          : sql``;
+        : sql``;
 
-        const countPromise = dbi.execute(sql`
+      const countPromise = dbi.execute(sql`
           SELECT COUNT(*) as total
           FROM aum_import_rows r
           INNER JOIN aum_import_files f ON r.file_id = f.id
           ${countJoins}
           ${whereClause}
         `);
-        const countTimeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('Query timeout: COUNT query exceeded 30s'));
-          }, QUERY_TIMEOUT_MS);
-        });
-        const countResult = await Promise.race([countPromise, countTimeoutPromise]);
-        type CountResult = {
-          total: string | number;
-        };
-        total = Number((countResult.rows?.[0] as CountResult | undefined)?.total || 0);
+      const countTimeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Query timeout: COUNT query exceeded 30s'));
+        }, QUERY_TIMEOUT_MS);
+      });
+      const countResult = await Promise.race([countPromise, countTimeoutPromise]);
+      type CountResult = {
+        total: string | number;
+      };
+      total = Number((countResult.rows?.[0] as CountResult | undefined)?.total || 0);
 
-        if (!search) {
-          setCachedCount(cacheKey, total);
-        }
-
-        req.log?.info?.(
-          {
-            fileId,
-            preferredOnly,
-            total,
-            cached: false,
-            conditionsCount: conditions.length,
-            needsSearchJoin,
-          },
-          'AUM rows GET: Conteo obtenido del COUNT query'
-        );
+      if (!search) {
+        setCachedCount(cacheKey, total);
       }
-    } else {
-      total = limit + offset + 100;
-    }
 
-    // Get paginated rows with joined data
-    const rowsPromise = dbi.execute(sql`
+      req.log?.info?.(
+        {
+          fileId,
+          preferredOnly,
+          total,
+          cached: false,
+          conditionsCount: conditions.length,
+          needsSearchJoin,
+        },
+        'AUM rows GET: Conteo obtenido del COUNT query'
+      );
+    }
+  } else {
+    total = limit + offset + 100;
+  }
+
+  // Get paginated rows with joined data
+  const rowsPromise = dbi.execute(sql`
       SELECT 
         r.id,
         r.file_id,
@@ -220,87 +229,84 @@ export async function listAllRows(req: Request, res: Response) {
       ORDER BY f.created_at DESC, r.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    const rowsTimeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('Query timeout: SELECT rows query exceeded 30s'));
-      }, QUERY_TIMEOUT_MS);
-    });
-    const result = await Promise.race([rowsPromise, rowsTimeoutPromise]);
+  const rowsTimeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('Query timeout: SELECT rows query exceeded 30s'));
+    }, QUERY_TIMEOUT_MS);
+  });
+  const result = await Promise.race([rowsPromise, rowsTimeoutPromise]);
 
-    const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
-      id: r.id,
-      fileId: r.file_id,
-      accountNumber: r.account_number,
-      holderName: r.holder_name,
-      idCuenta: r.id_cuenta,
-      advisorRaw: r.advisor_raw,
-      advisorNormalized: r.advisor_raw ? normalizeAdvisorAlias(r.advisor_raw) : null,
-      matchedContactId: r.matched_contact_id,
-      matchedUserId: r.matched_user_id,
-      suggestedUserId: r.suggested_user_id || null,
-      matchStatus: r.match_status,
-      isPreferred: r.is_preferred,
-      conflictDetected: r.conflict_detected,
-      needsConfirmation: r.needs_confirmation,
-      isNormalized: r.is_normalized ?? false,
-      rowCreatedAt: r.row_created_at,
-      rowUpdatedAt: r.row_updated_at,
-      isUpdated:
-        r.row_updated_at && r.row_created_at
-          ? new Date(r.row_updated_at).getTime() - new Date(r.row_created_at).getTime() > 1000
-          : false,
-      updatedByFile: {
-        id: r.current_file_id,
-        name: r.current_file_name,
-        createdAt: r.current_file_created_at,
-        fileType: r.file_type,
-        reportMonth: r.file_report_month,
-        reportYear: r.file_report_year,
-      },
-      aumDollars: parseNumeric(r.aum_dollars),
-      bolsaArg: parseNumeric(r.bolsa_arg),
-      fondosArg: parseNumeric(r.fondos_arg),
-      bolsaBci: parseNumeric(r.bolsa_bci),
-      pesos: parseNumeric(r.pesos),
-      mep: parseNumeric(r.mep),
-      cable: parseNumeric(r.cable),
-      cv7000: parseNumeric(r.cv7000),
-      file: {
-        id: r.file_id,
-        broker: r.broker,
-        originalFilename: r.original_filename,
-        status: r.file_status,
-        createdAt: r.file_created_at,
-      },
-      contact: r.matched_contact_id
-        ? {
-            id: r.matched_contact_id,
-            fullName: r.contact_name,
-            firstName: r.contact_first_name,
-            lastName: r.contact_last_name,
-          }
-        : null,
-      user: r.matched_user_id
-        ? {
-            id: r.matched_user_id,
-            name: r.user_name,
-            email: r.user_email,
-          }
-        : null,
-    }));
+  const rows = ((result.rows || []) as AumRowResult[]).map((r: AumRowResult) => ({
+    id: r.id,
+    fileId: r.file_id,
+    accountNumber: r.account_number,
+    holderName: r.holder_name,
+    idCuenta: r.id_cuenta,
+    advisorRaw: r.advisor_raw,
+    advisorNormalized: r.advisor_raw ? normalizeAdvisorAlias(r.advisor_raw) : null,
+    matchedContactId: r.matched_contact_id,
+    matchedUserId: r.matched_user_id,
+    suggestedUserId: r.suggested_user_id || null,
+    matchStatus: r.match_status,
+    isPreferred: r.is_preferred,
+    conflictDetected: r.conflict_detected,
+    needsConfirmation: r.needs_confirmation,
+    isNormalized: r.is_normalized ?? false,
+    rowCreatedAt: r.row_created_at,
+    rowUpdatedAt: r.row_updated_at,
+    isUpdated:
+      r.row_updated_at && r.row_created_at
+        ? new Date(r.row_updated_at).getTime() - new Date(r.row_created_at).getTime() > 1000
+        : false,
+    updatedByFile: {
+      id: r.current_file_id,
+      name: r.current_file_name,
+      createdAt: r.current_file_created_at,
+      fileType: r.file_type,
+      reportMonth: r.file_report_month,
+      reportYear: r.file_report_year,
+    },
+    aumDollars: parseNumeric(r.aum_dollars),
+    bolsaArg: parseNumeric(r.bolsa_arg),
+    fondosArg: parseNumeric(r.fondos_arg),
+    bolsaBci: parseNumeric(r.bolsa_bci),
+    pesos: parseNumeric(r.pesos),
+    mep: parseNumeric(r.mep),
+    cable: parseNumeric(r.cable),
+    cv7000: parseNumeric(r.cv7000),
+    file: {
+      id: r.file_id,
+      broker: r.broker,
+      originalFilename: r.original_filename,
+      status: r.file_status,
+      createdAt: r.file_created_at,
+    },
+    contact: r.matched_contact_id
+      ? {
+          id: r.matched_contact_id,
+          fullName: r.contact_name,
+          firstName: r.contact_first_name,
+          lastName: r.contact_last_name,
+        }
+      : null,
+    user: r.matched_user_id
+      ? {
+          id: r.matched_user_id,
+          name: r.user_name,
+          email: r.user_email,
+        }
+      : null,
+  }));
 
-    return res.json({
-      ok: true,
-      rows,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: Number(offset) + rows.length < total,
-      },
-    });
-  } catch (error) {
-    req.log?.error?.({ err: error }, 'failed to get all rows');
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Mantenemos formato { ok: true, rows, pagination } para compatibilidad con frontend
+  return res.json({
+    ok: true,
+    rows,
+    pagination: {
+      total,
+      limit,
+      offset,
+      hasMore: Number(offset) + rows.length < total,
+    },
+  });
+});

@@ -42,7 +42,7 @@ vi.mock('@/lib/api', () => ({
       ],
     },
   }),
-  matchAumRow: vi.fn().mockResolvedValue({ success: true })
+  matchAumRow: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 describe('DuplicateResolutionModal', () => {
@@ -50,7 +50,9 @@ describe('DuplicateResolutionModal', () => {
     const { matchAumRow } = await import('@/lib/api');
     const onResolved = vi.fn();
     const onClose = vi.fn();
-    render(<DuplicateResolutionModal accountNumber="123" onClose={onClose} onResolved={onResolved} />);
+    render(
+      <DuplicateResolutionModal accountNumber="123" onClose={onClose} onResolved={onResolved} />
+    );
 
     await waitFor(() => screen.getByText(/Duplicados para 123/));
 
@@ -67,5 +69,3 @@ describe('DuplicateResolutionModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
-
-

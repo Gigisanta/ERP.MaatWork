@@ -2,21 +2,12 @@
 
 import { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import {
-  Card,
-  CardContent,
-  Button,
-  Text,
-  Stack,
-  Badge,
-} from '@cactus/ui';
+import { Card, CardContent, Button, Text, Stack, Badge } from '@cactus/ui';
+// AI_DECISION: Import AssetSearcher statically to avoid webpack module resolution issues
+// Justificación: Dynamic import causes "Cannot read properties of undefined (reading 'call')" in webpack
+// Impacto: Fixes development crash, consistent with BenchmarksSection.tsx
+import AssetSearcher from '../../components/AssetSearcher';
 import type { PortfolioLine, InstrumentSearchResult } from '@/types';
-
-const AssetSearcher = dynamic(() => import('../../components/AssetSearcher'), {
-  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>,
-  ssr: false,
-});
 
 interface PortfolioCompositionProps {
   lines: PortfolioLine[];
@@ -89,7 +80,9 @@ export function PortfolioComposition({
                         disabled={disabled}
                         className="w-20 px-2 py-1 text-sm border border-border bg-surface text-foreground-base rounded focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                       />
-                      <Text size="sm" color="secondary">%</Text>
+                      <Text size="sm" color="secondary">
+                        %
+                      </Text>
                       {!disabled && (
                         <Button
                           variant="ghost"
@@ -111,9 +104,7 @@ export function PortfolioComposition({
             <CardContent className="p-4">
               <Stack direction="row" justify="between" align="center">
                 <Text weight="medium">Total:</Text>
-                <Badge variant={isValid ? 'success' : 'error'}>
-                  {totalWeight.toFixed(2)}%
-                </Badge>
+                <Badge variant={isValid ? 'success' : 'error'}>{totalWeight.toFixed(2)}%</Badge>
               </Stack>
               {!isValid && (
                 <Text size="sm" color="secondary" className="mt-2">
@@ -134,4 +125,3 @@ export function PortfolioComposition({
     </Stack>
   );
 }
-

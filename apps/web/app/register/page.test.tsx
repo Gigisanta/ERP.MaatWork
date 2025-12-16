@@ -21,11 +21,18 @@ vi.mock('@/lib/api', () => ({
   getManagers: vi.fn(),
 }));
 
-vi.mock('../../lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+    },
+  };
+});
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(() => ({

@@ -28,7 +28,7 @@ describe('breakpoints', () => {
   });
 
   it('debería tener todos los valores como números positivos', () => {
-    Object.values(breakpoints).forEach(value => {
+    Object.values(breakpoints).forEach((value) => {
       expect(typeof value).toBe('number');
       expect(value).toBeGreaterThan(0);
     });
@@ -38,7 +38,7 @@ describe('breakpoints', () => {
 describe('Breakpoint type', () => {
   it('debería aceptar todos los breakpoints válidos', () => {
     const validBreakpoints: Breakpoint[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
-    validBreakpoints.forEach(bp => {
+    validBreakpoints.forEach((bp) => {
       expect(typeof bp).toBe('string');
       expect(breakpoints).toHaveProperty(bp);
     });
@@ -56,7 +56,7 @@ describe('ResponsiveProp type', () => {
       base: 10,
       sm: 20,
       md: 30,
-      lg: 40
+      lg: 40,
     };
     expect(responsiveValue.base).toBe(10);
     expect(responsiveValue.sm).toBe(20);
@@ -70,7 +70,7 @@ describe('ResponsiveProp type', () => {
       md: 'md',
       lg: 'lg',
       xl: 'xl',
-      '2xl': '2xl'
+      '2xl': '2xl',
     };
     expect(allBreakpoints.base).toBe('base');
     expect(allBreakpoints['2xl']).toBe('2xl');
@@ -79,10 +79,9 @@ describe('ResponsiveProp type', () => {
   it('debería aceptar objeto con algunos breakpoints undefined', () => {
     const partialBreakpoints: ResponsiveProp<number> = {
       base: 10,
-      lg: 40
+      lg: 40,
     };
     expect(partialBreakpoints.base).toBe(10);
     expect(partialBreakpoints.lg).toBe(40);
   });
 });
-

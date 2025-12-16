@@ -1,6 +1,6 @@
 /**
  * Seed Broker Data
- * 
+ *
  * Seeds broker accounts and balances using actual schema structure.
  * brokerAccounts: broker (string), accountNumber, holderName, contactId, status
  * brokerBalances: brokerAccountId, asOfDate, currency, liquidBalance, totalBalance
@@ -25,7 +25,7 @@ async function createBrokerAccount(
 ): Promise<typeof brokerAccounts.$inferSelect | null> {
   const broker = getRandomElement(BROKERS);
   const accountNumber = `${broker.toUpperCase()}-${contact.dni ?? Math.random().toString(36).substring(7)}`;
-  
+
   const existing = await db()
     .select()
     .from(brokerAccounts)
@@ -34,13 +34,16 @@ async function createBrokerAccount(
 
   if (existing.length > 0) return null;
 
-  const [account] = await db().insert(brokerAccounts).values({
-    contactId: contact.id,
-    broker,
-    accountNumber,
-    holderName: contact.fullName,
-    status: 'active'
-  }).returning();
+  const [account] = await db()
+    .insert(brokerAccounts)
+    .values({
+      contactId: contact.id,
+      broker,
+      accountNumber,
+      holderName: contact.fullName,
+      status: 'active',
+    })
+    .returning();
 
   return account;
 }
@@ -48,11 +51,9 @@ async function createBrokerAccount(
 /**
  * Create balance for a broker account
  */
-async function createAccountBalance(
-  account: typeof brokerAccounts.$inferSelect
-): Promise<void> {
+async function createAccountBalance(account: typeof brokerAccounts.$inferSelect): Promise<void> {
   const today = new Date().toISOString().split('T')[0]!;
-  
+
   const existingBalance = await db()
     .select()
     .from(brokerBalances)
@@ -64,21 +65,24 @@ async function createAccountBalance(
   const liquidBalance = (Math.random() * 100000 + 10000).toFixed(6);
   const totalBalance = (parseFloat(liquidBalance) * (1 + Math.random() * 0.5)).toFixed(6);
 
-  await db().insert(brokerBalances).values({
-    brokerAccountId: account.id,
-    asOfDate: today,
-    currency: getRandomElement(CURRENCIES),
-    liquidBalance,
-    totalBalance
-  }).onConflictDoNothing();
+  await db()
+    .insert(brokerBalances)
+    .values({
+      brokerAccountId: account.id,
+      asOfDate: today,
+      currency: getRandomElement(CURRENCIES),
+      liquidBalance,
+      totalBalance,
+    })
+    .onConflictDoNothing();
 }
 
 /**
  * Seed broker data (accounts, balances)
  */
 export async function seedBrokerData(
-  contactsList: typeof contacts.$inferSelect[],
-  advisorUsers: typeof users.$inferSelect[]
+  contactsList: (typeof contacts.$inferSelect)[],
+  advisorUsers: (typeof users.$inferSelect)[]
 ) {
   console.log('🏦 Seeding broker data...');
 
@@ -89,14 +93,15 @@ export async function seedBrokerData(
     return { accounts: existingAccounts };
   }
 
-  const createdAccounts: typeof brokerAccounts.$inferSelect[] = [];
+  const createdAccounts: (typeof brokerAccounts.$inferSelect)[] = [];
 
   // Create accounts for some contacts
   const clientContacts = contactsList.filter(() => Math.random() > 0.5).slice(0, 15);
 
   for (const contact of clientContacts) {
-    const advisor = advisorUsers.find(a => a.id === contact.assignedAdvisorId)
-      ?? getRandomElement(advisorUsers);
+    const advisor =
+      advisorUsers.find((a) => a.id === contact.assignedAdvisorId) ??
+      getRandomElement(advisorUsers);
 
     const account = await createBrokerAccount(contact, advisor);
     if (account) {

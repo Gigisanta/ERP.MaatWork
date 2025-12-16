@@ -7,6 +7,7 @@ import express from 'express';
 import request from 'supertest';
 import capacitacionesRouter from './capacitaciones';
 import { signUserToken } from '../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
@@ -50,18 +51,14 @@ vi.mock('node:fs', () => ({
 
 import { db } from '@cactus/db';
 import { capacitaciones, eq } from '@cactus/db';
-import { transactionWithLogging } from '../utils/db-transactions';
+import { transactionWithLogging } from '../utils/database/db-transactions';
 
 const mockDb = vi.mocked(db);
 const mockTransactionWithLogging = vi.mocked(transactionWithLogging);
 
 describe('Capacitaciones Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/capacitaciones', capacitacionesRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/capacitaciones', router: capacitacionesRouter }]);
 
   let adminToken: string;
 
@@ -100,7 +97,7 @@ describe('Capacitaciones Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/capacitaciones')
         .set('Cookie', `token=${adminToken}`)
@@ -136,7 +133,7 @@ describe('Capacitaciones Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/capacitaciones?tema=Test')
         .set('Cookie', `token=${adminToken}`)
@@ -167,7 +164,7 @@ describe('Capacitaciones Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/capacitaciones/cap-1')
         .set('Cookie', `token=${adminToken}`)
@@ -194,7 +191,7 @@ describe('Capacitaciones Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/capacitaciones/invalid-id')
         .set('Cookie', `token=${adminToken}`)
@@ -234,7 +231,7 @@ describe('Capacitaciones Routes', () => {
         insert: mockInsert,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/capacitaciones')
         .set('Cookie', `token=${adminToken}`)
@@ -291,7 +288,7 @@ describe('Capacitaciones Routes', () => {
         return { update: mockUpdate } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .put('/capacitaciones/cap-1')
         .set('Cookie', `token=${adminToken}`)
@@ -332,7 +329,7 @@ describe('Capacitaciones Routes', () => {
         return { delete: mockDelete } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/capacitaciones/cap-1')
         .set('Cookie', `token=${adminToken}`)

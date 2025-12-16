@@ -9,6 +9,7 @@
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
 import { API_BASE_URL } from '../api-url';
+import { logger, toLogContext } from '../logger';
 import type {
   AumFile,
   AumRow,
@@ -63,7 +64,7 @@ export async function getAumRows(params?: {
     const validated = aumRowsResponseSchema.parse(response.data);
     return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
   } catch (error) {
-    console.error('[AUM API] Validation error:', error);
+    logger.error('AUM API validation error', toLogContext({ error }));
     throw new Error(
       `API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
@@ -100,8 +101,14 @@ export async function uploadAumFile(
 
       // Don't retry on client errors (4xx) except 408, 429
       if (error && typeof error === 'object' && 'status' in error) {
-        const status = (error as any).status as number;
-        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+        const status = (error as { status?: number }).status;
+        if (
+          status !== undefined &&
+          status >= 400 &&
+          status < 500 &&
+          status !== 408 &&
+          status !== 429
+        ) {
           throw error;
         }
       }
@@ -286,8 +293,14 @@ export async function uploadAdvisorMapping(
 
       // Don't retry on client errors (4xx) except 408, 429
       if (error && typeof error === 'object' && 'status' in error) {
-        const status = (error as any).status as number;
-        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+        const status = (error as { status?: number }).status;
+        if (
+          status !== undefined &&
+          status >= 400 &&
+          status < 500 &&
+          status !== 408 &&
+          status !== 429
+        ) {
           throw error;
         }
       }

@@ -8,6 +8,7 @@ import type { TimestampedEntity, CreateRequest, UpdateRequest } from './common';
  * Nivel del plan de carrera comercial
  */
 export interface CareerPlanLevel extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   category: string; // Ej: "AGENTE F. JUNIOR"
   level: string; // Ej: "Nivel 1 Junior"
   levelNumber: number; // Orden numérico (1, 2, 3...)
@@ -21,7 +22,10 @@ export interface CareerPlanLevel extends TimestampedEntity {
  * Request para crear un nivel del plan de carrera - usando utility type CreateRequest
  * Nota: index y percentage aceptan string | number para flexibilidad en el formulario
  */
-export interface CareerPlanLevelCreateRequest extends Omit<CreateRequest<CareerPlanLevel>, 'isActive' | 'index' | 'percentage'> {
+export interface CareerPlanLevelCreateRequest extends Omit<
+  CreateRequest<CareerPlanLevel>,
+  'isActive' | 'index' | 'percentage'
+> {
   category: string;
   level: string;
   levelNumber: number;
@@ -45,4 +49,3 @@ export interface UserCareerProgress {
   progressPercentage: number; // Porcentaje de progreso hacia el objetivo del nivel actual (0-100+)
   nextLevel: CareerPlanLevel | null; // Siguiente nivel (si existe)
 }
-

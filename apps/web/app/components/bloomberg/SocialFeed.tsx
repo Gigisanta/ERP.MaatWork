@@ -2,7 +2,7 @@
 
 /**
  * SocialFeed - Display social media posts (Reddit/X) filtered by symbol
- * 
+ *
  * AI_DECISION: Client component for social listening
  * Justificación: Interactive feed with filtering
  * Impacto: Better social sentiment analysis
@@ -20,10 +20,10 @@ export default function SocialFeed({ symbol }: SocialFeedProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // FUTURE_FEATURE: Requires social media API integrations
-    // Would need: Twitter/X API, Reddit API, or StockTwits
-    // Dependencies: API keys and rate limit management for social platforms
-    // Status: Low priority - placeholder for potential future social sentiment feature
+    // AI_DECISION: Placeholder para feed de redes sociales (Twitter/X, Reddit, StockTwits)
+    // Justificación: Baja prioridad - placeholder para feature potencial de análisis de sentimiento social
+    // Dependencies: API keys para plataformas sociales, gestión de rate limits, backend endpoints
+    // Impacto: Mejora análisis de sentimiento una vez implementada integración con APIs sociales
     setLoading(false);
   }, [symbol]);
 
@@ -41,14 +41,11 @@ export default function SocialFeed({ symbol }: SocialFeedProps) {
         <Stack direction="column" gap="md">
           <Heading level={4}>Social Feed - {symbol}</Heading>
           <Text color="secondary">
-            Social media posts (Reddit, X/Twitter) will be displayed here once social ingestion is complete.
+            Social media posts (Reddit, X/Twitter) will be displayed here once social ingestion is
+            complete.
           </Text>
         </Stack>
       </CardContent>
     </Card>
   );
 }
-
-
-
-

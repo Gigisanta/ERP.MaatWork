@@ -1,6 +1,6 @@
 /**
  * Tests para QuickNavCards component
- * 
+ *
  * AI_DECISION: Tests unitarios para componente de navegación rápida
  * Justificación: Validación crítica de links y accesibilidad
  * Impacto: Prevenir errores en navegación y UX
@@ -11,37 +11,39 @@ import { render, screen } from '@testing-library/react';
 
 // Mock Next.js Link
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: { children: React.ReactNode; href: string; [key: string]: unknown }) => {
-    return <a href={href} {...props}>{children}</a>;
-  }
+  default: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => {
+    return (
+      <a href={href} {...props}>
+        {children}
+      </a>
+    );
+  },
 }));
 
 // Mock @cactus/ui antes de importar el componente
 vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className }: any) => (
-    <div className={className}>{children}</div>
-  ),
-  CardContent: ({ children, className }: any) => (
-    <div className={className}>{children}</div>
-  ),
+  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
+  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
   Icon: ({ name, size, className }: any) => (
-    <span className={className} data-icon={name}>{name}</span>
+    <span className={className} data-icon={name}>
+      {name}
+    </span>
   ),
-  Heading: ({ children, level, size, className }: any) => (
-    <h3 className={className}>{children}</h3>
-  ),
+  Heading: ({ children, level, size, className }: any) => <h3 className={className}>{children}</h3>,
   Text: ({ children, size, color, className }: any) => (
     <span className={className}>{children}</span>
   ),
-  Stack: ({ children, direction, gap, align }: any) => (
-    <div>{children}</div>
-  ),
-  Grid: ({ children, cols, gap }: any) => (
-    <div>{children}</div>
-  ),
-  GridItem: ({ children }: any) => (
-    <div>{children}</div>
-  )
+  Stack: ({ children, direction, gap, align }: any) => <div>{children}</div>,
+  Grid: ({ children, cols, gap }: any) => <div>{children}</div>,
+  GridItem: ({ children }: any) => <div>{children}</div>,
 }));
 
 import { QuickNavCards } from './QuickNavCards';
@@ -85,10 +87,9 @@ describe('QuickNavCards', () => {
     render(<QuickNavCards />);
 
     const links = screen.getAllByRole('link');
-    links.forEach(link => {
+    links.forEach((link) => {
       expect(link).toHaveAttribute('aria-label');
       expect(link.getAttribute('aria-label')).toContain('Navegar a');
     });
   });
 });
-

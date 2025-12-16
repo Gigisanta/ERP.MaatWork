@@ -1,6 +1,6 @@
 /**
  * Tests para auth routes
- * 
+ *
  * AI_DECISION: Tests unitarios para endpoints de autenticación
  * Justificación: Validación crítica de seguridad y flujo de auth
  * Impacto: Prevenir accesos no autorizados y errores de autenticación
@@ -19,25 +19,25 @@ vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   users: { id: 'users.id', email: 'users.email', usernameNormalized: 'users.usernameNormalized' },
   teamMembershipRequests: {},
-  eq: vi.fn((col, val) => ({ type: 'eq', col, val }))
+  eq: vi.fn((col, val) => ({ type: 'eq', col, val })),
 }));
 
 vi.mock('../auth/jwt', () => ({
-  signUserToken: vi.fn()
+  signUserToken: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => {
     req.user = { id: 'user-123', email: 'test@example.com', role: 'advisor' };
     next();
-  })
+  }),
 }));
 
 vi.mock('bcrypt', () => ({
   default: {
     hash: vi.fn(),
-    compare: vi.fn()
-  }
+    compare: vi.fn(),
+  },
 }));
 
 const mockDb = vi.mocked(db);
@@ -60,14 +60,14 @@ describe('POST /auth/login', () => {
       log: {
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       },
-      cookies: {}
+      cookies: {},
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
-      cookie: vi.fn().mockReturnThis()
+      cookie: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -80,7 +80,7 @@ describe('POST /auth/login', () => {
 
       mockReq.body = {
         identifier: adminEmail,
-        password: adminPassword
+        password: adminPassword,
       };
 
       const adminUser = {
@@ -89,26 +89,26 @@ describe('POST /auth/login', () => {
         fullName: 'Gio Santarelli',
         role: 'admin',
         passwordHash: 'hashed-password',
-        isActive: true
+        isActive: true,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([adminUser])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([adminUser]),
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       mockBcrypt.compare.mockResolvedValue(true as never);
@@ -125,7 +125,7 @@ describe('POST /auth/login', () => {
 
       mockReq.body = {
         identifier: adminUsername,
-        password: adminPassword
+        password: adminPassword,
       };
 
       // Test admin username logic
@@ -139,20 +139,22 @@ describe('POST /auth/login', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([]) // No existe
-          })
-        })
+            limit: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([]), // No existe
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'admin-123',
-            email: adminEmail,
-            fullName: 'Gio Santarelli',
-            role: 'admin'
-          }])
-        })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'admin-123',
+              email: adminEmail,
+              fullName: 'Gio Santarelli',
+              role: 'admin',
+            },
+          ]),
+        }),
       });
 
       mockDb.mockReturnValue({
@@ -160,9 +162,9 @@ describe('POST /auth/login', () => {
         insert: mockInsert,
         update: vi.fn().mockReturnValue({
           set: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([])
-          })
-        })
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       } as any);
 
       mockBcrypt.hash.mockResolvedValue('hashed-password' as never);
@@ -180,7 +182,7 @@ describe('POST /auth/login', () => {
       mockReq.body = {
         identifier: adminEmail,
         password: adminPassword,
-        rememberMe: true
+        rememberMe: true,
       };
 
       // Test rememberMe logic
@@ -196,7 +198,7 @@ describe('POST /auth/login', () => {
 
       mockReq.body = {
         identifier: email,
-        password
+        password,
       };
 
       const user = {
@@ -205,26 +207,26 @@ describe('POST /auth/login', () => {
         fullName: 'Test User',
         role: 'advisor',
         passwordHash: 'hashed-password',
-        isActive: true
+        isActive: true,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([user])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([user]),
+          }),
+        }),
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        update: mockUpdate
+        update: mockUpdate,
       } as any);
 
       mockBcrypt.compare.mockResolvedValue(true as never);
@@ -240,7 +242,7 @@ describe('POST /auth/login', () => {
 
       mockReq.body = {
         identifier: username,
-        password
+        password,
       };
 
       const user = {
@@ -250,24 +252,24 @@ describe('POST /auth/login', () => {
         fullName: 'Test User',
         role: 'advisor',
         passwordHash: 'hashed-password',
-        isActive: true
+        isActive: true,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([user])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([user]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
         update: vi.fn().mockReturnValue({
           set: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([])
-          })
-        })
+            where: vi.fn().mockResolvedValue([]),
+          }),
+        }),
       } as any);
 
       mockBcrypt.compare.mockResolvedValue(true as never);
@@ -281,13 +283,13 @@ describe('POST /auth/login', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // No user found
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // No user found
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // Test user not found logic
@@ -299,19 +301,19 @@ describe('POST /auth/login', () => {
         id: 'user-123',
         email: 'user@example.com',
         isActive: false,
-        passwordHash: 'hashed-password'
+        passwordHash: 'hashed-password',
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([user])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([user]),
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // Test inactive user logic
@@ -323,7 +325,7 @@ describe('POST /auth/login', () => {
         id: 'user-123',
         email: 'user@example.com',
         passwordHash: 'hashed-password',
-        isActive: true
+        isActive: true,
       };
 
       mockBcrypt.compare.mockResolvedValue(false as never);
@@ -342,7 +344,7 @@ describe('POST /auth/login', () => {
     it('debería validar schema de login', () => {
       const validBody = {
         identifier: 'user@example.com',
-        password: 'password123'
+        password: 'password123',
       };
 
       expect(validBody.identifier).toBeDefined();
@@ -352,7 +354,7 @@ describe('POST /auth/login', () => {
     it('debería rechazar identifier vacío', () => {
       const invalidBody = {
         identifier: '',
-        password: 'password123'
+        password: 'password123',
       };
 
       expect(invalidBody.identifier.length).toBe(0);
@@ -361,7 +363,7 @@ describe('POST /auth/login', () => {
     it('debería rechazar password muy corto', () => {
       const invalidBody = {
         identifier: 'user@example.com',
-        password: '12345' // Menos de 6 caracteres
+        password: '12345', // Menos de 6 caracteres
       };
 
       expect(invalidBody.password.length).toBeLessThan(6);
@@ -379,12 +381,12 @@ describe('POST /auth/register', () => {
       body: {},
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -396,7 +398,7 @@ describe('POST /auth/register', () => {
         email: 'newuser@example.com',
         fullName: 'New User',
         password: 'password123',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       mockReq.body = newUser;
@@ -404,24 +406,26 @@ describe('POST /auth/register', () => {
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([]) // Email no existe
-          })
-        })
+            limit: vi.fn().mockResolvedValue([]), // Email no existe
+          }),
+        }),
       });
 
       const mockInsert = vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'user-123',
-            ...newUser,
-            isActive: false
-          }])
-        })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'user-123',
+              ...newUser,
+              isActive: false,
+            },
+          ]),
+        }),
       });
 
       mockDb.mockReturnValue({
         select: mockSelect,
-        insert: mockInsert
+        insert: mockInsert,
       } as any);
 
       mockBcrypt.hash.mockResolvedValue('hashed-password' as never);
@@ -434,7 +438,7 @@ describe('POST /auth/register', () => {
       const newUser = {
         id: 'user-123',
         email: 'newuser@example.com',
-        isActive: false
+        isActive: false,
       };
 
       // Test inactive user creation
@@ -447,7 +451,7 @@ describe('POST /auth/register', () => {
         fullName: 'New Advisor',
         password: 'password123',
         role: 'advisor' as const,
-        requestedManagerId: 'manager-123'
+        requestedManagerId: 'manager-123',
       };
 
       // Test membership request creation
@@ -462,19 +466,19 @@ describe('POST /auth/register', () => {
         email: 'existing@example.com',
         fullName: 'Existing User',
         password: 'password123',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       const mockSelect = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]) // Email existe
-          })
-        })
+            limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]), // Email existe
+          }),
+        }),
       });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // Test email conflict
@@ -487,27 +491,28 @@ describe('POST /auth/register', () => {
         username: 'existingusername',
         fullName: 'New User',
         password: 'password123',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
-      const mockSelect = vi.fn()
+      const mockSelect = vi
+        .fn()
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([]) // Email no existe
-            })
-          })
+              limit: vi.fn().mockResolvedValue([]), // Email no existe
+            }),
+          }),
         })
         .mockReturnValueOnce({
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]) // Username existe
-            })
-          })
+              limit: vi.fn().mockResolvedValue([{ id: 'existing-123' }]), // Username existe
+            }),
+          }),
         });
 
       mockDb.mockReturnValue({
-        select: mockSelect
+        select: mockSelect,
       } as any);
 
       // Test username conflict
@@ -550,11 +555,11 @@ describe('GET /auth/me', () => {
         id: 'user-123',
         email: 'user@example.com',
         role: 'advisor',
-        fullName: 'Test User'
-      }
+        fullName: 'Test User',
+      },
     };
     mockRes = {
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -580,15 +585,15 @@ describe('POST /auth/logout', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       log: {
-        info: vi.fn()
-      }
+        info: vi.fn(),
+      },
     };
     mockRes = {
       clearCookie: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -613,13 +618,3 @@ describe('POST /auth/logout', () => {
     expect(mockReq.log?.info).toBeDefined();
   });
 });
-
-
-
-
-
-
-
-
-
-

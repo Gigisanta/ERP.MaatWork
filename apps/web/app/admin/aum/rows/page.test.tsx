@@ -1,6 +1,6 @@
 /**
  * Tests para optimizaciones de virtualización en AumRowsPage
- * 
+ *
  * AI_DECISION: Tests para verificar que virtualización funciona correctamente
  * Justificación: Asegurar que solo se renderizan filas visibles
  * Impacto: Confianza en mejoras de performance del frontend
@@ -25,7 +25,7 @@ describe('AumRowsPage Virtualization', () => {
       const containerHeight = 600;
       const estimateSize = 60;
       const visibleRows = Math.ceil(containerHeight / estimateSize);
-      
+
       expect(visibleRows).toBe(10); // 600 / 60 = 10 filas visibles
     });
 
@@ -52,4 +52,3 @@ describe('AumRowsPage Virtualization', () => {
     });
   });
 });
-

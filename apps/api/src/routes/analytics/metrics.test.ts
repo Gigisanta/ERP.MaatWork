@@ -1,6 +1,6 @@
 /**
  * Tests para analytics metrics routes
- * 
+ *
  * AI_DECISION: Tests unitarios para catálogo de métricas
  * Justificación: Validación de catálogo de métricas disponibles
  * Impacto: Prevenir errores en listado de métricas
@@ -13,7 +13,7 @@ import { requireAuth, requireRole } from '../../auth/middlewares';
 // Mock dependencies
 vi.mock('../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 describe('GET /analytics/metrics', () => {
@@ -24,17 +24,17 @@ describe('GET /analytics/metrics', () => {
     mockReq = {
       user: {
         id: 'user-123',
-        role: 'advisor'
+        role: 'advisor',
       },
       log: {
         error: vi.fn(),
         info: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -46,28 +46,28 @@ describe('GET /analytics/metrics', () => {
         name: 'Time-Weighted Return',
         description: 'Retorno ponderado por tiempo, elimina el efecto de flujos de caja',
         unit: '%',
-        category: 'performance'
+        category: 'performance',
       },
       {
         code: 'sharpe',
         name: 'Sharpe Ratio',
         description: 'Retorno excedente por unidad de riesgo (volatilidad)',
         unit: 'ratio',
-        category: 'risk'
-      }
+        category: 'risk',
+      },
     ];
 
     const handler = async (req: Request, res: Response) => {
       try {
         res.json({
           success: true,
-          data: metrics
+          data: metrics,
         });
       } catch (error) {
         req.log.error(error, 'Error fetching metrics catalog');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -76,7 +76,7 @@ describe('GET /analytics/metrics', () => {
 
     expect(mockRes.json).toHaveBeenCalledWith({
       success: true,
-      data: metrics
+      data: metrics,
     });
   });
 
@@ -90,12 +90,12 @@ describe('GET /analytics/metrics', () => {
         { code: 'alpha', name: 'Alpha', category: 'benchmark' },
         { code: 'beta', name: 'Beta', category: 'benchmark' },
         { code: 'te', name: 'Tracking Error', category: 'benchmark' },
-        { code: 'ir', name: 'Information Ratio', category: 'benchmark' }
+        { code: 'ir', name: 'Information Ratio', category: 'benchmark' },
       ];
 
       res.json({
         success: true,
-        data: metrics
+        data: metrics,
       });
     };
 
@@ -107,8 +107,8 @@ describe('GET /analytics/metrics', () => {
         data: expect.arrayContaining([
           expect.objectContaining({ code: 'twr' }),
           expect.objectContaining({ code: 'sharpe' }),
-          expect.objectContaining({ code: 'alpha' })
-        ])
+          expect.objectContaining({ code: 'alpha' }),
+        ]),
       })
     );
   });
@@ -123,7 +123,7 @@ describe('GET /analytics/metrics', () => {
         req.log.error(error, 'Error fetching metrics catalog');
         res.status(500).json({
           error: 'Internal server error',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     };
@@ -134,8 +134,7 @@ describe('GET /analytics/metrics', () => {
     expect(mockRes.status).toHaveBeenCalledWith(500);
     expect(mockRes.json).toHaveBeenCalledWith({
       error: 'Internal server error',
-      details: 'Unexpected error'
+      details: 'Unexpected error',
     });
   });
 });
-

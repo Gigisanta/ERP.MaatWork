@@ -29,32 +29,34 @@ function parseEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  
+
   const content = fs.readFileSync(filePath, 'utf8');
   const env = {};
-  
+
   for (const line of content.split('\n')) {
     const trimmed = line.trim();
     // Ignorar comentarios y líneas vacías
     if (!trimmed || trimmed.startsWith('#')) {
       continue;
     }
-    
+
     const match = trimmed.match(/^([^=]+)=(.*)$/);
     if (match) {
       const key = match[1].trim();
       let value = match[2].trim();
-      
+
       // Remover comillas si existen
-      if ((value.startsWith('"') && value.endsWith('"')) || 
-          (value.startsWith("'") && value.endsWith("'"))) {
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
         value = value.slice(1, -1);
       }
-      
+
       env[key] = value;
     }
   }
-  
+
   return env;
 }
 
@@ -63,36 +65,36 @@ function parseEnvFile(filePath) {
  */
 function checkApiEnv() {
   console.log(info('🔧 Verificando apps/api/.env...'));
-  
+
   const envPath = path.join(projectRoot, 'apps', 'api', '.env');
-  
+
   if (!fs.existsSync(envPath)) {
     console.log(error('  ❌ Archivo apps/api/.env no existe'));
     console.log(error('     Crea el archivo desde apps/api/.env.example'));
     hasErrors = true;
     return null;
   }
-  
+
   const env = parseEnvFile(envPath);
-  
+
   if (!env) {
     console.log(error('  ❌ No se pudo leer apps/api/.env'));
     hasErrors = true;
     return null;
   }
-  
+
   console.log(success('  ✅ Archivo apps/api/.env existe'));
-  
+
   // Verificar variables críticas
   const criticalVars = {
-    'DATABASE_URL': 'Cadena de conexión a PostgreSQL',
-    'JWT_SECRET': 'Secreto para firmar tokens JWT',
-    'PORT': 'Puerto del servidor (default: 3001)'
+    DATABASE_URL: 'Cadena de conexión a PostgreSQL',
+    JWT_SECRET: 'Secreto para firmar tokens JWT',
+    PORT: 'Puerto del servidor (default: 3001)',
   };
-  
+
   const missing = [];
   const warnings = [];
-  
+
   for (const [key, description] of Object.entries(criticalVars)) {
     if (!env[key] || env[key].trim() === '') {
       if (key === 'PORT') {
@@ -121,7 +123,7 @@ function checkApiEnv() {
       }
     }
   }
-  
+
   if (missing.length > 0) {
     console.log(error('  ❌ Variables faltantes:'));
     missing.forEach(({ key, description }) => {
@@ -129,14 +131,14 @@ function checkApiEnv() {
     });
     hasErrors = true;
   }
-  
+
   if (warnings.length > 0) {
     warnings.forEach(({ key, description }) => {
       console.log(warning(`  ⚠️  ${key} no configurado (usará default: ${description})`));
     });
     hasWarnings = true;
   }
-  
+
   return env;
 }
 
@@ -145,10 +147,10 @@ function checkApiEnv() {
  */
 function checkWebEnv() {
   console.log(info('🌐 Verificando apps/web/.env.local...'));
-  
+
   const envPath = path.join(projectRoot, 'apps', 'web', '.env.local');
   const envExamplePath = path.join(projectRoot, 'apps', 'web', '.env.example');
-  
+
   if (!fs.existsSync(envPath)) {
     if (fs.existsSync(envExamplePath)) {
       console.log(warning('  ⚠️  Archivo apps/web/.env.local no existe'));
@@ -160,32 +162,36 @@ function checkWebEnv() {
     hasWarnings = true;
     return null;
   }
-  
+
   const env = parseEnvFile(envPath);
-  
+
   if (!env) {
     console.log(warning('  ⚠️  No se pudo leer apps/web/.env.local'));
     hasWarnings = true;
     return null;
   }
-  
+
   console.log(success('  ✅ Archivo apps/web/.env.local existe'));
-  
+
   // Verificar variables importantes
   if (env.NEXT_PUBLIC_API_URL) {
     console.log(success(`  ✅ NEXT_PUBLIC_API_URL configurado: ${env.NEXT_PUBLIC_API_URL}`));
   } else {
-    console.log(warning('  ⚠️  NEXT_PUBLIC_API_URL no configurado (default: http://localhost:3001)'));
+    console.log(
+      warning('  ⚠️  NEXT_PUBLIC_API_URL no configurado (default: http://localhost:3001)')
+    );
     hasWarnings = true;
   }
-  
+
   if (env.JWT_SECRET) {
     console.log(success('  ✅ JWT_SECRET configurado'));
   } else {
-    console.log(warning('  ⚠️  JWT_SECRET no configurado (puede causar problemas de autenticación)'));
+    console.log(
+      warning('  ⚠️  JWT_SECRET no configurado (puede causar problemas de autenticación)')
+    );
     hasWarnings = true;
   }
-  
+
   return env;
 }
 
@@ -194,19 +200,19 @@ function checkWebEnv() {
  */
 function checkJwtSync(apiEnv, webEnv) {
   console.log(info('🔐 Verificando sincronización de JWT_SECRET...'));
-  
+
   if (!apiEnv || !apiEnv.JWT_SECRET) {
     console.log(warning('  ⚠️  No se puede verificar (JWT_SECRET faltante en API)'));
     hasWarnings = true;
     return;
   }
-  
+
   if (!webEnv || !webEnv.JWT_SECRET) {
     console.log(warning('  ⚠️  JWT_SECRET no configurado en Web (puede causar problemas)'));
     hasWarnings = true;
     return;
   }
-  
+
   if (apiEnv.JWT_SECRET === webEnv.JWT_SECRET) {
     console.log(success('  ✅ JWT_SECRET sincronizado entre API y Web'));
   } else {
@@ -222,16 +228,16 @@ function checkJwtSync(apiEnv, webEnv) {
  */
 function main() {
   console.log(chalk.bold.cyan('\n🔍 Validando variables de entorno...\n'));
-  
+
   const apiEnv = checkApiEnv();
   console.log('');
-  
+
   const webEnv = checkWebEnv();
   console.log('');
-  
+
   checkJwtSync(apiEnv, webEnv);
   console.log('');
-  
+
   if (hasErrors) {
     console.log(error('❌ Hay errores críticos que deben resolverse antes de continuar'));
     process.exit(1);
@@ -251,4 +257,3 @@ if (require.main === module) {
 }
 
 module.exports = { main, checkApiEnv, checkWebEnv, checkJwtSync };
-

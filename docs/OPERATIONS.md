@@ -24,7 +24,6 @@ Esta guía consolida toda la información sobre deploy, configuración, monitore
 - PostgreSQL 16 (o `docker compose up -d`)
 - Python 3.10+ (opcional, para analytics-service)
 - PM2 en VPS (producción)
-- TMUX (recomendado para desarrollo)
 
 ### Instalación Inicial
 
@@ -59,6 +58,12 @@ CORS_ORIGINS=http://localhost:3000
 CSP_ENABLED=false
 JWT_SECRET=change-me
 JWT_EXPIRES_IN=7d
+
+# Google OAuth2 Configuration
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3001/v1/auth/google/callback
+GOOGLE_ENCRYPTION_KEY=your-32-character-encryption-key-here
 ```
 
 #### Web (`apps/web/.env.local`)
@@ -67,6 +72,7 @@ JWT_EXPIRES_IN=7d
 NEXT_PUBLIC_API_URL=http://localhost:3001
 JWT_SECRET=change-me  # Debe coincidir con API
 NEXT_PUBLIC_DEBUG=true
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
 **Nota:** El archivo `.env.local` debe crearse manualmente ya que está en `.gitignore` para proteger secretos.
@@ -78,13 +84,13 @@ NEXT_PUBLIC_DEBUG=true
 ### Iniciar Servicios
 
 ```bash
-# Opción 1: Con TMUX (recomendado - 4 paneles)
+# Iniciar todos los servicios (consola única con logs coloreados)
 pnpm dev
 
-# Opción 2: Sin TMUX
+# Modo básico (sin consola unificada)
 pnpm dev:basic
 
-# Detener sesión TMUX
+# Detener todos los servicios
 pnpm dev:kill
 ```
 
@@ -100,8 +106,7 @@ pnpm dev:kill
 # Verificar API
 curl http://localhost:3001/health
 
-# Verificar servicios en TMUX
-# Presionar Ctrl+B luego D para ver paneles
+# Verificar servicios en consola (logs en vivo)
 ```
 
 ---
@@ -414,31 +419,20 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 2. Revisar `onConflict*` en código de seeds
 3. Limpiar datos antes de re-ejecutar seeds si es necesario
 
-#### TMUX no está instalado
+#### Servicios no se detienen correctamente
 
-**Síntomas:** Error al ejecutar `pnpm dev`
-
-**Soluciones:**
-```bash
-# macOS
-brew install tmux
-
-# Ubuntu/Debian
-sudo apt-get install tmux
-
-# O usar modo básico sin TMUX
-pnpm dev:basic
-```
-
-#### Detener sesión TMUX
-
-**Síntomas:** Necesitas detener la sesión TMUX
+**Síntomas:** Procesos quedan corriendo después de Ctrl+C
 
 **Soluciones:**
 ```bash
-pnpm run dev:kill
-# o manualmente:
-tmux kill-session -t cactus-dev
+# Detener todos los servicios
+pnpm dev:kill
+
+# O manualmente matar procesos
+pkill -f "tsx watch src/index.ts"
+pkill -f "next dev"
+pkill -f "python.*main.py"
+pkill -f "uvicorn.*main:app"
 ```
 
 #### Servicio Analytics (Python) no inicia
@@ -462,6 +456,52 @@ tmux kill-session -t cactus-dev
 
 ---
 
+## Google OAuth2 y Calendar Integration
+
+### Configuración Inicial
+
+1. **Crear proyecto en Google Cloud Console:**
+   - Ir a https://console.cloud.google.com/
+   - Crear nuevo proyecto o seleccionar existente
+   - Habilitar Google Calendar API
+
+2. **Crear credenciales OAuth2:**
+   - Ir a "APIs & Services" > "Credentials"
+   - Crear "OAuth 2.0 Client ID"
+   - Tipo: "Web application"
+   - Authorized redirect URIs: `http://localhost:3001/v1/auth/google/callback` (dev) y tu URL de producción
+
+3. **Configurar variables de entorno:**
+   - Ver sección [Variables de Entorno](#variables-de-entorno) para `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+   - Generar `GOOGLE_ENCRYPTION_KEY` (32 caracteres mínimo):
+     ```bash
+     openssl rand -base64 32
+     ```
+
+4. **Aplicar migraciones de base de datos:**
+   ```bash
+   pnpm -F @cactus/db generate
+   pnpm -F @cactus/db migrate
+   ```
+
+### Troubleshooting
+
+#### Error "Google Calendar not connected"
+- Verificar que el usuario haya completado el flujo OAuth2
+- Verificar que los tokens no estén expirados (se refrescan automáticamente cada 10 minutos)
+- Revisar logs del backend para errores de refresh de tokens
+
+#### Error "Failed to refresh token"
+- Verificar que `GOOGLE_ENCRYPTION_KEY` sea el mismo en todos los entornos
+- Verificar que el refresh token no haya sido revocado en Google Account
+- El usuario puede necesitar re-autenticarse
+
+#### CSP bloquea recursos de Google
+- Si `CSP_ENABLED=true`, verificar que la configuración en `apps/api/src/index.ts` incluya dominios de Google
+- Ver sección [Seguridad](#seguridad-y-performance) para más detalles
+
+---
+
 ## Seguridad y Performance
 
 ### Seguridad
@@ -472,6 +512,7 @@ tmux kill-session -t cactus-dev
 - **Pino**: Logs estructurados con `redact` en producción (oculta headers sensibles)
 - **CORS**: Configurado con orígenes permitidos
 - **CSP**: Opcional vía `CSP_ENABLED` (Content Security Policy)
+- **Google OAuth**: Tokens encriptados con AES-256-GCM, refresh automático cada 10 minutos
 
 #### Web
 

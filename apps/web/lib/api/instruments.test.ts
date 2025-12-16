@@ -11,8 +11,8 @@ vi.mock('../api-client', () => {
       get: vi.fn(async (_p: string) => ({ success: true })),
       post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
       put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-      delete: vi.fn(async (_p: string) => ({ success: true }))
-    }
+      delete: vi.fn(async (_p: string) => ({ success: true })),
+    },
   };
 });
 
@@ -39,8 +39,16 @@ describe('instruments api client endpoints', () => {
   });
 
   it('calls get instruments endpoint with filters', async () => {
-    await apiIndex.getInstruments({ search: 'test', assetClass: 'equity', active: true, limit: 10, offset: 0 });
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/instruments?search=test&assetClass=equity&active=true&limit=10&offset=0');
+    await apiIndex.getInstruments({
+      search: 'test',
+      assetClass: 'equity',
+      active: true,
+      limit: 10,
+      offset: 0,
+    });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/instruments?search=test&assetClass=equity&active=true&limit=10&offset=0'
+    );
   });
 
   it('calls get instrument by id endpoint', async () => {
@@ -65,4 +73,3 @@ describe('instruments api client endpoints', () => {
     expect(apiClient.delete).toHaveBeenCalledWith('/v1/instruments/inst-123');
   });
 });
-

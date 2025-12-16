@@ -1,4 +1,4 @@
-import { type ResponsiveProp } from '../tokens/breakpoints';
+import { type ResponsiveProp } from '../tokens/breakpoints.js';
 
 // Map breakpoint key to Tailwind class prefix
 const prefixFor: Record<string, string> = {
@@ -59,5 +59,3 @@ export function buildResponsiveClasses<T>(
   }
   return classes;
 }
-
-

@@ -26,7 +26,7 @@ export async function moveContactToStage(
 ): Promise<ApiResponse<void>> {
   return apiClient.post<void>(`/v1/pipeline/move`, {
     contactId,
-    toStageId: stageId
+    toStageId: stageId,
   });
 }
 
@@ -43,7 +43,7 @@ export async function getPipelineBoard(): Promise<ApiResponse<PipelineStageWithC
 
 /**
  * Obtiene la siguiente etapa del pipeline basada en el order
- * 
+ *
  * @param stages - Array de etapas ordenadas por order
  * @param currentStageId - ID de la etapa actual (puede ser null)
  * @returns La siguiente etapa o null si no hay siguiente etapa
@@ -65,10 +65,10 @@ export function getNextPipelineStage(
 
   // Ordenar etapas por order
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
-  
+
   // Encontrar el índice de la etapa actual
   const currentIndex = sortedStages.findIndex((s) => s.id === currentStageId);
-  
+
   // Retornar la siguiente etapa (order + 1)
   if (currentIndex >= 0 && currentIndex < sortedStages.length - 1) {
     return sortedStages[currentIndex + 1];
@@ -76,4 +76,3 @@ export function getNextPipelineStage(
 
   return null;
 }
-

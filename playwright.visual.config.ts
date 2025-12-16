@@ -1,6 +1,6 @@
 /**
  * Playwright config for visual regression tests
- * 
+ *
  * Visual regression tests compare screenshots of pages/components
  * to detect visual changes
  */
@@ -27,14 +27,14 @@ export default defineConfig({
     // Visual comparison settings
     viewport: { width: 1280, height: 720 },
   },
-  
+
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  
+
   // Visual comparison configuration
   expect: {
     // Threshold for visual comparison (0-1)
@@ -45,7 +45,7 @@ export default defineConfig({
       maxDiffPixels: 100, // Maximum different pixels
     },
   },
-  
+
   // Web server configuration (if needed)
   webServer: process.env.CI
     ? undefined
@@ -56,4 +56,3 @@ export default defineConfig({
         timeout: 120000,
       },
 });
-

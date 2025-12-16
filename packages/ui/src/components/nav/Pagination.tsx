@@ -1,8 +1,8 @@
 import React from 'react';
-import { cn } from '../../utils/cn';
-import Button from './Button';
-import Icon from '../Icon';
-import { VisuallyHidden } from '../../primitives/VisuallyHidden';
+import { cn } from '../../utils/cn.js';
+import Button from './Button.js';
+import Icon from '../Icon.js';
+import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
 
 export interface PaginationProps {
   currentPage: number;
@@ -15,16 +15,19 @@ export interface PaginationProps {
 }
 
 export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
-  ({ 
-    currentPage,
-    totalPages,
-    onPageChange,
-    showFirstLast = true,
-    showPrevNext = true,
-    maxVisiblePages = 5,
-    className,
-    ...props 
-  }, ref) => {
+  (
+    {
+      currentPage,
+      totalPages,
+      onPageChange,
+      showFirstLast = true,
+      showPrevNext = true,
+      maxVisiblePages = 5,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const canGoPrevious = currentPage > 1;
     const canGoNext = currentPage < totalPages;
 
@@ -42,7 +45,7 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
       }
 
       const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-      
+
       const result = [];
       if (start > 1) {
         result.push(1);
@@ -167,8 +170,3 @@ export const Pagination = React.forwardRef<HTMLElement, PaginationProps>(
 );
 
 Pagination.displayName = 'Pagination';
-
-
-
-
-

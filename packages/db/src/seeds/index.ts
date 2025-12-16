@@ -1,24 +1,57 @@
 /**
  * Seed Full - Main Orchestrator
- * 
+ *
  * Coordinates all seed modules to populate the database with test data.
  * Modular structure allows running individual seeds or the full suite.
+ *
+ * AI_DECISION: Eliminar barrel exports (export *) para mejorar tree-shaking
+ * Justificación: Los barrel exports rompen tree-shaking y aumentan el bundle size
+ * Impacto: Mejor optimización de bundle, imports más explícitos
  */
 
-// Re-export all seed modules for individual use
-export * from './helpers';
-export * from './dependencies';
-export * from './users';
-export * from './teams';
-export * from './contacts';
-export * from './tags';
-export * from './tasks-notes';
-export * from './portfolios';
-export * from './broker-data';
-export * from './notifications';
-export * from './activity-events';
-export * from './capacitaciones';
-export * from './segments';
+// ==========================================================
+// Helper Functions
+// ==========================================================
+export {
+  getRandomElement,
+  getRandomElements,
+  getRandomDate,
+  getRandomDateOnly,
+  ARGENTINE_FIRST_NAMES,
+  ARGENTINE_LAST_NAMES,
+  generateRandomName,
+  generateRandomEmail,
+  generateRandomPhone,
+  generateRandomDNI,
+  hashPassword,
+} from './helpers';
+
+// ==========================================================
+// Dependencies (Lookup Tables & Pipeline Stages)
+// ==========================================================
+export {
+  seedAssetClasses,
+  seedTaskStatuses,
+  seedPriorities,
+  seedNotificationTypes,
+  seedPipelineStages,
+  ensureDependencies,
+} from './dependencies';
+
+// ==========================================================
+// Seed Functions
+// ==========================================================
+export { seedUsers } from './users';
+export { seedTeams } from './teams';
+export { seedContacts } from './contacts';
+export { seedTags } from './tags';
+export { seedTasks, seedNotes } from './tasks-notes';
+export { seedPortfolios } from './portfolios';
+export { seedBrokerData } from './broker-data';
+export { seedNotifications } from './notifications';
+export { seedActivityEvents } from './activity-events';
+export { seedCapacitaciones } from './capacitaciones';
+export { seedSegments } from './segments';
 
 // Import for orchestration
 import { ensureDependencies } from './dependencies';
@@ -55,7 +88,7 @@ export interface SeedFullOptions {
 
 /**
  * Run full database seed
- * 
+ *
  * Seeds the database in the correct order to satisfy dependencies:
  * 1. Dependencies (lookups, pipeline stages)
  * 2. Users (admin, managers, advisors)
@@ -78,7 +111,8 @@ export async function seedFull(options: SeedFullOptions = {}) {
 
   try {
     // 1. Dependencies
-    let pipelineStagesList: Awaited<ReturnType<typeof ensureDependencies>>['pipelineStagesList'] = [];
+    let pipelineStagesList: Awaited<ReturnType<typeof ensureDependencies>>['pipelineStagesList'] =
+      [];
     if (!options.skipDependencies) {
       const deps = await ensureDependencies();
       pipelineStagesList = deps.pipelineStagesList;
@@ -88,7 +122,7 @@ export async function seedFull(options: SeedFullOptions = {}) {
     let adminUser: Awaited<ReturnType<typeof seedUsers>>['adminUser'] | undefined;
     let managerUsers: Awaited<ReturnType<typeof seedUsers>>['managerUsers'] | undefined;
     let advisorUsers: Awaited<ReturnType<typeof seedUsers>>['advisorUsers'] | undefined;
-    
+
     if (!options.skipUsers) {
       const usersResult = await seedUsers();
       adminUser = usersResult.adminUser;
@@ -163,8 +197,8 @@ export async function seedFull(options: SeedFullOptions = {}) {
       counts: {
         users: advisorUsers ? advisorUsers.length + (managerUsers?.length ?? 0) + 1 : 0,
         teams: teamsList.length,
-        contacts: contactsList.length
-      }
+        contacts: contactsList.length,
+      },
     };
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

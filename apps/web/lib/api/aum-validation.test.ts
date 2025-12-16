@@ -1,6 +1,6 @@
 /**
  * Tests para aum-validation schemas
- * 
+ *
  * AI_DECISION: Tests unitarios para validación de schemas Zod de AUM
  * Justificación: Validación crítica de respuestas de API, prevenir errores en runtime
  * Impacto: Mayor robustez y mejor debugging de errores de validación
@@ -21,7 +21,7 @@ import {
   type AumUploadResponse,
   type AumRowsResponse,
   type AumHistoryResponse,
-  type AumMatchRowResponse
+  type AumMatchRowResponse,
 } from './aum-validation';
 
 describe('aumMatchStatusSchema', () => {
@@ -44,7 +44,7 @@ describe('aumTotalsSchema', () => {
     matched: 80,
     ambiguous: 10,
     conflicts: 5,
-    unmatched: 5
+    unmatched: 5,
   };
 
   it('debería aceptar objeto válido completo', () => {
@@ -55,7 +55,7 @@ describe('aumTotalsSchema', () => {
     const withOptionals = {
       ...validTotals,
       inserts: 10,
-      updates: 5
+      updates: 5,
     };
     expect(aumTotalsSchema.parse(withOptionals)).toEqual(withOptionals);
   });
@@ -80,7 +80,7 @@ describe('aumFileSchema', () => {
     sizeBytes: 1024,
     uploadedByUserId: '123e4567-e89b-12d3-a456-426614174001',
     status: 'processed',
-    createdAt: '2024-01-01T00:00:00Z'
+    createdAt: '2024-01-01T00:00:00Z',
   };
 
   it('debería aceptar archivo válido completo', () => {
@@ -98,8 +98,8 @@ describe('aumFileSchema', () => {
         matched: 80,
         ambiguous: 10,
         conflicts: 5,
-        unmatched: 5
-      }
+        unmatched: 5,
+      },
     };
     expect(aumFileSchema.parse(withOptionals)).toEqual(withOptionals);
   });
@@ -120,7 +120,7 @@ describe('aumContactInfoSchema', () => {
     id: '123e4567-e89b-12d3-a456-426614174000',
     fullName: 'John Doe',
     firstName: 'John',
-    lastName: 'Doe'
+    lastName: 'Doe',
   };
 
   it('debería aceptar contacto válido', () => {
@@ -141,7 +141,7 @@ describe('aumUserInfoSchema', () => {
   const validUser = {
     id: '123e4567-e89b-12d3-a456-426614174000',
     name: 'John Doe',
-    email: 'john@example.com'
+    email: 'john@example.com',
   };
 
   it('debería aceptar usuario válido', () => {
@@ -172,15 +172,15 @@ describe('aumRowSchema', () => {
     isPreferred: true,
     conflictDetected: false,
     rowCreatedAt: '2024-01-01T00:00:00Z',
-    aumDollars: 1000.50,
+    aumDollars: 1000.5,
     bolsaArg: 500.25,
     fondosArg: 300.75,
-    bolsaBci: 200.00,
+    bolsaBci: 200.0,
     pesos: 1000000,
-    mep: 500.00,
-    cable: 400.00,
-    cv7000: 300.00,
-    createdAt: '2024-01-01T00:00:00Z'
+    mep: 500.0,
+    cable: 400.0,
+    cv7000: 300.0,
+    createdAt: '2024-01-01T00:00:00Z',
   };
 
   it('debería aceptar fila válida completa', () => {
@@ -197,7 +197,7 @@ describe('aumRowSchema', () => {
       matchedContactId: null,
       matchedUserId: null,
       aumDollars: null,
-      bolsaArg: null
+      bolsaArg: null,
     };
     expect(aumRowSchema.parse(withNulls)).toEqual(withNulls);
   });
@@ -213,9 +213,9 @@ describe('aumRowSchema', () => {
       updatedByFile: {
         id: '123e4567-e89b-12d3-a456-426614174005',
         name: 'file.csv',
-        createdAt: '2024-01-01T00:00:00Z'
+        createdAt: '2024-01-01T00:00:00Z',
       },
-      updatedAt: '2024-01-02T00:00:00Z'
+      updatedAt: '2024-01-02T00:00:00Z',
     };
     expect(aumRowSchema.parse(withOptionals)).toEqual(withOptionals);
   });
@@ -231,23 +231,23 @@ describe('aumRowSchema', () => {
         sizeBytes: 1024,
         uploadedByUserId: '123e4567-e89b-12d3-a456-426614174007',
         status: 'processed',
-        createdAt: '2024-01-01T00:00:00Z'
+        createdAt: '2024-01-01T00:00:00Z',
       },
       contact: {
         id: '123e4567-e89b-12d3-a456-426614174008',
         fullName: 'John Doe',
         firstName: 'John',
-        lastName: 'Doe'
+        lastName: 'Doe',
       },
       user: {
         id: '123e4567-e89b-12d3-a456-426614174009',
         name: 'Advisor Name',
-        email: 'advisor@example.com'
+        email: 'advisor@example.com',
       },
       raw: {
         customField: 'value',
-        anotherField: 123
-      }
+        anotherField: 123,
+      },
     };
     expect(aumRowSchema.parse(withRelations)).toEqual(withRelations);
   });
@@ -256,7 +256,7 @@ describe('aumRowSchema', () => {
     const withNullRelations = {
       ...validRow,
       contact: null,
-      user: null
+      user: null,
     };
     expect(aumRowSchema.parse(withNullRelations)).toEqual(withNullRelations);
   });
@@ -285,7 +285,7 @@ describe('aumUploadResponseSchema', () => {
       matched: 80,
       ambiguous: 10,
       conflicts: 5,
-      unmatched: 5
+      unmatched: 5,
     },
     confirmationsRequired: 2,
     confirmations: [
@@ -293,9 +293,9 @@ describe('aumUploadResponseSchema', () => {
         rowId: '123e4567-e89b-12d3-a456-426614174001',
         idCuenta: 'CUENTA123',
         newAccountNumber: 'NEW123',
-        reason: 'Account number mismatch'
-      }
-    ]
+        reason: 'Account number mismatch',
+      },
+    ],
   };
 
   it('debería aceptar respuesta válida completa', () => {
@@ -305,7 +305,7 @@ describe('aumUploadResponseSchema', () => {
   it('debería aceptar con warnings opcionales', () => {
     const withWarnings = {
       ...validUploadResponse,
-      warnings: ['Warning 1', 'Warning 2']
+      warnings: ['Warning 1', 'Warning 2'],
     };
     expect(aumUploadResponseSchema.parse(withWarnings)).toEqual(withWarnings);
   });
@@ -318,9 +318,9 @@ describe('aumUploadResponseSchema', () => {
           rowId: '123e4567-e89b-12d3-a456-426614174001',
           idCuenta: null,
           newAccountNumber: null,
-          reason: 'Some reason'
-        }
-      ]
+          reason: 'Some reason',
+        },
+      ],
     };
     expect(aumUploadResponseSchema.parse(withNulls)).toEqual(withNulls);
   });
@@ -329,7 +329,7 @@ describe('aumUploadResponseSchema', () => {
     const emptyConfirmations = {
       ...validUploadResponse,
       confirmations: [],
-      confirmationsRequired: 0
+      confirmationsRequired: 0,
     };
     expect(aumUploadResponseSchema.parse(emptyConfirmations)).toEqual(emptyConfirmations);
   });
@@ -340,10 +340,12 @@ describe('aumUploadResponseSchema', () => {
   });
 
   it('debería rechazar tipos incorrectos en confirmaciones', () => {
-    expect(() => aumUploadResponseSchema.parse({
-      ...validUploadResponse,
-      confirmations: [{ invalid: 'data' }]
-    })).toThrow();
+    expect(() =>
+      aumUploadResponseSchema.parse({
+        ...validUploadResponse,
+        confirmations: [{ invalid: 'data' }],
+      })
+    ).toThrow();
   });
 });
 
@@ -372,15 +374,15 @@ describe('aumRowsResponseSchema', () => {
         mep: null,
         cable: null,
         cv7000: null,
-        createdAt: '2024-01-01T00:00:00Z'
-      }
+        createdAt: '2024-01-01T00:00:00Z',
+      },
     ],
     pagination: {
       total: 1,
       limit: 50,
       offset: 0,
-      hasMore: false
-    }
+      hasMore: false,
+    },
   };
 
   it('debería aceptar respuesta válida completa', () => {
@@ -393,8 +395,8 @@ describe('aumRowsResponseSchema', () => {
       rows: [],
       pagination: {
         ...validRowsResponse.pagination,
-        total: 0
-      }
+        total: 0,
+      },
     };
     expect(aumRowsResponseSchema.parse(emptyRows)).toEqual(emptyRows);
   });
@@ -402,16 +404,18 @@ describe('aumRowsResponseSchema', () => {
   it('debería aceptar ok: false', () => {
     const notOk = {
       ...validRowsResponse,
-      ok: false
+      ok: false,
     };
     expect(aumRowsResponseSchema.parse(notOk)).toEqual(notOk);
   });
 
   it('debería rechazar paginación inválida', () => {
-    expect(() => aumRowsResponseSchema.parse({
-      ...validRowsResponse,
-      pagination: {}
-    })).toThrow();
+    expect(() =>
+      aumRowsResponseSchema.parse({
+        ...validRowsResponse,
+        pagination: {},
+      })
+    ).toThrow();
   });
 });
 
@@ -426,14 +430,14 @@ describe('aumHistoryResponseSchema', () => {
         sizeBytes: 1024,
         uploadedByUserId: '123e4567-e89b-12d3-a456-426614174001',
         status: 'processed',
-        createdAt: '2024-01-01T00:00:00Z'
-      }
+        createdAt: '2024-01-01T00:00:00Z',
+      },
     ],
     pagination: {
       limit: 50,
       offset: 0,
-      total: 1
-    }
+      total: 1,
+    },
   };
 
   it('debería aceptar respuesta válida completa', () => {
@@ -446,17 +450,19 @@ describe('aumHistoryResponseSchema', () => {
       files: [],
       pagination: {
         ...validHistoryResponse.pagination,
-        total: 0
-      }
+        total: 0,
+      },
     };
     expect(aumHistoryResponseSchema.parse(emptyFiles)).toEqual(emptyFiles);
   });
 
   it('debería rechazar paginación inválida', () => {
-    expect(() => aumHistoryResponseSchema.parse({
-      ...validHistoryResponse,
-      pagination: { limit: 50 }
-    })).toThrow();
+    expect(() =>
+      aumHistoryResponseSchema.parse({
+        ...validHistoryResponse,
+        pagination: { limit: 50 },
+      })
+    ).toThrow();
   });
 });
 
@@ -484,9 +490,9 @@ describe('aumMatchRowResponseSchema', () => {
       mep: null,
       cable: null,
       cv7000: null,
-      createdAt: '2024-01-01T00:00:00Z'
+      createdAt: '2024-01-01T00:00:00Z',
     },
-    message: 'Match successful'
+    message: 'Match successful',
   };
 
   it('debería aceptar respuesta válida completa', () => {
@@ -496,7 +502,7 @@ describe('aumMatchRowResponseSchema', () => {
   it('debería aceptar sin row cuando success es false', () => {
     const failureResponse = {
       success: false,
-      message: 'Match failed'
+      message: 'Match failed',
     };
     expect(aumMatchRowResponseSchema.parse(failureResponse)).toEqual(failureResponse);
   });
@@ -504,15 +510,17 @@ describe('aumMatchRowResponseSchema', () => {
   it('debería aceptar sin message', () => {
     const withoutMessage = {
       success: true,
-      row: validMatchResponse.row
+      row: validMatchResponse.row,
     };
     expect(aumMatchRowResponseSchema.parse(withoutMessage)).toEqual(withoutMessage);
   });
 
   it('debería rechazar success: true sin row', () => {
-    expect(() => aumMatchRowResponseSchema.parse({
-      success: true
-    })).toThrow();
+    expect(() =>
+      aumMatchRowResponseSchema.parse({
+        success: true,
+      })
+    ).toThrow();
   });
 });
 
@@ -526,10 +534,10 @@ describe('Type inference', () => {
         matched: 80,
         ambiguous: 10,
         conflicts: 5,
-        unmatched: 5
+        unmatched: 5,
       },
       confirmationsRequired: 0,
-      confirmations: []
+      confirmations: [],
     };
     expect(aumUploadResponseSchema.parse(response)).toEqual(response);
   });
@@ -542,8 +550,8 @@ describe('Type inference', () => {
         total: 0,
         limit: 50,
         offset: 0,
-        hasMore: false
-      }
+        hasMore: false,
+      },
     };
     expect(aumRowsResponseSchema.parse(response)).toEqual(response);
   });
@@ -554,8 +562,8 @@ describe('Type inference', () => {
       pagination: {
         limit: 50,
         offset: 0,
-        total: 0
-      }
+        total: 0,
+      },
     };
     expect(aumHistoryResponseSchema.parse(response)).toEqual(response);
   });
@@ -563,9 +571,8 @@ describe('Type inference', () => {
   it('debería inferir tipos correctamente para AumMatchRowResponse', () => {
     const response: AumMatchRowResponse = {
       success: false,
-      message: 'Error'
+      message: 'Error',
     };
     expect(aumMatchRowResponseSchema.parse(response)).toEqual(response);
   });
 });
-

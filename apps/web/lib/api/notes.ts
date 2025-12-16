@@ -13,9 +13,7 @@ import type { Note, CreateNoteRequest, UpdateNoteRequest } from '@/types/note';
 /**
  * Listar notas
  */
-export async function getNotes(params?: {
-  contactId?: string;
-}): Promise<ApiResponse<Note[]>> {
+export async function getNotes(params?: { contactId?: string }): Promise<ApiResponse<Note[]>> {
   const queryParams = new URLSearchParams();
   if (params?.contactId) queryParams.append('contactId', params.contactId);
 
@@ -33,10 +31,7 @@ export async function createNote(data: CreateNoteRequest): Promise<ApiResponse<N
 /**
  * Actualizar nota
  */
-export async function updateNote(
-  id: string,
-  data: UpdateNoteRequest
-): Promise<ApiResponse<Note>> {
+export async function updateNote(id: string, data: UpdateNoteRequest): Promise<ApiResponse<Note>> {
   return apiClient.put<Note>(`/v1/notes/${id}`, data);
 }
 
@@ -46,4 +41,3 @@ export async function updateNote(
 export async function deleteNote(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/notes/${id}`);
 }
-

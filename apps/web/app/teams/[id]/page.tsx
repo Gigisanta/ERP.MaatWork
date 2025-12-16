@@ -11,13 +11,12 @@ import {
   removeTeamMember,
 } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
-import type { Team, TeamMember, TeamMetrics } from '@/types';
+import type { Team, TeamMember, TeamMetrics, TeamAdvisor } from '@/types';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-  CardFooter,
   Button,
   Text,
   Stack,
@@ -42,6 +41,12 @@ import {
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import TeamActivityTable from '../components/TeamActivityTable';
+import TeamPerformanceSnapshot from '../components/TeamPerformanceSnapshot';
+import { TeamCalendarSection } from '../components/TeamCalendarSection';
+import TeamGoalsCard from '../components/TeamGoalsCard';
+import LeadDistributionPanel from '../components/LeadDistributionPanel';
+import CapacityHeatmap from '../components/CapacityHeatmap';
+import TeamHistoryChart from '../components/TeamHistoryChart';
 
 export default function TeamDetailsPage() {
   const { user, loading } = useRequireAuth();
@@ -72,9 +77,7 @@ export default function TeamDetailsPage() {
 
   // Form states
   const [editTeamName, setEditTeamName] = useState('');
-  const [advisorCandidates, setAdvisorCandidates] = useState<
-    Array<{ id: string; email: string; fullName: string }>
-  >([]);
+  const [advisorCandidates, setAdvisorCandidates] = useState<TeamAdvisor[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
   // Toast state
@@ -89,10 +92,18 @@ export default function TeamDetailsPage() {
     variant: 'success',
   });
 
+  // Check if user can manage this team (admin or manager of this specific team)
+  const canManageTeam =
+    user &&
+    team &&
+    (user.role === 'admin' || (user.role === 'manager' && team.managerUserId === user.id));
+
   useEffect(() => {
     if (!user) return;
+    // Strict RBAC: Only managers and admins can view team details page
+    // Regular members see their dashboard at /teams
     if (!['manager', 'admin'].includes(user.role)) {
-      router.push('/home');
+      router.push('/teams');
       return;
     }
     fetchAll();
@@ -104,17 +115,25 @@ export default function TeamDetailsPage() {
       setError(null);
 
       // Get team detail (team + members + metrics) in a single request
+      // Backend validates permission (must be manager of this team or admin)
       const detailRes = await getTeamDetail(teamId);
+
       if (detailRes.success && detailRes.data) {
         setTeam(detailRes.data.team);
         setEditTeamName(detailRes.data.team.name);
         setMembers(detailRes.data.team.members || []);
         setTeamMetrics(detailRes.data.metrics);
       } else {
-        throw new Error('No se pudo cargar la información del equipo');
+        // If backend denies access or fails
+        throw new Error('No se pudo cargar la información del equipo o no tienes permisos');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cargar equipo');
+      const errMsg = e instanceof Error ? e.message : 'Error al cargar equipo';
+      setError(errMsg);
+      // Optional: Redirect if permission error
+      if (errMsg.includes('permisos') || errMsg.includes('Access denied')) {
+        setTimeout(() => router.push('/teams'), 2000);
+      }
     } finally {
       setLoadingData(false);
     }
@@ -139,7 +158,7 @@ export default function TeamDetailsPage() {
     try {
       const res = await getTeamAdvisors(teamId);
       if (res.success && res.data) {
-        setAdvisorCandidates(res.data || []);
+        setAdvisorCandidates((res.data || []) as TeamAdvisor[]);
       } else {
         setAdvisorCandidates([]);
       }
@@ -153,7 +172,7 @@ export default function TeamDetailsPage() {
       setInviteLoading(inviteeId);
       const res = await createTeamInvitation(teamId, { userId: inviteeId });
       if (res.success) {
-        setAdvisorCandidates((prev) => prev.filter((a) => a.id !== inviteeId));
+        setAdvisorCandidates((prev) => prev.filter((a: TeamAdvisor) => String(a.id) !== inviteeId));
         showToast('Invitación enviada', 'El asesor recibirá una notificación', 'success');
       } else {
         showToast('Error', 'No se pudo enviar la invitación', 'error');
@@ -280,20 +299,22 @@ export default function TeamDetailsPage() {
             </Button>
             <Heading level={2}>{team?.name || 'Equipo'}</Heading>
           </div>
-          <Stack direction="row" gap="sm">
-            <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
-              <Icon name="edit" size={16} className="mr-2" />
-              Editar
-            </Button>
-            <Button variant="secondary" onClick={() => setDeleteConfirmOpen(true)}>
-              <Icon name="trash-2" size={16} className="mr-2" />
-              Eliminar
-            </Button>
-            <Button onClick={openLinkModal}>
-              <Icon name="plus" size={16} className="mr-2" />
-              Vincular asesores
-            </Button>
-          </Stack>
+          {canManageTeam && (
+            <Stack direction="row" gap="sm">
+              <Button variant="secondary" onClick={() => setEditModalOpen(true)}>
+                <Icon name="edit" size={16} className="mr-2" />
+                Editar
+              </Button>
+              <Button variant="secondary" onClick={() => setDeleteConfirmOpen(true)}>
+                <Icon name="trash-2" size={16} className="mr-2" />
+                Eliminar
+              </Button>
+              <Button onClick={openLinkModal}>
+                <Icon name="plus" size={16} className="mr-2" />
+                Agregar miembros
+              </Button>
+            </Stack>
+          )}
         </div>
 
         {error && (
@@ -302,86 +323,78 @@ export default function TeamDetailsPage() {
           </Alert>
         )}
 
-        {/* Metrics Section */}
-        {teamMetrics && (
-          <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  AUM Total
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {formatCurrency(teamMetrics.teamAum)}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Miembros
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.memberCount}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Clientes
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.clientCount}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Portfolios Activos
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.portfolioCount}
-                </Text>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+        <Grid cols={{ base: 1, lg: 3 }} gap="lg">
+          {/* Left Column: Goals & Metrics */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Performance Snapshot */}
+            <TeamPerformanceSnapshot teamId={teamId} />
 
-        {/* Risk Distribution */}
-        {teamMetrics && teamMetrics.riskDistribution.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribución de Riesgo</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Stack direction="column" gap="sm">
-                {teamMetrics.riskDistribution.map((item) => (
-                  <div key={item.riskLevel} className="flex items-center justify-between">
-                    <Text>{getRiskLevelLabel(item.riskLevel)}</Text>
-                    <Badge variant="default">{item.count}</Badge>
-                  </div>
-                ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
+            {/* History Chart */}
+            <TeamHistoryChart teamId={teamId} />
 
-        {/* Members & Activity Tabs */}
+            {/* Capacity Heatmap */}
+            <CapacityHeatmap teamId={teamId} />
+
+            {/* Risk Distribution */}
+            {teamMetrics && teamMetrics.riskDistribution.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribución de Riesgo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Stack direction="column" gap="sm">
+                    {teamMetrics.riskDistribution.map((item) => (
+                      <div key={item.riskLevel} className="flex items-center justify-between">
+                        <Text>{getRiskLevelLabel(item.riskLevel)}</Text>
+                        <Badge variant="default">{item.count}</Badge>
+                      </div>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column: Goals & Calendar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Goals Card */}
+            <TeamGoalsCard teamId={teamId} />
+
+            {/* Manager Calendar View */}
+            {canManageTeam && team && (
+              <TeamCalendarSection
+                teamId={teamId}
+                isManager={true}
+                currentCalendarId={(team.calendarId || team.calendarUrl) ?? null}
+                members={members}
+              />
+            )}
+          </div>
+        </Grid>
+
+        {/* Tabs for Management */}
         <Tabs defaultValue="activity" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="activity">
               <Icon name="Activity" size={16} className="mr-2" />
-              Control de Actividad
+              Actividad
+            </TabsTrigger>
+            <TabsTrigger value="leads">
+              <Icon name="Users" size={16} className="mr-2" />
+              Gestión de Leads
             </TabsTrigger>
             <TabsTrigger value="members">
-              <Icon name="Users" size={16} className="mr-2" />
+              <Icon name="Team" size={16} className="mr-2" />
               Miembros ({members.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="activity">
             <TeamActivityTable teamId={teamId} teamName={team?.name} />
+          </TabsContent>
+
+          <TabsContent value="leads">
+            <LeadDistributionPanel teamId={teamId} />
           </TabsContent>
 
           <TabsContent value="members">
@@ -461,34 +474,45 @@ export default function TeamDetailsPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Modal vincular asesores */}
+        {/* Modal agregar miembros */}
         <Modal open={linkModalOpen} onOpenChange={setLinkModalOpen}>
           <ModalHeader>
-            <ModalTitle>Vincular asesores a {team?.name}</ModalTitle>
+            <ModalTitle>Agregar miembros a {team?.name}</ModalTitle>
             <ModalDescription>
-              Selecciona asesores para enviar invitación al equipo.
+              Selecciona miembros (asesores, managers o administrativos) para enviar invitación al
+              equipo.
             </ModalDescription>
           </ModalHeader>
           <ModalContent>
             <Stack direction="column" gap="sm">
               {advisorCandidates.length === 0 && (
-                <Text color="secondary">No hay asesores disponibles para invitar.</Text>
+                <Text color="secondary">No hay usuarios disponibles para invitar.</Text>
               )}
-              {advisorCandidates.map((a) => (
+              {advisorCandidates.map((a: TeamAdvisor) => (
                 <div
-                  key={a.id}
+                  key={String(a.id)}
                   className="flex items-center justify-between border rounded-md px-3 py-2"
                 >
-                  <div>
-                    <Text weight="medium">{a.fullName || a.email}</Text>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Text weight="medium">{a.fullName || a.email}</Text>
+                      <Badge variant="default" className="text-xs">
+                        {a.role || 'N/A'}
+                      </Badge>
+                      {a.currentTeamId && (
+                        <Badge variant="outline" className="text-xs">
+                          En otro equipo
+                        </Badge>
+                      )}
+                    </div>
                     <Text size="sm" color="secondary">
                       {a.email}
                     </Text>
                   </div>
                   <Button
                     size="sm"
-                    disabled={inviteLoading === a.id}
-                    onClick={() => inviteAdvisor(a.id)}
+                    disabled={inviteLoading === String(a.id)}
+                    onClick={() => inviteAdvisor(String(a.id))}
                   >
                     Invitar
                   </Button>

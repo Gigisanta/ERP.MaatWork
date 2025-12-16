@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { Analytics } from '@vercel/analytics/react';
 
@@ -14,7 +14,7 @@ export function ConditionalAnalytics() {
   const isProduction = process.env.NODE_ENV === 'production';
   const analyticsEnabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
   const analyticsDisabled = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'false';
-  
+
   // Solo cargar Analytics si está explícitamente habilitado o en producción (y no deshabilitado)
   const shouldLoadAnalytics = analyticsEnabled || (isProduction && !analyticsDisabled);
 

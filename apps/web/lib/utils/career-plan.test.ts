@@ -7,7 +7,7 @@ import {
   formatAnnualGoal,
   formatProgressPercentage,
   formatIndex,
-  formatLevelPercentage
+  formatLevelPercentage,
 } from './career-plan';
 
 describe('career-plan utilities', () => {
@@ -91,4 +91,3 @@ describe('career-plan utilities', () => {
     });
   });
 });
-

@@ -62,6 +62,7 @@ export interface AumUserInfo {
  * Fila AUM base - usando intersection type
  */
 export interface AumRow extends BaseEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   fileId: string;
   accountNumber: string | null;
   holderName: string | null;

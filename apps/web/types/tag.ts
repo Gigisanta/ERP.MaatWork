@@ -7,12 +7,13 @@ import type { BusinessLine } from './metrics';
 
 /**
  * Tag base - extiende TimestampedEntityOptional
- * 
+ *
  * NOTA: El backend usa 'scope' (contact, meeting, note) mientras que el frontend
  * usa 'entityType' (contact, task, note). El cliente API transforma automáticamente
  * entityType → scope antes de enviar al backend.
  */
 export interface Tag extends TimestampedEntityOptional {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   color: string;
   icon?: string;
@@ -23,11 +24,11 @@ export interface Tag extends TimestampedEntityOptional {
 
 /**
  * Request para crear tag - usando utility type CreateRequest
- * 
+ *
  * AI_DECISION: Usar entityType en frontend, transformar a scope en cliente API
  * Justificación: Mantener consistencia con otros tipos del frontend que usan entityType
  * Impacto: Transformación transparente en lib/api/tags.ts
- * 
+ *
  * Mapeo entityType → scope:
  * - 'contact' → 'contact'
  * - 'task' → 'meeting'

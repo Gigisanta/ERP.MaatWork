@@ -157,23 +157,15 @@ function main() {
 
   // Verificar dependencias
   if (!checkDependencies(python.cmd)) {
-    console.log('');
-    console.log(warning('⚠️  Dependencias Python no instaladas'));
-    console.log(warning('   Ejecuta: pnpm -F @cactus/analytics-service install'));
-    console.log('');
+    console.log(warning('⚠️  Dependencias Python no instaladas. Ejecuta: pnpm -F @cactus/analytics-service install'));
     process.exit(1);
   }
 
   // Verificar uvicorn
   if (!checkUvicorn(python.cmd)) {
-    console.log('');
     console.log(error('❌ uvicorn no está instalado'));
-    console.log(error('   Ejecuta: pnpm -F @cactus/analytics-service install'));
     process.exit(1);
   }
-
-  console.log(success('✅ Dependencias verificadas'));
-  console.log('');
 
   // Ejecutar el servicio
   runService(python.cmd);
@@ -181,4 +173,40 @@ function main() {
 
 // Ejecutar
 main();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

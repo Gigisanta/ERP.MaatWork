@@ -15,11 +15,8 @@ export async function requireContactAccess(req: Request, res: Response, next: Ne
   }
 
   // Buscar contactId en diferentes ubicaciones
-  const contactId = 
-    req.params.id || 
-    req.params.contactId || 
-    req.body.contactId || 
-    req.query.contactId;
+  const contactId =
+    req.params.id || req.params.contactId || req.body.contactId || req.query.contactId;
 
   if (!contactId || typeof contactId !== 'string') {
     return res.status(400).json({ error: 'contactId is required' });
@@ -28,13 +25,13 @@ export async function requireContactAccess(req: Request, res: Response, next: Ne
   try {
     // Verificar acceso de forma asíncrona
     const hasAccess = await canAccessContact(userId, role, contactId);
-    
+
     if (!hasAccess) {
       return res.status(403).json({ error: 'No tienes acceso a este contacto' });
     }
-    
-    // Guardar contactId en req para uso posterior
-    (req as any).contactId = contactId;
+
+    // Guardar contactId en req para uso posterior (contactId está tipado globalmente)
+    req.contactId = contactId;
     next();
   } catch (error) {
     req.log?.error({ err: error, contactId }, 'Error checking contact access');

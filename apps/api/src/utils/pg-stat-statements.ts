@@ -1,9 +1,9 @@
 /**
  * Utilidades para consultar pg_stat_statements
- * 
+ *
  * Proporciona funciones TypeScript para consultar estadísticas de queries
  * desde pg_stat_statements y detectar problemas de performance.
- * 
+ *
  * AI_DECISION: Utilidades para monitoreo de performance con pg_stat_statements
  * Justificación: Necesitamos herramientas para detectar queries lentas y problemas de performance
  * Impacto: Detección proactiva de problemas, alertas automáticas, mejor visibilidad
@@ -64,13 +64,15 @@ export async function isPgStatStatementsEnabled(): Promise<boolean> {
         WHERE extname = 'pg_stat_statements'
       ) as enabled
     `);
-    
+
     const enabled = (result.rows[0] as { enabled: boolean })?.enabled ?? false;
-    
+
     if (!enabled) {
-      logger.warn('pg_stat_statements no está habilitado. Requiere agregar a shared_preload_libraries y reiniciar PostgreSQL');
+      logger.warn(
+        'pg_stat_statements no está habilitado. Requiere agregar a shared_preload_libraries y reiniciar PostgreSQL'
+      );
     }
-    
+
     return enabled;
   } catch (error) {
     logger.error({ err: error }, 'Error verificando pg_stat_statements');
@@ -80,7 +82,7 @@ export async function isPgStatStatementsEnabled(): Promise<boolean> {
 
 /**
  * Obtener queries lentas usando función helper de PostgreSQL
- * 
+ *
  * @param thresholdMs Umbral mínimo de tiempo promedio en milisegundos (default: 1000)
  * @param limitCount Número máximo de resultados (default: 20)
  */
@@ -107,7 +109,7 @@ export async function getSlowQueries(
       maxExecTime: Number((row as { max_exec_time: string | number }).max_exec_time),
       minExecTime: Number((row as { min_exec_time: string | number }).min_exec_time),
       stddevExecTime: Number((row as { stddev_exec_time: string | number }).stddev_exec_time),
-      rows: Number((row as { rows: string | number }).rows)
+      rows: Number((row as { rows: string | number }).rows),
     }));
   } catch (error) {
     logger.error({ err: error, thresholdMs, limitCount }, 'Error obteniendo queries lentas');
@@ -117,12 +119,10 @@ export async function getSlowQueries(
 
 /**
  * Obtener queries más frecuentes
- * 
+ *
  * @param limitCount Número máximo de resultados (default: 20)
  */
-export async function getMostFrequentQueries(
-  limitCount: number = 20
-): Promise<FrequentQuery[]> {
+export async function getMostFrequentQueries(limitCount: number = 20): Promise<FrequentQuery[]> {
   try {
     const enabled = await isPgStatStatementsEnabled();
     if (!enabled) {
@@ -139,7 +139,7 @@ export async function getMostFrequentQueries(
       calls: Number((row as { calls: string | number }).calls),
       totalExecTime: Number((row as { total_exec_time: string | number }).total_exec_time),
       meanExecTime: Number((row as { mean_exec_time: string | number }).mean_exec_time),
-      rows: Number((row as { rows: string | number }).rows)
+      rows: Number((row as { rows: string | number }).rows),
     }));
   } catch (error) {
     logger.error({ err: error, limitCount }, 'Error obteniendo queries frecuentes');
@@ -149,12 +149,10 @@ export async function getMostFrequentQueries(
 
 /**
  * Obtener queries por tiempo total consumido
- * 
+ *
  * @param limitCount Número máximo de resultados (default: 20)
  */
-export async function getQueriesByTotalTime(
-  limitCount: number = 20
-): Promise<QueryByTotalTime[]> {
+export async function getQueriesByTotalTime(limitCount: number = 20): Promise<QueryByTotalTime[]> {
   try {
     const enabled = await isPgStatStatementsEnabled();
     if (!enabled) {
@@ -171,8 +169,10 @@ export async function getQueriesByTotalTime(
       calls: Number((row as { calls: string | number }).calls),
       totalExecTime: Number((row as { total_exec_time: string | number }).total_exec_time),
       meanExecTime: Number((row as { mean_exec_time: string | number }).mean_exec_time),
-      percentageTotalTime: Number((row as { percentage_total_time: string | number }).percentage_total_time),
-      rows: Number((row as { rows: string | number }).rows)
+      percentageTotalTime: Number(
+        (row as { percentage_total_time: string | number }).percentage_total_time
+      ),
+      rows: Number((row as { rows: string | number }).rows),
     }));
   } catch (error) {
     logger.error({ err: error, limitCount }, 'Error obteniendo queries por tiempo total');
@@ -182,7 +182,7 @@ export async function getQueriesByTotalTime(
 
 /**
  * Resetear estadísticas de pg_stat_statements
- * 
+ *
  * Advertencia: Solo usar en desarrollo o cuando se necesite reiniciar el monitoreo
  */
 export async function resetPgStatStatements(): Promise<void> {
@@ -218,7 +218,7 @@ export async function getPerformanceSummary(): Promise<{
         totalQueries: 0,
         totalTime: 0,
         avgQueryTime: 0,
-        slowQueriesCount: 0
+        slowQueriesCount: 0,
       };
     }
 
@@ -245,11 +245,10 @@ export async function getPerformanceSummary(): Promise<{
       totalQueries: Number(row.total_queries),
       totalTime: Number(row.total_time),
       avgQueryTime: Number(row.avg_query_time),
-      slowQueriesCount: Number(row.slow_queries_count)
+      slowQueriesCount: Number(row.slow_queries_count),
     };
   } catch (error) {
     logger.error({ err: error }, 'Error obteniendo resumen de performance');
     throw error;
   }
 }
-

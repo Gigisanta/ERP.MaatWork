@@ -1,6 +1,6 @@
 /**
  * Tests para useTheme hook
- * 
+ *
  * AI_DECISION: Tests unitarios para useTheme y ThemeProvider
  * Justificación: Validación crítica de gestión de temas
  * Impacto: Prevenir errores en dark/light mode
@@ -23,7 +23,7 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
-    }
+    },
   };
 })();
 
@@ -35,11 +35,11 @@ const createMatchMedia = (matches: boolean) => {
     onchange: null,
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn()
+    dispatchEvent: vi.fn(),
   };
   return vi.fn().mockImplementation((query: string) => ({
     ...mockMediaQuery,
-    media: query
+    media: query,
   }));
 };
 
@@ -49,11 +49,11 @@ describe('ThemeProvider', () => {
     localStorageMock.clear();
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
     Object.defineProperty(document.documentElement, 'setAttribute', {
       value: vi.fn(),
-      writable: true
+      writable: true,
     });
   });
 
@@ -150,8 +150,10 @@ describe('ThemeProvider', () => {
     expect(mediaQueryInstance?.addEventListener).toHaveBeenCalled();
 
     // Simular cambio en system preference
-    const changeHandler = mediaQueryInstance?.addEventListener.mock.calls[0]?.[1] as (e: MediaQueryListEvent) => void;
-    
+    const changeHandler = mediaQueryInstance?.addEventListener.mock.calls[0]?.[1] as (
+      e: MediaQueryListEvent
+    ) => void;
+
     if (changeHandler) {
       act(() => {
         changeHandler({ matches: true } as MediaQueryListEvent);
@@ -187,11 +189,11 @@ describe('useTheme hook', () => {
     localStorageMock.clear();
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
     Object.defineProperty(document.documentElement, 'setAttribute', {
       value: vi.fn(),
-      writable: true
+      writable: true,
     });
   });
 
@@ -362,8 +364,10 @@ describe('useTheme hook', () => {
 
     // Simular cambio en system preference
     const mediaQueryInstance = mockMediaQuery.mock.results[0]?.value;
-    const changeHandler = mediaQueryInstance?.addEventListener.mock.calls[0]?.[1] as (e: MediaQueryListEvent) => void;
-    
+    const changeHandler = mediaQueryInstance?.addEventListener.mock.calls[0]?.[1] as (
+      e: MediaQueryListEvent
+    ) => void;
+
     if (changeHandler) {
       act(() => {
         changeHandler({ matches: true } as MediaQueryListEvent);
@@ -374,5 +378,3 @@ describe('useTheme hook', () => {
     expect(screen.getByText('light')).toBeInTheDocument();
   });
 });
-
-

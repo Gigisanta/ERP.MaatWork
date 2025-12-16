@@ -28,4 +28,3 @@ test.describe('Benchmarks Page Visual Regression', () => {
     await expect(page).toHaveScreenshot('benchmarks-page.png', { fullPage: true });
   });
 });
-

@@ -10,8 +10,8 @@ vi.mock('../api-client', () => ({
     get: vi.fn(async (_p: string) => ({ success: true, data: [] })),
     post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
     put: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
-    delete: vi.fn(async (_p: string) => ({ success: true }))
-  }
+    delete: vi.fn(async (_p: string) => ({ success: true })),
+  },
 }));
 
 describe('portfolios api client', () => {
@@ -38,7 +38,9 @@ describe('portfolios api client', () => {
 
   it('calls getPortfolioLinesBatch endpoint', async () => {
     await portfoliosApi.getPortfolioLinesBatch(['portfolio-1', 'portfolio-2']);
-    expect(apiClient.get).toHaveBeenCalledWith(expect.stringContaining('/v1/portfolios/templates/lines/batch'));
+    expect(apiClient.get).toHaveBeenCalledWith(
+      expect.stringContaining('/v1/portfolios/templates/lines/batch')
+    );
   });
 
   it('calls createPortfolio endpoint', async () => {
@@ -48,7 +50,10 @@ describe('portfolios api client', () => {
 
   it('calls updatePortfolio endpoint', async () => {
     await portfoliosApi.updatePortfolio('portfolio-1', { name: 'Updated Portfolio' });
-    expect(apiClient.put).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1', expect.any(Object));
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/v1/portfolios/templates/portfolio-1',
+      expect.any(Object)
+    );
   });
 
   it('calls deletePortfolio endpoint', async () => {
@@ -60,33 +65,35 @@ describe('portfolios api client', () => {
     await portfoliosApi.addPortfolioLine('portfolio-1', {
       targetType: 'instrument',
       instrumentId: 'instrument-1',
-      targetWeight: 0.5
+      targetWeight: 0.5,
     });
     expect(apiClient.post).toHaveBeenCalledWith(
       '/v1/portfolios/templates/portfolio-1/lines',
       expect.objectContaining({
         targetType: 'instrument',
         instrumentId: 'instrument-1',
-        targetWeight: 0.5
+        targetWeight: 0.5,
       })
     );
   });
 
   it('calls updatePortfolioLine endpoint', async () => {
     await portfoliosApi.updatePortfolioLine('portfolio-1', 'line-1', {
-      targetWeight: 0.3
+      targetWeight: 0.3,
     });
     expect(apiClient.put).toHaveBeenCalledWith(
       '/v1/portfolios/templates/portfolio-1/lines/line-1',
       expect.objectContaining({
-        targetWeight: 0.3
+        targetWeight: 0.3,
       })
     );
   });
 
   it('calls deletePortfolioLine endpoint', async () => {
     await portfoliosApi.deletePortfolioLine('portfolio-1', 'line-1');
-    expect(apiClient.delete).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1/lines/line-1');
+    expect(apiClient.delete).toHaveBeenCalledWith(
+      '/v1/portfolios/templates/portfolio-1/lines/line-1'
+    );
   });
 
   it('calls getPortfolioLinesBatch with correct query params', async () => {
@@ -94,36 +101,26 @@ describe('portfolios api client', () => {
     expect(apiClient.get).toHaveBeenCalledWith(
       expect.stringContaining('/v1/portfolios/templates/lines/batch')
     );
-    expect(apiClient.get).toHaveBeenCalledWith(
-      expect.stringMatching(/ids=id1,id2,id3/)
-    );
+    expect(apiClient.get).toHaveBeenCalledWith(expect.stringMatching(/ids=id1,id2,id3/));
   });
 
   it('calls createPortfolio with correct data structure', async () => {
     const portfolioData = {
       name: 'Test Portfolio',
       description: 'Test Description',
-      riskLevel: 'moderate' as const
+      riskLevel: 'moderate' as const,
     };
     await portfoliosApi.createPortfolio(portfolioData);
-    expect(apiClient.post).toHaveBeenCalledWith(
-      '/v1/portfolios/templates',
-      portfolioData
-    );
+    expect(apiClient.post).toHaveBeenCalledWith('/v1/portfolios/templates', portfolioData);
   });
 
   it('calls updatePortfolio with correct data structure', async () => {
     const updateData = {
       name: 'Updated Name',
       description: 'Updated Description',
-      riskLevel: 'aggressive' as const
+      riskLevel: 'aggressive' as const,
     };
     await portfoliosApi.updatePortfolio('portfolio-1', updateData);
-    expect(apiClient.put).toHaveBeenCalledWith(
-      '/v1/portfolios/templates/portfolio-1',
-      updateData
-    );
+    expect(apiClient.put).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1', updateData);
   });
 });
-
-

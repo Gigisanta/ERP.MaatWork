@@ -34,7 +34,7 @@ export {
 } from './column-validator';
 
 // Función principal de mapeo
-export { mapAumColumns } from './column-mapper';
+export { mapAumColumns, resetAumMapperLogging } from './column-mapper';
 
 // Tipos
 export type { MappedAumColumns } from './types';

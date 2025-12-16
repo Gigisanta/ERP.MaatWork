@@ -24,6 +24,11 @@ export {
   careerPlanLevels
 } from './users';
 
+export { teamGoals } from './team-goals';
+
+// Autenticación OAuth
+export { googleOAuthTokens } from './auth';
+
 // Contactos, pipeline, etiquetas y segmentos
 export {
   pipelineStages,
@@ -36,6 +41,8 @@ export {
   segmentMembers,
   contactTags
 } from './contacts';
+
+export { contactStageInteractions } from './contact-interactions';
 
 // Notas, archivos de audio, adjuntos, tareas
 export {
@@ -123,7 +130,8 @@ export { capacitaciones } from './capacitaciones';
 // Automatizaciones
 export { automationConfigs } from './automations';
 
+// Contact Aliases
+export { contactAliases } from './contact-aliases';
 
-
-
-
+// Calendar
+export { calendarEvents } from './calendar';

@@ -5,7 +5,7 @@ import { getMacroSeriesList, getMacroSeries } from '@/lib/api/bloomberg';
 
 vi.mock('@/lib/api/bloomberg', () => ({
   getMacroSeriesList: vi.fn(),
-  getMacroSeries: vi.fn()
+  getMacroSeries: vi.fn(),
 }));
 
 describe('MacroPanel', () => {
@@ -16,9 +16,9 @@ describe('MacroPanel', () => {
   it('debería renderizar loading state inicialmente', () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
-    
+
     render(<MacroPanel />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
@@ -26,11 +26,11 @@ describe('MacroPanel', () => {
   it('debería mostrar error cuando falla la carga de series', async () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: false,
-      error: 'Failed to fetch'
+      error: 'Failed to fetch',
     });
-    
+
     render(<MacroPanel />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Failed to fetch/i)).toBeInTheDocument();
     });
@@ -39,21 +39,21 @@ describe('MacroPanel', () => {
   it('debería mostrar series disponibles cuando carga exitosamente', async () => {
     const mockSeries = [
       { series_id: 'USGDP', name: 'US GDP', description: 'US Gross Domestic Product' },
-      { series_id: 'USCPI', name: 'US CPI', description: 'US Consumer Price Index' }
+      { series_id: 'USCPI', name: 'US CPI', description: 'US Consumer Price Index' },
     ];
-    
+
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: mockSeries
+      data: mockSeries,
     });
-    
+
     (getMacroSeries as any).mockResolvedValue({
       success: true,
-      data: { points: [] }
+      data: { points: [] },
     });
-    
+
     render(<MacroPanel />);
-    
+
     await waitFor(() => {
       expect(screen.getByText(/Macro Economic Data/i)).toBeInTheDocument();
     });
@@ -62,11 +62,11 @@ describe('MacroPanel', () => {
   it('debería permitir cambiar entre US y AR', async () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
-    
+
     render(<MacroPanel />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('US')).toBeInTheDocument();
       expect(screen.getByText('AR')).toBeInTheDocument();
@@ -76,11 +76,11 @@ describe('MacroPanel', () => {
   it('debería llamar getMacroSeriesList con country correcto', async () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
-    
+
     render(<MacroPanel />);
-    
+
     await waitFor(() => {
       expect(getMacroSeriesList).toHaveBeenCalledWith('US');
     });
@@ -89,27 +89,30 @@ describe('MacroPanel', () => {
   it('debería mostrar "No data available" cuando no hay datos', async () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: [{ series_id: 'USGDP', name: 'US GDP' }]
+      data: [{ series_id: 'USGDP', name: 'US GDP' }],
     });
-    
+
     (getMacroSeries as any).mockResolvedValue({
       success: true,
-      data: { points: [] }
+      data: { points: [] },
     });
-    
+
     render(<MacroPanel />);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/No data available/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(/No data available/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('debería aceptar className prop', () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
-    
+
     const { container } = render(<MacroPanel className="custom-class" />);
     expect(container.querySelector('.custom-class')).toBeInTheDocument();
   });
@@ -117,12 +120,11 @@ describe('MacroPanel', () => {
   it('debería aceptar height prop', () => {
     (getMacroSeriesList as any).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
-    
+
     render(<MacroPanel height={400} />);
     // Verificar que el height se aplica al chart (verificación indirecta)
     expect(screen.getByText(/Macro Economic Data/i)).toBeInTheDocument();
   });
 });
-

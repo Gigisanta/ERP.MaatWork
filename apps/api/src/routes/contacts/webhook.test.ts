@@ -1,6 +1,6 @@
 /**
  * Tests para contacts webhook routes
- * 
+ *
  * AI_DECISION: Tests unitarios para exportación vía webhook
  * Justificación: Validación crítica de webhooks y rate limiting
  * Impacto: Prevenir errores en exportación de contactos
@@ -9,22 +9,22 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../../auth/middlewares';
-import { getHttpClient } from '../../utils/http-client';
-import { createUserRateLimiter } from '../../utils/rate-limiter';
+import { getHttpClient } from '../../utils/http/http-client';
+import { createUserRateLimiter } from '../../utils/performance/rate-limiter';
 
 // Mock dependencies
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../../utils/http-client', () => ({
-  getHttpClient: vi.fn()
+  getHttpClient: vi.fn(),
 }));
 
-vi.mock('../../utils/rate-limiter', () => ({
+vi.mock('../../utils/performance/rate-limiter', () => ({
   createUserRateLimiter: vi.fn(() => ({
-    consume: vi.fn().mockResolvedValue({ allowed: true })
-  }))
+    consume: vi.fn().mockResolvedValue({ allowed: true }),
+  })),
 }));
 
 const mockGetHttpClient = vi.mocked(getHttpClient);
@@ -44,15 +44,15 @@ describe('POST /contacts/webhook/export', () => {
             id: 'contact-1',
             firstName: 'John',
             lastName: 'Doe',
-            email: 'john@example.com'
-          }
-        ]
+            email: 'john@example.com',
+          },
+        ],
       },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -61,7 +61,7 @@ describe('POST /contacts/webhook/export', () => {
   it('debería validar webhookUrl', async () => {
     mockReq.body = {
       webhookUrl: 'invalid-url',
-      contacts: []
+      contacts: [],
     };
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -82,7 +82,7 @@ describe('POST /contacts/webhook/export', () => {
   it('debería validar que hay al menos un contacto', async () => {
     mockReq.body = {
       webhookUrl: 'https://example.com/webhook',
-      contacts: []
+      contacts: [],
     };
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -104,8 +104,8 @@ describe('POST /contacts/webhook/export', () => {
         status: 200,
         statusText: 'OK',
         headers: {},
-        body: 'Success'
-      })
+        body: 'Success',
+      }),
     };
 
     mockGetHttpClient.mockReturnValue(mockHttpClient as any);
@@ -118,8 +118,8 @@ describe('POST /contacts/webhook/export', () => {
         success: true,
         data: {
           sent: contacts.length,
-          statusCode: response.status
-        }
+          statusCode: response.status,
+        },
       });
     };
 
@@ -130,10 +130,9 @@ describe('POST /contacts/webhook/export', () => {
         success: true,
         data: expect.objectContaining({
           sent: 1,
-          statusCode: 200
-        })
+          statusCode: 200,
+        }),
       })
     );
   });
 });
-

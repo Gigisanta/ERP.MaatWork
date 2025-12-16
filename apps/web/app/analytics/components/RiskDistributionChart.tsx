@@ -25,11 +25,21 @@ const RechartsPieChart = dynamic(
       default: ({ data }: { data: RiskDistributionItem[] }) => {
         const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } = mod;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const renderCustomLabel = (props: any) => {
-          const { name, percent } = props;
-          if (percent < 0.05) return null; // No mostrar labels muy pequeños
-          return `${(percent * 100).toFixed(0)}%`;
+        // AI_DECISION: Usar unknown con type guard en lugar de any
+        // Justificación: Recharts PieLabelRenderProps no incluye 'percent' en tipos, pero lo proporciona en runtime
+        // Impacto: Type safety mejorado usando unknown con validación explícita
+        const renderCustomLabel = (props: unknown) => {
+          if (
+            typeof props === 'object' &&
+            props !== null &&
+            'percent' in props &&
+            typeof (props as { percent: unknown }).percent === 'number'
+          ) {
+            const percent = (props as { percent: number }).percent;
+            if (percent < 0.05) return null; // No mostrar labels muy pequeños
+            return `${(percent * 100).toFixed(0)}%`;
+          }
+          return null;
         };
 
         return (

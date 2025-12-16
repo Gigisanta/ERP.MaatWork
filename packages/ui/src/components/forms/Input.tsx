@@ -1,38 +1,57 @@
 'use client';
 
 import React, { useState, forwardRef } from 'react';
-import Icon, { type IconName } from '../Icon';
-import { cn } from '../../utils/cn';
+import Icon, { type IconName } from '../Icon.js';
+import { cn } from '../../utils/cn.js';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string | null | undefined;
   placeholder?: string;
-  leftIcon?: IconName;
-  rightIcon?: IconName;
+  leftIcon?: IconName | undefined;
+  rightIcon?: IconName | undefined;
+  /** Callback when right icon is clicked (makes icon interactive) */
+  onRightIconClick?: (() => void) | undefined;
   size?: 'sm' | 'md' | 'lg';
   showPasswordToggle?: boolean;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(function Input({ 
-  label, 
-  error, 
-  className = '', 
-  leftIcon,
-  rightIcon,
-  size = 'md',
-  showPasswordToggle = false,
-  type,
-  ...props 
-}: InputProps, ref: React.ForwardedRef<HTMLInputElement>) {
+/**
+ * Input component with brand styling.
+ * Uses Open Sans (body font) for text.
+ * Focus ring uses Primary Purple color.
+ *
+ * @example
+ * ```tsx
+ * <Input label="Email" placeholder="Enter your email" />
+ * <Input label="Password" type="password" showPasswordToggle />
+ * <Input error="This field is required" />
+ * ```
+ */
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  {
+    label,
+    error,
+    className = '',
+    leftIcon,
+    rightIcon,
+    onRightIconClick,
+    size = 'md',
+    showPasswordToggle = false,
+    type,
+    ...props
+  }: InputProps,
+  ref: React.ForwardedRef<HTMLInputElement>
+) {
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Normalize error: convert undefined to null for exactOptionalPropertyTypes compatibility
   const errorValue = error ?? null;
-  
+
   // Only use password toggle if type is password and showPasswordToggle is true
   const isPassword = type === 'password';
   const inputType = isPassword && showPasswordToggle && showPassword ? 'text' : type;
+
   const sizeClasses = {
     sm: 'h-9 text-sm px-3',
     md: 'h-10 text-base px-3',
@@ -46,39 +65,61 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full group">
       {label && (
-        <label htmlFor={props.id} className="block text-sm font-medium text-text mb-1">
+        <label
+          htmlFor={props.id}
+          className="block text-sm font-medium text-text mb-1.5 font-body transition-colors group-focus-within:text-primary"
+        >
           {label}
         </label>
       )}
       <div className="relative">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <Icon name={leftIcon} size={16} className="text-text-muted" />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted group-focus-within:text-primary transition-colors">
+            <Icon name={leftIcon} size={16} />
           </div>
         )}
         <input
           ref={ref}
           type={inputType}
           className={cn(
-            'w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors',
-            'bg-white text-gray-900',
+            // Base styles with enhanced transitions
+            'w-full border rounded-md transition-all-smooth font-body',
+            'bg-background text-text placeholder:text-text-muted',
+            // Focus styles - using Primary Purple with smooth glow transition
+            'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)]',
+            // Size
             sizeClasses[size],
             iconPadding[size],
             rightIcon && !leftIcon && 'pr-10',
             isPassword && showPasswordToggle && 'pr-10',
-            errorValue ? 'border-error focus:border-error focus:ring-error' : 'border-gray-300',
-            props.disabled && 'opacity-50 cursor-not-allowed bg-gray-50',
+            // Error state with shake animation class
+            errorValue
+              ? 'border-error focus:border-error focus:ring-error/30 animate-shake'
+              : 'border-border hover:border-border-hover',
+            // Disabled state
+            props.disabled && 'opacity-50 cursor-not-allowed bg-surface',
             className
           )}
           {...props}
         />
-        {rightIcon && !(isPassword && showPasswordToggle) && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <Icon name={rightIcon} size={16} className="text-text-muted" />
-          </div>
-        )}
+        {rightIcon &&
+          !(isPassword && showPasswordToggle) &&
+          (onRightIconClick ? (
+            <button
+              type="button"
+              onClick={onRightIconClick}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors cursor-pointer"
+              aria-label="Clear"
+            >
+              <Icon name={rightIcon} size={16} />
+            </button>
+          ) : (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted group-focus-within:text-primary transition-colors">
+              <Icon name={rightIcon} size={16} />
+            </div>
+          ))}
         {isPassword && showPasswordToggle && (
           <button
             type="button"
@@ -86,12 +127,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
             className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors cursor-pointer"
             aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >
-            {showPassword ? '👁️' : '👁️‍🗨️'}
+            <Icon name={showPassword ? 'eye-off' : 'eye'} size={16} />
           </button>
         )}
       </div>
       {errorValue && (
-        <p className="mt-1 text-sm text-error">{errorValue}</p>
+        <p className="mt-1.5 text-sm text-error font-body animate-fade-in-down">{errorValue}</p>
       )}
     </div>
   );

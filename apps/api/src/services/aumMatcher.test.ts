@@ -23,7 +23,7 @@ import {
   type ContactMatch,
   type AdvisorMatch,
   type MatchResult,
-} from './aumMatcher';
+} from './aum-matcher';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -36,7 +36,7 @@ vi.mock('@cactus/db', () => ({
   sql: vi.fn(),
 }));
 
-vi.mock('../utils/aum-normalization', () => ({
+vi.mock('../utils/aum/aum-normalization', () => ({
   normalizeAdvisorAlias: vi.fn((alias: string) => alias.trim().toLowerCase()),
 }));
 
@@ -56,7 +56,7 @@ vi.mock('../utils/logger', () => ({
 
 import { db } from '@cactus/db';
 import { brokerAccounts, contacts, users, advisorAliases, eq, sql } from '@cactus/db';
-import { normalizeAdvisorAlias } from '../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../utils/aum/aum-normalization';
 import { AUM_LIMITS } from '../config/aum-limits';
 import { logger } from '../utils/logger';
 

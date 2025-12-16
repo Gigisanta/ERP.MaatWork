@@ -85,6 +85,15 @@ export async function upsertAumRows(rows: AumRowInsert[], broker: string): Promi
         `Batch ${currentBatch}/${totalBatches} processed`
       );
     }
+
+    // AI_DECISION: Explicitly clear chunk reference to help GC
+    // Justificación: For large files, explicitly clearing chunk reference helps garbage collector
+    // Impacto: Faster memory release after each batch, especially for large files
+    // Clear chunk reference (chunk will be garbage collected)
+    if (global.gc && currentBatch % 5 === 0) {
+      // Suggest GC every 5 batches for very large files (only if --expose-gc flag is set)
+      global.gc();
+    }
   }
 
   const firstRowFileId = rows[0]?.fileId;

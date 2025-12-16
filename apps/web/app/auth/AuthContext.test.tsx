@@ -1,6 +1,6 @@
 /**
  * Tests para AuthContext
- * 
+ *
  * AI_DECISION: Tests unitarios para contexto de autenticación
  * Justificación: Validación crítica de login, registro y gestión de sesión
  * Impacto: Prevenir errores en autenticación y gestión de usuario
@@ -10,20 +10,21 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { fetchWithLogging, postJson } from '../../lib/fetch-client';
+import { postJson } from '../../lib/fetch-client';
 import { config } from '../../lib/config';
 import { logger } from '../../lib/logger';
+import { verifySession, refreshToken, clearSession } from '../../lib/auth/session-manager';
 
 // Mock dependencies
 vi.mock('../../lib/fetch-client', () => ({
   fetchWithLogging: vi.fn(),
-  postJson: vi.fn()
+  postJson: vi.fn(),
 }));
 
 vi.mock('../../lib/config', () => ({
   config: {
-    apiUrl: 'http://localhost:3001'
-  }
+    apiUrl: 'http://localhost:3001',
+  },
 }));
 
 vi.mock('../../lib/logger', () => ({
@@ -32,8 +33,15 @@ vi.mock('../../lib/logger', () => ({
     debug: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
-    updateUser: vi.fn()
-  }
+    updateUser: vi.fn(),
+  },
+}));
+
+vi.mock('../../lib/auth/session-manager', () => ({
+  verifySession: vi.fn(),
+  refreshToken: vi.fn(),
+  clearSession: vi.fn(),
+  isTokenExpiringSoon: vi.fn(),
 }));
 
 describe('AuthContext', () => {
@@ -42,11 +50,12 @@ describe('AuthContext', () => {
   });
 
   describe('AuthProvider', () => {
-    it('debería renderizar children', () => {
-      // Mock fetchWithLogging para que retorne una promesa resuelta
-      (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue({
-        ok: false,
-        json: vi.fn().mockResolvedValue({})
+    it('debería renderizar children', async () => {
+      // Mock verifySession para que retorne sin sesión
+      (verifySession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        user: null,
+        error: { type: 'auth', message: 'No active session' },
       });
 
       render(
@@ -55,22 +64,23 @@ describe('AuthContext', () => {
         </AuthProvider>
       );
 
-      expect(screen.getByText('Test Content')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('Test Content')).toBeInTheDocument();
+      });
     });
 
     it('debería verificar sesión al montar', async () => {
-      const mockResponse = {
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-          user: {
-            id: 'user-123',
-            email: 'test@example.com',
-            role: 'advisor',
-            fullName: 'Test User'
-          }
-        })
+      const mockUser = {
+        id: 'user-123',
+        email: 'test@example.com',
+        role: 'advisor' as const,
+        fullName: 'Test User',
       };
-      (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse);
+
+      (verifySession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        user: mockUser,
+      });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -82,14 +92,16 @@ describe('AuthContext', () => {
         expect(result.current.initialized).toBe(true);
       });
 
-      expect(fetchWithLogging).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/me`,
-        { credentials: 'include' }
-      );
+      expect(verifySession).toHaveBeenCalled();
+      expect(result.current.user).toEqual(mockUser);
     });
 
     it('debería manejar error al verificar sesión', async () => {
-      (fetchWithLogging as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+      (verifySession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        user: null,
+        error: { type: 'network', message: 'Network error' },
+      });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -106,11 +118,11 @@ describe('AuthContext', () => {
     });
 
     it('debería manejar respuesta sin usuario', async () => {
-      const mockResponse = {
-        ok: false,
-        json: vi.fn().mockResolvedValue({})
-      };
-      (fetchWithLogging as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse);
+      (verifySession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        user: null,
+        error: { type: 'auth', message: 'No active session' },
+      });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -137,18 +149,30 @@ describe('AuthContext', () => {
       consoleSpy.mockRestore();
     });
 
-    it('debería retornar contexto cuando está dentro del provider', () => {
+    it('debería retornar contexto cuando está dentro del provider', async () => {
+      // Mock initial session check
+      (verifySession as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: false,
+        user: null,
+        error: { type: 'auth', message: 'No active session' },
+      });
+
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
       );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
+
       expect(result.current).toHaveProperty('user');
       expect(result.current).toHaveProperty('initialized');
       expect(result.current).toHaveProperty('login');
       expect(result.current).toHaveProperty('register');
       expect(result.current).toHaveProperty('logout');
+      expect(result.current).toHaveProperty('refreshSession');
     });
   });
 
@@ -158,12 +182,25 @@ describe('AuthContext', () => {
         id: 'user-123',
         email: 'test@example.com',
         role: 'advisor' as const,
-        fullName: 'Test User'
+        fullName: 'Test User',
       };
+
+      // Mock initial session check (no user)
+      (verifySession as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          success: false,
+          user: null,
+          error: { type: 'auth', message: 'No active session' },
+        })
+        // Mock session verification after login
+        .mockResolvedValueOnce({
+          success: true,
+          user: mockUser,
+        });
 
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: mockUser
+        user: mockUser,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -171,27 +208,47 @@ describe('AuthContext', () => {
       );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial session check
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
 
       await act(async () => {
         await result.current.login('test@example.com', 'password');
       });
 
-      expect(result.current.user).toEqual(mockUser);
+      await waitFor(() => {
+        expect(result.current.user).toEqual(mockUser);
+      });
+
       expect(logger.updateUser).toHaveBeenCalledWith(mockUser.id, mockUser.role);
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/login`,
-        {
-          identifier: 'test@example.com',
-          password: 'password',
-          rememberMe: undefined
-        }
-      );
+      expect(postJson).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/login`, {
+        identifier: 'test@example.com',
+        password: 'password',
+        rememberMe: undefined,
+      });
     });
 
     it('debería pasar rememberMe cuando se proporciona', async () => {
+      const mockUser = { id: 'user-123', email: 'test@example.com', role: 'advisor' as const };
+
+      // Mock initial session check (no user)
+      (verifySession as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          success: false,
+          user: null,
+          error: { type: 'auth', message: 'No active session' },
+        })
+        // Mock session verification after login
+        .mockResolvedValueOnce({
+          success: true,
+          user: mockUser,
+        });
+
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: { id: 'user-123', email: 'test@example.com', role: 'advisor' }
+        user: mockUser,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -199,6 +256,11 @@ describe('AuthContext', () => {
       );
 
       const { result } = renderHook(() => useAuth(), { wrapper });
+
+      // Wait for initial session check
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
 
       await act(async () => {
         await result.current.login('test@example.com', 'password', true);
@@ -207,7 +269,7 @@ describe('AuthContext', () => {
       expect(postJson).toHaveBeenCalledWith(
         `${config.apiUrl}/v1/auth/login`,
         expect.objectContaining({
-          rememberMe: true
+          rememberMe: true,
         })
       );
     });
@@ -235,7 +297,7 @@ describe('AuthContext', () => {
   describe('register', () => {
     it('debería hacer registro exitoso', async () => {
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
-        success: true
+        success: true,
       });
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -248,22 +310,19 @@ describe('AuthContext', () => {
         email: 'new@example.com',
         fullName: 'New User',
         password: 'password123',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
       await act(async () => {
         await result.current.register(registerData);
       });
 
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/register`,
-        registerData
-      );
+      expect(postJson).toHaveBeenCalledWith(`${config.apiUrl}/v1/auth/register`, registerData);
       expect(logger.info).toHaveBeenCalledWith(
         'Registro exitoso',
         expect.objectContaining({
           email: 'new@example.com',
-          role: 'advisor'
+          role: 'advisor',
         })
       );
     });
@@ -284,7 +343,7 @@ describe('AuthContext', () => {
             email: 'existing@example.com',
             fullName: 'User',
             password: 'password',
-            role: 'advisor'
+            role: 'advisor',
           });
         })
       ).rejects.toThrow('Email already exists');
@@ -298,14 +357,29 @@ describe('AuthContext', () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
+
+      // Mock initial session check (no user)
+      (verifySession as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          success: false,
+          user: null,
+          error: { type: 'auth', message: 'No active session' },
+        })
+        // Mock session verification after login
+        .mockResolvedValueOnce({
+          success: true,
+          user: mockUser,
+        });
 
       // Primero hacer login
       (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
         success: true,
-        user: mockUser
+        user: mockUser,
       });
+
+      (clearSession as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -313,37 +387,56 @@ describe('AuthContext', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      // Wait for initial session check
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
+
       await act(async () => {
         await result.current.login('test@example.com', 'password');
       });
 
-      expect(result.current.user).toEqual(mockUser);
+      await waitFor(() => {
+        expect(result.current.user).toEqual(mockUser);
+      });
 
       // Ahora hacer logout
-      (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true });
-
-      act(() => {
-        result.current.logout();
+      await act(async () => {
+        await result.current.logout();
       });
 
       expect(result.current.user).toBeNull();
       expect(logger.updateUser).toHaveBeenCalledWith(null, null);
-      expect(postJson).toHaveBeenCalledWith(
-        `${config.apiUrl}/v1/auth/logout`,
-        {}
-      );
+      expect(clearSession).toHaveBeenCalled();
     });
 
     it('debería manejar error al limpiar cookie en logout', async () => {
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'advisor' as const
+        role: 'advisor' as const,
       };
 
-      (postJson as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce({ success: true, user: mockUser })
-        .mockRejectedValueOnce(new Error('Network error'));
+      // Mock initial session check (no user)
+      (verifySession as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          success: false,
+          user: null,
+          error: { type: 'auth', message: 'No active session' },
+        })
+        // Mock session verification after login
+        .mockResolvedValueOnce({
+          success: true,
+          user: mockUser,
+        });
+
+      (postJson as ReturnType<typeof vi.fn>).mockResolvedValue({
+        success: true,
+        user: mockUser,
+      });
+
+      // Mock clearSession to reject
+      (clearSession as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
       const wrapper = ({ children }: { children: React.ReactNode }) => (
         <AuthProvider>{children}</AuthProvider>
@@ -351,21 +444,28 @@ describe('AuthContext', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 
+      // Wait for initial session check
+      await waitFor(() => {
+        expect(result.current.initialized).toBe(true);
+      });
+
       await act(async () => {
         await result.current.login('test@example.com', 'password');
       });
 
+      await waitFor(() => {
+        expect(result.current.user).toEqual(mockUser);
+      });
+
+      // Logout should clear user even if clearSession fails
       await act(async () => {
-        result.current.logout();
-        // Esperar un tick para que el catch se ejecute
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await result.current.logout();
       });
 
       // El usuario debe ser limpiado incluso si hay error al limpiar cookie
       expect(result.current.user).toBeNull();
-      // El logger.warn se llama en el catch, pero puede no ejecutarse inmediatamente
-      // Verificamos que el usuario se limpió correctamente
+      expect(logger.updateUser).toHaveBeenCalledWith(null, null);
+      expect(logger.warn).toHaveBeenCalled();
     });
   });
 });
-

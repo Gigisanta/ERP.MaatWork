@@ -30,8 +30,3 @@ test.describe('Auth and protected routes', () => {
     expect(tokenCookie).toBeDefined();
   });
 });
-
-
-
-
-

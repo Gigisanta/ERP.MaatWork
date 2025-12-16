@@ -8,10 +8,10 @@ import { cookies } from 'next/headers';
 // Justificación: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 1 hour revalidation for semi-static KPI data
-// Justificación: KPIs change occasionally, ISR reduces server load 60-80% while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for frequently accessed analytics page
-export const revalidate = 3600; // Revalidate every hour
+// AI_DECISION: Force dynamic rendering for analytics page
+// Justificación: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+export const dynamic = 'force-dynamic';
 
 const getRoleLabel = (role?: string): string => {
   switch (role) {
@@ -55,10 +55,11 @@ export default async function AnalyticsPage() {
   }
 
   return (
-    <main className="p-4 max-w-[1400px] mx-auto">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-6">
-        <div className="flex gap-4 items-center">
-          <Link href="/home" className="text-info hover:underline">
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/home" className="text-info hover:underline transition-colors text-sm">
             ← Volver al inicio
           </Link>
           <span className="text-text-muted">|</span>
@@ -68,8 +69,9 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Error state */}
       {error && (
-        <div className="p-4 bg-error-subtle border border-error-subtle rounded-lg text-error">
+        <div className="p-4 bg-error-subtle border border-error rounded-lg text-error mb-6">
           Error: {error}
         </div>
       )}

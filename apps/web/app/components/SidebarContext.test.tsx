@@ -1,6 +1,6 @@
 /**
  * Tests para SidebarContext
- * 
+ *
  * AI_DECISION: Tests unitarios para SidebarContext
  * Justificación: Validación de estado de sidebar
  * Impacto: Prevenir errores en UI de sidebar
@@ -23,7 +23,7 @@ const localStorageMock = (() => {
     },
     clear: () => {
       store = {};
-    }
+    },
   };
 })();
 
@@ -33,7 +33,7 @@ describe('SidebarProvider', () => {
     localStorageMock.clear();
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
   });
 
@@ -123,7 +123,7 @@ describe('useSidebar hook', () => {
     localStorageMock.clear();
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
   });
 
@@ -168,5 +168,3 @@ describe('useSidebar hook', () => {
     consoleError.mockRestore();
   });
 });
-
-

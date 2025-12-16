@@ -1,11 +1,57 @@
-"use client";
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+'use client';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import Icon from '../Icon';
-import { cn } from '../../utils/cn';
-import { Checkbox } from '../forms/Checkbox';
-import EmptyState from './EmptyState';
-import { Spinner } from './Spinner';
+import Icon from '../Icon.js';
+import { cn } from '../../utils/cn.js';
+import { Checkbox } from '../forms/Checkbox.js';
+import EmptyState from './EmptyState.js';
+import { Spinner } from './Spinner.js';
+
+// AI_DECISION: Hook para detectar scroll y mostrar indicadores
+// Justificación: Mejora la UX indicando cuando hay más contenido para ver
+// Impacto: Usuarios saben que pueden scrollear para ver más filas/columnas
+function useScrollIndicators(ref: React.RefObject<HTMLElement>) {
+  const [scrollState, setScrollState] = useState({
+    canScrollUp: false,
+    canScrollDown: false,
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const updateScrollState = () => {
+      const { scrollTop, scrollHeight, clientHeight, scrollLeft, scrollWidth, clientWidth } =
+        element;
+
+      setScrollState({
+        canScrollUp: scrollTop > 0,
+        canScrollDown: scrollTop + clientHeight < scrollHeight - 1,
+        canScrollLeft: scrollLeft > 0,
+        canScrollRight: scrollLeft + clientWidth < scrollWidth - 1,
+      });
+    };
+
+    // Initial check
+    updateScrollState();
+
+    // Listen to scroll events
+    element.addEventListener('scroll', updateScrollState, { passive: true });
+
+    // Listen to resize events
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(element);
+
+    return () => {
+      element.removeEventListener('scroll', updateScrollState);
+      resizeObserver.disconnect();
+    };
+  }, [ref]);
+
+  return scrollState;
+}
 
 export interface Column<T> {
   key: keyof T | string;
@@ -29,17 +75,19 @@ export interface DataTableProps<T> {
   virtualized?: boolean;
   virtualizedHeight?: number;
   virtualizedOverscan?: number;
+  getRowClassName?: (item: T, index: number) => string;
+  getRowStyle?: (item: T, index: number) => React.CSSProperties;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
 
 /**
  * DataTable component for displaying tabular data with sorting, selection, and virtualization support
- * 
+ *
  * @template T - Type of data items (must extend Record<string, unknown>)
  * @param props - DataTable component props
  * @returns DataTable component with optional sorting, selection, and virtualization
- * 
+ *
  * @example
  * ```tsx
  * <DataTable
@@ -67,20 +115,27 @@ export const DataTable = <T extends Record<string, unknown>>({
   virtualized = false,
   virtualizedHeight = 400,
   virtualizedOverscan = 5,
+  getRowClassName,
+  getRowStyle,
   ...props
 }: DataTableProps<T>) => {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  
+
   // AI_DECISION: Add virtualization support using @tanstack/react-virtual
   // Justificación: Rendering all rows at once causes performance issues with 100+ items
   // Impacto: Reduces initial render time by 80-90%, improves scroll performance to 60fps
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // AI_DECISION: Track scroll state for visual indicators
+  // Justificación: Show shadows when there's more content to scroll
+  // Impacto: Better UX, users know they can scroll for more content
+  const scrollState = useScrollIndicators(parentRef as React.RefObject<HTMLElement>);
+
   // Handle sorting
   const handleSort = (columnKey: string) => {
-    const column = columns.find(col => col.key === columnKey);
+    const column = columns.find((col) => col.key === columnKey);
     if (!column?.sortable) return;
 
     if (sortColumn === columnKey) {
@@ -105,16 +160,16 @@ export const DataTable = <T extends Record<string, unknown>>({
     return [...data].sort((a, b) => {
       const aValue = a[sortColumn];
       const bValue = b[sortColumn];
-      
+
       // Handle null/undefined values
       if (aValue == null && bValue == null) return 0;
       if (aValue == null) return 1;
       if (bValue == null) return -1;
-      
+
       // Compare values - convert to comparable types
       const aComparable = typeof aValue === 'string' ? aValue.toLowerCase() : aValue;
       const bComparable = typeof bValue === 'string' ? bValue.toLowerCase() : bValue;
-      
+
       if (aComparable < bComparable) return sortDirection === 'asc' ? -1 : 1;
       if (aComparable > bComparable) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -131,9 +186,12 @@ export const DataTable = <T extends Record<string, unknown>>({
     enabled: shouldVirtualize,
   });
 
-  const handleRowClick = useCallback((item: T, index: number) => {
-    onRowClick?.(item, index);
-  }, [onRowClick]);
+  const handleRowClick = useCallback(
+    (item: T, index: number) => {
+      onRowClick?.(item, index);
+    },
+    [onRowClick]
+  );
 
   // Handle selection
   const handleSelectAll = () => {
@@ -141,7 +199,7 @@ export const DataTable = <T extends Record<string, unknown>>({
       setSelectedItems(new Set());
       onSelectionChange?.([]);
     } else {
-      const allKeys = new Set(data.map(item => String(item[keyField])));
+      const allKeys = new Set(data.map((item) => String(item[keyField])));
       setSelectedItems(allKeys);
       onSelectionChange?.(data);
     }
@@ -150,63 +208,82 @@ export const DataTable = <T extends Record<string, unknown>>({
   const handleSelectItem = (item: T, checked: boolean | 'indeterminate') => {
     const itemKey = String(item[keyField]);
     const newSelected = new Set(selectedItems);
-    
+
     if (checked === true) {
       newSelected.add(itemKey);
     } else {
       newSelected.delete(itemKey);
     }
-    
+
     setSelectedItems(newSelected);
-    const selectedData = data.filter(item => newSelected.has(String(item[keyField])));
+    const selectedData = data.filter((item) => newSelected.has(String(item[keyField])));
     onSelectionChange?.(selectedData);
   };
 
-  const renderRow = useCallback((item: T, index: number, virtualRow?: { index: number; start: number; size: number }) => {
-    const rowContent = (
-      <tr
-        key={String(item[keyField])}
-        className={cn(
-          'hover:bg-surface-hover transition-colors',
-          onRowClick && 'cursor-pointer',
-          selectedItems.has(String(item[keyField])) && 'bg-accent-subtle'
-        )}
-        onClick={() => handleRowClick(item, index)}
-        style={virtualRow ? {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: `${virtualRow.size}px`,
-          transform: `translateY(${virtualRow.start}px)`,
-        } : undefined}
-      >
-        {selectable && (
-          <td className="px-4 py-3">
-            <Checkbox
-              checked={selectedItems.has(String(item[keyField]))}
-              onCheckedChange={(checked) => handleSelectItem(item, checked)}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              aria-label={`Select ${String(item[keyField])}`}
-            />
-          </td>
-        )}
-        {columns.map((column) => (
-          <td
-            key={String(column.key)}
-            className={cn(
-              'px-4 py-3 text-sm',
-              column.align === 'center' && 'text-center',
-              column.align === 'right' && 'text-right'
-            )}
-          >
-            {column.render ? column.render(item, index) : String(item[column.key] || '')}
-          </td>
-        ))}
-      </tr>
-    );
-    return rowContent;
-  }, [keyField, onRowClick, selectedItems, selectable, columns, handleRowClick, handleSelectItem]);
+  const renderRow = useCallback(
+    (item: T, index: number, virtualRow?: { index: number; start: number; size: number }) => {
+      const rowContent = (
+        <tr
+          key={String(item[keyField])}
+          className={cn(
+            'hover:bg-surface-hover transition-colors',
+            onRowClick && 'cursor-pointer',
+            selectedItems.has(String(item[keyField])) && 'bg-primary-subtle',
+            getRowClassName?.(item, index)
+          )}
+          onClick={() => handleRowClick(item, index)}
+          style={{
+            ...(virtualRow
+              ? {
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }
+              : undefined),
+            ...getRowStyle?.(item, index),
+          }}
+        >
+          {selectable && (
+            <td className="px-4 py-3">
+              <Checkbox
+                checked={selectedItems.has(String(item[keyField]))}
+                onCheckedChange={(checked) => handleSelectItem(item, checked)}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                aria-label={`Select ${String(item[keyField])}`}
+              />
+            </td>
+          )}
+          {columns.map((column) => (
+            <td
+              key={String(column.key)}
+              className={cn(
+                'px-4 py-3 text-sm',
+                column.align === 'center' && 'text-center',
+                column.align === 'right' && 'text-right'
+              )}
+            >
+              {column.render ? column.render(item, index) : String(item[column.key] || '')}
+            </td>
+          ))}
+        </tr>
+      );
+      return rowContent;
+    },
+    [
+      keyField,
+      onRowClick,
+      selectedItems,
+      selectable,
+      columns,
+      handleRowClick,
+      handleSelectItem,
+      getRowClassName,
+      getRowStyle,
+    ]
+  );
 
   if (loading) {
     return (
@@ -223,10 +300,34 @@ export const DataTable = <T extends Record<string, unknown>>({
   const isVirtualized = shouldVirtualize;
 
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-border', className)} {...props}>
-      <div className="overflow-x-auto" ref={isVirtualized ? parentRef : undefined} style={isVirtualized ? { height: `${virtualizedHeight}px`, overflow: 'auto' } : undefined}>
+    <div
+      className={cn('overflow-hidden rounded-lg border border-border relative', className)}
+      {...props}
+    >
+      {/* Scroll indicators */}
+      {isVirtualized && scrollState.canScrollUp && (
+        <div className="absolute top-[42px] left-0 right-0 h-4 bg-gradient-to-b from-secondary/5 to-transparent pointer-events-none z-20" />
+      )}
+      {isVirtualized && scrollState.canScrollDown && (
+        <div className="absolute bottom-0 left-0 right-0 h-4 bg-gradient-to-t from-secondary/5 to-transparent pointer-events-none z-20" />
+      )}
+      {scrollState.canScrollLeft && (
+        <div className="absolute top-0 bottom-0 left-0 w-4 bg-gradient-to-r from-secondary/5 to-transparent pointer-events-none z-20" />
+      )}
+      {scrollState.canScrollRight && (
+        <div className="absolute top-0 bottom-0 right-0 w-4 bg-gradient-to-l from-secondary/5 to-transparent pointer-events-none z-20" />
+      )}
+
+      <div
+        className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400"
+        ref={parentRef}
+        style={isVirtualized ? { height: `${virtualizedHeight}px`, overflow: 'auto' } : undefined}
+      >
         <table className="w-full">
-          <thead className="bg-surface" style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}>
+          <thead
+            className="bg-surface shadow-sm"
+            style={isVirtualized ? { position: 'sticky', top: 0, zIndex: 10 } : undefined}
+          >
             <tr>
               {selectable && (
                 <th className="w-12 px-4 py-3">
@@ -265,7 +366,9 @@ export const DataTable = <T extends Record<string, unknown>>({
                           size={12}
                           className={cn(
                             'text-text-muted',
-                            sortColumn === String(column.key) && sortDirection === 'asc' && 'text-text'
+                            sortColumn === String(column.key) &&
+                              sortDirection === 'asc' &&
+                              'text-text'
                           )}
                         />
                         <Icon
@@ -273,7 +376,9 @@ export const DataTable = <T extends Record<string, unknown>>({
                           size={12}
                           className={cn(
                             'text-text-muted -mt-1',
-                            sortColumn === String(column.key) && sortDirection === 'desc' && 'text-text'
+                            sortColumn === String(column.key) &&
+                              sortDirection === 'desc' &&
+                              'text-text'
                           )}
                         />
                       </div>
@@ -283,15 +388,20 @@ export const DataTable = <T extends Record<string, unknown>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border" style={isVirtualized ? { position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` } : undefined}>
-            {isVirtualized ? (
-              rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const item = sortedData[virtualRow.index];
-                return renderRow(item, virtualRow.index, virtualRow);
-              })
-            ) : (
-              sortedData.map((item, index) => renderRow(item, index))
-            )}
+          <tbody
+            className="divide-y divide-border"
+            style={
+              isVirtualized
+                ? { position: 'relative', height: `${rowVirtualizer.getTotalSize()}px` }
+                : undefined
+            }
+          >
+            {isVirtualized
+              ? rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = sortedData[virtualRow.index];
+                  return renderRow(item, virtualRow.index, virtualRow);
+                })
+              : sortedData.map((item, index) => renderRow(item, index))}
           </tbody>
         </table>
       </div>

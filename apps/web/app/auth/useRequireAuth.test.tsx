@@ -1,6 +1,6 @@
 /**
  * Tests para useRequireAuth hook
- * 
+ *
  * AI_DECISION: Tests unitarios para hook de autenticación requerida
  * Justificación: Validación crítica de redirección y gestión de loading
  * Impacto: Prevenir errores en protección de rutas y UX
@@ -15,18 +15,18 @@ import { useRouter, usePathname } from 'next/navigation';
 
 // Mock dependencies
 vi.mock('./AuthContext', () => ({
-  useAuth: vi.fn()
+  useAuth: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
-  usePathname: vi.fn()
+  usePathname: vi.fn(),
 }));
 
 describe('useRequireAuth', () => {
   const mockPush = vi.fn();
   const mockRouter = {
-    push: mockPush
+    push: mockPush,
   };
 
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe('useRequireAuth', () => {
   it('debería retornar loading true cuando no está inicializado', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: false
+      initialized: false,
     });
 
     const { result } = renderHook(() => useRequireAuth());
@@ -56,12 +56,12 @@ describe('useRequireAuth', () => {
     const mockUser = {
       id: 'user-123',
       email: 'test@example.com',
-      role: 'advisor' as const
+      role: 'advisor' as const,
     };
 
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: mockUser,
-      initialized: true
+      initialized: true,
     });
 
     const { result } = renderHook(() => useRequireAuth());
@@ -74,7 +74,7 @@ describe('useRequireAuth', () => {
   it('debería redirigir a login cuando no hay usuario después de inicializar', async () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: true
+      initialized: true,
     });
 
     renderHook(() => useRequireAuth());
@@ -92,12 +92,12 @@ describe('useRequireAuth', () => {
     const mockUser = {
       id: 'user-123',
       email: 'test@example.com',
-      role: 'advisor' as const
+      role: 'advisor' as const,
     };
 
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: mockUser,
-      initialized: true
+      initialized: true,
     });
 
     renderHook(() => useRequireAuth());
@@ -111,12 +111,12 @@ describe('useRequireAuth', () => {
     const mockUser = {
       id: 'user-123',
       email: 'test@example.com',
-      role: 'advisor' as const
+      role: 'advisor' as const,
     };
 
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: mockUser,
-      initialized: true
+      initialized: true,
     });
 
     const { rerender } = renderHook(() => useRequireAuth());
@@ -131,7 +131,7 @@ describe('useRequireAuth', () => {
   it('debería resetear flag cuando pathname cambia y no hay usuario', async () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: true
+      initialized: true,
     });
 
     const { rerender } = renderHook(() => useRequireAuth());
@@ -157,7 +157,7 @@ describe('useRequireAuth', () => {
   it('debería no redirigir múltiples veces si ya redirigió', async () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: true
+      initialized: true,
     });
 
     renderHook(() => useRequireAuth());
@@ -177,7 +177,7 @@ describe('useRequireAuth', () => {
   it('debería limpiar timeout al desmontar', () => {
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: true
+      initialized: true,
     });
 
     const { unmount } = renderHook(() => useRequireAuth());
@@ -194,7 +194,7 @@ describe('useRequireAuth', () => {
     (usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/portfolios/123');
     (useAuth as ReturnType<typeof vi.fn>).mockReturnValue({
       user: null,
-      initialized: true
+      initialized: true,
     });
 
     renderHook(() => useRequireAuth());
@@ -205,4 +205,3 @@ describe('useRequireAuth', () => {
     expect(mockPush).toHaveBeenCalledWith('/login?redirect=%2Fportfolios%2F123');
   });
 });
-

@@ -1,9 +1,9 @@
 /**
  * @cactus/types - Shared TypeScript Types
- * 
+ *
  * This package provides shared type definitions used across
  * both API (apps/api) and Web (apps/web) applications.
- * 
+ *
  * Usage:
  * ```typescript
  * import { Contact, Team, UserRole } from '@cactus/types';
@@ -16,14 +16,17 @@
 export type {
   BaseEntity,
   TimestampedEntity,
+  TimestampedEntityOptional,
   SoftDeletableEntity,
   VersionedEntity,
+  CreateRequest,
+  UpdateRequest,
   ApiResponse,
   PaginatedResponse,
   UserRole,
   RiskProfile,
   ActiveStatus,
-  ApprovalStatus
+  ApprovalStatus,
 } from './common';
 
 // Domain types - Contact
@@ -35,7 +38,7 @@ export type {
   ContactFieldName,
   ContactFieldUpdate,
   CreateContactRequest,
-  UpdateContactRequest
+  UpdateContactRequest,
 } from './contact';
 
 // Domain types - Team
@@ -51,6 +54,5 @@ export type {
   TeamMetrics,
   RiskDistributionItem,
   AumTrendItem,
-  TeamMemberMetrics
+  TeamMemberMetrics,
 } from './team';
-

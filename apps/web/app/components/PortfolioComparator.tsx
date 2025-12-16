@@ -8,11 +8,20 @@ import { Plus, X, BarChart3, Target, TrendingUp, Users, CheckCircle } from 'luci
 // Impacto: Faster initial page load, smaller initial JavaScript bundle
 const PerformanceChart = dynamic(() => import('./PerformanceChart'), {
   loading: () => (
-    <div style={{ padding: '2rem', textAlign: 'center', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{
+        padding: '2rem',
+        textAlign: 'center',
+        minHeight: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       Cargando gráfico...
     </div>
   ),
-  ssr: false
+  ssr: false,
 });
 import { usePortfolioComparison } from '../../lib/api-hooks';
 import type { ComparisonResult } from '@/types';
@@ -66,7 +75,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
   benchmarks = [],
   onAddToComparison,
   onRemoveFromComparison,
-  className = ""
+  className = '',
 }: PortfolioComparatorProps) {
   const [selectedPortfolios, setSelectedPortfolios] = useState<string[]>([]);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>([]);
@@ -84,7 +93,11 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
   // Justificación: Transformation runs on every render, memoization prevents unnecessary recalculations
   // Impacto: Reduces computation time by 90%+ when data doesn't change
   const comparisonData = useMemo<ComparisonItem[]>(() => {
-    if (!apiComparisonData?.results || !Array.isArray(apiComparisonData.results) || apiComparisonData.results.length === 0) {
+    if (
+      !apiComparisonData?.results ||
+      !Array.isArray(apiComparisonData.results) ||
+      apiComparisonData.results.length === 0
+    ) {
       return [];
     }
 
@@ -96,15 +109,15 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
         performance: item.metrics?.totalReturn || 0,
         volatility: item.metrics?.volatility || 0,
       };
-      
+
       if (item.metrics?.sharpeRatio !== undefined) {
         result.sharpe = item.metrics.sharpeRatio;
       }
-      
+
       if (item.metrics?.maxDrawdown !== undefined) {
         result.maxDrawdown = item.metrics.maxDrawdown;
       }
-      
+
       return result;
     });
   }, [apiComparisonData]);
@@ -121,10 +134,10 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
 
   const handleRemoveFromComparison = (id: string, type: 'portfolio' | 'benchmark') => {
     if (type === 'portfolio') {
-      setSelectedPortfolios(selectedPortfolios.filter(p => p !== id));
+      setSelectedPortfolios(selectedPortfolios.filter((p) => p !== id));
       onRemoveFromComparison?.(id, type);
     } else if (type === 'benchmark') {
-      setSelectedBenchmarks(selectedBenchmarks.filter(b => b !== id));
+      setSelectedBenchmarks(selectedBenchmarks.filter((b) => b !== id));
       onRemoveFromComparison?.(id, type);
     }
   };
@@ -162,7 +175,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
           </CardHeader>
           <CardContent>
             <Stack direction="column" gap="sm">
-              {portfolios.map(portfolio => (
+              {portfolios.map((portfolio) => (
                 <Card key={portfolio.id} className="hover:bg-background-hover">
                   <CardContent>
                     <Stack direction="row" gap="sm" align="center">
@@ -171,7 +184,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                           <Text weight="medium" className="truncate">
                             {portfolio.name}
                           </Text>
-                          <Badge variant="brand">Cartera</Badge>
+                          <Badge variant="secondary">Cartera</Badge>
                           {selectedPortfolios.includes(portfolio.id) && (
                             <CheckCircle className="w-4 h-4 text-success-500" />
                           )}
@@ -190,7 +203,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                           </Stack>
                         )}
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -204,12 +217,14 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   </CardContent>
                 </Card>
               ))}
-              
+
               {portfolios.length === 0 && (
                 <div className="text-center py-8">
                   <BarChart3 className="w-12 h-12 mx-auto mb-4 text-foreground-tertiary" />
                   <Text color="secondary">No tienes carteras creadas</Text>
-                  <Text size="sm" color="muted">Crea tu primera cartera para comenzar</Text>
+                  <Text size="sm" color="muted">
+                    Crea tu primera cartera para comenzar
+                  </Text>
                 </div>
               )}
             </Stack>
@@ -226,7 +241,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
           </CardHeader>
           <CardContent>
             <Stack direction="column" gap="sm">
-              {benchmarks.map(benchmark => (
+              {benchmarks.map((benchmark) => (
                 <Card key={benchmark.id} className="hover:bg-background-hover">
                   <CardContent>
                     <Stack direction="row" gap="sm" align="center">
@@ -246,7 +261,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                           </Text>
                         )}
                       </div>
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -260,12 +275,14 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   </CardContent>
                 </Card>
               ))}
-              
+
               {benchmarks.length === 0 && (
                 <div className="text-center py-8">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 text-foreground-tertiary" />
                   <Text color="secondary">No hay benchmarks disponibles</Text>
-                  <Text size="sm" color="muted">Los administradores pueden crear benchmarks</Text>
+                  <Text size="sm" color="muted">
+                    Los administradores pueden crear benchmarks
+                  </Text>
                 </div>
               )}
             </Stack>
@@ -284,10 +301,10 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2 mb-6">
-              {selectedPortfolios.map(id => {
-                const portfolio = portfolios.find(p => p.id === id);
+              {selectedPortfolios.map((id) => {
+                const portfolio = portfolios.find((p) => p.id === id);
                 return (
-                  <Badge key={`portfolio-${id}`} variant="brand">
+                  <Badge key={`portfolio-${id}`} variant="secondary">
                     <Stack direction="row" gap="sm" align="center">
                       <Text size="sm">{portfolio?.name || `Portfolio ${id}`}</Text>
                       <Button
@@ -302,9 +319,9 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   </Badge>
                 );
               })}
-              
-              {selectedBenchmarks.map(id => {
-                const benchmark = benchmarks.find(b => b.id === id);
+
+              {selectedBenchmarks.map((id) => {
+                const benchmark = benchmarks.find((b) => b.id === id);
                 return (
                   <Badge key={`benchmark-${id}`} variant="success">
                     <Stack direction="row" gap="sm" align="center">
@@ -347,7 +364,9 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                 {
                   key: 'name',
                   header: 'Nombre',
-                  render: (item: ComparisonItem & Record<string, unknown>) => <Text weight="medium">{(item as ComparisonItem).name}</Text>,
+                  render: (item: ComparisonItem & Record<string, unknown>) => (
+                    <Text weight="medium">{(item as ComparisonItem).name}</Text>
+                  ),
                 },
                 {
                   key: 'type',
@@ -355,7 +374,7 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.type === 'portfolio' ? 'brand' : 'success'}>
+                      <Badge variant={typedItem.type === 'portfolio' ? 'secondary' : 'success'}>
                         {typedItem.type === 'portfolio' ? 'Cartera' : 'Benchmark'}
                       </Badge>
                     );
@@ -368,7 +387,8 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                     const typedItem = item as ComparisonItem;
                     return (
                       <Badge variant={typedItem.performance >= 0 ? 'success' : 'error'}>
-                        {typedItem.performance >= 0 ? '+' : ''}{typedItem.performance.toFixed(2)}%
+                        {typedItem.performance >= 0 ? '+' : ''}
+                        {typedItem.performance.toFixed(2)}%
                       </Badge>
                     );
                   },
@@ -379,7 +399,15 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.volatility < 10 ? 'success' : typedItem.volatility < 15 ? 'warning' : 'error'}>
+                      <Badge
+                        variant={
+                          typedItem.volatility < 10
+                            ? 'success'
+                            : typedItem.volatility < 15
+                              ? 'warning'
+                              : 'error'
+                        }
+                      >
                         {typedItem.volatility.toFixed(1)}%
                       </Badge>
                     );
@@ -391,7 +419,15 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.sharpe && typedItem.sharpe > 1 ? 'success' : typedItem.sharpe && typedItem.sharpe > 0.5 ? 'warning' : 'error'}>
+                      <Badge
+                        variant={
+                          typedItem.sharpe && typedItem.sharpe > 1
+                            ? 'success'
+                            : typedItem.sharpe && typedItem.sharpe > 0.5
+                              ? 'warning'
+                              : 'error'
+                        }
+                      >
                         {typedItem.sharpe?.toFixed(2) || 'N/A'}
                       </Badge>
                     );
@@ -403,7 +439,15 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.maxDrawdown && typedItem.maxDrawdown > -10 ? 'success' : typedItem.maxDrawdown && typedItem.maxDrawdown > -20 ? 'warning' : 'error'}>
+                      <Badge
+                        variant={
+                          typedItem.maxDrawdown && typedItem.maxDrawdown > -10
+                            ? 'success'
+                            : typedItem.maxDrawdown && typedItem.maxDrawdown > -20
+                              ? 'warning'
+                              : 'error'
+                        }
+                      >
                         {typedItem.maxDrawdown?.toFixed(2) || 'N/A'}%
                       </Badge>
                     );

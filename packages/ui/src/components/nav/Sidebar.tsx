@@ -1,11 +1,12 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-import { cn } from '../../utils/cn';
-import Button from './Button';
-import Icon, { type IconName } from '../Icon';
-import { Text } from '../../primitives/Text';
-import { VisuallyHidden } from '../../primitives/VisuallyHidden';
-import { Tooltip } from '../feedback/Tooltip';
+'use client';
+import React, { useState, useEffect, useCallback } from 'react';
+import { cn } from '../../utils/cn.js';
+import Button from './Button.js';
+import Icon, { type IconName } from '../Icon.js';
+import { Text } from '../../primitives/Text.js';
+import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
+import { Tooltip } from '../feedback/Tooltip.js';
+import { Feather } from 'lucide-react';
 
 export interface SidebarSection {
   title?: string;
@@ -39,31 +40,64 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 
+/**
+ * Sidebar navigation component with brand styling.
+ * Active items use Primary Purple background.
+ * Focus rings use Primary Purple color.
+ *
+ * AI_DECISION: Improved responsive behavior and touch targets
+ * Justificación: Better UX on mobile with larger touch targets and smoother scrolling
+ * Impacto: Sidebar works well on all screen sizes with proper accessibility
+ *
+ * @example
+ * ```tsx
+ * <Sidebar
+ *   sections={[
+ *     {
+ *       title: 'Main',
+ *       items: [
+ *         { label: 'Dashboard', href: '/', icon: 'home' },
+ *         { label: 'Contacts', href: '/contacts', icon: 'users' },
+ *       ]
+ *     }
+ *   ]}
+ *   currentPath={pathname}
+ * />
+ * ```
+ */
 export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
-  ({ 
-    sections,
-    logo,
-    collapsed: controlledCollapsed,
-    onCollapse,
-    defaultCollapsed = false,
-    currentPath = '',
-    isOpen,
-    onOpenChange,
-    LinkComponent,
-    className,
-    ...props 
-  }, ref) => {
+  (
+    {
+      sections,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      logo,
+      collapsed: controlledCollapsed,
+      onCollapse,
+      defaultCollapsed = false,
+      currentPath = '',
+      isOpen,
+      onOpenChange,
+      LinkComponent,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
-    
+
     const collapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
-    
-    const handleToggle = () => {
+
+    const handleToggle = useCallback(() => {
       const newCollapsed = !collapsed;
       if (controlledCollapsed === undefined) {
         setInternalCollapsed(newCollapsed);
       }
       onCollapse?.(newCollapsed);
-    };
+    }, [collapsed, controlledCollapsed, onCollapse]);
+
+    const handleClose = useCallback(() => {
+      onOpenChange?.(false);
+    }, [onOpenChange]);
 
     // Persist collapsed state to localStorage
     useEffect(() => {
@@ -81,55 +115,86 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       }
     }, [collapsed, controlledCollapsed]);
 
+    // Determine if we're in mobile/drawer mode
+    const isMobileMode = onOpenChange !== undefined;
+
     return (
       <div
         ref={ref}
         className={cn(
-          'relative flex flex-col h-full bg-surface border-r border-border',
+          'relative flex flex-col h-full bg-transparent',
+          // Border only on desktop
+          !isMobileMode && 'border-r border-border',
           'transition-all duration-300 ease-in-out',
           'overflow-x-hidden',
-          collapsed ? 'w-14' : 'w-48',
+          // Width based on collapsed state (desktop) or full width (mobile)
+          isMobileMode ? 'w-full' : collapsed ? 'w-16' : 'w-52',
           className
         )}
         data-open={isOpen === undefined ? undefined : isOpen}
         {...props}
       >
-        {/* Close button for mobile drawer usage - Top right corner */}
-        {onOpenChange && (
-          <div className="absolute top-2 right-2 z-10 lg:hidden">
+        {/* Mobile header with close button */}
+        {isMobileMode && (
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-primary">
+                <Feather className="w-6 h-6" strokeWidth={1.5} />
+              </span>
+              <span className="text-lg font-bold">
+                <span className="text-primary">Maat</span>
+                <span className="text-secondary">Work</span>
+              </span>
+            </div>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-7 w-7 p-0"
-              aria-label="Close menu"
+              onClick={handleClose}
+              className="min-w-[44px] min-h-[44px] p-0 hover:bg-error-subtle hover:text-error"
+              aria-label="Cerrar menú"
             >
-              <Icon name="X" size={14} />
+              <Icon name="X" size={20} />
             </Button>
           </div>
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-1 space-y-2.5" role="navigation">
+        <nav
+          className={cn(
+            'flex-1 overflow-y-auto overflow-x-hidden',
+            // Better scrolling on mobile
+            'overscroll-contain scroll-smooth',
+            // Responsive padding
+            isMobileMode ? 'py-4 px-3' : 'py-3 px-2',
+            'space-y-3'
+          )}
+          role="navigation"
+          aria-label="Navegación principal"
+        >
           {sections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-1">
               {section.title && !collapsed && (
-                <Text 
-                  size="xs" 
-                  weight="semibold" 
-                  className="text-text-muted uppercase tracking-wider px-2 mb-0.5"
+                <Text
+                  size="xs"
+                  weight="semibold"
+                  className={cn(
+                    'text-text-muted uppercase tracking-wider',
+                    isMobileMode ? 'px-3 mb-2' : 'px-2 mb-1'
+                  )}
                 >
                   {section.title}
                 </Text>
               )}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {section.items.map((item) => (
-                  <SidebarItem
+                  <SidebarItemComponent
                     key={item.href}
                     item={item}
-                    collapsed={collapsed}
+                    collapsed={collapsed && !isMobileMode}
                     currentPath={currentPath}
                     LinkComponent={LinkComponent}
+                    isMobileMode={isMobileMode}
+                    onNavigate={handleClose}
                   />
                 ))}
               </div>
@@ -137,27 +202,27 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
           ))}
         </nav>
 
-        {/* Expand/Collapse button - Bottom, integrated */}
-        <div className="border-t border-border pt-1 pb-1 px-1">
-          <button
-            onClick={handleToggle}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className={cn(
-              'w-full flex items-center justify-center',
-              'h-9 rounded-lg',
-              'text-text-muted hover:text-text',
-              'hover:bg-surface-hover',
-              'transition-all duration-200',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
-              collapsed ? 'px-0' : 'px-2'
-            )}
-          >
-            <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={14} />
-            {!collapsed && (
-              <span className="ml-1.5 text-xs font-medium">Colapsar</span>
-            )}
-          </button>
-        </div>
+        {/* Expand/Collapse button - Only on desktop */}
+        {!isMobileMode && (
+          <div className="border-t border-border pt-2 pb-2 px-2 shrink-0">
+            <button
+              onClick={handleToggle}
+              aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+              className={cn(
+                'w-full flex items-center justify-center',
+                'h-10 rounded-lg',
+                'text-text-muted hover:text-text',
+                'hover:bg-surface-hover',
+                'transition-all duration-200',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
+                collapsed ? 'px-0' : 'px-3'
+              )}
+            >
+              <Icon name={collapsed ? 'ChevronRight' : 'ChevronLeft'} size={16} />
+              {!collapsed && <span className="ml-2 text-sm font-medium font-body">Colapsar</span>}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -165,10 +230,12 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
 
 Sidebar.displayName = 'Sidebar';
 
-interface SidebarItemProps {
+interface SidebarItemComponentProps {
   item: SidebarItem;
   collapsed: boolean;
   currentPath?: string;
+  isMobileMode?: boolean;
+  onNavigate?: () => void;
   LinkComponent?: React.ComponentType<{
     href: string;
     className?: string;
@@ -178,10 +245,17 @@ interface SidebarItemProps {
   }>;
 }
 
-const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
-  ({ item, collapsed, currentPath = '', LinkComponent }, ref) => {
+const SidebarItemComponent = React.forwardRef<HTMLAnchorElement, SidebarItemComponentProps>(
+  ({ item, collapsed, currentPath = '', isMobileMode = false, onNavigate, LinkComponent }, ref) => {
     const isActive = currentPath === item.href;
     const Link = LinkComponent || 'a';
+
+    const handleClick = useCallback(() => {
+      // Close drawer on navigation in mobile mode
+      if (isMobileMode && onNavigate) {
+        onNavigate();
+      }
+    }, [isMobileMode, onNavigate]);
 
     const linkElement = (
       <Link
@@ -193,59 +267,68 @@ const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
           'transition-all duration-200',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
           'min-w-0 max-w-full',
-          collapsed 
-            ? 'justify-center w-10 h-9'
-            : 'gap-1.5 px-2 py-1.5 w-full',
+          // Size based on mode
+          collapsed
+            ? 'justify-center w-12 h-11'
+            : isMobileMode
+              ? // Mobile: larger touch targets
+                'gap-3 px-4 py-3.5 w-full min-h-[52px]'
+              : // Desktop: compact
+                'gap-2 px-3 py-2 w-full',
+          // Active/hover states
           isActive
-            ? 'bg-primary text-text-inverse shadow-md scale-105'
-            : 'text-text-secondary hover:text-text hover:bg-surface-hover hover:scale-105'
+            ? 'bg-primary text-text-inverse shadow-md'
+            : 'text-text-secondary hover:text-text hover:bg-surface-hover active:scale-[0.98]'
         )}
         aria-current={isActive ? 'page' : undefined}
+        onClick={handleClick}
       >
         {item.icon && (
-          <Icon 
-            name={item.icon} 
-            size={collapsed ? 20 : 16}
-            className="flex-shrink-0" 
+          <Icon
+            name={item.icon}
+            size={collapsed ? 22 : isMobileMode ? 22 : 18}
+            className="flex-shrink-0"
           />
         )}
-        
+
         {!collapsed && (
           <>
-            <span className="truncate flex-1 text-base">{item.label}</span>
+            <span
+              className={cn('truncate flex-1 font-body', isMobileMode ? 'text-base' : 'text-sm')}
+            >
+              {item.label}
+            </span>
             {item.badge && (
-              <span className={cn(
-                'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px]',
-                isActive
-                  ? 'bg-text-inverse/30 text-text-inverse'
-                  : 'bg-primary text-text-inverse'
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium min-w-[20px] h-[20px] font-body',
+                  isActive ? 'bg-text-inverse/30 text-text-inverse' : 'bg-primary text-text-inverse'
+                )}
+              >
                 {item.badge}
               </span>
             )}
           </>
         )}
-        
+
         {item.badge && collapsed && (
-          <span className={cn(
-            'absolute -top-1 -right-1 z-10',
-            'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px]',
-            isActive
-              ? 'bg-text-inverse/30 text-text-inverse'
-              : 'bg-primary text-text-inverse'
-          )}>
+          <span
+            className={cn(
+              'absolute -top-1 -right-1 z-10',
+              'inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-medium min-w-[18px] h-[18px] font-body',
+              isActive ? 'bg-text-inverse/30 text-text-inverse' : 'bg-primary text-text-inverse'
+            )}
+          >
             {item.badge}
           </span>
         )}
-        
-        {collapsed && item.badge && (
-          <VisuallyHidden>Badge: {item.badge}</VisuallyHidden>
-        )}
+
+        {collapsed && item.badge && <VisuallyHidden>Badge: {item.badge}</VisuallyHidden>}
       </Link>
     );
 
-    // Wrap with tooltip when collapsed
-    if (collapsed) {
+    // Wrap with tooltip when collapsed (desktop only)
+    if (collapsed && !isMobileMode) {
       return (
         <Tooltip content={item.label} side="right">
           {linkElement}
@@ -257,4 +340,4 @@ const SidebarItem = React.forwardRef<HTMLAnchorElement, SidebarItemProps>(
   }
 );
 
-SidebarItem.displayName = 'SidebarItem';
+SidebarItemComponent.displayName = 'SidebarItem';

@@ -27,7 +27,7 @@ describe('Breadcrumbs Component', () => {
       render(<Breadcrumbs items={mockItems} />);
       const homeLink = screen.getByRole('link', { name: 'Home' });
       const productsLink = screen.getByRole('link', { name: 'Products' });
-      
+
       expect(homeLink).toHaveAttribute('href', '/');
       expect(productsLink).toHaveAttribute('href', '/products');
     });
@@ -69,7 +69,9 @@ describe('Breadcrumbs Component', () => {
   describe('Custom Link Component', () => {
     it('should use custom LinkComponent when provided', () => {
       const CustomLink = ({ href, children, ...props }: LinkComponentProps) => (
-        <a href={href} data-custom="true" {...props}>{children}</a>
+        <a href={href} data-custom="true" {...props}>
+          {children}
+        </a>
       );
 
       render(<Breadcrumbs items={mockItems} LinkComponent={CustomLink} />);
@@ -150,4 +152,3 @@ describe('Breadcrumbs Component', () => {
     });
   });
 });
-

@@ -169,6 +169,8 @@ export const tasks = pgTable(
     originRef: jsonb('origin_ref'),
     recurrenceId: uuid('recurrence_id').references(() => taskRecurrences.id),
     parentTaskId: uuid('parent_task_id'), // Para tareas recurrentes, referencia a la serie
+    googleEventId: text('google_event_id'), // ID del evento en Google Calendar
+    googleCalendarId: text('google_calendar_id'), // ID del calendario en Google Calendar
     completedAt: timestamp('completed_at', { withTimezone: true }),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     version: integer('version').notNull().default(1),
@@ -223,6 +225,42 @@ export const tasks = pgTable(
       .where(sql`${table.deletedAt} IS NULL`)
   })
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

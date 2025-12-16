@@ -1,13 +1,17 @@
 /**
  * Utilidades para enviar contactos a webhook de N8N
- * 
+ *
  * AI_DECISION: Proxy a través del backend para evitar problemas de CORS
  * Justificación: El backend hace la petición server-to-server, eliminando restricciones CORS
  * Impacto: Eliminación de errores CORS, mejor seguridad, manejo centralizado de errores
  */
 
 import type { Contact } from '@/types/contact';
-import { sendContactsToWebhook as sendContactsToWebhookApi, type WebhookMetadata as ApiWebhookMetadata, type WebhookResult as ApiWebhookResult } from '@/lib/api/contacts';
+import {
+  sendContactsToWebhook as sendContactsToWebhookApi,
+  type WebhookMetadata as ApiWebhookMetadata,
+  type WebhookResult as ApiWebhookResult,
+} from '@/lib/api/contacts';
 import { ApiError } from '@/lib/api-client';
 
 // Re-export types from API client for backward compatibility
@@ -21,7 +25,7 @@ export interface WebhookPayload {
 
 /**
  * Envía contactos a un webhook de N8N (proxy a través del backend)
- * 
+ *
  * @param contacts - Array de contactos a enviar
  * @param webhookUrl - URL del webhook de N8N
  * @param metadata - Metadata opcional sobre los filtros aplicados
@@ -36,7 +40,7 @@ export async function sendContactsToWebhook(
   if (!Array.isArray(contacts) || contacts.length === 0) {
     return {
       success: false,
-      message: 'No hay contactos para enviar'
+      message: 'No hay contactos para enviar',
     };
   }
 
@@ -46,7 +50,7 @@ export async function sendContactsToWebhook(
   if (estimatedSize > maxSize) {
     return {
       success: false,
-      message: `El payload es demasiado grande (${Math.round(estimatedSize / 1024)}KB). El backend dividirá automáticamente en batches.`
+      message: `El payload es demasiado grande (${Math.round(estimatedSize / 1024)}KB). El backend dividirá automáticamente en batches.`,
     };
   }
 
@@ -56,7 +60,7 @@ export async function sendContactsToWebhook(
   } catch {
     return {
       success: false,
-      message: 'URL del webhook inválida'
+      message: 'URL del webhook inválida',
     };
   }
 
@@ -66,7 +70,7 @@ export async function sendContactsToWebhook(
     if (!response.success || !response.data) {
       return {
         success: false,
-        message: response.error || 'Error desconocido al enviar webhook'
+        message: response.error || 'Error desconocido al enviar webhook',
       };
     }
 
@@ -77,38 +81,38 @@ export async function sendContactsToWebhook(
       if (error.status === 504) {
         return {
           success: false,
-          message: 'Timeout: El webhook no respondió en el tiempo esperado'
+          message: 'Timeout: El webhook no respondió en el tiempo esperado',
         };
       }
       if (error.status === 502) {
         return {
           success: false,
-          message: `Error de conexión: ${error.message}. Verifica que el webhook esté corriendo y que la URL sea correcta.`
+          message: `Error de conexión: ${error.message}. Verifica que el webhook esté corriendo y que la URL sea correcta.`,
         };
       }
       if (error.status === 429) {
         return {
           success: false,
-          message: 'Demasiadas solicitudes. Por favor espera un momento antes de intentar nuevamente.'
+          message:
+            'Demasiadas solicitudes. Por favor espera un momento antes de intentar nuevamente.',
         };
       }
       return {
         success: false,
-        message: error.message || 'Error al enviar webhook'
+        message: error.message || 'Error al enviar webhook',
       };
     }
 
     if (error instanceof Error) {
       return {
         success: false,
-        message: `Error de red: ${error.message}`
+        message: `Error de red: ${error.message}`,
       };
     }
 
     return {
       success: false,
-      message: 'Error desconocido al enviar webhook'
+      message: 'Error desconocido al enviar webhook',
     };
   }
 }
-

@@ -31,13 +31,19 @@ router.delete('/contacts/:id', ...);
 
 ## Versionado de API
 
-**Usar prefijo `/v1/` para todas las rutas:**
+**El prefijo `/v1/` es OBLIGATORIO para todas las rutas:**
 
 ```typescript
 // apps/api/src/index.ts
+// ✅ CORRECTO - Todas las rutas deben usar /v1
 app.use('/v1/contacts', contactsRouter);
 app.use('/v1/users', usersRouter);
+
+// ❌ INCORRECTO - Rutas sin versión están deshabilitadas
+// app.use('/contacts', contactsRouter); // NO HACER ESTO
 ```
+
+**Nota:** Las rutas sin versión fueron eliminadas para mantener consistencia. Todos los endpoints deben usar el prefijo `/v1/`.
 
 ## Paginación Consistente
 
@@ -105,41 +111,147 @@ router.get('/',
 - `404` - Not Found (recurso no existe)
 - `500` - Internal Server Error (error del servidor)
 
+## Manejo de Handlers - createRouteHandler vs createAsyncHandler
+
+**Usar `createRouteHandler` para la mayoría de casos (recomendado):**
+
+```typescript
+import { createRouteHandler } from '../../utils/route-handler';
+
+// ✅ PATRÓN CORRECTO - Retorna datos directamente
+router.get('/contacts/:id',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  createRouteHandler(async (req) => {
+    const contact = await getContact(req.params.id);
+    if (!contact) {
+      throw new HttpError(404, 'Contact not found');
+    }
+    return contact; // Se envuelve automáticamente en { success: true, data: contact }
+  })
+);
+```
+
+**Usar `createAsyncHandler` SOLO cuando necesitas control directo de `res`:**
+
+```typescript
+import { createAsyncHandler } from '../../utils/route-handler';
+
+// ✅ CASO LEGÍTIMO 1: Status code 201 (Created) para POST
+router.post('/contacts',
+  requireAuth,
+  validate({ body: createContactSchema }),
+  createAsyncHandler(async (req, res) => {
+    const contact = await createContact(req.body);
+    return res.status(201).json({ success: true, data: contact, requestId: req.requestId });
+  })
+);
+
+// ✅ CASO LEGÍTIMO 2: Cookies o headers personalizados
+router.post('/auth/login',
+  createAsyncHandler(async (req, res) => {
+    const token = await signToken(user);
+    res.cookie('token', token, { httpOnly: true, secure: true });
+    return res.json({ success: true, user });
+  })
+);
+
+// ✅ CASO LEGÍTIMO 3: Respuestas con campos adicionales
+router.post('/contacts',
+  createAsyncHandler(async (req, res) => {
+    const contact = await createContact(req.body);
+    const warning = advisorWarning; // Campo adicional
+    return res.status(201).json({ 
+      success: true, 
+      data: contact, 
+      warning, 
+      requestId: req.requestId 
+    });
+  })
+);
+
+// ✅ CASO LEGÍTIMO 4: Streaming o Content-Type especial
+router.get('/export',
+  createAsyncHandler(async (req, res) => {
+    const csv = await generateCSV();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="export.csv"');
+    return res.send(csv);
+  })
+);
+```
+
+**Cuándo NO usar createAsyncHandler:**
+
+```typescript
+// ❌ INCORRECTO - No necesitas control directo de res
+createAsyncHandler(async (req, res) => {
+  const data = await getData();
+  return res.json({ success: true, data }); // createRouteHandler lo hace automáticamente
+})
+
+// ✅ CORRECTO - Usar createRouteHandler
+createRouteHandler(async (req) => {
+  return await getData(); // Se envuelve automáticamente
+})
+```
+
 ## Estructura de Respuestas
 
-**Respuestas exitosas:**
+**Respuestas exitosas con createRouteHandler (automático):**
 
 ```typescript
 // GET /v1/contacts/:id
-res.json({
-  id: '...',
-  firstName: '...',
-  // ...
-});
-
-// POST /v1/contacts
-res.status(201).json({
-  id: '...',
-  firstName: '...',
-  // ...
-});
+// Retorna automáticamente: { success: true, data: contact, requestId: '...' }
+router.get('/contacts/:id',
+  requireAuth,
+  createRouteHandler(async (req) => {
+    return await getContact(req.params.id);
+  })
+);
 ```
 
-**Respuestas de error:**
+**Respuestas con status 201 (usar createAsyncHandler):**
 
 ```typescript
-// Usar createErrorResponse()
-res.status(400).json({
-  error: 'Validation error',
-  requestId: req.requestId,
-  details: [...]
-});
+// POST /v1/contacts
+router.post('/contacts',
+  requireAuth,
+  validate({ body: createContactSchema }),
+  createAsyncHandler(async (req, res) => {
+    const contact = await createContact(req.body);
+    return res.status(201).json({ 
+      success: true, 
+      data: contact, 
+      requestId: req.requestId 
+    });
+  })
+);
+```
+
+**Respuestas de error (automático con createRouteHandler):**
+
+```typescript
+// Errores se manejan automáticamente
+router.get('/contacts/:id',
+  createRouteHandler(async (req) => {
+    const contact = await getContact(req.params.id);
+    if (!contact) {
+      throw new HttpError(404, 'Contact not found'); // Se convierte en respuesta 404
+    }
+    return contact;
+  })
+);
 ```
 
 ## Anti-Patterns a Evitar
 
-1. ❌ Rutas sin versionado (`/contacts` en lugar de `/v1/contacts`)
-2. ❌ Paginación inconsistente
-3. ❌ Códigos de estado incorrectos
-4. ❌ Respuestas sin Request ID
-5. ❌ Estructura de respuesta inconsistente
+1. ❌ Rutas sin versionado (`/contacts` en lugar de `/v1/contacts`) - **CRÍTICO: Todas las rutas deben usar `/v1/`**
+2. ❌ Usar `createAsyncHandler` cuando `createRouteHandler` es suficiente
+3. ❌ Manejo manual de `res.json()` cuando se puede usar `createRouteHandler`
+4. ❌ Try/catch manual en handlers cuando `createRouteHandler` lo maneja automáticamente
+5. ❌ `createErrorResponse` manual cuando `createRouteHandler` lo maneja automáticamente
+6. ❌ Paginación inconsistente
+7. ❌ Códigos de estado incorrectos
+8. ❌ Respuestas sin Request ID
+9. ❌ Estructura de respuesta inconsistente

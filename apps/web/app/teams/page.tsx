@@ -1,17 +1,26 @@
 import { redirect } from 'next/navigation';
-import { getTeams, getMembershipRequests, getCurrentUser } from '@/lib/api-server';
+import {
+  getTeams,
+  getMembershipRequests,
+  getCurrentUser,
+  getMemberDashboard,
+} from '@/lib/api-server';
 import TeamsClient from './components/TeamsClient';
-import { Heading, Button, Stack, Icon } from '@cactus/ui';
+import MemberTeamDashboard from './components/MemberTeamDashboard';
+import { Heading, Stack } from '@cactus/ui';
 import type { Team, MembershipRequest } from '@/types';
+import type { MemberDashboardResponse } from '@/lib/api/teams';
 
 // AI_DECISION: Convert to Server Component with Client Islands pattern
-// Justificación: Reduces First Load JS ~40KB, better SEO, faster initial load
+// Justificaci?n: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 1 hour revalidation for team data
-// Justificación: Teams change occasionally, ISR reduces server load 60-80% while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for team management page
-export const revalidate = 3600; // Revalidate every hour
+// AI_DECISION: Force dynamic rendering for teams page
+// Justificaci?n: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+// Note: Previously attempted ISR (revalidate = 3600) but caused build error:
+//       "Dynamic server usage: Route /teams couldn't be rendered statically because it used `cookies`"
+export const dynamic = 'force-dynamic';
 
 export default async function TeamsPage() {
   // Check authentication and get user
@@ -19,82 +28,94 @@ export default async function TeamsPage() {
   try {
     const userResponse = await getCurrentUser();
     if (!userResponse.success || !userResponse.data) {
-      // AI_DECISION: Log redirect reason for debugging
-      // Justificación: Ayuda a identificar por qué se redirige a login
-      // Impacto: Mejora debugging de problemas de autenticación
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[TeamsPage] Redirecting to /login: userResponse failed', {
-          success: userResponse.success,
-          hasData: !!userResponse.data
-        });
-      }
       redirect('/login');
     }
     user = userResponse.data;
   } catch (err) {
-    // AI_DECISION: Log redirect reason for debugging
-    // Justificación: Ayuda a identificar errores en getCurrentUser
-    // Impacto: Mejora debugging de problemas de autenticación
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[TeamsPage] Error getting current user, redirecting to /login', err);
-    }
+    // AI_DECISION: Usar console.error en Server Components para errores cr?ticos
+    // Justificaci?n: Server Components no tienen acceso a logger del cliente. console.error es apropiado para errores cr?ticos.
+    // Impacto: Errores cr?ticos de autenticaci?n se loguean correctamente
+    console.error('[TeamsPage] Error getting current user, redirecting to /login', err);
     redirect('/login');
   }
 
-  // AI_DECISION: Permitir acceso a advisor para visualización (solo lectura)
-  // Justificación: Advisors deben poder ver equipos pero sin permisos de edición
-  // Impacto: Mejora UX permitiendo que advisors vean información de equipos
-  // Check permissions - todos los roles autenticados pueden ver, pero solo manager/admin pueden editar
-  // La lógica de edición se maneja en TeamsClient basado en userRole
-  if (!['advisor', 'manager', 'admin'].includes(user.role)) {
-    // AI_DECISION: Log redirect reason for debugging
-    // Justificación: Ayuda a identificar por qué se redirige usuarios con roles inválidos
-    // Impacto: Mejora debugging de problemas de permisos
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[TeamsPage] Redirecting to /home: invalid role', {
-        role: user.role,
-        userId: user.id
-      });
+  // 1. MANAGER / ADMIN VIEW
+  if (['manager', 'admin'].includes(user.role)) {
+    // Fetch data server-side
+    let teams: Team[] = [];
+    let membershipRequests: MembershipRequest[] = [];
+    let teamCalendarUrl: string | null = null;
+
+    try {
+      const [teamsResponse, requestsResponse] = await Promise.all([
+        getTeams(),
+        getMembershipRequests(),
+      ]);
+
+      if (teamsResponse.success && teamsResponse.data) {
+        teams = teamsResponse.data;
+        // Extract team calendar URL from the first team that has one
+        const teamWithCalendar = teams.find((team) => team.calendarUrl);
+        teamCalendarUrl = teamWithCalendar?.calendarUrl || null;
+      }
+      if (requestsResponse.success && requestsResponse.data) {
+        membershipRequests = requestsResponse.data;
+      }
+    } catch (err) {
+      console.error('Error loading teams data', err);
     }
-    redirect('/home');
+
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <Stack direction="column" gap="lg">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <Heading level={3}>Equipos</Heading>
+          </div>
+
+          <TeamsClient
+            initialTeams={teams}
+            initialMembershipRequests={membershipRequests}
+            userRole={user.role}
+            userId={user.id}
+            isGoogleConnected={user.isGoogleConnected || false}
+            teamCalendarUrl={teamCalendarUrl}
+          />
+        </Stack>
+      </main>
+    );
   }
 
-  // Fetch data server-side
-  let teams: Team[] = [];
-  let membershipRequests: MembershipRequest[] = [];
-  let error: string | null = null;
-
+  // 2. MEMBER VIEW (Advisor)
+  // Fetch member dashboard data
+  let dashboardData: MemberDashboardResponse | null = null;
   try {
-    const [teamsResponse, requestsResponse] = await Promise.all([
-      getTeams(),
-      getMembershipRequests()
-    ]);
-
-    if (teamsResponse.success && teamsResponse.data) {
-      teams = teamsResponse.data;
-    }
-    if (requestsResponse.success && requestsResponse.data) {
-      membershipRequests = requestsResponse.data;
+    const dashboardResponse = await getMemberDashboard();
+    if (dashboardResponse.success && dashboardResponse.data) {
+      dashboardData = dashboardResponse.data;
     }
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Error al cargar datos';
+    console.error('Error loading member dashboard', err);
+  }
+
+  // If failed to load or no data, show empty state or error handled by component
+  if (!dashboardData) {
+    // Fallback if API fails completely
+    dashboardData = { hasTeam: false, team: null, metrics: null };
   }
 
   return (
-    <div className="p-4 md:p-6">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <Stack direction="column" gap="lg">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <Heading level={3}>Equipos</Heading>
-        </div>
+        {/* Only show heading if not in dashboard component which has its own header */}
+        {!dashboardData.hasTeam && (
+          <div className="flex justify-between items-center">
+            <Heading level={3}>Mi Equipo</Heading>
+          </div>
+        )}
 
-        <TeamsClient 
-          initialTeams={teams}
-          initialMembershipRequests={membershipRequests}
-          userRole={user.role}
-          userId={user.id}
-        />
+        <MemberTeamDashboard data={dashboardData} />
       </Stack>
-    </div>
+    </main>
   );
 }

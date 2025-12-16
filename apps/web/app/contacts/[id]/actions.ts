@@ -8,15 +8,19 @@ import { apiCall } from '@/lib/api-server';
 
 /**
  * Server Action for updating contact fields
- * 
+ *
  * @param contactId - The contact ID to update
  * @param field - The field name to update
  * @param value - The new value for the field (string, string[], or other types)
  */
-export async function updateContactField(contactId: string, field: string, value: string | string[] | number | null) {
+export async function updateContactField(
+  contactId: string,
+  field: string,
+  value: string | string[] | number | null
+) {
   // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente
   return apiCall(`/v1/contacts/${contactId}`, {
     method: 'PATCH',
-    body: { fields: [{ field, value }] }
+    body: { fields: [{ field, value }] },
   });
 }

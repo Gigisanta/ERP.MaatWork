@@ -11,6 +11,7 @@ import express from 'express';
 import request from 'supertest';
 import adminRouter from './admin';
 import { signUserToken } from '../../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -40,7 +41,7 @@ vi.mock('../../services/aumParser', () => ({
   parseAumFile: vi.fn(),
 }));
 
-vi.mock('../../utils/aum-normalization', () => ({
+vi.mock('../../utils/aum/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
@@ -96,7 +97,7 @@ vi.mock('node:fs', () => ({
 import { db } from '@cactus/db';
 import { aumImportFiles, aumImportRows, eq, sql } from '@cactus/db';
 import { parseAumFile } from '../../services/aumParser';
-import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../utils/aum-normalization';
+import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../utils/aum/aum-normalization';
 import { promises as fs } from 'node:fs';
 
 const mockDb = vi.mocked(db);
@@ -106,12 +107,8 @@ const mockNormalizeAdvisorAlias = vi.mocked(normalizeAdvisorAlias);
 const mockFs = vi.mocked(fs);
 
 describe('AUM Admin Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', adminRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/admin/aum', router: adminRouter }]);
 
   let adminToken: string;
 
@@ -153,7 +150,7 @@ describe('AUM Admin Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/uploads/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -175,7 +172,7 @@ describe('AUM Admin Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/uploads/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -203,7 +200,7 @@ describe('AUM Admin Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/uploads/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -223,7 +220,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/uploads')
         .set('Cookie', `token=${adminToken}`)
@@ -243,7 +240,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/uploads?force=true')
         .set('Cookie', `token=${adminToken}`)
@@ -264,7 +261,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/purge-all')
         .set('Cookie', `token=${adminToken}`)
@@ -283,7 +280,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .delete('/admin/aum/purge-all?broker=balanz')
         .set('Cookie', `token=${adminToken}`)
@@ -301,7 +298,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/cleanup-duplicates')
         .set('Cookie', `token=${adminToken}`)
@@ -323,7 +320,7 @@ describe('AUM Admin Routes', () => {
         execute: mockExecute,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/reset-all')
         .set('Cookie', `token=${adminToken}`)
@@ -377,7 +374,7 @@ describe('AUM Admin Routes', () => {
       mockFs.unlink.mockResolvedValue(undefined);
       mockFs.access.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -442,7 +439,7 @@ describe('AUM Admin Routes', () => {
         return { execute: mockExecute } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/verify/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -507,7 +504,7 @@ describe('AUM Admin Routes', () => {
         return { execute: mockExecute } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/verify/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -539,7 +536,7 @@ describe('AUM Admin Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/verify/file-123')
         .set('Cookie', `token=${adminToken}`)

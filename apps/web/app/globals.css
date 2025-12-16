@@ -2,128 +2,249 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   MaatWork Design System v2.3.0 - Web App Global Styles
+   Uses @cactus/ui for base styles, tokens, and components.
+   ============================================================================= */
+
 :root {
   /* ============================================================
-     Cactus CRM Design System - Semantic Color Variables
+     shadcn Compatibility Variables (mapped to Soft Purple theme)
      ============================================================ */
   
-  /* Primary Brand Colors (Green) */
-  --color-primary: #22c55e;
-  --color-primary-hover: #16a34a;
-  --color-primary-active: #15803d;
-  --color-primary-light: #4ade80;
-  --color-primary-subtle: #dcfce7;
-
-  /* Semantic Colors */
-  --color-success: #22c55e;
-  --color-success-hover: #16a34a;
-  --color-success-subtle: #dcfce7;
-  
-  --color-error: #ef4444;
-  --color-error-hover: #dc2626;
-  --color-error-subtle: #fee2e2;
-  
-  --color-warning: #f59e0b;
-  --color-warning-hover: #d97706;
-  --color-warning-subtle: #fef3c7;
-  
-  --color-info: #3b82f6;
-  --color-info-hover: #2563eb;
-  --color-info-subtle: #dbeafe;
-
-  /* Neutral Colors */
-  --color-background: #ffffff;
-  --color-surface: #f9fafb;
-  --color-surface-hover: #f3f4f6;
-  --color-border: #e5e7eb;
-  --color-border-hover: #d1d5db;
-
-  /* Text Colors */
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-text-inverse: #ffffff;
-
-  /* Chart Colors for Data Visualization */
-  --color-chart-1: #3b82f6; /* Blue */
-  --color-chart-2: #22c55e; /* Green */
-  --color-chart-3: #f59e0b; /* Amber */
-  --color-chart-4: #ef4444; /* Red */
-  --color-chart-5: #a855f7; /* Purple */
-  --color-chart-6: #06b6d4; /* Cyan */
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-  /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
-  --radius-full: 9999px;
-
-  /* Transitions */
-  --transition-fast: 150ms;
-  --transition-base: 200ms;
-  --transition-slow: 300ms;
-
-  /* ============================================================
-     shadcn Compatibility Variables (mapped to semantic colors)
-     ============================================================ */
   --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  --foreground: 0 0% 0%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 0 0% 0%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 142 76% 36%; /* HSL equivalent of #22c55e */
+  --popover-foreground: 0 0% 0%;
+  
+  /* Primary: #8b5cf6 (Soft Purple) -> HSL 266 96% 76% */
+  --primary: 266 96% 76%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  
+  --secondary: 0 0% 0%;
+  --secondary-foreground: 0 0% 100%;
+  
+  --muted: 0 0% 98%;
+  --muted-foreground: 0 0% 26%;
+  
+  /* Accent: #10b981 (Soft Green) -> HSL 160 84% 39% */
+  --accent: 160 84% 39%;
+  --accent-foreground: 0 0% 0%;
+  
+  /* Destructive: #ef4444 (Red) -> HSL 0 84% 60% */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 142 76% 36%; /* Primary color for focus rings */
+  
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 266 96% 76%;
+  
   --radius: 0.5rem;
+
+  /* ============================================================
+     Table Row Colors (Light Mode)
+     ============================================================ */
+  --row-client-bg: 142 70% 96%;
+  --row-client-border: 142 76% 36%;
+  
+  --row-no-interaction-bg: 0 100% 98%;
+  --row-no-interaction-border: 0 84% 60%;
+  
+  /* Dynamic row base values */
+  --row-dynamic-sat: 80%;
+  --row-dynamic-light: 96%;
+  --row-dynamic-border-sat: 70%;
+  --row-dynamic-border-light: 45%;
 }
 
-.dark {
-  /* Dark mode - to be implemented in the future */
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 142 76% 50%;
+/* Dark Mode Theme */
+.dark,
+[data-theme="dark"] {
+  /* shadcn dark mode variables */
+  --background: 0 0% 4%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 100%;
+  
+  /* Primary Dark: #a78bfa (Lighter Soft Purple) -> HSL 261 92% 82% */
+  --primary: 261 92% 82%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 142 76% 50%;
+  
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 0 0% 0%;
+  
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 69%;
+  
+  /* Accent Dark: #34d399 -> HSL 158 64% 52% */
+  --accent: 158 64% 52%;
+  --accent-foreground: 0 0% 0%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 261 92% 82%;
+
+  /* ============================================================
+     Table Row Colors (Dark Mode)
+     ============================================================ */
+  /* Darker backgrounds for contrast with white text */
+  --row-client-bg: 142 30% 10%;
+  --row-client-border: 142 60% 45%;
+  
+  --row-no-interaction-bg: 0 30% 12%;
+  --row-no-interaction-border: 0 60% 45%;
+  
+  /* Dynamic row base values */
+  --row-dynamic-sat: 30%;
+  --row-dynamic-light: 12%;
+  --row-dynamic-border-sat: 60%;
+  --row-dynamic-border-light: 45%;
 }
+
+/* ============================================================
+   Base Styles
+   ============================================================ */
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: var(--color-background);
   color: var(--color-text);
-  /* Use optimized Inter font from next/font */
-  font-family: var(--font-inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #fdfcf8; /* Cream base */
+  
+  /* App-wide subtle background texture */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.03) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+.dark body,
+[data-theme="dark"] body {
+  background-color: #0c0a09;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+}
+
+/* ============================================================
+   App-Specific Utility Classes
+   ============================================================ */
+
+/* Glass effect for cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-sm);
+}
+
+.dark .glass-card,
+[data-theme="dark"] .glass-card {
+  background: rgba(28, 25, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* ============================================================
+   Authentication Pages Background
+   ============================================================ */
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: hidden;
+  background-color: #fdfcf8;
+  
+  /* Modern Soft Gradients */
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.08), transparent 25%);
+}
+
+.auth-gradient-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(139, 92, 246, 0.03) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 8s infinite linear;
+  pointer-events: none;
+}
+
+.dark .auth-page {
+  background-color: #0c0a09;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.1), transparent 25%);
+}
+
+/* ============================================================
+   Scrollbar Styling
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary-light);
+}
+
+/* ============================================================
+   Mobile Safe Areas
+   ============================================================ */
+
+@layer utilities {
+  .safe-area-top { padding-top: env(safe-area-inset-top, 0px); }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .safe-area-left { padding-left: env(safe-area-inset-left, 0px); }
+  .safe-area-right { padding-right: env(safe-area-inset-right, 0px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

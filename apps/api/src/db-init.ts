@@ -433,7 +433,9 @@ async function seedCactusTeam(): Promise<void> {
       .where((teams.name as any).eq?.('cactus') ?? (eq as any)(teams.name as any, 'cactus'))
       .limit(1);
     if (existing.length > 0) {
-      logger.info({ teamId: existing[0].id }, '🌵 Team "cactus" already exists');
+      // AI_DECISION: Changed from info to debug to reduce console noise during startup
+      // Justification: This is expected behavior in most dev/prod restarts
+      logger.debug({ teamId: existing[0].id }, '🌵 Team "cactus" already exists');
       return;
     }
 

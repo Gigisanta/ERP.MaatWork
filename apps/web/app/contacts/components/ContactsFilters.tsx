@@ -88,20 +88,12 @@ export default function ContactsFilters({
             </Button>
 
             {/* Botón Métricas */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/contacts/metrics')}
-            >
+            <Button variant="outline" size="sm" onClick={() => router.push('/contacts/metrics')}>
               Métricas
             </Button>
 
             {/* Botón Nuevo Contacto */}
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => router.push('/contacts/new')}
-            >
+            <Button variant="outline" size="sm" onClick={() => router.push('/contacts/new')}>
               <Icon name="plus" size={16} className="mr-1.5" />
               Nuevo Contacto
             </Button>
@@ -113,7 +105,7 @@ export default function ContactsFilters({
               {filteredAdvisor && (
                 <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs">
                   Asesor: {filteredAdvisor.name}
-                  <button 
+                  <button
                     onClick={onClearAdvisorFilter}
                     className="ml-0.5 hover:opacity-70"
                     aria-label="Remover filtro de asesor"
@@ -125,35 +117,29 @@ export default function ContactsFilters({
               {selectedStage !== 'all' && (
                 <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs">
                   Etapa: {pipelineStages.find((s) => s.id === selectedStage)?.name || ''}
-                  <button 
-                    onClick={onClearStage}
-                    className="ml-0.5 hover:opacity-70"
-                  >
+                  <button onClick={onClearStage} className="ml-0.5 hover:opacity-70">
                     ×
                   </button>
                 </Badge>
               )}
-              {selectedTags.map(tagId => {
+              {selectedTags.map((tagId) => {
                 const tag = allTags.find((t) => t.id === tagId);
                 return tag ? (
-                  <Badge 
-                    key={tagId} 
+                  <Badge
+                    key={tagId}
                     className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs"
                     style={{ backgroundColor: tag.color, color: 'white' }}
                   >
                     {tag.name}
-                    <button 
-                      onClick={() => onClearTag(tagId)}
-                      className="ml-0.5 hover:opacity-70"
-                    >
+                    <button onClick={() => onClearTag(tagId)} className="ml-0.5 hover:opacity-70">
                       ×
                     </button>
                   </Badge>
                 ) : null;
               })}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onClearAllFilters}
                 className="text-xs h-6 px-2"
               >
@@ -166,4 +152,3 @@ export default function ContactsFilters({
     </div>
   );
 }
-

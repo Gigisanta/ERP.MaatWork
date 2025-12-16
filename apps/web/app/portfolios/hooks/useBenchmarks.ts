@@ -7,7 +7,12 @@ import {
   updateBenchmark as updateBenchmarkApi,
   deleteBenchmark as deleteBenchmarkApi,
 } from '@/lib/api';
-import type { Benchmark, BenchmarkComponent, CreateBenchmarkRequest, UpdateBenchmarkRequest } from '@/types';
+import type {
+  Benchmark,
+  BenchmarkComponent,
+  CreateBenchmarkRequest,
+  UpdateBenchmarkRequest,
+} from '@/types';
 import { useEntityWithComponents } from './useEntityWithComponents';
 import { useRequireAuth } from '../../auth/useRequireAuth';
 
@@ -15,7 +20,15 @@ export function useBenchmarks() {
   const { user } = useRequireAuth();
   const canManageBenchmarks = user?.role === 'admin' || user?.role === 'manager';
 
-  const { entities: benchmarks, isLoading, error, refetch, createEntity: createBenchmark, updateEntity: updateBenchmark, deleteEntity: deleteBenchmark } = useEntityWithComponents<
+  const {
+    entities: benchmarks,
+    isLoading,
+    error,
+    refetch,
+    createEntity: createBenchmark,
+    updateEntity: updateBenchmark,
+    deleteEntity: deleteBenchmark,
+  } = useEntityWithComponents<
     Benchmark & { components?: BenchmarkComponent[] },
     BenchmarkComponent,
     CreateBenchmarkRequest,

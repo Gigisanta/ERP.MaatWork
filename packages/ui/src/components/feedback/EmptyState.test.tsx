@@ -75,48 +75,39 @@ describe('EmptyState Component', () => {
 
   describe('Content Structure', () => {
     it('should render icon before title', () => {
-      render(
-        <EmptyState 
-          title="Empty" 
-          icon={<span data-testid="icon">Icon</span>} 
-        />
-      );
-      
+      render(<EmptyState title="Empty" icon={<span data-testid="icon">Icon</span>} />);
+
       const icon = screen.getByTestId('icon');
       const title = screen.getByText('Empty');
-      
+
       // Check that icon comes before title in DOM order
       const parent = icon.parentElement?.parentElement;
       const children = Array.from(parent?.children || []);
       const iconIndex = children.indexOf(icon.parentElement as Element);
       const titleIndex = children.indexOf(title);
-      
+
       expect(iconIndex).toBeLessThan(titleIndex);
     });
 
     it('should render description after title', () => {
       render(<EmptyState title="Empty" description="Description text" />);
-      
+
       const title = screen.getByText('Empty');
       const description = screen.getByText('Description text');
-      
+
       const parent = title.parentElement;
       const children = Array.from(parent?.children || []);
       const titleIndex = children.indexOf(title);
       const descIndex = children.indexOf(description);
-      
+
       expect(titleIndex).toBeLessThan(descIndex);
     });
 
     it('should render action after content', () => {
       const { container } = render(
-        <EmptyState 
-          title="Empty" 
-          description="Description"
-          action={<button>Action</button>} 
-        />
+        <EmptyState title="Empty" description="Description" action={<button>Action</button>} />
       );
-      
+
       const action = container.querySelector('.mt-4');
       expect(action).toBeInTheDocument();
     });
@@ -198,4 +189,3 @@ describe('EmptyState Component', () => {
     });
   });
 });
-

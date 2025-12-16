@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline metrics routes
- * 
+ *
  * AI_DECISION: Tests unitarios para métricas de pipeline
  * Justificación: Validación crítica de métricas y exportación
  * Impacto: Prevenir errores en cálculos de métricas
@@ -23,16 +23,16 @@ vi.mock('@cactus/db', () => ({
   isNull: vi.fn(),
   count: vi.fn(),
   inArray: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
   getUserAccessScope: vi.fn(),
-  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} }))
+  buildContactAccessFilter: vi.fn(() => ({ whereClause: {} })),
 }));
 
 const mockDb = vi.mocked(db);
@@ -47,11 +47,11 @@ describe('GET /pipeline/metrics', () => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -60,12 +60,12 @@ describe('GET /pipeline/metrics', () => {
   it('debería retornar métricas de conversión por etapa', async () => {
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
     const mockStages = [
       { id: 'stage-1', name: 'Stage 1', order: 1, isActive: true },
-      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true }
+      { id: 'stage-2', name: 'Stage 2', order: 2, isActive: true },
     ];
 
     const mockEnteredCounts = [{ toStage: 'stage-1', count: 10 }];
@@ -79,40 +79,40 @@ describe('GET /pipeline/metrics', () => {
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue(mockStages)
-            })
-          })
+              orderBy: vi.fn().mockResolvedValue(mockStages),
+            }),
+          }),
         };
       }
       if (selectCallCount === 2) {
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              groupBy: vi.fn().mockResolvedValue(mockEnteredCounts)
-            })
-          })
+              groupBy: vi.fn().mockResolvedValue(mockEnteredCounts),
+            }),
+          }),
         };
       }
       if (selectCallCount === 3) {
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              groupBy: vi.fn().mockResolvedValue(mockExitedCounts)
-            })
-          })
+              groupBy: vi.fn().mockResolvedValue(mockExitedCounts),
+            }),
+          }),
         };
       }
       return {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            groupBy: vi.fn().mockResolvedValue(mockCurrentCounts)
-          })
-        })
+            groupBy: vi.fn().mockResolvedValue(mockCurrentCounts),
+          }),
+        }),
       };
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
@@ -120,7 +120,7 @@ describe('GET /pipeline/metrics', () => {
       const enteredMap = new Map([['stage-1', 10]]);
       const exitedMap = new Map([['stage-1', 5]]);
       const currentMap = new Map([['stage-1', 3]]);
-      const stageMetrics = stages.map(stage => {
+      const stageMetrics = stages.map((stage) => {
         const entered = enteredMap.get(stage.id) || 0;
         const exited = exitedMap.get(stage.id) || 0;
         const current = currentMap.get(stage.id) || 0;
@@ -131,15 +131,15 @@ describe('GET /pipeline/metrics', () => {
           entered,
           exited,
           current,
-          conversionRate: parseFloat(conversionRate)
+          conversionRate: parseFloat(conversionRate),
         };
       });
       res.json({
         success: true,
         data: {
           stageMetrics,
-          overallConversionRate: 50.0
-        }
+          overallConversionRate: 50.0,
+        },
       });
     };
 
@@ -154,10 +154,10 @@ describe('GET /pipeline/metrics', () => {
               stageId: 'stage-1',
               entered: 10,
               exited: 5,
-              conversionRate: 50.0
-            })
-          ])
-        })
+              conversionRate: 50.0,
+            }),
+          ]),
+        }),
       })
     );
   });
@@ -172,12 +172,12 @@ describe('GET /pipeline/metrics/export', () => {
     mockReq = {
       user: { id: 'user-123', role: 'advisor' },
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       setHeader: vi.fn(),
       send: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis()
+      json: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -186,35 +186,38 @@ describe('GET /pipeline/metrics/export', () => {
   it('debería exportar métricas como CSV', async () => {
     mockGetUserAccessScope.mockResolvedValue({
       accessibleAdvisorIds: ['user-123'],
-      accessibleTeamIds: []
+      accessibleTeamIds: [],
     });
 
-    const mockStages = [
-      { id: 'stage-1', name: 'Stage 1', order: 1, isActive: true }
-    ];
+    const mockStages = [{ id: 'stage-1', name: 'Stage 1', order: 1, isActive: true }];
 
     const handler = async (req: Request, res: Response, next: NextFunction) => {
       const stages = mockStages;
-      const metrics = stages.map(stage => ({
+      const metrics = stages.map((stage) => ({
         stageId: stage.id,
         stageName: stage.name,
         entered: 10,
         exited: 5,
         averageTimeInDays: 0,
-        totalValue: 0
+        totalValue: 0,
       }));
       const headers = ['stageName', 'entered', 'exited', 'conversionRate'];
       const csv = [
         headers.join(','),
-        ...metrics.map(item => [
-          item.stageName,
-          item.entered.toString(),
-          item.exited.toString(),
-          ((item.exited / (item.entered || 1)) * 100).toFixed(2)
-        ].join(','))
+        ...metrics.map((item) =>
+          [
+            item.stageName,
+            item.entered.toString(),
+            item.exited.toString(),
+            ((item.exited / (item.entered || 1)) * 100).toFixed(2),
+          ].join(',')
+        ),
       ].join('\n');
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="pipeline_metrics_${new Date().toISOString()}.csv"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="pipeline_metrics_${new Date().toISOString()}.csv"`
+      );
       res.send(csv);
     };
 
@@ -224,4 +227,3 @@ describe('GET /pipeline/metrics/export', () => {
     expect(mockRes.send).toHaveBeenCalled();
   });
 });
-

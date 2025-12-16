@@ -1,6 +1,6 @@
 /**
  * Tests para AppShell component
- * 
+ *
  * AI_DECISION: Tests unitarios para AppShell
  * Justificación: Validación de shell principal de la aplicación
  * Impacto: Prevenir errores en estructura principal
@@ -8,6 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import AppShell from './AppShell';
 
 // Mock UI components
 vi.mock('@cactus/ui', () => ({
@@ -23,7 +24,7 @@ vi.mock('@cactus/ui', () => ({
         <div key={section.title}>{section.title}</div>
       ))}
     </nav>
-  )
+  ),
 }));
 
 // Mock NavigationNew
@@ -34,7 +35,7 @@ vi.mock('./NavigationNew', () => ({
         Toggle Sidebar
       </button>
     </nav>
-  )
+  ),
 }));
 
 describe('AppShell', () => {
@@ -88,11 +89,11 @@ describe('AppShell', () => {
 
     const toggleButton = screen.getByText('Toggle Sidebar');
     const drawer = screen.getByTestId('drawer');
-    
+
     expect(drawer.getAttribute('data-open')).toBe('false');
-    
+
     toggleButton.click();
-    
+
     expect(drawer.getAttribute('data-open')).toBe('true');
   });
 
@@ -105,13 +106,13 @@ describe('AppShell', () => {
 
     const toggleButton = screen.getByText('Toggle Sidebar');
     toggleButton.click();
-    
+
     const drawer = screen.getByTestId('drawer');
     expect(drawer.getAttribute('data-open')).toBe('true');
-    
+
     const closeButton = screen.getByText('Close');
     closeButton.click();
-    
+
     expect(drawer.getAttribute('data-open')).toBe('false');
   });
 
@@ -128,5 +129,3 @@ describe('AppShell', () => {
     expect(root.className).toContain('lg:grid-cols-[240px_1fr]');
   });
 });
-
-

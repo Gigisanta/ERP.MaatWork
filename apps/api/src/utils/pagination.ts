@@ -4,7 +4,7 @@
  * Funciones para parsear, validar y formatear respuestas de paginación
  */
 
-import { paginationQuerySchema } from './common-schemas';
+import { paginationQuerySchema } from './validation/common-schemas';
 import type { z } from 'zod';
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
@@ -121,7 +121,7 @@ export function calculateTotalPages(total: number, limit: number): number {
  * @param params - Parámetros de paginación usados
  * @returns Objeto con datos y metadatos de paginación
  */
-export function formatPaginationResponse<T>(
+export function formatPaginatedResponse<T>(
   data: T[],
   total: number,
   params: PaginationParams

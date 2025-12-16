@@ -103,12 +103,22 @@ export default function TagManagementModal({
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Color
                 </label>
-                <input
-                  type="color"
-                  value={newTagColor}
-                  onChange={(e) => onNewTagColorChange(e.target.value)}
-                  className="w-full h-10 rounded-md cursor-pointer"
-                />
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={newTagColor}
+                    onChange={(e) => onNewTagColorChange(e.target.value)}
+                    className="w-12 h-10 rounded-lg cursor-pointer border border-border hover:border-primary/50 transition-colors"
+                  />
+                  <div
+                    className="flex-1 h-10 rounded-lg border border-border flex items-center px-3"
+                    style={{ backgroundColor: newTagColor }}
+                  >
+                    <span className="text-sm font-mono text-white drop-shadow-sm">
+                      {newTagColor}
+                    </span>
+                  </div>
+                </div>
               </div>
               <Select
                 label="Línea de negocio"
@@ -153,12 +163,22 @@ export default function TagManagementModal({
                 <label className="block text-sm font-medium text-text-secondary mb-1.5">
                   Color
                 </label>
-                <input
-                  type="color"
-                  value={editedTagColor}
-                  onChange={(e) => onEditedTagColorChange(e.target.value)}
-                  className="w-full h-10 rounded-md cursor-pointer"
-                />
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={editedTagColor}
+                    onChange={(e) => onEditedTagColorChange(e.target.value)}
+                    className="w-12 h-10 rounded-lg cursor-pointer border border-border hover:border-primary/50 transition-colors"
+                  />
+                  <div
+                    className="flex-1 h-10 rounded-lg border border-border flex items-center px-3"
+                    style={{ backgroundColor: editedTagColor }}
+                  >
+                    <span className="text-sm font-mono text-white drop-shadow-sm">
+                      {editedTagColor}
+                    </span>
+                  </div>
+                </div>
               </div>
               <Select
                 label="Línea de negocio"
@@ -229,7 +249,7 @@ export default function TagManagementModal({
                             variant="ghost"
                             size="sm"
                             onClick={() => onDeleteTag(tag.id)}
-                            className="text-red-600 hover:text-red-700 h-7 px-2"
+                            className="text-danger hover:text-danger/80 h-7 px-2"
                           >
                             <Icon name="trash-2" size={14} className="mr-1" />
                             Eliminar

@@ -9,7 +9,7 @@ import type { AuthUser } from '../../auth/types';
 import { db } from '@cactus/db';
 import { users } from '@cactus/db/schema';
 import { eq } from 'drizzle-orm';
-import { hash } from 'bcryptjs';
+import { hash } from 'bcrypt';
 
 /**
  * Create a test user in the database

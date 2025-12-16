@@ -2,12 +2,19 @@
  * Tipos relacionados con portfolios/carteras
  */
 
-import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase, RiskLevel } from './common';
+import type {
+  TimestampedEntity,
+  UpdateRequest,
+  CreateRequest,
+  ComponentBase,
+  RiskLevel,
+} from './common';
 
 /**
  * Portfolio base - extiende TimestampedEntity
  */
 export interface Portfolio extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   description?: string | null;
   riskLevel: RiskLevel;

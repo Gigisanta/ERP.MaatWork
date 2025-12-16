@@ -10,14 +10,18 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
 import { AUM_LIMITS } from '../../../config/aum-limits';
-import { createAumUpload, handleMulterError, DEFAULT_UPLOAD_DIR } from '../../../utils/file-upload';
+import {
+  createAumUpload,
+  handleMulterError,
+  DEFAULT_UPLOAD_DIR,
+} from '../../../utils/file/file-upload';
 import {
   aumFileIdParamsSchema,
   aumUploadQuerySchema,
   aumPreviewQuerySchema,
   aumHistoryQuerySchema,
   aumExportQuerySchema,
-} from '../../../utils/aum-validation';
+} from '../../../utils/aum/aum-validation';
 
 // Import handlers
 import { handleUpload } from './handlers/upload';

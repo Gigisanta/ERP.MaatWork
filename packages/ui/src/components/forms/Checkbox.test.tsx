@@ -63,13 +63,13 @@ describe('Checkbox Component', () => {
     it('should toggle when clicked', async () => {
       const user = userEvent.setup();
       render(<Checkbox />);
-      
+
       const checkbox = screen.getByRole('checkbox');
       expect(checkbox).not.toBeChecked();
-      
+
       await user.click(checkbox);
       expect(checkbox).toBeChecked();
-      
+
       await user.click(checkbox);
       expect(checkbox).not.toBeChecked();
     });
@@ -77,9 +77,9 @@ describe('Checkbox Component', () => {
     it('should call onCheckedChange when toggled', async () => {
       const handleChange = vi.fn<(checked: boolean) => void>();
       const user = userEvent.setup();
-      
+
       render(<Checkbox onCheckedChange={handleChange} />);
-      
+
       await user.click(screen.getByRole('checkbox'));
       expect(handleChange).toHaveBeenCalledWith(true);
     });
@@ -87,10 +87,10 @@ describe('Checkbox Component', () => {
     it('should toggle when label is clicked', async () => {
       const user = userEvent.setup();
       render(<Checkbox label="Click me" />);
-      
+
       const checkbox = screen.getByRole('checkbox');
       expect(checkbox).not.toBeChecked();
-      
+
       await user.click(screen.getByText('Click me'));
       expect(checkbox).toBeChecked();
     });
@@ -98,9 +98,9 @@ describe('Checkbox Component', () => {
     it('should not toggle when disabled', async () => {
       const handleChange = vi.fn<(checked: boolean) => void>();
       const user = userEvent.setup();
-      
+
       render(<Checkbox disabled={true} onCheckedChange={handleChange} />);
-      
+
       await user.click(screen.getByRole('checkbox'));
       expect(handleChange).not.toHaveBeenCalled();
     });
@@ -110,7 +110,7 @@ describe('Checkbox Component', () => {
     it('should have proper ARIA attributes when error is present', () => {
       render(<Checkbox error="Error message" />);
       const checkbox = screen.getByRole('checkbox');
-      
+
       expect(checkbox).toHaveAttribute('aria-invalid', 'true');
       expect(checkbox).toHaveAttribute('aria-describedby');
     });
@@ -118,18 +118,18 @@ describe('Checkbox Component', () => {
     it('should link helper text with aria-describedby', () => {
       render(<Checkbox helperText="Helper text" id="test-checkbox" />);
       const checkbox = screen.getByRole('checkbox');
-      
+
       expect(checkbox).toHaveAttribute('aria-describedby', 'test-checkbox-helper');
     });
 
     it('should be keyboard accessible', async () => {
       const user = userEvent.setup();
       render(<Checkbox label="Keyboard test" />);
-      
+
       const checkbox = screen.getByRole('checkbox');
       checkbox.focus();
       expect(checkbox).toHaveFocus();
-      
+
       await user.keyboard(' ');
       expect(checkbox).toBeChecked();
     });
@@ -137,7 +137,7 @@ describe('Checkbox Component', () => {
     it('should have focus styles', () => {
       render(<Checkbox />);
       const checkbox = screen.getByRole('checkbox');
-      
+
       expect(checkbox).toHaveClass('focus:outline-none', 'focus:ring-2', 'focus:ring-primary');
     });
   });
@@ -160,4 +160,3 @@ describe('Checkbox Component', () => {
     });
   });
 });
-

@@ -1,6 +1,6 @@
 /**
  * Script de diagnóstico para investigar por qué las 36 filas con solo "Descripcion" no se insertan
- * 
+ *
  * Uso: pnpm -F @cactus/api tsx src/scripts/diagnose-missing-rows.ts
  */
 
@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 import { join } from 'path';
 import { config } from 'dotenv';
-import { mapAumColumns, normalizeColumnName } from '../utils/aum-column-mapper';
+import { mapAumColumns, normalizeColumnName } from '../utils/aum-columns';
 
 // Cargar .env
 const projectRoot = join(__dirname, '..', '..', '..', '..');
@@ -32,32 +32,31 @@ function hasOnlyDescripcion(row: CsvRow): boolean {
 }
 
 function hasAnyData(row: CsvRow): boolean {
-  return Object.values(row).some(v => v && String(v).trim().length > 0);
+  return Object.values(row).some((v) => v && String(v).trim().length > 0);
 }
 
 function hasUsefulData(mapped: ReturnType<typeof mapAumColumns>): boolean {
-  const hasValidHolderName = mapped.holderName && 
-                             typeof mapped.holderName === 'string' && 
-                             mapped.holderName.trim().length > 0;
-  const hasValidIdCuenta = mapped.idCuenta && 
-                           typeof mapped.idCuenta === 'string' && 
-                           mapped.idCuenta.trim().length > 0;
-  const hasValidAccountNumber = mapped.accountNumber && 
-                                typeof mapped.accountNumber === 'string' && 
-                                mapped.accountNumber.trim().length > 0;
-  const hasFinancialData = mapped.aumDollars !== null || 
-                           mapped.bolsaArg !== null || 
-                           mapped.fondosArg !== null || 
-                           mapped.bolsaBci !== null || 
-                           mapped.pesos !== null || 
-                           mapped.mep !== null || 
-                           mapped.cable !== null || 
-                           mapped.cv7000 !== null;
-  
-  return hasValidIdCuenta || 
-         hasValidAccountNumber || 
-         hasValidHolderName || 
-         hasFinancialData;
+  const hasValidHolderName =
+    mapped.holderName &&
+    typeof mapped.holderName === 'string' &&
+    mapped.holderName.trim().length > 0;
+  const hasValidIdCuenta =
+    mapped.idCuenta && typeof mapped.idCuenta === 'string' && mapped.idCuenta.trim().length > 0;
+  const hasValidAccountNumber =
+    mapped.accountNumber &&
+    typeof mapped.accountNumber === 'string' &&
+    mapped.accountNumber.trim().length > 0;
+  const hasFinancialData =
+    mapped.aumDollars !== null ||
+    mapped.bolsaArg !== null ||
+    mapped.fondosArg !== null ||
+    mapped.bolsaBci !== null ||
+    mapped.pesos !== null ||
+    mapped.mep !== null ||
+    mapped.cable !== null ||
+    mapped.cv7000 !== null;
+
+  return hasValidIdCuenta || hasValidAccountNumber || hasValidHolderName || hasFinancialData;
 }
 
 async function diagnose() {
@@ -73,7 +72,7 @@ async function diagnose() {
   const csvRecords: CsvRow[] = parse(csvContent, {
     columns: true,
     skip_empty_lines: false,
-    trim: true
+    trim: true,
   });
 
   const csvValidRows = csvRecords.filter(hasAnyData);
@@ -85,7 +84,7 @@ async function diagnose() {
 
   // 2. Analizar cada fila con solo Descripcion
   console.log('2. Analizando mapeo de filas con solo Descripcion...\n');
-  
+
   let passedHasAnyData = 0;
   let passedHasUsefulData = 0;
   let failedHasAnyData = 0;
@@ -98,36 +97,44 @@ async function diagnose() {
 
   for (const row of csvOnlyDescripcionRows) {
     // Verificar hasAnyData
-    const hasDescripcionColumn = row && typeof row === 'object' && Object.keys(row).some(k => {
-      const normalized = normalizeColumnName(k);
-      return normalized.includes('descripcion');
-    });
-    
-    const descripcionValue = hasDescripcionColumn ? Object.entries(row).find(([k]) => {
-      const normalized = normalizeColumnName(k);
-      return normalized.includes('descripcion');
-    })?.[1] : null;
-    
-    const hasValidDescripcion = descripcionValue !== null && 
-                               descripcionValue !== undefined && 
-                               descripcionValue !== '' &&
-                               String(descripcionValue).trim().length > 0;
-    
-    const hasAnyDataResult = row && typeof row === 'object' && Object.keys(row).length > 0 && (
-      hasValidDescripcion ||
-      Object.values(row).some(v => {
-        if (v === null || v === undefined || v === '') return false;
-        const str = String(v).trim();
-        return str.length > 0;
-      })
-    );
+    const hasDescripcionColumn =
+      row &&
+      typeof row === 'object' &&
+      Object.keys(row).some((k) => {
+        const normalized = normalizeColumnName(k);
+        return normalized.includes('descripcion');
+      });
+
+    const descripcionValue = hasDescripcionColumn
+      ? Object.entries(row).find(([k]) => {
+          const normalized = normalizeColumnName(k);
+          return normalized.includes('descripcion');
+        })?.[1]
+      : null;
+
+    const hasValidDescripcion =
+      descripcionValue !== null &&
+      descripcionValue !== undefined &&
+      descripcionValue !== '' &&
+      String(descripcionValue).trim().length > 0;
+
+    const hasAnyDataResult =
+      row &&
+      typeof row === 'object' &&
+      Object.keys(row).length > 0 &&
+      (hasValidDescripcion ||
+        Object.values(row).some((v) => {
+          if (v === null || v === undefined || v === '') return false;
+          const str = String(v).trim();
+          return str.length > 0;
+        }));
 
     if (!hasAnyDataResult) {
       failedHasAnyData++;
       failedRows.push({
         row,
         reason: 'Falla hasAnyData',
-        mapped: mapAumColumns(row as Record<string, unknown>)
+        mapped: mapAumColumns(row as Record<string, unknown>),
       });
       continue;
     }
@@ -135,17 +142,21 @@ async function diagnose() {
 
     // Mapear columnas
     const mapped = mapAumColumns(row as Record<string, unknown>);
-    
+
     // Verificar si Descripcion se mapeó manualmente
     if (!mapped.holderName || (mapped.holderName && mapped.holderName.trim().length === 0)) {
-      const descripcionKey = Object.keys(row).find(k => {
+      const descripcionKey = Object.keys(row).find((k) => {
         const normalized = normalizeColumnName(k);
         return normalized.includes('descripcion') || normalized === 'descripcion';
       });
-      
+
       if (descripcionKey) {
         const descripcionValue = row[descripcionKey];
-        if (descripcionValue !== null && descripcionValue !== undefined && descripcionValue !== '') {
+        if (
+          descripcionValue !== null &&
+          descripcionValue !== undefined &&
+          descripcionValue !== ''
+        ) {
           const descripcionStr = String(descripcionValue).trim();
           if (descripcionStr.length > 0) {
             mapped.holderName = descripcionStr;
@@ -156,13 +167,13 @@ async function diagnose() {
 
     // Verificar hasUsefulData
     const hasUsefulDataResult = hasUsefulData(mapped);
-    
+
     if (!hasUsefulDataResult) {
       failedHasUsefulData++;
       failedRows.push({
         row,
         reason: 'Falla hasUsefulData',
-        mapped
+        mapped,
       });
       continue;
     }
@@ -171,8 +182,12 @@ async function diagnose() {
 
   // 3. Reporte
   console.log('3. RESULTADOS DEL DIAGNÓSTICO:\n');
-  console.log(`   Filas que pasan hasAnyData: ${passedHasAnyData}/${csvOnlyDescripcionRows.length}`);
-  console.log(`   Filas que pasan hasUsefulData: ${passedHasUsefulData}/${csvOnlyDescripcionRows.length}`);
+  console.log(
+    `   Filas que pasan hasAnyData: ${passedHasAnyData}/${csvOnlyDescripcionRows.length}`
+  );
+  console.log(
+    `   Filas que pasan hasUsefulData: ${passedHasUsefulData}/${csvOnlyDescripcionRows.length}`
+  );
   console.log(`   Filas que fallan hasAnyData: ${failedHasAnyData}`);
   console.log(`   Filas que fallan hasUsefulData: ${failedHasUsefulData}\n`);
 
@@ -203,10 +218,10 @@ async function diagnose() {
     const mapped = mapAumColumns(sampleRow as Record<string, unknown>);
     console.log(`   Mapeo automático:`);
     console.log(`     - holderName: "${mapped.holderName || 'null'}"`);
-    
+
     // Verificar mapeo manual
     if (!mapped.holderName || (mapped.holderName && mapped.holderName.trim().length === 0)) {
-      const descripcionKey = Object.keys(sampleRow).find(k => {
+      const descripcionKey = Object.keys(sampleRow).find((k) => {
         const normalized = normalizeColumnName(k);
         return normalized.includes('descripcion') || normalized === 'descripcion';
       });
@@ -229,7 +244,7 @@ async function diagnose() {
   console.log('\n' + '='.repeat(80));
   console.log('CONCLUSIÓN');
   console.log('='.repeat(80));
-  
+
   if (failedRows.length === 0 && passedHasUsefulData === csvOnlyDescripcionRows.length) {
     console.log('\n✅ Todas las filas pasan las validaciones.');
     console.log('   El problema debe estar en la inserción/actualización en la base de datos.');
@@ -237,21 +252,11 @@ async function diagnose() {
     console.log(`\n⚠️  ${failedRows.length} filas fallan las validaciones.`);
     console.log('   Revisar la lógica de validación y mapeo.');
   }
-  
+
   console.log('\n');
 }
 
-diagnose().catch(error => {
+diagnose().catch((error) => {
   console.error('Error:', error);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-

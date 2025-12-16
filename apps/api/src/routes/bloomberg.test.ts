@@ -11,6 +11,7 @@ import express from 'express';
 import request from 'supertest';
 import bloombergRouter from './bloomberg';
 import { signUserToken } from '../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -54,12 +55,8 @@ import { instruments, pricesDaily, pricesIntraday, eq, desc } from '@cactus/db';
 const mockDb = vi.mocked(db);
 
 describe('Bloomberg Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/bloomberg', bloombergRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/bloomberg', router: bloombergRouter }]);
 
   let advisorToken: string;
 
@@ -123,7 +120,7 @@ describe('Bloomberg Routes', () => {
         return { select: mockSelectPrice } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/bloomberg/assets/AAPL/snapshot')
         .set('Cookie', `token=${advisorToken}`)
@@ -157,7 +154,7 @@ describe('Bloomberg Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/bloomberg/assets/INVALID/snapshot')
         .set('Cookie', `token=${advisorToken}`)
@@ -202,7 +199,7 @@ describe('Bloomberg Routes', () => {
         return { select: mockSelectPrice } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/bloomberg/assets/AAPL/snapshot')
         .set('Cookie', `token=${advisorToken}`)
@@ -258,7 +255,7 @@ describe('Bloomberg Routes', () => {
         return { select: mockSelectPrice } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/bloomberg/assets/AAPL/ohlcv?timeframe=1d')
         .set('Cookie', `token=${advisorToken}`)
@@ -281,7 +278,7 @@ describe('Bloomberg Routes', () => {
     });
 
     it('debería validar timeframe', async () => {
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/bloomberg/assets/AAPL/ohlcv?timeframe=invalid')
         .set('Cookie', `token=${advisorToken}`)

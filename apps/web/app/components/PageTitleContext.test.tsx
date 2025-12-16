@@ -1,6 +1,6 @@
 /**
  * Tests para PageTitleContext
- * 
+ *
  * AI_DECISION: Tests para contexto de título de página
  * Justificación: Validar gestión de título dinámico en header
  * Impacto: Prevenir errores en navegación y UX
@@ -12,7 +12,9 @@ import { PageTitleProvider, usePageTitle, usePageTitleContext } from './PageTitl
 
 describe('PageTitleContext', () => {
   it('debería proporcionar contexto con valores iniciales', () => {
-    let contextValue: { pageTitle: string | null; setPageTitle: (title: string | null) => void } | undefined;
+    let contextValue:
+      | { pageTitle: string | null; setPageTitle: (title: string | null) => void }
+      | undefined;
 
     const TestComponent = () => {
       contextValue = usePageTitleContext();
@@ -31,7 +33,9 @@ describe('PageTitleContext', () => {
   });
 
   it('debería actualizar título cuando se usa usePageTitle', () => {
-    let contextValue: { pageTitle: string | null; setPageTitle: (title: string | null) => void } | undefined;
+    let contextValue:
+      | { pageTitle: string | null; setPageTitle: (title: string | null) => void }
+      | undefined;
 
     const TestComponent = () => {
       usePageTitle('Test Title');
@@ -49,7 +53,9 @@ describe('PageTitleContext', () => {
   });
 
   it('debería resetear título cuando componente se desmonta', () => {
-    let contextValue: { pageTitle: string | null; setPageTitle: (title: string | null) => void } | undefined;
+    let contextValue:
+      | { pageTitle: string | null; setPageTitle: (title: string | null) => void }
+      | undefined;
 
     const TestComponent = () => {
       usePageTitle('Test Title');
@@ -90,7 +96,9 @@ describe('PageTitleContext', () => {
   });
 
   it('debería actualizar título cuando cambia el parámetro', () => {
-    let contextValue: { pageTitle: string | null; setPageTitle: (title: string | null) => void } | undefined;
+    let contextValue:
+      | { pageTitle: string | null; setPageTitle: (title: string | null) => void }
+      | undefined;
 
     const TestComponent = ({ title }: { title: string }) => {
       usePageTitle(title);

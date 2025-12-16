@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,13 +16,23 @@ import {
   Spinner,
   Alert,
   Icon,
-  DataTable
+  DataTable,
 } from '@cactus/ui';
 import type { Column } from '@cactus/ui';
 
 const MONTH_NAMES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
 ];
 
 interface HistoryRow {
@@ -57,10 +67,7 @@ export default function HistoryView() {
       setLoading(true);
       setError(null);
 
-      const response = await getContactsMetrics(
-        filterMonth ?? undefined,
-        filterYear ?? undefined
-      );
+      const response = await getContactsMetrics(filterMonth ?? undefined, filterYear ?? undefined);
 
       if (response.success && response.data) {
         setMetrics(response.data);
@@ -85,7 +92,7 @@ export default function HistoryView() {
       newProspects: h.newProspects,
       firstMeetings: h.firstMeetings,
       secondMeetings: h.secondMeetings,
-      newClients: h.newClients
+      newClients: h.newClients,
     }));
   }, [metrics]);
 
@@ -98,36 +105,36 @@ export default function HistoryView() {
       key: 'monthYear',
       header: 'Mes/Año',
       sortable: true,
-      align: 'left'
+      align: 'left',
     },
     {
       key: 'newProspects',
       header: 'Prospectos',
       sortable: true,
       align: 'right',
-      render: (item) => <span className="text-right">{item.newProspects}</span>
+      render: (item) => <span className="text-right">{item.newProspects}</span>,
     },
     {
       key: 'firstMeetings',
       header: '1ra Reunión',
       sortable: true,
       align: 'right',
-      render: (item) => <span className="text-right">{item.firstMeetings}</span>
+      render: (item) => <span className="text-right">{item.firstMeetings}</span>,
     },
     {
       key: 'secondMeetings',
       header: '2da Reunión',
       sortable: true,
       align: 'right',
-      render: (item) => <span className="text-right">{item.secondMeetings}</span>
+      render: (item) => <span className="text-right">{item.secondMeetings}</span>,
     },
     {
       key: 'newClients',
       header: 'Clientes',
       sortable: true,
       align: 'right',
-      render: (item) => <span className="text-right font-medium">{item.newClients}</span>
-    }
+      render: (item) => <span className="text-right font-medium">{item.newClients}</span>,
+    },
   ];
 
   if (loading) {
@@ -142,7 +149,9 @@ export default function HistoryView() {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <Heading size="lg" className="mb-2">Historial de Métricas</Heading>
+          <Heading size="lg" className="mb-2">
+            Historial de Métricas
+          </Heading>
           <Text color="secondary">Comparación de métricas por mes y año</Text>
         </div>
         <Button variant="secondary" onClick={() => router.push('/contacts/metrics')}>
@@ -172,8 +181,8 @@ export default function HistoryView() {
                 { value: '', label: 'Todos los años' },
                 ...years.map((year) => ({
                   value: year.toString(),
-                  label: year.toString()
-                }))
+                  label: year.toString(),
+                })),
               ]}
               className="w-48"
             />
@@ -185,8 +194,8 @@ export default function HistoryView() {
                 { value: '', label: 'Todos los meses' },
                 ...MONTH_NAMES.map((name, idx) => ({
                   value: (idx + 1).toString(),
-                  label: name
-                }))
+                  label: name,
+                })),
               ]}
               className="w-48"
             />
@@ -226,4 +235,3 @@ export default function HistoryView() {
     </div>
   );
 }
-

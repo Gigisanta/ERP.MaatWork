@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState, useEffect, useTransition } from 'react';
 import { Text, Spinner, Input } from '@cactus/ui';
 import { useRouter } from 'next/navigation';
@@ -21,9 +21,9 @@ interface ContactEditableFieldProps {
 
 /**
  * ContactEditableField - Client wrapper for inline contact field editing
- * 
+ *
  * Handles Server Action calls internally to avoid prop passing issues
- * 
+ *
  * @example
  * <ContactEditableField
  *   label="Email"
@@ -32,15 +32,15 @@ interface ContactEditableFieldProps {
  *   contactId={contact.id}
  * />
  */
-export default function ContactEditableField({ 
-  label, 
-  value, 
-  field, 
+export default function ContactEditableField({
+  label,
+  value,
+  field,
   contactId,
-  placeholder, 
-  emptyText = "Sin especificar", 
+  placeholder,
+  emptyText = 'Sin especificar',
   type = 'text',
-  maxLength
+  maxLength,
 }: ContactEditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value || '');
@@ -56,7 +56,7 @@ export default function ContactEditableField({
       setIsEditing(false);
       return;
     }
-    
+
     startTransition(async () => {
       try {
         // Import and call Server Action dynamically
@@ -66,7 +66,10 @@ export default function ContactEditableField({
         // Revalidate the page data to show updated values
         router.refresh();
       } catch (err) {
-        logger.error('Error updating contact field', toLogContext({ err, contactId, field, value }));
+        logger.error(
+          'Error updating contact field',
+          toLogContext({ err, contactId, field, value })
+        );
         setLocalValue(value || '');
       }
     });
@@ -112,7 +115,7 @@ export default function ContactEditableField({
         </div>
       );
     }
-    
+
     return (
       <div className="flex items-center gap-2">
         <Input
@@ -139,13 +142,17 @@ export default function ContactEditableField({
       className="cursor-pointer hover:bg-gray-50 px-1.5 py-0.5 rounded"
       onClick={() => setIsEditing(true)}
     >
-      <Text size="xs" weight="medium" color="secondary">{label}</Text>
+      <Text size="xs" weight="medium" color="secondary">
+        {label}
+      </Text>
       {type === 'textarea' ? (
         <Text size="sm" className="mt-0.5 whitespace-pre-wrap">
           {value || <span className="text-gray-400">{emptyText}</span>}
         </Text>
       ) : (
-        <Text size="sm" className="mt-0.5">{value || <span className="text-gray-400">{emptyText}</span>}</Text>
+        <Text size="sm" className="mt-0.5">
+          {value || <span className="text-gray-400">{emptyText}</span>}
+        </Text>
       )}
     </div>
   );

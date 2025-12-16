@@ -6,6 +6,7 @@ export interface RequestOptions extends RequestInit {
   timeout?: number;
   retries?: number;
   requireAuth?: boolean;
+  requestId?: string;
 }
 
 export interface RequestConfig {

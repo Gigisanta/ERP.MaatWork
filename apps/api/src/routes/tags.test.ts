@@ -1,6 +1,6 @@
 /**
  * Tests para tags routes
- * 
+ *
  * AI_DECISION: Tests unitarios para sistema de etiquetas
  * Justificación: Validación crítica de tags y RBAC
  * Impacto: Prevenir errores en gestión de etiquetas
@@ -21,16 +21,16 @@ vi.mock('@cactus/db', () => ({
   eq: vi.fn(),
   and: vi.fn(),
   sql: vi.fn(),
-  inArray: vi.fn()
+  inArray: vi.fn(),
 }));
 
 vi.mock('../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next())
+  requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
 vi.mock('../auth/authorization', () => ({
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -42,14 +42,14 @@ describe('GET /tags', () => {
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
           orderBy: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
-      })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(true).toBe(true);
@@ -77,17 +77,19 @@ describe('GET /tags/:id', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{
-            id: tagId,
-            name: 'Test Tag',
-            scope: 'contact'
-          }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([
+            {
+              id: tagId,
+              name: 'Test Tag',
+              scope: 'contact',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(tagId).toBe('tag-123');
@@ -97,13 +99,13 @@ describe('GET /tags/:id', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -115,29 +117,31 @@ describe('POST /tags', () => {
     const newTag = {
       scope: 'contact' as const,
       name: 'New Tag',
-      color: '#6B7280'
+      color: '#6B7280',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]) // No existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([]), // No existe
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{
-          id: 'tag-123',
-          ...newTag
-        }])
-      })
+        returning: vi.fn().mockResolvedValue([
+          {
+            id: 'tag-123',
+            ...newTag,
+          },
+        ]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(newTag.name).toBe('New Tag');
@@ -147,19 +151,19 @@ describe('POST /tags', () => {
     const existingTag = {
       id: 'tag-123',
       name: 'Existing Tag',
-      scope: 'contact' as const
+      scope: 'contact' as const,
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existingTag]) // Ya existe
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existingTag]), // Ya existe
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(existingTag.id).toBe('tag-123');
@@ -170,31 +174,33 @@ describe('PUT /tags/:id', () => {
   it('debería actualizar tag', async () => {
     const existingTag = {
       id: 'tag-123',
-      createdByUserId: 'user-123'
+      createdByUserId: 'user-123',
     };
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([existingTag])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([existingTag]),
+        }),
+      }),
     });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'tag-123',
-            name: 'Updated Tag'
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'tag-123',
+              name: 'Updated Tag',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(existingTag.id).toBe('tag-123');
@@ -205,7 +211,7 @@ describe('PUT /tags/:id', () => {
     const userId = 'advisor-123';
     const tag = {
       id: 'tag-123',
-      createdByUserId: 'other-user-456'
+      createdByUserId: 'other-user-456',
     };
 
     if (userRole === 'advisor' && tag.createdByUserId !== userId) {
@@ -217,27 +223,25 @@ describe('PUT /tags/:id', () => {
 describe('POST /tags/:id/contacts', () => {
   it('debería asignar tag a contactos accesibles', async () => {
     const contactIds = ['contact-1', 'contact-2'];
-    mockCanAccessContact
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(true);
+    mockCanAccessContact.mockResolvedValueOnce(true).mockResolvedValueOnce(true);
 
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ id: 'tag-123' }])
-        })
-      })
+          limit: vi.fn().mockResolvedValue([{ id: 'tag-123' }]),
+        }),
+      }),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        onConflictDoNothing: vi.fn().mockResolvedValue([])
-      })
+        onConflictDoNothing: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(contactIds.length).toBe(2);
@@ -245,9 +249,7 @@ describe('POST /tags/:id/contacts', () => {
 
   it('debería filtrar contactos no accesibles', async () => {
     const contactIds = ['contact-1', 'contact-2'];
-    mockCanAccessContact
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false); // Segundo contacto no accesible
+    mockCanAccessContact.mockResolvedValueOnce(true).mockResolvedValueOnce(false); // Segundo contacto no accesible
 
     expect(contactIds.length).toBe(2);
   });
@@ -262,21 +264,21 @@ describe('GET /contacts/:contactId/tags/:tagId', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: {
         contactId: 'contact-123',
-        tagId: 'tag-123'
+        tagId: 'tag-123',
       },
       log: {
         info: vi.fn(),
         error: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -288,26 +290,28 @@ describe('GET /contacts/:contactId/tags/:tagId', () => {
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'relation-123',
-              contactId: 'contact-123',
-              tagId: 'tag-123',
-              monthlyPremium: 1000,
-              policyNumber: 'POL-123',
-              createdAt: new Date(),
-              tag: {
-                id: 'tag-123',
-                name: 'Test Tag',
-                color: '#6B7280'
-              }
-            }])
-          })
-        })
-      })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'relation-123',
+                contactId: 'contact-123',
+                tagId: 'tag-123',
+                monthlyPremium: 1000,
+                policyNumber: 'POL-123',
+                createdAt: new Date(),
+                tag: {
+                  id: 'tag-123',
+                  name: 'Test Tag',
+                  color: '#6B7280',
+                },
+              },
+            ]),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect(mockReq.params?.contactId).toBe('contact-123');
@@ -320,14 +324,14 @@ describe('GET /contacts/:contactId/tags/:tagId', () => {
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([])
-          })
-        })
-      })
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect([]).toHaveLength(0);
@@ -349,25 +353,25 @@ describe('PUT /contacts/:contactId/tags/:tagId', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: {
         contactId: 'contact-123',
-        tagId: 'tag-123'
+        tagId: 'tag-123',
       },
       body: {
         monthlyPremium: 1500,
-        policyNumber: 'POL-456'
+        policyNumber: 'POL-456',
       },
       log: {
         info: vi.fn(),
         error: vi.fn(),
-        warn: vi.fn()
-      }
+        warn: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -375,48 +379,55 @@ describe('PUT /contacts/:contactId/tags/:tagId', () => {
   it('debería actualizar relación contacto-tag', async () => {
     mockCanAccessContact.mockResolvedValue(true);
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{
-                id: 'relation-123',
-                tagBusinessLine: 'zurich'
-              }])
-            })
-          })
-        })
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: 'relation-123',
+                  tagBusinessLine: 'zurich',
+                },
+              ]),
+            }),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue([{
-                id: 'relation-123',
-                monthlyPremium: 1500,
-                policyNumber: 'POL-456'
-              }])
-            })
-          })
-        })
+              limit: vi.fn().mockResolvedValue([
+                {
+                  id: 'relation-123',
+                  monthlyPremium: 1500,
+                  policyNumber: 'POL-456',
+                },
+              ]),
+            }),
+          }),
+        }),
       });
 
     const mockUpdate = vi.fn().mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([{
-            id: 'relation-123',
-            monthlyPremium: 1500,
-            policyNumber: 'POL-456'
-          }])
-        })
-      })
+          returning: vi.fn().mockResolvedValue([
+            {
+              id: 'relation-123',
+              monthlyPremium: 1500,
+              policyNumber: 'POL-456',
+            },
+          ]),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
-      update: mockUpdate
+      update: mockUpdate,
     } as any);
 
     expect(mockReq.body?.monthlyPremium).toBe(1500);
@@ -429,17 +440,19 @@ describe('PUT /contacts/:contactId/tags/:tagId', () => {
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([{
-              id: 'relation-123',
-              tagBusinessLine: 'inversiones' // No es zurich
-            }])
-          })
-        })
-      })
+            limit: vi.fn().mockResolvedValue([
+              {
+                id: 'relation-123',
+                tagBusinessLine: 'inversiones', // No es zurich
+              },
+            ]),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     expect('inversiones').not.toBe('zurich');
@@ -449,7 +462,7 @@ describe('PUT /contacts/:contactId/tags/:tagId', () => {
     mockCanAccessContact.mockResolvedValue(true);
     mockReq.body = {
       monthlyPremium: null,
-      policyNumber: null
+      policyNumber: null,
     };
 
     expect(mockReq.body.monthlyPremium).toBeNull();
@@ -466,22 +479,22 @@ describe('PUT /contacts/:contactId/tags', () => {
       user: {
         id: 'user-123',
         email: 'user@example.com',
-        role: 'advisor'
+        role: 'advisor',
       },
       params: {
-        contactId: 'contact-123'
+        contactId: 'contact-123',
       },
       body: {
-        tagIds: ['tag-1', 'tag-2']
+        tagIds: ['tag-1', 'tag-2'],
       },
       log: {
         info: vi.fn(),
-        error: vi.fn()
-      }
+        error: vi.fn(),
+      },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     vi.clearAllMocks();
   });
@@ -492,25 +505,25 @@ describe('PUT /contacts/:contactId/tags', () => {
     const mockSelect = vi.fn().mockReturnValue({
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
-      })
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
     });
 
     const mockDelete = vi.fn().mockReturnValue({
-      where: vi.fn().mockResolvedValue([])
+      where: vi.fn().mockResolvedValue([]),
     });
 
     const mockInsert = vi.fn().mockReturnValue({
       values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([])
-      })
+        returning: vi.fn().mockResolvedValue([]),
+      }),
     });
 
     mockDb.mockReturnValue({
       select: mockSelect,
       delete: mockDelete,
-      insert: mockInsert
+      insert: mockInsert,
     } as any);
 
     expect(mockReq.body?.tagIds).toEqual(['tag-1', 'tag-2']);
@@ -522,14 +535,3 @@ describe('PUT /contacts/:contactId/tags', () => {
     expect(false).toBe(false);
   });
 });
-
-
-
-
-
-
-
-
-
-
-

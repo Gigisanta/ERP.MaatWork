@@ -1,6 +1,6 @@
 /**
  * Tests para AssetSnapshot component
- * 
+ *
  * AI_DECISION: Tests unitarios para componente de snapshot de activos Bloomberg
  * Justificación: Validación crítica de fetching y renderizado de datos
  * Impacto: Prevenir errores en visualización de datos financieros
@@ -13,33 +13,29 @@ import { getAssetSnapshot } from '@/lib/api';
 
 // Mock dependencies
 vi.mock('@/lib/api', () => ({
-  getAssetSnapshot: vi.fn()
+  getAssetSnapshot: vi.fn(),
 }));
 
 vi.mock('@cactus/ui', () => ({
   Card: ({ children, className }: any) => (
-    <div data-testid="card" className={className}>{children}</div>
+    <div data-testid="card" className={className}>
+      {children}
+    </div>
   ),
-  CardContent: ({ children, className }: any) => (
-    <div className={className}>{children}</div>
-  ),
+  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
   CardHeader: ({ children }: any) => <div>{children}</div>,
   CardTitle: ({ children }: any) => <h3>{children}</h3>,
   Text: ({ children, size, weight, color, className, style }: any) => (
-    <span className={className} style={style}>{children}</span>
+    <span className={className} style={style}>
+      {children}
+    </span>
   ),
   Heading: ({ children, level }: any) => <h2>{children}</h2>,
-  Stack: ({ children, direction, gap, align, style }: any) => (
-    <div style={style}>{children}</div>
-  ),
+  Stack: ({ children, direction, gap, align, style }: any) => <div style={style}>{children}</div>,
   Badge: ({ children, variant }: any) => <span>{children}</span>,
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  Alert: ({ children, variant }: any) => (
-    <div role="alert">{children}</div>
-  ),
-  Button: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
-  )
+  Alert: ({ children, variant }: any) => <div role="alert">{children}</div>,
+  Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
 }));
 
 describe('AssetSnapshot', () => {
@@ -67,12 +63,12 @@ describe('AssetSnapshot', () => {
       pe: 25.5,
       currency: 'USD',
       source: 'Bloomberg',
-      asof: '2024-01-15T10:00:00Z'
+      asof: '2024-01-15T10:00:00Z',
     };
 
     (getAssetSnapshot as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockSnapshot
+      data: mockSnapshot,
     });
 
     render(<AssetSnapshot symbol="AAPL" />);
@@ -107,8 +103,8 @@ describe('AssetSnapshot', () => {
         low52w: 300.0,
         currency: 'USD',
         source: 'Bloomberg',
-        asof: '2024-01-15T10:00:00Z'
-      }
+        asof: '2024-01-15T10:00:00Z',
+      },
     });
 
     render(<AssetSnapshot symbol="MSFT" />);
@@ -126,4 +122,3 @@ describe('AssetSnapshot', () => {
     expect(container.firstChild).toHaveClass('custom-class');
   });
 });
-

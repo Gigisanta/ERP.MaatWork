@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   respondToInvitation,
   createTeam,
@@ -9,7 +10,7 @@ import {
   changePassword,
   updateUserProfile,
 } from '@/lib/api';
-import { updateTeam } from '@/lib/api/teams';
+import { getTeams } from '@/lib/api/teams';
 import { logger, toLogContext } from '@/lib/logger';
 import type { UserApiResponse as User, Team, TeamInvitation } from '@/types';
 import type { AuthUser } from '@/app/auth/AuthContext';
@@ -29,6 +30,7 @@ interface UseProfileActionsProps {
   setTeams: React.Dispatch<React.SetStateAction<Team[]>>;
   setUserInfo: React.Dispatch<React.SetStateAction<User | null>>;
   fetchUserInfo: () => Promise<void>;
+  router?: ReturnType<typeof useRouter>;
 }
 
 interface PasswordForm {
@@ -57,10 +59,9 @@ export function useProfileActions({
   setTeams,
   setUserInfo,
   fetchUserInfo,
+  router,
 }: UseProfileActionsProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [calendarUrls, setCalendarUrls] = useState<Record<string, string>>({});
-  const [calendarLoading, setCalendarLoading] = useState<Record<string, boolean>>({});
 
   // Form states
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -88,12 +89,44 @@ export function useProfileActions({
       setError(null);
       await respondToInvitation(id, action);
       setInvitations((prev) => prev.filter((r) => r.id !== id));
+
+      // Si se acepta la invitación, actualizar la lista de equipos y mostrar toast
+      if (action === 'accept') {
+        showToast(
+          'Invitación aceptada',
+          'Ahora eres miembro del equipo. Puedes verlo en la página de equipos.',
+          'success'
+        );
+
+        // Actualizar la lista de equipos para reflejar el cambio
+        try {
+          const teamsResponse = await getTeams();
+          if (teamsResponse.success && teamsResponse.data) {
+            setTeams(teamsResponse.data || []);
+          }
+        } catch (teamsErr) {
+          logger.warn(
+            'Error refreshing teams after accepting invitation',
+            toLogContext({ err: teamsErr })
+          );
+          // No es crítico, el usuario puede refrescar manualmente
+        }
+
+        // Invalidar el cache del router para que /teams se actualice automáticamente
+        if (router) {
+          router.refresh();
+        }
+      } else {
+        showToast('Invitación rechazada', undefined, 'info');
+      }
     } catch (err) {
       logger.error(
         'Error responding to invitation',
         toLogContext({ err, invitationId: id, action })
       );
-      setError(err instanceof Error ? err.message : 'Error al procesar invitación');
+      const errorMessage = err instanceof Error ? err.message : 'Error al procesar invitación';
+      setError(errorMessage);
+      showToast('Error', errorMessage, 'error');
     } finally {
       setActionLoading(null);
     }
@@ -209,31 +242,6 @@ export function useProfileActions({
     }
   };
 
-  const handleUpdateCalendarUrl = async (teamId: string) => {
-    try {
-      setCalendarLoading((prev) => ({ ...prev, [teamId]: true }));
-      setError(null);
-
-      const calendarUrl = calendarUrls[teamId]?.trim() || null;
-
-      await updateTeam(teamId, { calendarUrl });
-
-      setTeams((prev) =>
-        prev.map((team) => (team.id === teamId ? { ...team, calendarUrl } : team))
-      );
-
-      showToast('URL del calendario actualizada', undefined, 'success');
-    } catch (err) {
-      logger.error('Error updating calendar URL', toLogContext({ err, teamId }));
-      const errorMessage =
-        err instanceof Error ? err.message : 'Error al actualizar URL del calendario';
-      setError(errorMessage);
-      showToast('Error', errorMessage, 'error');
-    } finally {
-      setCalendarLoading((prev) => ({ ...prev, [teamId]: false }));
-    }
-  };
-
   const handleSavePhone = async () => {
     setPhoneError(null);
 
@@ -276,9 +284,6 @@ export function useProfileActions({
 
   return {
     actionLoading,
-    calendarUrls,
-    setCalendarUrls,
-    calendarLoading,
     passwordForm,
     setPasswordForm,
     teamForm,
@@ -296,7 +301,6 @@ export function useProfileActions({
     handleCreateTeam,
     handleAddMember,
     handleLeaveTeam,
-    handleUpdateCalendarUrl,
     handleSavePhone,
     handleCancelEditPhone,
   };

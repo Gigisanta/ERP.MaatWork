@@ -1,14 +1,7 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from './Card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 
 describe('Card Component', () => {
   describe('Rendering', () => {
@@ -34,19 +27,33 @@ describe('Card Component', () => {
     it('should apply outlined variant classes', () => {
       const { container } = render(<Card variant="outlined">Outlined</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('border', 'border-border', 'bg-surface');
+      expect(card).toHaveClass('border', 'border-border', 'bg-background');
     });
 
     it('should apply elevated variant classes', () => {
       const { container } = render(<Card variant="elevated">Elevated</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('shadow-md', 'bg-surface');
+      expect(card).toHaveClass('shadow-md', 'bg-background');
     });
 
     it('should apply interactive variant classes', () => {
       const { container } = render(<Card variant="interactive">Interactive</Card>);
       const card = container.firstChild as HTMLElement;
-      expect(card).toHaveClass('hover:shadow-md', 'cursor-pointer');
+      expect(card).toHaveClass('hover:shadow-lg', 'cursor-pointer');
+    });
+
+    it('should apply glass variant classes', () => {
+      const { container } = render(<Card variant="glass">Glass</Card>);
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('backdrop-blur-md', 'bg-white/70');
+    });
+  });
+
+  describe('Animation', () => {
+    it('should apply animation classes when animated prop is true', () => {
+      const { container } = render(<Card animated>Animated</Card>);
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('hover:shadow-lg', 'transition-all');
     });
   });
 
@@ -236,11 +243,10 @@ describe('Card Composition', () => {
         <CardFooter>Footer actions</CardFooter>
       </Card>
     );
-    
+
     expect(screen.getByText('Card Title')).toBeInTheDocument();
     expect(screen.getByText('Card description')).toBeInTheDocument();
     expect(screen.getByText('Main content goes here')).toBeInTheDocument();
     expect(screen.getByText('Footer actions')).toBeInTheDocument();
   });
 });
-

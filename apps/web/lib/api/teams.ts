@@ -14,6 +14,11 @@ import type {
   TeamMetrics,
   TeamMemberMetrics,
   TeamMemberActivity,
+  TeamGoal,
+  SetTeamGoalRequest,
+  StalledLead,
+  ReassignLeadsRequest,
+  TeamCapacityMember,
 } from '@/types/team';
 
 // ==========================================================
@@ -29,6 +34,37 @@ export interface CreateTeamRequest {
 export interface AddTeamMemberRequest {
   userId: string;
   role?: 'member' | 'lead';
+}
+
+// ==========================================================
+// Dashboard Types
+// ==========================================================
+
+export interface MemberDashboardResponse {
+  hasTeam: boolean;
+  team: {
+    id: string;
+    name: string;
+    managerName: string | null;
+    calendarUrl: string | null;
+    calendarId: string | null;
+    role: string;
+  } | null;
+  metrics: {
+    totalAum: number;
+    newContactsMonth: number;
+    totalClients: number;
+    newContactsThisMonth: number;
+    openTasks: number;
+    firstMeetingsLast30Days: number;
+    secondMeetingsLast30Days: number;
+  } | null;
+}
+
+export interface TeamHistoryMetric {
+  month: string;
+  newClients: number;
+  totalAum: number;
 }
 
 // ==========================================================
@@ -50,6 +86,13 @@ export async function getTeamById(id: string): Promise<ApiResponse<Team>> {
 }
 
 /**
+ * Obtener dashboard del miembro (legacy? user MemberTeamDashboardData instead if applicable)
+ */
+export async function getMemberDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
+  return apiClient.get<MemberDashboardResponse>('/v1/teams/member-dashboard');
+}
+
+/**
  * Obtener equipo con miembros y métricas combinados
  */
 export interface TeamDetailResponse {
@@ -58,7 +101,7 @@ export interface TeamDetailResponse {
 }
 
 export async function getTeamDetail(id: string): Promise<ApiResponse<TeamDetailResponse>> {
-  return apiClient.get<TeamDetailResponse>(`/v1/teams/${id}/detail`);
+  return apiClient.get<TeamDetailResponse>(`/v1/teams/${id}/detail`, { cache: 'no-store' });
 }
 
 /**
@@ -220,7 +263,7 @@ export interface TeamMembersActivityResponse {
     inactiveMembers: number;
     criticalMembers: number;
     totalContactsCreatedThisMonth: number;
-    totalNotesLast30Days: number;
+    totalFirstMeetingsLast30Days: number;
   };
 }
 
@@ -228,4 +271,42 @@ export async function getTeamMembersActivity(
   teamId: string
 ): Promise<ApiResponse<TeamMembersActivityResponse>> {
   return apiClient.get<TeamMembersActivityResponse>(`/v1/teams/${teamId}/members-activity`);
+}
+
+/**
+ * Obtener historial de métricas del equipo
+ */
+export async function getTeamHistory(teamId: string): Promise<ApiResponse<TeamHistoryMetric[]>> {
+  return apiClient.get<TeamHistoryMetric[]>(`/v1/teams/${teamId}/history`);
+}
+
+// New API calls added in previous steps
+export async function getMemberTeamDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
+  return apiClient.get<MemberDashboardResponse>('/v1/teams/my-dashboard', { cache: 'no-store' });
+}
+
+export async function getTeamGoals(teamId: string): Promise<ApiResponse<TeamGoal[]>> {
+  return apiClient.get<TeamGoal[]>(`/v1/teams/${teamId}/goals`, { cache: 'no-store' });
+}
+
+export async function setTeamGoal(
+  teamId: string,
+  data: SetTeamGoalRequest
+): Promise<ApiResponse<TeamGoal>> {
+  return apiClient.post<TeamGoal>(`/v1/teams/${teamId}/goals`, data);
+}
+
+export async function listStalledLeads(teamId: string): Promise<ApiResponse<StalledLead[]>> {
+  return apiClient.get<StalledLead[]>(`/v1/teams/${teamId}/leads/stalled`, { cache: 'no-store' });
+}
+
+export async function reassignTeamLeads(
+  teamId: string,
+  data: ReassignLeadsRequest
+): Promise<ApiResponse<void>> {
+  return apiClient.post<void>(`/v1/teams/${teamId}/leads/reassign`, data);
+}
+
+export async function getTeamCapacity(teamId: string): Promise<ApiResponse<TeamCapacityMember[]>> {
+  return apiClient.get<TeamCapacityMember[]>(`/v1/teams/${teamId}/capacity`, { cache: 'no-store' });
 }

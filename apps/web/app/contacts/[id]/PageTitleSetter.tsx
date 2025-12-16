@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { usePageTitle } from '../../components/PageTitleContext';
 
 interface PageTitleSetterProps {
@@ -9,4 +9,3 @@ export default function PageTitleSetter({ contactName }: PageTitleSetterProps) {
   usePageTitle(contactName);
   return null;
 }
-

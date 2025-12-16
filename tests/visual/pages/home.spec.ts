@@ -11,8 +11,14 @@ test.describe('Home Page Visual Tests', () => {
     const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
     await page.goto('/login');
-    await page.getByLabel(/email|usuario|correo/i).first().fill(adminEmail);
-    await page.getByLabel(/contraseña|password/i).first().fill(adminPassword);
+    await page
+      .getByLabel(/email|usuario|correo/i)
+      .first()
+      .fill(adminEmail);
+    await page
+      .getByLabel(/contraseña|password/i)
+      .first()
+      .fill(adminPassword);
     await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
     await page.waitForURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
   });
@@ -20,7 +26,7 @@ test.describe('Home Page Visual Tests', () => {
   test('home page desktop view', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('home-desktop.png');
   });
 
@@ -28,7 +34,7 @@ test.describe('Home Page Visual Tests', () => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('home-tablet.png');
   });
 
@@ -36,8 +42,7 @@ test.describe('Home Page Visual Tests', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     await expect(page).toHaveScreenshot('home-mobile.png');
   });
 });
-

@@ -19,6 +19,7 @@ export interface Team extends TimestampedEntity {
   description?: string | null;
   managerUserId: string;
   calendarUrl?: string | null;
+  calendarId?: string | null; // Added calendarId for compatibility with TeamCalendarSection
   members?: TeamMember[];
   role?: string; // Current user's role in the team
 }
@@ -70,6 +71,7 @@ export interface MembershipRequest extends TimestampedEntity {
     id: string;
     email: string;
     fullName: string;
+    role: UserRole;
   };
 }
 
@@ -128,8 +130,15 @@ export interface TeamMemberMetrics {
   portfolioCount: number;
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
+  lastLogin?: string | null;
+  daysSinceLogin?: number | null;
+  contactsCreatedThisMonth?: number;
+  contactsCreatedLast30Days?: number;
+  firstMeetingsLast30Days?: number;
+  secondMeetingsLast30Days?: number;
+  notesCreatedLast30Days?: number;
+  tasksCompletedLast30Days?: number;
 }
-
 
 
 

@@ -20,7 +20,6 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "echo 'DB package does not need dev mode'",
     "generate": "drizzle-kit generate --config=drizzle.config.mjs",
     "migrate": "drizzle-kit migrate --config=drizzle.config.mjs",
     "studio": "drizzle-kit studio --config=drizzle.config.mjs",
@@ -41,15 +40,11 @@
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.30.6",
     "drizzle-orm": "^0.38.4",
-    "node-cache": "^5.1.2",
-    "node-cron": "^4.2.1",
-    "pg": "^8.12.0",
-    "redis": "^5.9.0"
+    "drizzle-zod": "^0.7.0",
+    "pg": "^8.12.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/lodash": "^4.17.20",
-    "@types/node-cache": "^4.2.5",
     "@types/pg": "^8.10.2",
     "tsx": "^4.16.2",
     "typescript": "^5.9.3"

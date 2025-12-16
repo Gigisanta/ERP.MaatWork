@@ -1,6 +1,6 @@
 /**
  * Tests para Text primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para Text component
  * Justificación: Validación de componente de texto base
  * Impacto: Prevenir errores en tipografía
@@ -108,7 +108,11 @@ describe('Text', () => {
   });
 
   it('debería pasar props adicionales', () => {
-    render(<Text data-testid="text" id="test-id">Test</Text>);
+    render(
+      <Text data-testid="text" id="test-id">
+        Test
+      </Text>
+    );
     const element = screen.getByTestId('text');
     expect(element.id).toBe('test-id');
   });
@@ -118,5 +122,3 @@ describe('Text', () => {
     expect(screen.getByText('Child content')).toBeInTheDocument();
   });
 });
-
-

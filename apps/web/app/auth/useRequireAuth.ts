@@ -1,4 +1,4 @@
-"use client";
+'use client';
 // AI_DECISION: Optimizar useRequireAuth para evitar loading innecesario en navegación
 // Justificación: El middleware ya valida el token, no necesitamos resetear loading en cada navegación
 // Impacto: Elimina el spinner de carga al navegar entre páginas autenticadas, mejorando UX

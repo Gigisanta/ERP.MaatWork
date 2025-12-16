@@ -1,6 +1,6 @@
 /**
  * Tests para analytics comparison routes
- * 
+ *
  * AI_DECISION: Tests para endpoints de comparación de portfolios/benchmarks
  * Justificación: Validar comparación crítica de performance
  * Impacto: Prevenir errores en análisis de carteras
@@ -12,6 +12,7 @@ import request from 'supertest';
 import comparisonRouter from './comparison';
 import { signUserToken } from '../../auth/jwt';
 import { db } from '@cactus/db';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 import { vi } from 'vitest';
 
 // Mock db
@@ -29,12 +30,8 @@ vi.mock('../../config/timeouts', () => ({
 }));
 
 describe('Analytics Comparison Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/analytics', comparisonRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/analytics', router: comparisonRouter }]);
 
   const mockDb = vi.mocked(db);
   const originalFetch = global.fetch;
@@ -50,7 +47,7 @@ describe('Analytics Comparison Routes', () => {
 
   describe('POST /analytics/compare', () => {
     it('debería retornar 401 sin autenticación', async () => {
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
 
       await request(app)
         .post('/analytics/compare')
@@ -59,8 +56,12 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería retornar 400 cuando no hay portfolios ni benchmarks', async () => {
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .post('/analytics/compare')
@@ -72,8 +73,12 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería retornar 400 para periodo inválido', async () => {
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .post('/analytics/compare')
@@ -123,8 +128,12 @@ describe('Analytics Comparison Routes', () => {
         }),
       });
 
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .post('/analytics/compare')
@@ -193,8 +202,12 @@ describe('Analytics Comparison Routes', () => {
         }),
       });
 
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .post('/analytics/compare')
@@ -220,8 +233,12 @@ describe('Analytics Comparison Routes', () => {
 
       (global.fetch as any).mockRejectedValue(new Error('Python service error'));
 
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       const res = await request(app)
         .post('/analytics/compare')
@@ -233,8 +250,12 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería retornar 403 para rol no autorizado', async () => {
-      const app = createTestApp();
-      const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'client' });
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'client',
+      });
 
       await request(app)
         .post('/analytics/compare')
@@ -264,8 +285,12 @@ describe('Analytics Comparison Routes', () => {
           json: async () => ({ success: true, data: {} }),
         });
 
-        const app = createTestApp();
-        const token = await signUserToken({ id: 'user-1', email: 'test@example.com', role: 'advisor' });
+        const app = createTestAppWithRoutes();
+        const token = await signUserToken({
+          id: 'user-1',
+          email: 'test@example.com',
+          role: 'advisor',
+        });
 
         const res = await request(app)
           .post('/analytics/compare')

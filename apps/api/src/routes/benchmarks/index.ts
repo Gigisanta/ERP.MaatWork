@@ -7,7 +7,13 @@
  */
 
 import { Router } from 'express';
+import { z } from 'zod';
 import { requireAuth, requireRole } from '../../auth/middlewares';
+import { validate } from '../../utils/validation';
+import { idParamSchema, uuidSchema } from '../../utils/validation/common-schemas';
+import { cache } from '../../middleware/cache';
+import { REDIS_TTL } from '../../config/redis';
+import { buildCacheKey } from '../../config/redis';
 
 // Import handlers
 import { handleListBenchmarks } from './handlers/list';
@@ -24,6 +30,12 @@ import {
   handleDeleteComponent,
 } from './handlers/components';
 import { handleAvailableInstruments } from './handlers/instruments';
+import {
+  createBenchmarkSchema,
+  updateBenchmarkSchema,
+  addComponentSchema,
+  updateComponentSchema,
+} from './schemas';
 
 const router = Router();
 
@@ -35,7 +47,19 @@ const router = Router();
  * GET /benchmarks
  * Listar benchmarks disponibles
  */
-router.get('/', requireAuth, handleListBenchmarks);
+router.get(
+  '/',
+  requireAuth,
+  cache({
+    ttl: REDIS_TTL.BENCHMARKS,
+    keyPrefix: 'benchmarks',
+    keyBuilder: (req) => {
+      const userId = req.user?.id || 'anonymous';
+      return buildCacheKey('benchmarks', userId);
+    },
+  }),
+  handleListBenchmarks
+);
 
 /**
  * GET /benchmarks/components/batch
@@ -59,25 +83,43 @@ router.get('/instruments/available', requireAuth, handleAvailableInstruments);
  * GET /benchmarks/:id
  * Obtener benchmark específico con sus componentes
  */
-router.get('/:id', requireAuth, handleGetBenchmark);
+router.get('/:id', requireAuth, validate({ params: idParamSchema }), handleGetBenchmark);
 
 /**
  * POST /benchmarks
  * Crear benchmark custom (solo admin)
  */
-router.post('/', requireAuth, requireRole(['admin']), handleCreateBenchmark);
+router.post(
+  '/',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ body: createBenchmarkSchema }),
+  handleCreateBenchmark
+);
 
 /**
  * PUT /benchmarks/:id
  * Actualizar benchmark (solo admin, solo custom)
  */
-router.put('/:id', requireAuth, requireRole(['admin']), handleUpdateBenchmark);
+router.put(
+  '/:id',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema, body: updateBenchmarkSchema }),
+  handleUpdateBenchmark
+);
 
 /**
  * DELETE /benchmarks/:id
  * Eliminar benchmark (solo admin, solo custom)
  */
-router.delete('/:id', requireAuth, requireRole(['admin']), handleDeleteBenchmark);
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema }),
+  handleDeleteBenchmark
+);
 
 // ==========================================================
 // Benchmark Components
@@ -87,7 +129,13 @@ router.delete('/:id', requireAuth, requireRole(['admin']), handleDeleteBenchmark
  * POST /benchmarks/:id/components
  * Agregar componente a benchmark
  */
-router.post('/:id/components', requireAuth, requireRole(['admin']), handleAddComponent);
+router.post(
+  '/:id/components',
+  requireAuth,
+  requireRole(['admin']),
+  validate({ params: idParamSchema, body: addComponentSchema }),
+  handleAddComponent
+);
 
 /**
  * PUT /benchmarks/:id/components/:componentId
@@ -97,6 +145,10 @@ router.put(
   '/:id/components/:componentId',
   requireAuth,
   requireRole(['admin']),
+  validate({
+    params: z.object({ id: uuidSchema, componentId: uuidSchema }),
+    body: updateComponentSchema,
+  }),
   handleUpdateComponent
 );
 
@@ -108,6 +160,9 @@ router.delete(
   '/:id/components/:componentId',
   requireAuth,
   requireRole(['admin']),
+  validate({
+    params: z.object({ id: uuidSchema, componentId: uuidSchema }),
+  }),
   handleDeleteComponent
 );
 

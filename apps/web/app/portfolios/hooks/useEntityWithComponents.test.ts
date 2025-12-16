@@ -18,12 +18,18 @@ vi.mock('../../auth/useRequireAuth', () => ({
   })),
 }));
 
-vi.mock('../../../lib/logger', () => ({
-  logger: {
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('../../../lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+    },
+  };
+});
 
 describe('useEntityWithComponents', () => {
   const mockFetchEntities = vi.fn();

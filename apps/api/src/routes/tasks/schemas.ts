@@ -7,7 +7,11 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema, paginationQuerySchema, dateSchema } from '../../utils/common-schemas';
+import {
+  uuidSchema,
+  paginationQuerySchema,
+  dateSchema,
+} from '../../utils/validation/common-schemas';
 
 // Query parameter schemas
 // AI_DECISION: Usar .and() en lugar de .extend() porque paginationQuerySchema es ZodEffects

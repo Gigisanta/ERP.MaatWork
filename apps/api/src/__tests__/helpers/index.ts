@@ -45,6 +45,18 @@ export { createMockAuthRequest } from './test-auth';
 // Export mock-auth helpers
 export { createMockUser } from './mock-auth';
 
+// Export Drizzle mock helpers
+export {
+  DrizzleMock,
+  createDrizzleMock,
+  createSimpleDrizzleMock,
+  type DrizzleMockConfig,
+  type SelectResponse,
+  type InsertResponse,
+  type UpdateResponse,
+  type DeleteResponse,
+} from './drizzle-mocks';
+
 // Re-export AuthUser type from auth/types
 export type { AuthUser } from '../../auth/types';
 export type MockUser = import('../../auth/types').AuthUser;

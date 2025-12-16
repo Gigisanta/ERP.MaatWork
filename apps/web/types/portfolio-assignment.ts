@@ -13,6 +13,7 @@ export type PortfolioAssignmentStatus = 'active' | 'paused' | 'ended';
  * Asignación de portfolio a contacto - extiende TimestampedEntity
  */
 export interface PortfolioAssignment extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   contactId: string;
   templateId: string;
   templateName?: string; // Nombre del template (para UI)

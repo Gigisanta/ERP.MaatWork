@@ -7,7 +7,8 @@ import type { ComponentProps } from 'react';
 /**
  * Tipo para LinkComponent basado en NavProps
  */
-type LinkComponentProps = NonNullable<NavProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
+type LinkComponentProps =
+  NonNullable<NavProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
 
 const mockItems: NavItem[] = [
   { label: 'Home', href: '/home', icon: 'Home' },
@@ -15,7 +16,12 @@ const mockItems: NavItem[] = [
   { label: 'Contact', href: '/contact', badge: 5 },
 ];
 
-const MockLink = ({ href, className, children, ...props }: LinkComponentProps & ComponentProps<'a'>) => (
+const MockLink = ({
+  href,
+  className,
+  children,
+  ...props
+}: LinkComponentProps & ComponentProps<'a'>) => (
   <a href={href} className={className} {...props}>
     {children}
   </a>
@@ -169,9 +175,7 @@ describe('Nav Component', () => {
     });
 
     it('should handle items without badges', () => {
-      const itemsNoBadges: NavItem[] = [
-        { label: 'Page 1', href: '/page1' },
-      ];
+      const itemsNoBadges: NavItem[] = [{ label: 'Page 1', href: '/page1' }];
       render(<Nav items={itemsNoBadges} LinkComponent={MockLink} />);
       expect(screen.getByText('Page 1')).toBeInTheDocument();
     });
@@ -179,7 +183,7 @@ describe('Nav Component', () => {
     it('should handle no currentPath', () => {
       render(<Nav items={mockItems} LinkComponent={MockLink} />);
       const links = screen.getAllByRole('link');
-      links.forEach(link => {
+      links.forEach((link) => {
         expect(link).toHaveClass('text-text-secondary');
       });
     });
@@ -200,4 +204,3 @@ describe('Nav Component', () => {
     });
   });
 });
-

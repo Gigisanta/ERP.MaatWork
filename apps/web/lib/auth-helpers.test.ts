@@ -11,21 +11,21 @@ describe('auth-helpers', () => {
     id: 'admin-1',
     email: 'admin@test.com',
     role: 'admin',
-    fullName: 'Admin User'
+    fullName: 'Admin User',
   };
 
   const mockManagerUser: AuthUser = {
     id: 'manager-1',
     email: 'manager@test.com',
     role: 'manager',
-    fullName: 'Manager User'
+    fullName: 'Manager User',
   };
 
   const mockAdvisorUser: AuthUser = {
     id: 'advisor-1',
     email: 'advisor@test.com',
     role: 'advisor',
-    fullName: 'Advisor User'
+    fullName: 'Advisor User',
   };
 
   describe('isAdmin', () => {
@@ -100,4 +100,3 @@ describe('auth-helpers', () => {
     });
   });
 });
-

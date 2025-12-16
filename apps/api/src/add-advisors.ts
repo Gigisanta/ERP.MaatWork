@@ -67,6 +67,8 @@ async function main(): Promise<void> {
   console.log('\n🎉 Listo. Puedes ajustar roles desde el panel de admin.\n');
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch(() => process.exit(1));
+if (process.env.NODE_ENV !== 'test') {
+  main()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1));
+}

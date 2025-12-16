@@ -26,4 +26,3 @@ export function calculateTotalWeight(lines: PortfolioLineWithWeight[]): number {
 export function isValidTotalWeight(totalWeight: number, tolerance: number = 0.0001): boolean {
   return Math.abs(totalWeight - 1.0) < tolerance;
 }
-

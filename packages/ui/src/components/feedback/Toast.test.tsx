@@ -24,25 +24,26 @@ describe('Toast Component', () => {
   describe('Variants', () => {
     it('should render info variant (default)', () => {
       const { container } = render(<Toast title="Info" variant="info" open={true} />);
-      const toast = container.querySelector('.border-info');
+      // ToastPrimitive.Root uses its own class naming, so we check for our specific variant class
+      const toast = container.querySelector('.border-info\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render success variant', () => {
       const { container } = render(<Toast title="Success" variant="success" open={true} />);
-      const toast = container.querySelector('.border-success');
+      const toast = container.querySelector('.border-success\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render warning variant', () => {
       const { container } = render(<Toast title="Warning" variant="warning" open={true} />);
-      const toast = container.querySelector('.border-warning');
+      const toast = container.querySelector('.border-warning\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render error variant', () => {
       const { container } = render(<Toast title="Error" variant="error" open={true} />);
-      const toast = container.querySelector('.border-error');
+      const toast = container.querySelector('.border-error\\/20');
       expect(toast).toBeInTheDocument();
     });
   });
@@ -81,10 +82,10 @@ describe('Toast Component', () => {
       const { container } = render(
         <Toast title="Closeable" open={true} onOpenChange={handleOpenChange} />
       );
-      
+
       const closeButton = container.querySelector('.absolute.right-2.top-2') as HTMLElement;
       closeButton?.click();
-      
+
       expect(handleOpenChange).toHaveBeenCalledWith(false);
     });
   });
@@ -142,13 +143,15 @@ describe('Toast Component', () => {
     });
 
     it('should handle long titles', () => {
-      const longTitle = 'This is a very long notification title that might wrap to multiple lines in the toast component';
+      const longTitle =
+        'This is a very long notification title that might wrap to multiple lines in the toast component';
       render(<Toast title={longTitle} open={true} />);
       expect(screen.getByText(longTitle)).toBeInTheDocument();
     });
 
     it('should handle long descriptions', () => {
-      const longDesc = 'This is a detailed description explaining what happened in the system with lots of contextual information';
+      const longDesc =
+        'This is a detailed description explaining what happened in the system with lots of contextual information';
       render(<Toast title="Title" description={longDesc} open={true} />);
       expect(screen.getByText(longDesc)).toBeInTheDocument();
     });
@@ -180,4 +183,3 @@ describe('Toast Component', () => {
     });
   });
 });
-

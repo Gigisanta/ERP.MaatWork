@@ -7,6 +7,7 @@ import express from 'express';
 import request from 'supertest';
 import uploadRouter from './upload/index';
 import { signUserToken } from '../../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
@@ -69,7 +70,7 @@ vi.mock('../../utils/aum-file-detection', () => ({
   detectAumFileMetadata: vi.fn(),
 }));
 
-vi.mock('../../utils/aum-normalization', () => ({
+vi.mock('../../utils/aum/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
@@ -125,19 +126,15 @@ vi.mock('node:fs', () => ({
 import { db } from '@cactus/db';
 import { aumImportFiles, aumImportRows } from '@cactus/db';
 import { parseAumFile } from '../../services/aumParser';
-import { upsertAumRows } from '../../services/aumUpsert';
+import { upsertAumRows } from '../../services/aum-upsert';
 
 const mockDb = vi.mocked(db);
 const mockParseAumFile = vi.mocked(parseAumFile);
 const mockUpsertAumRows = vi.mocked(upsertAumRows);
 
 describe('AUM Upload Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', uploadRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/admin/aum', router: uploadRouter }]);
 
   let adminToken: string;
 
@@ -211,7 +208,7 @@ describe('AUM Upload Routes', () => {
         return { insert: mockInsert } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/uploads')
         .set('Cookie', `token=${adminToken}`)
@@ -238,7 +235,7 @@ describe('AUM Upload Routes', () => {
         error: 'Parse error',
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/uploads')
         .set('Cookie', `token=${adminToken}`)
@@ -287,7 +284,7 @@ describe('AUM Upload Routes', () => {
         return { execute: mockExecute } as any;
       });
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/uploads/file-123/preview')
         .set('Cookie', `token=${adminToken}`)
@@ -328,7 +325,7 @@ describe('AUM Upload Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/uploads/file-123')
         .set('Cookie', `token=${adminToken}`)
@@ -368,7 +365,7 @@ describe('AUM Upload Routes', () => {
         select: mockSelect,
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/uploads')
         .set('Cookie', `token=${adminToken}`)

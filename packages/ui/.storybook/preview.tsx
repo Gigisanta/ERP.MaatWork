@@ -55,25 +55,24 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const theme = context.globals.theme || 'light';
-      
+
       return React.createElement(
         ThemeProvider,
         { defaultTheme: theme },
-        React.createElement('div', {
-          'data-theme': theme,
-          style: {
-            minHeight: '100vh',
-            padding: '1rem',
+        React.createElement(
+          'div',
+          {
+            'data-theme': theme,
+            style: {
+              minHeight: '100vh',
+              padding: '1rem',
+            },
           },
-        }, React.createElement(Story))
+          React.createElement(Story)
+        )
       );
     },
   ],
 };
 
 export default preview;
-
-
-
-
-

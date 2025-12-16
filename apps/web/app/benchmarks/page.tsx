@@ -2,16 +2,17 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getBenchmarks, getCurrentUser } from '@/lib/api-server';
 import BenchmarksClient from './components/BenchmarksClient';
+import { Heading, Text, Alert } from '@cactus/ui';
 import type { Benchmark } from '@/types';
 
 // AI_DECISION: Convert to Server Component with Client Islands pattern
 // Justificación: Reduces First Load JS ~40KB, better SEO, faster initial load
 // Impacto: Page loads faster, better performance, reduced hydration JS
 
-// AI_DECISION: Enable ISR with 2 hour revalidation for benchmark data
-// Justificación: Benchmarks change rarely, ISR reduces server load 60-80% while keeping data fresh
-// Impacto: Faster TTFB, reduced API calls, better performance for benchmark management page
-export const revalidate = 7200; // Revalidate every 2 hours
+// AI_DECISION: Force dynamic rendering for benchmarks page
+// Justificación: Page requires authentication via cookies(), cannot be pre-rendered statically
+// Impacto: Dynamic rendering on each request, but necessary for authentication
+export const dynamic = 'force-dynamic';
 
 export default async function BenchmarksPage() {
   // Check authentication and get user
@@ -29,9 +30,16 @@ export default async function BenchmarksPage() {
   // Solo admin puede gestionar benchmarks
   if (user.role !== 'admin') {
     return (
-      <main style={{ padding: 16 }}>
-        <p>No tienes permisos para gestionar benchmarks.</p>
-        <Link href="/home" style={{ color: '#3b82f6' }}>← Volver al inicio</Link>
+      <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <Alert variant="warning" title="Acceso restringido">
+          No tienes permisos para gestionar benchmarks.
+        </Alert>
+        <Link
+          href="/home"
+          className="inline-block mt-4 text-info hover:underline transition-colors"
+        >
+          ← Volver al inicio
+        </Link>
       </main>
     );
   }
@@ -52,20 +60,31 @@ export default async function BenchmarksPage() {
   }
 
   return (
-    <main style={{ padding: 16, maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>📈 Benchmarks</h1>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <Link href="/home" style={{ color: '#3b82f6' }}>← Volver al inicio</Link>
-          <span style={{ color: '#6b7280' }}>|</span>
-          <span style={{ fontSize: 14, color: '#6b7280' }}>
+    <main className="max-w-5xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="mb-6">
+        <Heading level={1} className="mb-2">
+          📈 Benchmarks
+        </Heading>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/home" className="text-info hover:underline transition-colors text-sm">
+            ← Volver al inicio
+          </Link>
+          <span className="text-text-muted">|</span>
+          <Text size="sm" color="secondary">
             Gestión de benchmarks para comparación de carteras
-          </span>
+          </Text>
         </div>
       </div>
 
-      {error && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
+      {/* Error state */}
+      {error && (
+        <Alert variant="error" title="Error" className="mb-6">
+          {error}
+        </Alert>
+      )}
 
+      {/* Content */}
       {!error && <BenchmarksClient initialBenchmarks={benchmarks} />}
     </main>
   );

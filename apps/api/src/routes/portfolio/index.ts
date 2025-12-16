@@ -16,6 +16,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
 import { requireContactAccess } from '../../middleware/contact-access';
+import { createRouteHandler, createAsyncHandler } from '../../utils/route-handler';
 
 // Schemas
 import {
@@ -54,15 +55,26 @@ const router = Router();
 // ==========================================================
 
 // GET /portfolios/templates - Listar plantillas
-router.get('/templates', requireAuth, requireRole(['admin', 'manager']), listTemplates);
+router.get(
+  '/templates',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  createRouteHandler(listTemplates)
+);
 
 // POST /portfolios/templates - Crear plantilla
+// AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
+// Justificación: createRouteHandler siempre retorna 200, pero POST debe retornar 201
+// Impacto: Respuesta HTTP correcta según estándares REST
 router.post(
   '/templates',
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ body: createPortfolioSchema }),
-  createTemplate
+  createAsyncHandler(async (req, res) => {
+    const result = await createTemplate(req);
+    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
+  })
 );
 
 // GET /portfolios/templates/lines/batch - Obtener líneas en batch (DEBE ir antes de :id)
@@ -70,7 +82,7 @@ router.get(
   '/templates/lines/batch',
   requireAuth,
   requireRole(['admin', 'manager']),
-  getTemplateLinesBatch
+  createRouteHandler(getTemplateLinesBatch)
 );
 
 // GET /portfolios/templates/:id - Obtener plantilla por ID
@@ -79,7 +91,7 @@ router.get(
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: templateIdParamSchema }),
-  getTemplateById
+  createRouteHandler(getTemplateById)
 );
 
 // PUT /portfolios/templates/:id - Actualizar plantilla
@@ -88,7 +100,7 @@ router.put(
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: templateIdParamSchema, body: updatePortfolioSchema }),
-  updateTemplate
+  createRouteHandler(updateTemplate)
 );
 
 // GET /portfolios/templates/:id/lines - Obtener líneas de plantilla
@@ -97,16 +109,22 @@ router.get(
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: templateIdParamSchema }),
-  getTemplateLines
+  createRouteHandler(getTemplateLines)
 );
 
 // POST /portfolios/templates/:id/lines - Agregar línea a plantilla
+// AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
+// Justificación: createRouteHandler siempre retorna 200, pero POST debe retornar 201
+// Impacto: Respuesta HTTP correcta según estándares REST
 router.post(
   '/templates/:id/lines',
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: templateIdParamSchema, body: addPortfolioLineSchema }),
-  addTemplateLine
+  createAsyncHandler(async (req, res) => {
+    const result = await addTemplateLine(req);
+    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
+  })
 );
 
 // DELETE /portfolios/templates/:id/lines/:lineId - Eliminar línea de plantilla
@@ -115,7 +133,7 @@ router.delete(
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: lineIdParamSchema }),
-  deleteTemplateLine
+  createRouteHandler(deleteTemplateLine)
 );
 
 // ==========================================================
@@ -123,29 +141,44 @@ router.delete(
 // ==========================================================
 
 // GET /portfolios/assignments - Listar asignaciones
-router.get('/assignments', requireAuth, requireContactAccess, listAssignments);
+router.get('/assignments', requireAuth, requireContactAccess, createRouteHandler(listAssignments));
 
 // POST /portfolios/assignments - Crear asignación
+// AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
+// Justificación: createRouteHandler siempre retorna 200, pero POST debe retornar 201
+// Impacto: Respuesta HTTP correcta según estándares REST
 router.post(
   '/assignments',
   requireAuth,
   validate({ body: createAssignmentSchema }),
   requireContactAccess,
-  createAssignment
+  createAsyncHandler(async (req, res) => {
+    const result = await createAssignment(req);
+    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
+  })
 );
 
 // GET /contacts/:id/portfolio - Obtener cartera activa de contacto
-router.get('/contacts/:id/portfolio', requireAuth, requireContactAccess, getContactPortfolio);
+router.get(
+  '/contacts/:id/portfolio',
+  requireAuth,
+  requireContactAccess,
+  createRouteHandler(getContactPortfolio)
+);
 
 // PUT /portfolios/assignments/:id/overrides - Actualizar overrides
-router.put('/assignments/:id/overrides', requireAuth, updateAssignmentOverrides);
+router.put(
+  '/assignments/:id/overrides',
+  requireAuth,
+  createRouteHandler(updateAssignmentOverrides)
+);
 
 // PATCH /portfolios/assignments/:id - Actualizar estado
 router.patch(
   '/assignments/:id',
   requireAuth,
   validate({ params: assignmentIdParamSchema, body: updateAssignmentStatusSchema }),
-  updateAssignmentStatus
+  createRouteHandler(updateAssignmentStatus)
 );
 
 // DELETE /portfolios/assignments/:id - Eliminar asignación
@@ -153,7 +186,7 @@ router.delete(
   '/assignments/:id',
   requireAuth,
   validate({ params: assignmentIdParamSchema }),
-  deleteAssignment
+  createRouteHandler(deleteAssignment)
 );
 
 export default router;

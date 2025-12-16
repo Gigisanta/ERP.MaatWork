@@ -1,19 +1,28 @@
 /**
  * Tests para career-plan utils
- * 
+ *
  * AI_DECISION: Tests unitarios para cálculo de progreso de carrera
  * Justificación: Validación crítica de cálculos de producción y niveles
  * Impacto: Prevenir errores en cálculo de progreso
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db, careerPlanLevels, contactTags, contacts, tags, users, teamMembership, teams } from '@cactus/db';
+import {
+  db,
+  careerPlanLevels,
+  contactTags,
+  contacts,
+  tags,
+  users,
+  teamMembership,
+  teams,
+} from '@cactus/db';
 import {
   calculateUserAnnualProduction,
   determineUserLevel,
   calculateProgressPercentage,
   getNextLevel,
-  calculateUserCareerProgress
+  calculateUserCareerProgress,
 } from './career-plan';
 
 // Mock dependencies
@@ -30,7 +39,7 @@ vi.mock('@cactus/db', () => ({
   and: vi.fn(),
   isNotNull: vi.fn(),
   sql: vi.fn(),
-  inArray: vi.fn()
+  inArray: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -46,14 +55,14 @@ describe('calculateUserAnnualProduction', () => {
       from: vi.fn().mockReturnValue({
         innerJoin: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(mockResult)
-          })
-        })
-      })
+            where: vi.fn().mockResolvedValue(mockResult),
+          }),
+        }),
+      }),
     });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const result = await calculateUserAnnualProduction('user-123', 'advisor');
@@ -63,28 +72,29 @@ describe('calculateUserAnnualProduction', () => {
 
   it('debería incluir miembros del equipo para manager', async () => {
     const mockTeamMembers = [{ id: 'user-2' }, { id: 'user-3' }];
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(mockTeamMembers)
-            })
-          })
-        })
+              where: vi.fn().mockResolvedValue(mockTeamMembers),
+            }),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ totalMonthlyPremium: 20000 }])
-            })
-          })
-        })
+              where: vi.fn().mockResolvedValue([{ totalMonthlyPremium: 20000 }]),
+            }),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const result = await calculateUserAnnualProduction('user-123', 'manager');
@@ -98,7 +108,7 @@ describe('determineUserLevel', () => {
     const levels = [
       { id: 'level-1', levelNumber: 1, annualGoalUsd: 100000, isActive: true },
       { id: 'level-2', levelNumber: 2, annualGoalUsd: 200000, isActive: true },
-      { id: 'level-3', levelNumber: 3, annualGoalUsd: 300000, isActive: true }
+      { id: 'level-3', levelNumber: 3, annualGoalUsd: 300000, isActive: true },
     ];
 
     const result = await determineUserLevel(250000, levels);
@@ -106,9 +116,7 @@ describe('determineUserLevel', () => {
   });
 
   it('debería retornar null cuando no alcanza ningún nivel', async () => {
-    const levels = [
-      { id: 'level-1', levelNumber: 1, annualGoalUsd: 100000, isActive: true }
-    ];
+    const levels = [{ id: 'level-1', levelNumber: 1, annualGoalUsd: 100000, isActive: true }];
 
     const result = await determineUserLevel(50000, levels);
     expect(result).toBeNull();
@@ -118,7 +126,7 @@ describe('determineUserLevel', () => {
     const levels = [
       { id: 'level-1', levelNumber: 1, annualGoalUsd: 100000, isActive: true },
       { id: 'level-2', levelNumber: 2, annualGoalUsd: 200000, isActive: false },
-      { id: 'level-3', levelNumber: 3, annualGoalUsd: 300000, isActive: true }
+      { id: 'level-3', levelNumber: 3, annualGoalUsd: 300000, isActive: true },
     ];
 
     const result = await determineUserLevel(250000, levels);
@@ -151,7 +159,7 @@ describe('getNextLevel', () => {
     const levels = [
       currentLevel,
       { id: 'level-2', levelNumber: 2, isActive: true },
-      { id: 'level-3', levelNumber: 3, isActive: true }
+      { id: 'level-3', levelNumber: 3, isActive: true },
     ];
 
     const result = await getNextLevel(currentLevel, levels);
@@ -161,7 +169,7 @@ describe('getNextLevel', () => {
   it('debería retornar nivel más bajo cuando no hay nivel actual', async () => {
     const levels = [
       { id: 'level-1', levelNumber: 1, isActive: true },
-      { id: 'level-2', levelNumber: 2, isActive: true }
+      { id: 'level-2', levelNumber: 2, isActive: true },
     ];
 
     const result = await getNextLevel(null, levels);
@@ -173,7 +181,7 @@ describe('getNextLevel', () => {
     const levels = [
       { id: 'level-1', levelNumber: 1, isActive: true },
       { id: 'level-2', levelNumber: 2, isActive: true },
-      currentLevel
+      currentLevel,
     ];
 
     const result = await getNextLevel(currentLevel, levels);
@@ -189,29 +197,30 @@ describe('calculateUserCareerProgress', () => {
   it('debería calcular progreso completo del usuario', async () => {
     const mockLevels = [
       { id: 'level-1', levelNumber: 1, annualGoalUsd: 100000, isActive: true },
-      { id: 'level-2', levelNumber: 2, annualGoalUsd: 200000, isActive: true }
+      { id: 'level-2', levelNumber: 2, annualGoalUsd: 200000, isActive: true },
     ];
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            orderBy: vi.fn().mockResolvedValue(mockLevels)
-          })
-        })
+            orderBy: vi.fn().mockResolvedValue(mockLevels),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           innerJoin: vi.fn().mockReturnValue({
             innerJoin: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ totalMonthlyPremium: 10000 }])
-            })
-          })
-        })
+              where: vi.fn().mockResolvedValue([{ totalMonthlyPremium: 10000 }]),
+            }),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const result = await calculateUserCareerProgress('user-123', 'advisor');
@@ -223,4 +232,3 @@ describe('calculateUserCareerProgress', () => {
     expect(result.annualProduction).toBe(120000);
   });
 });
-

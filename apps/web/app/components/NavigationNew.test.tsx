@@ -1,6 +1,6 @@
 /**
  * Tests for NavigationNew Component
- * 
+ *
  * Covers:
  * - Rendering with user
  * - Not rendering when no user
@@ -167,11 +167,11 @@ describe('NavigationNew', () => {
   describe('Mobile Navigation', () => {
     it('should close drawer on pathname change (mobile)', () => {
       const { rerender } = render(<NavigationNew />);
-      
+
       // Simulate pathname change
       (usePathname as ReturnType<typeof vi.fn>).mockReturnValue('/contacts');
       rerender(<NavigationNew />);
-      
+
       // Drawer should close (tested through useEffect)
       expect(screen.getByText('CACTUS CRM')).toBeInTheDocument();
     });
@@ -250,5 +250,3 @@ describe('NavigationNew', () => {
     });
   });
 });
-
-

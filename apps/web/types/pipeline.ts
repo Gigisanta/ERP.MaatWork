@@ -9,6 +9,7 @@ import type { Contact } from './contact';
  * Etapa de pipeline - extiende BaseEntity (sin timestamps requeridos)
  */
 export interface PipelineStage extends BaseEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   order: number;
   color?: string;

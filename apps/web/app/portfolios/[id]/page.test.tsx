@@ -1,6 +1,6 @@
 /**
  * Tests for Portfolio Detail Page
- * 
+ *
  * Covers:
  * - CRUD operations for portfolio lines
  * - Error handling
@@ -39,13 +39,18 @@ vi.mock('../../auth/useRequireAuth', () => ({
 }));
 
 // Mock logger
-vi.mock('../../../lib/logger', () => ({
-  logger: {
-    error: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
+vi.mock('../../../lib/logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../lib/logger')>();
+  return {
+    ...actual,
+    logger: {
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    },
+  };
+});
 
 describe('PortfolioDetailPage', () => {
   const mockPortfolio = {
@@ -123,4 +128,3 @@ describe('PortfolioDetailPage', () => {
     });
   });
 });
-

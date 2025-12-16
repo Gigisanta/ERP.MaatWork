@@ -24,6 +24,11 @@ import {
 import { safeToString, safeToNumber, validateColumnMapping } from './column-validator';
 import type { MappedAumColumns } from './types';
 
+// AI_DECISION: Usar variable de módulo en lugar de global para flag de logging
+// Justificación: Evita contaminar el objeto global y mejora type safety
+// Impacto: Código más limpio y mantenible sin necesidad de type assertions
+let aumMapperLogged = false;
+
 /**
  * Mapea columnas flexibles de un registro CSV/Excel a campos AUM
  *
@@ -36,9 +41,9 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
   // AI_DECISION: Logging solo en primera fila para evitar spam excesivo
   // Justificación: Necesitamos diagnóstico pero no spam en cada fila
   // Impacto: Logging útil sin saturar la consola
-  const isFirstRow = !(global as any).__aumMapperLogged;
+  const isFirstRow = !aumMapperLogged;
   if (isFirstRow && availableColumns.length > 0) {
-    (global as any).__aumMapperLogged = true;
+    aumMapperLogged = true;
     // Solo mostrar columnas clave para debugging, no todas las normalizaciones
     const keyColumns = availableColumns.slice(0, 10).join(', ');
     const moreColumns =
@@ -312,6 +317,31 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
         } else {
           // No es numérico, asignar normalmente
           advisorRawValue = safeToString(rawValue);
+
+          // AI_DECISION: Detectar y corregir error de formato "Nombre+Numero" en advisorRaw
+          // Justificación: A veces el CSV tiene errores donde el asesor aparece como "Mateo Vicente8019.23"
+          // cuando debería ser solo "Mateo Vicente" (el número es un valor financiero que se corrió)
+          // Impacto: Corrige automáticamente el nombre del asesor para evitar asesores ficticios
+          if (advisorRawValue) {
+            const advisorWithNumberPattern = /^([A-Za-z\s]+?)(\d+[\.,]\d+)$/;
+            const errorMatch = advisorRawValue.match(advisorWithNumberPattern);
+
+            if (errorMatch) {
+              const nombreReal = errorMatch[1].trim();
+              const numeroExtraido = errorMatch[2];
+
+              logger.warn(
+                {
+                  originalValue: advisorRawValue,
+                  extractedName: nombreReal,
+                  extractedNumber: numeroExtraido,
+                },
+                'AUM Column Mapper: Detectado error de formato Asesor+Numero - se corrige automaticamente'
+              );
+
+              advisorRawValue = nombreReal;
+            }
+          }
         }
       }
     }
@@ -403,4 +433,15 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
   mapped.cv7000 = cv7000Column ? safeToNumber(record[cv7000Column]) : null;
 
   return mapped;
+}
+
+/**
+ * Resetea el flag de logging para permitir logging en la primera fila del siguiente archivo
+ *
+ * AI_DECISION: Función exportada para resetear flag de logging entre archivos
+ * Justificación: Permite que cada archivo parseado tenga su propio logging inicial
+ * Impacto: Mejor debugging sin necesidad de usar variables globales
+ */
+export function resetAumMapperLogging(): void {
+  aumMapperLogged = false;
 }

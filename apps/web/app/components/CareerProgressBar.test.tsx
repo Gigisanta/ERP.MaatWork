@@ -1,6 +1,6 @@
 /**
  * Tests for CareerProgressBar Component
- * 
+ *
  * Covers:
  * - Rendering with data
  * - Loading and error states
@@ -52,7 +52,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       expect(screen.getByText('Asesor Junior')).toBeInTheDocument();
       expect(screen.getByText(/75%/i)).toBeInTheDocument();
     });
@@ -76,7 +76,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       expect(screen.getByText('Asesor Senior')).toBeInTheDocument();
     });
 
@@ -99,7 +99,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       expect(screen.getByText(/5/i)).toBeInTheDocument();
     });
 
@@ -122,7 +122,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       const progressBar = document.querySelector('.bg-primary');
       expect(progressBar).toBeInTheDocument();
       expect((progressBar as HTMLElement).style.width).toBe('75%');
@@ -147,7 +147,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       const progressBar = document.querySelector('.bg-primary');
       expect((progressBar as HTMLElement).style.width).toBe('100%');
     });
@@ -234,10 +234,10 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       const button = screen.getByRole('button', { name: /ver plan de carrera/i });
       fireEvent.click(button);
-      
+
       expect(mockPush).toHaveBeenCalledWith('/plandecarrera');
     });
 
@@ -260,7 +260,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       const button = screen.getByRole('button', { name: /ver plan de carrera/i });
       expect(button).toHaveAttribute('aria-label', 'Ver plan de carrera');
     });
@@ -286,7 +286,7 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       expect(useSWR).toHaveBeenCalledWith(
         'career-plan-user-progress',
         expect.any(Function),
@@ -318,14 +318,12 @@ describe('CareerProgressBar', () => {
       });
 
       render(<CareerProgressBar />);
-      
+
       const swrCall = (useSWR as ReturnType<typeof vi.fn>).mock.calls[0];
       const fetcher = swrCall[1];
-      
+
       // Verify fetcher calls getUserCareerProgress
       expect(fetcher).toBeDefined();
     });
   });
 });
-
-

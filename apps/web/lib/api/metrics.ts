@@ -4,11 +4,7 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type {
-  ContactsMetricsResponse,
-  MonthlyGoal,
-  SaveMonthlyGoalRequest
-} from '@/types/metrics';
+import type { ContactsMetricsResponse, MonthlyGoal, SaveMonthlyGoalRequest } from '@/types/metrics';
 
 // ==========================================================
 // API Methods
@@ -16,7 +12,7 @@ import type {
 
 /**
  * Obtener métricas de contactos
- * 
+ *
  * @param month - Mes (1-12), opcional, default: mes actual
  * @param year - Año, opcional, default: año actual
  */
@@ -27,16 +23,16 @@ export async function getContactsMetrics(
   const params = new URLSearchParams();
   if (month) params.append('month', month.toString());
   if (year) params.append('year', year.toString());
-  
+
   const query = params.toString();
   const endpoint = query ? `/v1/metrics/contacts?${query}` : '/v1/metrics/contacts';
-  
+
   return apiClient.get<ContactsMetricsResponse>(endpoint);
 }
 
 /**
  * Obtener objetivos mensuales
- * 
+ *
  * @param month - Mes (1-12), opcional, default: mes actual
  * @param year - Año, opcional, default: año actual
  */
@@ -47,16 +43,16 @@ export async function getMonthlyGoals(
   const params = new URLSearchParams();
   if (month) params.append('month', month.toString());
   if (year) params.append('year', year.toString());
-  
+
   const query = params.toString();
   const endpoint = query ? `/v1/metrics/goals?${query}` : '/v1/metrics/goals';
-  
+
   return apiClient.get<MonthlyGoal | null>(endpoint);
 }
 
 /**
  * Guardar/actualizar objetivos mensuales
- * 
+ *
  * @param data - Datos del objetivo mensual
  */
 export async function saveMonthlyGoals(
@@ -64,4 +60,3 @@ export async function saveMonthlyGoals(
 ): Promise<ApiResponse<MonthlyGoal>> {
   return apiClient.post<MonthlyGoal>('/v1/metrics/goals', data);
 }
-

@@ -8,7 +8,8 @@ import type { ComponentProps } from 'react';
 /**
  * Tipo para LinkComponent basado en SidebarProps
  */
-type LinkComponentProps = NonNullable<SidebarProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
+type LinkComponentProps =
+  NonNullable<SidebarProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
 
 const mockSections: SidebarSection[] = [
   {
@@ -27,7 +28,12 @@ const mockSections: SidebarSection[] = [
   },
 ];
 
-const MockLink = ({ href, className, children, ...props }: LinkComponentProps & ComponentProps<'a'>) => (
+const MockLink = ({
+  href,
+  className,
+  children,
+  ...props
+}: LinkComponentProps & ComponentProps<'a'>) => (
   <a href={href} className={className} {...props}>
     {children}
   </a>
@@ -38,8 +44,12 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    clear: () => { store = {}; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    clear: () => {
+      store = {};
+    },
   };
 })();
 
@@ -56,9 +66,7 @@ describe('Sidebar Component', () => {
 
   describe('Rendering', () => {
     it('should render sidebar', () => {
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
       expect(container.querySelector('nav')).toBeInTheDocument();
     });
 
@@ -77,9 +85,7 @@ describe('Sidebar Component', () => {
     });
 
     it('should render icons when provided', () => {
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
       const icons = container.querySelectorAll('span');
       expect(icons.length).toBeGreaterThan(0);
     });
@@ -106,19 +112,17 @@ describe('Sidebar Component', () => {
 
     it('should render toggle button', () => {
       render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
-      const toggleButton = screen.getByLabelText(/collapse sidebar/i);
+      const toggleButton = screen.getByLabelText(/colapsar menú/i);
       expect(toggleButton).toBeInTheDocument();
     });
   });
 
   describe('Collapsed State', () => {
     it('should be expanded by default', () => {
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
       const sidebar = container.firstChild as HTMLElement;
-      // El componente usa w-48 cuando está expandido
-      expect(sidebar).toHaveClass('w-48');
+      // El componente usa w-52 cuando está expandido
+      expect(sidebar).toHaveClass('w-52');
     });
 
     it('should be collapsed when defaultCollapsed is true', () => {
@@ -126,25 +130,23 @@ describe('Sidebar Component', () => {
         <Sidebar sections={mockSections} defaultCollapsed={true} LinkComponent={MockLink} />
       );
       const sidebar = container.firstChild as HTMLElement;
-      // El componente usa w-14 cuando está colapsado
-      expect(sidebar).toHaveClass('w-14');
+      // El componente usa w-16 cuando está colapsado
+      expect(sidebar).toHaveClass('w-16');
     });
 
     it('should toggle collapsed state on button click', async () => {
       const user = userEvent.setup();
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
 
       const sidebar = container.firstChild as HTMLElement;
-      // El componente usa w-48 cuando está expandido
-      expect(sidebar).toHaveClass('w-48');
+      // El componente usa w-52 cuando está expandido
+      expect(sidebar).toHaveClass('w-52');
 
-      const toggleButton = screen.getByLabelText(/collapse sidebar/i);
+      const toggleButton = screen.getByLabelText(/colapsar menú/i);
       await user.click(toggleButton);
 
-      // El componente usa w-14 cuando está colapsado
-      expect(sidebar).toHaveClass('w-14');
+      // El componente usa w-16 cuando está colapsado
+      expect(sidebar).toHaveClass('w-16');
     });
 
     it('should hide section titles when collapsed', () => {
@@ -176,7 +178,7 @@ describe('Sidebar Component', () => {
 
     it('should change toggle button label when collapsed', () => {
       render(<Sidebar sections={mockSections} defaultCollapsed={true} LinkComponent={MockLink} />);
-      const toggleButton = screen.getByLabelText(/expand sidebar/i);
+      const toggleButton = screen.getByLabelText(/expandir menú/i);
       expect(toggleButton).toBeInTheDocument();
     });
   });
@@ -187,8 +189,8 @@ describe('Sidebar Component', () => {
         <Sidebar sections={mockSections} collapsed={true} LinkComponent={MockLink} />
       );
       const sidebar = container.firstChild as HTMLElement;
-      // El componente usa w-14 cuando está colapsado
-      expect(sidebar).toHaveClass('w-14');
+      // El componente usa w-16 cuando está colapsado
+      expect(sidebar).toHaveClass('w-16');
     });
 
     it('should call onCollapse when toggle button is clicked', async () => {
@@ -204,7 +206,7 @@ describe('Sidebar Component', () => {
         />
       );
 
-      const toggleButton = screen.getByLabelText(/collapse sidebar/i);
+      const toggleButton = screen.getByLabelText(/colapsar menú/i);
       await user.click(toggleButton);
 
       expect(handleCollapse).toHaveBeenCalledWith(true);
@@ -213,37 +215,19 @@ describe('Sidebar Component', () => {
 
   describe('Active State', () => {
     it('should highlight active item', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          currentPath="/dashboard"
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} currentPath="/dashboard" LinkComponent={MockLink} />);
       const dashboardLink = screen.getByText('Dashboard').closest('a');
       expect(dashboardLink).toHaveClass('bg-primary', 'text-text-inverse');
     });
 
     it('should not highlight inactive items', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          currentPath="/dashboard"
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} currentPath="/dashboard" LinkComponent={MockLink} />);
       const analyticsLink = screen.getByText('Analytics').closest('a');
       expect(analyticsLink).toHaveClass('text-text-secondary');
     });
 
     it('should set aria-current on active item', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          currentPath="/analytics"
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} currentPath="/analytics" LinkComponent={MockLink} />);
       const analyticsLink = screen.getByText('Analytics').closest('a');
       expect(analyticsLink).toHaveAttribute('aria-current', 'page');
     });
@@ -251,26 +235,14 @@ describe('Sidebar Component', () => {
 
   describe('Badge Styling', () => {
     it('should style badge differently for active item', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          currentPath="/dashboard"
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} currentPath="/dashboard" LinkComponent={MockLink} />);
       const badge = screen.getByText('3');
       // El componente usa bg-text-inverse/30 en lugar de bg-text-inverse/20
       expect(badge).toHaveClass('bg-text-inverse/30', 'text-text-inverse');
     });
 
     it('should style badge normally for inactive item', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          currentPath="/analytics"
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} currentPath="/analytics" LinkComponent={MockLink} />);
       const badge = screen.getByText('3');
       expect(badge).toHaveClass('bg-primary', 'text-text-inverse');
     });
@@ -284,24 +256,20 @@ describe('Sidebar Component', () => {
 
     it('should have accessible toggle button', () => {
       render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
-      const button = screen.getByLabelText(/sidebar/i);
+      const button = screen.getByLabelText(/menú/i);
       expect(button).toBeInTheDocument();
     });
 
     it('should show title on collapsed items', () => {
-      render(
-        <Sidebar
-          sections={mockSections}
-          defaultCollapsed={true}
-          LinkComponent={MockLink}
-        />
-      );
+      render(<Sidebar sections={mockSections} defaultCollapsed={true} LinkComponent={MockLink} />);
       // Cuando está colapsado, el componente usa Tooltip para mostrar el label
       // El link sigue estando presente pero sin el texto visible
       // Buscamos el link por su href ya que el texto no está visible
-      const dashboardLink = screen.getByRole('link', { name: (accessibleName, element) => {
-        return element.getAttribute('href') === '/dashboard';
-      }});
+      const dashboardLink = screen.getByRole('link', {
+        name: (accessibleName, element) => {
+          return element.getAttribute('href') === '/dashboard';
+        },
+      });
       expect(dashboardLink).toBeInTheDocument();
       expect(dashboardLink).toHaveAttribute('href', '/dashboard');
     });
@@ -312,7 +280,7 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
 
-      const toggleButton = screen.getByLabelText(/collapse sidebar/i);
+      const toggleButton = screen.getByLabelText(/colapsar menú/i);
       await user.click(toggleButton);
 
       expect(localStorageMock.getItem('sidebar-collapsed')).toBe('true');
@@ -321,16 +289,14 @@ describe('Sidebar Component', () => {
     it('should load collapsed state from localStorage', async () => {
       localStorageMock.setItem('sidebar-collapsed', 'true');
 
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
-      
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
+
       // El componente carga el estado desde localStorage en un useEffect
       // Necesitamos esperar a que el efecto se ejecute
       await waitFor(() => {
         const sidebar = container.firstChild as HTMLElement;
-        // El componente usa w-14 cuando está colapsado
-        expect(sidebar).toHaveClass('w-14');
+        // El componente usa w-16 cuando está colapsado
+        expect(sidebar).toHaveClass('w-16');
       });
     });
 
@@ -347,7 +313,7 @@ describe('Sidebar Component', () => {
         />
       );
 
-      const toggleButton = screen.getByLabelText(/collapse sidebar/i);
+      const toggleButton = screen.getByLabelText(/colapsar menú/i);
       await user.click(toggleButton);
 
       // Should not write to localStorage when controlled
@@ -357,9 +323,7 @@ describe('Sidebar Component', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty sections', () => {
-      const { container } = render(
-        <Sidebar sections={[]} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={[]} LinkComponent={MockLink} />);
       const nav = container.querySelector('nav');
       expect(nav).toBeInTheDocument();
     });
@@ -403,11 +367,7 @@ describe('Sidebar Component', () => {
   describe('Custom Props', () => {
     it('should apply custom className', () => {
       const { container } = render(
-        <Sidebar
-          sections={mockSections}
-          className="custom-sidebar"
-          LinkComponent={MockLink}
-        />
+        <Sidebar sections={mockSections} className="custom-sidebar" LinkComponent={MockLink} />
       );
       const sidebar = container.firstChild as HTMLElement;
       expect(sidebar).toHaveClass('custom-sidebar');
@@ -416,12 +376,9 @@ describe('Sidebar Component', () => {
 
   describe('Transitions', () => {
     it('should have transition classes', () => {
-      const { container } = render(
-        <Sidebar sections={mockSections} LinkComponent={MockLink} />
-      );
+      const { container } = render(<Sidebar sections={mockSections} LinkComponent={MockLink} />);
       const sidebar = container.firstChild as HTMLElement;
       expect(sidebar).toHaveClass('transition-all', 'duration-300');
     });
   });
 });
-

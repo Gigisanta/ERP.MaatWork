@@ -1,8 +1,8 @@
 /**
  * AdvisorSelector Component
- * 
+ *
  * Componente para seleccionar asesores desde una lista
- * 
+ *
  * AI_DECISION: Componente separado para reutilización y mejor UX
  * Justificación: Encapsula la lógica de carga y conversión de asesores
  * Impacto: Mejor experiencia de usuario al asignar asesores
@@ -37,7 +37,7 @@ export function AdvisorSelector({
   onValueChange,
   placeholder = 'Seleccionar asesor...',
   disabled = false,
-  className
+  className,
 }: AdvisorSelectorProps) {
   const { advisors, isLoading } = useAdvisors();
 
@@ -47,8 +47,8 @@ export function AdvisorSelector({
   // Impacto: Reduce re-renders innecesarios
   const selectItems: SelectItem[] = useMemo(() => {
     return (advisors as Advisor[]).map((advisor: Advisor) => ({
-      value: advisor.id,
-      label: advisor.fullName || advisor.email || 'Sin nombre'
+      value: String(advisor.id),
+      label: advisor.fullName || advisor.email || 'Sin nombre',
     }));
   }, [advisors]);
 
@@ -60,21 +60,16 @@ export function AdvisorSelector({
     }
 
     // Buscar el asesor seleccionado
-    const selectedAdvisor = (advisors as Advisor[]).find(
-      (advisor) => advisor.id === selectedValue
-    ) || null;
-    
+    const selectedAdvisor =
+      (advisors as Advisor[]).find((advisor) => advisor.id === selectedValue) || null;
+
     onValueChange(selectedValue, selectedAdvisor);
   };
 
   if (isLoading) {
     return (
       <div className={className}>
-        <Select
-          items={[]}
-          placeholder="Cargando asesores..."
-          disabled={true}
-        />
+        <Select items={[]} placeholder="Cargando asesores..." disabled={true} />
       </div>
     );
   }
@@ -91,4 +86,3 @@ export function AdvisorSelector({
     </div>
   );
 }
-

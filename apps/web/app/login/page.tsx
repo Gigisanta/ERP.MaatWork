@@ -18,6 +18,8 @@ import {
   Icon,
   Spinner,
 } from '@cactus/ui';
+import { Feather } from 'lucide-react';
+import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
 function LoginPageContent() {
   const { login, user, initialized } = useAuth();
@@ -30,33 +32,26 @@ function LoginPageContent() {
   const [rememberMe, setRememberMe] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ identifier?: string; password?: string }>({});
   const hasRedirectedRef = useRef(false);
+  const [mounted, setMounted] = useState(false);
+
+  // AI_DECISION: Detectar errores de OAuth y success
+  // Justificación: Mostrar mensajes apropiados cuando vienen de Google OAuth
+  const oauthError = searchParams.get('error');
+  const googleAuthSuccess = searchParams.get('google_auth');
+
+  // Trigger mount animation
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // AI_DECISION: Redirigir automáticamente si ya hay sesión
-  // Justificación: Evita que usuarios autenticados vean el formulario de login (estado inconsistente
-  // entre cookie o navegación directa a /login). Mejora UX y previene loops.
-  // Impacto: Afecta navegación en la ruta `/login` cuando `user` está presente.
-  // AI_DECISION: Usar useRef para evitar loops infinitos de redirección
-  // Justificación: searchParams es mutable y cambia de referencia, causando re-ejecuciones del useEffect.
-  // Usar useRef previene múltiples redirecciones y rompe el ciclo de recursión.
-  // AI_DECISION: Esperar a que AuthContext termine de inicializar antes de redirigir
-  // Justificación: Evita redirecciones prematuras cuando el middleware permite el acceso pero
-  // el AuthContext aún no ha terminado de verificar la sesión. Esto previene loops de redirección.
   useEffect(() => {
-    // Esperar a que la autenticación se inicialice antes de tomar decisiones
-    if (!initialized) {
-      return;
-    }
-
-    // Resetear flag cuando el componente se monta o cuando no hay sesión
+    if (!initialized) return;
     if (!user) {
       hasRedirectedRef.current = false;
       return;
     }
-
-    // Guard: evitar múltiples redirecciones
-    if (hasRedirectedRef.current) {
-      return;
-    }
+    if (hasRedirectedRef.current) return;
 
     if (user) {
       hasRedirectedRef.current = true;
@@ -91,19 +86,57 @@ function LoginPageContent() {
       setLoading(true);
       setError(null);
 
+      // Perform login (this now includes session verification)
       await login(identifier, password, rememberMe);
 
-      // Marcar que se hizo redirect para evitar que el useEffect lo haga de nuevo
+      // Wait for session to be established and user state to update (max 5 seconds)
+      const maxWaitTime = 5000;
+      const startTime = Date.now();
+      const checkInterval = 100; // Check every 100ms
+
+      const waitForSession = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          const checkSession = () => {
+            // Check if user is available and context is initialized
+            if (user && initialized) {
+              resolve();
+              return;
+            }
+
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= maxWaitTime) {
+              // If initialized but no user, session verification might have failed
+              if (initialized && !user) {
+                reject(
+                  new Error(
+                    'La sesión no se pudo verificar después del login. Por favor, intenta nuevamente.'
+                  )
+                );
+              } else {
+                reject(
+                  new Error('La sesión no se estableció a tiempo. Por favor, intenta nuevamente.')
+                );
+              }
+              return;
+            }
+
+            setTimeout(checkSession, checkInterval);
+          };
+
+          // Start checking immediately
+          checkSession();
+        });
+      };
+
+      // Wait for session confirmation
+      await waitForSession();
+
+      // Session confirmed, redirect
       hasRedirectedRef.current = true;
-
-      // Obtener URL de redirección desde query params
       const redirectTo = searchParams.get('redirect') || '/';
-
-      // Redirigir inmediatamente usando replace para evitar loops
-      router.replace(redirectTo);
+      router.push(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
-      // Si hay error, resetear el flag para permitir redirección futura
       hasRedirectedRef.current = false;
     } finally {
       setLoading(false);
@@ -111,78 +144,144 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      {/* Centered login panel */}
-      <div className="w-full max-w-sm">
-        <Card className="shadow-xl">
-          <CardHeader>
+    <div className="auth-page">
+      {/* Animated gradient overlay */}
+      <div className="auth-gradient-bg" aria-hidden="true" />
+
+      {/* Dot pattern overlay */}
+      <div className="auth-dot-pattern" aria-hidden="true" />
+
+      {/* Login card */}
+      <div
+        className={`
+          w-full max-w-md relative z-10
+          transition-all duration-700 ease-out
+          ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+        `}
+      >
+        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/95">
+          <CardHeader className="pb-2">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-xl mb-3">
-                <span className="text-2xl">🌵</span>
+              {/* Logo with animation - Purple gradient */}
+              <div
+                className={`
+                  inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4
+                  bg-primary shadow-lg shadow-primary/30
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'scale-100 rotate-0' : 'scale-50 -rotate-12'}
+                `}
+                style={{ transitionDelay: '200ms' }}
+              >
+                <span className="text-primary">
+                  <Feather className="w-10 h-10" strokeWidth={1.5} />
+                </span>
               </div>
-              <Heading level={1} className="text-primary">
-                CACTUS CRM
-              </Heading>
-              <Text color="secondary" className="mt-2">
-                Inicia sesión con tu email o usuario y contraseña
-              </Text>
+
+              {/* Title with stagger animation */}
+              <div
+                className={`
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                `}
+                style={{ transitionDelay: '300ms' }}
+              >
+                <Heading level={1} className="text-3xl tracking-tight">
+                  <span className="text-primary">Maat</span>
+                  <span className="text-secondary">Work</span>
+                </Heading>
+              </div>
+
+              <div
+                className={`
+                  transition-all duration-500 ease-out
+                  ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                `}
+                style={{ transitionDelay: '400ms' }}
+              >
+                <Text color="secondary" className="mt-2">
+                  Gestión profesional de clientes e inversiones
+                </Text>
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent>
-            {/* Form */}
+          <CardContent className="pt-6">
+            {/* Form with staggered animation */}
             <form onSubmit={handleSubmit}>
-              <Stack direction="column" gap="md">
-                {/* Identifier Input */}
-                <Input
-                  id="identifier"
-                  type="text"
-                  label="Email o usuario"
-                  value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    if (fieldErrors.identifier) {
-                      setFieldErrors((prev) => {
-                        const next = { ...prev };
-                        delete next.identifier;
-                        return next;
-                      });
-                    }
-                  }}
-                  placeholder="tu@email.com o tu_usuario"
-                  disabled={loading}
-                  required
-                  autoComplete="username"
-                  autoFocus
-                  error={fieldErrors.identifier ?? null}
-                />
+              <Stack direction="column" gap="lg">
+                {/* Email Input */}
+                <div
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '450ms' }}
+                >
+                  <Input
+                    id="identifier"
+                    type="text"
+                    label="Email o usuario"
+                    value={identifier}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value);
+                      if (fieldErrors.identifier) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.identifier;
+                          return next;
+                        });
+                      }
+                    }}
+                    placeholder="tu@email.com"
+                    disabled={loading}
+                    required
+                    autoComplete="username"
+                    autoFocus
+                    error={fieldErrors.identifier ?? null}
+                  />
+                </div>
 
                 {/* Password Input */}
-                <Input
-                  id="password"
-                  type="password"
-                  label="Contraseña"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (fieldErrors.password) {
-                      setFieldErrors((prev) => {
-                        const next = { ...prev };
-                        delete next.password;
-                        return next;
-                      });
-                    }
-                  }}
-                  placeholder="Tu contraseña"
-                  disabled={loading}
-                  required
-                  showPasswordToggle={true}
-                  autoComplete="current-password"
-                  error={fieldErrors.password ?? null}
-                />
+                <div
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '500ms' }}
+                >
+                  <Input
+                    id="password"
+                    type="password"
+                    label="Contraseña"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (fieldErrors.password) {
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.password;
+                          return next;
+                        });
+                      }
+                    }}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    required
+                    showPasswordToggle={true}
+                    autoComplete="current-password"
+                    error={fieldErrors.password ?? null}
+                  />
+                </div>
 
-                {/* Remember me */}
-                <div className="flex items-center justify-between text-sm">
+                {/* Remember me & Forgot password */}
+                <div
+                  className={`
+                    flex items-center justify-between text-sm
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '550ms' }}
+                >
                   <Checkbox
                     id="rememberMe"
                     checked={rememberMe}
@@ -191,47 +290,149 @@ function LoginPageContent() {
                   />
                   <Link
                     href="#"
-                    className="text-primary hover:text-primary-hover hover:underline transition-colors"
+                    className="text-primary hover:text-primary-hover hover:underline transition-colors font-medium"
                   >
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
 
-                {/* Error Alert */}
-                {error && (
-                  <Alert
-                    variant={error.includes('pendiente de aprobación') ? 'warning' : 'error'}
-                    title={error.includes('pendiente de aprobación') ? 'Cuenta pendiente' : 'Error'}
-                  >
-                    {error}
-                  </Alert>
+                {/* OAuth Error Alert */}
+                {oauthError === 'no_account' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="warning" title="Cuenta no encontrada">
+                      No tienes una cuenta con este email de Google. Por favor regístrate primero.
+                    </Alert>
+                  </div>
                 )}
 
-                {/* Submit Button */}
-                <Button type="submit" variant="primary" disabled={loading} className="w-full">
-                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-                </Button>
+                {/* Success Alert */}
+                {googleAuthSuccess === 'success' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="success" title="¡Bienvenido!">
+                      Has iniciado sesión exitosamente con Google.
+                    </Alert>
+                  </div>
+                )}
+
+                {/* Error Alert */}
+                {error && (
+                  <div className="animate-fade-in">
+                    <Alert
+                      variant={error.includes('pendiente de aprobación') ? 'warning' : 'error'}
+                      title={
+                        error.includes('pendiente de aprobación')
+                          ? 'Cuenta pendiente'
+                          : 'Error de autenticación'
+                      }
+                    >
+                      {error}
+                    </Alert>
+                  </div>
+                )}
+
+                {/* Submit Button - Purple primary */}
+                <div
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '600ms' }}
+                >
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={loading}
+                    className="w-full h-12 text-base font-semibold"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Spinner size="sm" variant="default" />
+                        Iniciando sesión...
+                      </span>
+                    ) : (
+                      'Iniciar Sesión'
+                    )}
+                  </Button>
+                </div>
+
+                {/* Divider */}
+                <div
+                  className={`
+                    relative transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '650ms' }}
+                >
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-text-muted">O continúa con</span>
+                  </div>
+                </div>
+
+                {/* Google OAuth Button */}
+                <div
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '700ms' }}
+                >
+                  <GoogleOAuthButton context="login" disabled={loading} />
+                </div>
               </Stack>
             </form>
 
-            {/* Secondary actions */}
-            <div className="mt-4 pt-4 border-t border-slate-200 text-center space-y-3">
-              <div>
-                <Link
-                  href="/register"
-                  className="text-sm text-text-secondary hover:text-primary hover:underline transition-colors"
-                >
-                  ¿No tienes cuenta? Regístrate aquí
-                </Link>
-              </div>
-              <div>
-                <Link href="/home" className="text-xs text-slate-500 hover:text-slate-700">
-                  ← Volver al inicio
-                </Link>
+            {/* Divider */}
+            <div
+              className={`
+                mt-8 pt-6 border-t border-border
+                transition-all duration-500 ease-out
+                ${mounted ? 'opacity-100' : 'opacity-0'}
+              `}
+              style={{ transitionDelay: '700ms' }}
+            >
+              {/* Register link */}
+              <div className="text-center space-y-4">
+                <div>
+                  <Text size="sm" color="secondary">
+                    ¿No tienes cuenta?{' '}
+                    <Link
+                      href="/register"
+                      className="text-primary hover:text-primary-hover font-semibold hover:underline transition-colors"
+                    >
+                      Regístrate aquí
+                    </Link>
+                  </Text>
+                </div>
+
+                <div>
+                  <Link
+                    href="/home"
+                    className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                  >
+                    ← Volver al inicio
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Footer text */}
+        <div
+          className={`
+            text-center mt-6 transition-all duration-500 ease-out
+            ${mounted ? 'opacity-100' : 'opacity-0'}
+          `}
+          style={{ transitionDelay: '800ms' }}
+        >
+          <Text size="xs" color="muted">
+            © 2024 <span className="text-primary">Maat</span>
+            <span className="text-secondary">Work</span>. Todos los derechos reservados.
+          </Text>
+        </div>
       </div>
     </div>
   );
@@ -241,8 +442,15 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <Spinner size="lg" />
+        <div className="auth-page">
+          <div className="auth-gradient-bg" aria-hidden="true" />
+          <div className="auth-dot-pattern" aria-hidden="true" />
+          <div className="text-center relative z-10">
+            <Spinner size="lg" variant="secondary" />
+            <Text color="secondary" className="mt-4">
+              Cargando...
+            </Text>
+          </div>
         </div>
       }
     >

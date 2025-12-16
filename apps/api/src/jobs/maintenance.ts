@@ -1,10 +1,10 @@
 /**
  * Database Maintenance Job
- * 
+ *
  * Performs periodic database maintenance tasks:
  * - Daily: VACUUM ANALYZE on high-write tables
  * - Weekly: REINDEX on fragmented indexes
- * 
+ *
  * AI_DECISION: Automated database maintenance for optimal performance
  * Justificación: Regular maintenance keeps statistics updated and reduces fragmentation
  * Impacto: Maintains query performance, prevents index bloat, keeps statistics accurate
@@ -18,7 +18,7 @@ const logger = pino({ name: 'db-maintenance' });
 
 /**
  * Tables that receive frequent writes and benefit from daily VACUUM ANALYZE
- * 
+ *
  * AI_DECISION: Expandir lista de tablas para incluir tablas de logs y particionadas
  * Justificación: Tablas de logs crecen rápidamente y necesitan mantenimiento regular
  * Impacto: Mejor performance en tablas grandes, estadísticas actualizadas
@@ -34,27 +34,27 @@ const HIGH_WRITE_TABLES = [
   'audit_logs',
   'message_log',
   'notifications',
-  'activity_events'
+  'activity_events',
 ];
 
 /**
  * Daily maintenance: VACUUM ANALYZE on high-write tables
- * 
+ *
  * Runs VACUUM ANALYZE on tables that receive frequent updates to:
  * - Update table statistics for query planner
  * - Reclaim space from deleted/updated rows
  * - Update index statistics
- * 
+ *
  * También crea particiones futuras para tablas particionadas.
  */
 export async function runDailyMaintenance(): Promise<void> {
   logger.info('🔧 Starting daily database maintenance (VACUUM ANALYZE)...');
-  
+
   try {
     // 1. VACUUM ANALYZE en tablas de alto write
     for (const tableName of HIGH_WRITE_TABLES) {
       logger.info({ table: tableName }, 'Running VACUUM ANALYZE');
-      
+
       try {
         // Verificar si la tabla existe antes de ejecutar VACUUM
         const tableExists = await db().execute(sql`
@@ -64,12 +64,12 @@ export async function runDailyMaintenance(): Promise<void> {
             AND table_name = ${tableName}
           )
         `);
-        
+
         if (!(tableExists.rows[0] as { exists: boolean }).exists) {
           logger.debug({ table: tableName }, 'Table does not exist, skipping');
           continue;
         }
-        
+
         // Use parameterized query to safely escape table name
         await db().execute(sql.raw(`VACUUM ANALYZE "${tableName}"`));
         logger.info({ table: tableName }, 'VACUUM ANALYZE completed');
@@ -78,10 +78,10 @@ export async function runDailyMaintenance(): Promise<void> {
         // Continue with other tables even if one fails
       }
     }
-    
+
     // 2. Crear particiones futuras para tablas particionadas
     await createFuturePartitions();
-    
+
     logger.info('✅ Daily database maintenance completed');
   } catch (error) {
     logger.error({ err: error }, 'Error in daily database maintenance');
@@ -91,7 +91,7 @@ export async function runDailyMaintenance(): Promise<void> {
 
 /**
  * Crear particiones futuras para tablas particionadas
- * 
+ *
  * Crea particiones para los próximos 3 meses para tablas que usan particionamiento
  */
 async function createFuturePartitions(): Promise<void> {
@@ -103,21 +103,21 @@ async function createFuturePartitions(): Promise<void> {
         WHERE proname = 'create_future_partitions'
       ) as exists
     `);
-    
+
     if (!(functionsExist.rows[0] as { exists: boolean }).exists) {
       logger.debug('Partitioning functions not available, skipping partition creation');
       return;
     }
-    
+
     // Tablas candidatas a particionamiento
     const partitionedTables = [
       { name: 'broker_transactions', strategy: 'monthly' },
       { name: 'broker_positions', strategy: 'monthly' },
       { name: 'activity_events', strategy: 'monthly' },
       { name: 'aum_snapshots', strategy: 'monthly' },
-      { name: 'audit_logs', strategy: 'monthly' }
+      { name: 'audit_logs', strategy: 'monthly' },
     ];
-    
+
     for (const table of partitionedTables) {
       try {
         // Verificar si la tabla está particionada
@@ -130,16 +130,16 @@ async function createFuturePartitions(): Promise<void> {
               AND c.relkind = 'p'
           ) as is_partitioned
         `);
-        
+
         if (!(isPartitioned.rows[0] as { is_partitioned: boolean }).is_partitioned) {
           logger.debug({ table: table.name }, 'Table is not partitioned, skipping');
           continue;
         }
-        
+
         // Crear particiones futuras (3 meses adelante)
-        await db().execute(sql.raw(
-          `SELECT create_future_partitions('${table.name}', 3, '${table.strategy}')`
-        ));
+        await db().execute(
+          sql.raw(`SELECT create_future_partitions('${table.name}', 3, '${table.strategy}')`)
+        );
         logger.info({ table: table.name }, 'Future partitions created');
       } catch (error) {
         logger.error({ err: error, table: table.name }, 'Error creating future partitions');
@@ -154,17 +154,17 @@ async function createFuturePartitions(): Promise<void> {
 
 /**
  * Weekly maintenance: REINDEX on fragmented indexes
- * 
+ *
  * Identifies indexes with high fragmentation and rebuilds them.
  * Uses pg_stat_user_indexes and pg_class to find indexes that need reindexing.
- * 
+ *
  * AI_DECISION: Mejorar detección de índices fragmentados
  * Justificación: Detección anterior era muy básica, ahora incluye análisis de tamaño
  * Impacto: Mejor identificación de índices que realmente necesitan reindex
  */
 export async function runWeeklyMaintenance(): Promise<void> {
   logger.info('🔧 Starting weekly database maintenance (REINDEX)...');
-  
+
   try {
     // Encontrar índices con alta fragmentación usando múltiples criterios:
     // 1. Índices no usados pero con muchas tuplas leídas
@@ -203,25 +203,28 @@ export async function runWeeklyMaintenance(): Promise<void> {
       ORDER BY pg_relation_size(i.indexrelid) DESC
       LIMIT 20
     `);
-    
+
     if (fragmentedIndexes.rows.length === 0) {
       logger.info('No fragmented indexes found');
       return;
     }
-    
+
     logger.info({ count: fragmentedIndexes.rows.length }, 'Found fragmented indexes');
-    
+
     for (const index of fragmentedIndexes.rows) {
       const indexName = (index as { indexname: string }).indexname;
       const indexSize = (index as { index_size: string }).index_size;
       const tableName = (index as { tablename: string }).tablename;
-      
-      logger.info({ 
-        index: indexName, 
-        table: tableName,
-        size: indexSize 
-      }, 'Rebuilding index');
-      
+
+      logger.info(
+        {
+          index: indexName,
+          table: tableName,
+          size: indexSize,
+        },
+        'Rebuilding index'
+      );
+
       try {
         // Verificar si el índice existe antes de reindexar
         const indexExists = await db().execute(sql`
@@ -231,12 +234,12 @@ export async function runWeeklyMaintenance(): Promise<void> {
             AND indexname = ${indexName}
           ) as exists
         `);
-        
+
         if (!(indexExists.rows[0] as { exists: boolean }).exists) {
           logger.debug({ index: indexName }, 'Index does not exist, skipping');
           continue;
         }
-        
+
         // Use REINDEX CONCURRENTLY para no bloquear la tabla
         // Nota: CONCURRENTLY requiere que el índice no sea único
         // Si falla, intentar sin CONCURRENTLY
@@ -245,11 +248,14 @@ export async function runWeeklyMaintenance(): Promise<void> {
           logger.info({ index: indexName }, 'Index rebuilt successfully (concurrent)');
         } catch (concurrentError) {
           // Si falla CONCURRENTLY (puede ser índice único), intentar sin CONCURRENTLY
-          logger.warn({ 
-            index: indexName, 
-            err: concurrentError 
-          }, 'Concurrent reindex failed, trying non-concurrent');
-          
+          logger.warn(
+            {
+              index: indexName,
+              err: concurrentError,
+            },
+            'Concurrent reindex failed, trying non-concurrent'
+          );
+
           await db().execute(sql.raw(`REINDEX INDEX "${indexName}"`));
           logger.info({ index: indexName }, 'Index rebuilt successfully (non-concurrent)');
         }
@@ -258,7 +264,7 @@ export async function runWeeklyMaintenance(): Promise<void> {
         // Continue with other indexes even if one fails
       }
     }
-    
+
     logger.info('✅ Weekly database maintenance completed');
   } catch (error) {
     logger.error({ err: error }, 'Error in weekly database maintenance');
@@ -268,7 +274,7 @@ export async function runWeeklyMaintenance(): Promise<void> {
 
 /**
  * Get database maintenance statistics
- * 
+ *
  * Returns information about tables that may need maintenance
  */
 export async function getMaintenanceStats(): Promise<{
@@ -303,7 +309,7 @@ export async function getMaintenanceStats(): Promise<{
     ORDER BY n_dead_tup DESC
     LIMIT 20
   `);
-  
+
   const indexesStats = await db().execute(sql`
     SELECT 
       schemaname,
@@ -318,7 +324,7 @@ export async function getMaintenanceStats(): Promise<{
     ORDER BY idx_tup_read DESC
     LIMIT 20
   `);
-  
+
   return {
     tablesNeedingVacuum: tablesStats.rows as Array<{
       schemaname: string;
@@ -334,7 +340,6 @@ export async function getMaintenanceStats(): Promise<{
       indexname: string;
       idx_scan: number;
       idx_tup_read: number;
-    }>
+    }>,
   };
 }
-

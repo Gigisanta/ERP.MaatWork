@@ -11,7 +11,7 @@ import type { PipelineStage } from '@/types/pipeline';
 describe('csv-export', () => {
   const mockStages: PipelineStage[] = [
     { id: 'stage-1', name: 'Prospecto', order: 1, userId: 'user-1' },
-    { id: 'stage-2', name: 'Reunión', order: 2, userId: 'user-1' }
+    { id: 'stage-2', name: 'Reunión', order: 2, userId: 'user-1' },
   ];
 
   const mockContact: Contact = {
@@ -29,12 +29,12 @@ describe('csv-export', () => {
     contactLastTouchAt: '2024-01-15T00:00:00Z',
     customFields: {
       whatsapp: '987654321',
-      phoneSecondary: '555555555'
+      phoneSecondary: '555555555',
     },
     tags: [
       { id: 'tag-1', name: 'VIP' },
-      { id: 'tag-2', name: 'Hot Lead' }
-    ]
+      { id: 'tag-2', name: 'Hot Lead' },
+    ],
   };
 
   beforeEach(() => {
@@ -51,7 +51,7 @@ describe('csv-export', () => {
   describe('exportContactsToCSV', () => {
     it('debería exportar contactos a CSV', () => {
       const csv = exportContactsToCSV([mockContact], mockStages);
-      
+
       expect(csv).toContain('Nombre Completo');
       expect(csv).toContain('John Doe');
       expect(csv).toContain('john@example.com');
@@ -62,12 +62,12 @@ describe('csv-export', () => {
 
     it('debería incluir BOM UTF-8 al inicio', () => {
       const csv = exportContactsToCSV([mockContact], mockStages);
-      expect(csv.charCodeAt(0)).toBe(0xFEFF);
+      expect(csv.charCodeAt(0)).toBe(0xfeff);
     });
 
     it('debería exportar CSV vacío con headers si no hay contactos', () => {
       const csv = exportContactsToCSV([], mockStages);
-      
+
       expect(csv).toContain('Nombre Completo');
       expect(csv).toContain('Email');
       expect(csv).not.toContain('John Doe');
@@ -78,9 +78,9 @@ describe('csv-export', () => {
         ...mockContact,
         email: null,
         phone: null,
-        customFields: {}
+        customFields: {},
       };
-      
+
       const csv = exportContactsToCSV([contactWithoutContact], mockStages);
       expect(csv).toContain('John Doe');
     });
@@ -88,9 +88,9 @@ describe('csv-export', () => {
     it('debería escapar valores con comillas en CSV', () => {
       const contactWithQuotes: Contact = {
         ...mockContact,
-        notes: 'Test "quoted" notes'
+        notes: 'Test "quoted" notes',
       };
-      
+
       const csv = exportContactsToCSV([contactWithQuotes], mockStages);
       expect(csv).toContain('"Test ""quoted"" notes"');
     });
@@ -98,9 +98,9 @@ describe('csv-export', () => {
     it('debería escapar valores con comas en CSV', () => {
       const contactWithComma: Contact = {
         ...mockContact,
-        notes: 'Test, notes with comma'
+        notes: 'Test, notes with comma',
       };
-      
+
       const csv = exportContactsToCSV([contactWithComma], mockStages);
       expect(csv).toContain('"Test, notes with comma"');
     });
@@ -110,16 +110,16 @@ describe('csv-export', () => {
         ...mockContact,
         id: 'contact-complete',
         email: 'complete@example.com',
-        phone: '111111111'
+        phone: '111111111',
       };
-      
+
       const incompleteContact: Contact = {
         ...mockContact,
         id: 'contact-incomplete',
         email: null,
-        phone: null
+        phone: null,
       };
-      
+
       const csv = exportContactsToCSV([incompleteContact, completeContact], mockStages);
       const lines = csv.split('\n');
       // El contacto completo debería aparecer primero
@@ -130,9 +130,9 @@ describe('csv-export', () => {
     it('debería manejar contactos sin pipelineStageId', () => {
       const contactWithoutStage: Contact = {
         ...mockContact,
-        pipelineStageId: null
+        pipelineStageId: null,
       };
-      
+
       const csv = exportContactsToCSV([contactWithoutStage], mockStages);
       expect(csv).toContain('John Doe');
     });
@@ -140,9 +140,9 @@ describe('csv-export', () => {
     it('debería manejar contactos sin tags', () => {
       const contactWithoutTags: Contact = {
         ...mockContact,
-        tags: []
+        tags: [],
       };
-      
+
       const csv = exportContactsToCSV([contactWithoutTags], mockStages);
       expect(csv).toContain('John Doe');
     });
@@ -159,17 +159,17 @@ describe('csv-export', () => {
       // Mock DOM APIs
       global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
       global.URL.revokeObjectURL = vi.fn();
-      
+
       // Mock document.createElement
       const mockLink = {
         setAttribute: vi.fn(),
         style: {},
-        click: vi.fn()
+        click: vi.fn(),
       };
       vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
       vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as any);
       vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as any);
-      
+
       // Mock setTimeout
       vi.useFakeTimers();
     });
@@ -180,9 +180,9 @@ describe('csv-export', () => {
 
     it('debería descargar CSV con nombre de archivo', () => {
       const csv = exportContactsToCSV([mockContact], mockStages);
-      
+
       downloadCSV(csv, 'test-contacts');
-      
+
       expect(document.createElement).toHaveBeenCalledWith('a');
       expect(global.URL.createObjectURL).toHaveBeenCalled();
     });
@@ -195,23 +195,22 @@ describe('csv-export', () => {
 
     it('debería mostrar warning si solo hay headers', () => {
       const csvOnlyHeaders = '\uFEFFNombre Completo,Email\n';
-      
+
       downloadCSV(csvOnlyHeaders, 'test');
-      
+
       expect(console.warn).toHaveBeenCalled();
     });
 
     it('debería limpiar URL después de descargar', () => {
       const csv = exportContactsToCSV([mockContact], mockStages);
-      
+
       downloadCSV(csv, 'test-contacts');
-      
+
       act(() => {
         vi.advanceTimersByTime(100);
       });
-      
+
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
     });
   });
 });
-

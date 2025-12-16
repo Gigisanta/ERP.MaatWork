@@ -8,6 +8,8 @@ import type { TimestampedEntity, UpdateRequest } from './common';
  * Tarea base - extiende TimestampedEntity
  */
 export interface Task extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
+  createdAt: string | Date; // Explicitly include createdAt from TimestampedEntity for TypeScript resolution
   contactId: string;
   title: string;
   description?: string | null;

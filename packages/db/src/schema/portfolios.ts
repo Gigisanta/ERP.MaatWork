@@ -139,3 +139,39 @@ export const portfolioMonitoringDetails = pgTable('portfolio_monitoring_details'
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

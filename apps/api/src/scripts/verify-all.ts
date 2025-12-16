@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * Script maestro de verificación
- * 
+ *
  * Ejecuta todas las verificaciones del sistema en secuencia y genera un reporte consolidado.
- * 
+ *
  * Uso: pnpm -F @cactus/api verify-all
  */
 
@@ -27,16 +27,18 @@ const VERIFICATIONS = [
   {
     name: 'AUM Import',
     command: 'pnpm -F @cactus/api verify-aum-import',
-    description: 'Verifica que las importaciones AUM se hayan cargado correctamente'
+    description: 'Verifica que las importaciones AUM se hayan cargado correctamente',
   },
   {
     name: 'Contacts Assignment',
     command: 'pnpm -F @cactus/api verify-contacts-assignment',
-    description: 'Verifica que todos los contactos estén correctamente asignados'
-  }
+    description: 'Verifica que todos los contactos estén correctamente asignados',
+  },
 ];
 
-async function runVerification(verification: typeof VERIFICATIONS[0]): Promise<VerificationResult> {
+async function runVerification(
+  verification: (typeof VERIFICATIONS)[0]
+): Promise<VerificationResult> {
   console.log(`\n${'='.repeat(80)}`);
   console.log(`Ejecutando: ${verification.name}`);
   console.log(`${'='.repeat(80)}`);
@@ -46,7 +48,7 @@ async function runVerification(verification: typeof VERIFICATIONS[0]): Promise<V
     const output = execSync(verification.command, {
       encoding: 'utf-8',
       stdio: 'pipe',
-      cwd: join(projectRoot, 'apps', 'api')
+      cwd: join(projectRoot, 'apps', 'api'),
     });
 
     const exitCode = 0; // execSync no lanza error si exit code es 0
@@ -54,25 +56,29 @@ async function runVerification(verification: typeof VERIFICATIONS[0]): Promise<V
       name: verification.name,
       success: exitCode === 0,
       exitCode,
-      output
+      output,
     };
   } catch (error: unknown) {
-    const execError = error as { status?: number; stdout?: Buffer | string; stderr?: Buffer | string };
+    const execError = error as {
+      status?: number;
+      stdout?: Buffer | string;
+      stderr?: Buffer | string;
+    };
     const exitCode = execError.status || 1;
     const output = execError.stdout?.toString() || '';
     const stderr = execError.stderr?.toString() || '';
-    
+
     const result: VerificationResult = {
       name: verification.name,
       success: false,
       exitCode,
-      output: output + (stderr ? `\nSTDERR:\n${stderr}` : '')
+      output: output + (stderr ? `\nSTDERR:\n${stderr}` : ''),
     };
-    
+
     if (stderr) {
       result.errors = [stderr];
     }
-    
+
     return result;
   }
 }
@@ -82,8 +88,8 @@ function printConsolidatedReport(results: VerificationResult[]): void {
   console.log('REPORTE CONSOLIDADO DE VERIFICACIONES');
   console.log('='.repeat(80));
 
-  const successful = results.filter(r => r.success);
-  const failed = results.filter(r => !r.success);
+  const successful = results.filter((r) => r.success);
+  const failed = results.filter((r) => !r.success);
 
   console.log('\n📊 RESUMEN:');
   console.log(`   Total verificaciones: ${results.length}`);
@@ -92,14 +98,14 @@ function printConsolidatedReport(results: VerificationResult[]): void {
 
   if (successful.length > 0) {
     console.log('\n✅ VERIFICACIONES EXITOSAS:');
-    successful.forEach(r => {
+    successful.forEach((r) => {
       console.log(`   - ${r.name}`);
     });
   }
 
   if (failed.length > 0) {
     console.log('\n❌ VERIFICACIONES FALLIDAS:');
-    failed.forEach(r => {
+    failed.forEach((r) => {
       console.log(`   - ${r.name} (exit code: ${r.exitCode})`);
       if (r.errors && r.errors.length > 0) {
         console.log(`     Errores: ${r.errors.join(', ')}`);
@@ -133,7 +139,7 @@ async function main() {
   for (const verification of VERIFICATIONS) {
     const result = await runVerification(verification);
     results.push(result);
-    
+
     // Mostrar output de cada verificación
     if (result.output) {
       console.log(result.output);
@@ -152,13 +158,3 @@ main().catch((error) => {
   }
   process.exit(1);
 });
-
-
-
-
-
-
-
-
-
-

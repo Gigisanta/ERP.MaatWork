@@ -1,48 +1,34 @@
-"use client";
+'use client';
 /**
  * Contacts Page
- * 
- * Main contacts listing with table/kanban views, filters, and inline editing.
+ *
+ * Main contacts listing with table view, filters, and inline editing.
  * REFACTORED: Logic extracted to hooks (useContactsFilters, useTagManagement, useContactActions)
- * and components (ContactsToolbar, ContactKanbanView, TagManagementModal, DeleteContactModal)
+ * and components (ContactsToolbar, TagManagementModal, DeleteContactModal)
+ *
+ * AI_DECISION: Eliminada vista kanban local, agregado botón a /pipeline
+ * Justificación: Había dos vistas kanban (local en /contacts y /pipeline), causando confusión.
+ *                /pipeline es la vista kanban real con drag & drop optimizada.
+ * Impacto: Navegación más clara: /contacts = tabla, /pipeline = kanban.
+ *          Eliminado estado viewMode de useContactsFilters, código más simple.
  */
 
-import React, { useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import { deleteTag } from '@/lib/api';
-import type { Contact, PipelineStage, Tag } from '@/types';
+import type { Contact, PipelineStage, Tag, Advisor } from '@/types';
 import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
 import ContactsToolbar from './components/ContactsToolbar';
-import ContactKanbanView from './components/ContactKanbanView';
 import DeleteContactModal from './components/DeleteContactModal';
 import TagManagementModal from './components/TagManagementModal';
+import InteractionCounter from './components/InteractionCounter';
 import dynamic from 'next/dynamic';
-
-// Hooks
-import { useContactsFilters, filterContacts, useTagManagement, useContactActions } from './hooks';
-
-// Lazy load DataTable
-const DataTable = dynamic(() => import('@cactus/ui').then(mod => ({ default: mod.DataTable })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <Spinner size="md" />
-    </div>
-  )
-});
-
-// Lazy load ConfirmDialog
-const ConfirmDialog = dynamic(() => import('../components/ConfirmDialog'), {
-  ssr: false
-});
-
-import { useSearchShortcut, useEscapeShortcut } from '../../lib/hooks/useKeyboardShortcuts';
 import {
   Card,
   CardHeader,
@@ -57,12 +43,48 @@ import {
   Alert,
   Spinner,
   Icon,
+  ProgressBar,
+  Modal,
+  ModalContent,
   type Column,
 } from '@cactus/ui';
+import { useSearchShortcut, useEscapeShortcut } from '../../lib/hooks/useKeyboardShortcuts';
+
+// Hooks
+import { useContactsFilters, filterContacts, useTagManagement, useContactActions } from './hooks';
+
+// Lazy load DataTable
+const DataTable = dynamic(() => import('@cactus/ui').then((mod) => ({ default: mod.DataTable })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center p-8">
+      <Spinner size="md" />
+    </div>
+  ),
+});
+
+// Lazy load ConfirmDialog
+const ConfirmDialog = dynamic(() => import('../components/ConfirmDialog'), {
+  ssr: false,
+});
 import { useViewport } from '../(shared)/useViewport';
 import { useToast } from '../../lib/hooks/useToast';
 import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
 import { logger } from '../../lib/logger';
+
+// Helper to format relative time
+const formatTimeAgo = (dateString?: string | null) => {
+  if (!dateString) return 'Sin interacción';
+  const date = new Date(dateString);
+  const now = new Date();
+  // Use floor to count full days passed, or just use strict day difference
+  const diffTime = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 1) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+  return `Hace ${diffDays} días`;
+};
 
 export default function ContactsPage() {
   const { isMd } = useViewport();
@@ -70,23 +92,44 @@ export default function ContactsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Set page title in header
   usePageTitle('Contactos');
-  
+
+  // Page transition animation state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Data fetching with SWR
-  const { contacts, error: contactsError, isLoading: contactsLoading, mutate: mutateContacts } = useContacts(searchParams.get('advisorId') || undefined);
-  const { stages: pipelineStages, error: stagesError, isLoading: stagesLoading } = usePipelineStages();
+  const {
+    contacts,
+    error: contactsError,
+    isLoading: contactsLoading,
+    mutate: mutateContacts,
+  } = useContacts(searchParams.get('advisorId') || undefined);
+  const {
+    stages: pipelineStages,
+    error: stagesError,
+    isLoading: stagesLoading,
+  } = usePipelineStages();
   const { advisors, error: advisorsError, isLoading: advisorsLoading } = useAdvisors();
-  const { tags: allTags, error: tagsError, isLoading: tagsLoading, mutate: mutateTags } = useTags('contact');
-  
+  const {
+    tags: allTags,
+    error: tagsError,
+    isLoading: tagsLoading,
+    mutate: mutateTags,
+  } = useTags('contact');
+
   // Custom hooks for state management
-  const filters = useContactsFilters({ advisors: advisors as any });
+  const filters = useContactsFilters({ advisors: advisors as Advisor[] });
   const tagManagement = useTagManagement({ mutateTags, mutateContacts });
   const contactActions = useContactActions({ mutateContacts, allTags: allTags as Tag[] });
-  
+
   const { showToast } = useToast();
-  
+
   // Keyboard shortcuts
   useSearchShortcut(searchInputRef as React.RefObject<HTMLInputElement>, true);
   useEscapeShortcut(() => {
@@ -105,7 +148,7 @@ export default function ContactsPage() {
       void mutateContacts(undefined, { revalidate: true });
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete('refresh');
-      const newUrl = newSearchParams.toString() 
+      const newUrl = newSearchParams.toString()
         ? `/contacts?${newSearchParams.toString()}`
         : '/contacts';
       router.replace(newUrl);
@@ -113,8 +156,14 @@ export default function ContactsPage() {
   }, [searchParams, mutateContacts, router]);
 
   // Filtered contacts
-  const filteredContacts = useMemo(() => 
-    filterContacts(contacts as Contact[], filters.debouncedSearchTerm, filters.selectedStage, filters.selectedTags),
+  const filteredContacts = useMemo(
+    () =>
+      filterContacts(
+        contacts as Contact[],
+        filters.debouncedSearchTerm,
+        filters.selectedStage,
+        filters.selectedTags
+      ),
     [contacts, filters.debouncedSearchTerm, filters.selectedStage, filters.selectedTags]
   );
 
@@ -128,128 +177,282 @@ export default function ContactsPage() {
   }>({
     open: false,
     title: '',
-    onConfirm: () => {}
+    onConfirm: () => {},
   });
 
-  const handleDeleteTag = useCallback((tagId: string) => {
-    setConfirmDialog({
-      open: true,
-      title: 'Eliminar etiqueta',
-      description: '¿Estás seguro de eliminar esta etiqueta?',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          await deleteTag(tagId);
-          mutateTags();
-          showToast('Etiqueta eliminada', undefined, 'success');
-          mutateContacts();
-        } catch (err) {
-          showToast('Error al eliminar etiqueta', err instanceof Error ? err.message : 'Error desconocido', 'error');
-        }
-      }
-    });
-  }, [mutateTags, mutateContacts, showToast]);
+  // AI_DECISION: Estado para mostrar progreso durante exportaciรณn CSV
+  // Justificaciรณn: Proporciona feedback visual durante exportaciones de muchos contactos
+  // Impacto: Mejor UX, usuario sabe que la exportaciรณn estรก en progreso
+  const [exportState, setExportState] = React.useState<{
+    isExporting: boolean;
+    progress: number;
+    status: string;
+  }>({
+    isExporting: false,
+    progress: 0,
+    status: '',
+  });
 
-  // CSV export handler
-  const handleExportCSV = useCallback(() => {
+  const handleDeleteTag = useCallback(
+    (tagId: string) => {
+      setConfirmDialog({
+        open: true,
+        title: 'Eliminar etiqueta',
+        description: 'ยฟEstรกs seguro de eliminar esta etiqueta?',
+        variant: 'danger',
+        onConfirm: async () => {
+          try {
+            await deleteTag(tagId);
+            mutateTags();
+            showToast('Etiqueta eliminada', undefined, 'success');
+            mutateContacts();
+          } catch (err) {
+            showToast(
+              'Error al eliminar etiqueta',
+              err instanceof Error ? err.message : 'Error desconocido',
+              'error'
+            );
+          }
+        },
+      });
+    },
+    [mutateTags, mutateContacts, showToast]
+  );
+
+  // CSV export handler with progress indication
+  const handleExportCSV = useCallback(async () => {
     try {
       if (!filteredContacts || filteredContacts.length === 0) {
-        showToast('No hay contactos para exportar', 'No hay contactos filtrados disponibles', 'warning');
+        showToast(
+          'No hay contactos para exportar',
+          'No hay contactos filtrados disponibles',
+          'warning'
+        );
         return;
       }
+
+      // Show progress for large exports
+      const isLargeExport = filteredContacts.length > 100;
+      if (isLargeExport) {
+        setExportState({
+          isExporting: true,
+          progress: 0,
+          status: 'Preparando exportaciรณn...',
+        });
+      }
+
       const stages = Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : [];
+
+      // Simulate progress for UX (actual export is synchronous)
+      if (isLargeExport) {
+        setExportState((prev) => ({ ...prev, progress: 30, status: 'Generando CSV...' }));
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
       const csvContent = exportContactsToCSV(filteredContacts, stages);
+
+      if (isLargeExport) {
+        setExportState((prev) => ({ ...prev, progress: 70, status: 'Preparando descarga...' }));
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
       downloadCSV(csvContent, `contactos_${dateStr}_${timeStr}`);
-      showToast('Exportación exitosa', `Se exportaron ${filteredContacts.length} contactos`, 'success');
+
+      if (isLargeExport) {
+        setExportState((prev) => ({ ...prev, progress: 100, status: 'ยกCompletado!' }));
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        setExportState({ isExporting: false, progress: 0, status: '' });
+      }
+
+      showToast(
+        'Exportaciรณn exitosa',
+        `Se exportaron ${filteredContacts.length} contactos`,
+        'success'
+      );
     } catch (err) {
-      logger.error('Error al exportar CSV', { error: err instanceof Error ? err.message : String(err) });
-      showToast('Error al exportar', err instanceof Error ? err.message : 'Error desconocido', 'error');
+      setExportState({ isExporting: false, progress: 0, status: '' });
+      logger.error('Error al exportar CSV', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      showToast(
+        'Error al exportar',
+        err instanceof Error ? err.message : 'Error desconocido',
+        'error'
+      );
     }
   }, [filteredContacts, pipelineStages, showToast]);
 
+  // Helper function to get row style based on last interaction (Gradient)
+  const getRowStyle = useCallback(
+    (contact: Contact): React.CSSProperties => {
+      // Find the stage name
+      const stage = Array.isArray(pipelineStages)
+        ? (pipelineStages as PipelineStage[]).find((s) => s.id === contact.pipelineStageId)
+        : null;
+
+      // Always green for "Cliente" stage
+      if (stage?.name.toLowerCase() === 'cliente') {
+        return {
+          backgroundColor: 'hsl(var(--row-client-bg))',
+          borderLeft: '4px solid hsl(var(--row-client-border))',
+        };
+      }
+
+      if (!contact.contactLastTouchAt) {
+        return {
+          backgroundColor: 'hsl(var(--row-no-interaction-bg))',
+          borderLeft: '4px solid hsl(var(--row-no-interaction-border))',
+        };
+      }
+
+      const lastTouch = new Date(contact.contactLastTouchAt);
+      const now = new Date();
+      const daysSinceTouch = Math.max(
+        0,
+        Math.floor((now.getTime() - lastTouch.getTime()) / (1000 * 60 * 60 * 24))
+      );
+
+      // Gradient Logic:
+      // 0 days -> 120 (Green)
+      // 7 days -> 60 (Yellow)
+      // 14+ days -> 0 (Red)
+      const maxDays = 14;
+      // Calculate hue: start at 120, decrease by (120/14) per day
+      const hue = Math.max(0, 120 - (daysSinceTouch / maxDays) * 120);
+
+      return {
+        '--row-hue': hue,
+        backgroundColor: 'hsl(var(--row-hue) var(--row-dynamic-sat) var(--row-dynamic-light))',
+        borderLeft:
+          '4px solid hsl(var(--row-hue) var(--row-dynamic-border-sat) var(--row-dynamic-border-light))',
+      } as React.CSSProperties;
+    },
+    [pipelineStages]
+  );
+
   // Column definitions
-  const columns: Column<Contact>[] = useMemo(() => [
-    {
-      key: 'fullName',
-      header: 'Nombre',
-      sortable: true,
-      render: (contact) => (
-        <Link href={`/contacts/${contact.id}`} className="block hover:opacity-80 transition-opacity">
-          <Text weight="medium" className="text-primary cursor-pointer">{contact.fullName}</Text>
-          {contact.email && <Text size="sm" color="secondary">{contact.email}</Text>}
-        </Link>
-      )
-    },
-    {
-      key: 'pipelineStageId',
-      header: 'Etapa',
-      render: (contact) => (
-        <InlineStageSelect
-          contact={contact}
-          pipelineStages={Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []}
-          isSaving={contactActions.savingContactId === contact.id}
-          onStageChange={contactActions.handleStageChange}
-          onMutate={mutateContacts}
-          onError={(error: Error) => showToast('Error al avanzar etapa', error.message, 'error')}
-        />
-      )
-    },
-    {
-      key: 'tags',
-      header: 'Etiquetas',
-      render: (contact) => (
-        <InlineTagsEditor
-          contact={contact}
-          allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
-          isSaving={contactActions.savingContactId === contact.id}
-          onTagsChange={contactActions.handleTagsChange}
-          onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-        />
-      )
-    },
-    {
-      key: 'nextStep',
-      header: 'Próximo Paso',
-      render: (contact) => (
-        <InlineTextInput
-          contact={contact}
-          field="nextStep"
-          placeholder="Agregar próximo paso..."
-          isSaving={contactActions.savingContactId === contact.id}
-          onSave={contactActions.handleTextInputSave}
-        />
-      )
-    },
-    {
-      key: 'actions',
-      header: 'Acciones',
-      render: (contact) => (
-        <DropdownMenu
-          trigger={<Button variant="ghost" size="sm"><Icon name="more-vertical" size={16} /></Button>}
-        >
-          <DropdownMenuItem onClick={() => router.push(`/contacts/${contact.id}`)}>
-            <Icon name="edit" size={16} className="mr-2" />Editar
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {
-            contactActions.setContactToDelete(contact);
-            contactActions.setShowDeleteModal(true);
-          }}>
-            <Icon name="trash-2" size={16} className="mr-2" />Eliminar
-          </DropdownMenuItem>
-        </DropdownMenu>
-      )
-    }
-  ], [pipelineStages, allTags, contactActions, tagManagement, router, mutateContacts, showToast]) as Column<Contact>[];
+  const columns: Column<Contact>[] = useMemo(
+    () => [
+      {
+        key: 'fullName',
+        header: 'Nombre',
+        sortable: true,
+        render: (contact) => (
+          <Link
+            href={`/contacts/${contact.id}`}
+            className="block hover:opacity-80 transition-opacity"
+          >
+            <Text weight="medium" className="text-primary cursor-pointer">
+              {contact.fullName}
+            </Text>
+            {contact.email && (
+              <Text size="sm" color="secondary">
+                {contact.email}
+              </Text>
+            )}
+          </Link>
+        ),
+      },
+      {
+        key: 'pipelineStageId',
+        header: 'Etapa',
+        render: (contact) => (
+          <InlineStageSelect
+            contact={contact}
+            pipelineStages={
+              Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
+            }
+            isSaving={contactActions.savingContactId === contact.id}
+            onStageChange={contactActions.handleStageChange}
+            onMutate={mutateContacts}
+            onError={(error: Error) => showToast('Error al avanzar etapa', error.message, 'error')}
+          />
+        ),
+      },
+      {
+        key: 'tags',
+        header: 'Etiquetas',
+        render: (contact) => (
+          <InlineTagsEditor
+            contact={contact}
+            allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+            isSaving={contactActions.savingContactId === contact.id}
+            onTagsChange={contactActions.handleTagsChange}
+            onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
+          />
+        ),
+      },
+      {
+        key: 'nextStep',
+        header: 'Prรณximo Paso',
+        render: (contact) => (
+          <InlineTextInput
+            contact={contact}
+            field="nextStep"
+            placeholder="Agregar prรณximo paso..."
+            isSaving={contactActions.savingContactId === contact.id}
+            onSave={contactActions.handleTextInputSave}
+          />
+        ),
+      },
+      {
+        key: 'interactionCount',
+        header: 'Interacciones',
+        render: (contact) => (
+          <div className="flex flex-col gap-1">
+            <InteractionCounter
+              contact={contact}
+              onUpdate={mutateContacts}
+              onError={(error) =>
+                showToast('Error al actualizar interacción', error.message, 'error')
+              }
+            />
+            <Text size="xs" color="secondary" className="whitespace-nowrap">
+              {formatTimeAgo(contact.contactLastTouchAt)}
+            </Text>
+          </div>
+        ),
+      },
+      {
+        key: 'actions',
+        header: 'Acciones',
+        render: (contact) => (
+          <DropdownMenu
+            trigger={
+              <Button variant="ghost" size="sm">
+                <Icon name="more-vertical" size={16} />
+              </Button>
+            }
+          >
+            <DropdownMenuItem onClick={() => router.push(`/contacts/${contact.id}`)}>
+              <Icon name="edit" size={16} className="mr-2" />
+              Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                contactActions.setContactToDelete(contact);
+                contactActions.setShowDeleteModal(true);
+              }}
+            >
+              <Icon name="trash-2" size={16} className="mr-2" />
+              Eliminar
+            </DropdownMenuItem>
+          </DropdownMenu>
+        ),
+      },
+    ],
+    [pipelineStages, allTags, contactActions, tagManagement, router, mutateContacts, showToast]
+  ) as Column<Contact>[];
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Stack direction="column" gap="md" align="center">
           <Spinner size="lg" />
-          <Text color="secondary">Verificando autenticación...</Text>
+          <Text color="secondary">Verificando autenticaciรณn...</Text>
         </Stack>
       </div>
     );
@@ -266,10 +469,18 @@ export default function ContactsPage() {
     );
   }
 
-  const hasActiveFilters = filters.selectedStage !== 'all' || filters.selectedTags.length > 0 || !!filters.searchTerm || !!filters.advisorIdFilter;
+  const hasActiveFilters =
+    filters.selectedStage !== 'all' ||
+    filters.selectedTags.length > 0 ||
+    !!filters.searchTerm ||
+    !!filters.advisorIdFilter;
 
   return (
-    <div className="p-3 md:p-4">
+    <div
+      className={`p-3 md:p-4 transition-all duration-500 ease-out ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       <Stack direction="column" gap="md">
         {combinedError && (
           <Alert variant="error" title="Error">
@@ -278,28 +489,40 @@ export default function ContactsPage() {
         )}
 
         {/* Toolbar */}
-        <ContactsToolbar
-          searchInputRef={searchInputRef}
-          searchTerm={filters.searchTerm}
-          onSearchChange={filters.setSearchTerm}
-          selectedStage={filters.selectedStage}
-          selectedTags={filters.selectedTags}
-          pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
-          allTags={Array.isArray(allTags) ? allTags as Tag[] : []}
-          onStageChange={filters.setSelectedStage}
-          onTagToggle={filters.handleTagToggle}
-          onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-          viewMode={filters.viewMode}
-          onViewModeChange={filters.setViewMode}
-          advisorIdFilter={filters.advisorIdFilter}
-          filteredAdvisor={filters.filteredAdvisor}
-          onClearAdvisorFilter={filters.clearAdvisorFilter}
-          onClearAllFilters={filters.clearAllFilters}
-        />
+        <div
+          className={`transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+          }`}
+          style={{ transitionDelay: '50ms' }}
+        >
+          <ContactsToolbar
+            searchInputRef={searchInputRef}
+            searchTerm={filters.searchTerm}
+            onSearchChange={filters.setSearchTerm}
+            selectedStage={filters.selectedStage}
+            selectedTags={filters.selectedTags}
+            pipelineStages={
+              Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
+            }
+            allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+            onStageChange={filters.setSelectedStage}
+            onTagToggle={filters.handleTagToggle}
+            onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
+            advisorIdFilter={filters.advisorIdFilter}
+            filteredAdvisor={filters.filteredAdvisor}
+            onClearAdvisorFilter={filters.clearAdvisorFilter}
+            onClearAllFilters={filters.clearAllFilters}
+          />
+        </div>
 
-        {/* Table or Kanban view */}
-        {filters.viewMode === 'table' ? (
-          <Card className="rounded-md border border-neutral-200" padding="sm">
+        {/* Table view */}
+        <div
+          className={`transition-all duration-500 ease-out ${
+            mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ transitionDelay: '100ms' }}
+        >
+          <Card className="rounded-md border border-border" padding="sm">
             <CardHeader className="p-2 md:p-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm md:text-base">
@@ -323,8 +546,10 @@ export default function ContactsPage() {
                 // Mobile view
                 <MobileContactList
                   contacts={filteredContacts}
-                  pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
-                  allTags={Array.isArray(allTags) ? allTags as Tag[] : []}
+                  pipelineStages={
+                    Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
+                  }
+                  allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
                   savingContactId={contactActions.savingContactId}
                   onStageChange={contactActions.handleStageChange}
                   onTagsChange={contactActions.handleTagsChange}
@@ -342,21 +567,19 @@ export default function ContactsPage() {
                   keyField="id"
                   emptyMessage={
                     hasActiveFilters
-                      ? "No se encontraron contactos con los filtros aplicados."
-                      : "Comienza agregando tu primer contacto al sistema."
+                      ? 'No se encontraron contactos con los filtros aplicados.'
+                      : 'Comienza agregando tu primer contacto al sistema.'
                   }
                   virtualized={true}
                   virtualizedHeight={600}
+                  getRowStyle={(item: Record<string, unknown>) =>
+                    getRowStyle(item as unknown as Contact)
+                  }
                 />
               )}
             </CardContent>
           </Card>
-        ) : (
-          <ContactKanbanView
-            contacts={filteredContacts}
-            pipelineStages={Array.isArray(pipelineStages) ? pipelineStages as PipelineStage[] : []}
-          />
-        )}
+        </div>
 
         {/* Modals */}
         <DeleteContactModal
@@ -369,7 +592,7 @@ export default function ContactsPage() {
         <TagManagementModal
           open={tagManagement.showManageTagsModal}
           onOpenChange={tagManagement.setShowManageTagsModal}
-          allTags={Array.isArray(allTags) ? allTags as Tag[] : []}
+          allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
           isCreatingTag={tagManagement.isCreatingTag}
           newTagName={tagManagement.newTag.name}
           newTagColor={tagManagement.newTag.color}
@@ -396,7 +619,7 @@ export default function ContactsPage() {
 
         <ConfirmDialog
           open={confirmDialog.open}
-          onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+          onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
           onConfirm={confirmDialog.onConfirm}
           title={confirmDialog.title}
           {...(confirmDialog.description ? { description: confirmDialog.description } : {})}
@@ -404,6 +627,29 @@ export default function ContactsPage() {
           confirmLabel="Confirmar"
           cancelLabel="Cancelar"
         />
+
+        {/* Export Progress Modal */}
+        <Modal open={exportState.isExporting} onOpenChange={() => {}}>
+          <ModalContent className="max-w-sm">
+            <div className="p-6 text-center">
+              <div className="mb-4">
+                <Icon name="download" size={32} className="text-primary mx-auto" />
+              </div>
+              <Text weight="medium" size="lg" className="mb-2">
+                Exportando Contactos
+              </Text>
+              <Text size="sm" color="secondary" className="mb-4">
+                {exportState.status}
+              </Text>
+              <ProgressBar
+                value={exportState.progress}
+                variant={exportState.progress === 100 ? 'success' : 'default'}
+                size="md"
+                animated
+              />
+            </div>
+          </ModalContent>
+        </Modal>
       </Stack>
     </div>
   );
@@ -422,7 +668,7 @@ function MobileContactList({
   mutateContacts,
   showToast,
   hasActiveFilters,
-  onClearFilters
+  onClearFilters,
 }: {
   contacts: Contact[];
   pipelineStages: PipelineStage[];
@@ -433,7 +679,11 @@ function MobileContactList({
   onTextInputSave: (contactId: string, field: string, value: string) => void;
   onManageTagsClick: () => void;
   mutateContacts: () => void;
-  showToast: (title: string, description: string | undefined, type: 'success' | 'error' | 'warning') => void;
+  showToast: (
+    title: string,
+    description: string | undefined,
+    type: 'success' | 'error' | 'warning'
+  ) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }) {
@@ -441,12 +691,12 @@ function MobileContactList({
 
   if (contacts.length === 0) {
     return (
-      <EmptyState 
-        title={hasActiveFilters ? "Sin resultados" : "No hay contactos"}
+      <EmptyState
+        title={hasActiveFilters ? 'Sin resultados' : 'No hay contactos'}
         description={
           hasActiveFilters
-            ? "No se encontraron contactos con los filtros aplicados."
-            : "Comienza agregando tu primer contacto al sistema."
+            ? 'No se encontraron contactos con los filtros aplicados.'
+            : 'Comienza agregando tu primer contacto al sistema.'
         }
         action={
           hasActiveFilters ? (
@@ -464,45 +714,85 @@ function MobileContactList({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-3">
       {contacts.map((contact) => (
-        <div key={contact.id} className="p-2 rounded-md border border-gray-200 bg-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text weight="medium" className="text-sm">{contact.fullName}</Text>
+        <div
+          key={contact.id}
+          className="p-3 rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-shadow"
+        >
+          {/* Header: Name and Action */}
+          <div className="flex items-start justify-between mb-3">
+            <div
+              onClick={() => router.push(`/contacts/${contact.id}`)}
+              className="cursor-pointer flex-1"
+            >
+              <Text weight="semibold" className="text-base text-primary">
+                {contact.fullName}
+              </Text>
               {contact.email && (
-                <Text size="xs" color="secondary" className="mt-0.5">{contact.email}</Text>
+                <Text size="xs" color="secondary" className="mt-0.5 block truncate">
+                  {contact.email}
+                </Text>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => router.push(`/contacts/${contact.id}`)} className="h-6 w-6 p-0">
-              <Icon name="ChevronRight" size={14} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/contacts/${contact.id}`)}
+              className="h-8 w-8 p-0 text-secondary shrink-0"
+            >
+              <Icon name="ChevronRight" size={18} />
             </Button>
           </div>
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <InlineStageSelect
-              contact={contact}
-              pipelineStages={pipelineStages}
-              isSaving={savingContactId === contact.id}
-              onStageChange={onStageChange}
-              onMutate={mutateContacts}
-              onError={(error: Error) => showToast('Error al avanzar etapa', error.message, 'error')}
-            />
-            <InlineTagsEditor
-              contact={contact}
-              allTags={allTags}
-              isSaving={savingContactId === contact.id}
-              onTagsChange={onTagsChange}
-              onManageTagsClick={onManageTagsClick}
-            />
+
+          {/* Middle: Stage and Interaction */}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <InlineStageSelect
+                contact={contact}
+                pipelineStages={pipelineStages}
+                isSaving={savingContactId === contact.id}
+                onStageChange={onStageChange}
+                onMutate={mutateContacts}
+                onError={(error: Error) =>
+                  showToast('Error al avanzar etapa', error.message, 'error')
+                }
+              />
+            </div>
+            <div className="flex flex-col items-end shrink-0 pl-2 border-l border-border/50">
+              <InteractionCounter
+                contact={contact}
+                onUpdate={mutateContacts}
+                onError={(error) =>
+                  showToast('Error al actualizar interacción', error.message, 'error')
+                }
+              />
+              <Text size="xs" color="muted" className="mt-1 text-[10px] uppercase tracking-wider">
+                {formatTimeAgo(contact.contactLastTouchAt)}
+              </Text>
+            </div>
           </div>
-          <div className="mt-1.5">
-            <InlineTextInput
-              contact={contact}
-              field="nextStep"
-              placeholder="Agregar próximo paso..."
-              isSaving={savingContactId === contact.id}
-              onSave={onTextInputSave}
-            />
+
+          {/* Bottom: Tags and Next Step */}
+          <div className="space-y-3 pt-2 border-t border-border/50">
+            <div className="w-full">
+              <InlineTagsEditor
+                contact={contact}
+                allTags={allTags}
+                isSaving={savingContactId === contact.id}
+                onTagsChange={onTagsChange}
+                onManageTagsClick={onManageTagsClick}
+              />
+            </div>
+            <div className="w-full">
+              <InlineTextInput
+                contact={contact}
+                field="nextStep"
+                placeholder="Agregar próximo paso..."
+                isSaving={savingContactId === contact.id}
+                onSave={onTextInputSave}
+              />
+            </div>
           </div>
         </div>
       ))}

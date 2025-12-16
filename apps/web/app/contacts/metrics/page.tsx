@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useRequireAuth } from '../../auth/useRequireAuth';
 import MetricsView from './MetricsView';
 
@@ -11,4 +11,3 @@ export default function MetricsPage() {
 
   return <MetricsView />;
 }
-

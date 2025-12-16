@@ -18,8 +18,10 @@ import {
   getTeamMembers,
   getUserTeams,
 } from './authorization';
+import { invalidateAccessScope, cache } from './cache';
 import type { UserRole } from './types';
 import { createMockDbWithResponses } from '../__tests__/helpers/mock-db';
+import { createMockDb } from '../__tests__/helpers/mock-db';
 
 // Mock DB
 vi.mock('@cactus/db', async () => {
@@ -49,6 +51,8 @@ const mockDb = vi.mocked(db);
 describe('getUserAccessScope', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear access scope cache between tests
+    cache.clear();
   });
 
   describe('Admin role', () => {
@@ -132,35 +136,39 @@ describe('getUserAccessScope', () => {
       const userId = 'manager-123';
       const role: UserRole = 'manager';
 
-      // Mock user query
-      const mockUserLimit = vi
-        .fn()
-        .mockResolvedValue([{ id: userId, email: 'manager@test.com', role: 'manager' }]);
-      const mockUserWhere = vi.fn().mockReturnValue({ limit: mockUserLimit });
-      const mockUserFrom = vi.fn().mockReturnValue({ where: mockUserWhere });
-      const mockUserSelect = vi.fn().mockReturnValue({ from: mockUserFrom });
-
-      // Mock team members query that throws error
-      const mockTeamWhere = vi.fn().mockRejectedValue(new Error('No team members'));
-      const mockTeamInnerJoin2 = vi.fn().mockReturnValue({ where: mockTeamWhere });
-      const mockTeamInnerJoin1 = vi.fn().mockReturnValue({ innerJoin: mockTeamInnerJoin2 });
-      const mockTeamFrom = vi.fn().mockReturnValue({ innerJoin: mockTeamInnerJoin1 });
-      const mockTeamSelect = vi.fn().mockReturnValue({ from: mockTeamFrom });
+      // Clear cache to ensure fresh execution
+      invalidateAccessScope(userId, role);
 
       // Mock console.warn para evitar output en tests
       const originalWarn = console.warn;
       console.warn = vi.fn();
 
-      let selectCallCount = 0;
-      mockDb.mockReturnValue({
-        select: vi.fn((columns?: unknown) => {
-          selectCallCount++;
-          if (selectCallCount === 1) {
-            return mockUserSelect();
-          }
-          return mockTeamSelect();
-        }),
-      } as any);
+      // Mock db to simulate manager without team
+      let callCount = 0;
+      mockDb.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // User query - should succeed
+          return {
+            select: vi.fn().mockReturnValue({
+              from: vi.fn().mockReturnValue({
+                where: vi.fn().mockReturnValue({
+                  limit: vi
+                    .fn()
+                    .mockResolvedValue([
+                      { id: userId, email: 'manager@test.com', role: 'manager' },
+                    ]),
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Team query - should fail
+          return {
+            select: vi.fn().mockRejectedValue(new Error('No team members')),
+          };
+        }
+      });
 
       const scope = await getUserAccessScope(userId, role);
 
@@ -305,6 +313,46 @@ describe('buildContactAccessFilter', () => {
       const filter = buildContactAccessFilter(accessScope);
 
       expect(filter.description).toContain('advisor');
+      expect(filter.whereClause).toBeDefined();
+    });
+  });
+
+  describe('Staff filter', () => {
+    it('debería retornar filter sin restricciones para staff (igual que admin)', () => {
+      const accessScope = {
+        userId: 'staff-123',
+        role: 'staff' as UserRole,
+        accessibleAdvisorIds: [],
+        canSeeUnassigned: true,
+        canAssignToOthers: true,
+        canReassign: true,
+      };
+
+      const filter = buildContactAccessFilter(accessScope);
+
+      expect(filter.description).toContain('staff');
+      expect(filter.description).toContain('no filters');
+      // Staff should have same access as admin (no restrictions)
+      expect(filter.whereClause).toBeDefined();
+    });
+  });
+
+  describe('Owner filter', () => {
+    it('debería retornar filter sin restricciones para owner (igual que admin)', () => {
+      const accessScope = {
+        userId: 'owner-123',
+        role: 'owner' as UserRole,
+        accessibleAdvisorIds: [],
+        canSeeUnassigned: true,
+        canAssignToOthers: false,
+        canReassign: false,
+      };
+
+      const filter = buildContactAccessFilter(accessScope);
+
+      expect(filter.description).toContain('owner');
+      expect(filter.description).toContain('no filters');
+      // Owner should have same access as admin for viewing (no restrictions)
       expect(filter.whereClause).toBeDefined();
     });
   });

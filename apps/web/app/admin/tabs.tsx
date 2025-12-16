@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,7 +7,7 @@ export default function Tabs() {
   const pathname = usePathname();
   const tabs = [
     { href: '/admin/users', label: 'Usuarios y cuentas' },
-    { href: '/admin/aum', label: 'AUM y Brokers' }
+    { href: '/admin/aum', label: 'AUM y Brokers' },
   ];
   return (
     <div className="border-b border-gray-200 mb-4">
@@ -32,9 +32,3 @@ export default function Tabs() {
     </div>
   );
 }
-
-
-
-
-
-

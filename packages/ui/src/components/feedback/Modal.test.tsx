@@ -303,7 +303,12 @@ describe('Modal Component', () => {
         </Modal>
       );
       const dialog = screen.getByRole('dialog');
-      expect(dialog).toHaveClass('left-[50%]', 'top-[50%]', 'translate-x-[-50%]', 'translate-y-[-50%]');
+      expect(dialog).toHaveClass(
+        'left-[50%]',
+        'top-[50%]',
+        'translate-x-[-50%]',
+        'translate-y-[-50%]'
+      );
     });
   });
 
@@ -319,4 +324,3 @@ describe('Modal Component', () => {
     });
   });
 });
-

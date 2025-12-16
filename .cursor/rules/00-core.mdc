@@ -1,127 +1,493 @@
 ---
 alwaysApply: true
-description: "Reglas base de arquitectura general del monorepo - siempre aplicadas"
+description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de negocio, patrones y convenciones"
 ---
 
-# Proyecto: CACTUS CRM (Monorepo pnpm + Turborepo)
+# CACTUS CRM — Contexto Base
 
-## Arquitectura General
+> **Esta regla siempre se aplica.** Define el contexto fundamental que la IA necesita para entender y trabajar correctamente con este codebase.
 
-**Monorepo:** `pnpm workspaces` + `turborepo`
+---
 
-- **Apps:** `apps/api` (Node.js + Express), `apps/web` (Next.js App Router), `apps/analytics-service` (Python)
-- **Packages:** `packages/db` (Drizzle ORM), `packages/ui` (React Components)
-- **Tech Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), PostgreSQL 16, PM2
+## Dominio de Negocio
 
-**Rutas clave:**
+**CACTUS** es un CRM para **advisors financieros** (wealth management). Gestiona:
 
-- API: `apps/api/src/routes/*`, entrypoint `apps/api/src/index.ts`
-- Web: `apps/web/app/*` (Server/Client components)
-- DB: `packages/db/src/schema.ts`, migraciones con `drizzle-kit`
-- UI: `packages/ui/src/components/*`
+| Dominio | Descripción | Tablas principales |
+|---|----|----|
+| **Contacts/Pipeline** | Leads y clientes con etapas de conversión | `contacts`, `pipelineStages`, `tags`, `segments` |
+| **AUM (Assets Under Management)** | Importación y tracking de patrimonio | `aumImportFiles`, `aumImportRows`, `aumMonthlySnapshots` |
+| **Portfolio Templates** | Modelos de inversión asignables | `portfolioTemplates`, `portfolioTemplateLines`, `clientPortfolioAssignments` |
+| **Benchmarks/Instruments** | Analytics financiero (precios, performance) | `instruments`, `benchmarkDefinitions`, `priceSnapshots` |
+| **Tasks/Notes** | Actividades y seguimiento | `tasks`, `notes`, `attachments` |
+| **Teams** | Equipos con métricas y goals | `teams`, `teamMembership`, `monthlyGoals`, `teamGoals` |
+| **Automations** | Workflows y disparadores automáticos | `automations` |
+| **Calendar** | Eventos personales y de equipo | `calendarEvents` |
+| **Capacitaciones** | Módulos de entrenamiento | `capacitaciones` |
+| **Audit/Admin** | Logs y mantenimiento del sistema | `auditLogs`, `adminLogs` |
 
-**Documentación:** Ver [docs/README.md](../../docs/README.md) para índice completo
+**Usuarios:** Advisors, Team Leads, Managers, Admins
+
+---
+
+## Arquitectura del Monorepo
+
+```
+cactus/
+├── apps/
+│   ├── api/                # Express 4 + TypeScript + Pino (puerto 3001)
+│   ├── web/                # Next.js 15 App Router (puerto 3000)
+│   └── analytics-service/  # Python + yfinance (puerto 3002)
+├── packages/
+│   ├── db/                 # Drizzle ORM + PostgreSQL 16
+│   ├── ui/                 # Design System React (@cactus/ui)
+│   └── types/              # Tipos compartidos (@cactus/types)
+├── tests/e2e/              # Playwright E2E
+├── docs/                   # Documentación técnica
+├── .templates/             # Templates para nuevos archivos
+└── infrastructure/         # AWS CDK deployments
+```
+
+**Stack:** TypeScript estricto (`exactOptionalPropertyTypes: true`), React 19, Node.js ≥22, pnpm ≥9
 
 ---
 
 ## Principios Fundamentales
 
+### Reglas Críticas
+
+1. **Estabilidad > Creatividad**: Priorizar soluciones probadas sobre innovación
+2. **Typecheck primero**: Ejecutar `pnpm typecheck` antes de cualquier cambio
+3. **DRY**: Factorizar código duplicado inmediatamente
+4. **Documentar "por qué"**: El código explica el "cómo", los comentarios el "por qué"
+5. **Consistencia**: Seguir patrones existentes del codebase
+6. **No over-engineering**: Solo implementar lo que se pide, sin extras
+
 ### Antes de Modificar Código
 
-1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
-2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
-3. **Ejecutar typecheck ANTES:** `pnpm typecheck` (todos los workspaces)
-4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
-
----
-
-## Comandos Útiles
-
-**Desarrollo:**
-
 ```bash
-pnpm dev                   # Dev mode (web + api + analytics)
-pnpm -F @cactus/api dev    # Solo API
-pnpm -F @cactus/web dev    # Solo frontend
+# 1. Verificar estado actual
+pnpm typecheck
+
+# 2. Si modificaste @cactus/ui o @cactus/db
+pnpm -F @cactus/ui build && pnpm -F @cactus/db build
 ```
 
-**Typecheck (SIEMPRE antes de commit):**
+### Verificación Completa (pre-commit)
 
 ```bash
-pnpm typecheck             # Todos los workspaces
-pnpm -F @cactus/web typecheck
-pnpm -F @cactus/api typecheck
-```
-
-**Build:**
-
-```bash
-pnpm -F @cactus/ui build   # Construir paquete UI
-pnpm -F @cactus/db build   # Construir paquete DB
-pnpm build                 # Build completo
-```
-
-**Tests:**
-
-```bash
-pnpm test                  # Unit tests
-pnpm test:coverage         # Con coverage
-pnpm test:e2e              # E2E tests
-```
-
-**Base de Datos:**
-
-```bash
-pnpm -F @cactus/db generate    # Generar migración
-pnpm -F @cactus/db migrate     # Aplicar migración
-pnpm -F @cactus/db seed:all     # Seed completo
+pnpm verify:all:no-e2e   # typecheck + lint + tests (sin E2E)
+pnpm verify:all          # Incluye E2E
 ```
 
 ---
 
-## Referencias Rápidas
+## Convenciones de Código
 
-**Rutas de código:**
+### Nombrado
 
-- **Tipos:** `apps/web/types/[domain].ts`
-- **Cliente API:** `apps/web/lib/api/[domain].ts`
-- **Validaciones:** `apps/api/src/routes/*.ts` (sección `// Zod Validation Schemas`)
-- **Utils:** `apps/api/src/utils/[feature].ts`
-- **Config:** `apps/api/src/config/[feature].ts`
-- **UI Components:** `packages/ui/src/components/*` (verificar tipos antes de usar)
-- **Schema DB:** `packages/db/src/schema.ts`
+| Tipo | Convención | Ejemplo |
+|---|---|---|
+| Variables/funciones | `camelCase` | `handleCreateContact`, `userId` |
+| Componentes/tipos | `PascalCase` | `ContactCard`, `CreateContactRequest` |
+| Constantes | `UPPER_SNAKE_CASE` | `MAX_RETRY_ATTEMPTS`, `DEFAULT_TIMEOUT_MS` |
+| Archivos componentes | `PascalCase.tsx` | `ContactCard.tsx` |
+| Archivos utils | `kebab-case.ts` | `error-response.ts` |
+| Hooks | `use[Feature].ts` | `useContacts.ts` |
 
-**Documentación:**
-
-- [Índice de Documentación](../../docs/README.md)
-- [Arquitectura](../../docs/ARCHITECTURE.md)
-- [Guía de Base de Datos](../../docs/DATABASE.md)
-- [Guía de Desarrollo](../../docs/DEVELOPMENT.md)
-- [Guía de Testing](../../docs/TESTING.md)
-- [Guía de Operaciones](../../docs/OPERATIONS.md)
-
-**Score objetivo:** 8.5+/10 en todas las categorías de calidad
-
----
-
-## Documentación de Decisiones
-
-**Para decisiones no obvias, usar formato:**
+### Prefijos para Evitar Shadowing
 
 ```typescript
-// AI_DECISION: [Motivo del cambio]
-// Justificación: [Por qué es mejor esta implementación]
-// Impacto: [Qué áreas del código afecta]
+import { createContact } from '@/lib/api';
+
+// ✅ BIEN - Prefijos handle/do/perform
+const handleCreateContact = async () => {
+  await createContact({ ... });
+};
+
+// ❌ MAL - Shadowing de import
+const createContact = async () => { ... };
+```
+
+### Tipos Request/Response
+
+```typescript
+// Patrón estándar para tipos de API
+export interface CreateContactRequest { ... }
+export interface UpdateContactRequest { ... }
+export interface ContactResponse { ... }
+export interface ListContactsResponse { ... }
 ```
 
 ---
 
-## Sistema de Reglas Modular
+## Mapeo Rápido: Necesidad → Código
 
-Este proyecto usa un sistema de reglas modular organizado por dominio y patrón:
+| Necesitas... | Busca en... |
+|-----|----|
+| Endpoint de API | `apps/api/src/routes/[domain]/` o `[domain].ts` |
+| Validaciones Zod | Sección `// Zod Validation Schemas` en cada route |
+| Página web | `apps/web/app/[route]/page.tsx` |
+| Tipos frontend | `apps/web/types/[domain].ts` |
+| Cliente API (fetch) | `apps/web/lib/api/[domain].ts` |
+| Schema DB | `packages/db/src/schema/[domain].ts` |
+| Componente UI | `packages/ui/src/components/[category]/` |
+| Utils backend | `apps/api/src/utils/[feature].ts` |
+| Hooks compartidos | `apps/web/lib/api-hooks.ts` o `lib/hooks/` |
 
-- **Reglas base:** `00-core.mdc` (siempre aplica), `01-typescript.mdc`, `02-testing.mdc`
-- **Reglas por dominio:** `domains/api.mdc`, `domains/web.mdc`, `domains/ui-package.mdc`, `domains/database.mdc`, `domains/python.mdc`
-- **Reglas por patrón:** `patterns/error-handling.mdc`, `patterns/logging.mdc`, `patterns/security.mdc`, `patterns/api-design.mdc`, `patterns/performance.mdc`
+---
 
-Ver [README.md](./README.md) para índice completo y guía de uso.
+## Helpers y Utilidades Críticas
+
+### Backend (`apps/api/src/utils/`)
+
+| Archivo | Propósito | Uso Principal |
+|---|-----|---|
+| `route-handler.ts` | Wrapper para handlers async | `createRouteHandler()` - maneja errores automáticamente |
+| `error-response.ts` | Respuestas de error consistentes | `createErrorResponse()`, `getStatusCodeFromError()` |
+| `validation.ts` | Middleware validación Zod | `validate({ params, query, body })` |
+| `common-schemas.ts` | Schemas Zod reutilizables | `uuidSchema`, `emailSchema`, `paginationQuerySchema` |
+| `pagination.ts` | Helpers de paginación | `parsePaginationQuery()`, `formatPaginatedResponse()` |
+| `db-transactions.ts` | Transacciones con retry | `transactionWithLogging()` |
+
+### Frontend (`apps/web/lib/`)
+
+| Archivo | Propósito | Uso Principal |
+|---|-----|---|
+| `api/client.ts` | Cliente HTTP centralizado | `apiClient.get()`, `apiClient.post()` |
+| `api/[domain].ts` | Funciones API por dominio | `getContacts()`, `createContact()` |
+| `api-hooks.ts` | Hooks SWR compartidos | `useContacts()`, `usePipelineStages()` |
+| `api-error.ts` | Clase ApiError | Manejo de errores HTTP en frontend |
+| `api-server.ts` | Cliente para Server Components | `apiCall()` con cookies automáticas |
+
+---
+
+## Patrones de Código Obligatorios
+
+### Backend: Estructura de Route Handler
+
+```typescript
+// apps/api/src/routes/[domain]/handlers/[action].ts
+import { Router } from 'express';
+import { z } from 'zod';
+import { requireAuth } from '../../auth/middlewares';
+import { validate } from '../../utils/validation';
+import { createRouteHandler } from '../../utils/route-handler';
+
+const router = Router();
+
+// ==========================================================
+// Zod Validation Schemas
+// ==========================================================
+
+const createSchema = z.object({
+  name: z.string().min(1).max(100),
+  email: z.string().email(),
+});
+
+// ==========================================================
+// Routes
+// ==========================================================
+
+router.post('/',
+  requireAuth,
+  validate({ body: createSchema }),
+  createRouteHandler(async (req) => {
+    const result = await createItem(req.body);
+    return result; // Respuesta automática: { success: true, data: result }
+  })
+);
+
+export default router;
+```
+
+### Frontend: Estructura de API Client
+
+```typescript
+// apps/web/lib/api/[domain].ts
+import { apiClient } from '../api-client';
+import type { ApiResponse } from '../api-client';
+
+// ==========================================================
+// Types
+// ==========================================================
+
+export interface CreateRequest { ... }
+export interface UpdateRequest { ... }
+
+// ==========================================================
+// API Functions
+// ==========================================================
+
+export async function getItems(): Promise<ApiResponse<Item[]>> {
+  return apiClient.get<Item[]>('/v1/items');
+}
+
+export async function createItem(data: CreateRequest): Promise<ApiResponse<Item>> {
+  return apiClient.post<Item>('/v1/items', data);
+}
+```
+
+### Frontend: Client Islands Pattern
+
+```typescript
+// page.tsx (Server Component)
+import { apiServer } from '@/lib/api-server';
+import { InteractiveSection } from './InteractiveSection';
+
+export default async function Page() {
+  const data = await apiServer.get('/v1/data');
+  return (
+    <div>
+      <h1>Server Content</h1>
+      <InteractiveSection initialData={data} /> {/* Client Island */}
+    </div>
+  );
+}
+
+// InteractiveSection.tsx (Client Component)
+"use client";
+import { useSWR } from 'swr';
+
+export function InteractiveSection({ initialData }) {
+  const { data } = useSWR('/api/data', { fallbackData: initialData });
+  // Interactividad aquí
+}
+```
+
+---
+
+## Validación y Manejo de Errores
+
+### Backend: Validación con Zod
+
+```typescript
+// ✅ SIEMPRE usar middleware validate()
+router.post('/',
+  requireAuth,
+  validate({ body: createSchema }),
+  async (req, res) => {
+    // req.body ya está validado y tipado
+  }
+);
+
+// ❌ NUNCA usar .parse() manual
+router.post('/', async (req, res) => {
+  const data = createSchema.parse(req.body); // NO hacer esto
+});
+```
+
+### Backend: Manejo de Errores
+
+```typescript
+// Opción 1: Usar createRouteHandler (recomendado)
+router.get('/items', createRouteHandler(async (req) => {
+  return await getItems(); // Errores se manejan automáticamente
+}));
+
+// Opción 2: Manejo manual (casos especiales)
+import { createErrorResponse, getStatusCodeFromError } from '../utils/error-response';
+
+try {
+  // ... lógica
+} catch (error) {
+  const statusCode = getStatusCodeFromError(error);
+  return res.status(statusCode).json(
+    createErrorResponse({
+      error,
+      requestId: req.requestId,
+      userMessage: 'Failed to process request',
+    })
+  );
+}
+```
+
+### Frontend: Manejo de Errores
+
+```typescript
+import { ApiError } from '@/lib/api-error';
+
+try {
+  await apiClient.post('/v1/endpoint', data);
+} catch (error) {
+  if (error instanceof ApiError) {
+    if (error.isAuthError) { /* redirect to login */ }
+    if (error.isValidationError) { /* show form errors */ }
+    if (error.isNotFoundError) { /* show 404 */ }
+  }
+}
+```
+
+---
+
+## Flujos de Trabajo
+
+### Desarrollo Local
+
+```bash
+pnpm dev              # Inicia api + web + analytics en paralelo
+pnpm -F @cactus/api dev   # Solo backend (puerto 3001)
+pnpm -F @cactus/web dev   # Solo frontend (puerto 3000)
+```
+
+### Cambios en Base de Datos
+
+```bash
+# 1. Editar packages/db/src/schema/*.ts
+# 2. Generar migración
+pnpm -F @cactus/db generate
+# 3. Aplicar migración
+pnpm -F @cactus/db migrate
+# 4. Seeds opcionales
+pnpm -F @cactus/db seed:all
+```
+
+> ⚠️ **NUNCA** usar `drizzle-kit push` en producción — es destructivo
+
+---
+
+## Documentación de Decisiones (AI_DECISION)
+
+Formato estándar para documentar decisiones no obvias:
+
+```typescript
+// AI_DECISION: [Qué se cambió]
+// Justificación: [Por qué es mejor]
+// Impacto: [Qué áreas afecta]
+// Referencias: [Archivos/patrones relacionados] (opcional)
+```
+
+**Ejemplo:**
+
+```typescript
+// AI_DECISION: Centralizar validación en middleware validate()
+// Justificación: Elimina duplicación de try/catch y manejo de ZodError
+// Impacto: Todas las rutas usan el mismo patrón de validación
+// Referencias: apps/api/src/utils/validation.ts
+```
+
+---
+
+## Anti-Patterns a Evitar
+
+### Backend
+1. ❌ `fetch` manual sin cliente centralizado
+2. ❌ Sin validación de inputs (usar Zod)
+3. ❌ `console.log` en producción (usar `req.log` de Pino)
+4. ❌ Queries N+1 en loops (usar batch queries)
+5. ❌ Timeouts hardcodeados (usar config centralizada)
+6. ❌ Manejar `ZodError` manualmente (usar middleware)
+
+### Frontend
+1. ❌ `window.location` en Next.js (usar `useRouter`)
+   - **Excepciones legítimas:**
+     - Error Boundaries: `window.location.reload()` cuando no hay acceso a hooks
+     - Logging: `window.location.href` para capturar URL actual en logs (no navegación)
+     - Verificación de origen: `window.location.href` para comparar URLs (no navegación)
+2. ❌ `alert()` / `confirm()` nativos (usar Toast/Modal)
+   - **Excepciones:** Tests pueden mantener `alert()`/`confirm()` si es necesario
+3. ❌ `fetch` manual (usar `apiClient`)
+   - **Excepciones legítimas:**
+     - Server Components: `api-server.ts` usa `fetch` directo porque necesita `cookies()` de Next.js
+     - Dynamic imports con problemas de webpack: Documentar claramente con `AI_DECISION` (ver `AssetSnapshot.tsx`)
+4. ❌ Server Components con hooks de React
+5. ❌ Asumir props de componentes UI (verificar tipos)
+
+### General
+1. ❌ Tipos `any` sin justificación
+2. ❌ Shadowing de funciones importadas
+3. ❌ Definir tipos duplicados (reutilizar)
+4. ❌ Magic numbers (usar constantes)
+5. ❌ Over-engineering (solo lo pedido)
+
+---
+
+## Sistema de Reglas
+
+Esta regla (`00-core`) siempre se aplica. Las demás se activan según contexto:
+
+| Regla | Cuándo aplica | Contenido principal |
+|---|----|----|
+| `01-typescript` | Archivos .ts/.tsx | Tipos, exactOptionalPropertyTypes, herencia |
+| `02-testing` | Archivos .test.ts | Vitest, Playwright, Testing Library |
+| `domains/api` | Código en `apps/api/` | Express, Zod, middlewares, logging |
+| `domains/web` | Código en `apps/web/` | Next.js, SWR, Client Islands |
+| `domains/database` | Código en `packages/db/` | Drizzle, migraciones, seeds |
+| `domains/ui-package` | Código en `packages/ui/` | Componentes, Design System |
+| `domains/python` | Código en `apps/analytics-service/` | yfinance, caching |
+| `patterns/error-handling` | Manejo de errores | createErrorResponse, ApiError |
+| `patterns/logging` | Logging | Pino, req.log, niveles |
+| `patterns/security` | Auth/autenticación | JWT, cookies, middlewares |
+| `patterns/api-design` | Diseño de endpoints | REST, paginación, versionado |
+| `patterns/performance` | Optimización | Caching, ETags, SWR |
+
+---
+
+## Dominios API Principales
+
+| Ruta base | Dominio | Archivo/Directorio |
+|---|----|----|
+| `/contacts` | Pipeline CRM | `routes/contacts/` |
+| `/aum/*` | Gestión patrimonio | `routes/aum/` (upload, rows, commit) |
+| `/portfolios/*` | Carteras modelo | `routes/portfolio/` |
+| `/benchmarks` | Benchmarks financieros | `routes/benchmarks/` |
+| `/instruments` | Instrumentos (Python) | `routes/instruments/` |
+| `/tasks` | Tareas y seguimiento | `routes/tasks/` |
+| `/teams` | Equipos y métricas | `routes/teams/` |
+| `/metrics/*` | Goals y métricas | `routes/metrics/` |
+| `/analytics/*` | Performance financiero | `routes/analytics/` |
+| `/auth` | Autenticación JWT | `routes/auth/` |
+| `/automations` | Automatizaciones | `routes/automations/` |
+| `/calendar` | Calendario | `routes/calendar/` |
+| `/capacitaciones` | Entrenamientos | `routes/capacitaciones/` |
+| `/notes` | Notas | `routes/notes/` |
+| `/tags` | Etiquetas | `routes/tags/` |
+| `/users` | Gestión Usuarios | `routes/users/` |
+
+---
+
+## Schema DB: Módulos por Dominio
+
+`packages/db/src/schema/`:
+
+- **lookups.ts** — Catálogos (asset classes, task status, priorities)
+- **users.ts** — Usuarios, equipos, membresías, career plan
+- **contacts.ts** — Contactos, pipeline stages, tags, segmentos
+- **notes-tasks.ts** — Notas, adjuntos, tareas, recurrencias
+- **aum.ts** — Imports AUM, snapshots mensuales, mappings
+- **portfolios.ts** — Templates, líneas, asignaciones
+- **instruments.ts** — Instrumentos financieros, aliases
+- **benchmarks.ts** — Definiciones, componentes, precios
+- **reports.ts** — Métricas, goals, actividad
+- **broker.ts** — Integración broker
+- **audit.ts** — Auditoría y logs
+- **automations.ts** — Automatizaciones
+- **capacitaciones.ts** — Capacitaciones
+- **contact-interactions.ts** — Interacciones de contactos
+- **notifications.ts** — Notificaciones
+- **team-goals.ts** — Objetivos de equipo
+
+---
+
+## Documentación Extendida
+
+| Documento | Contenido |
+|---|----|
+| [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) | Decisiones técnicas, estructuras |
+| [ARCHITECTURE-DECISIONS.md](../../docs/ARCHITECTURE-DECISIONS.md) | ADRs (por qué cada tecnología) |
+| [CODE-IMPROVEMENTS.md](../../docs/CODE-IMPROVEMENTS.md) | Patrones, convenciones, mejoras |
+| [FILE-STRUCTURE.md](../../docs/FILE-STRUCTURE.md) | Estructura estándar de archivos |
+| [DATABASE.md](../../docs/DATABASE.md) | Schema, migraciones, optimización |
+| [DEVELOPMENT.md](../../docs/DEVELOPMENT.md) | Setup, debugging, standards |
+| [TESTING.md](../../docs/TESTING.md) | Unit, integration, E2E |
+| [OPERATIONS.md](../../docs/OPERATIONS.md) | Deploy, monitoreo |
+
+---
+
+## Templates Disponibles
+
+`.templates/`:
+
+- `api-client-template.ts` — Template para nuevos API clients frontend
+- `route-handler-template.ts` — Template para nuevos handlers backend
+- `README.md` — Instrucciones de uso de templates

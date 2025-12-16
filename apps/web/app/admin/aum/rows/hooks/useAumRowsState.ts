@@ -6,7 +6,7 @@
  * Impacto: Código más modular, fácil de entender y mantener
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAumPagination } from './useAumPagination';
 import { useAumFilters } from './useAumFilters';
 import { useAumSearch } from './useAumSearch';
@@ -100,9 +100,11 @@ export function useAumRowsState(initialFileId?: string | null) {
     [setDebouncedSearch, resetPagination]
   );
 
-  return {
-    state,
-    actions: {
+  // AI_DECISION: Memoize actions object to prevent unnecessary re-renders in consumers
+  // Justificación: The previous implementation created a new object on every render, causing useEffects depending on 'actions' to loop
+  // Impacto: Prevents "Too many re-renders" errors and improves performance
+  const actions = useMemo(
+    () => ({
       setPagination,
       setFilters: setFiltersWithReset,
       setSearchTerm,
@@ -116,6 +118,26 @@ export function useAumRowsState(initialFileId?: string | null) {
       setLoading,
       resetFilters,
       resetPagination,
-    },
+    }),
+    [
+      setPagination,
+      setFiltersWithReset,
+      setSearchTerm,
+      setDebouncedSearchWithReset,
+      setUploadedFileIdAction,
+      setOnlyUpdatedAction,
+      openDuplicateModal,
+      closeDuplicateModal,
+      openAdvisorModal,
+      closeAdvisorModal,
+      setLoading,
+      resetFilters,
+      resetPagination,
+    ]
+  );
+
+  return {
+    state,
+    actions,
   };
 }

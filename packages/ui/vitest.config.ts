@@ -26,12 +26,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
       reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: [
-        'src/**/*.stories.{ts,tsx}',
-        'src/**/*.d.ts',
-        'src/index.ts',
-        'src/**/index.ts',
-      ],
+      exclude: ['src/**/*.stories.{ts,tsx}', 'src/**/*.d.ts', 'src/index.ts', 'src/**/index.ts'],
       thresholds: {
         branches: 85,
         functions: 85,
@@ -39,12 +34,7 @@ export default defineConfig({
         statements: 85,
       },
     },
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/.next/**',
-      '**/coverage/**',
-    ],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**', '**/coverage/**'],
   },
   resolve: {
     alias: {
@@ -52,4 +42,3 @@ export default defineConfig({
     },
   },
 });
-

@@ -2,14 +2,25 @@
 
 /**
  * BloombergMacroWidget - Widget compacto con curvas de tasas e indicadores macro
- * 
+ *
  * AI_DECISION: Componente compacto para mostrar macro y curvas en espacio reducido
  * Justificación: Versión optimizada de MacroPanel y YieldCurveChart para dashboard
  * Impacto: Mejor uso del espacio, información macro accesible rápidamente
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Grid, Text, Stack, Badge, Spinner, Alert } from '@cactus/ui';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Grid,
+  Text,
+  Stack,
+  Badge,
+  Spinner,
+  Alert,
+} from '@cactus/ui';
 import { getYieldSpreads } from '@/lib/api/bloomberg';
 import { useEffect } from 'react';
 
@@ -26,7 +37,7 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
     const fetchSpreads = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const response = await getYieldSpreads('US');
         if (response.success && response.data?.spreads) {
@@ -42,7 +53,7 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
     };
 
     fetchSpreads();
-    
+
     // Refresh every 5 minutes
     const interval = setInterval(fetchSpreads, 5 * 60 * 1000);
     return () => clearInterval(interval);
@@ -57,9 +68,7 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
         <CardHeader>
           <Stack direction="row" gap="sm" align="center" justify="between">
             <CardTitle>US Treasury Spreads</CardTitle>
-            {isInverted && (
-              <Badge variant="error">Inverted</Badge>
-            )}
+            {isInverted && <Badge variant="error">Inverted</Badge>}
           </Stack>
         </CardHeader>
         <CardContent>
@@ -73,12 +82,14 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
             <Stack direction="column" gap="md">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Text size="sm" color="secondary">2s10s Spread</Text>
-                  <Text 
-                    size="lg" 
+                  <Text size="sm" color="secondary">
+                    2s10s Spread
+                  </Text>
+                  <Text
+                    size="lg"
                     weight="bold"
-                    style={{ 
-                      color: usSpreads['2s10s'] && usSpreads['2s10s'] < 0 ? '#ef4444' : '#10b981' 
+                    style={{
+                      color: usSpreads['2s10s'] && usSpreads['2s10s'] < 0 ? '#ef4444' : '#10b981',
                     }}
                   >
                     {usSpreads['2s10s']?.toFixed(2)}%
@@ -86,7 +97,9 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
                 </div>
                 {usSpreads['3m10y'] !== undefined && (
                   <div>
-                    <Text size="sm" color="secondary">3m-10y Spread</Text>
+                    <Text size="sm" color="secondary">
+                      3m-10y Spread
+                    </Text>
                     <Text size="lg" weight="bold">
                       {usSpreads['3m10y'].toFixed(2)}%
                     </Text>
@@ -115,41 +128,58 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
         <CardContent>
           <Stack direction="column" gap="md">
             <div>
-              <Text size="sm" color="secondary" weight="medium" className="mb-2">Argentina</Text>
+              <Text size="sm" color="secondary" weight="medium" className="mb-2">
+                Argentina
+              </Text>
               <Stack direction="column" gap="xs">
                 <div className="flex justify-between">
                   <Text size="sm">Badlar</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text size="sm">IPC</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text size="sm">TC Oficial</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
               </Stack>
             </div>
             <div>
-              <Text size="sm" color="secondary" weight="medium" className="mb-2">United States</Text>
+              <Text size="sm" color="secondary" weight="medium" className="mb-2">
+                United States
+              </Text>
               <Stack direction="column" gap="xs">
                 <div className="flex justify-between">
                   <Text size="sm">CPI</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text size="sm">Fed Funds Rate</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
                 <div className="flex justify-between">
                   <Text size="sm">Unemployment</Text>
-                  <Text size="sm" color="secondary">N/A</Text>
+                  <Text size="sm" color="secondary">
+                    N/A
+                  </Text>
                 </div>
               </Stack>
             </div>
             <Text size="xs" color="muted" className="mt-2">
-              Para datos completos, visita la página de detalle de activos o el panel macro completo.
+              Para datos completos, visita la página de detalle de activos o el panel macro
+              completo.
             </Text>
           </Stack>
         </CardContent>
@@ -157,4 +187,3 @@ export default function BloombergMacroWidget({ className }: BloombergMacroWidget
     </Grid>
   );
 }
-

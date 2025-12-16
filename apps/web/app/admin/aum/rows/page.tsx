@@ -28,22 +28,44 @@ import { useUrlSync } from './hooks/useUrlSync';
 import { AUM_ROWS_CONFIG } from './lib/aumRowsConstants';
 import { useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { Breadcrumbs, type BreadcrumbItem } from '@cactus/ui';
+import ConfirmDialog from '@/app/components/ConfirmDialog';
+
+// AI_DECISION: Agregar breadcrumbs para mejorar navegación
+// Justificación: Permite a los usuarios saber dónde están y volver fácilmente
+// Impacto: Mejor UX, navegación más intuitiva
+const breadcrumbItems: BreadcrumbItem[] = [
+  { href: '/admin', label: 'Administración' },
+  { href: '/admin/aum', label: 'AUM' },
+  { href: '/admin/aum/rows', label: 'Filas' },
+];
 
 export default function AumRowsPage() {
   const { user } = useAuth();
   const canImport = canImportFiles(user);
   const [isDetailExpanded, setIsDetailExpanded] = useState(true);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const detailContainerClasses = `flex flex-col bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden ${
+    isDetailExpanded ? 'flex-1 min-h-0' : 'flex-shrink-0'
+  }`;
 
   // Centralized state management
   const { state, actions } = useAumRowsState();
 
   // Sync URL with state (URL → State) for fileId
-  const { updateUrl } = useUrlSync({
-    onFileIdChange: (fileId) => {
+  // AI_DECISION: Memoize handler to prevent infinite loop in useUrlSync
+  const handleFileIdChange = useCallback(
+    (fileId: string | null) => {
+      // Only update if value actually changed to prevent re-renders
       if (fileId !== state.uploadedFileId) {
         actions.setUploadedFileId(fileId);
       }
     },
+    [state.uploadedFileId, actions]
+  );
+
+  const { updateUrl } = useUrlSync({
+    onFileIdChange: handleFileIdChange,
   });
 
   // Debounced search term
@@ -68,12 +90,14 @@ export default function AumRowsPage() {
     onlyUpdated: state.onlyUpdated,
   });
 
-  // AI_DECISION: Doble confirmación para acción destructiva crítica
-  // Justificación: Reset elimina TODOS los datos, requiere confirmación explícita
-  // Impacto: Previene pérdida de datos por error del usuario
-  const handleResetAll = useCallback(async () => {
-    if (!confirm('⚠️ ADVERTENCIA: Esto eliminará TODAS las filas AUM. ¿Continuar?')) return;
+  // AI_DECISION: Usar ConfirmDialog en lugar de confirm() nativo
+  // Justificación: Mejor UX con componente del design system, consistente con el resto de la app
+  // Impacto: Interfaz más moderna y accesible
+  const handleResetAllClick = useCallback(() => {
+    setShowResetConfirm(true);
+  }, []);
 
+  const handleResetConfirm = useCallback(async () => {
     actions.setLoading('resetting', true);
     try {
       await resetAumSystem();
@@ -127,10 +151,15 @@ export default function AumRowsPage() {
   // El scroll se maneja solo dentro de cada tabla con altura fija
   return (
     <AumErrorBoundary onReset={() => mutate()}>
-      <div className="flex flex-col h-screen -m-6 overflow-hidden bg-gray-50">
+      <div className="flex flex-col h-screen -m-6 overflow-hidden">
         {/* Header y Admin Actions - Fijo */}
         <section className="bg-white border-b border-gray-200 shadow-sm flex-shrink-0 z-30">
           <div className="px-6 py-1.5">
+            {/* Breadcrumbs */}
+            <div className="mb-1">
+              <Breadcrumbs items={breadcrumbItems} />
+            </div>
+
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-3">
                 <h1 className="text-base font-semibold text-gray-900">
@@ -163,7 +192,7 @@ export default function AumRowsPage() {
               <AumAdminActions
                 isResetting={state.loading.resetting}
                 canImport={canImport}
-                onReset={handleResetAll}
+                onReset={handleResetAllClick}
               />
             </div>
 
@@ -189,15 +218,15 @@ export default function AumRowsPage() {
           </div>
         </section>
 
-        {/* Contenido principal - Sin scroll aquí, cada sección maneja su propio scroll */}
+        {/* Contenido principal - SIN scroll aquí, cada sección maneja su propio scroll */}
         <div className="flex-1 flex flex-col min-h-0 px-6 py-4 gap-4 overflow-hidden">
           {/* Resumen por Asesor - Colapsable, altura dinámica */}
           <div className="flex-shrink-0">
             <AdvisorAumSummary defaultExpanded={true} />
           </div>
 
-          {/* Tabla Principal - Ocupa espacio restante */}
-          <div className="flex-1 flex flex-col min-h-0 bg-white border border-gray-200 rounded-xl shadow-md">
+          {/* Tabla Principal - Ocupa espacio restante, layout flex column */}
+          <div className={detailContainerClasses}>
             {/* Header de la tabla de detalle - Fijo */}
             <div
               className="px-4 py-3 bg-gradient-to-r from-slate-600 to-slate-700 cursor-pointer flex-shrink-0 rounded-t-xl"
@@ -239,9 +268,9 @@ export default function AumRowsPage() {
               </div>
             </div>
 
-            {/* Contenido de tabla - Scroll interno, altura dinámica */}
+            {/* Contenido de tabla - Scroll interno con overflow-auto, flex-1 para ocupar espacio */}
             {isDetailExpanded && (
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-hidden">
                 <AumVirtualTable
                   rows={rows || []}
                   isLoading={isLoading}
@@ -253,7 +282,7 @@ export default function AumRowsPage() {
               </div>
             )}
 
-            {/* Paginación - Fija al fondo de la tabla */}
+            {/* Paginación - Fija al fondo de la tabla, fuera del área de scroll */}
             {!isLoading && rows && rows.length > 0 && isDetailExpanded && (
               <div className="flex-shrink-0 border-t border-gray-200 bg-white px-4 py-2 rounded-b-xl">
                 <AumPagination
@@ -294,6 +323,17 @@ export default function AumRowsPage() {
             }}
           />
         )}
+
+        <ConfirmDialog
+          open={showResetConfirm}
+          onOpenChange={setShowResetConfirm}
+          onConfirm={handleResetConfirm}
+          title="⚠️ ADVERTENCIA"
+          description="Esto eliminará TODAS las filas AUM. ¿Continuar?"
+          confirmLabel="Eliminar todo"
+          cancelLabel="Cancelar"
+          variant="danger"
+        />
       </div>
     </AumErrorBoundary>
   );

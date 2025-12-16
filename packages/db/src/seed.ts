@@ -141,4 +141,3 @@ seed()
     console.error('❌ Error fatal:', err);
     process.exit(1);
   });
-

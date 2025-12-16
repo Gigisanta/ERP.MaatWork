@@ -1,6 +1,6 @@
 /**
  * Tests para contact-access middleware
- * 
+ *
  * AI_DECISION: Tests unitarios para middleware de acceso a contactos
  * Justificación: Validación crítica de seguridad y acceso
  * Impacto: Prevenir accesos no autorizados
@@ -13,7 +13,7 @@ import { requireContactAccess } from './contact-access';
 
 // Mock dependencies
 vi.mock('../auth/authorization', () => ({
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 const mockCanAccessContact = vi.mocked(canAccessContact);
@@ -29,11 +29,11 @@ describe('requireContactAccess', () => {
       params: {},
       body: {},
       query: {},
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -137,4 +137,3 @@ describe('requireContactAccess', () => {
     expect(mockNext).toHaveBeenCalled();
   });
 });
-

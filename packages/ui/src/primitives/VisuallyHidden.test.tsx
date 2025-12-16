@@ -1,6 +1,6 @@
 /**
  * Tests para VisuallyHidden primitive
- * 
+ *
  * AI_DECISION: Tests unitarios para VisuallyHidden component
  * Justificación: Validación crítica de accesibilidad
  * Impacto: Prevenir errores en screen readers
@@ -35,7 +35,7 @@ describe('VisuallyHidden', () => {
         <span aria-hidden="true">Visible text</span>
       </button>
     );
-    
+
     const hiddenText = screen.getByText('Screen reader text');
     expect(hiddenText).toBeInTheDocument();
     // sr-only hace que el texto sea accesible pero visualmente oculto
@@ -53,5 +53,3 @@ describe('VisuallyHidden', () => {
     expect(screen.getByText('Text 2')).toBeInTheDocument();
   });
 });
-
-

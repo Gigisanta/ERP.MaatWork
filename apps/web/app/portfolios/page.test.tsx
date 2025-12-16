@@ -1,6 +1,6 @@
 /**
  * Tests para portfolios page
- * 
+ *
  * AI_DECISION: Tests unitarios básicos para portfolios page
  * Justificación: Validación de renderizado básico
  * Impacto: Prevenir errores críticos en página de portfolios
@@ -14,8 +14,8 @@ import PortfoliosPage from './page';
 vi.mock('../auth/useRequireAuth', () => ({
   useRequireAuth: () => ({
     user: { id: 'user-123', email: 'test@example.com', role: 'admin' },
-    loading: false
-  })
+    loading: false,
+  }),
 }));
 
 vi.mock('./hooks/usePortfolios', () => ({
@@ -25,26 +25,26 @@ vi.mock('./hooks/usePortfolios', () => ({
     error: null,
     createPortfolio: vi.fn(),
     updatePortfolio: vi.fn(),
-    deletePortfolio: vi.fn()
-  })
+    deletePortfolio: vi.fn(),
+  }),
 }));
 
 vi.mock('./hooks/useBenchmarks', () => ({
   useBenchmarks: () => ({
     benchmarks: [],
     isLoading: false,
-    error: null
-  })
+    error: null,
+  }),
 }));
 
 vi.mock('../components/PageTitleContext', () => ({
-  usePageTitle: vi.fn()
+  usePageTitle: vi.fn(),
 }));
 
 describe('PortfoliosPage', () => {
   it('debería renderizar correctamente', () => {
     render(<PortfoliosPage />);
-    
+
     // Verificar que la página se renderiza sin errores
     expect(document.body).toBeDefined();
   });
@@ -52,7 +52,7 @@ describe('PortfoliosPage', () => {
   it('debería mostrar título de página', () => {
     const { usePageTitle } = require('../components/PageTitleContext');
     render(<PortfoliosPage />);
-    
+
     expect(usePageTitle).toHaveBeenCalledWith('Carteras');
   });
 });

@@ -13,6 +13,7 @@ export type BenchmarkType = 'individual' | 'composite';
  * Benchmark base - extiende TimestampedEntity
  */
 export interface Benchmark extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string;
   type: BenchmarkType;
   description?: string | null;
@@ -60,7 +61,10 @@ export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {}
 /**
  * Request para agregar componente de benchmark
  */
-export interface AddBenchmarkComponentRequest extends Pick<BenchmarkComponent, 'instrumentId' | 'weight'> {}
+export interface AddBenchmarkComponentRequest extends Pick<
+  BenchmarkComponent,
+  'instrumentId' | 'weight'
+> {}
 
 /**
  * Benchmark con componentes completos

@@ -2,7 +2,7 @@
 
 /**
  * TechnicalSignals - Display technical indicators and signals
- * 
+ *
  * AI_DECISION: Client component for technical analysis
  * Justificación: Interactive component with real-time calculations
  * Impacto: Better technical analysis UX
@@ -20,10 +20,10 @@ export default function TechnicalSignals({ symbol }: TechnicalSignalsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // FUTURE_FEATURE: Requires price history and technical indicator calculations
-    // Indicators needed: SMA, EMA, RSI, MACD, Bollinger Bands
-    // Dependencies: Price history in DB, analytics-service (cactus_ingestors/utils/technical.py)
-    // Status: Placeholder UI ready, technical calculations ready in Python service
+    // AI_DECISION: Placeholder para indicadores técnicos (SMA, EMA, RSI, MACD, Bollinger Bands)
+    // Justificación: UI lista, cálculos técnicos disponibles en analytics-service (cactus_ingestors/utils/technical.py)
+    // Dependencies: Price history en DB, endpoints API para exponer cálculos técnicos
+    // Impacto: Mejora análisis técnico una vez conectado con backend
     setLoading(false);
   }, [symbol]);
 
@@ -41,14 +41,11 @@ export default function TechnicalSignals({ symbol }: TechnicalSignalsProps) {
         <Stack direction="column" gap="md">
           <Heading level={4}>Technical Signals - {symbol}</Heading>
           <Text color="secondary">
-            Technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands) will be displayed here once calculations are implemented.
+            Technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands) will be displayed here once
+            calculations are implemented.
           </Text>
         </Stack>
       </CardContent>
     </Card>
   );
 }
-
-
-
-

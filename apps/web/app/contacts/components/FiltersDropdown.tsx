@@ -1,17 +1,11 @@
-"use client";
+'use client';
+
 import React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  Button,
-  Icon,
-  Text,
-  Badge,
-} from '@cactus/ui';
+// AI_DECISION: Importar componentes en un solo statement para simplificar resoluci?n de webpack
+// Justificaci?n: Webpack tiene problemas resolviendo @cactus/ui cuando hay m?ltiples imports separados
+// Impacto: Un solo import statement ayuda a webpack a resolver todos los m?dulos de una vez
+import { Button, Icon, Text, Badge } from '@cactus/ui';
 // Utility function para combinar clases (similar a cn de @cactus/ui)
 function cn(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(' ');
@@ -29,9 +23,9 @@ export interface FiltersDropdownProps {
 }
 
 // AI_DECISION: Componente unificado para optimizar espacio en barra de filtros
-// Justificación: Combina dos selectores separados en un solo dropdown con dos columnas
+// Justificaci?n: Combina dos selectores separados en un solo dropdown con dos columnas
 // Impacto: Reduce espacio horizontal, mejora UX con filtros relacionados agrupados
-const FiltersDropdown = React.memo<FiltersDropdownProps>(({
+function FiltersDropdownComponent({
   selectedStage,
   selectedTags,
   pipelineStages,
@@ -39,16 +33,17 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
   onStageChange,
   onTagToggle,
   onManageTagsClick,
-}) => {
+}: FiltersDropdownProps) {
   // Calcular texto del trigger basado en selecciones
   const getTriggerText = () => {
-    const stageText = selectedStage === 'all' 
-      ? 'Todas las etapas' 
-      : pipelineStages.find(s => s.id === selectedStage)?.name || 'Etapas';
-    
+    const stageText =
+      selectedStage === 'all'
+        ? 'Todas las etapas'
+        : pipelineStages.find((s) => s.id === selectedStage)?.name || 'Etapas';
+
     const tagsCount = selectedTags.length;
     const tagsText = tagsCount > 0 ? `Etiquetas (${tagsCount})` : 'Etiquetas';
-    
+
     return `${stageText} • ${tagsText}`;
   };
 
@@ -62,10 +57,7 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
           <Button variant="outline" size="sm">
             <span className="text-sm">{triggerText}</span>
             {hasActiveFilters && (
-              <Badge 
-                variant="brand" 
-                className="ml-2 h-5 min-w-[20px] px-1.5 text-xs"
-              >
+              <Badge variant="secondary" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
                 {selectedTags.length + (selectedStage !== 'all' ? 1 : 0)}
               </Badge>
             )}
@@ -109,7 +101,9 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
                         <Icon name="check" size={14} />
                       </DropdownMenuPrimitive.ItemIndicator>
                     </div>
-                    <Text size="sm" className="pl-6">Todas las etapas</Text>
+                    <Text size="sm" className="pl-6">
+                      Todas las etapas
+                    </Text>
                   </DropdownMenuPrimitive.RadioItem>
                   {Array.isArray(pipelineStages) && pipelineStages.length > 0 && (
                     <>
@@ -130,8 +124,8 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
                             </DropdownMenuPrimitive.ItemIndicator>
                           </div>
                           <div className="flex items-center w-full pl-6">
-                            <div 
-                              className="w-3 h-3 rounded-full mr-2 shrink-0" 
+                            <div
+                              className="w-3 h-3 rounded-full mr-2 shrink-0"
                               style={{ backgroundColor: stage.color || '#6B7280' }}
                             />
                             <Text size="sm">{stage.name}</Text>
@@ -167,8 +161,8 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
                           </DropdownMenuPrimitive.ItemIndicator>
                         </div>
                         <div className="flex items-center w-full pl-6">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2 shrink-0" 
+                          <div
+                            className="w-3 h-3 rounded-full mr-2 shrink-0"
                             style={{ backgroundColor: tag.color || '#6B7280' }}
                           />
                           <Text size="sm">{tag.name}</Text>
@@ -206,9 +200,9 @@ const FiltersDropdown = React.memo<FiltersDropdownProps>(({
       </DropdownMenuPrimitive.Root>
     </div>
   );
-});
+}
 
+const FiltersDropdown = React.memo(FiltersDropdownComponent);
 FiltersDropdown.displayName = 'FiltersDropdown';
 
 export default FiltersDropdown;
-

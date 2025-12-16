@@ -1,15 +1,16 @@
 /**
  * Contacts Assignment Routes
- * 
+ *
  * Handles contact assignment operations
  */
 
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request } from 'express';
 import { db, contacts, contactFieldHistory } from '@cactus/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
-import { idParamSchema } from '../../utils/common-schemas';
+import { idParamSchema } from '../../utils/validation/common-schemas';
+import { createRouteHandler, HttpError } from '../../utils/route-handler';
 import { z } from 'zod';
 
 const router = Router();
@@ -19,7 +20,7 @@ const router = Router();
 // ==========================================================
 
 const nextStepSchema = z.object({
-  nextStep: z.string().max(500).optional().nullable()
+  nextStep: z.string().max(500).optional().nullable(),
 });
 
 // ==========================================================
@@ -29,14 +30,14 @@ const nextStepSchema = z.object({
 /**
  * PATCH /contacts/:id/next-step - Actualizar próximo paso
  */
-router.patch('/:id/next-step', 
+router.patch(
+  '/:id/next-step',
   requireAuth,
-  validate({ 
+  validate({
     params: idParamSchema,
-    body: nextStepSchema 
+    body: nextStepSchema,
   }),
-  async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  createRouteHandler(async (req: Request) => {
     const { id } = req.params;
     const { nextStep } = req.body;
 
@@ -48,15 +49,15 @@ router.patch('/:id/next-step',
       .limit(1);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Contact not found' });
+      throw new HttpError(404, 'Contact not found');
     }
 
     // Actualizar solo el próximo paso
     const [updated] = await db()
       .update(contacts)
-      .set({ 
+      .set({
         nextStep,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(contacts.id, id))
       .returning();
@@ -70,17 +71,13 @@ router.patch('/:id/next-step',
           fieldName: 'nextStep',
           oldValue: existing.nextStep || '',
           newValue: nextStep || '',
-          changedByUserId: req.user!.id
+          changedByUserId: req.user!.id,
         });
     }
 
     req.log.info({ contactId: id, nextStep }, 'contact next step updated');
-    res.json({ success: true, data: updated });
-  } catch (err) {
-    req.log.error({ err, contactId: req.params.id }, 'failed to update contact next step');
-    next(err);
-  }
-});
+    return updated;
+  })
+);
 
 export default router;
-

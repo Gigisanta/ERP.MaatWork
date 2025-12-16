@@ -9,8 +9,8 @@ vi.mock('../api-client', () => {
   return {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
-      post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true }))
-    }
+      post: vi.fn(async (_p: string, _b?: unknown) => ({ success: true })),
+    },
   };
 });
 
@@ -30,7 +30,7 @@ describe('pipeline api client endpoints', () => {
     await apiIndex.moveContactToStage('contact-123', 'stage-456');
     expect(apiClient.post).toHaveBeenCalledWith('/v1/pipeline/move', {
       contactId: 'contact-123',
-      toStageId: 'stage-456'
+      toStageId: 'stage-456',
     });
   });
 
@@ -43,7 +43,7 @@ describe('pipeline api client endpoints', () => {
     const mockStages = [
       { id: 'stage-1', order: 1 },
       { id: 'stage-2', order: 2 },
-      { id: 'stage-3', order: 3 }
+      { id: 'stage-3', order: 3 },
     ] as any[];
 
     it('returns first stage when currentStageId is null', () => {
@@ -67,4 +67,3 @@ describe('pipeline api client endpoints', () => {
     });
   });
 });
-

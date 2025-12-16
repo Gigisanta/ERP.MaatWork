@@ -9,6 +9,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { db, tasks, taskRecurrences } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
+import { syncTaskToGoogle } from '../../../services/task-sync';
 
 /**
  * POST /tasks/:id/complete - Completar tarea
@@ -48,6 +49,12 @@ export async function handleCompleteTask(req: Request, res: Response, next: Next
     }
 
     req.log.info({ taskId: id }, 'task completed');
+
+    // Sync to Google Calendar
+    syncTaskToGoogle(id, 'update').catch((err) =>
+      req.log.error({ err, taskId: id }, 'failed to sync task completion to google')
+    );
+
     res.json({ success: true, data: task });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to complete task');

@@ -1,25 +1,13 @@
-"use client";
-import { useState, useCallback } from 'react';
+'use client';
+import { useState, useCallback, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { usePageTitle } from '../../components/PageTitleContext';
-import { 
-  Stack,
-  Heading,
-  Text,
-  Button,
-  Alert,
-  Spinner,
-  Toast,
-} from '@cactus/ui';
+import { Stack, Heading, Text, Button, Alert, Spinner, Toast } from '@cactus/ui';
 import { usePortfolios } from '../hooks/usePortfolios';
-import { useBenchmarks } from '../hooks/useBenchmarks';
 import { PortfoliosGrid } from './PortfoliosGrid';
 import { PortfolioForm } from './PortfolioForm';
-import { PortfolioDashboard } from './PortfolioDashboard';
-import {
-  addPortfolioLine,
-  getPortfolioById,
-} from '@/lib/api';
+import { PortfolioAnalyticsView } from './PortfolioAnalyticsView';
+import { addPortfolioLine, getPortfolioById } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { Portfolio, PortfolioLine, AddPortfolioLineRequest, RiskLevel } from '@/types';
 import { ensureInstrumentsExist, syncPortfolioLines } from '../utils/portfolio-helpers';
@@ -31,14 +19,17 @@ interface PortfoliosClientProps {
 
 /**
  * PortfoliosClient - Client Island for portfolio management interactivity
- * 
- * AI_DECISION: Extract interactive parts to Client Island for Server Component pattern
- * Justificación: Forms, modals, and state management require client-side interactivity
- * Impacto: Reduces First Load JS ~40KB, better SEO, faster initial load
  */
 export default function PortfoliosClient({ initialPortfolios }: PortfoliosClientProps) {
   usePageTitle('Carteras');
-  
+
+  // Page transition animation state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Use SWR hook - it will use initialPortfolios as fallback
   const {
     portfolios,
@@ -48,11 +39,9 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
     updatePortfolio,
     deletePortfolio,
   } = usePortfolios();
-  
+
   // Use initial portfolios if SWR hasn't loaded yet
   const displayPortfolios = portfolios.length > 0 ? portfolios : initialPortfolios;
-
-  const { benchmarks } = useBenchmarks();
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
   const [showPortfolioForm, setShowPortfolioForm] = useState(false);
@@ -83,18 +72,24 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   });
 
   const showToast = useCallback(
-    (title: string, description?: string, variant: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    (
+      title: string,
+      description?: string,
+      variant: 'success' | 'error' | 'warning' | 'info' = 'info'
+    ) => {
       setToast({ show: true, title, ...(description && { description }), variant });
     },
     []
   );
 
   const handleCreatePortfolio = useCallback(() => {
+    console.log('Opening Create Portfolio Form');
     setEditingPortfolio(null);
     setShowPortfolioForm(true);
   }, []);
 
   const handleEditPortfolio = useCallback((portfolio: Portfolio) => {
+    console.log('Opening Edit Portfolio Form for:', portfolio.name);
     setEditingPortfolio(portfolio);
     setShowPortfolioForm(true);
   }, []);
@@ -136,7 +131,12 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   );
 
   const handlePortfolioSubmit = useCallback(
-    async (data: { name: string; description: string; riskLevel: string; lines: PortfolioLine[] }) => {
+    async (data: {
+      name: string;
+      description: string;
+      riskLevel: string;
+      lines: PortfolioLine[];
+    }) => {
       setIsSubmitting(true);
 
       try {
@@ -157,7 +157,8 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
 
           // Obtener líneas actuales
           const currentPortfolioResponse = await getPortfolioById(editingPortfolio.id);
-          const currentLines = currentPortfolioResponse.success && currentPortfolioResponse.data?.lines || [];
+          const currentLines =
+            (currentPortfolioResponse.success && currentPortfolioResponse.data?.lines) || [];
 
           // Sincronizar líneas usando helper
           await syncPortfolioLines(editingPortfolio.id, currentLines, data.lines, instrumentIds);
@@ -185,7 +186,9 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
             const payload: AddPortfolioLineRequest = {
               targetType: line.targetType,
               targetWeight: line.targetWeight,
-              ...(line.targetType === 'assetClass' && line.assetClass ? { assetClass: line.assetClass } : {}),
+              ...(line.targetType === 'assetClass' && line.assetClass
+                ? { assetClass: line.assetClass }
+                : {}),
               ...(instrumentId ? { instrumentId } : {}),
             };
             await addPortfolioLine(portfolioId, payload);
@@ -233,32 +236,50 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   }
 
   return (
-    <div className="space-y-4">
+    <div
+      className={`space-y-4 transition-all duration-500 ease-out ${
+        mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+    >
       {/* Header compacto */}
-      <div className="flex items-center justify-between">
+      <div
+        className={`flex items-center justify-between transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        }`}
+        style={{ transitionDelay: '50ms' }}
+      >
         <Heading level={1}>Carteras</Heading>
         <Button onClick={handleCreatePortfolio} variant="primary" size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Nueva Cartera
         </Button>
       </div>
-                          
-      {/* Grid de Carteras Compacto */}
-      <PortfoliosGrid
-        portfolios={displayPortfolios}
-        onEdit={handleEditPortfolio}
-        onDelete={handleDeletePortfolio}
-        onCreateNew={handleCreatePortfolio}
-        onSelect={handleSelectPortfolio}
-      />
 
-      {/* Dashboard Unificado: Gráfico + Bloomberg */}
-      <PortfolioDashboard
-        portfolios={displayPortfolios}
-        benchmarks={benchmarks}
-        selectedPortfolioId={selectedPortfolioId}
-        onPortfolioSelect={setSelectedPortfolioId}
-      />
+      {/* Grid de Carteras Compacto */}
+      <div
+        className={`transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '100ms' }}
+      >
+        <PortfoliosGrid
+          portfolios={displayPortfolios}
+          onEdit={handleEditPortfolio}
+          onDelete={handleDeletePortfolio}
+          onCreateNew={handleCreatePortfolio}
+          onSelect={handleSelectPortfolio}
+        />
+      </div>
+
+      {/* Dashboard Unificado: Gráfico + Watchlist */}
+      <div
+        className={`transition-all duration-500 ease-out ${
+          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+        style={{ transitionDelay: '150ms' }}
+      >
+        <PortfolioAnalyticsView portfolios={displayPortfolios} />
+      </div>
 
       {/* Portfolio Form Drawer */}
       <PortfolioForm
@@ -292,4 +313,3 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
     </div>
   );
 }
-

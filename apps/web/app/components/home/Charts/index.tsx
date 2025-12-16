@@ -11,3 +11,4 @@
 export { GoalsComparisonChart } from './GoalsComparisonChart';
 export { BusinessLineChart } from './BusinessLineChart';
 export { TransitionTimesChart } from './TransitionTimesChart';
+export { MarketTypeConversionChart } from './MarketTypeConversionChart';

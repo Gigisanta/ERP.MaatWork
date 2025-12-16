@@ -1,23 +1,30 @@
 /**
  * Handler para obtener duplicados de filas AUM
+ *
+ * AI_DECISION: Migrado a createRouteHandler para manejo automático de errores
+ * Justificación: Consistencia con otros handlers, manejo de errores centralizado
+ * Impacto: Código más limpio, mejor logging de errores, requestId automático
  */
 
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { db } from '@cactus/db';
 import { sql } from 'drizzle-orm';
-import { normalizeAdvisorAlias } from '../../../../utils/aum-normalization';
+import { normalizeAdvisorAlias } from '../../../../utils/aum/aum-normalization';
 import type { AumRowResultDuplicate } from '../types';
+import { createRouteHandler } from '@/utils/route-handler';
 
 /**
  * GET /admin/aum/rows/duplicates/:accountNumber
  * Get all rows with same account number
+ *
+ * Params están validados por middleware validate() con aumAccountNumberParamsSchema
  */
-export async function getDuplicates(req: Request, res: Response) {
-  try {
-    const { accountNumber } = req.params;
-    const dbi = db();
+export const getDuplicates = createRouteHandler(async (req: Request) => {
+  // req.params ya está validado y tipado por el middleware validate()
+  const { accountNumber } = req.params;
+  const dbi = db();
 
-    const result = await dbi.execute(sql`
+  const result = await dbi.execute(sql`
       SELECT 
         r.id,
         r.file_id,
@@ -44,52 +51,45 @@ export async function getDuplicates(req: Request, res: Response) {
       ORDER BY f.created_at DESC, r.created_at DESC
     `);
 
-    const rows = ((result.rows || []) as AumRowResultDuplicate[]).map(
-      (r: AumRowResultDuplicate) => ({
-        id: r.id,
-        fileId: r.file_id,
-        accountNumber: r.account_number,
-        holderName: r.holder_name,
-        advisorRaw: r.advisor_raw,
-        advisorNormalized: r.advisor_raw ? normalizeAdvisorAlias(r.advisor_raw) : null,
-        matchedContactId: r.matched_contact_id,
-        matchedUserId: r.matched_user_id,
-        matchStatus: r.match_status,
-        isPreferred: r.is_preferred,
-        conflictDetected: r.conflict_detected,
-        rowCreatedAt: r.row_created_at,
-        file: {
-          id: r.file_id,
-          broker: r.broker,
-          originalFilename: r.original_filename,
-          createdAt: r.file_created_at,
-        },
-        contact: r.matched_contact_id
-          ? {
-              id: r.matched_contact_id,
-              fullName: r.contact_name,
-            }
-          : null,
-        user: r.matched_user_id
-          ? {
-              id: r.matched_user_id,
-              name: r.user_name,
-            }
-          : null,
-      })
-    );
+  const rows = ((result.rows || []) as AumRowResultDuplicate[]).map((r: AumRowResultDuplicate) => ({
+    id: r.id,
+    fileId: r.file_id,
+    accountNumber: r.account_number,
+    holderName: r.holder_name,
+    advisorRaw: r.advisor_raw,
+    advisorNormalized: r.advisor_raw ? normalizeAdvisorAlias(r.advisor_raw) : null,
+    matchedContactId: r.matched_contact_id,
+    matchedUserId: r.matched_user_id,
+    matchStatus: r.match_status,
+    isPreferred: r.is_preferred,
+    conflictDetected: r.conflict_detected,
+    rowCreatedAt: r.row_created_at,
+    file: {
+      id: r.file_id,
+      broker: r.broker,
+      originalFilename: r.original_filename,
+      createdAt: r.file_created_at,
+    },
+    contact: r.matched_contact_id
+      ? {
+          id: r.matched_contact_id,
+          fullName: r.contact_name,
+        }
+      : null,
+    user: r.matched_user_id
+      ? {
+          id: r.matched_user_id,
+          name: r.user_name,
+        }
+      : null,
+  }));
 
-    return res.json({
-      ok: true,
-      accountNumber,
-      rows,
-      hasConflicts: rows.some((r) => r.conflictDetected),
-    });
-  } catch (error) {
-    req.log?.error?.(
-      { err: error, accountNumber: req.params.accountNumber },
-      'failed to get duplicates'
-    );
-    return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-  }
-}
+  // Retornar datos directamente - createRouteHandler los envuelve en { success: true, data: ... }
+  // Mantenemos formato { ok: true, accountNumber, rows, hasConflicts } para compatibilidad con frontend
+  return {
+    ok: true,
+    accountNumber,
+    rows,
+    hasConflicts: rows.some((r) => r.conflictDetected),
+  };
+});

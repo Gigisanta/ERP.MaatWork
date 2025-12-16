@@ -1,6 +1,6 @@
 /**
  * Performance Dashboard
- * 
+ *
  * Visualiza métricas de queries en tiempo real, incluyendo:
  * - Latencia p50, p95, p99
  * - Top queries lentas
@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
 import { Card } from '@cactus/ui';
 import { logger } from '@/lib/logger';
@@ -52,35 +52,37 @@ export default function PerformanceDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(500);
 
-  const fetchMetrics = async () => {
+  const fetchMetrics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await apiClient.get<PerformanceData>(
         `/v1/admin/query-metrics?threshold=${threshold}`
       );
-      
+
       if (response.success && response.data) {
         setData(response.data);
       } else {
         throw new Error('Failed to fetch metrics');
       }
     } catch (err) {
-      logger.error('Error fetching performance metrics', { 
-        err: err instanceof Error ? err.message : String(err) 
+      logger.error('Error fetching performance metrics', {
+        err: err instanceof Error ? err.message : String(err),
       });
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [threshold]);
 
   useEffect(() => {
-    fetchMetrics();
-    const interval = setInterval(fetchMetrics, 30000); // Refresh every 30 seconds
+    void fetchMetrics();
+    const interval = setInterval(() => {
+      void fetchMetrics();
+    }, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [threshold]);
+  }, [fetchMetrics]);
 
   if (loading && !data) {
     return (
@@ -116,9 +118,10 @@ export default function PerformanceDashboard() {
   const cacheEntries = Object.values(data.cacheHealth);
   const totalCacheHits = cacheEntries.reduce((sum, c) => sum + c.hits, 0);
   const totalCacheMisses = cacheEntries.reduce((sum, c) => sum + c.misses, 0);
-  const overallCacheHitRate = totalCacheHits + totalCacheMisses > 0
-    ? (totalCacheHits / (totalCacheHits + totalCacheMisses)) * 100
-    : 0;
+  const overallCacheHitRate =
+    totalCacheHits + totalCacheMisses > 0
+      ? (totalCacheHits / (totalCacheHits + totalCacheMisses)) * 100
+      : 0;
 
   return (
     <div className="container mx-auto p-6">
@@ -174,11 +177,21 @@ export default function PerformanceDashboard() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operation</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Count</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg (ms)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P95 (ms)</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">P99 (ms)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Operation
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Count
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Avg (ms)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    P95 (ms)
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    P99 (ms)
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -187,8 +200,12 @@ export default function PerformanceDashboard() {
                     <td className="px-4 py-3 text-sm font-mono">{query.operationBase}</td>
                     <td className="px-4 py-3 text-sm">{query.count}</td>
                     <td className="px-4 py-3 text-sm">{query.avgDuration.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-orange-600">{query.p95Duration.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-red-600">{query.p99Duration.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-orange-600">
+                      {query.p95Duration.toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-red-600">
+                      {query.p99Duration.toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -205,10 +222,18 @@ export default function PerformanceDashboard() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operation</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Executions</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">N+1 Occurrences</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Duration (ms)</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Operation
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Total Executions
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    N+1 Occurrences
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Avg Duration (ms)
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -216,7 +241,9 @@ export default function PerformanceDashboard() {
                   <tr key={query.operationBase}>
                     <td className="px-4 py-3 text-sm font-mono">{query.operationBase}</td>
                     <td className="px-4 py-3 text-sm">{query.count}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-red-600">{query.nPlusOneCount}</td>
+                    <td className="px-4 py-3 text-sm font-semibold text-red-600">
+                      {query.nPlusOneCount}
+                    </td>
                     <td className="px-4 py-3 text-sm">{query.avgDuration.toFixed(2)}</td>
                   </tr>
                 ))}
@@ -232,11 +259,21 @@ export default function PerformanceDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(data.cacheHealth).map(([name, stats]) => (
             <div key={name} className="border rounded p-4">
-              <h3 className="font-semibold mb-2 capitalize">{name.replace(/([A-Z])/g, ' $1').trim()}</h3>
+              <h3 className="font-semibold mb-2 capitalize">
+                {name.replace(/([A-Z])/g, ' $1').trim()}
+              </h3>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Hit Rate:</span>
-                  <span className={stats.hitRate >= 70 ? 'text-green-600' : stats.hitRate >= 50 ? 'text-yellow-600' : 'text-red-600'}>
+                  <span
+                    className={
+                      stats.hitRate >= 70
+                        ? 'text-green-600'
+                        : stats.hitRate >= 50
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
+                    }
+                  >
                     {stats.hitRate.toFixed(1)}%
                   </span>
                 </div>
@@ -260,4 +297,3 @@ export default function PerformanceDashboard() {
     </div>
   );
 }
-

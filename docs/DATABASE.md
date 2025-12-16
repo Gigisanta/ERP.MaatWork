@@ -481,7 +481,7 @@ Elimina una partición específica (útil para archivado).
 
 #### 2. Instrumentos (Búsqueda)
 
-**Ubicación**: `apps/api/src/routes/instruments.ts`
+**Ubicación**: `apps/api/src/routes/instruments/index.ts`
 
 **Características:**
 - ✅ Datos relativamente estables (instrumentos financieros no cambian frecuentemente)
@@ -500,7 +500,7 @@ Elimina una partición específica (útil para archivado).
 
 #### 3. Benchmarks
 
-**Ubicación**: `apps/api/src/routes/benchmarks.ts`
+**Ubicación**: `apps/api/src/routes/benchmarks/index.ts`
 
 **Características:**
 - ✅ Cambian poco (solo cuando admin modifica benchmarks)

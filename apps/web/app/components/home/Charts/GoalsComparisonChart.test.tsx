@@ -1,6 +1,6 @@
 /**
  * Tests para GoalsComparisonChart component
- * 
+ *
  * AI_DECISION: Tests unitarios para gráfico de comparación de objetivos
  * Justificación: Validación crítica de visualización de objetivos vs actuales
  * Impacto: Prevenir errores en análisis de cumplimiento de objetivos
@@ -14,7 +14,9 @@ import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 // Mock dependencies
 vi.mock('recharts', () => ({
   BarChart: ({ children, data }: any) => (
-    <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>{children}</div>
+    <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
+      {children}
+    </div>
   ),
   Bar: ({ children }: any) => <div>{children}</div>,
   Cell: () => null,
@@ -23,7 +25,7 @@ vi.mock('recharts', () => ({
   CartesianGrid: () => null,
   Tooltip: () => null,
   Legend: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>
+  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
 }));
 
 describe('GoalsComparisonChart', () => {
@@ -35,20 +37,20 @@ describe('GoalsComparisonChart', () => {
     businessLineClosures: {
       inversiones: 2,
       zurich: 1,
-      patrimonial: 0
+      patrimonial: 0,
     },
     transitionTimes: {
       prospectoToFirstMeeting: 5,
       firstToSecondMeeting: 7,
-      secondMeetingToClient: 10
-    }
+      secondMeetingToClient: 10,
+    },
   };
 
   const mockGoals: MonthlyGoal = {
     newProspectsGoal: 15,
     firstMeetingsGoal: 12,
     secondMeetingsGoal: 8,
-    newClientsGoal: 5
+    newClientsGoal: 5,
   };
 
   beforeEach(() => {
@@ -68,7 +70,7 @@ describe('GoalsComparisonChart', () => {
     expect(chartData[0]).toMatchObject({
       name: 'Nuevos Contactos',
       actual: 10,
-      goal: 15
+      goal: 15,
     });
   });
 
@@ -79,7 +81,7 @@ describe('GoalsComparisonChart', () => {
 
     const chart = container.querySelector('[data-testid="bar-chart"]');
     const chartData = JSON.parse(chart?.getAttribute('data-chart-data') || '[]');
-    
+
     expect(chartData[0].goal).toBe(0);
     expect(chartData[1].goal).toBe(0);
     expect(chartData[2].goal).toBe(0);
@@ -93,7 +95,7 @@ describe('GoalsComparisonChart', () => {
 
     const chart = container.querySelector('[data-testid="bar-chart"]');
     const chartData = JSON.parse(chart?.getAttribute('data-chart-data') || '[]');
-    
+
     const metricNames = chartData.map((item: any) => item.name);
     expect(metricNames).toContain('Nuevos Contactos');
     expect(metricNames).toContain('Primeras Reuniones');
@@ -101,4 +103,3 @@ describe('GoalsComparisonChart', () => {
     expect(metricNames).toContain('Nuevos Clientes');
   });
 });
-

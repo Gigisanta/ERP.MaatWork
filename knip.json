@@ -1,0 +1,64 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "apps/api/src/index.ts",
+    "apps/web/app/**/*.{ts,tsx}",
+    "apps/web/middleware.ts",
+    "packages/ui/src/index.ts",
+    "packages/db/src/index.ts"
+  ],
+  "project": [
+    "apps/**/*.{ts,tsx}",
+    "packages/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,js}",
+    "tests/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.d.ts",
+    "**/dist/**",
+    "**/.next/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/migrations/**",
+    "**/__pycache__/**"
+  ],
+  "ignoreDependencies": [
+    "@types/*",
+    "eslint*",
+    "@typescript-eslint/*",
+    "prettier",
+    "vitest",
+    "@vitest/*",
+    "playwright",
+    "@playwright/*",
+    "turbo",
+    "husky",
+    "lint-staged",
+    "@changesets/*",
+    "@lhci/*",
+    "rimraf",
+    "chalk"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.{ts,js}"]
+    },
+    "apps/api": {
+      "entry": ["src/index.ts"]
+    },
+    "apps/web": {
+      "entry": ["app/**/*.{ts,tsx}", "middleware.ts"]
+    },
+    "packages/ui": {
+      "entry": ["src/index.ts"]
+    },
+    "packages/db": {
+      "entry": ["src/index.ts"]
+    }
+  }
+}

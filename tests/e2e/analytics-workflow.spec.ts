@@ -1,8 +1,8 @@
 /**
  * E2E tests for analytics workflow
- * 
+ *
  * Tests: View dashboard → Filter metrics → Compare periods → Export reports
- * 
+ *
  * AI_DECISION: Tests E2E completos para workflow de analytics
  * Justificación: Validación crítica de analytics y reportes
  * Impacto: Prevenir errores en visualización de datos
@@ -15,8 +15,14 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page, email: string = adminEmail, password: string = adminPassword) {
   await page.goto('/login');
-  await page.getByLabel(/email|usuario|correo/i).first().fill(email);
-  await page.getByLabel(/contraseña|password/i).first().fill(password);
+  await page
+    .getByLabel(/email|usuario|correo/i)
+    .first()
+    .fill(email);
+  await page
+    .getByLabel(/contraseña|password/i)
+    .first()
+    .fill(password);
   await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
   await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
 }
@@ -39,12 +45,12 @@ test.describe('Analytics Workflow', () => {
 
     // Find date range selector
     const dateRangeSelect = page.getByLabel(/período|period|rango/i);
-    if (await dateRangeSelect.count() > 0) {
+    if ((await dateRangeSelect.count()) > 0) {
       await dateRangeSelect.first().click();
 
       // Select different period
       const periodOption = page.getByRole('option', { name: /último mes|last month/i });
-      if (await periodOption.count() > 0) {
+      if ((await periodOption.count()) > 0) {
         await periodOption.first().click();
       }
 
@@ -59,17 +65,17 @@ test.describe('Analytics Workflow', () => {
 
     // Find compare button
     const compareButton = page.getByRole('button', { name: /comparar|compare/i });
-    if (await compareButton.count() > 0) {
+    if ((await compareButton.count()) > 0) {
       await compareButton.first().click();
 
       // Select comparison periods
       const period1Select = page.getByLabel(/período 1|period 1/i);
       const period2Select = page.getByLabel(/período 2|period 2/i);
-      
-      if (await period1Select.count() > 0 && await period2Select.count() > 0) {
+
+      if ((await period1Select.count()) > 0 && (await period2Select.count()) > 0) {
         await period1Select.first().click();
         await page.getByRole('option').first().click();
-        
+
         await period2Select.first().click();
         await page.getByRole('option').nth(1).click();
 
@@ -87,7 +93,7 @@ test.describe('Analytics Workflow', () => {
 
     // Find export button
     const exportButton = page.getByRole('button', { name: /exportar|export|descargar/i });
-    if (await exportButton.count() > 0) {
+    if ((await exportButton.count()) > 0) {
       await exportButton.first().click();
 
       // Wait for download
@@ -101,10 +107,8 @@ test.describe('Analytics Workflow', () => {
 
     // Should show charts
     const chart = page.locator('canvas').or(page.locator('[role="img"]'));
-    if (await chart.count() > 0) {
+    if ((await chart.count()) > 0) {
       await expect(chart.first()).toBeVisible({ timeout: 5000 });
     }
   });
 });
-
-

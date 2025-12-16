@@ -38,4 +38,3 @@ export async function createBrokerAccount(
 export async function deleteBrokerAccount(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/broker-accounts/${id}`);
 }
-

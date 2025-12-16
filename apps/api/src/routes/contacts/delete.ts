@@ -3,10 +3,12 @@
  *
  * DELETE /contacts/:id - Soft delete contact
  */
-import { Router, type Request, type Response, type NextFunction } from 'express';
+import { Router, type Request } from 'express';
 import { db, contacts } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
+import { invalidateCache } from '../../middleware/cache';
+import { createRouteHandler, HttpError } from '../../utils/route-handler';
 
 const router = Router();
 
@@ -18,27 +20,26 @@ router.delete(
   '/:id',
   requireAuth,
   requireRole(['manager', 'admin']),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
+  createRouteHandler(async (req: Request) => {
+    const { id } = req.params;
 
-      const [deleted] = await db()
-        .update(contacts)
-        .set({ deletedAt: new Date() })
-        .where(eq(contacts.id, id))
-        .returning();
+    const [deleted] = await db()
+      .update(contacts)
+      .set({ deletedAt: new Date() })
+      .where(eq(contacts.id, id))
+      .returning();
 
-      if (!deleted) {
-        return res.status(404).json({ error: 'Contact not found' });
-      }
-
-      req.log.info({ contactId: id }, 'contact deleted');
-      res.json({ success: true, data: { id, deleted: true } });
-    } catch (err) {
-      req.log.error({ err, contactId: req.params.id }, 'failed to delete contact');
-      next(err);
+    if (!deleted) {
+      throw new HttpError(404, 'Contact not found');
     }
-  }
+
+    // Invalidate Redis cache for contacts and pipeline
+    await invalidateCache('crm:contacts:*');
+    await invalidateCache('crm:pipeline:*');
+
+    req.log.info({ contactId: id }, 'contact deleted');
+    return { id, deleted: true };
+  })
 );
 
 export default router;

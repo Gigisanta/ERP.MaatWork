@@ -1,11 +1,11 @@
 /**
  * Job de Monitoreo de Performance de Queries con pg_stat_statements
- * 
+ *
  * Monitorea queries lentas usando pg_stat_statements y genera alertas
  * cuando se detectan queries que exceden umbrales de performance.
- * 
+ *
  * Se ejecuta diariamente vía scheduler para detectar problemas proactivamente.
- * 
+ *
  * AI_DECISION: Monitoreo de performance con pg_stat_statements
  * Justificación: Necesitamos detectar queries lentas automáticamente y generar alertas
  * Impacto: Detección proactiva de problemas, mejor visibilidad de performance
@@ -42,26 +42,36 @@ export class MonitorQueryPerformanceJob {
 
       // 1. Obtener resumen de performance
       const summary = await getPerformanceSummary();
-      
+
       if (!summary.enabled) {
         logger.warn('pg_stat_statements no está habilitado, saltando monitoreo');
         return;
       }
 
-      logger.info({
-        totalQueries: summary.totalQueries,
-        totalTime: summary.totalTime,
-        avgQueryTime: summary.avgQueryTime,
-        slowQueriesCount: summary.slowQueriesCount
-      }, 'Resumen de performance');
+      logger.info(
+        {
+          totalQueries: summary.totalQueries,
+          totalTime: summary.totalTime,
+          avgQueryTime: summary.avgQueryTime,
+          slowQueriesCount: summary.slowQueriesCount,
+        },
+        'Resumen de performance'
+      );
 
       // 2. Detectar queries lentas
-      const slowQueries = await getSlowQueries(this.SLOW_QUERY_THRESHOLD_MS, this.MAX_ALERT_QUERIES);
-      
+      const slowQueries = await getSlowQueries(
+        this.SLOW_QUERY_THRESHOLD_MS,
+        this.MAX_ALERT_QUERIES
+      );
+
       if (slowQueries.length > 0) {
         // Separar queries críticas de warnings
-        const criticalQueries = slowQueries.filter(q => q.meanExecTime >= this.CRITICAL_QUERY_THRESHOLD_MS);
-        const warningQueries = slowQueries.filter(q => q.meanExecTime < this.CRITICAL_QUERY_THRESHOLD_MS);
+        const criticalQueries = slowQueries.filter(
+          (q) => q.meanExecTime >= this.CRITICAL_QUERY_THRESHOLD_MS
+        );
+        const warningQueries = slowQueries.filter(
+          (q) => q.meanExecTime < this.CRITICAL_QUERY_THRESHOLD_MS
+        );
 
         if (criticalQueries.length > 0) {
           alerts.push({
@@ -69,14 +79,14 @@ export class MonitorQueryPerformanceJob {
             type: 'slow_query',
             message: `Se detectaron ${criticalQueries.length} queries críticas (tiempo promedio >= ${this.CRITICAL_QUERY_THRESHOLD_MS}ms)`,
             details: {
-              queries: criticalQueries.slice(0, 5).map(q => ({
+              queries: criticalQueries.slice(0, 5).map((q) => ({
                 query: this.sanitizeQuery(q.query),
                 calls: q.calls,
                 meanExecTime: q.meanExecTime,
                 maxExecTime: q.maxExecTime,
-                totalExecTime: q.totalExecTime
-              }))
-            }
+                totalExecTime: q.totalExecTime,
+              })),
+            },
           });
         }
 
@@ -86,14 +96,14 @@ export class MonitorQueryPerformanceJob {
             type: 'slow_query',
             message: `Se detectaron ${warningQueries.length} queries lentas (tiempo promedio >= ${this.SLOW_QUERY_THRESHOLD_MS}ms)`,
             details: {
-              queries: warningQueries.slice(0, 5).map(q => ({
+              queries: warningQueries.slice(0, 5).map((q) => ({
                 query: this.sanitizeQuery(q.query),
                 calls: q.calls,
                 meanExecTime: q.meanExecTime,
                 maxExecTime: q.maxExecTime,
-                totalExecTime: q.totalExecTime
-              }))
-            }
+                totalExecTime: q.totalExecTime,
+              })),
+            },
           });
         }
       }
@@ -107,8 +117,8 @@ export class MonitorQueryPerformanceJob {
           details: {
             avgQueryTime: summary.avgQueryTime,
             totalQueries: summary.totalQueries,
-            slowQueriesCount: summary.slowQueriesCount
-          }
+            slowQueriesCount: summary.slowQueriesCount,
+          },
         });
       }
 
@@ -119,7 +129,6 @@ export class MonitorQueryPerformanceJob {
       } else {
         logger.info('✅ No se detectaron problemas de performance');
       }
-
     } catch (error) {
       logger.error({ err: error }, '❌ Error en monitoreo de performance');
       throw error;
@@ -154,8 +163,8 @@ export class MonitorQueryPerformanceJob {
       }
 
       // Agrupar alertas por severidad
-      const criticalAlerts = alerts.filter(a => a.severity === 'critical');
-      const warningAlerts = alerts.filter(a => a.severity === 'warning');
+      const criticalAlerts = alerts.filter((a) => a.severity === 'critical');
+      const warningAlerts = alerts.filter((a) => a.severity === 'warning');
 
       // Crear notificaciones para cada admin
       for (const admin of adminUsers) {
@@ -169,7 +178,7 @@ export class MonitorQueryPerformanceJob {
               type: sql`(SELECT id FROM lookup_notification_type WHERE id = 'critical')`,
               severity: 'critical',
               renderedBody: this.formatAlertMessage(criticalAlerts, 'critical'),
-              payload: { alerts: criticalAlerts }
+              payload: { alerts: criticalAlerts },
             });
         }
 
@@ -181,17 +190,19 @@ export class MonitorQueryPerformanceJob {
               type: sql`(SELECT id FROM lookup_notification_type WHERE id = 'info')`,
               severity: 'warning',
               renderedBody: this.formatAlertMessage(warningAlerts, 'warning'),
-              payload: { alerts: warningAlerts }
+              payload: { alerts: warningAlerts },
             });
         }
       }
 
-      logger.info({ 
-        adminCount: adminUsers.length,
-        criticalCount: criticalAlerts.length,
-        warningCount: warningAlerts.length
-      }, 'Alertas enviadas a administradores');
-
+      logger.info(
+        {
+          adminCount: adminUsers.length,
+          criticalCount: criticalAlerts.length,
+          warningCount: warningAlerts.length,
+        },
+        'Alertas enviadas a administradores'
+      );
     } catch (error) {
       logger.error({ err: error }, 'Error enviando alertas');
       throw error;
@@ -231,4 +242,3 @@ export class MonitorQueryPerformanceJob {
     return message;
   }
 }
-

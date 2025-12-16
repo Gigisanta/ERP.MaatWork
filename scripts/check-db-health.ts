@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Script para Verificar Salud de la Base de Datos
- * 
+ *
  * Verifica múltiples aspectos de la salud de la base de datos:
  * - Conexión y versión de PostgreSQL
  * - Estado de extensiones críticas
@@ -9,7 +9,7 @@
  * - Queries lentas
  * - Estado de mantenimiento
  * - Uso de espacio
- * 
+ *
  * Uso:
  *   pnpm tsx scripts/check-db-health.ts
  */
@@ -17,7 +17,10 @@
 import { db } from '../packages/db/src/index.js';
 import { sql } from 'drizzle-orm';
 import pino from 'pino';
-import { getPerformanceSummary, isPgStatStatementsEnabled } from '../apps/api/src/utils/pg-stat-statements.js';
+import {
+  getPerformanceSummary,
+  isPgStatStatementsEnabled,
+} from '../apps/api/src/utils/pg-stat-statements.js';
 import { getMaintenanceStats } from '../apps/api/src/jobs/maintenance.js';
 
 const logger = pino({ name: 'check-db-health' });
@@ -38,19 +41,19 @@ async function checkConnection(): Promise<HealthCheck> {
       SELECT version() as version
     `);
     const version = (result.rows[0] as { version: string }).version;
-    
+
     return {
       name: 'Conexión a PostgreSQL',
       status: 'ok',
       message: 'Conexión exitosa',
-      details: { version }
+      details: { version },
     };
   } catch (error) {
     return {
       name: 'Conexión a PostgreSQL',
       status: 'error',
       message: 'Error de conexión',
-      details: { error: error instanceof Error ? error.message : String(error) }
+      details: { error: error instanceof Error ? error.message : String(error) },
     };
   }
 }
@@ -60,15 +63,15 @@ async function checkConnection(): Promise<HealthCheck> {
  */
 async function checkExtensions(): Promise<HealthCheck[]> {
   const checks: HealthCheck[] = [];
-  
+
   // Verificar pg_stat_statements
   const pgStatEnabled = await isPgStatStatementsEnabled();
   checks.push({
     name: 'pg_stat_statements',
     status: pgStatEnabled ? 'ok' : 'warning',
-    message: pgStatEnabled 
-      ? 'Extensión habilitada' 
-      : 'Extensión no habilitada (requiere shared_preload_libraries y reinicio)'
+    message: pgStatEnabled
+      ? 'Extensión habilitada'
+      : 'Extensión no habilitada (requiere shared_preload_libraries y reinicio)',
   });
 
   // Verificar otras extensiones útiles
@@ -79,15 +82,15 @@ async function checkExtensions(): Promise<HealthCheck[]> {
     ORDER BY extname
   `);
 
-  const extensionNames = extensions.rows.map((row: unknown) => 
-    (row as { extname: string }).extname
+  const extensionNames = extensions.rows.map(
+    (row: unknown) => (row as { extname: string }).extname
   );
 
   if (!extensionNames.includes('pg_trgm')) {
     checks.push({
       name: 'pg_trgm',
       status: 'warning',
-      message: 'Extensión pg_trgm no encontrada (necesaria para búsquedas de texto)'
+      message: 'Extensión pg_trgm no encontrada (necesaria para búsquedas de texto)',
     });
   }
 
@@ -141,10 +144,10 @@ async function checkTablesAndIndexes(): Promise<HealthCheck[]> {
             return {
               table: r.tablename,
               deadTuples: r.n_dead_tup,
-              percentage: r.dead_tuple_percentage.toFixed(2)
+              percentage: r.dead_tuple_percentage.toFixed(2),
             };
-          })
-        }
+          }),
+        },
       });
     }
   }
@@ -174,8 +177,8 @@ async function checkTablesAndIndexes(): Promise<HealthCheck[]> {
         indexes: unusedIndexes.rows.map((row: unknown) => {
           const r = row as { indexname: string; size: string };
           return { index: r.indexname, size: r.size };
-        })
-      }
+        }),
+      },
     });
   }
 
@@ -192,12 +195,12 @@ async function checkSlowQueries(): Promise<HealthCheck> {
       return {
         name: 'Queries lentas',
         status: 'warning',
-        message: 'pg_stat_statements no habilitado, no se pueden verificar queries lentas'
+        message: 'pg_stat_statements no habilitado, no se pueden verificar queries lentas',
       };
     }
 
     const summary = await getPerformanceSummary();
-    
+
     if (summary.slowQueriesCount > 0) {
       return {
         name: 'Queries lentas',
@@ -206,8 +209,8 @@ async function checkSlowQueries(): Promise<HealthCheck> {
         details: {
           slowQueriesCount: summary.slowQueriesCount,
           avgQueryTime: summary.avgQueryTime.toFixed(2) + 'ms',
-          totalQueries: summary.totalQueries
-        }
+          totalQueries: summary.totalQueries,
+        },
       };
     }
 
@@ -217,15 +220,15 @@ async function checkSlowQueries(): Promise<HealthCheck> {
       message: 'No se detectaron queries lentas',
       details: {
         avgQueryTime: summary.avgQueryTime.toFixed(2) + 'ms',
-        totalQueries: summary.totalQueries
-      }
+        totalQueries: summary.totalQueries,
+      },
     };
   } catch (error) {
     return {
       name: 'Queries lentas',
       status: 'error',
       message: 'Error verificando queries lentas',
-      details: { error: error instanceof Error ? error.message : String(error) }
+      details: { error: error instanceof Error ? error.message : String(error) },
     };
   }
 }
@@ -236,7 +239,7 @@ async function checkSlowQueries(): Promise<HealthCheck> {
 async function checkMaintenance(): Promise<HealthCheck> {
   try {
     const stats = await getMaintenanceStats();
-    
+
     const needsVacuum = stats.tablesNeedingVacuum.length;
     const needsReindex = stats.indexesNeedingReindex.length;
 
@@ -247,22 +250,22 @@ async function checkMaintenance(): Promise<HealthCheck> {
         message: `Se requiere mantenimiento: ${needsVacuum} tabla(s) necesitan VACUUM, ${needsReindex} índice(s) necesitan REINDEX`,
         details: {
           tablesNeedingVacuum: needsVacuum,
-          indexesNeedingReindex: needsReindex
-        }
+          indexesNeedingReindex: needsReindex,
+        },
       };
     }
 
     return {
       name: 'Mantenimiento',
       status: 'ok',
-      message: 'No se requiere mantenimiento inmediato'
+      message: 'No se requiere mantenimiento inmediato',
     };
   } catch (error) {
     return {
       name: 'Mantenimiento',
       status: 'error',
       message: 'Error verificando mantenimiento',
-      details: { error: error instanceof Error ? error.message : String(error) }
+      details: { error: error instanceof Error ? error.message : String(error) },
     };
   }
 }
@@ -297,15 +300,15 @@ async function checkDiskUsage(): Promise<HealthCheck> {
         databaseSize: row.database_size,
         tablesSize: row.tables_size,
         dataSize: row.data_size,
-        indexesSize: row.indexes_size
-      }
+        indexesSize: row.indexes_size,
+      },
     };
   } catch (error) {
     return {
       name: 'Uso de espacio',
       status: 'error',
       message: 'Error verificando uso de espacio',
-      details: { error: error instanceof Error ? error.message : String(error) }
+      details: { error: error instanceof Error ? error.message : String(error) },
     };
   }
 }
@@ -322,10 +325,10 @@ async function main(): Promise<void> {
   checks.push(await checkConnection());
 
   // 2. Verificar extensiones
-  checks.push(...await checkExtensions());
+  checks.push(...(await checkExtensions()));
 
   // 3. Verificar tablas e índices
-  checks.push(...await checkTablesAndIndexes());
+  checks.push(...(await checkTablesAndIndexes()));
 
   // 4. Verificar queries lentas
   checks.push(await checkSlowQueries());
@@ -341,9 +344,9 @@ async function main(): Promise<void> {
   console.log('REPORTE DE SALUD DE BASE DE DATOS');
   console.log('========================================\n');
 
-  const okChecks = checks.filter(c => c.status === 'ok');
-  const warningChecks = checks.filter(c => c.status === 'warning');
-  const errorChecks = checks.filter(c => c.status === 'error');
+  const okChecks = checks.filter((c) => c.status === 'ok');
+  const warningChecks = checks.filter((c) => c.status === 'warning');
+  const errorChecks = checks.filter((c) => c.status === 'error');
 
   // Mostrar checks OK
   if (okChecks.length > 0) {
@@ -403,10 +406,8 @@ async function main(): Promise<void> {
 }
 
 // Ejecutar
-main()
-  .catch((error) => {
-    logger.error({ error }, 'Error en verificación de salud');
-    console.error('\n❌ Error ejecutando verificación de salud:', error);
-    process.exit(1);
-  });
-
+main().catch((error) => {
+  logger.error({ error }, 'Error en verificación de salud');
+  console.error('\n❌ Error ejecutando verificación de salud:', error);
+  process.exit(1);
+});

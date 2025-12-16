@@ -23,6 +23,7 @@ export interface AutomationConfigData {
  * Configuración de automatización - extiende TimestampedEntity
  */
 export interface AutomationConfig extends TimestampedEntity {
+  id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   name: string; // Identificador único (ej: "mail_bienvenida")
   displayName: string; // Nombre para mostrar (ej: "Mail de bienvenida")
   triggerType: string; // Tipo de trigger (ej: "pipeline_stage_change")
@@ -56,4 +57,3 @@ export interface UpdateAutomationConfigRequest extends UpdateRequest<AutomationC
   enabled?: boolean;
   config?: AutomationConfigData;
 }
-

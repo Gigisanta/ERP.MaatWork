@@ -7,214 +7,148 @@
  */
 
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { db } from '@cactus/db';
 import { benchmarkDefinitions, benchmarkComponents, instruments } from '@cactus/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { UserRole } from '../../../auth/types';
-import { benchmarksCacheUtil } from '../../../utils/cache';
+import { benchmarksCacheUtil } from '../../../utils/performance/cache';
+import { createAsyncHandler, createRouteHandler, HttpError } from '../../../utils/route-handler';
+import { createBenchmarkSchema, updateBenchmarkSchema } from '../schemas';
 
 /**
  * POST /benchmarks
  * Crear benchmark custom (solo admin)
  */
-export async function handleCreateBenchmark(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id;
-    const role = req.user?.role as UserRole;
+export const handleCreateBenchmark = createAsyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const validated = req.body as z.infer<typeof createBenchmarkSchema>;
+  const { code, name, description, components } = validated;
 
-    if (!userId || !role) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
+  // Verificar que el código sea único
+  const existingBenchmark = await db()
+    .select({ id: benchmarkDefinitions.id })
+    .from(benchmarkDefinitions)
+    .where(eq(benchmarkDefinitions.code, code))
+    .limit(1);
 
-    // Solo admin puede crear benchmarks custom
-    if (role !== 'admin') {
-      return res.status(403).json({ error: 'Solo administradores pueden crear benchmarks' });
-    }
-
-    const { code, name, description, components } = req.body;
-
-    if (!code || !name) {
-      return res.status(400).json({ error: 'Código y nombre son requeridos' });
-    }
-
-    // Verificar que el código sea único
-    const existingBenchmark = await db()
-      .select({ id: benchmarkDefinitions.id })
-      .from(benchmarkDefinitions)
-      .where(eq(benchmarkDefinitions.code, code))
-      .limit(1);
-
-    if (existingBenchmark.length > 0) {
-      return res.status(400).json({ error: 'El código del benchmark ya existe' });
-    }
-
-    // Validar componentes si se proporcionan
-    if (components && Array.isArray(components)) {
-      const totalWeight = components.reduce((sum, comp) => sum + Number(comp.weight || 0), 0);
-      if (Math.abs(totalWeight - 1.0) > 0.0001) {
-        return res.status(400).json({ error: 'La suma de pesos debe ser 100%' });
-      }
-
-      // Verificar que los instrumentos existen
-      const instrumentIds = components
-        .filter((comp) => comp.instrumentId)
-        .map((comp) => comp.instrumentId);
-
-      if (instrumentIds.length > 0) {
-        const existingInstruments = await db()
-          .select({ id: instruments.id })
-          .from(instruments)
-          .where(sql`${instruments.id} = ANY(${instrumentIds})`);
-
-        if (existingInstruments.length !== instrumentIds.length) {
-          return res.status(400).json({ error: 'Algunos instrumentos no existen' });
-        }
-      }
-    }
-
-    // Crear benchmark
-    const [benchmark] = await db()
-      .insert(benchmarkDefinitions)
-      .values({
-        code,
-        name,
-        description,
-        isSystem: false,
-        createdByUserId: userId,
-      })
-      .returning();
-
-    // Crear componentes si se proporcionan
-    if (components && Array.isArray(components) && components.length > 0) {
-      await db()
-        .insert(benchmarkComponents)
-        .values(
-          components.map((comp) => ({
-            benchmarkId: benchmark.id,
-            instrumentId: comp.instrumentId,
-            weight: Number(comp.weight),
-          }))
-        );
-    }
-
-    // Invalidate cache when benchmark is created
-    benchmarksCacheUtil.clear();
-
-    res.status(201).json({
-      success: true,
-      data: benchmark,
-    });
-  } catch (error) {
-    req.log.error({ error }, 'Error creating benchmark');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (existingBenchmark.length > 0) {
+    throw new HttpError(400, 'El código del benchmark ya existe');
   }
-}
+
+  // Verificar que los instrumentos existen si se proporcionan componentes
+  if (components && components.length > 0) {
+    const instrumentIds = components.map((comp) => comp.instrumentId);
+    const existingInstruments = await db()
+      .select({ id: instruments.id })
+      .from(instruments)
+      .where(sql`${instruments.id} = ANY(${instrumentIds})`);
+
+    if (existingInstruments.length !== instrumentIds.length) {
+      throw new HttpError(400, 'Algunos instrumentos no existen');
+    }
+  }
+
+  // Crear benchmark
+  const [benchmark] = await db()
+    .insert(benchmarkDefinitions)
+    .values({
+      code,
+      name,
+      description,
+      isSystem: false,
+      createdByUserId: userId,
+    })
+    .returning();
+
+  // Crear componentes si se proporcionan
+  if (components && components.length > 0) {
+    await db()
+      .insert(benchmarkComponents)
+      .values(
+        components.map((comp) => ({
+          benchmarkId: benchmark.id,
+          instrumentId: comp.instrumentId,
+          weight: comp.weight,
+        }))
+      );
+  }
+
+  // Invalidate cache when benchmark is created
+  benchmarksCacheUtil.clear();
+
+  req.log.info({ benchmarkId: benchmark.id }, 'benchmark created');
+  return res.status(201).json({ success: true, data: benchmark, requestId: req.requestId });
+});
 
 /**
  * PUT /benchmarks/:id
  * Actualizar benchmark (solo admin, solo custom)
  */
-export async function handleUpdateBenchmark(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id;
-    const role = req.user?.role as UserRole;
-    const benchmarkId = req.params.id;
+export const handleUpdateBenchmark = createRouteHandler(async (req: Request) => {
+  const benchmarkId = req.params.id;
+  const validated = req.body as z.infer<typeof updateBenchmarkSchema>;
+  const { name, description } = validated;
 
-    if (!userId || !role) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
+  // Verificar que el benchmark existe y es custom
+  const benchmark = await db()
+    .select({ id: benchmarkDefinitions.id, isSystem: benchmarkDefinitions.isSystem })
+    .from(benchmarkDefinitions)
+    .where(eq(benchmarkDefinitions.id, benchmarkId))
+    .limit(1);
 
-    // Solo admin puede editar benchmarks
-    if (role !== 'admin') {
-      return res.status(403).json({ error: 'Solo administradores pueden editar benchmarks' });
-    }
-
-    const { name, description } = req.body;
-
-    // Verificar que el benchmark existe y es custom
-    const benchmark = await db()
-      .select({ id: benchmarkDefinitions.id, isSystem: benchmarkDefinitions.isSystem })
-      .from(benchmarkDefinitions)
-      .where(eq(benchmarkDefinitions.id, benchmarkId))
-      .limit(1);
-
-    if (benchmark.length === 0) {
-      return res.status(404).json({ error: 'Benchmark no encontrado' });
-    }
-
-    if (benchmark[0].isSystem) {
-      return res.status(403).json({ error: 'No se pueden editar benchmarks del sistema' });
-    }
-
-    // Actualizar benchmark
-    const [updatedBenchmark] = await db()
-      .update(benchmarkDefinitions)
-      .set({
-        name,
-        description,
-      })
-      .where(eq(benchmarkDefinitions.id, benchmarkId))
-      .returning();
-
-    // Invalidate cache when benchmark is updated
-    benchmarksCacheUtil.clear();
-
-    res.json({
-      success: true,
-      data: updatedBenchmark,
-    });
-  } catch (error) {
-    req.log.error({ error }, 'Error updating benchmark');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (benchmark.length === 0) {
+    throw new HttpError(404, 'Benchmark no encontrado');
   }
-}
+
+  if (benchmark[0].isSystem) {
+    throw new HttpError(403, 'No se pueden editar benchmarks del sistema');
+  }
+
+  // Actualizar benchmark
+  const [updatedBenchmark] = await db()
+    .update(benchmarkDefinitions)
+    .set({
+      name,
+      description,
+    })
+    .where(eq(benchmarkDefinitions.id, benchmarkId))
+    .returning();
+
+  // Invalidate cache when benchmark is updated
+  benchmarksCacheUtil.clear();
+
+  req.log.info({ benchmarkId }, 'benchmark updated');
+  return updatedBenchmark;
+});
 
 /**
  * DELETE /benchmarks/:id
  * Eliminar benchmark (solo admin, solo custom)
  */
-export async function handleDeleteBenchmark(req: Request, res: Response) {
-  try {
-    const userId = req.user?.id;
-    const role = req.user?.role as UserRole;
-    const benchmarkId = req.params.id;
+export const handleDeleteBenchmark = createRouteHandler(async (req: Request) => {
+  const benchmarkId = req.params.id;
 
-    if (!userId || !role) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
+  // Verificar que el benchmark existe y es custom
+  const benchmark = await db()
+    .select({ id: benchmarkDefinitions.id, isSystem: benchmarkDefinitions.isSystem })
+    .from(benchmarkDefinitions)
+    .where(eq(benchmarkDefinitions.id, benchmarkId))
+    .limit(1);
 
-    // Solo admin puede eliminar benchmarks
-    if (role !== 'admin') {
-      return res.status(403).json({ error: 'Solo administradores pueden eliminar benchmarks' });
-    }
-
-    // Verificar que el benchmark existe y es custom
-    const benchmark = await db()
-      .select({ id: benchmarkDefinitions.id, isSystem: benchmarkDefinitions.isSystem })
-      .from(benchmarkDefinitions)
-      .where(eq(benchmarkDefinitions.id, benchmarkId))
-      .limit(1);
-
-    if (benchmark.length === 0) {
-      return res.status(404).json({ error: 'Benchmark no encontrado' });
-    }
-
-    if (benchmark[0].isSystem) {
-      return res.status(403).json({ error: 'No se pueden eliminar benchmarks del sistema' });
-    }
-
-    // Eliminar benchmark (los componentes se eliminan por CASCADE)
-    await db().delete(benchmarkDefinitions).where(eq(benchmarkDefinitions.id, benchmarkId));
-
-    // Invalidate cache when benchmark is deleted
-    benchmarksCacheUtil.clear();
-
-    res.json({
-      success: true,
-      message: 'Benchmark eliminado correctamente',
-    });
-  } catch (error) {
-    req.log.error({ error }, 'Error deleting benchmark');
-    res.status(500).json({ error: 'Error interno del servidor' });
+  if (benchmark.length === 0) {
+    throw new HttpError(404, 'Benchmark no encontrado');
   }
-}
+
+  if (benchmark[0].isSystem) {
+    throw new HttpError(403, 'No se pueden eliminar benchmarks del sistema');
+  }
+
+  // Eliminar benchmark (los componentes se eliminan por CASCADE)
+  await db().delete(benchmarkDefinitions).where(eq(benchmarkDefinitions.id, benchmarkId));
+
+  // Invalidate cache when benchmark is deleted
+  benchmarksCacheUtil.clear();
+
+  req.log.info({ benchmarkId }, 'benchmark deleted');
+  return { message: 'Benchmark eliminado correctamente' };
+});

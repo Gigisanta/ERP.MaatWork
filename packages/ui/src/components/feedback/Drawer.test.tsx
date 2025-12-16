@@ -22,5 +22,3 @@ describe('Drawer', () => {
     expect(onChange).toHaveBeenCalledWith(false);
   });
 });
-
-

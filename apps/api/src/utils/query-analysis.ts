@@ -41,11 +41,11 @@ export interface ExplainPlanNode {
 
 /**
  * Ejecuta EXPLAIN ANALYZE en una query SQL
- * 
+ *
  * AI_DECISION: Utilidad para análisis de performance de queries
  * Justificación: Permite identificar planes de ejecución subóptimos y sugerir índices faltantes
  * Impacto: Facilita debugging y optimización proactiva de queries lentas
- * 
+ *
  * @param logger - Logger para registrar resultados
  * @param query - Query SQL a analizar (puede incluir placeholders $1, $2, etc.)
  * @param params - Parámetros para la query (opcional)
@@ -60,15 +60,13 @@ export async function explainAnalyze(
     // Ejecutar EXPLAIN ANALYZE con formato JSON para parsing fácil
     // Usar sql.raw con el query completo ya que params ya están interpolados en query
     const explainQuery = `EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON) ${query}`;
-    
-    const result = await db().execute(
-      sql.raw(explainQuery)
-    );
+
+    const result = await db().execute(sql.raw(explainQuery));
 
     // El resultado de EXPLAIN ANALYZE con FORMAT JSON es un array con un objeto
     const planData = result.rows[0] as { 'QUERY PLAN': unknown };
     const planJson = planData['QUERY PLAN'];
-    
+
     if (!planJson || typeof planJson !== 'object' || !Array.isArray(planJson)) {
       throw new Error('Invalid EXPLAIN ANALYZE result format');
     }
@@ -97,16 +95,19 @@ export async function explainAnalyze(
       totalCost,
       rows: totalRows,
       width: plan.planWidth,
-      plan
+      plan,
     };
 
-    logger.info({
-      executionTime,
-      planningTime,
-      totalCost,
-      rows: totalRows,
-      query: query.substring(0, 200) // Limitar longitud para logging
-    }, 'EXPLAIN ANALYZE completed');
+    logger.info(
+      {
+        executionTime,
+        planningTime,
+        totalCost,
+        rows: totalRows,
+        query: query.substring(0, 200), // Limitar longitud para logging
+      },
+      'EXPLAIN ANALYZE completed'
+    );
 
     return resultData;
   } catch (error) {
@@ -139,27 +140,27 @@ function calculatePlanMetrics(node: ExplainPlanNode): { totalCost: number; total
 function formatPlanAsText(node: ExplainPlanNode, indent: number = 0): string {
   const indentStr = '  '.repeat(indent);
   const prefix = indent > 0 ? '└─ ' : '';
-  
+
   let text = `${indentStr}${prefix}${node.nodeType}`;
-  
+
   if (node.relationName) {
     text += ` on ${node.relationName}`;
     if (node.alias && node.alias !== node.relationName) {
       text += ` (${node.alias})`;
     }
   }
-  
+
   if (node.indexName) {
     text += ` using ${node.indexName}`;
   }
-  
+
   if (node.joinType) {
     text += ` (${node.joinType})`;
   }
-  
+
   text += `\n${indentStr}  Cost: ${node.startupCost.toFixed(2)}..${node.totalCost.toFixed(2)}`;
   text += ` Rows: ${node.planRows}`;
-  
+
   if (node.actualTotalTime !== undefined) {
     text += ` Actual Time: ${node.actualStartupTime?.toFixed(2)}..${node.actualTotalTime.toFixed(2)}`;
     text += ` Actual Rows: ${node.actualRows || 0}`;
@@ -167,15 +168,15 @@ function formatPlanAsText(node: ExplainPlanNode, indent: number = 0): string {
       text += ` Loops: ${node.actualLoops}`;
     }
   }
-  
+
   if (node.filter) {
     text += `\n${indentStr}  Filter: ${node.filter}`;
   }
-  
+
   if (node.indexCond) {
     text += `\n${indentStr}  Index Cond: ${node.indexCond}`;
   }
-  
+
   if (node.hashCond) {
     text += `\n${indentStr}  Hash Cond: ${node.hashCond}`;
   }
@@ -191,7 +192,7 @@ function formatPlanAsText(node: ExplainPlanNode, indent: number = 0): string {
 
 /**
  * Sugiere índices basado en el plan de ejecución
- * 
+ *
  * @param plan - Plan de ejecución analizado
  * @returns Array de sugerencias de índices
  */
@@ -210,7 +211,7 @@ export function suggestIndexes(plan: ExplainPlanNode): string[] {
 
     // Detectar Nested Loop con Sequential Scan en el lado interno
     if (node.nodeType === 'Nested Loop' && node.children) {
-      const innerChild = node.children.find(c => c.nodeType === 'Seq Scan');
+      const innerChild = node.children.find((c) => c.nodeType === 'Seq Scan');
       if (innerChild && innerChild.relationName) {
         suggestions.push(
           `Consider adding index on ${innerChild.relationName} to optimize nested loop join`
@@ -238,14 +239,14 @@ export function suggestIndexes(plan: ExplainPlanNode): string[] {
   }
 
   analyzeNode(plan);
-  
+
   // Eliminar duplicados
   return Array.from(new Set(suggestions));
 }
 
 /**
  * Analiza una query problemática y retorna recomendaciones
- * 
+ *
  * @param logger - Logger para registro
  * @param query - Query SQL a analizar
  * @param params - Parámetros opcionales
@@ -263,10 +264,10 @@ export async function analyzeQuery(
 }> {
   const explain = await explainAnalyze(logger, query, params);
   const suggestions = suggestIndexes(explain.plan);
-  
+
   // Detectar si es lenta (más de 100ms)
   const isSlow = explain.executionTime > 100;
-  
+
   // Detectar Sequential Scans
   const hasSeqScan = hasSequentialScan(explain.plan);
 
@@ -274,7 +275,7 @@ export async function analyzeQuery(
     explain,
     suggestions,
     isSlow,
-    hasSeqScan
+    hasSeqScan,
   };
 }
 
@@ -285,7 +286,7 @@ function hasSequentialScan(node: ExplainPlanNode): boolean {
   if (node.nodeType === 'Seq Scan') {
     return true;
   }
-  
+
   if (node.children) {
     for (const child of node.children) {
       if (hasSequentialScan(child)) {
@@ -293,7 +294,6 @@ function hasSequentialScan(node: ExplainPlanNode): boolean {
       }
     }
   }
-  
+
   return false;
 }
-

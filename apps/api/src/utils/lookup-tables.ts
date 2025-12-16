@@ -1,20 +1,20 @@
 /**
  * Utilities for caching and retrieving lookup tables
- * 
+ *
  * AI_DECISION: Centralize lookup table queries with caching
  * Justificación: Lookup tables are queried frequently but change rarely, caching reduces DB load
  * Impacto: Reduces queries to lookup tables by 70-90% for repeated requests
  */
 
 import { db } from '@cactus/db';
-import { 
-  lookupAssetClass, 
-  lookupTaskStatus, 
-  lookupPriority, 
-  pipelineStages 
+import {
+  lookupAssetClass,
+  lookupTaskStatus,
+  lookupPriority,
+  pipelineStages,
 } from '@cactus/db/schema';
 import { eq } from 'drizzle-orm';
-import { lookupTablesCacheUtil, normalizeCacheKey } from './cache';
+import { lookupTablesCacheUtil, normalizeCacheKey } from './performance/cache';
 
 /**
  * Get all asset classes with caching
@@ -22,18 +22,16 @@ import { lookupTablesCacheUtil, normalizeCacheKey } from './cache';
 export async function getAssetClasses() {
   const cacheKey = normalizeCacheKey('lookup', 'asset_class', 'all');
   const cached = lookupTablesCacheUtil.get(cacheKey);
-  
+
   if (cached) {
     return cached as Array<{ id: string; label: string }>;
   }
-  
-  const assetClasses = await db()
-    .select()
-    .from(lookupAssetClass);
-  
+
+  const assetClasses = await db().select().from(lookupAssetClass);
+
   // Cache for 1 hour
   lookupTablesCacheUtil.set(cacheKey, assetClasses, 3600);
-  
+
   return assetClasses;
 }
 
@@ -43,18 +41,16 @@ export async function getAssetClasses() {
 export async function getTaskStatuses() {
   const cacheKey = normalizeCacheKey('lookup', 'task_status', 'all');
   const cached = lookupTablesCacheUtil.get(cacheKey);
-  
+
   if (cached) {
     return cached as Array<{ id: string; label: string }>;
   }
-  
-  const taskStatuses = await db()
-    .select()
-    .from(lookupTaskStatus);
-  
+
+  const taskStatuses = await db().select().from(lookupTaskStatus);
+
   // Cache for 1 hour
   lookupTablesCacheUtil.set(cacheKey, taskStatuses, 3600);
-  
+
   return taskStatuses;
 }
 
@@ -64,18 +60,16 @@ export async function getTaskStatuses() {
 export async function getPriorities() {
   const cacheKey = normalizeCacheKey('lookup', 'priority', 'all');
   const cached = lookupTablesCacheUtil.get(cacheKey);
-  
+
   if (cached) {
     return cached as Array<{ id: string; label: string }>;
   }
-  
-  const priorities = await db()
-    .select()
-    .from(lookupPriority);
-  
+
+  const priorities = await db().select().from(lookupPriority);
+
   // Cache for 1 hour
   lookupTablesCacheUtil.set(cacheKey, priorities, 3600);
-  
+
   return priorities;
 }
 
@@ -85,7 +79,7 @@ export async function getPriorities() {
 export async function getPipelineStages() {
   const cacheKey = normalizeCacheKey('lookup', 'pipeline_stages', 'all');
   const cached = lookupTablesCacheUtil.get(cacheKey);
-  
+
   if (cached) {
     return cached as Array<{
       id: string;
@@ -100,16 +94,16 @@ export async function getPipelineStages() {
       updatedAt: Date;
     }>;
   }
-  
+
   const stages = await db()
     .select()
     .from(pipelineStages)
     .where(eq(pipelineStages.isActive, true))
     .orderBy(pipelineStages.order);
-  
+
   // Cache for 30 minutes (pipeline stages change more frequently than other lookups)
   lookupTablesCacheUtil.set(cacheKey, stages, 1800);
-  
+
   return stages;
 }
 
@@ -120,4 +114,3 @@ export async function getPipelineStages() {
 export function invalidateLookupTablesCache() {
   lookupTablesCacheUtil.clear();
 }
-

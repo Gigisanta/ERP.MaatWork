@@ -1,6 +1,6 @@
 /**
  * useDebouncedState Hook
- * 
+ *
  * AI_DECISION: Hook reutilizable para debounce con cleanup correcto
  * Justificación: Evita duplicación de lógica de debounce y asegura cleanup de timers
  * Impacto: Mejor performance y prevención de memory leaks
@@ -10,7 +10,7 @@ import { useState, useEffect, useRef } from 'react';
 
 /**
  * Hook for debounced state management
- * 
+ *
  * @param initialValue - Initial value for the state
  * @param delay - Delay in milliseconds before updating debounced value
  * @returns [value, debouncedValue, setValue] - Current value, debounced value, and setter
@@ -49,7 +49,7 @@ export function useDebouncedState<T>(
 /**
  * Hook for debounced value (simplified version)
  * Only returns the debounced value without exposing the setter
- * 
+ *
  * @param value - Value to debounce
  * @param delay - Delay in milliseconds
  * @returns Debounced value
@@ -77,4 +77,3 @@ export function useDebouncedValue<T>(value: T, delay: number = 300): T {
 
   return debouncedValue;
 }
-

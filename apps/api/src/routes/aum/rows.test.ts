@@ -6,7 +6,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import rowsRouter from './rows/index';
+import aumRouter from './index';
 import { signUserToken } from '../../auth/jwt';
+import { createTestApp } from '../../__tests__/helpers/test-server';
 
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
@@ -66,22 +68,25 @@ vi.mock('../../services/aumMatcher', () => ({
   matchAdvisor: vi.fn(),
 }));
 
-vi.mock('../../utils/aum-normalization', () => ({
+vi.mock('../../utils/aum/aum-normalization', () => ({
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
+}));
+
+vi.mock('../rows/cache', () => ({
+  getCacheKey: vi.fn((params: any) => JSON.stringify(params)),
+  getCachedCount: vi.fn(() => null), // Always return null to force DB query
+  setCachedCount: vi.fn(),
 }));
 
 import { db } from '@cactus/db';
 import { aumImportRows, aumImportFiles } from '@cactus/db';
+import { createDrizzleMock } from '../../__tests__/helpers/drizzle-mocks';
 
 const mockDb = vi.mocked(db);
 
 describe('AUM Rows Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', rowsRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/admin/aum/rows', router: rowsRouter }]);
 
   let adminToken: string;
 
@@ -92,66 +97,68 @@ describe('AUM Rows Routes', () => {
       email: 'admin@example.com',
       role: 'admin',
     });
+    // Reset mockDb with default empty responses
+    const defaultMock = createDrizzleMock();
+    mockDb.mockReturnValue(defaultMock.getInstance());
   });
 
   describe('GET /admin/aum/rows/all', () => {
     it('debería retornar rows con paginación', async () => {
-      const mockExecute = vi
-        .fn()
-        .mockResolvedValueOnce({
-          rows: [{ total: 10 }],
-        })
-        .mockResolvedValueOnce({
-          rows: [
-            {
-              id: 'row-1',
-              file_id: 'file-1',
-              account_number: '12345',
-              holder_name: 'Juan Perez',
-              id_cuenta: null,
-              advisor_raw: null,
-              matched_contact_id: null,
-              matched_user_id: null,
-              match_status: 'matched',
-              is_preferred: false,
-              conflict_detected: false,
-              needs_confirmation: false,
-              is_normalized: false,
-              row_created_at: new Date(),
-              row_updated_at: new Date(),
-              current_file_id: 'file-1',
-              current_file_name: 'test.csv',
-              current_file_created_at: new Date(),
-              file_type: 'csv',
-              file_report_month: null,
-              file_report_year: null,
-              aum_dollars: null,
-              bolsa_arg: null,
-              fondos_arg: null,
-              bolsa_bci: null,
-              pesos: null,
-              mep: null,
-              cable: null,
-              cv7000: null,
-              broker: 'balanz',
-              original_filename: 'test.csv',
-              file_status: 'parsed',
-              file_created_at: new Date(),
-              contact_name: null,
-              contact_first_name: null,
-              contact_last_name: null,
-              user_name: null,
-              user_email: null,
-              suggested_user_id: null,
-            },
-          ],
-        });
+      // Configure mock with specific responses using helper
+      const drizzleMock = createDrizzleMock({
+        executeResponses: [
+          { rows: [{ total: '10' }] }, // First execute: COUNT query
+          {
+            rows: [
+              {
+                id: 'row-1',
+                file_id: 'file-1',
+                account_number: '12345',
+                holder_name: 'Juan Perez',
+                id_cuenta: null,
+                advisor_raw: null,
+                matched_contact_id: null,
+                matched_user_id: null,
+                match_status: 'matched',
+                is_preferred: false,
+                conflict_detected: false,
+                needs_confirmation: false,
+                is_normalized: false,
+                row_created_at: new Date(),
+                row_updated_at: new Date(),
+                current_file_id: 'file-1',
+                current_file_name: 'test.csv',
+                current_file_created_at: new Date(),
+                file_type: 'csv',
+                file_report_month: null,
+                file_report_year: null,
+                aum_dollars: null,
+                bolsa_arg: null,
+                fondos_arg: null,
+                bolsa_bci: null,
+                pesos: null,
+                mep: null,
+                cable: null,
+                cv7000: null,
+                broker: 'balanz',
+                original_filename: 'test.csv',
+                file_status: 'parsed',
+                file_created_at: new Date(),
+                contact_name: null,
+                contact_first_name: null,
+                contact_last_name: null,
+                user_name: null,
+                user_email: null,
+                suggested_user_id: null,
+              },
+            ],
+          }, // Second execute: SELECT query
+        ],
+      });
 
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockDb.mockReturnValue(drizzleMock.getInstance());
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?limit=10&offset=0')
         .set('Cookie', `token=${adminToken}`)
@@ -173,20 +180,16 @@ describe('AUM Rows Routes', () => {
     });
 
     it('debería filtrar por broker', async () => {
-      const mockExecute = vi
-        .fn()
-        .mockResolvedValueOnce({
-          rows: [{ total: 5 }],
-        })
-        .mockResolvedValueOnce({
-          rows: [],
-        });
+      const drizzleMock = createDrizzleMock({
+        executeResponses: [
+          { rows: [{ total: '5' }] }, // COUNT query
+          { rows: [] }, // SELECT query
+        ],
+      });
 
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockDb.mockReturnValue(drizzleMock.getInstance());
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?broker=balanz')
         .set('Cookie', `token=${adminToken}`)
@@ -196,20 +199,16 @@ describe('AUM Rows Routes', () => {
     });
 
     it('debería filtrar por status', async () => {
-      const mockExecute = vi
-        .fn()
-        .mockResolvedValueOnce({
-          rows: [{ total: 3 }],
-        })
-        .mockResolvedValueOnce({
-          rows: [],
-        });
+      const drizzleMock = createDrizzleMock({
+        executeResponses: [
+          { rows: [{ total: '3' }] }, // COUNT query
+          { rows: [] }, // SELECT query
+        ],
+      });
 
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockDb.mockReturnValue(drizzleMock.getInstance());
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .get('/admin/aum/rows/all?status=matched')
         .set('Cookie', `token=${adminToken}`)
@@ -278,7 +277,9 @@ describe('AUM Rows Routes', () => {
         update: mockUpdate,
       } as any);
 
-      const app = createTestApp();
+      // Note: match route is registered in upload router, which is part of aumRouter
+      // Use the full aumRouter which includes all sub-routers
+      const app = createTestApp([{ path: '/admin/aum', router: aumRouter }]);
       const res = await request(app)
         .post('/admin/aum/uploads/file-1/match')
         .set('Cookie', `token=${adminToken}`)

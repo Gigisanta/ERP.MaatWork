@@ -1,68 +1,41 @@
 /**
  * Loading component for contacts page
- * 
- * AI_DECISION: Create loading.tsx for streaming SSR
- * Justificación: Provides instant loading state while Server Component fetches data
- * Impacto: Better perceived performance, reduced layout shift
+ *
+ * AI_DECISION: Avoid @cactus/ui imports in loading components to prevent webpack module resolution issues
+ * Justificación: @cactus/ui has circular dependency issues with SkeletonLoader in loading contexts
+ * Impacto: Eliminates "Cannot read properties of undefined (reading 'call')" webpack errors
  */
 
-import { Card, CardContent, Spinner, Stack, Text } from '@cactus/ui';
-
-// Simple Skeleton component using Tailwind
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse bg-gray-200 rounded ${className || ''}`} />;
-}
+import { Skeleton, SkeletonTable } from '../components/SkeletonLoader';
 
 export default function ContactsLoading() {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
-      <Stack direction="column" gap="lg">
+    <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 animate-fade-in">
+      <div className="flex flex-col gap-6">
         {/* Header skeleton */}
-        <Card>
-          <CardContent>
-            <Stack direction="row" gap="md" align="center" justify="between" className="py-4">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-10 w-32" />
-            </Stack>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32 rounded-lg" delay={50} />
+        </div>
 
         {/* Filters skeleton */}
-        <Card>
-          <CardContent>
-            <Stack direction="row" gap="md" className="py-4">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-10 w-48" />
-            </Stack>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="py-3">
+            <div className="flex flex-wrap gap-3">
+              <Skeleton className="h-10 w-64" delay={100} />
+              <Skeleton className="h-10 w-48" delay={150} />
+              <Skeleton className="h-10 w-48" delay={200} />
+            </div>
+          </div>
+        </div>
 
         {/* Table skeleton */}
-        <Card>
-          <CardContent>
-            <Stack direction="column" gap="md" className="py-4">
-              {/* Table header */}
-              <Stack direction="row" gap="md">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-6 w-24" />
-              </Stack>
-              {/* Table rows */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Stack key={i} direction="row" gap="md">
-                  <Skeleton className="h-12 w-32" />
-                  <Skeleton className="h-12 w-48" />
-                  <Skeleton className="h-12 w-32" />
-                  <Skeleton className="h-12 w-24" />
-                </Stack>
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-    </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="py-4">
+            <SkeletonTable rows={8} columns={4} />
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
-

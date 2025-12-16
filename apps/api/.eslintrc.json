@@ -24,10 +24,11 @@
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",
         "ignoreRestSiblings": true,
-        "caughtErrorsIgnorePattern": "^_"
+        "caughtErrorsIgnorePattern": "^_",
+        "vars": "all",
+        "args": "after-used"
       }
     ],
-    "@typescript-eslint/no-unused-imports": "off",
     "no-restricted-syntax": [
       "error",
       {

@@ -43,7 +43,7 @@ async function verifyMigrations() {
       console.log('Últimas migraciones aplicadas:');
       for (const migration of migrations.rows) {
         const m = migration as Record<string, unknown>;
-        const hash = m.hash as string || 'N/A';
+        const hash = (m.hash as string) || 'N/A';
         console.log(`  ✓ ${hash.substring(0, 8)}...`);
       }
     } catch (error) {
@@ -85,10 +85,10 @@ async function verifyMigrations() {
       ) as exists
     `);
     const exists = (pgStatExists.rows[0] as { exists: boolean }).exists;
-    
+
     if (exists) {
       console.log('  ✅ pg_stat_statements está habilitado');
-      
+
       // Verificar funciones helper
       const functions = await db().execute(sql`
         SELECT proname
@@ -100,10 +100,17 @@ async function verifyMigrations() {
       for (const func of functions.rows) {
         console.log(`    - ${(func as { proname: string }).proname}`);
       }
-      
+
       if (functions.rows.length < 4) {
-        const missing = ['get_slow_queries', 'get_most_frequent_queries', 'get_queries_by_total_time', 'reset_pg_stat_statements']
-          .filter(name => !functions.rows.some((f: unknown) => (f as { proname: string }).proname === name));
+        const missing = [
+          'get_slow_queries',
+          'get_most_frequent_queries',
+          'get_queries_by_total_time',
+          'reset_pg_stat_statements',
+        ].filter(
+          (name) =>
+            !functions.rows.some((f: unknown) => (f as { proname: string }).proname === name)
+        );
         if (missing.length > 0) {
           console.log(`  ⚠️  Funciones faltantes: ${missing.join(', ')}`);
         }
@@ -135,10 +142,19 @@ async function verifyMigrations() {
     for (const func of partitionFunctions.rows) {
       console.log(`    - ${(func as { proname: string }).proname}`);
     }
-    
+
     if (partitionFunctions.rows.length < 6) {
-      const missing = ['create_monthly_partition', 'create_quarterly_partition', 'create_partitions_for_range', 'create_future_partitions', 'list_table_partitions', 'drop_old_partition']
-        .filter(name => !partitionFunctions.rows.some((f: unknown) => (f as { proname: string }).proname === name));
+      const missing = [
+        'create_monthly_partition',
+        'create_quarterly_partition',
+        'create_partitions_for_range',
+        'create_future_partitions',
+        'list_table_partitions',
+        'drop_old_partition',
+      ].filter(
+        (name) =>
+          !partitionFunctions.rows.some((f: unknown) => (f as { proname: string }).proname === name)
+      );
       if (missing.length > 0) {
         console.log(`  ⚠️  Funciones faltantes: ${missing.join(', ')}`);
       }
@@ -157,4 +173,3 @@ verifyMigrations()
     console.error('Error:', error);
     process.exit(1);
   });
-

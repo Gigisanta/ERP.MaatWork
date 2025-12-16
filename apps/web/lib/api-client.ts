@@ -1,12 +1,12 @@
 /**
  * Cliente API centralizado
- * 
+ *
  * Re-exports from modular structure in ./api/ for backward compatibility.
- * 
+ *
  * AI_DECISION: Refactorizado a estructura modular en ./api/
  * Justificación: Clase de 385 líneas dividida en módulos especializados
  * Impacto: Mejor mantenibilidad, funciones más testeables, código más navegable
- * 
+ *
  * Estructura modular:
  * - ./api/types.ts - Tipos compartidos (RequestOptions, RequestConfig)
  * - ./api/request-builder.ts - Construcción de headers y serialización de body

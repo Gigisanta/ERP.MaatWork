@@ -11,6 +11,8 @@ import express from 'express';
 import request from 'supertest';
 import mappingRouter from './mapping';
 import { signUserToken } from '../../../auth/jwt';
+import multer from 'multer';
+import { createTestApp } from '../../../__tests__/helpers/test-server';
 
 // Mock multer before importing the route
 vi.mock('multer', () => {
@@ -33,11 +35,20 @@ vi.mock('multer', () => {
 
   const mockMemoryStorage = vi.fn(() => ({}));
   const mockMulter = vi.fn((options?: unknown) => ({
-    single: vi.fn(() => vi.fn()),
-    array: vi.fn(() => vi.fn()),
-    fields: vi.fn(() => vi.fn()),
-    any: vi.fn(() => vi.fn()),
-    none: vi.fn(() => vi.fn()),
+    single: vi.fn(() => (req: any, _res: any, next: any) => {
+      // Provide a default file so the route can progress
+      req.file = {
+        path: '/tmp/mock-upload.csv',
+        originalname: 'mock-upload.csv',
+        size: 10,
+        mimetype: 'text/csv',
+      };
+      next();
+    }),
+    array: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    fields: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    any: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    none: vi.fn(() => (_req: any, _res: any, next: any) => next()),
   }));
 
   // Attach diskStorage to the default export
@@ -56,13 +67,24 @@ vi.mock('multer', () => {
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
-  advisorAccountMapping: {},
-  advisorAliases: {},
-  eq: vi.fn(),
+  advisorAccountMapping: {
+    accountNumber: 'accountNumber',
+    advisorName: 'advisorName',
+    advisorRaw: 'advisorRaw',
+    matchedUserId: 'matchedUserId',
+  },
+  advisorAliases: {
+    userId: 'userId',
+    aliasNormalized: 'aliasNormalized',
+  },
+  eq: vi.fn((column: any, value: any) => ({ column, value })),
 }));
 
 vi.mock('../../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next()),
+  requireAuth: vi.fn((req, res, next) => {
+    req.user = { id: 'admin-123', email: 'admin@example.com', role: 'admin' };
+    next();
+  }),
   requireRole: vi.fn(() => (req, res, next) => next()),
 }));
 
@@ -72,7 +94,7 @@ vi.mock('../../../config/aum-limits', () => ({
   },
 }));
 
-vi.mock('../../../utils/aum-normalization', () => ({
+vi.mock('../../../utils/aum/aum-normalization', () => ({
   normalizeAccountNumber: vi.fn((value: string) => value.replace(/\D+/g, '')),
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
@@ -91,8 +113,13 @@ vi.mock('node:fs', () => ({
 import { db } from '@cactus/db';
 import { advisorAccountMapping, advisorAliases, eq } from '@cactus/db';
 import { parseAumFile } from '../../../services/aumParser';
-import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../../utils/aum-normalization';
+import {
+  normalizeAccountNumber,
+  normalizeAdvisorAlias,
+} from '../../../utils/aum/aum-normalization';
 import { promises as fs } from 'node:fs';
+import multer from 'multer';
+import { requireAuth } from '../../../auth/middlewares';
 
 const mockDb = vi.mocked(db);
 const mockEq = vi.mocked(eq);
@@ -100,14 +127,11 @@ const mockParseAumFile = vi.mocked(parseAumFile);
 const mockNormalizeAccountNumber = vi.mocked(normalizeAccountNumber);
 const mockNormalizeAdvisorAlias = vi.mocked(normalizeAdvisorAlias);
 const mockFs = vi.mocked(fs);
+const mockRequireAuth = vi.mocked(requireAuth);
 
 describe('AUM Admin - Mapping Routes', () => {
-  function createTestApp() {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin/aum', mappingRouter);
-    return app;
-  }
+  const createTestAppWithRoutes = () =>
+    createTestApp([{ path: '/admin/aum', router: mappingRouter }]);
 
   let adminToken: string;
 
@@ -117,6 +141,29 @@ describe('AUM Admin - Mapping Routes', () => {
       id: 'admin-123',
       email: 'admin@example.com',
       role: 'admin',
+    });
+
+    // Reset multer mock to default behavior (provides file)
+    vi.mocked(multer).mockReturnValue({
+      single: vi.fn(() => (req: any, _res: any, next: any) => {
+        req.file = {
+          path: '/tmp/mock-upload.csv',
+          originalname: 'mock-upload.csv',
+          size: 10,
+          mimetype: 'text/csv',
+        };
+        next();
+      }),
+      array: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+      fields: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+      any: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+      none: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    } as any);
+
+    // Reset requireAuth mock to default behavior (sets user)
+    mockRequireAuth.mockImplementation((req, res, next) => {
+      req.user = { id: 'admin-123', email: 'admin@example.com', role: 'admin' };
+      next();
     });
   });
 
@@ -135,7 +182,8 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe');
 
-      const mockSelect = vi.fn().mockReturnValue({
+      // Mock for checking existing mapping (returns empty = no existing)
+      const mockSelectExisting = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([]), // No existing mapping
@@ -143,25 +191,47 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       });
 
-      const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue(undefined),
+      // Mock for checking advisorAliases (returns empty = no match)
+      const mockSelectAliases = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]), // No match
+          }),
+        }),
       });
 
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        // First call: check existing mapping
-        // Second call: check advisorAliases (no match)
-        // Third call: insert new mapping
-        if (callCount <= 2) {
-          return { select: mockSelect } as any;
+      const mockInsert = vi.fn((table: any) => ({
+        values: vi.fn((data: any) => Promise.resolve(undefined)),
+      }));
+
+      let selectCallCount = 0;
+      const mockSelect = vi.fn().mockImplementation(() => {
+        selectCallCount++;
+        // First select: check existing mapping
+        if (selectCallCount === 1) {
+          return mockSelectExisting();
         }
-        return { insert: mockInsert } as any;
+        // Second select: check advisorAliases (only if advisorRaw exists)
+        return mockSelectAliases();
       });
+
+      // Configure mockDb to return an object with all necessary methods
+      mockDb.mockImplementation(() => ({
+        select: mockSelect,
+        insert: mockInsert,
+        update: vi.fn((table: any) => ({
+          set: vi.fn((data: any) => ({
+            where: vi.fn((condition: any) => Promise.resolve(undefined)),
+          })),
+        })),
+      }));
+
+      // Reset selectCallCount before test
+      selectCallCount = 0;
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -194,7 +264,8 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe updated');
 
-      const mockSelect = vi.fn().mockReturnValue({
+      // Mock for checking existing mapping (returns existing mapping)
+      const mockSelectExisting = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([
@@ -208,27 +279,43 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       });
 
+      // Mock for checking advisorAliases (returns empty = no match)
+      const mockSelectAliases = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]), // No match
+          }),
+        }),
+      });
+
       const mockUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
         }),
       });
 
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return { select: mockSelect } as any; // Existing mapping
+      let selectCallCount = 0;
+      const mockSelect = vi.fn().mockImplementation(() => {
+        selectCallCount++;
+        // First select: check existing mapping
+        if (selectCallCount === 1) {
+          return mockSelectExisting();
         }
-        if (callCount === 2) {
-          return { select: mockSelect } as any; // advisorAliases check
-        }
-        return { update: mockUpdate } as any; // Update
+        // Second select: check advisorAliases
+        return mockSelectAliases();
       });
+
+      mockDb.mockImplementation(() => ({
+        select: mockSelect,
+        insert: vi.fn().mockReturnValue({
+          values: vi.fn().mockResolvedValue(undefined),
+        }),
+        update: mockUpdate,
+      }));
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -257,6 +344,7 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe');
 
+      // Mock for checking existing mapping (returns empty = no existing)
       const mockSelectMapping = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -265,6 +353,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       });
 
+      // Mock for checking advisorAliases (returns match)
       const mockSelectAlias = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -282,21 +371,30 @@ describe('AUM Admin - Mapping Routes', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return { select: mockSelectMapping } as any;
+      let selectCallCount = 0;
+      const mockSelect = vi.fn().mockImplementation(() => {
+        selectCallCount++;
+        // First select: check existing mapping
+        if (selectCallCount === 1) {
+          return mockSelectMapping();
         }
-        if (callCount === 2) {
-          return { select: mockSelectAlias } as any;
-        }
-        return { insert: mockInsert } as any;
+        // Second select: check advisorAliases
+        return mockSelectAlias();
       });
+
+      mockDb.mockImplementation(() => ({
+        select: mockSelect,
+        insert: mockInsert,
+        update: vi.fn().mockReturnValue({
+          set: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(undefined),
+          }),
+        }),
+      }));
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -319,7 +417,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -343,7 +441,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -363,7 +461,7 @@ describe('AUM Admin - Mapping Routes', () => {
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -386,7 +484,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -408,7 +506,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -429,7 +527,7 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       } as any);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -455,7 +553,15 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe');
 
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockSelectExisting = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const mockSelectAliases = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([]),
@@ -467,18 +573,28 @@ describe('AUM Admin - Mapping Routes', () => {
         values: vi.fn().mockRejectedValue(new Error('Database error')),
       });
 
-      let callCount = 0;
+      let selectCallCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount <= 2) {
-          return { select: mockSelect } as any;
-        }
-        return { insert: mockInsert } as any;
+        return {
+          select: vi.fn().mockImplementation(() => {
+            selectCallCount++;
+            if (selectCallCount === 1) {
+              return mockSelectExisting();
+            }
+            return mockSelectAliases();
+          }),
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -503,7 +619,15 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe');
 
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockSelectExisting = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const mockSelectAliases = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([]),
@@ -515,18 +639,28 @@ describe('AUM Admin - Mapping Routes', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      let callCount = 0;
+      let selectCallCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount <= 2) {
-          return { select: mockSelect } as any;
-        }
-        return { insert: mockInsert } as any;
+        return {
+          select: vi.fn().mockImplementation(() => {
+            selectCallCount++;
+            if (selectCallCount === 1) {
+              return mockSelectExisting();
+            }
+            return mockSelectAliases();
+          }),
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
@@ -550,7 +684,15 @@ describe('AUM Admin - Mapping Routes', () => {
       mockNormalizeAccountNumber.mockReturnValue('12345');
       mockNormalizeAdvisorAlias.mockReturnValue('john doe');
 
-      const mockSelect = vi.fn().mockReturnValue({
+      const mockSelectExisting = vi.fn().mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const mockSelectAliases = vi.fn().mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             limit: vi.fn().mockResolvedValue([]),
@@ -562,18 +704,28 @@ describe('AUM Admin - Mapping Routes', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      let callCount = 0;
+      let selectCallCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount <= 2) {
-          return { select: mockSelect } as any;
-        }
-        return { insert: mockInsert } as any;
+        return {
+          select: vi.fn().mockImplementation(() => {
+            selectCallCount++;
+            if (selectCallCount === 1) {
+              return mockSelectExisting();
+            }
+            return mockSelectAliases();
+          }),
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       mockFs.unlink.mockRejectedValue(new Error('File not found'));
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       // Should still succeed even if cleanup fails
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
@@ -585,38 +737,38 @@ describe('AUM Admin - Mapping Routes', () => {
     });
 
     it('debería retornar 401 cuando no hay usuario autenticado', async () => {
-      // Note: Auth is tested via middleware, but handler checks userId
-      // This test verifies handler works with valid user
-      mockParseAumFile.mockResolvedValue({
-        success: true,
-        data: [],
+      // Mock requireAuth to not set req.user (simulating unauthenticated request)
+      mockRequireAuth.mockImplementationOnce((req, res, next) => {
+        // Don't set req.user to simulate unauthenticated request
+        next();
       });
 
-      mockFs.unlink.mockResolvedValue(undefined);
-
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
-        .set('Cookie', `token=${adminToken}`)
         .attach('file', Buffer.from('test'), 'test.csv')
-        .expect(201);
+        .expect(401);
 
-      expect(res.body.ok).toBe(true);
+      expect(res.body.error).toBe('Unauthorized');
     });
 
     it('debería manejar errores generales correctamente', async () => {
-      mockParseAumFile.mockRejectedValue(new Error('Unexpected error'));
+      // Mock parseAumFile to return error result (not reject)
+      mockParseAumFile.mockResolvedValue({
+        success: false,
+        error: 'Unexpected error',
+      });
+      mockFs.unlink.mockResolvedValue(undefined);
 
-      const app = createTestApp();
+      const app = createTestAppWithRoutes();
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .set('Cookie', `token=${adminToken}`)
         .attach('file', Buffer.from('test'), 'test.csv')
-        .expect(500);
+        .expect(400);
 
-      expect(res.body).toEqual({
-        error: 'Unexpected error',
-      });
+      expect(res.body.error).toBe('Error al procesar el archivo');
+      expect(res.body.details).toBe('Unexpected error');
     });
   });
 });

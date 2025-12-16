@@ -3,7 +3,7 @@ import { db, users } from '../index';
 async function createUser() {
   try {
     console.log('\n🔐 Creando usuario de prueba...\n');
-    
+
     const [newUser] = await db()
       .insert(users)
       .values({
@@ -13,18 +13,18 @@ async function createUser() {
         isActive: true,
       })
       .returning();
-    
+
     console.log('✅ Usuario creado exitosamente!');
     console.log(`  ID: ${newUser.id}`);
     console.log(`  Email: ${newUser.email}`);
     console.log(`  Nombre: ${newUser.fullName}`);
     console.log(`  Role: ${newUser.role}\n`);
-    
+
     console.log('📝 Para hacer login:');
     console.log('   1. Ve a http://localhost:3000');
     console.log('   2. Haz login con: test@example.com');
     console.log('   3. No necesitas contraseña\n');
-    
+
     process.exit(0);
   } catch (err: unknown) {
     type ErrorWithMessage = {
@@ -42,5 +42,3 @@ async function createUser() {
 }
 
 createUser();
-
-

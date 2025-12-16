@@ -1,14 +1,18 @@
 /**
  * API Client
- * 
+ *
  * Main API client using modular components for:
  * - Request building (headers, body serialization)
  * - Retry logic with exponential backoff
  * - Auth management (token refresh)
- * 
+ *
  * AI_DECISION: Migración a cookies httpOnly exclusivas
  * Justificación: Más seguro (inmune a XSS), simplifica código (sin dual storage)
  * Impacto: Breaking change - requiere re-login de usuarios activos
+ *
+ * AI_DECISION: Unificación con fetchWithLogging
+ * Justificación: Eliminar duplicación de código y garantizar logging/requestId consistentes
+ * Impacto: Menor superficie de errores, observabilidad mejorada
  */
 
 import type { ApiResponse, UserApiResponse } from '@/types';
@@ -18,6 +22,7 @@ import { buildHeaders, serializeBody, buildUrl } from './request-builder';
 import { shouldRetry, calculateRetryDelay, delay } from './retry-handler';
 import { AuthManager } from './auth-manager';
 import type { RequestOptions, RequestConfig } from './types';
+import { fetchWithLogging } from '../fetch-client';
 
 export class ApiClient {
   private config: RequestConfig;
@@ -30,45 +35,24 @@ export class ApiClient {
       retries: 2, // AI_DECISION: 2 retries = 3 total attempts for better resilience
       ...configOverride,
     };
-    
-    this.authManager = new AuthManager(
-      this.config,
-      this.fetchWithTimeout.bind(this)
-    );
+
+    // Use fetchWithLogging internally within authManager as well
+    this.authManager = new AuthManager(this.config, this.fetchWrapper.bind(this));
   }
 
   /**
-   * Fetch with timeout
+   * Internal wrapper to adapt fetchWithLogging signature to AuthManager expectations
    */
-  private async fetchWithTimeout(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<Response> {
-    const timeout = (options as RequestOptions).timeout || this.config.timeout;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        credentials: 'include', // Include cookies in all requests
-      });
-
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError(504, 'Request timeout', {
-          details: `Request took longer than ${timeout}ms`,
-        });
-      }
-
-      throw error;
-    }
+  private async fetchWrapper(url: string, options: RequestInit = {}): Promise<Response> {
+    const requestOptions = options as RequestOptions;
+    return fetchWithLogging(url, {
+      ...options,
+      timeout: requestOptions.timeout || this.config.timeout,
+      // If requestId is in headers, extract it to pass explicitly to logging wrapper
+      // otherwise fetchWithLogging will generate one
+      requestId:
+        (options.headers as Record<string, string>)?.['X-Request-ID'] || requestOptions.requestId,
+    });
   }
 
   /**
@@ -84,26 +68,64 @@ export class ApiClient {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const headers = buildHeaders(options);
-        const response = await this.fetchWithTimeout(url, {
+
+        // Use standard fetchWithLogging wrapper
+        const response = await fetchWithLogging(url, {
           ...options,
           headers,
+          timeout: options.timeout || this.config.timeout,
+          requestId: options.requestId,
         });
 
         // Handle non-successful responses
         if (!response.ok) {
           const error = await createApiErrorFromResponse(response);
-          
-          // Handle 401 with automatic token refresh (only on first attempt)
-          if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
-            try {
-              await this.authManager.handle401();
-              // Retry original request after successful refresh
-              return this.requestWithRetry<T>(url, { ...options, retries: 0 });
-            } catch {
-              throw error;
+
+          // Handle 401/403 authentication errors
+          if (response.status === 401 || response.status === 403) {
+            // Try to refresh token on 401 (only on first attempt)
+            if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
+              try {
+                const refreshed = await this.authManager.handle401();
+                if (refreshed) {
+                  // Emit event to notify AuthContext of successful refresh
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('auth:token-refreshed'));
+                  }
+                  // Retry original request after successful refresh
+                  return this.requestWithRetry<T>(url, { ...options, retries: 0 });
+                }
+              } catch (refreshError) {
+                // Refresh failed, emit auth error event
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(
+                    new CustomEvent('auth:session-expired', {
+                      detail: {
+                        error:
+                          refreshError instanceof Error
+                            ? refreshError.message
+                            : String(refreshError),
+                      },
+                    })
+                  );
+                }
+                throw error;
+              }
+            }
+
+            // 403 or 401 after refresh failed - emit session expired event
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('auth:session-expired', {
+                  detail: {
+                    status: response.status,
+                    message: response.status === 403 ? 'Forbidden' : 'Unauthorized',
+                  },
+                })
+              );
             }
           }
-          
+
           // Extract Retry-After header for 429
           if (response.status === 429) {
             const retryAfter = response.headers.get('Retry-After');
@@ -111,21 +133,17 @@ export class ApiClient {
               (error as ApiError & { retryAfter?: string }).retryAfter = retryAfter;
             }
           }
-          
+
           throw error;
         }
 
         // Parse and normalize response
         return await this.normalizeResponse<T>(response);
-
       } catch (error) {
         lastError = error as Error;
 
         // If last attempt or non-retryable error, throw
-        if (
-          attempt === maxRetries ||
-          error instanceof ApiError && !shouldRetry(error)
-        ) {
+        if (attempt === maxRetries || (error instanceof ApiError && !shouldRetry(error))) {
           throw error;
         }
 
@@ -140,7 +158,7 @@ export class ApiClient {
       }
     }
 
-    throw lastError || new ApiError(500, 'Request failed after retries');
+    throw lastError || new ApiError('Request failed after retries', 500);
   }
 
   /**
@@ -148,7 +166,7 @@ export class ApiClient {
    */
   private async normalizeResponse<T>(response: Response): Promise<ApiResponse<T>> {
     const data = await response.json();
-    
+
     // Normalize responses that use { ok: boolean } instead of { success }
     if (data && typeof data === 'object' && !('success' in data) && 'ok' in data) {
       const ok = Boolean((data as { ok: boolean }).ok);
@@ -161,16 +179,13 @@ export class ApiClient {
       }
       return normalized;
     }
-    
+
     return data as ApiResponse<T>;
   }
 
   // HTTP Methods
 
-  async get<T = unknown>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<ApiResponse<T>> {
+  async get<T = unknown>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
     return this.requestWithRetry<T>(buildUrl(this.config.baseUrl, endpoint), {
       ...options,
       method: 'GET',
@@ -241,4 +256,5 @@ export class ApiClient {
   }
 }
 
-
+// Export singleton instance
+export const apiClient = new ApiClient();

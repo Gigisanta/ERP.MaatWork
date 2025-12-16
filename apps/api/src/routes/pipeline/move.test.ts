@@ -1,6 +1,6 @@
 /**
  * Tests para pipeline move routes
- * 
+ *
  * AI_DECISION: Tests unitarios para mover contactos entre etapas
  * Justificación: Validación crítica de movimientos y WIP limits
  * Impacto: Prevenir errores en movimientos y validación de límites
@@ -11,8 +11,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
 import { requireAuth } from '../../auth/middlewares';
 import { canAccessContact } from '../../auth/authorization';
-import { transactionWithLogging } from '../../utils/db-transactions';
-import { sendWebhook } from '../../utils/webhook-client';
+import { transactionWithLogging } from '../../utils/database/db-transactions';
+import { sendWebhook } from '../../utils/http/webhook-client';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
@@ -25,23 +25,23 @@ vi.mock('@cactus/db', () => ({
   and: vi.fn(),
   isNull: vi.fn(),
   count: vi.fn(),
-  sql: vi.fn()
+  sql: vi.fn(),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next())
+  requireAuth: vi.fn((req, res, next) => next()),
 }));
 
 vi.mock('../../auth/authorization', () => ({
-  canAccessContact: vi.fn()
+  canAccessContact: vi.fn(),
 }));
 
 vi.mock('../../utils/db-transactions', () => ({
-  transactionWithLogging: vi.fn()
+  transactionWithLogging: vi.fn(),
 }));
 
 vi.mock('../../utils/webhook-client', () => ({
-  sendWebhook: vi.fn()
+  sendWebhook: vi.fn(),
 }));
 
 const mockDb = vi.mocked(db);
@@ -60,13 +60,13 @@ describe('POST /pipeline/move', () => {
       body: {
         contactId: 'contact-123',
         toStageId: 'stage-456',
-        reason: 'Moving forward'
+        reason: 'Moving forward',
       },
-      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn(), child: vi.fn() }
+      log: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn(), child: vi.fn() },
     };
     mockRes = {
       json: vi.fn().mockReturnThis(),
-      status: vi.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -94,33 +94,39 @@ describe('POST /pipeline/move', () => {
 
   it('debería mover contacto exitosamente', async () => {
     mockCanAccessContact.mockResolvedValue(true);
-    const contact = { id: 'contact-123', pipelineStageId: 'stage-123', firstName: 'John', email: 'john@example.com' };
+    const contact = {
+      id: 'contact-123',
+      pipelineStageId: 'stage-123',
+      firstName: 'John',
+      email: 'john@example.com',
+    };
     const toStage = { id: 'stage-456', name: 'New Stage', wipLimit: null };
     const updated = { ...contact, pipelineStageId: 'stage-456' };
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([contact])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([contact]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([toStage])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([toStage]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([])
-        })
+          where: vi.fn().mockResolvedValue([]),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     mockTransactionWithLogging.mockResolvedValue(updated);
@@ -133,8 +139,16 @@ describe('POST /pipeline/move', () => {
       if (!hasAccess) {
         return res.status(404).json({ error: 'Contact not found' });
       }
-      const [contact] = await db().select().from(contacts).where({} as any).limit(1);
-      const [toStage] = await db().select().from(pipelineStages).where({} as any).limit(1);
+      const [contact] = await db()
+        .select()
+        .from(contacts)
+        .where({} as any)
+        .limit(1);
+      const [toStage] = await db()
+        .select()
+        .from(pipelineStages)
+        .where({} as any)
+        .limit(1);
       const updated = await transactionWithLogging(req.log, 'move-contact-pipeline', async (tx) => {
         return { ...contact, pipelineStageId: toStageId };
       });
@@ -151,24 +165,25 @@ describe('POST /pipeline/move', () => {
     const contact = { id: 'contact-123', pipelineStageId: 'stage-123' };
     const toStage = { id: 'stage-456', name: 'New Stage', wipLimit: 5 };
 
-    const mockSelect = vi.fn()
+    const mockSelect = vi
+      .fn()
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([contact])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([contact]),
+          }),
+        }),
       })
       .mockReturnValueOnce({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue([toStage])
-          })
-        })
+            limit: vi.fn().mockResolvedValue([toStage]),
+          }),
+        }),
       });
 
     mockDb.mockReturnValue({
-      select: mockSelect
+      select: mockSelect,
     } as any);
 
     const wipError = new Error('WIP limit exceeded');
@@ -184,7 +199,7 @@ describe('POST /pipeline/move', () => {
         if (err instanceof Error && err.message === 'WIP limit exceeded') {
           return res.status(400).json({
             error: 'WIP limit exceeded',
-            message: 'El límite de trabajo en progreso (WIP) para esta etapa ha sido alcanzado.'
+            message: 'El límite de trabajo en progreso (WIP) para esta etapa ha sido alcanzado.',
           });
         }
         throw err;
@@ -196,8 +211,7 @@ describe('POST /pipeline/move', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith({
       error: 'WIP limit exceeded',
-      message: 'El límite de trabajo en progreso (WIP) para esta etapa ha sido alcanzado.'
+      message: 'El límite de trabajo en progreso (WIP) para esta etapa ha sido alcanzado.',
     });
   });
 });
-

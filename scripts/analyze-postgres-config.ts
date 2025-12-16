@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Script para analizar configuración de PostgreSQL y recomendar optimizaciones
- * 
+ *
  * Analiza:
  * - Configuración actual de PostgreSQL
  * - Recursos del sistema (RAM, CPU)
@@ -31,7 +31,8 @@ interface SystemResources {
 }
 
 async function getPostgresConfig(): Promise<PostgresConfig[]> {
-  const configs = await db().execute(sql.raw(`
+  const configs = await db().execute(
+    sql.raw(`
     SELECT name, setting, unit, context, short_desc
     FROM pg_settings
     WHERE name IN (
@@ -49,7 +50,8 @@ async function getPostgresConfig(): Promise<PostgresConfig[]> {
       'log_min_duration_statement'
     )
     ORDER BY name
-  `));
+  `)
+  );
 
   return configs.rows.map((row: any) => ({
     name: row.name,
@@ -57,38 +59,38 @@ async function getPostgresConfig(): Promise<PostgresConfig[]> {
     recommended: null,
     unit: row.unit || '',
     requiresRestart: row.context === 'postmaster',
-    description: row.short_desc || ''
+    description: row.short_desc || '',
   }));
 }
 
 function getSystemResources(): SystemResources {
   const totalMemoryBytes = os.totalmem();
   const freeMemoryBytes = os.freemem();
-  
+
   return {
     totalMemoryGB: totalMemoryBytes / (1024 * 1024 * 1024),
     availableMemoryGB: freeMemoryBytes / (1024 * 1024 * 1024),
-    cpuCount: os.cpus().length
+    cpuCount: os.cpus().length,
   };
 }
 
 function parseSize(sizeStr: string, unit: string): number {
   if (!sizeStr || sizeStr === '0') return 0;
-  
+
   // PostgreSQL puede retornar valores como "8kB", "256MB", "2GB"
   const match = sizeStr.match(/^(\d+(?:\.\d+)?)\s*(kB|MB|GB|TB)?$/i);
   if (!match) return parseFloat(sizeStr) || 0;
-  
+
   const value = parseFloat(match[1]);
   const sizeUnit = (match[2] || unit || 'kB').toUpperCase();
-  
+
   const multipliers: Record<string, number> = {
     KB: 1024,
     MB: 1024 * 1024,
     GB: 1024 * 1024 * 1024,
-    TB: 1024 * 1024 * 1024 * 1024
+    TB: 1024 * 1024 * 1024 * 1024,
   };
-  
+
   return value * (multipliers[sizeUnit] || 1);
 }
 
@@ -105,39 +107,39 @@ function calculateRecommendations(
 ): PostgresConfig[] {
   const totalMemoryGB = resources.totalMemoryGB;
   const cpuCount = resources.cpuCount;
-  
+
   // Calcular recomendaciones basadas en recursos disponibles
   const sharedBuffersMB = Math.min(
     Math.max(256, Math.floor(totalMemoryGB * 0.25 * 1024)),
     8192 // Máximo 8GB
   );
-  
+
   const effectiveCacheSizeGB = Math.floor(totalMemoryGB * 0.75);
-  
+
   // Obtener max_connections actual
   const maxConnections = parseInt(
-    configs.find(c => c.name === 'max_connections')?.current || '100',
+    configs.find((c) => c.name === 'max_connections')?.current || '100',
     10
   );
-  
+
   // work_mem: (RAM - shared_buffers) / (max_connections * 2)
   const workMemMB = Math.max(
     4,
     Math.floor((totalMemoryGB * 1024 - sharedBuffersMB) / (maxConnections * 2))
   );
-  
+
   // maintenance_work_mem: Puede ser mayor que work_mem
   const maintenanceWorkMemMB = Math.min(
     Math.max(workMemMB * 4, 512),
     Math.floor(totalMemoryGB * 1024 * 0.1) // Máximo 10% de RAM
   );
-  
+
   // max_wal_size: Basado en tamaño de base de datos esperado
   const maxWalSizeGB = Math.min(Math.max(2, Math.floor(totalMemoryGB * 0.25)), 16);
-  
-  return configs.map(config => {
+
+  return configs.map((config) => {
     let recommended: string | null = null;
-    
+
     switch (config.name) {
       case 'shared_buffers':
         recommended = `${sharedBuffersMB}MB`;
@@ -206,7 +208,7 @@ function calculateRecommendations(
         }
         break;
     }
-    
+
     return { ...config, recommended };
   });
 }
@@ -224,7 +226,9 @@ async function analyzePostgresConfig(): Promise<void> {
     console.error('   2. DATABASE_URL esté configurada en el entorno');
     console.error('   3. Las credenciales sean correctas');
     console.error('\n   Ejemplo de configuración:');
-    console.error('   $env:DATABASE_URL="postgresql://usuario:password@localhost:5432/nombre_db"\n');
+    console.error(
+      '   $env:DATABASE_URL="postgresql://usuario:password@localhost:5432/nombre_db"\n'
+    );
     throw error;
   }
 
@@ -249,9 +253,9 @@ async function analyzePostgresConfig(): Promise<void> {
   const needsReload: PostgresConfig[] = [];
   const needsChangeList: PostgresConfig[] = [];
 
-  recommendations.forEach(config => {
+  recommendations.forEach((config) => {
     const shouldChange = config.recommended && config.current !== config.recommended;
-    
+
     if (shouldChange) {
       if (config.requiresRestart) {
         needsRestart.push(config);
@@ -282,7 +286,7 @@ async function analyzePostgresConfig(): Promise<void> {
 
     if (needsRestart.length > 0) {
       console.log('🔴 CAMBIOS QUE REQUIEREN REINICIO:\n');
-      needsRestart.forEach(config => {
+      needsRestart.forEach((config) => {
         console.log(`   ${config.name} = ${config.recommended}`);
       });
       console.log('');
@@ -290,7 +294,7 @@ async function analyzePostgresConfig(): Promise<void> {
 
     if (needsReload.length > 0) {
       console.log('🟡 CAMBIOS QUE REQUIEREN RELOAD (sin reinicio):\n');
-      needsReload.forEach(config => {
+      needsReload.forEach((config) => {
         console.log(`   ALTER SYSTEM SET ${config.name} = '${config.recommended}';`);
       });
       console.log('');
@@ -312,14 +316,16 @@ async function analyzePostgresConfig(): Promise<void> {
 
   // Verificar pg_stat_statements
   try {
-    const pgStatStatements = await db().execute(sql.raw(`
+    const pgStatStatements = await db().execute(
+      sql.raw(`
       SELECT COUNT(*) as extension_count
       FROM pg_extension
       WHERE extname = 'pg_stat_statements'
-    `));
-    
+    `)
+    );
+
     const extensionExists = parseInt((pgStatStatements.rows[0] as any).extension_count, 10) > 0;
-    
+
     if (!extensionExists) {
       console.log('⚠️  RECOMENDACIÓN ADICIONAL:');
       console.log('   Instalar extensión pg_stat_statements para análisis de queries:');
@@ -338,10 +344,12 @@ analyzePostgresConfig()
     process.exit(0);
   })
   .catch((error) => {
-    logger.error({ 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    }, 'Error en análisis');
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      'Error en análisis'
+    );
     process.exit(1);
   });
-

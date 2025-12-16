@@ -6,7 +6,7 @@ import type { Request, Response } from 'express';
 import type { SymbolSearchResult, SymbolSearchResponse } from '../../../types/python-service';
 import { isConnectionError } from '../../../types/python-service';
 import { PAGINATION_LIMITS } from '../../../config/api-limits';
-import { instrumentsSearchCache, normalizeCacheKey } from '../../../utils/cache';
+import { instrumentsSearchCache, normalizeCacheKey } from '../../../utils/performance/cache';
 import { PYTHON_SERVICE_URL, searchInstrumentsInDB, type DBInstrumentSearchResult } from '../utils';
 import { pythonServiceCircuitBreaker } from '../circuit-breaker';
 

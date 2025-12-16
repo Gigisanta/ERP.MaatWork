@@ -1,6 +1,6 @@
 /**
  * Tests para OHLCVChart component
- * 
+ *
  * AI_DECISION: Tests unitarios para gráfico OHLCV
  * Justificación: Validación crítica de visualización de datos de precios
  * Impacto: Prevenir errores en visualización de gráficos financieros
@@ -13,7 +13,7 @@ import { getOHLCV } from '@/lib/api/bloomberg';
 
 // Mock dependencies
 vi.mock('@/lib/api/bloomberg', () => ({
-  getOHLCV: vi.fn()
+  getOHLCV: vi.fn(),
 }));
 
 vi.mock('recharts', () => ({
@@ -27,12 +27,14 @@ vi.mock('recharts', () => ({
   Tooltip: () => null,
   Legend: () => null,
   ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
-  ReferenceLine: () => null
+  ReferenceLine: () => null,
 }));
 
 vi.mock('@cactus/ui', () => ({
   Card: ({ children, className }: any) => (
-    <div data-testid="card" className={className}>{children}</div>
+    <div data-testid="card" className={className}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
   CardHeader: ({ children }: any) => <div>{children}</div>,
@@ -40,18 +42,20 @@ vi.mock('@cactus/ui', () => ({
   Select: ({ value, onValueChange, items }: any) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item: any) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
       ))}
     </select>
   ),
   Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: any) => (
-    <div role="alert" data-alert-variant={variant}>{children}</div>
+    <div role="alert" data-alert-variant={variant}>
+      {children}
+    </div>
   ),
   Text: ({ children, color }: any) => <span>{children}</span>,
-  Stack: ({ children, direction, gap, align, justify }: any) => (
-    <div>{children}</div>
-  )
+  Stack: ({ children, direction, gap, align, justify }: any) => <div>{children}</div>,
 }));
 
 describe('OHLCVChart', () => {
@@ -81,7 +85,7 @@ describe('OHLCVChart', () => {
         high: 105,
         low: 99,
         close: 103,
-        volume: 1000000
+        volume: 1000000,
       },
       {
         date: '2024-01-02',
@@ -89,13 +93,13 @@ describe('OHLCVChart', () => {
         high: 107,
         low: 102,
         close: 106,
-        volume: 1200000
-      }
+        volume: 1200000,
+      },
     ];
 
     (getOHLCV as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockData
+      data: mockData,
     });
 
     render(<OHLCVChart symbol="AAPL" />);
@@ -111,7 +115,7 @@ describe('OHLCVChart', () => {
   it('debería mostrar error cuando falla la carga', async () => {
     (getOHLCV as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: false,
-      error: 'Failed to fetch OHLCV data'
+      error: 'Failed to fetch OHLCV data',
     });
 
     render(<OHLCVChart symbol="AAPL" />);
@@ -127,9 +131,7 @@ describe('OHLCVChart', () => {
   });
 
   it('debería manejar errores de excepción', async () => {
-    (getOHLCV as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error('Network error')
-    );
+    (getOHLCV as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
     render(<OHLCVChart symbol="AAPL" />);
 
@@ -144,7 +146,7 @@ describe('OHLCVChart', () => {
   it('debería mostrar mensaje cuando no hay datos', async () => {
     (getOHLCV as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: []
+      data: [],
     });
 
     render(<OHLCVChart symbol="AAPL" />);
@@ -164,13 +166,13 @@ describe('OHLCVChart', () => {
         high: 105,
         low: 99,
         close: 103,
-        volume: 1000000
-      }
+        volume: 1000000,
+      },
     ];
 
     (getOHLCV as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockData
+      data: mockData,
     });
 
     render(<OHLCVChart symbol="AAPL" />);
@@ -180,12 +182,7 @@ describe('OHLCVChart', () => {
     });
 
     // Verificar que se llamó con timeframe por defecto (1m)
-    expect(getOHLCV).toHaveBeenCalledWith(
-      'AAPL',
-      '1d',
-      expect.any(String),
-      expect.any(String)
-    );
+    expect(getOHLCV).toHaveBeenCalledWith('AAPL', '1d', expect.any(String), expect.any(String));
   });
 
   it('debería aplicar className y height personalizados', async () => {
@@ -196,13 +193,13 @@ describe('OHLCVChart', () => {
         high: 105,
         low: 99,
         close: 103,
-        volume: 1000000
-      }
+        volume: 1000000,
+      },
     ];
 
     (getOHLCV as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
-      data: mockData
+      data: mockData,
     });
 
     const { container } = render(
@@ -217,4 +214,3 @@ describe('OHLCVChart', () => {
     expect(card).toHaveClass('custom-class');
   });
 });
-

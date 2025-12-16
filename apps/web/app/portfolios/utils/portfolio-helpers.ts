@@ -1,9 +1,4 @@
-import {
-  createInstrument,
-  getInstruments,
-  addPortfolioLine,
-  deletePortfolioLine,
-} from '@/lib/api';
+import { createInstrument, getInstruments, addPortfolioLine, deletePortfolioLine } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { PortfolioLine, Instrument } from '@/types';
 
@@ -38,14 +33,19 @@ export async function ensureInstrumentsExist(lines: PortfolioLine[]): Promise<st
             if (existing) {
               instrumentIds.push(existing.id);
             } else {
-              throw new Error(`No se pudo crear ni encontrar el instrumento ${line.instrumentSymbol}`);
+              throw new Error(
+                `No se pudo crear ni encontrar el instrumento ${line.instrumentSymbol}`
+              );
             }
           } else {
             throw new Error(`No se pudo crear el instrumento ${line.instrumentSymbol}`);
           }
         }
       } catch (err) {
-        logger.error('Error creating/finding instrument', toLogContext({ err, symbol: line.instrumentSymbol }));
+        logger.error(
+          'Error creating/finding instrument',
+          toLogContext({ err, symbol: line.instrumentSymbol })
+        );
         throw err;
       }
     } else if (line.instrumentId) {
@@ -101,7 +101,9 @@ export async function syncPortfolioLines(
       await addPortfolioLine(portfolioId, {
         targetType: newLine.targetType,
         targetWeight: newLine.targetWeight,
-        ...(newLine.targetType === 'assetClass' && newLine.assetClass ? { assetClass: newLine.assetClass } : {}),
+        ...(newLine.targetType === 'assetClass' && newLine.assetClass
+          ? { assetClass: newLine.assetClass }
+          : {}),
         ...(newLine.targetType === 'instrument' && instrumentId ? { instrumentId } : {}),
       });
     }

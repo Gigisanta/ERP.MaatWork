@@ -2,7 +2,7 @@
  * API methods para instruments
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type {
   ApiResponse,
   Instrument,
@@ -15,7 +15,9 @@ import type {
 /**
  * Buscar instrumentos
  */
-export async function searchInstruments(query: string): Promise<ApiResponse<InstrumentSearchResult[]>> {
+export async function searchInstruments(
+  query: string
+): Promise<ApiResponse<InstrumentSearchResult[]>> {
   return apiClient.post<InstrumentSearchResult[]>('/v1/instruments/search', { query });
 }
 
@@ -37,7 +39,7 @@ export async function getInstruments(params?: {
   offset?: number;
 }): Promise<ApiResponse<{ instruments: Instrument[]; total: number }>> {
   const queryParams = new URLSearchParams();
-  
+
   if (params?.search) queryParams.append('search', params.search);
   if (params?.assetClass) queryParams.append('assetClass', params.assetClass);
   if (params?.active !== undefined) queryParams.append('active', String(params.active));
@@ -80,4 +82,3 @@ export async function updateInstrument(
 export async function deleteInstrument(id: string): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/v1/instruments/${id}`);
 }
-

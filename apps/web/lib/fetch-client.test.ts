@@ -1,23 +1,38 @@
 /**
  * Tests para fetch-client
- * 
+ *
  * AI_DECISION: Tests unitarios para wrapper de fetch con logging
  * Justificación: Validación crítica de logging y correlación
  * Impacto: Prevenir errores en logging y correlación de requests
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { fetchWithLogging, fetchJson, postJson, putJson, deleteJson, getJson } from './fetch-client';
+import {
+  fetchWithLogging,
+  fetchJson,
+  postJson,
+  putJson,
+  deleteJson,
+  getJson,
+} from './fetch-client';
 import { logger } from './logger';
 
 // Mock dependencies
-vi.mock('./logger', () => ({
-  logger: {
-    logRequest: vi.fn(),
-    logResponse: vi.fn(),
-    logNetworkError: vi.fn()
-  }
-}));
+vi.mock('./logger', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./logger')>();
+  return {
+    ...actual,
+    logger: {
+      logRequest: vi.fn(),
+      logResponse: vi.fn(),
+      logNetworkError: vi.fn(),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    },
+  };
+});
 
 // Mock global fetch
 global.fetch = vi.fn();
@@ -40,7 +55,7 @@ describe('fetchWithLogging', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({})
+      json: async () => ({}),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -50,7 +65,7 @@ describe('fetchWithLogging', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://example.com/test',
       expect.objectContaining({
-        headers: expect.any(Headers)
+        headers: expect.any(Headers),
       })
     );
   });
@@ -60,7 +75,7 @@ describe('fetchWithLogging', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({})
+      json: async () => ({}),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -95,7 +110,7 @@ describe('fetchWithLogging', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({})
+      json: async () => ({}),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -115,7 +130,7 @@ describe('fetchWithLogging', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({})
+      json: async () => ({}),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -138,7 +153,7 @@ describe('fetchJson', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => mockData
+      json: async () => mockData,
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -153,7 +168,7 @@ describe('fetchJson', () => {
       status: 404,
       statusText: 'Not Found',
       headers: new Headers(),
-      text: async () => 'Not found'
+      text: async () => 'Not found',
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -172,7 +187,7 @@ describe('postJson', () => {
       ok: true,
       status: 201,
       headers: new Headers(),
-      json: async () => ({ id: '123' })
+      json: async () => ({ id: '123' }),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -183,7 +198,7 @@ describe('postJson', () => {
       'https://example.com/test',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ name: 'Test' })
+        body: JSON.stringify({ name: 'Test' }),
       })
     );
   });
@@ -199,7 +214,7 @@ describe('putJson', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({ id: '123' })
+      json: async () => ({ id: '123' }),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -210,7 +225,7 @@ describe('putJson', () => {
       'https://example.com/test',
       expect.objectContaining({
         method: 'PUT',
-        body: JSON.stringify({ name: 'Test' })
+        body: JSON.stringify({ name: 'Test' }),
       })
     );
   });
@@ -226,7 +241,7 @@ describe('deleteJson', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => ({})
+      json: async () => ({}),
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -236,7 +251,7 @@ describe('deleteJson', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://example.com/test',
       expect.objectContaining({
-        method: 'DELETE'
+        method: 'DELETE',
       })
     );
   });
@@ -253,7 +268,7 @@ describe('getJson', () => {
       ok: true,
       status: 200,
       headers: new Headers(),
-      json: async () => mockData
+      json: async () => mockData,
     } as Response;
 
     mockFetch.mockResolvedValue(mockResponse);
@@ -263,9 +278,8 @@ describe('getJson', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       'https://example.com/test',
       expect.objectContaining({
-        method: 'GET'
+        method: 'GET',
       })
     );
   });
 });
-

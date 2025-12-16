@@ -1,6 +1,6 @@
 /**
  * Seed Tags
- * 
+ *
  * Seeds tags and contact-tag associations.
  * Note: The actual schema has no tag categories - tags have scope (contact/meeting/note).
  */
@@ -39,18 +39,16 @@ const TAGS_DATA = [
   { scope: 'contact', name: 'Activo', color: '#22C55E' },
   { scope: 'contact', name: 'Inactivo', color: '#EF4444' },
   { scope: 'contact', name: 'En proceso', color: '#F59E0B' },
-  { scope: 'contact', name: 'Requiere seguimiento', color: '#EC4899' }
+  { scope: 'contact', name: 'Requiere seguimiento', color: '#EC4899' },
 ];
 
 /**
  * Seed tags
  */
-export async function seedTags(
-  contactsList: typeof contacts.$inferSelect[]
-) {
+export async function seedTags(contactsList: (typeof contacts.$inferSelect)[]) {
   console.log('🏷️  Seeding tags...');
 
-  const createdTags: typeof tags.$inferSelect[] = [];
+  const createdTags: (typeof tags.$inferSelect)[] = [];
 
   // Create tags
   for (const tagData of TAGS_DATA) {
@@ -61,12 +59,15 @@ export async function seedTags(
       .limit(1);
 
     if (existing.length === 0) {
-      const [created] = await db().insert(tags).values({
-        scope: tagData.scope,
-        name: tagData.name,
-        color: tagData.color,
-        isSystem: false
-      }).returning();
+      const [created] = await db()
+        .insert(tags)
+        .values({
+          scope: tagData.scope,
+          name: tagData.name,
+          color: tagData.color,
+          isSystem: false,
+        })
+        .returning();
       createdTags.push(created);
       console.log(`  ✓ Created tag: ${tagData.name}`);
     } else {
@@ -92,10 +93,13 @@ export async function seedTags(
           .limit(1);
 
         if (existingAssignment.length === 0) {
-          await db().insert(contactTags).values({
-            contactId: contact.id,
-            tagId: tag.id
-          }).onConflictDoNothing();
+          await db()
+            .insert(contactTags)
+            .values({
+              contactId: contact.id,
+              tagId: tag.id,
+            })
+            .onConflictDoNothing();
           assignmentsCreated++;
         }
       }

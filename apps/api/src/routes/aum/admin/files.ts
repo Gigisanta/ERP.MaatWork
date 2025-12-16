@@ -1,6 +1,6 @@
 /**
  * AUM Admin - File Management Routes
- * 
+ *
  * Handles file upload deletion and verification
  */
 
@@ -11,7 +11,9 @@ import { db, aumImportFiles, aumImportRows } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';
-import { aumFileIdParamsSchema, aumPurgeQuerySchema } from '../../../utils/aum-validation';
+import { createErrorResponse, getStatusCodeFromError } from '../../../utils/error-response';
+import { HttpError } from '../../../utils/route-handler';
+import { aumFileIdParamsSchema, aumPurgeQuerySchema } from '../../../utils/aum/aum-validation';
 
 const router = Router();
 
@@ -21,7 +23,8 @@ const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
  * DELETE /admin/aum/uploads/:fileId
  * Delete a specific import file
  */
-router.delete('/uploads/:fileId',
+router.delete(
+  '/uploads/:fileId',
   requireAuth,
   requireRole(['admin']),
   validate({ params: aumFileIdParamsSchema }),
@@ -32,22 +35,27 @@ router.delete('/uploads/:fileId',
       const userRole = req.user?.role as string;
 
       if (!userId || !userRole) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        throw new HttpError(401, 'Unauthorized');
       }
 
       const dbi = db();
 
       // Verify file exists
-      const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
+      const [file] = await dbi
+        .select()
+        .from(aumImportFiles)
+        .where(eq(aumImportFiles.id, fileId))
+        .limit(1);
       if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+        throw new HttpError(404, 'File not found');
       }
 
       // Prevent deletion of committed files (safety measure)
       if (file.status === 'committed') {
-        return res.status(400).json({
-          error: 'Cannot delete committed import. Contact administrator if removal is necessary.'
-        });
+        throw new HttpError(
+          400,
+          'Cannot delete committed import. Contact administrator if removal is necessary.'
+        );
       }
 
       // Delete associated rows first (CASCADE should handle this, but being explicit)
@@ -68,7 +76,14 @@ router.delete('/uploads/:fileId',
       return res.json({ ok: true, message: 'Archivo eliminado exitosamente' });
     } catch (error) {
       req.log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM file deletion failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      const statusCode = getStatusCodeFromError(error);
+      return res.status(statusCode).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error eliminando archivo AUM',
+        })
+      );
     }
   }
 );
@@ -77,7 +92,8 @@ router.delete('/uploads/:fileId',
  * DELETE /admin/aum/uploads
  * Purge all non-committed uploads (or all if force=true)
  */
-router.delete('/uploads',
+router.delete(
+  '/uploads',
   requireAuth,
   requireRole(['admin']),
   validate({ query: aumPurgeQuerySchema.optional() }),
@@ -106,7 +122,14 @@ router.delete('/uploads',
       return res.json({ ok: true, message: 'AUM uploads purgados (solo no committed)' });
     } catch (error) {
       req.log?.error?.({ err: error }, 'AUM purge failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      const statusCode = getStatusCodeFromError(error);
+      return res.status(statusCode).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error purgando archivos AUM',
+        })
+      );
     }
   }
 );
@@ -115,7 +138,8 @@ router.delete('/uploads',
  * GET /admin/aum/verify/:fileId
  * Verify import integrity
  */
-router.get('/verify/:fileId',
+router.get(
+  '/verify/:fileId',
   requireAuth,
   validate({ params: aumFileIdParamsSchema }),
   async (req: Request, res: Response) => {
@@ -125,15 +149,19 @@ router.get('/verify/:fileId',
       const userRole = req.user?.role as 'admin' | 'manager' | 'advisor';
 
       if (!userId || !userRole) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        throw new HttpError(401, 'Unauthorized');
       }
 
       const dbi = db();
 
       // Get file
-      const [file] = await dbi.select().from(aumImportFiles).where(eq(aumImportFiles.id, fileId)).limit(1);
+      const [file] = await dbi
+        .select()
+        .from(aumImportFiles)
+        .where(eq(aumImportFiles.id, fileId))
+        .limit(1);
       if (!file) {
-        return res.status(404).json({ error: 'File not found' });
+        throw new HttpError(404, 'File not found');
       }
 
       // Count rows in DB
@@ -165,22 +193,28 @@ router.get('/verify/:fileId',
         WHERE file_id = ${fileId}
         GROUP BY match_status
       `);
-      const statusCounts = (statusResult.rows || []).reduce((acc: Record<string, number>, row: unknown) => {
-        const r = row as { match_status: string; count: number };
-        acc[r.match_status] = r.count;
-        return acc;
-      }, {} as Record<string, number>);
+      const statusCounts = (statusResult.rows || []).reduce(
+        (acc: Record<string, number>, row: unknown) => {
+          const r = row as { match_status: string; count: number };
+          acc[r.match_status] = r.count;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
 
       // Check for discrepancies
       const discrepancy = file.totalParsed - dbCount;
       const hasDiscrepancy = discrepancy !== 0;
 
-      req.log?.info?.({
-        fileId,
-        dbCount,
-        fileTotalParsed: file.totalParsed,
-        discrepancy
-      }, 'AUM file verification completed');
+      req.log?.info?.(
+        {
+          fileId,
+          dbCount,
+          fileTotalParsed: file.totalParsed,
+          discrepancy,
+        },
+        'AUM file verification completed'
+      );
 
       return res.json({
         ok: true,
@@ -192,9 +226,9 @@ router.get('/verify/:fileId',
           totals: {
             parsed: file.totalParsed,
             matched: file.totalMatched,
-            unmatched: file.totalUnmatched
+            unmatched: file.totalUnmatched,
           },
-          createdAt: file.createdAt
+          createdAt: file.createdAt,
         },
         verification: {
           dbCount,
@@ -202,15 +236,21 @@ router.get('/verify/:fileId',
           discrepancy,
           hasDiscrepancy,
           onlyHolderNameCount: dbOnlyHolderNameCount,
-          statusCounts
-        }
+          statusCounts,
+        },
       });
     } catch (error) {
       req.log?.error?.({ err: error, fileId: req.params.fileId }, 'AUM verify failed');
-      return res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+      const statusCode = getStatusCodeFromError(error);
+      return res.status(statusCode).json(
+        createErrorResponse({
+          error,
+          requestId: req.requestId,
+          userMessage: 'Error verificando archivo AUM',
+        })
+      );
     }
   }
 );
 
 export default router;
-

@@ -44,4 +44,3 @@ export function formatLevelPercentage(percentage: string | number): string {
   }
   return `${num}%`;
 }
-

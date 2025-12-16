@@ -10,7 +10,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactus/db';
 import { eq, and } from 'drizzle-orm';
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { validateUuidParam } from '../../../utils/validation/common-schemas';
 
 /**
  * GET /teams/membership-requests - Listar solicitudes pendientes para el manager

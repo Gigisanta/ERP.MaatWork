@@ -4,24 +4,24 @@
  * Helper functions shared across team CRUD handlers to reduce duplication.
  *
  * ## Contents:
- * - parseTeamId: Validates UUID and returns error response if invalid
  * - checkTeamAccess: Verifies user access to a team
+ * - requireTeamManageAccess: Checks management permissions (returns response)
+ * - requireTeamManageAccessOrThrow: Checks management permissions (throws error)
  * - getTeamMembers: Fetches team members with user info
  */
 import type { Response } from 'express';
 import { db, teamMembership, users } from '@cactus/db';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';
 import { UserRole } from '../../../auth/types';
-
-// Type from getUserTeams return
-type UserTeamInfo = { id: string; name: string; role: 'member' | 'manager' };
-import { validateUuidParam } from '../../../utils/common-schemas';
+import { HttpError } from '../../../utils/route-handler';
 
 // ==========================================================
 // Types
 // ==========================================================
+
+// Type from getUserTeams return
+type UserTeamInfo = { id: string; name: string; role: 'member' | 'manager' };
 
 export interface TeamAccessResult {
   hasAccess: boolean;
@@ -42,30 +42,9 @@ export interface TeamMember {
 // UUID Validation Helper
 // ==========================================================
 
-/**
- * Validates a team ID parameter and sends 400 response if invalid.
- * Returns null if validation fails (response already sent).
- *
- * @param paramValue - The raw parameter value from req.params
- * @param res - Express response object
- * @returns The validated UUID string, or null if invalid (response sent)
- *
- * @example
- * ```typescript
- * const teamId = parseTeamId(req.params.id, res);
- * if (!teamId) return; // Response already sent
- * ```
- */
-export function parseTeamId(paramValue: string | undefined, res: Response): string | null {
-  try {
-    return validateUuidParam(paramValue, 'teamId');
-  } catch (err) {
-    res.status(400).json({
-      error: err instanceof Error ? err.message : 'Invalid team ID format',
-    });
-    return null;
-  }
-}
+// REMOVED: parseTeamId and parseTeamIdOrThrow functions
+// Migration completed: All routes now use validate({ params: idParamSchema }) middleware
+// See: apps/api/src/routes/teams/index.ts for examples
 
 // ==========================================================
 // Access Control Helpers
@@ -134,6 +113,33 @@ export async function requireTeamManageAccess(
   return true;
 }
 
+/**
+ * Checks if user can manage (update/delete) a team.
+ * Throws HttpError if access denied (for use with createRouteHandler).
+ *
+ * @param userId - The user's ID
+ * @param userRole - The user's role
+ * @param teamId - The team ID to check
+ * @param action - The action being attempted (for error message)
+ * @throws HttpError(403) if access denied
+ */
+export async function requireTeamManageAccessOrThrow(
+  userId: string,
+  userRole: UserRole,
+  teamId: string,
+  action: 'update' | 'delete'
+): Promise<void> {
+  if (userRole === 'admin') {
+    return;
+  }
+
+  const { isManager } = await checkTeamAccess(userId, userRole, teamId);
+
+  if (!isManager) {
+    throw new HttpError(403, `Access denied. Only team managers can ${action} this team.`);
+  }
+}
+
 // ==========================================================
 // Data Fetching Helpers
 // ==========================================================
@@ -163,18 +169,4 @@ export async function getTeamMembers(teamId: string): Promise<TeamMember[]> {
 // Error Handling Helpers
 // ==========================================================
 
-/**
- * Handles Zod validation errors in a consistent way.
- * Returns true if the error was a ZodError and response was sent.
- *
- * @param err - The error to check
- * @param res - Express response object
- * @returns true if error was handled, false otherwise
- */
-export function handleZodError(err: unknown, res: Response): boolean {
-  if (err instanceof z.ZodError) {
-    res.status(400).json({ error: 'Validation error', details: err.errors });
-    return true;
-  }
-  return false;
-}
+// handleZodError removido - usar middleware validate() en su lugar

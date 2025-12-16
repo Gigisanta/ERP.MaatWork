@@ -8,46 +8,111 @@ import { PageTitleProvider } from './components/PageTitleContext';
 import { ConditionalAnalytics } from './components/ConditionalAnalytics';
 import ServiceWorkerRegistration from './components/ServiceWorkerRegistration';
 import { ToastProvider } from '../lib/hooks/useToast';
-import { Inter } from 'next/font/google';
-import dynamic from 'next/dynamic';
-// Styles from @cactus/ui - copied to local styles folder during build
-import '../styles/ui-styles.css';
+import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
+import { getCurrentUser } from '@/lib/api-server';
+import {
+  DynamicDebugConsole,
+  DynamicGlobalKeyboardShortcuts,
+} from './components/LayoutDynamicWrappers';
+import type { Metadata } from 'next';
+
+// Styles from @cactus/ui
+import '@cactus/ui/styles.css';
 import './globals.css';
 
 // AI_DECISION: Only load DebugConsole in development to reduce production bundle
 // Justificación: DebugConsole adds ~2KB to bundle and creates client component overhead
 // Impacto: Smaller production bundle, faster initial load in production
-const DebugConsole = dynamic(() => import('./components/DebugConsole'), { ssr: false });
+// Ref: moved to LayoutDynamicWrappers.tsx to support ssr: false
 
-// AI_DECISION: Use next/font/google for optimized font loading
-// Justificación: next/font automatically optimizes fonts, reduces FOUT, and improves performance
-// Impacto: Self-hosts fonts, eliminates external font requests, reduces layout shift
-const inter = Inter({
+// AI_DECISION: Keyboard shortcuts available globally with Cmd/Ctrl + ?
+// Justificación: Mejora la productividad de usuarios avanzados
+// Impacto: Modal de atajos accesible desde cualquier página
+// Ref: moved to LayoutDynamicWrappers.tsx to support ssr: false
+
+// AI_DECISION: Typography Refresh - Modern Geometric Sans
+// Justificación: 'Outfit' provides a friendly, modern, geometric look for headings.
+// 'Plus Jakarta Sans' offers excellent readability with a modern geometric touch for body text.
+// Impacto: "Fresh" and modern aesthetic requested by user.
+
+// Outfit - Display font for headings (Modern, Geometric, Friendly)
+const outfit = Outfit({
   subsets: ['latin'],
-  display: 'swap', // Reduce FOUT by showing fallback font immediately
-  variable: '--font-inter', // CSS variable for use in globals.css
-  preload: true, // Preload font for faster initial render
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-display',
+  preload: true,
 });
+
+// Plus Jakarta Sans - Body font (High readability, Modern)
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-body',
+  preload: true,
+});
+
+export const metadata: Metadata = {
+  title: {
+    template: '%s | MaatWork',
+    default: 'MaatWork',
+  },
+  description: 'Gestión profesional de clientes e inversiones',
+  icons: {
+    icon: '/favicon.ico', // Assuming this exists or will fallback
+  },
+};
 
 // Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+async function getInitialUser() {
+  try {
+    const response = await getCurrentUser();
+    if (response.success && response.data) {
+      // Convert UserApiResponse to AuthUser format
+      const userData = response.data;
+      return {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        fullName: userData.fullName,
+        isActive: userData.isActive,
+      };
+    }
+  } catch (error) {
+    // AI_DECISION: Log errors but don't throw - allow app to render unauthenticated shell
+    // Justificación: Errores de red o API no deben bloquear el renderizado inicial
+    // Impacto: Mejor UX permitiendo que la app se cargue incluso si la API no está disponible
+    if (process.env.NODE_ENV === 'development') {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn('[Layout] Error getting initial user:', errorMessage);
+    }
+    // Return null to render unauthenticated shell
+  }
+  return null;
+}
+
 // AI_DECISION: Convert root layout to server component for 200-500ms FCP/LCP improvement
 // Justificación: 'use client' forces entire app to CSR, increasing hydration JS by ~40KB
 // Impacto: Server-side rendering for static content, client JS only where needed
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const initialUser = await getInitialUser();
+
   return (
-    <html lang="es" className={inter.variable}>
-      <body className={`bg-background ${inter.className}`}>
-        {isDevelopment && <DebugConsole />}
+    <html lang="es" className={`${outfit.variable} ${plusJakarta.variable}`}>
+      <body className={plusJakarta.className}>
+        {isDevelopment && <DynamicDebugConsole />}
         <ThemeProviderWrapper defaultTheme="light">
           <ErrorBoundary>
-            <AuthProvider>
+            <AuthProvider initialUser={initialUser}>
               <ToastProvider>
                 <SidebarProvider>
                   <PageTitleProvider>
                     <NavigationNew />
                     <AppLayout>{children}</AppLayout>
+                    <DynamicGlobalKeyboardShortcuts />
                   </PageTitleProvider>
                 </SidebarProvider>
               </ToastProvider>

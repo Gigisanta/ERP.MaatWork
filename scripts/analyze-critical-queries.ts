@@ -1,12 +1,21 @@
 /**
  * Script para analizar queries críticas con EXPLAIN ANALYZE
- * 
+ *
  * Ejecuta EXPLAIN ANALYZE en las queries más lentas y genera reporte
  * con planes de ejecución y recomendaciones.
  */
 
 import { db } from '../packages/db/src/index.js';
-import { contacts, tasks, notes, brokerAccounts, aumSnapshots, brokerTransactions, brokerPositions, activityEvents } from '../packages/db/src/schema.js';
+import {
+  contacts,
+  tasks,
+  notes,
+  brokerAccounts,
+  aumSnapshots,
+  brokerTransactions,
+  brokerPositions,
+  activityEvents,
+} from '../packages/db/src/schema.js';
 import { eq, and, isNull, sql, desc, inArray } from 'drizzle-orm';
 import { explainQuery } from '../apps/api/src/utils/explain-analyzer.js';
 import { writeFileSync } from 'fs';
@@ -56,7 +65,7 @@ async function analyzeCriticalQueries() {
       name: 'Listado de contactos por advisor',
       description: 'Query principal del endpoint GET /contacts',
       query: query1,
-      explainResult: explain1
+      explainResult: explain1,
     });
 
     // Query 2: Timeline de notas por contacto
@@ -74,7 +83,7 @@ async function analyzeCriticalQueries() {
       name: 'Timeline de notas por contacto',
       description: 'Query del endpoint GET /contacts/:id/detail (sección notas)',
       query: query2,
-      explainResult: explain2
+      explainResult: explain2,
     });
 
     // Query 3: Tareas abiertas por usuario
@@ -93,7 +102,7 @@ async function analyzeCriticalQueries() {
       name: 'Tareas abiertas por usuario',
       description: 'Query del endpoint GET /tasks (dashboard)',
       query: query3,
-      explainResult: explain3
+      explainResult: explain3,
     });
 
     // Query 4: Broker accounts por contacto
@@ -110,7 +119,7 @@ async function analyzeCriticalQueries() {
       name: 'Broker accounts por contacto',
       description: 'Query del endpoint GET /contacts/:id/detail (sección cuentas)',
       query: query4,
-      explainResult: explain4
+      explainResult: explain4,
     });
 
     // Query 5: Transacciones por cuenta (histórico)
@@ -127,7 +136,7 @@ async function analyzeCriticalQueries() {
       name: 'Transacciones por cuenta',
       description: 'Query del endpoint GET /broker-accounts/:id/transactions',
       query: query5,
-      explainResult: explain5
+      explainResult: explain5,
     });
 
     // Query 6: Posiciones por cuenta
@@ -147,7 +156,7 @@ async function analyzeCriticalQueries() {
       name: 'Posiciones por cuenta (última fecha)',
       description: 'Query para obtener posiciones actuales de una cuenta',
       query: query6,
-      explainResult: explain6
+      explainResult: explain6,
     });
 
     // Query 7: AUM snapshots por contacto
@@ -164,7 +173,7 @@ async function analyzeCriticalQueries() {
       name: 'AUM snapshots por contacto',
       description: 'Query del endpoint GET /contacts/:id/aum-history',
       query: query7,
-      explainResult: explain7
+      explainResult: explain7,
     });
 
     // Query 8: Activity events por usuario
@@ -181,13 +190,13 @@ async function analyzeCriticalQueries() {
       name: 'Activity events por usuario',
       description: 'Query para timeline de actividad de usuario',
       query: query8,
-      explainResult: explain8
+      explainResult: explain8,
     });
 
     // Generar reporte
     const report = {
       timestamp: new Date().toISOString(),
-      analyses: analyses.map(a => ({
+      analyses: analyses.map((a) => ({
         name: a.name,
         description: a.description,
         query: a.query,
@@ -197,8 +206,8 @@ async function analyzeCriticalQueries() {
         sequentialScans: a.explainResult.sequentialScans,
         indexScans: a.explainResult.indexScans,
         recommendations: a.explainResult.recommendations,
-        plan: a.explainResult.plan
-      }))
+        plan: a.explainResult.plan,
+      })),
     };
 
     // Guardar reporte JSON
@@ -222,7 +231,7 @@ async function analyzeCriticalQueries() {
       console.log(`   Index scans: ${a.indexScans}`);
       if (a.recommendations.length > 0) {
         console.log(`   Recomendaciones: ${a.recommendations.length}`);
-        a.recommendations.forEach(rec => console.log(`     - ${rec}`));
+        a.recommendations.forEach((rec) => console.log(`     - ${rec}`));
       }
     });
 
@@ -235,7 +244,7 @@ async function analyzeCriticalQueries() {
 
 function generateTextReport(report: any): string {
   const lines: string[] = [];
-  
+
   lines.push('='.repeat(80));
   lines.push('ANÁLISIS EXPLAIN ANALYZE DE QUERIES CRÍTICAS');
   lines.push(`Generado: ${report.timestamp}`);
@@ -252,7 +261,7 @@ function generateTextReport(report: any): string {
     lines.push(`Sequential scans: ${a.sequentialScans}`);
     lines.push(`Index scans: ${a.indexScans}`);
     lines.push('');
-    
+
     if (a.recommendations.length > 0) {
       lines.push('Recomendaciones:');
       a.recommendations.forEach((rec: string) => {
@@ -260,7 +269,7 @@ function generateTextReport(report: any): string {
       });
       lines.push('');
     }
-    
+
     lines.push('Plan de ejecución:');
     lines.push(a.plan);
     lines.push('');
@@ -280,4 +289,3 @@ analyzeCriticalQueries()
     console.error('\n❌ Error:', error);
     process.exit(1);
   });
-

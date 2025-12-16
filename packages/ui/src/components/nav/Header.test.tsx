@@ -2,7 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, render as rtlRender, screen as rtlScreen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Header, Header as HeaderComponent, type HeaderProps, type NavItem, type User } from './Header';
+import {
+  Header,
+  Header as HeaderComponent,
+  type HeaderProps,
+  type NavItem,
+  type User,
+} from './Header';
 
 describe('Header - Profile item', () => {
   function renderHeader(extraProps: Partial<HeaderProps> = {}) {
@@ -20,11 +26,11 @@ describe('Header - Profile item', () => {
     renderHeader();
 
     // Open the dropdown by clicking the trigger button
-    const trigger = rtlScreen.getByRole('button', { name: /user menu for john doe/i });
+    const trigger = rtlScreen.getByRole('button', { name: /menú de usuario: john doe/i });
     await user.click(trigger);
 
     // Wait for the dropdown menu to appear (Radix UI renders in a portal)
-    const profileLink = await rtlScreen.findByRole('menuitem', { name: /profile/i });
+    const profileLink = await rtlScreen.findByRole('menuitem', { name: /mi perfil/i });
     expect(profileLink).toHaveAttribute('href', '/profile');
   });
 });
@@ -62,7 +68,7 @@ describe('Header Component', () => {
     it('should render user section when user provided', () => {
       render(<Header user={mockUser} />);
       // Header solo muestra la inicial, no el nombre completo
-      expect(screen.getByLabelText(/user menu for john doe/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/menú de usuario: john doe/i)).toBeInTheDocument();
       expect(screen.getByText('J')).toBeInTheDocument();
     });
 
@@ -82,12 +88,12 @@ describe('Header Component', () => {
     it('should render mobile menu button when onToggleSidebar provided', () => {
       const handleToggle = vi.fn();
       render(<Header onToggleSidebar={handleToggle} />);
-      expect(screen.getByLabelText(/open sidebar/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/abrir menú/i)).toBeInTheDocument();
     });
 
     it('should not render mobile menu button when no onToggleSidebar', () => {
       render(<Header />);
-      expect(screen.queryByLabelText(/sidebar/i)).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/menú/i)).not.toBeInTheDocument();
     });
   });
 
@@ -126,19 +132,19 @@ describe('Header Component', () => {
   describe('User Menu', () => {
     it('should render user menu button', () => {
       render(<Header user={mockUser} />);
-      const button = screen.getByLabelText(/user menu for john doe/i);
+      const button = screen.getByLabelText(/menú de usuario: john doe/i);
       expect(button).toBeInTheDocument();
     });
 
     it('should have aria-haspopup on user menu button', () => {
       render(<Header user={mockUser} />);
-      const button = screen.getByLabelText(/user menu/i);
+      const button = screen.getByLabelText(/menú de usuario/i);
       expect(button).toHaveAttribute('aria-haspopup', 'menu');
     });
 
     it('should have aria-expanded false by default', () => {
       render(<Header user={mockUser} />);
-      const button = screen.getByLabelText(/user menu/i);
+      const button = screen.getByLabelText(/menú de usuario/i);
       expect(button).toHaveAttribute('aria-expanded', 'false');
     });
 
@@ -147,14 +153,14 @@ describe('Header Component', () => {
     it('should render user menu trigger with proper structure', () => {
       render(<Header user={mockUser} />);
       // Header solo muestra la inicial, no el nombre completo
-      expect(screen.getByLabelText(/user menu for john doe/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/menú de usuario: john doe/i)).toBeInTheDocument();
       expect(screen.getByText('J')).toBeInTheDocument(); // Initial
     });
 
     it('should accept onLogout callback', () => {
       const handleLogout = vi.fn();
       render(<Header user={mockUser} onLogout={handleLogout} />);
-      expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/menú de usuario/i)).toBeInTheDocument();
     });
   });
 
@@ -165,7 +171,7 @@ describe('Header Component', () => {
 
       render(<Header onToggleSidebar={handleToggle} />);
 
-      const toggleButton = screen.getByLabelText(/open sidebar/i);
+      const toggleButton = screen.getByLabelText(/abrir menú/i);
       await user.click(toggleButton);
 
       expect(handleToggle).toHaveBeenCalled();
@@ -173,12 +179,12 @@ describe('Header Component', () => {
 
     it('should change aria-label based on sidebarOpen state', () => {
       render(<Header onToggleSidebar={vi.fn()} sidebarOpen={true} />);
-      expect(screen.getByLabelText(/close sidebar/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/cerrar menú/i)).toBeInTheDocument();
     });
 
     it('should be hidden on large screens', () => {
       render(<Header onToggleSidebar={vi.fn()} />);
-      const button = screen.getByLabelText(/sidebar/i);
+      const button = screen.getByLabelText(/abrir menú/i);
       expect(button).toHaveClass('lg:hidden');
     });
   });
@@ -205,7 +211,7 @@ describe('Header Component', () => {
     it('should have responsive padding', () => {
       const { container } = render(<Header />);
       const header = container.querySelector('header');
-      expect(header).toHaveClass('px-3', 'sm:px-4', 'lg:px-6');
+      expect(header).toHaveClass('px-2', 'xs:px-3', 'sm:px-4', 'lg:px-6');
     });
   });
 
@@ -213,7 +219,8 @@ describe('Header Component', () => {
     it('should have border and background', () => {
       const { container } = render(<Header />);
       const header = container.querySelector('header');
-      expect(header).toHaveClass('bg-surface', 'border-b', 'border-border');
+      // Using backdrop blur with bg-surface/95 for glassmorphism effect
+      expect(header).toHaveClass('bg-surface/95', 'border-b', 'border-border');
     });
 
     it('should have proper z-index', () => {
@@ -242,12 +249,12 @@ describe('Header Component', () => {
 
     it('should have accessible user menu button', () => {
       render(<Header user={mockUser} />);
-      expect(screen.getByLabelText(/user menu/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/menú de usuario/i)).toBeInTheDocument();
     });
 
     it('should have accessible mobile menu button', () => {
       render(<Header onToggleSidebar={vi.fn()} />);
-      expect(screen.getByLabelText(/sidebar/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/abrir menú/i)).toBeInTheDocument();
     });
 
     it('should have focus styles', () => {
@@ -262,7 +269,7 @@ describe('Header Component', () => {
       render(<Header user={mockUser} />);
       // Header solo muestra la inicial, no el nombre completo
       // El botón del usuario siempre está visible, pero el nombre completo no se muestra
-      const userButton = screen.getByLabelText(/user menu for john doe/i);
+      const userButton = screen.getByLabelText(/menú de usuario: john doe/i);
       expect(userButton).toBeInTheDocument();
       // Verificar que la inicial está visible
       expect(screen.getByText('J')).toBeInTheDocument();
@@ -270,7 +277,7 @@ describe('Header Component', () => {
 
     it('should show mobile menu button only on small screens', () => {
       render(<Header onToggleSidebar={vi.fn()} />);
-      const button = screen.getByLabelText(/sidebar/i);
+      const button = screen.getByLabelText(/abrir menú/i);
       expect(button).toHaveClass('lg:hidden');
     });
   });
@@ -290,7 +297,9 @@ describe('Header Component', () => {
       const longNameUser = { ...mockUser, name: 'Very Long Name That Might Overflow' };
       render(<Header user={longNameUser} />);
       // Header solo muestra la inicial, no el nombre completo
-      expect(screen.getByLabelText(/user menu for very long name that might overflow/i)).toBeInTheDocument();
+      expect(
+        screen.getByLabelText(/menú de usuario: very long name that might overflow/i)
+      ).toBeInTheDocument();
       expect(screen.getByText('V')).toBeInTheDocument(); // Initial
     });
 
@@ -305,10 +314,10 @@ describe('Header Component', () => {
     });
 
     it('should handle special characters in user name', () => {
-      const specialUser = { ...mockUser, name: 'Ñoño O\'Brien' };
+      const specialUser = { ...mockUser, name: "Ñoño O'Brien" };
       render(<Header user={specialUser} />);
       // Header solo muestra la inicial, no el nombre completo
-      expect(screen.getByLabelText(/user menu for ñoño o'brien/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/menú de usuario: ñoño o'brien/i)).toBeInTheDocument();
       expect(screen.getByText('Ñ')).toBeInTheDocument(); // Initial
     });
   });
@@ -346,4 +355,3 @@ describe('Header Component', () => {
     });
   });
 });
-

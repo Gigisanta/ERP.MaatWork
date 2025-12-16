@@ -1,80 +1,159 @@
-"use client";
+'use client';
 
 import { Card, CardContent, Text, Stack } from '@cactus/ui';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState, memo } from 'react';
 
 interface MetricCardProps {
   title: string;
   actual: number;
   goal: number;
   color: string;
+  /** Animation delay index for staggered animations */
+  index?: number;
 }
 
 /**
  * Card individual para mostrar una métrica con su valor actual y objetivo
- * Usa variables CSS del sistema de diseño para colores consistentes
+ * Con animaciones de entrada staggered y progress bar animado
+ *
+ * AI_DECISION: Memoizado para evitar re-renders innecesarios
+ * Justificación: Solo debe re-renderizar si cambian los valores reales, no el timestamp
+ * Impacto: Menos re-renders en dashboard home, mejor performance
  */
-export function MetricCard({ title, actual, goal, color }: MetricCardProps) {
+function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCardProps) {
+  const [mounted, setMounted] = useState(false);
+  const [animateProgress, setAnimateProgress] = useState(false);
+
+  useEffect(() => {
+    // Trigger mount animation
+    const mountTimer = setTimeout(() => setMounted(true), 50);
+    // Trigger progress bar animation after card is visible
+    const progressTimer = setTimeout(() => setAnimateProgress(true), 300 + index * 100);
+
+    return () => {
+      clearTimeout(mountTimer);
+      clearTimeout(progressTimer);
+    };
+  }, [index]);
+
   const percentage = useMemo(() => {
     if (goal === 0) return 0;
     return Math.min((actual / goal) * 100, 100);
   }, [actual, goal]);
 
-  // Manejar tanto colores hex como variables CSS
+  // AI_DECISION: Use color-mix for robust color manipulation
+  // Justificación: Previous string manipulation of var() was fragile and invalid for some CSS variable formats.
+  // Impacto: Correctly renders background tints in all themes and with all color formats (hex, var, etc).
   const getBackgroundColor = (colorValue: string) => {
-    // Si es una variable CSS, usar color-mix (soporte moderno) o fallback
-    if (colorValue.startsWith('var(')) {
-      // Para variables CSS, usar opacity directamente en el color
-      return colorValue.replace(')', ' / 0.05)');
-    }
-    // Si es hex, convertir a rgba
-    const hex = colorValue.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, 0.05)`;
+    // 92% transparent = 0.08 opacity
+    return `color-mix(in srgb, ${colorValue}, transparent 92%)`;
+  };
+
+  const getGlowColor = (colorValue: string) => {
+    // 85% transparent = 0.15 opacity
+    return `color-mix(in srgb, ${colorValue}, transparent 85%)`;
   };
 
   return (
-    <Card
-      className="relative overflow-hidden transition-all duration-200 hover:shadow-md"
-      style={{
-        borderTop: `3px solid ${color}`,
-        backgroundColor: getBackgroundColor(color)
-      }}
+    <div
+      className={`
+        transition-all duration-500 ease-out
+        ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}
+      `}
+      style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <CardContent className="p-4">
-        <Stack direction="column" gap="xs">
-          <Text size="sm" color="secondary" className="font-medium">
-            {title}
-          </Text>
-          <Text size="xl" className="font-bold" style={{ color }}>
-            {actual}
-          </Text>
-          <Stack direction="row" gap="xs" align="center" justify="between">
-            <Text size="xs" color="secondary">
-              Objetivo: {goal}
+      <Card
+        className="relative overflow-hidden hover-lift group cursor-default"
+        style={{
+          borderTop: `3px solid ${color}`,
+          backgroundColor: getBackgroundColor(color),
+        }}
+      >
+        {/* Subtle glow effect on hover */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at top, ${getGlowColor(color)}, transparent 70%)`,
+          }}
+        />
+
+        {/* AI_DECISION: Reduce padding for optimized layout */}
+        <CardContent className="p-3 relative">
+          <Stack direction="column" gap="xs">
+            {/* Title */}
+            <Text
+              size="xs"
+              color="secondary"
+              className="font-medium uppercase tracking-wide truncate"
+            >
+              {title}
             </Text>
-            {goal > 0 && (
-              <Text size="xs" color="secondary" className="font-medium">
-                {percentage.toFixed(0)}%
+
+            {/* Value with count-up animation feel */}
+            <div className="flex flex-col items-start -space-y-0.5">
+              <Text
+                size="lg"
+                className="font-bold text-2xl transition-all duration-300 leading-tight"
+                style={{ color }}
+              >
+                {actual}
               </Text>
+              {goal > 0 && (
+                <Text size="xs" color="muted" className="font-medium">
+                  / {goal}
+                </Text>
+              )}
+            </div>
+
+            {/* Percentage badge and progress bar in one line to save space if needed, 
+                but here keeping stacked but tighter */}
+            {goal > 0 && (
+              <>
+                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden mt-1">
+                  <div
+                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    style={{
+                      width: animateProgress ? `${percentage}%` : '0%',
+                      backgroundColor: color,
+                      boxShadow: `0 0 8px ${getGlowColor(color)}`,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <span
+                    className={`
+                      text-xs font-semibold
+                      ${
+                        percentage >= 100
+                          ? 'text-success'
+                          : percentage >= 75
+                            ? 'text-accent-hover'
+                            : percentage >= 50
+                              ? 'text-warning'
+                              : 'text-text-secondary'
+                      }
+                    `}
+                  >
+                    {percentage.toFixed(0)}%
+                  </span>
+                </div>
+              </>
             )}
           </Stack>
-          {goal > 0 && (
-            <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden mt-1">
-              <div
-                className="h-full transition-all duration-500 ease-out rounded-full"
-                style={{
-                  width: `${percentage}%`,
-                  backgroundColor: color
-                }}
-              />
-            </div>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
+// Memoize with custom comparison - ignore timestamp changes if values are equal
+export const MetricCard = memo(MetricCardComponent, (prev, next) => {
+  // Compare by title, actual value, goal, and color
+  if (prev.title !== next.title) return false;
+  if (prev.actual !== next.actual) return false;
+  if (prev.goal !== next.goal) return false;
+  if (prev.color !== next.color) return false;
+  // Index can change without affecting display, but we compare it anyway for consistency
+  // The component will re-render if index changes, but that's acceptable
+  return true;
+});
