@@ -1,31 +1,89 @@
 /**
  * Excel File Parser for AUM files
  *
- * AI_DECISION: Extraer parsing de Excel a módulo independiente
- * Justificación: Separar responsabilidades, facilitar testing, reutilización
- * Impacto: Código más modular y testeable
+ * AI_DECISION: Migrar de xlsx a exceljs para resolver vulnerabilidades de seguridad
+ * Justificación: xlsx tiene vulnerabilidades HIGH sin parche disponible (Prototype Pollution, ReDoS)
+ * Impacto: Mejor seguridad, exceljs es mantenido activamente
  */
 
-import { promises as fs } from 'node:fs';
 import type { ParseResult } from '../aumParser';
+import ExcelJS from 'exceljs';
+
+/**
+ * Convert ExcelJS worksheet to array of objects (similar to xlsx sheet_to_json)
+ */
+function worksheetToJson(worksheet: ExcelJS.Worksheet): Array<Record<string, unknown>> {
+  const rows: Array<Record<string, unknown>> = [];
+  const headers: string[] = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) {
+      // First row is headers
+      row.eachCell((cell, colNumber) => {
+        const value = cell.value;
+        headers[colNumber - 1] =
+          value !== null && value !== undefined ? String(value) : `Column${colNumber}`;
+      });
+    } else {
+      // Data rows
+      const rowData: Record<string, unknown> = {};
+      let hasData = false;
+
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        const header = headers[colNumber - 1];
+        if (header) {
+          let value: unknown = cell.value;
+
+          // Handle ExcelJS cell value types
+          if (value !== null && typeof value === 'object') {
+            // Handle rich text
+            if ('richText' in value && Array.isArray((value as { richText: unknown[] }).richText)) {
+              value = (value as { richText: Array<{ text: string }> }).richText
+                .map((rt) => rt.text)
+                .join('');
+            }
+            // Handle formula results
+            else if ('result' in value) {
+              value = (value as { result: unknown }).result;
+            }
+            // Handle hyperlinks
+            else if ('text' in value) {
+              value = (value as { text: string }).text;
+            }
+            // Handle dates
+            else if (value instanceof Date) {
+              // Keep as Date object for now, let mapper handle formatting
+              value = value;
+            }
+          }
+
+          rowData[header] = value;
+          if (value !== null && value !== undefined && value !== '') {
+            hasData = true;
+          }
+        }
+      });
+
+      // Only add rows that have at least some data
+      if (hasData) {
+        rows.push(rowData);
+      }
+    }
+  });
+
+  return rows;
+}
 
 /**
  * Parse Excel file (.xlsx, .xls) to AUM rows
  */
 export async function parseExcelFile(filePath: string, originalName: string): Promise<ParseResult> {
   try {
-    // Dynamic import of xlsx module
-    const XLSX = await import('xlsx');
-    const xlsxModule = 'default' in XLSX ? XLSX.default : XLSX;
+    const workbook = new ExcelJS.Workbook();
 
     // Read Excel file
-    let workbook;
     try {
-      workbook = xlsxModule.readFile(filePath, {
-        cellDates: true,
-        cellNF: false,
-        cellText: false,
-      });
+      await workbook.xlsx.readFile(filePath);
     } catch (readError) {
       return {
         success: false,
@@ -35,7 +93,7 @@ export async function parseExcelFile(filePath: string, originalName: string): Pr
     }
 
     // Validate workbook has sheets
-    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+    if (!workbook.worksheets || workbook.worksheets.length === 0) {
       return {
         success: false,
         error: 'Excel file contains no sheets',
@@ -44,26 +102,21 @@ export async function parseExcelFile(filePath: string, originalName: string): Pr
     }
 
     // Get first sheet
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
+    const worksheet = workbook.worksheets[0];
+    const sheetName = worksheet.name;
 
     if (!worksheet) {
       return {
         success: false,
         error: `Cannot access sheet "${sheetName}"`,
-        details: `Available sheets: ${workbook.SheetNames.join(', ')}`,
+        details: `Available sheets: ${workbook.worksheets.map((ws) => ws.name).join(', ')}`,
       };
     }
 
     // Convert sheet to JSON
     let jsonData: Array<Record<string, unknown>>;
     try {
-      jsonData = xlsxModule.utils.sheet_to_json(worksheet, {
-        defval: null,
-        raw: true,
-        dateNF: 'yyyy-mm-dd',
-        blankrows: false,
-      }) as Array<Record<string, unknown>>;
+      jsonData = worksheetToJson(worksheet);
     } catch (parseError) {
       return {
         success: false,
