@@ -61,7 +61,8 @@ export type IconName =
   | 'Navigation'
   | 'Zap'
   | 'command'
-  | 'Command';
+  | 'Command'
+  | 'calendar';
 
 interface IconProps {
   name: IconName;
@@ -133,6 +134,7 @@ export default function Icon({ name, size = 16, className = '' }: IconProps) {
     Zap: '⚡',
     command: '⌘',
     Command: '⌘',
+    calendar: '📅',
   };
 
   const iconChar = iconMap[name] || '?';

@@ -223,3 +223,4 @@ PageContainer.Content = PageContent;
 PageContainer.Section = PageSection;
 
 export default PageContainer;
+export { PageHeader, PageContent, PageSection };

@@ -121,6 +121,20 @@ export async function updatePortfolioAssignmentStatus(
 }
 
 /**
+ * Update contact interaction count
+ */
+export async function updateContactInteraction(
+  id: string,
+  stageId: string,
+  action: 'increment' | 'decrement'
+): Promise<ApiResponse<{ interactionCount: number; lastInteractionAt: string }>> {
+  return apiClient.post<{ interactionCount: number; lastInteractionAt: string }>(
+    `/v1/contacts/${id}/interaction`,
+    { stageId, action }
+  );
+}
+
+/**
  * Enviar contactos a webhook (proxy a través del backend)
  */
 export interface WebhookMetadata {

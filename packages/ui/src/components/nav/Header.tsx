@@ -23,6 +23,7 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   logo?: React.ReactNode;
   navItems?: NavItem[];
   user?: User;
+  notificationComponent?: React.ReactNode;
   onLogout?: () => void;
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
@@ -43,6 +44,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
       logo,
       navItems = [],
       user,
+      notificationComponent,
       onLogout,
       onToggleSidebar,
       sidebarOpen = false,
@@ -144,101 +146,107 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
           )}
 
           {/* Right section: User menu */}
-          {user && (
-            <div className="flex items-center shrink-0">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      'flex items-center justify-center p-1',
-                      'transition-transform duration-200 hover:scale-105 active:scale-95',
-                      // Minimum touch target for accessibility
-                      'min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px]'
-                    )}
-                    aria-label={`Menú de usuario: ${user.name}`}
-                  >
-                    {user.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt=""
-                        className="h-8 w-8 sm:h-9 sm:w-9 rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200 object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary text-xs sm:text-sm font-medium text-text-inverse ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </Button>
-                </DropdownMenu.Trigger>
+          <div className="flex items-center shrink-0 gap-2 sm:gap-3">
+            {notificationComponent && (
+              <div className="flex items-center">{notificationComponent}</div>
+            )}
 
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    className={cn(
-                      // Responsive width - smaller on mobile
-                      'w-[calc(100vw-1rem)] xs:w-[280px] sm:min-w-[260px]',
-                      'max-w-[320px]',
-                      'bg-background rounded-xl border border-border shadow-xl',
-                      'p-1.5 z-50',
-                      // Animations
-                      'data-[state=open]:animate-in data-[state=closed]:animate-out',
-                      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-                      'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-                      'data-[side=bottom]:slide-in-from-top-2',
-                      // Safe area for mobile
-                      'mr-2 sm:mr-0'
-                    )}
-                    sideOffset={8}
-                    align="end"
-                    collisionPadding={8}
-                  >
-                    {/* User info header */}
-                    <div className="px-3 py-2.5 border-b border-border mb-1">
-                      <p className="text-sm font-semibold text-text truncate">{user.name}</p>
-                      <p className="text-xs text-text-muted truncate mt-0.5">{user.email}</p>
-                      {user.role && (
-                        <p className="text-xs text-primary font-medium mt-1">{user.role}</p>
+            {user && (
+              <div className="flex items-center shrink-0">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        'flex items-center justify-center p-1',
+                        'transition-transform duration-200 hover:scale-105 active:scale-95',
+                        // Minimum touch target for accessibility
+                        'min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px]'
                       )}
-                    </div>
+                      aria-label={`Menú de usuario: ${user.name}`}
+                    >
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt=""
+                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary text-xs sm:text-sm font-medium text-text-inverse ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </Button>
+                  </DropdownMenu.Trigger>
 
-                    <DropdownMenu.Item asChild>
-                      <a
-                        href="/profile"
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className={cn(
+                        // Responsive width - smaller on mobile
+                        'w-[calc(100vw-1rem)] xs:w-[280px] sm:min-w-[260px]',
+                        'max-w-[320px]',
+                        'bg-background rounded-xl border border-border shadow-xl',
+                        'p-1.5 z-50',
+                        // Animations
+                        'data-[state=open]:animate-in data-[state=closed]:animate-out',
+                        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+                        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+                        'data-[side=bottom]:slide-in-from-top-2',
+                        // Safe area for mobile
+                        'mr-2 sm:mr-0'
+                      )}
+                      sideOffset={8}
+                      align="end"
+                      collisionPadding={8}
+                    >
+                      {/* User info header */}
+                      <div className="px-3 py-2.5 border-b border-border mb-1">
+                        <p className="text-sm font-semibold text-text truncate">{user.name}</p>
+                        <p className="text-xs text-text-muted truncate mt-0.5">{user.email}</p>
+                        {user.role && (
+                          <p className="text-xs text-primary font-medium mt-1">{user.role}</p>
+                        )}
+                      </div>
+
+                      <DropdownMenu.Item asChild>
+                        <a
+                          href="/profile"
+                          className={cn(
+                            'flex items-center gap-2.5 px-3 py-2.5 text-sm cursor-pointer no-underline',
+                            'text-text hover:bg-primary-subtle hover:text-primary',
+                            'focus:bg-primary-subtle focus:text-primary focus:outline-none',
+                            'rounded-lg transition-all duration-150',
+                            // Touch target
+                            'min-h-[44px] sm:min-h-[40px]'
+                          )}
+                        >
+                          <Icon name="User" size={18} />
+                          Mi Perfil
+                        </a>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
+
+                      <DropdownMenu.Item
                         className={cn(
-                          'flex items-center gap-2.5 px-3 py-2.5 text-sm cursor-pointer no-underline',
-                          'text-text hover:bg-primary-subtle hover:text-primary',
-                          'focus:bg-primary-subtle focus:text-primary focus:outline-none',
+                          'flex items-center gap-2.5 px-3 py-2.5 text-sm cursor-pointer',
+                          'text-error hover:bg-error-subtle',
+                          'focus:bg-error-subtle focus:outline-none',
                           'rounded-lg transition-all duration-150',
                           // Touch target
                           'min-h-[44px] sm:min-h-[40px]'
                         )}
+                        onClick={onLogout}
                       >
-                        <Icon name="User" size={18} />
-                        Mi Perfil
-                      </a>
-                    </DropdownMenu.Item>
-
-                    <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
-
-                    <DropdownMenu.Item
-                      className={cn(
-                        'flex items-center gap-2.5 px-3 py-2.5 text-sm cursor-pointer',
-                        'text-error hover:bg-error-subtle',
-                        'focus:bg-error-subtle focus:outline-none',
-                        'rounded-lg transition-all duration-150',
-                        // Touch target
-                        'min-h-[44px] sm:min-h-[40px]'
-                      )}
-                      onClick={onLogout}
-                    >
-                      <Icon name="LogOut" size={18} />
-                      Cerrar Sesión
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
-            </div>
-          )}
+                        <Icon name="LogOut" size={18} />
+                        Cerrar Sesión
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+            )}
+          </div>
         </div>
       </header>
     );

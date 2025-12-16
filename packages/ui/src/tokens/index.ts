@@ -1,3 +1,8 @@
+// MaatWork Design System v2.3.0
+// Single Source of Truth for Design Tokens
+
+import core from './core.json';
+
 export type Theme = 'light' | 'dark' | 'high-contrast';
 
 export interface ThemeConfig {
@@ -31,88 +36,88 @@ export interface ThemeConfig {
   };
 }
 
-// Maat Brand Colors v2.0
-// Primary: #5900FF (Purple - CTAs, buttons, highlights)
-// Secondary: #000000 (Black - Professional base, text)
-// Accent: #00E676 (Green - Growth, success)
+// MaatWork Brand Colors v2.3.0
+// Primary: Soft Purple (Modern, Digital, Friendly)
+// Secondary: Warm Stone/Black (Professional, Grounded)
+// Accent: Soft Green (Growth, Success)
 
 export const themes: Record<Theme, ThemeConfig> = {
   light: {
     name: 'light',
     colors: {
-      // Brand colors - Purple is PRIMARY for actions
-      primary: '#5900ff',
-      primaryHover: '#4700cc',
-      primaryActive: '#3600a3',
-      secondary: '#000000',
-      secondaryHover: '#1e1e1e',
-      accent: '#00e676',
-      accentHover: '#00c858',
+      // Brand colors
+      primary: core.colors.primary[500],
+      primaryHover: core.colors.primary[600],
+      primaryActive: core.colors.primary[700],
+      secondary: core.colors.secondary[900],
+      secondaryHover: core.colors.secondary[800],
+      accent: core.colors.accent[500],
+      accentHover: core.colors.accent[600],
       // Semantic colors
-      success: '#4caf50',
-      warning: '#ffc107',
-      error: '#f44336',
-      info: '#2196f3',
+      success: core.colors.success[500],
+      warning: core.colors.warning[500],
+      error: core.colors.error[500],
+      info: core.colors.info[500],
       // Surface colors
-      background: '#ffffff',
-      surface: '#fafafa',
-      surfaceHover: '#f5f5f5',
+      background: core.colors.surface.cream,
+      surface: core.colors.surface.light,
+      surfaceHover: core.colors.surface.white,
       // Text colors
-      text: '#000000',
-      textSecondary: '#424242',
-      textMuted: '#757575',
-      textInverse: '#ffffff',
+      text: core.colors.secondary[900],
+      textSecondary: core.colors.secondary[600],
+      textMuted: core.colors.secondary[500],
+      textInverse: core.colors.surface.white,
       // Border colors
-      border: '#e0e0e0',
-      borderHover: '#bdbdbd',
+      border: core.colors.secondary[200],
+      borderHover: core.colors.secondary[300],
     },
   },
   dark: {
     name: 'dark',
     colors: {
-      // Brand colors - Purple lighter for dark mode
-      primary: '#771eff',
-      primaryHover: '#953cff',
-      primaryActive: '#b77fff',
-      secondary: '#ffffff',
-      secondaryHover: '#e0e0e0',
-      accent: '#00e676',
-      accentHover: '#3cffb2',
+      // Brand colors - Lighter purple for dark mode
+      primary: core.colors.primary[400],
+      primaryHover: core.colors.primary[300],
+      primaryActive: core.colors.primary[200],
+      secondary: core.colors.surface.white,
+      secondaryHover: core.colors.secondary[100],
+      accent: core.colors.accent[400],
+      accentHover: core.colors.accent[300],
       // Semantic colors
-      success: '#66bb6a',
-      warning: '#ffca28',
-      error: '#ef5350',
-      info: '#42a5f5',
+      success: core.colors.success[400],
+      warning: core.colors.warning[400],
+      error: core.colors.error[400],
+      info: core.colors.info[400],
       // Surface colors
-      background: '#0a0a0a',
-      surface: '#141414',
-      surfaceHover: '#1e1e1e',
+      background: core.colors.surface.darker,
+      surface: core.colors.surface.dark,
+      surfaceHover: core.colors.secondary[800],
       // Text colors
-      text: '#ffffff',
-      textSecondary: '#b0b0b0',
-      textMuted: '#757575',
-      textInverse: '#000000',
+      text: core.colors.surface.white,
+      textSecondary: core.colors.secondary[400],
+      textMuted: core.colors.secondary[600],
+      textInverse: core.colors.secondary[900],
       // Border colors
-      border: '#2d2d2d',
-      borderHover: '#424242',
+      border: core.colors.secondary[800],
+      borderHover: core.colors.secondary[700],
     },
   },
   'high-contrast': {
     name: 'high-contrast',
     colors: {
-      // Brand colors - Purple for actions
-      primary: '#5900ff',
-      primaryHover: '#4700cc',
-      primaryActive: '#3600a3',
+      // Brand colors
+      primary: core.colors.primary[700],
+      primaryHover: core.colors.primary[800],
+      primaryActive: core.colors.primary[900],
       secondary: '#000000',
-      secondaryHover: '#000000',
-      accent: '#00aa3a',
-      accentHover: '#008c1c',
+      secondaryHover: '#333333',
+      accent: core.colors.accent[700],
+      accentHover: core.colors.accent[800],
       // Semantic colors
-      success: '#107314',
-      warning: '#c38500',
-      error: '#b80700',
-      info: '#0d47a1',
+      success: core.colors.success[700],
+      warning: core.colors.warning[700],
+      error: core.colors.error[700],
+      info: core.colors.info[700],
       // Surface colors
       background: '#ffffff',
       surface: '#ffffff',
@@ -120,7 +125,7 @@ export const themes: Record<Theme, ThemeConfig> = {
       // Text colors
       text: '#000000',
       textSecondary: '#000000',
-      textMuted: '#424242',
+      textMuted: '#333333',
       textInverse: '#ffffff',
       // Border colors
       border: '#000000',
@@ -129,55 +134,31 @@ export const themes: Record<Theme, ThemeConfig> = {
   },
 };
 
-// Export color tokens for direct access
+// Export raw tokens for advanced usage
+export const tokens = core;
+
+// Export specialized color scales
 export const brandColors = {
   primary: {
-    base: '#5900ff',
-    hover: '#4700cc',
-    active: '#3600a3',
-    light: '#771eff',
-    lighter: '#953cff',
-    subtle: '#f3e8ff',
+    base: core.colors.primary[500],
+    hover: core.colors.primary[600],
+    active: core.colors.primary[700],
+    light: core.colors.primary[400],
+    lighter: core.colors.primary[300],
+    subtle: core.colors.primary[50],
   },
   secondary: {
-    base: '#000000',
-    hover: '#1e1e1e',
-    light: '#3c3c3c',
-    lighter: '#6b6b6b',
-    subtle: '#f5f5f5',
+    base: core.colors.secondary[900],
+    hover: core.colors.secondary[800],
+    light: core.colors.secondary[700],
+    lighter: core.colors.secondary[500],
+    subtle: core.colors.secondary[50],
   },
   accent: {
-    base: '#00e676',
-    hover: '#00c858',
-    light: '#1eff94',
-    lighter: '#3cffb2',
-    subtle: '#e8fff3',
-  },
-};
-
-export const semanticColors = {
-  success: {
-    base: '#4caf50',
-    light: '#88eb8c',
-    lighter: '#6acd6e',
-    dark: '#2e9132',
-    darker: '#107314',
-    subtle: '#e8f5e9',
-  },
-  warning: {
-    base: '#ffc107',
-    light: '#fffd43',
-    lighter: '#ffdf25',
-    dark: '#e1a300',
-    darker: '#c38500',
-    subtle: '#fff8e1',
-  },
-  error: {
-    base: '#f44336',
-    light: '#ff7f72',
-    lighter: '#ff6154',
-    dark: '#d62518',
-    darker: '#b80700',
-    subtle: '#ffebee',
+    base: core.colors.accent[500],
+    hover: core.colors.accent[600],
+    light: core.colors.accent[400],
+    lighter: core.colors.accent[300],
+    subtle: core.colors.accent[50],
   },
 };

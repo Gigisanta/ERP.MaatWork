@@ -232,6 +232,62 @@
       "when": 1763146000000,
       "tag": "0032_enable_pg_stat_statements",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1765816604109,
+      "tag": "0033_massive_mysterio",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1765820763853,
+      "tag": "0034_many_xavin",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1765843629788,
+      "tag": "0035_flowery_talkback",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1765897451502,
+      "tag": "0036_concerned_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1765899883052,
+      "tag": "0037_broken_tag",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1765907598814,
+      "tag": "0038_gigantic_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1765908149754,
+      "tag": "0039_early_warbound",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1765912092056,
+      "tag": "0040_typical_giant_man",
+      "breakpoints": true
     }
   ]
 }

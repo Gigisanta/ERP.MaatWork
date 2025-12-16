@@ -23,6 +23,9 @@ export const REDIS_TTL = {
   OHLCV_DAILY: 600, // 10 minutes
   YIELD_CURVE: 600, // 10 minutes
   MACRO_SERIES: 1800, // 30 minutes
+  DAILY: 600, // 10 minutes (Added alias for OHLCV_DAILY)
+  HOURLY: 3600, // 1 hour (Added alias)
+  LONG_CACHE: 86400, // 24 hours (Added alias)
 
   // Low-frequency data (long TTL)
   FILINGS: 3600, // 1 hour

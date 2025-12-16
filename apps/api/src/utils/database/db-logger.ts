@@ -146,7 +146,7 @@ export async function loggedQuery<T>(
       nPlusOneDetected || !isFastQuery || Math.random() < FAST_QUERY_SAMPLING_RATE;
 
     // Record Prometheus metrics (async, non-blocking)
-    import('./metrics')
+    import('../metrics')
       .then(({ dbQueryDuration, dbQueriesTotal }) => {
         dbQueryDuration.observe({ operation, table }, durationSeconds);
         dbQueriesTotal.inc({ operation, table });
@@ -226,7 +226,7 @@ export async function loggedQuery<T>(
     const durationSeconds = duration / 1000;
 
     // Record Prometheus metrics for failed queries (async, non-blocking)
-    import('./metrics')
+    import('../metrics')
       .then(({ dbQueryDuration, dbQueriesTotal }) => {
         dbQueryDuration.observe({ operation, table }, durationSeconds);
         dbQueriesTotal.inc({ operation, table });

@@ -99,12 +99,13 @@ async function getContactData(id: string) {
 }
 
 interface ContactDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default async function ContactDetailPage({ params }: ContactDetailPageProps) {
+export default async function ContactDetailPage(props: ContactDetailPageProps) {
+  const params = await props.params;
   const { id } = params;
 
   // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente

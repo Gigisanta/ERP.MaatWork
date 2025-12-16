@@ -2,14 +2,12 @@
 
 import { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { Card, CardContent, Button, Text, Stack, Badge } from '@cactus/ui';
+// AI_DECISION: Import AssetSearcher statically to avoid webpack module resolution issues
+// Justificación: Dynamic import causes "Cannot read properties of undefined (reading 'call')" in webpack
+// Impacto: Fixes development crash, consistent with BenchmarksSection.tsx
+import AssetSearcher from '../../components/AssetSearcher';
 import type { PortfolioLine, InstrumentSearchResult } from '@/types';
-
-const AssetSearcher = dynamic(() => import('../../components/AssetSearcher'), {
-  loading: () => <div style={{ padding: '1rem', textAlign: 'center' }}>Loading...</div>,
-  ssr: false,
-});
 
 interface PortfolioCompositionProps {
   lines: PortfolioLine[];

@@ -13,7 +13,7 @@
     "dev:clean": "pnpm dev:kill && pnpm -F @cactus/web clean && pnpm dev",
     "dev:kill": "node scripts/dev-kill.js",
     "lint": "turbo run lint",
-    "lint:analytics": "cd apps/analytics-service && python -m flake8 . --max-line-length=88 --extend-ignore=E203,W503",
+    "lint:analytics": "cd apps/analytics-service && python -m flake8 . --max-line-length=88 --extend-ignore=E203,W503 && python -m mypy .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "typecheck": "turbo run typecheck",
@@ -58,7 +58,11 @@
     "audit:unused-exports": "ts-prune --project tsconfig.prune.json --ignore \"test|spec|d.ts\"",
     "audit:types": "grep -r ':\\s*any\\b' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
     "audit:barrels": "grep -r 'export \\* from' apps/ packages/ --include='*.ts' --include='*.tsx' | wc -l",
-    "clean:temp": "node -e \"const fs=require('fs');['.tmp_aum_cookies.txt'].forEach(f=>{try{fs.unlinkSync(f);console.log('Deleted:',f)}catch(e){}})\""
+    "clean:temp": "node -e \"const fs=require('fs');['.tmp_aum_cookies.txt'].forEach(f=>{try{fs.unlinkSync(f);console.log('Deleted:',f)}catch(e){}})\"",
+    "deps:outdated": "pnpm outdated",
+    "deps:update": "node scripts/update-deps.js",
+    "deps:update:major": "node scripts/update-deps.js --major",
+    "deps:update:check": "node scripts/update-deps.js --dry-run"
   },
   "dependencies": {},
   "devDependencies": {
@@ -79,6 +83,9 @@
     "chalk": "^5.6.2",
     "csv-parse": "^5.5.6",
     "depcheck": "^1.4.7",
+    "eslint": "^8.53.0",
+    "@eslint/js": "^9.14.0",
+    "typescript-eslint": "^8.13.0",
     "dotenv": "^16.6.1",
     "drizzle-orm": "^0.38.4",
     "husky": "^9.0.11",

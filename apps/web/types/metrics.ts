@@ -101,10 +101,20 @@ export interface SaveMonthlyGoalRequest {
 }
 
 /**
+ * Promedio de interacciones por etapa
+ */
+export interface AverageInteractionByStage {
+  stageId: string;
+  stageName: string;
+  averageInteractions: number;
+}
+
+/**
  * Respuesta del endpoint de métricas
  */
 export interface ContactsMetricsResponse {
   currentMonth: MonthlyMetrics;
   history: MonthlyMetrics[];
   goals?: MonthlyGoal | null;
+  averageInteractions?: AverageInteractionByStage[];
 }

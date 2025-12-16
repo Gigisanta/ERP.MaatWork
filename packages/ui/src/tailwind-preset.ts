@@ -1,6 +1,6 @@
-// Maat UI Tailwind Preset - Brand Design System v2.0
-// Typography: Poppins (Display) + Open Sans (Body)
-// Colors: Primary #5900FF (Purple), Secondary #000000 (Black), Accent #00E676
+// MaatWork UI Tailwind Preset - Brand Design System v2.3.0
+// Typography: Outfit (Display) + Plus Jakarta Sans (Body)
+// Colors: Primary (Soft Purple), Secondary (Warm Stone), Accent (Soft Green)
 //
 // AI_DECISION: Custom breakpoints for better responsive design
 // Justificación: xs at 475px provides better control for small devices
@@ -136,11 +136,11 @@ const uiPreset = {
         slow: 'var(--transition-slow)',
       },
       fontFamily: {
-        // Display font - Poppins for headings and titles
-        display: ['var(--font-display)', 'Poppins', 'system-ui', 'sans-serif'],
-        // Body font - Open Sans for body text and UI elements
-        sans: ['var(--font-body)', 'Open Sans', 'system-ui', 'sans-serif'],
-        body: ['var(--font-body)', 'Open Sans', 'system-ui', 'sans-serif'],
+        // Display font - Outfit for headings and titles
+        display: ['var(--font-display)', 'Outfit', 'system-ui', 'sans-serif'],
+        // Body font - Plus Jakarta Sans for body text and UI elements
+        sans: ['var(--font-body)', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        body: ['var(--font-body)', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
         // Monospace font for code
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },

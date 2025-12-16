@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn.js';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Visual style variant */
-  variant?: 'outlined' | 'elevated' | 'interactive' | 'highlight' | 'animated';
+  variant?: 'outlined' | 'elevated' | 'interactive' | 'highlight' | 'animated' | 'glass';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   /** Enable hover animations (lift + glow effect) */
   animated?: boolean;
@@ -33,11 +33,13 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       outlined: 'border border-border bg-background',
       elevated: 'shadow-md bg-background border-0',
       interactive:
-        'border border-border bg-background hover:shadow-lg hover:border-secondary/30 transition-all-smooth cursor-pointer',
+        'border border-border bg-background hover:shadow-lg hover:border-secondary/30 transition-all-smooth cursor-pointer hover-lift',
       highlight: 'border-l-4 border-l-secondary border border-border bg-background',
       // New animated variant with enhanced hover effects
       animated:
-        'border border-border bg-background hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 transition-all-smooth cursor-pointer',
+        'border border-border bg-background hover:shadow-lg hover:border-primary/30 hover-lift transition-all-smooth cursor-pointer',
+      glass:
+        'border border-white/20 bg-white/70 backdrop-blur-md shadow-sm dark:bg-black/40 dark:border-white/10',
     };
 
     const paddingClasses = {
@@ -49,7 +51,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
     // Animated prop adds hover-lift effect to any variant
     const animatedClasses = animated
-      ? 'hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300'
+      ? 'hover:shadow-lg hover-lift hover:border-primary/30 transition-all duration-300'
       : '';
 
     return (

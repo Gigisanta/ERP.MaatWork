@@ -18,4 +18,7 @@ router.use(metricsRouter);
 router.use(performanceRouter);
 router.use(comparisonRouter);
 
+// Debug route to verify analytics mounting
+router.get('/ping', (req, res) => res.json({ status: 'ok', service: 'analytics' }));
+
 export default router;

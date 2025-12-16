@@ -53,12 +53,19 @@ export default function AumRowsPage() {
   const { state, actions } = useAumRowsState();
 
   // Sync URL with state (URL → State) for fileId
-  const { updateUrl } = useUrlSync({
-    onFileIdChange: (fileId) => {
+  // AI_DECISION: Memoize handler to prevent infinite loop in useUrlSync
+  const handleFileIdChange = useCallback(
+    (fileId: string | null) => {
+      // Only update if value actually changed to prevent re-renders
       if (fileId !== state.uploadedFileId) {
         actions.setUploadedFileId(fileId);
       }
     },
+    [state.uploadedFileId, actions]
+  );
+
+  const { updateUrl } = useUrlSync({
+    onFileIdChange: handleFileIdChange,
   });
 
   // Debounced search term

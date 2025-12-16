@@ -24,25 +24,26 @@ describe('Toast Component', () => {
   describe('Variants', () => {
     it('should render info variant (default)', () => {
       const { container } = render(<Toast title="Info" variant="info" open={true} />);
-      const toast = container.querySelector('.border-info');
+      // ToastPrimitive.Root uses its own class naming, so we check for our specific variant class
+      const toast = container.querySelector('.border-info\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render success variant', () => {
       const { container } = render(<Toast title="Success" variant="success" open={true} />);
-      const toast = container.querySelector('.border-success');
+      const toast = container.querySelector('.border-success\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render warning variant', () => {
       const { container } = render(<Toast title="Warning" variant="warning" open={true} />);
-      const toast = container.querySelector('.border-warning');
+      const toast = container.querySelector('.border-warning\\/20');
       expect(toast).toBeInTheDocument();
     });
 
     it('should render error variant', () => {
       const { container } = render(<Toast title="Error" variant="error" open={true} />);
-      const toast = container.querySelector('.border-error');
+      const toast = container.querySelector('.border-error\\/20');
       expect(toast).toBeInTheDocument();
     });
   });

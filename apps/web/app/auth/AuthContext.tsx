@@ -20,6 +20,7 @@ export interface AuthUser {
   role: UserRole;
   fullName?: string;
   isActive?: boolean;
+  isGoogleConnected?: boolean;
 }
 
 interface RegisterData {
@@ -38,6 +39,7 @@ interface AuthContextValue {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
+  mutateUser: () => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
@@ -47,8 +49,14 @@ const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000;
 // Token lifetime estimate (24 hours)
 const TOKEN_LIFETIME = 24 * 60 * 60 * 1000;
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AuthUser | null>(null);
+export function AuthProvider({
+  children,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}) {
+  const [user, setUser] = React.useState<AuthUser | null>(initialUser ?? null);
   const [initialized, setInitialized] = React.useState(false);
   const hasCheckedSession = React.useRef(false);
   const lastVerifiedRef = React.useRef<number | null>(null);
@@ -59,32 +67,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const startTime = Date.now();
     logger.debug('Verificando sesión inicial');
 
-    const result = await verifySession(3, [500, 1000, 2000]);
+    try {
+      const result = await verifySession(3, [500, 1000, 2000]);
 
-    if (result.success && result.user) {
-      logger.info('Sesión verificada exitosamente', {
-        userId: result.user.id,
+      if (result.success && result.user) {
+        logger.info('Sesión verificada exitosamente', {
+          userId: result.user.id,
+          duration: Date.now() - startTime,
+        });
+        setUser(result.user);
+        logger.updateUser(result.user.id, result.user.role);
+        lastVerifiedRef.current = Date.now();
+      } else {
+        // Differentiate between error types for better logging
+        if (result.error) {
+          if (result.error.type === 'auth') {
+            logger.debug('No hay sesión activa', {
+              status: result.error.status,
+              message: result.error.message,
+            });
+          } else if (result.error.type === 'network') {
+            logger.warn('Error de red al verificar sesión', {
+              type: result.error.type,
+              message: result.error.message,
+              status: result.error.status,
+            });
+          } else {
+            logger.warn('Error al verificar sesión', {
+              type: result.error.type,
+              message: result.error.message,
+              status: result.error.status,
+            });
+          }
+        }
+        setUser(null);
+        logger.updateUser(null, null);
+        lastVerifiedRef.current = null;
+      }
+    } catch (error) {
+      // Catch any unexpected errors during session verification
+      logger.error('Error inesperado al verificar sesión', {
+        error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
       });
-      setUser(result.user);
-      logger.updateUser(result.user.id, result.user.role);
-      lastVerifiedRef.current = Date.now();
-    } else {
-      // Differentiate between error types for better logging
-      if (result.error) {
-        if (result.error.type === 'auth') {
-          logger.debug('No hay sesión activa', {
-            status: result.error.status,
-            message: result.error.message,
-          });
-        } else {
-          logger.warn('Error al verificar sesión', {
-            type: result.error.type,
-            message: result.error.message,
-            status: result.error.status,
-          });
-        }
-      }
       setUser(null);
       logger.updateUser(null, null);
       lastVerifiedRef.current = null;
@@ -99,6 +124,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     hasCheckedSession.current = true;
 
+    // AI_DECISION: Si hay initialUser, establecerlo inmediatamente y marcar como inicializado
+    // Justificación: El layout ya verificó la sesión en el servidor, no necesitamos verificar de nuevo
+    // Impacto: Mejor UX evitando verificación duplicada y estado de carga innecesario
+    if (initialUser) {
+      setUser(initialUser);
+      logger.updateUser(initialUser.id, initialUser.role);
+      lastVerifiedRef.current = Date.now();
+      setInitialized(true);
+      return;
+    }
+
+    // AI_DECISION: Siempre establecer initialized=true después de verificar sesión
+    // Justificación: Incluso si hay errores, necesitamos que el estado initialized se establezca
+    //                para que NavigationNew pueda tomar decisiones (redirigir al login)
+    // Impacto: Mejor UX evitando estados de carga infinitos cuando hay problemas de red
     checkSession()
       .then(() => {
         setInitialized(true);
@@ -106,10 +146,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((err) => {
         logger.error('Error crítico al verificar sesión inicial', {
           error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
         });
+        // Asegurar que initialized se establezca incluso con errores
+        // Esto permite que NavigationNew redirija al login cuando no hay usuario
         setInitialized(true);
+        setUser(null);
+        logger.updateUser(null, null);
       });
-  }, [checkSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar, initialUser se maneja en el estado inicial
 
   // Automatic token refresh
   React.useEffect(() => {
@@ -360,9 +406,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logger.info('Sesión cerrada exitosamente');
   }, []);
 
+  const mutateUser = React.useCallback(async () => {
+    logger.debug('[AuthContext] mutateUser called - Refrescando datos de usuario');
+    const result = await verifySession(1);
+    logger.debug('[AuthContext] mutateUser result', {
+      success: result.success,
+      hasUser: !!result.user,
+      isGoogleConnected: result.user?.isGoogleConnected,
+      userId: result.user?.id,
+      userEmail: result.user?.email,
+    });
+    if (result.success && result.user) {
+      // AI_DECISION: No incluir user en dependencias para evitar bucles infinitos
+      // Justificación: mutateUser es llamado desde componentes que re-renderizan cuando user cambia
+      //                Si mutateUser depende de user, crea un bucle: user cambia -> mutateUser cambia -> useEffect dispara -> user cambia
+      // Impacto: mutateUser es estable, componentes pueden usarlo sin causar bucles
+      setUser(result.user);
+    } else {
+      logger.warn('[AuthContext] mutateUser failed to get user', {
+        success: result.success,
+        hasUser: !!result.user,
+      });
+    }
+  }, []); // Sin dependencias - función estable
+
   const value = React.useMemo<AuthContextValue>(
-    () => ({ user, initialized, login, register, logout, refreshSession }),
-    [user, initialized, login, register, logout, refreshSession]
+    () => ({ user, initialized, login, register, logout, refreshSession, mutateUser }),
+    [user, initialized, login, register, logout, refreshSession, mutateUser]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

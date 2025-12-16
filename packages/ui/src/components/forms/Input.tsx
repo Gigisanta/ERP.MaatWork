@@ -65,16 +65,19 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full group">
       {label && (
-        <label htmlFor={props.id} className="block text-sm font-medium text-text mb-1.5 font-body">
+        <label
+          htmlFor={props.id}
+          className="block text-sm font-medium text-text mb-1.5 font-body transition-colors group-focus-within:text-primary"
+        >
           {label}
         </label>
       )}
       <div className="relative">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <Icon name={leftIcon} size={16} className="text-text-muted" />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted group-focus-within:text-primary transition-colors">
+            <Icon name={leftIcon} size={16} />
           </div>
         )}
         <input
@@ -85,7 +88,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             'w-full border rounded-md transition-all-smooth font-body',
             'bg-background text-text placeholder:text-text-muted',
             // Focus styles - using Primary Purple with smooth glow transition
-            'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary focus:shadow-[0_0_0_3px_rgba(89,0,255,0.1)]',
+            'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary focus:shadow-[0_0_0_3px_rgba(139,92,246,0.1)]',
             // Size
             sizeClasses[size],
             iconPadding[size],
@@ -113,8 +116,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
               <Icon name={rightIcon} size={16} />
             </button>
           ) : (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <Icon name={rightIcon} size={16} className="text-text-muted" />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted group-focus-within:text-primary transition-colors">
+              <Icon name={rightIcon} size={16} />
             </div>
           ))}
         {isPassword && showPasswordToggle && (
@@ -128,7 +131,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           </button>
         )}
       </div>
-      {errorValue && <p className="mt-1.5 text-sm text-error font-body">{errorValue}</p>}
+      {errorValue && (
+        <p className="mt-1.5 text-sm text-error font-body animate-fade-in-down">{errorValue}</p>
+      )}
     </div>
   );
 });

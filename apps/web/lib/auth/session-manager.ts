@@ -35,7 +35,7 @@ export async function verifySession(
   retryDelays: number[] = [500, 1000, 2000]
 ): Promise<SessionCheckResult> {
   const startTime = Date.now();
-  logger.debug('Verificando sesi?n', { maxRetries });
+  logger.debug('Verificando sesión', { maxRetries, apiUrl: config.apiUrl });
 
   let lastError: Error | null = null;
   let lastStatus: number | undefined;
@@ -53,8 +53,15 @@ export async function verifySession(
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
-      const response = await fetchWithLogging(`${config.apiUrl}/v1/auth/me`, {
+      const endpoint = `${config.apiUrl}/v1/auth/me`;
+      logger.debug('Llamando endpoint de verificación de sesión', {
+        endpoint,
+        attempt: attempt + 1,
+      });
+
+      const response = await fetchWithLogging(endpoint, {
         credentials: 'include',
+        cache: 'no-store', // AI_DECISION: Prevent caching of session check
         timeout: 10000, // 10 second timeout for session check
       });
 
@@ -77,17 +84,21 @@ export async function verifySession(
           };
         }
 
-        if (data?.user) {
+        // AI_DECISION: Backend uses createRouteHandler which wraps response in { success, data }
+        // Justificación: The actual user data is in data.data, not data.user
+        // Impacto: Correct parsing of user data including isGoogleConnected flag
+        if (data?.data) {
           const duration = Date.now() - startTime;
           logger.info('Sesi?n verificada exitosamente', {
-            userId: data.user.id,
+            userId: data.data.id,
             attempt: attempt + 1,
             duration,
+            isGoogleConnected: data.data.isGoogleConnected,
           });
 
           return {
             success: true,
-            user: data.user as AuthUser,
+            user: data.data as AuthUser,
           };
         }
 
@@ -175,10 +186,12 @@ export async function verifySession(
       }
 
       // Last attempt failed
-      logger.error('Error al verificar sesi?n despu?s de todos los intentos', {
+      logger.error('Error al verificar sesión después de todos los intentos', {
         attempts: attempt + 1,
         duration,
         error: error instanceof Error ? error.message : String(error),
+        apiUrl: config.apiUrl,
+        endpoint: `${config.apiUrl}/v1/auth/me`,
       });
 
       return {
@@ -194,11 +207,13 @@ export async function verifySession(
 
   // All retries exhausted
   const duration = Date.now() - startTime;
-  logger.error('Fallo al verificar sesi?n despu?s de todos los reintentos', {
+  logger.error('Fallo al verificar sesión después de todos los reintentos', {
     attempts: maxRetries + 1,
     duration,
     lastError: lastError?.message,
     lastStatus,
+    apiUrl: config.apiUrl,
+    endpoint: `${config.apiUrl}/v1/auth/me`,
   });
 
   return {

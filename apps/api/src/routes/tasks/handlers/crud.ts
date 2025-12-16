@@ -10,6 +10,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { db, tasks, taskRecurrences } from '@cactus/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { canAccessContact } from '../../../auth/authorization';
+import { syncTaskToGoogle } from '../../../services/task-sync';
 
 /**
  * POST /tasks - Crear nueva tarea
@@ -70,6 +71,12 @@ export async function handleCreateTask(req: Request, res: Response, next: NextFu
       .returning();
 
     req.log.info({ taskId: newTask.id }, 'task created');
+
+    // Sync to Google Calendar
+    syncTaskToGoogle(newTask.id, 'create').catch((err) =>
+      req.log.error({ err, taskId: newTask.id }, 'failed to sync task to google')
+    );
+
     res.status(201).json({ data: newTask });
   } catch (err) {
     req.log.error({ err }, 'failed to create task');
@@ -158,6 +165,12 @@ export async function handleUpdateTask(req: Request, res: Response, next: NextFu
     }
 
     req.log.info({ taskId: id }, 'task updated');
+
+    // Sync to Google Calendar
+    syncTaskToGoogle(id, 'update').catch((err) =>
+      req.log.error({ err, taskId: id }, 'failed to sync task to google')
+    );
+
     res.json({ success: true, data: updated });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to update task');
@@ -216,6 +229,12 @@ export async function handleDeleteTask(req: Request, res: Response, next: NextFu
       .returning();
 
     req.log.info({ taskId: id }, 'task deleted');
+
+    // Sync to Google Calendar
+    syncTaskToGoogle(id, 'delete').catch((err) =>
+      req.log.error({ err, taskId: id }, 'failed to sync task deletion to google')
+    );
+
     res.json({ success: true, data: { id, deleted: true } });
   } catch (err) {
     req.log.error({ err, taskId: req.params.id }, 'failed to delete task');

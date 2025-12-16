@@ -7,8 +7,8 @@
  * Se ejecuta semanalmente (domingos) vía cron job.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
-import { getCacheHealth } from '../utils/cache';
+import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/database/db-logger';
+import { getCacheHealth } from '../utils/performance/cache';
 import { analyzeQueries, generateTextReport } from '../utils/query-analyzer';
 import pino from 'pino';
 import { writeFileSync } from 'fs';
@@ -57,6 +57,10 @@ export class WeeklyPerformanceReportJob {
         ksize: number;
         vsize: number;
         hitRate: number;
+        sizeBytes: number;
+        keyCount: number;
+        largestValueBytes: number;
+        largestKey: string | null;
       }
 
       // Filter out totalMemoryBytes and maxMemoryBytes, and ensure stats have hits/misses

@@ -58,7 +58,7 @@ export interface ErrorResponseOptions {
   /** El error capturado (puede ser Error, string, o cualquier valor) */
   error: unknown;
   /** ID de la request para trazabilidad (de req.requestId) */
-  requestId?: string;
+  requestId?: string | undefined;
   /** Mensaje amigable para el usuario (no expone detalles internos) */
   userMessage?: string;
   /** Contexto adicional para debugging (solo visible en desarrollo) */

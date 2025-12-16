@@ -10,7 +10,7 @@ import {
   changePassword,
   updateUserProfile,
 } from '@/lib/api';
-import { updateTeam, getTeams } from '@/lib/api/teams';
+import { getTeams } from '@/lib/api/teams';
 import { logger, toLogContext } from '@/lib/logger';
 import type { UserApiResponse as User, Team, TeamInvitation } from '@/types';
 import type { AuthUser } from '@/app/auth/AuthContext';
@@ -62,8 +62,6 @@ export function useProfileActions({
   router,
 }: UseProfileActionsProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [calendarUrls, setCalendarUrls] = useState<Record<string, string>>({});
-  const [calendarLoading, setCalendarLoading] = useState<Record<string, boolean>>({});
 
   // Form states
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -244,31 +242,6 @@ export function useProfileActions({
     }
   };
 
-  const handleUpdateCalendarUrl = async (teamId: string) => {
-    try {
-      setCalendarLoading((prev) => ({ ...prev, [teamId]: true }));
-      setError(null);
-
-      const calendarUrl = calendarUrls[teamId]?.trim() || null;
-
-      await updateTeam(teamId, { calendarUrl });
-
-      setTeams((prev) =>
-        prev.map((team) => (team.id === teamId ? { ...team, calendarUrl } : team))
-      );
-
-      showToast('URL del calendario actualizada', undefined, 'success');
-    } catch (err) {
-      logger.error('Error updating calendar URL', toLogContext({ err, teamId }));
-      const errorMessage =
-        err instanceof Error ? err.message : 'Error al actualizar URL del calendario';
-      setError(errorMessage);
-      showToast('Error', errorMessage, 'error');
-    } finally {
-      setCalendarLoading((prev) => ({ ...prev, [teamId]: false }));
-    }
-  };
-
   const handleSavePhone = async () => {
     setPhoneError(null);
 
@@ -311,9 +284,6 @@ export function useProfileActions({
 
   return {
     actionLoading,
-    calendarUrls,
-    setCalendarUrls,
-    calendarLoading,
     passwordForm,
     setPasswordForm,
     teamForm,
@@ -331,7 +301,6 @@ export function useProfileActions({
     handleCreateTeam,
     handleAddMember,
     handleLeaveTeam,
-    handleUpdateCalendarUrl,
     handleSavePhone,
     handleCancelEditPhone,
   };

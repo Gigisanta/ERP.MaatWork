@@ -1,8 +1,15 @@
 import { redirect } from 'next/navigation';
-import { getTeams, getMembershipRequests, getCurrentUser } from '@/lib/api-server';
+import {
+  getTeams,
+  getMembershipRequests,
+  getCurrentUser,
+  getMemberDashboard,
+} from '@/lib/api-server';
 import TeamsClient from './components/TeamsClient';
-import { Heading, Button, Stack, Icon } from '@cactus/ui';
+import MemberTeamDashboard from './components/MemberTeamDashboard';
+import { Heading, Stack } from '@cactus/ui';
 import type { Team, MembershipRequest } from '@/types';
+import type { MemberDashboardResponse } from '@/lib/api/teams';
 
 // AI_DECISION: Convert to Server Component with Client Islands pattern
 // Justificaci?n: Reduces First Load JS ~40KB, better SEO, faster initial load
@@ -32,51 +39,82 @@ export default async function TeamsPage() {
     redirect('/login');
   }
 
-  // AI_DECISION: Permitir acceso a advisor para visualizaci?n (solo lectura)
-  // Justificaci?n: Advisors deben poder ver equipos pero sin permisos de edici?n
-  // Impacto: Mejora UX permitiendo que advisors vean informaci?n de equipos
-  // Check permissions - todos los roles autenticados pueden ver, pero solo manager/admin pueden editar
-  // La l?gica de edici?n se maneja en TeamsClient basado en userRole
-  if (!['advisor', 'manager', 'admin'].includes(user.role)) {
-    // AI_DECISION: Log redirect reason for debugging
-    redirect('/home');
+  // 1. MANAGER / ADMIN VIEW
+  if (['manager', 'admin'].includes(user.role)) {
+    // Fetch data server-side
+    let teams: Team[] = [];
+    let membershipRequests: MembershipRequest[] = [];
+    let teamCalendarUrl: string | null = null;
+
+    try {
+      const [teamsResponse, requestsResponse] = await Promise.all([
+        getTeams(),
+        getMembershipRequests(),
+      ]);
+
+      if (teamsResponse.success && teamsResponse.data) {
+        teams = teamsResponse.data;
+        // Extract team calendar URL from the first team that has one
+        const teamWithCalendar = teams.find((team) => team.calendarUrl);
+        teamCalendarUrl = teamWithCalendar?.calendarUrl || null;
+      }
+      if (requestsResponse.success && requestsResponse.data) {
+        membershipRequests = requestsResponse.data;
+      }
+    } catch (err) {
+      console.error('Error loading teams data', err);
+    }
+
+    return (
+      <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <Stack direction="column" gap="lg">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <Heading level={3}>Equipos</Heading>
+          </div>
+
+          <TeamsClient
+            initialTeams={teams}
+            initialMembershipRequests={membershipRequests}
+            userRole={user.role}
+            userId={user.id}
+            isGoogleConnected={user.isGoogleConnected || false}
+            teamCalendarUrl={teamCalendarUrl}
+          />
+        </Stack>
+      </main>
+    );
   }
 
-  // Fetch data server-side
-  let teams: Team[] = [];
-  let membershipRequests: MembershipRequest[] = [];
-  let error: string | null = null;
-
+  // 2. MEMBER VIEW (Advisor)
+  // Fetch member dashboard data
+  let dashboardData: MemberDashboardResponse | null = null;
   try {
-    const [teamsResponse, requestsResponse] = await Promise.all([
-      getTeams(),
-      getMembershipRequests(),
-    ]);
-
-    if (teamsResponse.success && teamsResponse.data) {
-      teams = teamsResponse.data;
-    }
-    if (requestsResponse.success && requestsResponse.data) {
-      membershipRequests = requestsResponse.data;
+    const dashboardResponse = await getMemberDashboard();
+    if (dashboardResponse.success && dashboardResponse.data) {
+      dashboardData = dashboardResponse.data;
     }
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Error al cargar datos';
+    console.error('Error loading member dashboard', err);
+  }
+
+  // If failed to load or no data, show empty state or error handled by component
+  if (!dashboardData) {
+    // Fallback if API fails completely
+    dashboardData = { hasTeam: false, team: null, metrics: null };
   }
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
       <Stack direction="column" gap="lg">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <Heading level={3}>Equipos</Heading>
-        </div>
+        {/* Only show heading if not in dashboard component which has its own header */}
+        {!dashboardData.hasTeam && (
+          <div className="flex justify-between items-center">
+            <Heading level={3}>Mi Equipo</Heading>
+          </div>
+        )}
 
-        <TeamsClient
-          initialTeams={teams}
-          initialMembershipRequests={membershipRequests}
-          userRole={user.role}
-          userId={user.id}
-        />
+        <MemberTeamDashboard data={dashboardData} />
       </Stack>
     </main>
   );

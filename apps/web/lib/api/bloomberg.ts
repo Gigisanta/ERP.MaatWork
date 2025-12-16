@@ -15,20 +15,20 @@ import type { ApiResponse } from '../api-client';
 
 export interface AssetSnapshot {
   symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  high52w: number;
-  low52w: number;
-  pe?: number;
-  evEbitda?: number;
-  margin?: number;
-  roe?: number;
-  debtEbitda?: number;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  volume: number | null;
+  high52w: number | null;
+  low52w: number | null;
+  pe?: number | null;
+  evEbitda?: number | null;
+  margin?: number | null;
+  roe?: number | null;
+  debtEbitda?: number | null;
   currency: string;
   source: string;
-  asof: string;
+  asof: string | null;
 }
 
 export interface OHLCVPoint {
@@ -94,6 +94,15 @@ export async function getAssetSnapshot(symbol: string): Promise<ApiResponse<Asse
 }
 
 /**
+ * Get batch asset snapshots
+ */
+export async function getAssetSnapshotsBatch(
+  symbols: string[]
+): Promise<ApiResponse<AssetSnapshot[]>> {
+  return apiClient.post<AssetSnapshot[]>('/v1/bloomberg/assets/snapshots-batch', { symbols });
+}
+
+/**
  * Get OHLCV data for an asset
  */
 export async function getOHLCV(
@@ -106,7 +115,24 @@ export async function getOHLCV(
   if (from) params.append('from', from);
   if (to) params.append('to', to);
 
-  return apiClient.get<OHLCVPoint[]>(`/v1/bloomberg/assets/${symbol}/ohlcv?${params}`);
+  // AI_DECISION: Normalize response data for OHLCV
+  // Justificación: The API returns { data: [...], count: N } but the client expects { data: [...] }
+  // We need to extract the array from the data property if it's wrapped
+  const response = await apiClient.get<any>(`/v1/bloomberg/assets/${symbol}/ohlcv?${params}`);
+
+  if (
+    response.success &&
+    response.data &&
+    !Array.isArray(response.data) &&
+    Array.isArray(response.data.data)
+  ) {
+    return {
+      ...response,
+      data: response.data.data as OHLCVPoint[],
+    };
+  }
+
+  return response as ApiResponse<OHLCVPoint[]>;
 }
 
 /**
@@ -123,7 +149,7 @@ export async function getMacroSeries(
 
   const query = params.toString();
   return apiClient.get<{ series: MacroSeries; points: MacroSeriesPoint[] }>(
-    `/v1/macro/${seriesId}${query ? `?${query}` : ''}`
+    `/v1/bloomberg/macro/${seriesId}${query ? `?${query}` : ''}`
   );
 }
 
@@ -137,7 +163,7 @@ export async function getYieldCurve(
   const params = new URLSearchParams({ country });
   if (date) params.append('date', date);
 
-  return apiClient.get<YieldCurve>(`/v1/yields?${params}`);
+  return apiClient.get<YieldCurve>(`/v1/bloomberg/yields?${params}`);
 }
 
 /**
@@ -162,7 +188,7 @@ export async function getYieldSpreads(
     country: string;
     spreads: Record<string, number>;
     yields: Record<string, number>;
-  }>(`/v1/yields/spreads?${params}`);
+  }>(`/v1/bloomberg/yields/spreads?${params}`);
 }
 
 /**
@@ -179,5 +205,7 @@ export async function getMacroSeriesList(
   if (category) params.append('category', category);
 
   const query = params.toString();
-  return apiClient.get<MacroSeriesListItem[]>(`/v1/macro/series${query ? `?${query}` : ''}`);
+  return apiClient.get<MacroSeriesListItem[]>(
+    `/v1/bloomberg/macro/series${query ? `?${query}` : ''}`
+  );
 }

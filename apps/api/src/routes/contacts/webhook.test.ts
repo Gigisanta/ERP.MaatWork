@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../../auth/middlewares';
-import { getHttpClient } from '../../utils/http-client';
+import { getHttpClient } from '../../utils/http/http-client';
 import { createUserRateLimiter } from '../../utils/performance/rate-limiter';
 
 // Mock dependencies

@@ -51,7 +51,7 @@ vi.mock('node:fs', () => ({
 
 import { db } from '@cactus/db';
 import { capacitaciones, eq } from '@cactus/db';
-import { transactionWithLogging } from '../utils/db-transactions';
+import { transactionWithLogging } from '../utils/database/db-transactions';
 
 const mockDb = vi.mocked(db);
 const mockTransactionWithLogging = vi.mocked(transactionWithLogging);

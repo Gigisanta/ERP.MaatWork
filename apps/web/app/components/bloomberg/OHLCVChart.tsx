@@ -134,13 +134,15 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
     return ma;
   };
 
-  const maData = showMA ? calculateMA(maPeriod) : [];
-  const chartData = data.map((point, index) => ({
-    date: new Date(point.date).toLocaleDateString(),
-    close: point.close,
-    volume: point.volume,
-    ma: maData[index] || null,
-  }));
+  const maData = showMA && Array.isArray(data) ? calculateMA(maPeriod) : [];
+  const chartData = Array.isArray(data)
+    ? data.map((point, index) => ({
+        date: new Date(point.date).toLocaleDateString(),
+        close: point.close,
+        volume: point.volume,
+        ma: maData[index] || null,
+      }))
+    : [];
 
   if (loading) {
     return (

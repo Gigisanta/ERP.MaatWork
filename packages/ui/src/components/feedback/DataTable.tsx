@@ -75,6 +75,8 @@ export interface DataTableProps<T> {
   virtualized?: boolean;
   virtualizedHeight?: number;
   virtualizedOverscan?: number;
+  getRowClassName?: (item: T, index: number) => string;
+  getRowStyle?: (item: T, index: number) => React.CSSProperties;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -113,6 +115,8 @@ export const DataTable = <T extends Record<string, unknown>>({
   virtualized = false,
   virtualizedHeight = 400,
   virtualizedOverscan = 5,
+  getRowClassName,
+  getRowStyle,
   ...props
 }: DataTableProps<T>) => {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -224,11 +228,12 @@ export const DataTable = <T extends Record<string, unknown>>({
           className={cn(
             'hover:bg-surface-hover transition-colors',
             onRowClick && 'cursor-pointer',
-            selectedItems.has(String(item[keyField])) && 'bg-primary-subtle'
+            selectedItems.has(String(item[keyField])) && 'bg-primary-subtle',
+            getRowClassName?.(item, index)
           )}
           onClick={() => handleRowClick(item, index)}
-          style={
-            virtualRow
+          style={{
+            ...(virtualRow
               ? {
                   position: 'absolute',
                   top: 0,
@@ -237,8 +242,9 @@ export const DataTable = <T extends Record<string, unknown>>({
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
                 }
-              : undefined
-          }
+              : undefined),
+            ...getRowStyle?.(item, index),
+          }}
         >
           {selectable && (
             <td className="px-4 py-3">
@@ -266,7 +272,17 @@ export const DataTable = <T extends Record<string, unknown>>({
       );
       return rowContent;
     },
-    [keyField, onRowClick, selectedItems, selectable, columns, handleRowClick, handleSelectItem]
+    [
+      keyField,
+      onRowClick,
+      selectedItems,
+      selectable,
+      columns,
+      handleRowClick,
+      handleSelectItem,
+      getRowClassName,
+      getRowStyle,
+    ]
   );
 
   if (loading) {

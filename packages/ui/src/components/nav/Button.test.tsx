@@ -47,6 +47,12 @@ describe('Button Component', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveClass('text-text', 'hover:bg-primary-subtle');
     });
+
+    it('should apply joy variant classes', () => {
+      render(<Button variant="joy">Joy</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-joy', 'hover:bg-joy-hover');
+    });
   });
 
   describe('Sizes', () => {

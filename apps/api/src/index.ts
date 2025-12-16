@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import compression from 'compression';
 import crypto from 'crypto';
 import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
-import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/rate-limiter';
+import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/performance';
 import usersRouter from './routes/users';
 import authRouter from './routes/auth';
 import contactsRouter from './routes/contacts';
@@ -42,6 +42,7 @@ import adminMemoryRouter from './routes/admin-memory';
 import capacitacionesRouter from './routes/capacitaciones';
 import automationsRouter from './routes/automations';
 import healthRouter from './routes/health';
+import calendarRouter from './routes/calendar';
 import { handleEtag } from './utils/etag-cache';
 import cors, { type CorsOptions } from 'cors';
 import helmet from 'helmet';
@@ -200,7 +201,33 @@ const helmetOptions: HelmetOptions = {
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   crossOriginEmbedderPolicy: false,
 };
-if (process.env.CSP_ENABLED !== 'true') {
+if (process.env.CSP_ENABLED === 'true') {
+  // AI_DECISION: Permitir dominios de Google para OAuth2 y Calendar API
+  // Justificación: Necesario para redirecciones OAuth2 y carga de recursos de Google Calendar
+  // Impacto: Permite integración con Google OAuth y Calendar sin violar CSP
+  helmetOptions.contentSecurityPolicy = {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://accounts.google.com', 'https://apis.google.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
+      imgSrc: [
+        "'self'",
+        'data:',
+        'https:',
+        'https://www.google.com',
+        'https://accounts.google.com',
+      ],
+      connectSrc: [
+        "'self'",
+        'https://accounts.google.com',
+        'https://oauth2.googleapis.com',
+        'https://www.googleapis.com',
+      ],
+      frameSrc: ["'self'", 'https://accounts.google.com'],
+      formAction: ["'self'", 'https://accounts.google.com'],
+    },
+  };
+} else {
   helmetOptions.contentSecurityPolicy = false;
 }
 app.use(helmet(helmetOptions));
@@ -292,9 +319,8 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     const method = req.method;
 
     try {
-      const { httpRequestDuration, httpRequestsTotal, httpErrorsTotal } = await import(
-        './utils/metrics'
-      );
+      const { httpRequestDuration, httpRequestsTotal, httpErrorsTotal } =
+        await import('./utils/metrics');
 
       // Record request duration
       httpRequestDuration.observe({ method, route, status }, duration);
@@ -332,7 +358,7 @@ app.get(
   '/metrics',
   createAsyncHandler(async (req, res) => {
     const { getMetrics, updateMemoryMetrics, updateCacheMetrics } = await import('./utils/metrics');
-    const { getCacheHealth } = await import('./utils/cache');
+    const { getCacheHealth } = await import('./utils/performance/cache');
 
     // Update memory metrics
     updateMemoryMetrics();
@@ -358,7 +384,7 @@ app.get(
 app.get(
   '/metrics/json',
   createAsyncHandler(async (req, res) => {
-    const memUsage = process.memoryUsage() as typeof process.memoryUsage & { external?: number };
+    const memUsage = process.memoryUsage() as unknown as NodeJS.MemoryUsage & { external?: number };
     return res.json({
       ok: true,
       pid: process.pid,
@@ -457,6 +483,7 @@ app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
 app.use('/v1/automations', automationsRouter);
 app.use('/v1/bloomberg', bloombergRouter);
+app.use('/v1/calendar', calendarRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -507,9 +534,8 @@ const port = Number(process.env.PORT || 3001);
 // Initialize database before starting server
 async function startServer() {
   try {
-    logger.info('🔧 Initializing database...');
+    // AI_DECISION: Removed explicit logging here as initializeDatabase() already logs its progress
     await initializeDatabase();
-    logger.info('✅ Database initialization completed');
 
     // Iniciar scheduler de jobs automáticos
     const scheduler = getScheduler();
@@ -519,7 +545,7 @@ async function startServer() {
     // Justificación: Regular memory metrics updates provide better visibility into memory trends
     // Impacto: Better monitoring of memory usage over time
     const { updateMemoryMetrics, updateCacheMetrics } = await import('./utils/metrics');
-    const { getCacheHealth } = await import('./utils/cache');
+    const { getCacheHealth } = await import('./utils/performance/cache');
 
     // Update memory metrics every 30 seconds
     setInterval(() => {

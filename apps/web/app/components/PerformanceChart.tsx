@@ -145,14 +145,28 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
     );
   }
 
+  // AI_DECISION: Improve error handling UI for empty results vs API errors
+  // Justificación: User shouldn't see a scary error if the portfolio is just empty or new
+  // Impacto: Better onboarding experience for new portfolios
   if (error) {
+    // If it's a "No valid portfolios" error, show a friendlier message
+    const isNoDataError = error.includes('No valid portfolios') || error.includes('not found');
+
     return (
       <Card className={className}>
         <CardContent>
           <div className="flex items-center justify-center" style={{ height: `${height}px` }}>
-            <Alert variant="error" title="Error">
-              {error}
-            </Alert>
+            <Stack direction="column" gap="md" align="center">
+              <BarChart3 className="w-12 h-12 text-foreground-tertiary" />
+              <Text size="lg" weight="medium" color="secondary">
+                {isNoDataError ? 'Sin datos suficientes' : 'Error al cargar datos'}
+              </Text>
+              <Text color="muted" align="center" className="max-w-md">
+                {isNoDataError
+                  ? 'Esta cartera no tiene suficientes datos históricos o instrumentos para calcular el rendimiento.'
+                  : error}
+              </Text>
+            </Stack>
           </div>
         </CardContent>
       </Card>

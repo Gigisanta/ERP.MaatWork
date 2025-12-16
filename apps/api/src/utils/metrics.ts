@@ -184,7 +184,7 @@ export function updateMemoryMetrics(): void {
  * Impacto: Better visibility into cache memory consumption
  */
 export function updateCacheMetrics(
-  cacheHealth: ReturnType<typeof import('./cache').getCacheHealth>
+  cacheHealth: ReturnType<typeof import('./performance/cache').getCacheHealth>
 ): void {
   // Update cache metrics for each cache type
   const cacheTypes = [

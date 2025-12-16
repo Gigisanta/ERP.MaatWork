@@ -27,13 +27,13 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "echo 'Types package does not need dev mode'",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "clean": "rimraf dist"
   },
   "devDependencies": {
     "rimraf": "^5.0.10",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/lodash": "^4.14.202"
   },
   "engines": {
     "node": ">=22.0.0 <25.0.0"

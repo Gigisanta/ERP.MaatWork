@@ -9,6 +9,10 @@
  * AI_DECISION: Migración a cookies httpOnly exclusivas
  * Justificación: Más seguro (inmune a XSS), simplifica código (sin dual storage)
  * Impacto: Breaking change - requiere re-login de usuarios activos
+ *
+ * AI_DECISION: Unificación con fetchWithLogging
+ * Justificación: Eliminar duplicación de código y garantizar logging/requestId consistentes
+ * Impacto: Menor superficie de errores, observabilidad mejorada
  */
 
 import type { ApiResponse, UserApiResponse } from '@/types';
@@ -18,6 +22,7 @@ import { buildHeaders, serializeBody, buildUrl } from './request-builder';
 import { shouldRetry, calculateRetryDelay, delay } from './retry-handler';
 import { AuthManager } from './auth-manager';
 import type { RequestOptions, RequestConfig } from './types';
+import { fetchWithLogging } from '../fetch-client';
 
 export class ApiClient {
   private config: RequestConfig;
@@ -31,38 +36,23 @@ export class ApiClient {
       ...configOverride,
     };
 
-    this.authManager = new AuthManager(this.config, this.fetchWithTimeout.bind(this));
+    // Use fetchWithLogging internally within authManager as well
+    this.authManager = new AuthManager(this.config, this.fetchWrapper.bind(this));
   }
 
   /**
-   * Fetch with timeout
+   * Internal wrapper to adapt fetchWithLogging signature to AuthManager expectations
    */
-  private async fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
-    const timeout = (options as RequestOptions).timeout || this.config.timeout;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        credentials: 'include', // Include cookies in all requests
-      });
-
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new ApiError('Request timeout', 504, {
-          details: `Request took longer than ${timeout}ms`,
-        });
-      }
-
-      throw error;
-    }
+  private async fetchWrapper(url: string, options: RequestInit = {}): Promise<Response> {
+    const requestOptions = options as RequestOptions;
+    return fetchWithLogging(url, {
+      ...options,
+      timeout: requestOptions.timeout || this.config.timeout,
+      // If requestId is in headers, extract it to pass explicitly to logging wrapper
+      // otherwise fetchWithLogging will generate one
+      requestId:
+        (options.headers as Record<string, string>)?.['X-Request-ID'] || requestOptions.requestId,
+    });
   }
 
   /**
@@ -78,9 +68,13 @@ export class ApiClient {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const headers = buildHeaders(options);
-        const response = await this.fetchWithTimeout(url, {
+
+        // Use standard fetchWithLogging wrapper
+        const response = await fetchWithLogging(url, {
           ...options,
           headers,
+          timeout: options.timeout || this.config.timeout,
+          requestId: options.requestId,
         });
 
         // Handle non-successful responses
@@ -261,3 +255,6 @@ export class ApiClient {
     await this.post('/v1/auth/logout', {});
   }
 }
+
+// Export singleton instance
+export const apiClient = new ApiClient();

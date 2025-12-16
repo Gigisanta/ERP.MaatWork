@@ -13,7 +13,7 @@ import {
   benchmarkComponents,
   instruments,
 } from '@cactus/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { getPortfolioCompareTimeout } from '../../config/timeouts';
 
@@ -84,7 +84,7 @@ router.post(
               eq(portfolioTemplateLines.templateId, portfolioTemplates.id)
             )
             .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-            .where(sql`${portfolioTemplates.id} = ANY(${portfolioIds})`);
+            .where(inArray(portfolioTemplates.id, portfolioIds));
 
           // Agrupar por portfolioId
           type PortfolioDataRow = {
@@ -111,11 +111,16 @@ router.post(
                 id: portfolioId,
                 name: portfolioData[0]?.portfolioName || `Portfolio ${portfolioId}`,
                 type: 'portfolio',
-                components: portfolioData.map((line: PortfolioDataRow) => ({
-                  symbol: line.instrumentSymbol,
-                  weight: Number(line.weight),
-                  name: line.instrumentName,
-                })),
+                components: portfolioData
+                  .filter(
+                    (line: PortfolioDataRow) =>
+                      line.instrumentSymbol && !line.instrumentSymbol.includes(' ')
+                  )
+                  .map((line: PortfolioDataRow) => ({
+                    symbol: line.instrumentSymbol,
+                    weight: Number(line.weight),
+                    name: line.instrumentName,
+                  })),
               });
             }
           });
@@ -141,7 +146,7 @@ router.post(
               eq(benchmarkComponents.benchmarkId, benchmarkDefinitions.id)
             )
             .innerJoin(instruments, eq(instruments.id, benchmarkComponents.instrumentId))
-            .where(sql`${benchmarkDefinitions.id} = ANY(${benchmarkIds})`);
+            .where(inArray(benchmarkDefinitions.id, benchmarkIds));
 
           // Agrupar por benchmarkId
           type BenchmarkDataRow = {
@@ -168,11 +173,16 @@ router.post(
                 id: benchmarkId,
                 name: benchmarkData[0]?.benchmarkName || `Benchmark ${benchmarkId}`,
                 type: 'benchmark',
-                components: benchmarkData.map((line: BenchmarkDataRow) => ({
-                  symbol: line.instrumentSymbol,
-                  weight: Number(line.weight),
-                  name: line.instrumentName,
-                })),
+                components: benchmarkData
+                  .filter(
+                    (line: BenchmarkDataRow) =>
+                      line.instrumentSymbol && !line.instrumentSymbol.includes(' ')
+                  )
+                  .map((line: BenchmarkDataRow) => ({
+                    symbol: line.instrumentSymbol,
+                    weight: Number(line.weight),
+                    name: line.instrumentName,
+                  })),
               });
             }
           });

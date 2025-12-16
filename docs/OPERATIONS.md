@@ -58,6 +58,12 @@ CORS_ORIGINS=http://localhost:3000
 CSP_ENABLED=false
 JWT_SECRET=change-me
 JWT_EXPIRES_IN=7d
+
+# Google OAuth2 Configuration
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3001/v1/auth/google/callback
+GOOGLE_ENCRYPTION_KEY=your-32-character-encryption-key-here
 ```
 
 #### Web (`apps/web/.env.local`)
@@ -66,6 +72,7 @@ JWT_EXPIRES_IN=7d
 NEXT_PUBLIC_API_URL=http://localhost:3001
 JWT_SECRET=change-me  # Debe coincidir con API
 NEXT_PUBLIC_DEBUG=true
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
 **Nota:** El archivo `.env.local` debe crearse manualmente ya que está en `.gitignore` para proteger secretos.
@@ -449,6 +456,52 @@ pkill -f "uvicorn.*main:app"
 
 ---
 
+## Google OAuth2 y Calendar Integration
+
+### Configuración Inicial
+
+1. **Crear proyecto en Google Cloud Console:**
+   - Ir a https://console.cloud.google.com/
+   - Crear nuevo proyecto o seleccionar existente
+   - Habilitar Google Calendar API
+
+2. **Crear credenciales OAuth2:**
+   - Ir a "APIs & Services" > "Credentials"
+   - Crear "OAuth 2.0 Client ID"
+   - Tipo: "Web application"
+   - Authorized redirect URIs: `http://localhost:3001/v1/auth/google/callback` (dev) y tu URL de producción
+
+3. **Configurar variables de entorno:**
+   - Ver sección [Variables de Entorno](#variables-de-entorno) para `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+   - Generar `GOOGLE_ENCRYPTION_KEY` (32 caracteres mínimo):
+     ```bash
+     openssl rand -base64 32
+     ```
+
+4. **Aplicar migraciones de base de datos:**
+   ```bash
+   pnpm -F @cactus/db generate
+   pnpm -F @cactus/db migrate
+   ```
+
+### Troubleshooting
+
+#### Error "Google Calendar not connected"
+- Verificar que el usuario haya completado el flujo OAuth2
+- Verificar que los tokens no estén expirados (se refrescan automáticamente cada 10 minutos)
+- Revisar logs del backend para errores de refresh de tokens
+
+#### Error "Failed to refresh token"
+- Verificar que `GOOGLE_ENCRYPTION_KEY` sea el mismo en todos los entornos
+- Verificar que el refresh token no haya sido revocado en Google Account
+- El usuario puede necesitar re-autenticarse
+
+#### CSP bloquea recursos de Google
+- Si `CSP_ENABLED=true`, verificar que la configuración en `apps/api/src/index.ts` incluya dominios de Google
+- Ver sección [Seguridad](#seguridad-y-performance) para más detalles
+
+---
+
 ## Seguridad y Performance
 
 ### Seguridad
@@ -459,6 +512,7 @@ pkill -f "uvicorn.*main:app"
 - **Pino**: Logs estructurados con `redact` en producción (oculta headers sensibles)
 - **CORS**: Configurado con orígenes permitidos
 - **CSP**: Opcional vía `CSP_ENABLED` (Content Security Policy)
+- **Google OAuth**: Tokens encriptados con AES-256-GCM, refresh automático cada 10 minutos
 
 #### Web
 

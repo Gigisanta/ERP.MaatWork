@@ -50,7 +50,7 @@ vi.mock('../../utils/error-response', () => ({
 import { db } from '@cactus/db';
 import { aumImportFiles, aumImportRows, brokerAccounts, contacts, eq, and } from '@cactus/db';
 import { canAccessAumFile } from '../../auth/authorization';
-import { transactionWithLogging } from '../../utils/db-transactions';
+import { transactionWithLogging } from '../../utils/database/db-transactions';
 
 const mockDb = vi.mocked(db);
 const mockCanAccessAumFile = vi.mocked(canAccessAumFile);

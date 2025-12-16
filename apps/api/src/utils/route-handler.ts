@@ -108,20 +108,23 @@ export function createRouteHandler<T>(handler: RouteHandlerFn<T>) {
 
       res.json(response);
     } catch (error) {
-      // Log del error con contexto
-      req.log?.error?.(
+      // Determinar codigo de estado y generar respuesta de error
+      const statusCode = getStatusCodeFromError(error);
+
+      // Log del error con contexto (WARN para 4xx, ERROR para 5xx)
+      const logLevel = statusCode >= 500 ? 'error' : 'warn';
+      req.log?.[logLevel]?.(
         {
           err: error,
           requestId: req.requestId,
           method: req.method,
           url: req.url,
           userId: req.user?.id,
+          statusCode,
         },
         'Route handler error'
       );
 
-      // Determinar codigo de estado y generar respuesta de error
-      const statusCode = getStatusCodeFromError(error);
       const errorResponse = createErrorResponse({
         error,
         requestId: req.requestId,
@@ -299,7 +302,8 @@ export function isHttpError(error: unknown, statusCode: number): boolean {
 export class HttpError extends Error {
   constructor(
     public readonly statusCode: number,
-    message: string
+    message: string,
+    public readonly context?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'HttpError';

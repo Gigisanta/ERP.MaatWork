@@ -9,6 +9,7 @@ import { eq, or } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { signUserToken } from '../../../auth/jwt';
 import { ROLES, type UserRole } from '../../../auth/types';
+import { getAuthCookieOptions } from '../../../auth/cookie-config';
 import { createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { loginSchema } from '../schemas';
 import { z } from 'zod';
@@ -89,12 +90,7 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
 
     // Establecer cookie del servidor
     const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 días o 1 día
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge,
-    });
+    res.cookie('token', token, getAuthCookieOptions(maxAge));
 
     const duration = Date.now() - startTime;
     req.log.info(
@@ -166,7 +162,7 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
     throw new HttpError(
       403,
       'Tu cuenta está pendiente de aprobación. Un administrador debe aprobarla antes de que puedas iniciar sesión.',
-      'PENDING_APPROVAL'
+      { code: 'PENDING_APPROVAL' }
     );
   }
   if (!user.passwordHash) {

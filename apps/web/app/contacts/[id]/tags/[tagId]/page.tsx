@@ -59,13 +59,14 @@ async function getContactTagData(contactId: string, tagId: string) {
 }
 
 interface ContactTagDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
     tagId: string;
-  };
+  }>;
 }
 
-export default async function ContactTagDetailPage({ params }: ContactTagDetailPageProps) {
+export default async function ContactTagDetailPage(props: ContactTagDetailPageProps) {
+  const params = await props.params;
   const { id: contactId, tagId } = params;
 
   // apiCall maneja cookies automáticamente, no necesitamos obtener token manualmente

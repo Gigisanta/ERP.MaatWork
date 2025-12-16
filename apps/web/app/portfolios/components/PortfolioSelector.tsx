@@ -19,7 +19,8 @@ export function PortfolioSelector({
   className,
 }: PortfolioSelectorProps) {
   const items = [
-    { value: '', label: placeholder },
+    // Use a special value for the placeholder to avoid "invalid value" warnings with empty strings
+    { value: 'PLACEHOLDER_EMPTY', label: placeholder },
     ...portfolios.map((portfolio) => ({
       value: portfolio.id,
       label: portfolio.name,
@@ -28,8 +29,8 @@ export function PortfolioSelector({
 
   return (
     <Select
-      value={selectedPortfolioId || ''}
-      onValueChange={(value) => onSelect(value || null)}
+      value={selectedPortfolioId || 'PLACEHOLDER_EMPTY'}
+      onValueChange={(value) => onSelect(value === 'PLACEHOLDER_EMPTY' ? null : value)}
       items={items}
       {...(className ? { className } : {})}
     />

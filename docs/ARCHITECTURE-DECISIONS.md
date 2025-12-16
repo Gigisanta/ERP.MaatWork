@@ -350,6 +350,62 @@ const swrConfig = {
 
 ---
 
+## ADR 11: Integración Google OAuth2 y Calendar API
+
+### Contexto
+
+Necesitamos permitir a los usuarios autenticarse con Google OAuth2 y gestionar calendarios:
+- **Calendario de equipo**: Managers pueden conectar calendario de Google para su equipo (en `/teams`)
+- **Calendario personal**: Cada usuario puede conectar su calendario personal de Google (en `/home` y sección dedicada `/calendar`)
+- Sincronización bidireccional de eventos
+- Mantener tokens seguros y renovarlos automáticamente
+
+### Decisión
+
+Usar `google-auth-library` y `googleapis` directamente en el backend, almacenando tokens encriptados en la base de datos. Distinguir entre:
+- **Calendario de equipo**: Se almacena en `teams.calendarId` (Google Calendar ID) y usa tokens del manager
+- **Calendario personal**: Se almacena en `google_oauth_tokens.calendarId` y usa tokens del usuario
+
+### Justificación
+
+- **Separación clara**: Calendarios de equipo vs personales tienen diferentes propósitos y permisos
+- **Tokens del manager**: Para calendario de equipo, el manager autoriza y el equipo ve eventos
+- **Tokens personales**: Cada usuario gestiona su propio calendario personal
+- **Compatibilidad**: Mantiene `teams.calendarUrl` existente (iframe embed) mientras agrega API integration
+- **Seguridad**: Tokens encriptados con AES-256-GCM, refresh automático cada 10 minutos
+- **Control directo**: Sin dependencias adicionales como Passport.js, mejor integración con Express
+
+### Alternativas Consideradas
+
+- **Passport.js**: Más complejo, agrega abstracción innecesaria para nuestro caso de uso
+- **Google Sign-In para Web**: Solo frontend, no permite refresh tokens en backend
+- **Calendar API sin OAuth**: No permite acceso a calendarios privados de usuarios
+
+### Consecuencias
+
+- **Dos tipos de conexión**: Equipo (manager) y personal (usuario)
+- **Permisos diferentes**: Solo managers pueden conectar calendario de equipo
+- **UI diferenciada**: Componentes separados para cada tipo de calendario
+- **Rutas específicas**: `/teams/[id]` para calendario de equipo, `/calendar` para personal
+- **Job scheduler**: Refresh automático de tokens cada 10 minutos
+- **CSP actualizado**: Necesario permitir dominios de Google cuando CSP está habilitado
+- **Migración DB**: Nueva tabla `google_oauth_tokens` y campos adicionales en `teams` y `users`
+
+### Referencias
+
+- `apps/api/src/auth/google-oauth.ts` - Cliente OAuth2
+- `apps/api/src/routes/auth/google/` - Rutas de autenticación Google
+- `apps/api/src/routes/calendar/` - Rutas de calendario (personal y equipo)
+- `apps/api/src/services/google-calendar.ts` - Servicio Calendar API
+- `apps/api/src/jobs/google-token-refresh.ts` - Job de refresh de tokens
+- `packages/db/src/schema/auth.ts` - Schema de tokens OAuth
+- `apps/web/components/auth/GoogleLoginButton.tsx` - Componente de login Google
+- `apps/web/app/calendar/` - Página de calendario personal
+- `apps/web/app/components/home/PersonalCalendarWidget.tsx` - Widget de calendario personal
+- `apps/web/app/teams/components/TeamCalendarSection.tsx` - Sección de calendario de equipo
+
+---
+
 ## Historial de Decisiones
 
 | ADR | Fecha | Decision |
@@ -364,6 +420,7 @@ const swrConfig = {
 | 8 | 2024-03 | Logging Estructurado con Pino |
 | 9 | 2024-03 | Autenticacion JWT con Cookies |
 | 10 | 2024-03 | SWR para Client-Side Data Fetching |
+| 11 | 2024-12 | Integracion Google OAuth2 y Calendar API |
 
 ---
 

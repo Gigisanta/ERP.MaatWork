@@ -19,6 +19,7 @@ import { loginSchema, registerSchema } from './schemas';
 import { handleLogin } from './handlers/login';
 import { handleRegister } from './handlers/register';
 import { handleGetCurrentUser, handleRefreshToken, handleLogout } from './handlers/session';
+import googleAuthRouter from './google';
 
 const router = Router();
 
@@ -39,6 +40,12 @@ router.get('/me', requireAuth, handleGetCurrentUser);
 router.post('/refresh', handleRefreshToken);
 
 router.post('/logout', requireAuth, handleLogout);
+
+// ==========================================================
+// Google OAuth Routes
+// ==========================================================
+
+router.use('/google', googleAuthRouter);
 
 export default router;
 

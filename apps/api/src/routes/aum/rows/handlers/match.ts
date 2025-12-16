@@ -7,6 +7,8 @@ import { db, aumImportRows, aumImportFiles } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
 import { HttpError } from '@/utils/route-handler';
 import { createErrorResponse, getStatusCodeFromError } from '@/utils/error-response';
+import { addContactAlias } from '@/services/alias';
+import { matchRow as autoMatchRow } from '@/services/aum-matcher';
 
 /**
  * POST /admin/aum/uploads/:fileId/match
@@ -56,6 +58,20 @@ export async function matchRow(req: Request, res: Response) {
           SET is_preferred = false
           WHERE file_id = ${fileId} AND account_number = ${accountNumber} AND id <> ${rowId}
         `);
+      }
+    }
+
+    // AI_DECISION: Auto-learn contact alias on manual match
+    // Justification: If user manually links a row with holder_name "Juan Perez" to contact "J. Perez", we should learn this alias.
+    if (matchedContactId) {
+      const [row] = await dbi
+        .select({ holderName: aumImportRows.holderName })
+        .from(aumImportRows)
+        .where(eq(aumImportRows.id, rowId))
+        .limit(1);
+
+      if (row?.holderName) {
+        await addContactAlias(matchedContactId, row.holderName, 'manual', true);
       }
     }
 

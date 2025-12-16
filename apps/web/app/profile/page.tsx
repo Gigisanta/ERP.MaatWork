@@ -47,6 +47,7 @@ import {
   InvitationsSection,
   TeamMembersSection,
   ProfileModals,
+  GoogleCalendarSection,
 } from './components';
 
 export default function ProfilePage() {
@@ -90,9 +91,6 @@ export default function ProfilePage() {
   // Hook de acciones del perfil
   const {
     actionLoading,
-    calendarUrls,
-    setCalendarUrls,
-    calendarLoading,
     passwordForm,
     setPasswordForm,
     teamForm,
@@ -110,7 +108,6 @@ export default function ProfilePage() {
     handleCreateTeam,
     handleAddMember,
     handleLeaveTeam,
-    handleUpdateCalendarUrl,
     handleSavePhone,
     handleCancelEditPhone,
   } = useProfileActions({
@@ -141,17 +138,6 @@ export default function ProfilePage() {
       setPhoneValue(userInfo.phone ?? '');
     }
   }, [userInfo, setPhoneValue]);
-
-  // Initialize calendar URLs from teams
-  useEffect(() => {
-    const initialUrls: Record<string, string> = {};
-    teams.forEach((team) => {
-      if (team.calendarUrl) {
-        initialUrls[team.id] = team.calendarUrl;
-      }
-    });
-    setCalendarUrls(initialUrls);
-  }, [teams, setCalendarUrls]);
 
   if (loading) {
     return (
@@ -204,6 +190,9 @@ export default function ProfilePage() {
 
                 {/* Secciones integradas en Grid */}
                 <Grid cols={{ base: 1, md: 2 }} gap="sm">
+                  {/* Google Calendar */}
+                  <GoogleCalendarSection />
+
                   {/* Aliases AUM */}
                   <AliasesSection
                     aliases={aliases}
@@ -219,12 +208,6 @@ export default function ProfilePage() {
                   <TeamsSection
                     user={user}
                     teams={teams}
-                    calendarUrls={calendarUrls}
-                    calendarLoading={calendarLoading}
-                    onCalendarUrlChange={(teamId, url) =>
-                      setCalendarUrls((prev) => ({ ...prev, [teamId]: url }))
-                    }
-                    onUpdateCalendarUrl={handleUpdateCalendarUrl}
                     onShowTeamForm={() => setShowTeamForm(true)}
                   />
                 </Grid>

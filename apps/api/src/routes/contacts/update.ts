@@ -5,7 +5,14 @@
  * PATCH /contacts/:id - Partial update
  */
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, contacts, contactFieldHistory, pipelineStageHistory, users } from '@cactus/db';
+import {
+  db,
+  contacts,
+  contactFieldHistory,
+  pipelineStageHistory,
+  users,
+  notifications,
+} from '@cactus/db';
 import { eq, and, isNull, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
 import { canAccessContact, canAssignContactTo } from '../../auth/authorization';
@@ -205,6 +212,29 @@ router.put(
         await invalidateCache('crm:pipeline:*');
       }
 
+      // Notify new advisor if assigned
+      if (
+        updated.assignedAdvisorId &&
+        updated.assignedAdvisorId !== existing.assignedAdvisorId &&
+        updated.assignedAdvisorId !== userId
+      ) {
+        await db()
+          .insert(notifications)
+          .values({
+            userId: updated.assignedAdvisorId,
+            type: 'info',
+            severity: 'info',
+            contactId: id,
+            renderedBody: `Se te ha asignado el contacto ${updated.fullName || 'Sin nombre'}`,
+            payload: {
+              assignedBy: userId,
+              contactName: updated.fullName,
+              previousAdvisorId: existing.assignedAdvisorId,
+            },
+            deliveredChannels: [],
+          });
+      }
+
       req.log.info({ contactId: id, changedFields }, 'contact updated');
       res.json({
         success: true,
@@ -397,6 +427,29 @@ router.patch(
       await invalidateCache('crm:contacts:*');
       if (pipelineStageChanged) {
         await invalidateCache('crm:pipeline:*');
+      }
+
+      // Notify new advisor if assigned
+      if (
+        updated.assignedAdvisorId &&
+        updated.assignedAdvisorId !== existing.assignedAdvisorId &&
+        updated.assignedAdvisorId !== userId
+      ) {
+        await db()
+          .insert(notifications)
+          .values({
+            userId: updated.assignedAdvisorId,
+            type: 'info',
+            severity: 'info',
+            contactId: id,
+            renderedBody: `Se te ha asignado el contacto ${updated.fullName || 'Sin nombre'}`,
+            payload: {
+              assignedBy: userId,
+              contactName: updated.fullName,
+              previousAdvisorId: existing.assignedAdvisorId,
+            },
+            deliveredChannels: [],
+          });
       }
 
       req.log.info(

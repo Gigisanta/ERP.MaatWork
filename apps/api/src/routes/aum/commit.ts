@@ -14,6 +14,7 @@ import { canAccessAumFile } from '@/auth/authorization';
 import { validate } from '@/utils/validation';
 import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 import { transactionWithLogging } from '@/utils/database/db-transactions';
+import { syncContactAdvisorsFromAumRows } from '@/services/aum/contact-sync';
 import {
   aumFileIdParamsSchema,
   aumCommitQuerySchema,
@@ -133,21 +134,14 @@ router.post(
               upserts += 1;
             }
           }
+        }
 
-          // Optionally set advisor on contact if empty and we have a matched user
-          if (r.matchedUserId) {
-            const [c] = await tx
-              .select({ assignedAdvisorId: contacts.assignedAdvisorId })
-              .from(contacts)
-              .where(eq(contacts.id, r.matchedContactId as string))
-              .limit(1);
-            if (c && !c.assignedAdvisorId) {
-              await tx
-                .update(contacts)
-                .set({ assignedAdvisorId: r.matchedUserId as string })
-                .where(eq(contacts.id, r.matchedContactId as string));
-            }
-          }
+        // Sync advisors to contacts (if contacts have no advisor assigned)
+        // AI_DECISION: Extracted synchronization logic to reusable service
+        // Justification: Centralizes logic for syncing AUM advisor data to contacts
+        const { syncedCount } = await syncContactAdvisorsFromAumRows(tx, rows, req.log);
+        if (syncedCount > 0) {
+          req.log?.info({ syncedCount }, 'Synced advisors to contacts during commit');
         }
 
         // Update file status only if all operations succeeded

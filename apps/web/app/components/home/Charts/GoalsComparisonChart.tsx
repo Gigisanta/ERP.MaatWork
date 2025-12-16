@@ -62,33 +62,64 @@ export function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonCha
   );
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={chartData} aria-label="Gráfico de comparación de objetivos vs actuales">
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart
+        data={chartData}
+        aria-label="Gráfico de comparación de objetivos vs actuales"
+        barGap={0}
+        barCategoryGap="20%"
+        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+      >
+        <CartesianGrid
+          strokeDasharray="3 3"
+          vertical={false}
+          stroke="var(--color-border)"
+          opacity={0.5}
+        />
         <XAxis
           dataKey="name"
-          fontSize={11}
+          fontSize={10}
           tick={{ fill: 'var(--color-text-secondary)' }}
-          angle={-45}
-          textAnchor="end"
-          height={60}
+          axisLine={false}
+          tickLine={false}
+          dy={8}
         />
-        <YAxis fontSize={11} tick={{ fill: 'var(--color-text-secondary)' }} />
+        <YAxis
+          fontSize={10}
+          tick={{ fill: 'var(--color-text-secondary)' }}
+          axisLine={false}
+          tickLine={false}
+        />
         <Tooltip
+          cursor={{ fill: 'transparent' }}
           contentStyle={{
             backgroundColor: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: '8px',
             color: 'var(--color-text)',
+            fontSize: '12px',
+            padding: '8px 12px',
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
           }}
         />
-        <Legend />
-        <Bar dataKey="actual" name="Actual" radius={[4, 4, 0, 0]}>
+        <Legend
+          iconType="circle"
+          iconSize={8}
+          fontSize={11}
+          wrapperStyle={{ paddingTop: '10px' }}
+        />
+        <Bar dataKey="actual" name="Actual" radius={[4, 4, 0, 0]} maxBarSize={50}>
           {chartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
         </Bar>
-        <Bar dataKey="goal" name="Objetivo" fill="var(--color-text-muted)" radius={[4, 4, 0, 0]} />
+        <Bar
+          dataKey="goal"
+          name="Objetivo"
+          fill="var(--color-surface-hover)"
+          radius={[4, 4, 0, 0]}
+          maxBarSize={50}
+        />
       </BarChart>
     </ResponsiveContainer>
   );

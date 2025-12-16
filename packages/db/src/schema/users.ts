@@ -23,7 +23,11 @@ export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   managerUserId: uuid('manager_user_id'),
-  calendarUrl: text('calendar_url'),
+  calendarUrl: text('calendar_url'), // URL de embed (existente, para compatibilidad)
+  calendarId: text('calendar_id'), // Google Calendar ID (nuevo, para API integration)
+  meetingRoomCalendarId: text('meeting_room_calendar_id'), // Calendario secundario (Sala de reuniones)
+  calendarConnectedAt: timestamp('calendar_connected_at', { withTimezone: true }), // Cuándo se conectó
+  calendarConnectedByUserId: uuid('calendar_connected_by_user_id').references(() => users.id), // Manager que conectó
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
@@ -44,6 +48,7 @@ export const users = pgTable(
     usernameNormalized: text('username_normalized'),
     fullName: text('full_name').notNull(),
     phone: text('phone'), // Número de teléfono para automatizaciones
+    googleId: text('google_id'), // ID de Google (para matching rápido)
     role: text('role').notNull(), // advisor, manager, admin
     passwordHash: text('password_hash'),
     isActive: boolean('is_active').notNull().default(true),
@@ -149,6 +154,7 @@ export const careerPlanLevels = pgTable(
     careerPlanLevelsIsActiveIdx: index('idx_career_plan_levels_is_active').on(table.isActive)
   })
 );
+
 
 
 

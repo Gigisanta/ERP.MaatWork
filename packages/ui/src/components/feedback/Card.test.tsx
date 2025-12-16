@@ -41,6 +41,20 @@ describe('Card Component', () => {
       const card = container.firstChild as HTMLElement;
       expect(card).toHaveClass('hover:shadow-lg', 'cursor-pointer');
     });
+
+    it('should apply glass variant classes', () => {
+      const { container } = render(<Card variant="glass">Glass</Card>);
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('backdrop-blur-md', 'bg-white/70');
+    });
+  });
+
+  describe('Animation', () => {
+    it('should apply animation classes when animated prop is true', () => {
+      const { container } = render(<Card animated>Animated</Card>);
+      const card = container.firstChild as HTMLElement;
+      expect(card).toHaveClass('hover:shadow-lg', 'transition-all');
+    });
   });
 
   describe('Padding', () => {

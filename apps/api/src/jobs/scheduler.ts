@@ -13,6 +13,7 @@ import cron, { type ScheduledTask } from 'node-cron';
 import pino from 'pino';
 import { runDailyMaintenance, runWeeklyMaintenance } from './maintenance';
 import { MonitorQueryPerformanceJob } from './monitor-query-performance';
+import { refreshExpiringTokens } from './google-token-refresh';
 
 const logger = pino({ name: 'scheduler' });
 
@@ -92,6 +93,17 @@ export class JobScheduler {
         logger.info('✅ Mantenimiento de particiones completado');
       } catch (error) {
         logger.error({ err: error }, '❌ Error en mantenimiento de particiones');
+      }
+    });
+
+    // Job periódico: Refresh de tokens de Google OAuth (cada 10 minutos)
+    this.scheduleJob('refresh-google-tokens', '*/10 * * * *', async () => {
+      logger.debug('🔄 Refrescando tokens de Google OAuth expirados...');
+      try {
+        await refreshExpiringTokens();
+        logger.debug('✅ Refresh de tokens completado');
+      } catch (error) {
+        logger.error({ err: error }, '❌ Error refrescando tokens de Google');
       }
     });
 

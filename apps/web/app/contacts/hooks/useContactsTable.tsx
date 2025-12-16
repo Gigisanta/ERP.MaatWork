@@ -98,26 +98,47 @@ export function useContactsTable({
         ),
       },
       {
-        key: 'actions',
-        header: 'Acciones',
-        render: (contact) => (
-          <DropdownMenu
-            trigger={
-              <Button variant="ghost" size="sm">
-                <Icon name="more-vertical" size={16} />
-              </Button>
-            }
-          >
-            <DropdownMenuItem onClick={() => router.push(`/contacts/${contact.id}`)}>
-              <Icon name="edit" size={16} className="mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDeleteClick(contact)}>
-              <Icon name="trash-2" size={16} className="mr-2" />
-              Eliminar
-            </DropdownMenuItem>
-          </DropdownMenu>
-        ),
+        key: 'meetingStatus',
+        header: 'Reuniones',
+        render: (contact) => {
+          const status = contact.meetingStatus;
+          // If no status, show empty placeholders or nothing
+          if (!status)
+            return (
+              <Text size="xs" color="secondary">
+                -
+              </Text>
+            );
+
+          return (
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center gap-0.5" title="Primera Reunión">
+                <Text size="xs" className="text-[10px] uppercase font-bold text-gray-400">
+                  1ª
+                </Text>
+                {status.firstMeeting?.completed ? (
+                  <Icon name="check-circle" size={16} className="text-green-500" />
+                ) : status.firstMeeting?.scheduled ? (
+                  <Icon name="calendar" size={16} className="text-blue-500" />
+                ) : (
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-0.5" title="Segunda Reunión">
+                <Text size="xs" className="text-[10px] uppercase font-bold text-gray-400">
+                  2ª
+                </Text>
+                {status.secondMeeting?.completed ? (
+                  <Icon name="check-circle" size={16} className="text-green-500" />
+                ) : status.secondMeeting?.scheduled ? (
+                  <Icon name="calendar" size={16} className="text-blue-500" />
+                ) : (
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
+                )}
+              </div>
+            </div>
+          );
+        },
       },
     ],
     [

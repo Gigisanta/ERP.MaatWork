@@ -6,6 +6,7 @@ import Icon, { type IconName } from '../Icon.js';
 import { Text } from '../../primitives/Text.js';
 import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
 import { Tooltip } from '../feedback/Tooltip.js';
+import { Feather } from 'lucide-react';
 
 export interface SidebarSection {
   title?: string;
@@ -68,6 +69,7 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
   (
     {
       sections,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       logo,
       collapsed: controlledCollapsed,
       onCollapse,
@@ -136,8 +138,13 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
         {isMobileMode && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">⚖️</span>
-              <span className="text-lg font-bold text-secondary">Maat</span>
+              <span className="text-primary">
+                <Feather className="w-6 h-6" strokeWidth={1.5} />
+              </span>
+              <span className="text-lg font-bold">
+                <span className="text-primary">Maat</span>
+                <span className="text-secondary">Work</span>
+              </span>
             </div>
             <Button
               variant="ghost"

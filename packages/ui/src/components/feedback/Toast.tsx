@@ -18,19 +18,19 @@ export interface ToastProps {
 const variantConfig: Record<ToastVariant, { icon: IconName; className: string }> = {
   info: {
     icon: 'info',
-    className: 'border-info bg-info-subtle text-text',
+    className: 'border-info/20 bg-info-subtle text-text',
   },
   success: {
     icon: 'check-circle',
-    className: 'border-success bg-success-subtle text-text',
+    className: 'border-success/20 bg-success-subtle text-text',
   },
   warning: {
     icon: 'alert-circle',
-    className: 'border-warning bg-warning-subtle text-text',
+    className: 'border-warning/20 bg-warning-subtle text-text',
   },
   error: {
     icon: 'x-circle',
-    className: 'border-error bg-error-subtle text-text',
+    className: 'border-error/20 bg-error-subtle text-text',
   },
 };
 
@@ -55,8 +55,12 @@ export const Toast = React.forwardRef<React.ElementRef<typeof ToastPrimitive.Roo
         <ToastPrimitive.Root
           ref={ref}
           className={cn(
-            'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all',
-            'data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
+            'group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-lg border p-4 shadow-lg transition-all',
+            // Swipe interactions
+            'data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none',
+            // Enter/Exit animations using new animation utilities
+            'data-[state=open]:animate-enter',
+            'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-right-full',
             config.className
           )}
           open={open}
@@ -64,12 +68,14 @@ export const Toast = React.forwardRef<React.ElementRef<typeof ToastPrimitive.Roo
           duration={duration}
           {...props}
         >
-          <div className="flex items-start space-x-3">
-            <Icon name={config.icon} size={16} className="flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <ToastPrimitive.Title className="text-sm font-semibold">{title}</ToastPrimitive.Title>
+          <div className="flex items-start space-x-3 w-full">
+            <Icon name={config.icon} size={20} className="flex-shrink-0 mt-0.5 opacity-90" />
+            <div className="flex-1 space-y-1">
+              <ToastPrimitive.Title className="text-sm font-semibold font-display">
+                {title}
+              </ToastPrimitive.Title>
               {description && (
-                <ToastPrimitive.Description className="mt-1 text-sm opacity-90">
+                <ToastPrimitive.Description className="text-sm opacity-90 font-body leading-relaxed">
                   {description}
                 </ToastPrimitive.Description>
               )}

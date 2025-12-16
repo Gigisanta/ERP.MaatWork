@@ -80,3 +80,6 @@ export const capacitaciones = pgTable(
 
 
 
+
+
+

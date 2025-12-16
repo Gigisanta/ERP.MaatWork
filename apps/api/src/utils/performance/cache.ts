@@ -19,7 +19,7 @@
 
 import NodeCache from 'node-cache';
 import Redis from 'ioredis';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 // Initialize Redis if REDIS_URL is available
 let redisClient: Redis | null = null;
@@ -115,6 +115,7 @@ interface CacheSizeTracker {
   keyCount: number;
   largestValueBytes: number;
   largestKey: string | null;
+  keySizes: Map<string, number>;
 }
 
 const cacheSizeTrackers = new Map<NodeCache, CacheSizeTracker>();
@@ -133,7 +134,7 @@ function createCacheWithRedis(
   const cache = new NodeCache({
     stdTTL: defaultTtl,
     checkperiod: 600,
-    maxKeys,
+    maxKeys: 0, // Disable internal eviction to prevent "silent" eviction messing up our tracking
     useClones: false,
     deleteOnExpire: true,
     enableLegacyCallbacks: false,
@@ -145,11 +146,16 @@ function createCacheWithRedis(
     keyCount: 0,
     largestValueBytes: 0,
     largestKey: null,
+    keySizes: new Map(),
   };
   cacheSizeTrackers.set(cache, tracker);
 
-  // Wrap set method to check value size
+  // Store original methods before wrapping to avoid recursion
+  const originalGet = cache.get.bind(cache);
   const originalSet = cache.set.bind(cache);
+  const originalDel = cache.del.bind(cache);
+
+  // Wrap set method to check value size
   cache.set = function (key: string, value: unknown, ttl?: number | string) {
     const valueSize = estimateValueSize(value);
 
@@ -164,32 +170,36 @@ function createCacheWithRedis(
 
     // Check if adding this value would exceed total cache size
     const currentSize = tracker.totalSizeBytes;
-    const existingValue = cache.get(key);
-    const existingSize = existingValue ? estimateValueSize(existingValue) : 0;
+    const existingSize = tracker.keySizes.get(key) || 0; // Use map instead of originalGet
     const newTotalSize = currentSize - existingSize + valueSize;
 
-    if (newTotalSize > MAX_TOTAL_CACHE_SIZE_BYTES) {
+    if (newTotalSize > MAX_TOTAL_CACHE_SIZE_BYTES || tracker.keyCount >= maxKeys) {
       // Evict oldest entries (LRU) until we have space
-      const keys = cache.keys();
-      if (keys.length > 0) {
-        // NodeCache doesn't expose LRU directly, so we'll evict oldest TTL entries
-        // This is approximate but better than nothing
-        const oldestKey = keys[0]; // Simple eviction strategy
-        const oldestValue = cache.get(oldestKey);
-        if (oldestValue) {
-          const oldestSize = estimateValueSize(oldestValue);
-          tracker.totalSizeBytes -= oldestSize;
-          tracker.keyCount--;
+      const keysIterator = tracker.keySizes.keys();
+      // Simple eviction strategy based on our map order
+      let nextKey = keysIterator.next();
+
+      while (
+        (tracker.totalSizeBytes - existingSize + valueSize > MAX_TOTAL_CACHE_SIZE_BYTES ||
+          tracker.keyCount >= maxKeys) &&
+        !nextKey.done
+      ) {
+        const oldestKey = nextKey.value;
+        // Don't evict the key we are about to update if it's the oldest (unlikely but possible)
+        if (oldestKey !== key) {
+          cache.del(oldestKey); // Call our wrapper to handle cleanup
         }
-        cache.del(oldestKey);
+        nextKey = keysIterator.next();
       }
     }
 
     // Update tracker
     tracker.totalSizeBytes = tracker.totalSizeBytes - existingSize + valueSize;
-    if (!existingValue) {
+    if (existingSize === 0) {
       tracker.keyCount++;
     }
+
+    tracker.keySizes.set(key, valueSize);
 
     if (valueSize > tracker.largestValueBytes) {
       tracker.largestValueBytes = valueSize;
@@ -205,15 +215,17 @@ function createCacheWithRedis(
   };
 
   // Wrap del method to update tracker
-  const originalDel = cache.del.bind(cache);
+  // AI_DECISION: Use keySizes map instead of originalGet to avoid recursion
+  // Justificación: cache.get may be intercepted and call _check, which can call del again
+  // Impacto: Prevents "Maximum call stack size exceeded" error
   cache.del = function (keys: string | string[]) {
     const keysArray = Array.isArray(keys) ? keys : [keys];
     for (const key of keysArray) {
-      const value = cache.get(key);
-      if (value) {
-        const valueSize = estimateValueSize(value);
-        tracker.totalSizeBytes -= valueSize;
+      const size = tracker.keySizes.get(key);
+      if (size !== undefined) {
+        tracker.totalSizeBytes -= size;
         tracker.keyCount--;
+        tracker.keySizes.delete(key);
 
         if (key === tracker.largestKey) {
           // Reset largest tracking
@@ -232,6 +244,7 @@ function createCacheWithRedis(
     tracker.keyCount = 0;
     tracker.largestValueBytes = 0;
     tracker.largestKey = null;
+    tracker.keySizes.clear();
     return originalFlushAll();
   };
 
@@ -282,7 +295,7 @@ function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default')
 
       // Track cache metrics (async, non-blocking)
       if (value !== undefined) {
-        import('./metrics')
+        import('../metrics')
           .then(({ cacheHitsTotal }) => {
             cacheHitsTotal.inc({ cache_type: cacheType });
           })
@@ -290,7 +303,7 @@ function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default')
             // Silently fail metrics
           });
       } else {
-        import('./metrics')
+        import('../metrics')
           .then(({ cacheMissesTotal }) => {
             cacheMissesTotal.inc({ cache_type: cacheType });
           })

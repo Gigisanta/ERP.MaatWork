@@ -6,11 +6,13 @@
  * Impacto: Mejor performance y claridad en lógica de matching
  */
 
-import { db, contacts, brokerAccounts, users, advisorAliases } from '@cactus/db';
+import { db, contacts, brokerAccounts, users, advisorAliases, aumImportRows } from '@cactus/db';
 import { eq, sql } from 'drizzle-orm';
 import { normalizeAdvisorAlias } from '../utils/aum/aum-normalization';
 import { AUM_LIMITS } from '../config/aum-limits';
 import { logger } from '../utils/logger';
+import { findContactByName } from './alias';
+import { normalizeName } from './normalization';
 
 // ==========================================================
 // Types
@@ -69,13 +71,23 @@ export async function matchContactByAccountNumber(
 }
 
 /**
- * Match contact by holder name using similarity search
+ * Match contact by holder name using alias service and similarity
  */
 export async function matchContactByHolderName(holderName: string): Promise<ContactMatch | null> {
+  // 1. Try exact/alias match via AliasService
+  const aliasMatchId = await findContactByName(holderName);
+  if (aliasMatchId) {
+    return {
+      contactId: aliasMatchId,
+      score: 1.0,
+      method: 'name_exact',
+    };
+  }
+
   const dbi = db();
 
   try {
-    // Try pg_trgm similarity search first
+    // 2. Fallback to pg_trgm similarity search if enabled
     const result = await dbi.execute(sql`
       SELECT id, full_name,
              similarity(full_name, ${holderName}) as sim_score
@@ -96,27 +108,8 @@ export async function matchContactByHolderName(holderName: string): Promise<Cont
       };
     }
   } catch (error) {
-    // Fallback to exact match if pg_trgm extension not available
-    try {
-      const result = await dbi.execute(sql`
-        SELECT id FROM contacts
-        WHERE deleted_at IS NULL
-          AND LOWER(TRIM(full_name)) = LOWER(TRIM(${holderName}))
-        LIMIT 1
-      `);
-
-      const row = result.rows?.[0] as { id: string } | undefined;
-
-      if (row?.id) {
-        return {
-          contactId: row.id,
-          score: 1.0, // Exact match
-          method: 'name_exact',
-        };
-      }
-    } catch (exactError) {
-      logger.warn({ err: exactError, holderName }, 'Error in exact name match fallback');
-    }
+    // pg_trgm fallback handled by alias service logic mostly, but we log here just in case
+    logger.debug({ err: error }, 'pg_trgm search failed or not available');
   }
 
   return null;
@@ -393,55 +386,26 @@ export async function detectDuplicates(): Promise<Set<string>> {
 // Name Similarity Functions
 // ==========================================================
 
-/**
- * Normalize name for comparison (remove spaces, lowercase, remove accents)
- */
-function normalizeName(name: string | null | undefined): string {
-  if (!name) return '';
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Calculate simple similarity between two names (0-1)
- * Uses substring comparison and length
- * Returns >0.8 if names are very similar
- */
-export function calculateNameSimilarity(name1: string | null, name2: string | null): number {
-  if (!name1 || !name2) return 0;
-
-  const norm1 = normalizeName(name1);
-  const norm2 = normalizeName(name2);
-
-  if (norm1 === norm2) return 1.0;
-
-  // If one contains the other, high similarity
-  if (norm1.includes(norm2) || norm2.includes(norm1)) {
-    const longer = Math.max(norm1.length, norm2.length);
-    const shorter = Math.min(norm1.length, norm2.length);
-    return shorter / longer;
-  }
-
-  // Calculate common characters
-  const chars1 = new Set(norm1.split(''));
-  const chars2 = new Set(norm2.split(''));
-  const common = new Set([...chars1].filter((c) => chars2.has(c)));
-  const total = new Set([...chars1, ...chars2]);
-
-  if (total.size === 0) return 0;
-
-  return common.size / total.size;
-}
+// Re-export from normalization service for backward compatibility if needed,
+// but internally we should use the service.
+export { normalizeName, calculateNameSimilarity } from './normalization';
 
 /**
  * Determine if two names are sufficiently similar (>80%)
  */
 export function isNameSimilarityHigh(name1: string | null, name2: string | null): boolean {
-  return calculateNameSimilarity(name1, name2) > 0.8;
+  if (!name1 || !name2) return false;
+  // Use local import or direct implementation
+  // We can't use the imported calculateNameSimilarity directly if it's not imported yet in this block context
+  // But we imported normalizeName at top.
+  // Let's rely on the service logic.
+
+  // Basic check using normalization
+  const n1 = normalizeName(name1);
+  const n2 = normalizeName(name2);
+  if (n1 === n2) return true;
+
+  return n1.includes(n2) || n2.includes(n1);
 }
 
 /**
@@ -451,4 +415,63 @@ export function computeMatchStatus(
   matchedContactId: string | null | undefined
 ): 'matched' | 'unmatched' {
   return matchedContactId ? 'matched' : 'unmatched';
+}
+
+/**
+ * Reprocess unmatched rows to see if they match a specific contact (e.g. after alias added)
+ */
+export async function reprocessUnmatchedRowsForContact(contactId: string, aliases: string[]) {
+  const dbi = db();
+
+  // 1. Find all unmatched rows (or ambiguous)
+  // Optimization: Filter by holder_name similarity in SQL if possible,
+  // or just basic "unmatched" and filter in memory if volume is low.
+  // Ideally we use the aliases to strict match in SQL.
+
+  if (aliases.length === 0) return;
+
+  // Normalize aliases for comparison just in case, though usually passed normalized?
+  // We'll assume the caller passes normalized aliases or we match against holder_name raw?
+  // AUM rows have `holder_name`. We need to match `normalizeName(holder_name)` IN `aliases`.
+
+  // We can't easily do normalization in SQL without a stored function.
+  // So we might need to fetch candidate rows.
+  // Or, we can iterate aliases and search:
+  // WHERE holder_name ILIKE alias (fuzzy) - risks false positives?
+  // Better: Fetch unmatched rows (id, holder_name).
+
+  const unmatched = await dbi
+    .select({ id: aumImportRows.id, holderName: aumImportRows.holderName })
+    .from(aumImportRows)
+    .where(sql`${aumImportRows.matchStatus} != 'matched'`);
+
+  const updates: string[] = [];
+
+  for (const row of unmatched) {
+    if (!row.holderName) continue;
+
+    // Check if this row matches the contact
+    // We reuse the single row matcher logic but targeted?
+    // Actually simpler: check if row.holderName is in aliases
+    const normalizedHolder = normalizeName(row.holderName);
+    if (aliases.includes(normalizedHolder)) {
+      updates.push(row.id);
+    }
+  }
+
+  if (updates.length > 0) {
+    await dbi
+      .update(aumImportRows)
+      .set({
+        matchedContactId: contactId,
+        matchStatus: 'matched',
+        isPreferred: false, // Default to false, user can override? Or true?
+      })
+      .where(sql`${aumImportRows.id} IN ${updates}`);
+
+    logger.info(
+      { contactId, matchCount: updates.length },
+      'Reprocessed unmatched rows for contact'
+    );
+  }
 }

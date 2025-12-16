@@ -85,13 +85,24 @@ export async function apiCall<T>(
   let response: Response;
   try {
     response = await fetch(url, fetchOptions);
+  } catch (fetchError) {
+    clearTimeout(timeout);
+    // Network error (ECONNREFUSED, timeout, etc.)
+    const error = new Error(fetchError instanceof Error ? fetchError.message : 'Network error');
+    // Mark as network error (no status code)
+    (error as Error & { status?: number; isNetworkError?: boolean }).isNetworkError = true;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+    const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+    const error = new Error(errorMessage);
+    // Attach status code to error for better error handling
+    (error as Error & { status?: number }).status = response.status;
+    throw error;
   }
 
   const data = await response.json();
@@ -119,6 +130,15 @@ export async function getDashboardKPIs(): Promise<ApiResponse<import('@/types').
  */
 export async function getTeams(): Promise<ApiResponse<import('@/types/team').Team[]>> {
   return apiCall('/v1/teams');
+}
+
+/**
+ * Helper para obtener dashboard del miembro en Server Components
+ */
+export async function getMemberDashboard(): Promise<
+  ApiResponse<import('@/lib/api/teams').MemberDashboardResponse>
+> {
+  return apiCall('/v1/teams/member-dashboard');
 }
 
 /**

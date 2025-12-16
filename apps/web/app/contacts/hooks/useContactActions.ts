@@ -9,6 +9,7 @@ import {
   deleteContact,
   updateContactField as updateContactFieldApi,
   updateContactTags as updateContactTagsApi,
+  moveContactToStage, // AI_DECISION: Use dedicated pipeline API for stage changes
 } from '@/lib/api';
 import { useToast } from '@/lib/hooks/useToast';
 import type { Contact, Tag, ApiResponse, ContactFieldValue } from '@/types';
@@ -26,7 +27,7 @@ export interface ContactActionsActions {
   handleDeleteContact: () => Promise<void>;
   updateContactField: (contactId: string, field: string, value: ContactFieldValue) => Promise<void>;
   updateContactTags: (contactId: string, add: string[], remove: string[]) => Promise<void>;
-  handleStageChange: (contactId: string, stageId: string | null) => void;
+  handleStageChange: (contactId: string, stageId: string | null) => Promise<void>;
   handleTagsChange: (contactId: string, add: string[], remove: string[]) => void;
   handleTextInputSave: (contactId: string, field: string, value: string) => void;
 }
@@ -200,10 +201,41 @@ export function useContactActions({
   );
 
   const handleStageChange = useCallback(
-    (contactId: string, stageId: string | null) => {
-      updateContactField(contactId, 'pipelineStageId', stageId);
+    async (contactId: string, stageId: string | null) => {
+      // AI_DECISION: Use moveContactToStage instead of updateContactField for consistency
+      // Justificación: moveContactToStage handles automation, WIP limits, and specific history logs.
+      // updateContactField (PATCH /contacts/:id) is generic and might miss these checks.
+      // Impacto: Ensures same behavior as Kanban board and Advance button.
+      setSavingContactId(contactId);
+
+      // We do NOT use optimistic update for stage change because it has complex rules (WIP)
+      // and failure is possible (e.g. WIP limit exceeded).
+      // We wait for server response.
+
+      try {
+        if (!stageId) {
+          // If clearing stage, fallback to field update as move requires target stage
+          await updateContactFieldApi(contactId, 'pipelineStageId', null);
+        } else {
+          const response = await moveContactToStage(contactId, stageId);
+          if (!response.success) {
+            throw new Error(response.error || 'Error al cambiar etapa');
+          }
+        }
+
+        mutateContacts(); // Revalidate list
+        showToast('Etapa actualizada', undefined, 'success');
+      } catch (err) {
+        showToast(
+          'Error al cambiar etapa',
+          err instanceof Error ? err.message : 'Error desconocido',
+          'error'
+        );
+      } finally {
+        setSavingContactId(null);
+      }
     },
-    [updateContactField]
+    [showToast, mutateContacts]
   );
 
   const handleTagsChange = useCallback(

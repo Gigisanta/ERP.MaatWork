@@ -2,11 +2,13 @@
 // Justificación: Eliminates redundant API calls on navigation and provides automatic caching
 // Impacto: Reduces API load, improves perceived performance with instant cache hits
 
+import React from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useAuth } from '../app/auth/AuthContext';
 import { API_BASE_URL } from './api-url';
 import { fetchJson } from './fetch-client';
 import type { ApiResponse } from './api-client';
+import { ApiError } from './api-error';
 import type { AumRow, UserApiResponse } from '@/types';
 import { logger } from './logger';
 
@@ -380,7 +382,6 @@ export function usePortfolioComparison(
   const postFetcher = async ([url, body]: [string, unknown]): Promise<
     ApiResponse<{ results: unknown[] }>
   > => {
-    const { fetchJson } = await import('./fetch-client');
     return fetchJson<ApiResponse<{ results: unknown[] }>>(url, {
       method: 'POST',
       headers: {
@@ -680,5 +681,139 @@ export function useInvalidateCapacitacionesCache() {
     const commonKeys = [`${API_BASE_URL}/v1/capacitaciones`];
 
     await Promise.all(commonKeys.map((key) => mutate(key, undefined, { revalidate: true })));
+  };
+}
+
+// ==========================================================
+// Calendar Hooks
+// ==========================================================
+
+import { getCalendarEvents, getTeamCalendarEvents } from './api/calendar';
+import type { GetEventsParams, CalendarEvent } from './api/calendar';
+
+/**
+ * Hook para obtener eventos del calendario personal del usuario
+ *
+ * AI_DECISION: Agregar logging comprehensivo para debugging
+ * Justificación: Permite identificar problemas en producción con conexión Google Calendar
+ * Impacto: Mejor visibilidad de errores, facilita troubleshooting
+ */
+export function useCalendarEvents(params?: GetEventsParams) {
+  const { user } = useAuth();
+
+  const queryParams = new URLSearchParams();
+  if (params?.calendarId) queryParams.set('calendarId', params.calendarId);
+  if (params?.timeMin) queryParams.set('timeMin', params.timeMin);
+  if (params?.timeMax) queryParams.set('timeMax', params.timeMax);
+  if (params?.maxResults) queryParams.set('maxResults', params.maxResults.toString());
+
+  const queryString = queryParams.toString();
+  const url = `${API_BASE_URL}/v1/calendar/personal/events${queryString ? `?${queryString}` : ''}`;
+
+  // AI_DECISION: Only fetch if params are provided (implying intent to fetch)
+  // Justificación: Allows conditional fetching based on connection status from the component
+  // Impacto: Prevents 400 errors loop when not connected
+  const swrKey: string | null = user && params ? url : null;
+
+  // Log cuando se intenta hacer fetch
+  React.useEffect(() => {
+    if (swrKey) {
+      logger.debug('[useCalendarEvents] Fetching calendar events', {
+        url: swrKey,
+        paramsProvided: !!params,
+        userId: user?.id,
+      });
+    }
+  }, [swrKey, params, user?.id]);
+
+  // AI_DECISION: Optimizar caching específico para eventos de calendario
+  // Justificación: Eventos cambian con menos frecuencia que otros datos
+  // Impacto: Reduce llamadas API, mejor performance, menos carga en Google API
+  const {
+    data: response,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<ApiResponse<CalendarEvent[]>>(swrKey, swrKey ? fetcher : null, {
+    ...swrConfig,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    shouldRetryOnError: false, // Don't retry automatically
+    dedupingInterval: 60000, // 1 minuto - evita requests duplicados
+    refreshInterval: 300000, // 5 minutos - auto-refresh periódico
+    revalidateOnMount: true, // Revalidar al montar solo si datos están stale
+  });
+
+  // Log cuando hay error
+  React.useEffect(() => {
+    if (error) {
+      const apiError = error as ApiError | Error;
+      logger.error('[useCalendarEvents] Error fetching calendar events', {
+        error: apiError.message,
+        status: apiError instanceof ApiError ? apiError.status : undefined,
+        isAuthError: apiError instanceof ApiError ? apiError.isAuthError : false,
+        userId: user?.id,
+        url: swrKey,
+      });
+    }
+  }, [error, user?.id, swrKey]);
+
+  // Log cuando hay datos exitosos
+  React.useEffect(() => {
+    if (response?.success && response.data) {
+      logger.info('[useCalendarEvents] Calendar events fetched successfully', {
+        eventCount: Array.isArray(response.data) ? response.data.length : 0,
+        userId: user?.id,
+      });
+    } else if (response && !response.success) {
+      logger.warn('[useCalendarEvents] API returned unsuccessful response', {
+        hasError: !!response.error,
+        userId: user?.id,
+      });
+    }
+  }, [response, user?.id]);
+
+  return {
+    data: (response?.data as CalendarEvent[]) || [],
+    error,
+    isLoading,
+    mutate,
+  };
+}
+
+// Hook for Team Calendar
+export function useTeamCalendar(teamId: string, params?: Omit<GetEventsParams, 'calendarId'>) {
+  const { user } = useAuth();
+
+  const queryParams = new URLSearchParams();
+  if (params?.timeMin) queryParams.set('timeMin', params.timeMin);
+  if (params?.timeMax) queryParams.set('timeMax', params.timeMax);
+  if (params?.maxResults) queryParams.set('maxResults', params.maxResults.toString());
+
+  const queryString = queryParams.toString();
+  const url = `${API_BASE_URL}/v1/calendar/team/${teamId}/events${queryString ? `?${queryString}` : ''}`;
+
+  // AI_DECISION: Only fetch if params are provided (implying intent to fetch and connection exists)
+  // Justificación: Prevents 404/400 errors loop when calendar is not connected
+  // Impacto: Improves performance and prevents error log spam
+  const swrKey: string | null = user && teamId && params ? url : null;
+
+  const {
+    data: response,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<ApiResponse<unknown[]>>(swrKey, swrKey ? fetcher : null, {
+    ...swrConfig,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+    shouldRetryOnError: false, // Don't retry automatically
+  });
+
+  return {
+    data: (response?.data as unknown[]) || [],
+    error,
+    isLoading,
+    mutate,
   };
 }

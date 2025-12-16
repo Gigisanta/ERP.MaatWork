@@ -18,6 +18,8 @@ import {
   Icon,
   Spinner,
 } from '@cactus/ui';
+import { Feather } from 'lucide-react';
+import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
 function LoginPageContent() {
   const { login, user, initialized } = useAuth();
@@ -31,6 +33,11 @@ function LoginPageContent() {
   const [fieldErrors, setFieldErrors] = useState<{ identifier?: string; password?: string }>({});
   const hasRedirectedRef = useRef(false);
   const [mounted, setMounted] = useState(false);
+
+  // AI_DECISION: Detectar errores de OAuth y success
+  // Justificación: Mostrar mensajes apropiados cuando vienen de Google OAuth
+  const oauthError = searchParams.get('error');
+  const googleAuthSuccess = searchParams.get('google_auth');
 
   // Trigger mount animation
   useEffect(() => {
@@ -165,7 +172,9 @@ function LoginPageContent() {
                 `}
                 style={{ transitionDelay: '200ms' }}
               >
-                <span className="text-3xl">⚖️</span>
+                <span className="text-primary">
+                  <Feather className="w-10 h-10" strokeWidth={1.5} />
+                </span>
               </div>
 
               {/* Title with stagger animation */}
@@ -176,8 +185,9 @@ function LoginPageContent() {
                 `}
                 style={{ transitionDelay: '300ms' }}
               >
-                <Heading level={1} className="text-secondary text-3xl tracking-tight">
-                  Maat
+                <Heading level={1} className="text-3xl tracking-tight">
+                  <span className="text-primary">Maat</span>
+                  <span className="text-secondary">Work</span>
                 </Heading>
               </div>
 
@@ -286,6 +296,24 @@ function LoginPageContent() {
                   </Link>
                 </div>
 
+                {/* OAuth Error Alert */}
+                {oauthError === 'no_account' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="warning" title="Cuenta no encontrada">
+                      No tienes una cuenta con este email de Google. Por favor regístrate primero.
+                    </Alert>
+                  </div>
+                )}
+
+                {/* Success Alert */}
+                {googleAuthSuccess === 'success' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="success" title="¡Bienvenido!">
+                      Has iniciado sesión exitosamente con Google.
+                    </Alert>
+                  </div>
+                )}
+
                 {/* Error Alert */}
                 {error && (
                   <div className="animate-fade-in">
@@ -325,6 +353,33 @@ function LoginPageContent() {
                       'Iniciar Sesión'
                     )}
                   </Button>
+                </div>
+
+                {/* Divider */}
+                <div
+                  className={`
+                    relative transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '650ms' }}
+                >
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-text-muted">O continúa con</span>
+                  </div>
+                </div>
+
+                {/* Google OAuth Button */}
+                <div
+                  className={`
+                    transition-all duration-500 ease-out
+                    ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+                  `}
+                  style={{ transitionDelay: '700ms' }}
+                >
+                  <GoogleOAuthButton context="login" disabled={loading} />
                 </div>
               </Stack>
             </form>
@@ -374,7 +429,8 @@ function LoginPageContent() {
           style={{ transitionDelay: '800ms' }}
         >
           <Text size="xs" color="muted">
-            © 2024 Maat. Todos los derechos reservados.
+            © 2024 <span className="text-primary">Maat</span>
+            <span className="text-secondary">Work</span>. Todos los derechos reservados.
           </Text>
         </div>
       </div>

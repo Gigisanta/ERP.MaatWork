@@ -7,7 +7,9 @@ describe('cn', () => {
   });
 
   it('debería manejar clases condicionales', () => {
+    // eslint-disable-next-line no-constant-binary-expression
     expect(cn('foo', false && 'bar', 'baz')).toBe('foo baz');
+    // eslint-disable-next-line no-constant-binary-expression
     expect(cn('foo', true && 'bar', 'baz')).toBe('foo bar baz');
   });
 

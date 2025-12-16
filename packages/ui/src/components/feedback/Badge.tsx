@@ -11,8 +11,12 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
     | 'success'
     | 'warning'
     | 'error'
+    | 'joy'
+    | 'info'
     | 'outline';
   size?: 'sm' | 'md' | 'lg';
+  /** Enable pop animation on mount */
+  animated?: boolean;
   children: React.ReactNode;
   className?: string;
 }
@@ -29,15 +33,17 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
  * ```
  */
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ variant = 'default', size = 'md', children, className, ...props }, ref) => {
+  ({ variant = 'default', size = 'md', animated = false, children, className, ...props }, ref) => {
     const variantClasses = {
       default: 'bg-surface-hover text-text',
-      primary: 'bg-primary-subtle text-primary',
-      secondary: 'bg-secondary-subtle text-secondary',
-      accent: 'bg-accent-subtle text-accent-hover',
-      success: 'bg-success-subtle text-success',
-      warning: 'bg-warning-subtle text-warning',
-      error: 'bg-error-subtle text-error',
+      primary: 'bg-primary-subtle text-primary border border-primary/10',
+      secondary: 'bg-secondary-subtle text-secondary border border-secondary/10',
+      accent: 'bg-accent-subtle text-accent-hover border border-accent/10',
+      success: 'bg-success-subtle text-success border border-success/10',
+      warning: 'bg-warning-subtle text-warning border border-warning/10',
+      error: 'bg-error-subtle text-error border border-error/10',
+      joy: 'bg-joy-subtle text-joy-hover border border-joy/10',
+      info: 'bg-info-subtle text-info-hover border border-info/10',
       outline: 'bg-transparent border border-border text-text',
     };
 
@@ -51,9 +57,10 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
       <span
         ref={ref}
         className={cn(
-          'inline-flex items-center rounded-full font-medium font-body',
+          'inline-flex items-center rounded-full font-medium font-body transition-colors',
           variantClasses[variant],
           sizeClasses[size],
+          animated && 'animate-pop',
           className
         )}
         {...props}

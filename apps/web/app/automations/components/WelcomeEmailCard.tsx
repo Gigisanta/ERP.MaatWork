@@ -41,6 +41,8 @@ export default function WelcomeEmailCard() {
         setLoading(true);
         setError(null);
 
+        // AI_DECISION: Handle 404 gracefully without generic error logging
+        // Justificación: 404 is expected on first load if not configured
         const response = await getAutomationConfigByName(AUTOMATION_NAME);
 
         if (response.success && response.data) {
@@ -48,7 +50,7 @@ export default function WelcomeEmailCard() {
           setWebhookUrl(response.data.webhookUrl || '');
           setEnabled(response.data.enabled);
         } else {
-          // No existe configuración, usar valores por defecto
+          // Fallback if success=false but no error (unlikely)
           setWebhookUrl('http://localhost:5678/webhook-test/abax-bienvenida-upload');
           setEnabled(true);
         }
@@ -56,6 +58,10 @@ export default function WelcomeEmailCard() {
         // Manejar 404 como "no existe configuración" (caso normal)
         if (err instanceof ApiError && err.status === 404) {
           // No existe configuración, usar valores por defecto
+          // AI_DECISION: Log debug instead of error for expected 404
+          logger.debug('Automation config not found (404), using defaults', {
+            name: AUTOMATION_NAME,
+          });
           setWebhookUrl('http://localhost:5678/webhook-test/abax-bienvenida-upload');
           setEnabled(true);
         } else {

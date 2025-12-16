@@ -1,5 +1,5 @@
 /* =============================================================================
-   Maat Design System v2.3.0 - Base Styles (Refined & Readable)
+   MaatWork Design System v2.3.0 - Base Styles (Refined & Readable)
    Typography: Outfit (Display) + Plus Jakarta Sans (Body)
    Colors: Primary (Soft Purple), Secondary (Warm Stone), Accent (Soft Green), Joy (Sunshine)
    ============================================================================= */
@@ -96,8 +96,8 @@
 
   /* Border Radius - Modern & Round */
   --radius-sm: 0.25rem;
-  --radius-md: 0.75rem; /* Increased from 0.5rem */
-  --radius-lg: 1rem;    /* Increased from 0.75rem */
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
   --radius-full: 9999px;
@@ -106,6 +106,10 @@
   --transition-fast: 150ms;
   --transition-base: 300ms;
   --transition-slow: 500ms;
+
+  /* Typography Fonts */
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
 }
 
 /* Dark Mode - "Warm Dark" Stone 950 Base */

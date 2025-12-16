@@ -5,7 +5,7 @@
  * PATCH /users/me - Update current user profile
  */
 import type { Request } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users, googleOAuthTokens } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { updateProfileSchema } from '../schemas';
@@ -35,7 +35,28 @@ export const handleGetCurrentUser = createRouteHandler(async (req: Request) => {
     throw new HttpError(404, 'Usuario no encontrado');
   }
 
-  return user;
+  // AI_DECISION: Check if user has Google Calendar connected in profile endpoint too
+  // Justificación: Consistencia con el endpoint /auth/me y soporte para actualizaciones de perfil
+  // Impacto: UI de conexión/desconexión funciona correctamente en la página de perfil
+  let isGoogleConnected = false;
+  try {
+    const [token] = await db()
+      .select({ id: googleOAuthTokens.id })
+      .from(googleOAuthTokens)
+      .where(eq(googleOAuthTokens.userId, user.id))
+      .limit(1);
+
+    isGoogleConnected = !!token;
+    req.log.info({ userId, isGoogleConnected }, 'Checked Google connection status in profile');
+  } catch (error) {
+    // If table doesn't exist yet or DB error, assume not connected but don't fail request
+    req.log.warn({ err: error }, 'Failed to check Google connection status');
+  }
+
+  return {
+    ...user,
+    isGoogleConnected,
+  };
 });
 
 /**
@@ -75,5 +96,23 @@ export const handleUpdateCurrentUserProfile = createRouteHandler(async (req: Req
 
   req.log.info({ userId, phone }, 'user profile updated');
 
-  return updatedUser;
+  // Also include Google connection status for consistency
+  let isGoogleConnected = false;
+  try {
+    const [token] = await db()
+      .select({ id: googleOAuthTokens.id })
+      .from(googleOAuthTokens)
+      .where(eq(googleOAuthTokens.userId, userId))
+      .limit(1);
+
+    isGoogleConnected = !!token;
+    req.log.info({ userId, isGoogleConnected }, 'Checked Google connection status in profile');
+  } catch (error) {
+    req.log.warn({ err: error }, 'Failed to check Google connection status');
+  }
+
+  return {
+    ...updatedUser,
+    isGoogleConnected,
+  };
 });

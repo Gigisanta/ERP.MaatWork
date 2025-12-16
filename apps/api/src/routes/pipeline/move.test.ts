@@ -11,8 +11,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
 import { requireAuth } from '../../auth/middlewares';
 import { canAccessContact } from '../../auth/authorization';
-import { transactionWithLogging } from '../../utils/db-transactions';
-import { sendWebhook } from '../../utils/webhook-client';
+import { transactionWithLogging } from '../../utils/database/db-transactions';
+import { sendWebhook } from '../../utils/http/webhook-client';
 
 // Mock dependencies
 vi.mock('@cactus/db', () => ({

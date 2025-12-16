@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Card,
@@ -135,76 +135,78 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
     return null;
   }
 
+  // AI_DECISION: Changed layout to side-by-side grid
+  // Justificación: Optimized space usage for dashboard
+  // Impacto: Metric cards on left/right of chart depending on screen size, better information density
   return (
-    <Stack direction="column" gap="lg">
-      {/* Gráfico principal */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <CardTitle>Métricas del Mes</CardTitle>
-          <div className="w-64">
-            <Select
-              items={chartItems}
-              value={chartView}
-              onValueChange={(value) => setChartView(value as ChartView)}
-              className="text-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {chartView === 'goals' && (
-            <GoalsComparisonChart currentMonth={metricsData} goals={goalsData} />
-          )}
-          {chartView === 'businessLines' && (
-            <BusinessLineChart businessLineClosures={metricsData.businessLineClosures} />
-          )}
-          {chartView === 'transitionTimes' && (
-            <TransitionTimesChart transitionTimes={metricsData.transitionTimes} />
-          )}
-          {chartView === 'marketConversion' && (
-            <MarketTypeConversionChart marketTypeConversion={metricsData.marketTypeConversion} />
-          )}
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Gráfico principal - 8 columnas en LG */}
+      <div className="lg:col-span-8">
+        <Card className="h-full">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 pb-2">
+            <CardTitle>Métricas del Mes</CardTitle>
+            <div className="w-56">
+              <Select
+                items={chartItems}
+                value={chartView}
+                onValueChange={(value) => setChartView(value as ChartView)}
+                className="text-xs"
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              {chartView === 'goals' && (
+                <GoalsComparisonChart currentMonth={metricsData} goals={goalsData} />
+              )}
+              {chartView === 'businessLines' && (
+                <BusinessLineChart businessLineClosures={metricsData.businessLineClosures} />
+              )}
+              {chartView === 'transitionTimes' && (
+                <TransitionTimesChart transitionTimes={metricsData.transitionTimes} />
+              )}
+              {chartView === 'marketConversion' && (
+                <MarketTypeConversionChart
+                  marketTypeConversion={metricsData.marketTypeConversion}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Grid de métricas individuales con animaciones staggered */}
-      <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
-        <GridItem>
-          <MetricCard
-            title="Nuevos Contactos"
-            actual={metricsData.newProspects}
-            goal={goalsData?.newProspectsGoal ?? 0}
-            color={METRIC_COLORS['Nuevos Contactos']}
-            index={0}
-          />
-        </GridItem>
-        <GridItem>
-          <MetricCard
-            title="Primeras Reuniones"
-            actual={metricsData.firstMeetings}
-            goal={goalsData?.firstMeetingsGoal ?? 0}
-            color={METRIC_COLORS['Primeras Reuniones']}
-            index={1}
-          />
-        </GridItem>
-        <GridItem>
-          <MetricCard
-            title="Segundas Reuniones"
-            actual={metricsData.secondMeetings}
-            goal={goalsData?.secondMeetingsGoal ?? 0}
-            color={METRIC_COLORS['Segundas Reuniones']}
-            index={2}
-          />
-        </GridItem>
-        <GridItem>
-          <MetricCard
-            title="Nuevos Clientes"
-            actual={metricsData.newClients}
-            goal={goalsData?.newClientsGoal ?? 0}
-            color={METRIC_COLORS['Nuevos Clientes']}
-            index={3}
-          />
-        </GridItem>
-      </Grid>
-    </Stack>
+      {/* Grid de métricas individuales - 4 columnas en LG */}
+      {/* AI_DECISION: 2x2 Grid for Metric Cards to reduce vertical space */}
+      <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <MetricCard
+          title="Nuevos Contactos"
+          actual={metricsData.newProspects}
+          goal={goalsData?.newProspectsGoal ?? 0}
+          color={METRIC_COLORS['Nuevos Contactos']}
+          index={0}
+        />
+        <MetricCard
+          title="Primeras Reuniones"
+          actual={metricsData.firstMeetings}
+          goal={goalsData?.firstMeetingsGoal ?? 0}
+          color={METRIC_COLORS['Primeras Reuniones']}
+          index={1}
+        />
+        <MetricCard
+          title="Segundas Reuniones"
+          actual={metricsData.secondMeetings}
+          goal={goalsData?.secondMeetingsGoal ?? 0}
+          color={METRIC_COLORS['Segundas Reuniones']}
+          index={2}
+        />
+        <MetricCard
+          title="Nuevos Clientes"
+          actual={metricsData.newClients}
+          goal={goalsData?.newClientsGoal ?? 0}
+          color={METRIC_COLORS['Nuevos Clientes']}
+          index={3}
+        />
+      </div>
+    </div>
   );
 }

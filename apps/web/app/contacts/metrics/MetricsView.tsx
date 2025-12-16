@@ -258,6 +258,33 @@ export default function MetricsView() {
             marketTypeConversion={currentMonth.marketTypeConversion}
           />
 
+          {/* Average Interactions by Stage */}
+          {metrics?.averageInteractions && metrics.averageInteractions.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Promedio de Interacciones por Etapa</CardTitle>
+                <Text size="sm" color="secondary">
+                  Número promedio de interacciones por contacto en cada etapa
+                </Text>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {metrics.averageInteractions.map((item) => (
+                    <div
+                      key={item.stageId}
+                      className="p-4 rounded-lg border border-border bg-surface"
+                    >
+                      <Text size="sm" color="secondary" className="mb-1">
+                        {item.stageName}
+                      </Text>
+                      <Heading size="lg">{item.averageInteractions.toFixed(1)}</Heading>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Link al historial */}
           <Card className="mb-6">
             <CardContent className="pt-6">

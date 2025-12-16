@@ -4,7 +4,7 @@
  * Zod schemas for validating users CRUD operations
  */
 import { z } from 'zod';
-import { paginationQuerySchema, idParamSchema } from '../../utils/common-schemas';
+import { paginationQuerySchema, idParamSchema } from '../../utils/validation/common-schemas';
 
 // ==========================================================
 // Body Schemas

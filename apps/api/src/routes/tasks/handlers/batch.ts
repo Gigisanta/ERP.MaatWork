@@ -10,14 +10,14 @@ import type { Request, Response, NextFunction } from 'express';
 import { db, tasks, contacts } from '@cactus/db';
 import { eq, desc, and, isNull, inArray, sql, type InferSelectModel } from 'drizzle-orm';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';
-import { createDrizzleLogger } from '../../../utils/db-logger';
+import { createDrizzleLogger } from '../../../utils/database/db-logger';
 
 /**
  * GET /tasks/batch - Obtener tareas de múltiples contactos (batch)
  */
 export async function handleBatchTasks(req: Request, res: Response, next: NextFunction) {
   try {
-    const { validateBatchIds } = await import('../../../utils/batch-validation');
+    const { validateBatchIds } = await import('../../../utils/database/batch-validation');
 
     const validation = validateBatchIds(req.query.contactIds as string, {
       maxCount: 50, // Límite específico para tasks batch

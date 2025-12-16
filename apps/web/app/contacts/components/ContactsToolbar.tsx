@@ -6,22 +6,15 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { Button, Badge, Icon, Spinner } from '@cactus/ui';
+import { Button, Badge, Icon } from '@cactus/ui';
 import SearchAutocomplete from './SearchAutocomplete';
+import FiltersDropdown from './FiltersDropdown';
 import type { PipelineStage, Tag, Advisor } from '@/types';
 
-// Lazy load FiltersDropdown
-const FiltersDropdown = dynamic(() => import('./FiltersDropdown'), {
-  ssr: false,
-  loading: () => (
-    <div className="shrink-0">
-      <Button variant="outline" size="sm" disabled>
-        <Spinner size="sm" />
-      </Button>
-    </div>
-  ),
-});
+// AI_DECISION: Import FiltersDropdown statically to avoid webpack module resolution issues
+// Justificación: Dynamic import of FiltersDropdown causes webpack to fail resolving @radix-ui/react-dropdown-menu
+// Impacto: Adds ~15KB to initial bundle, but fixes "Cannot read properties of undefined (reading 'call')" error
+// Note: Similar to GoalsComparisonChart in MetricsSection.tsx which had to be imported statically
 
 export interface ContactsToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;

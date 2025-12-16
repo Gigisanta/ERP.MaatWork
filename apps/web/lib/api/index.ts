@@ -30,8 +30,12 @@ export { ApiError } from '../api-error';
 export type { ApiResponse } from '@/types';
 
 // Singleton instance
-import { ApiClient } from './client';
-export const apiClient = new ApiClient();
+export { apiClient } from './client';
+
+// ==========================================================
+// Calendar API
+// ==========================================================
+export * from './calendar';
 
 // ==========================================================
 // Analytics API

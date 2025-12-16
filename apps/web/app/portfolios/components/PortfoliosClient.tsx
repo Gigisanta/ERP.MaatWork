@@ -4,10 +4,9 @@ import { Plus } from 'lucide-react';
 import { usePageTitle } from '../../components/PageTitleContext';
 import { Stack, Heading, Text, Button, Alert, Spinner, Toast } from '@cactus/ui';
 import { usePortfolios } from '../hooks/usePortfolios';
-import { useBenchmarks } from '../hooks/useBenchmarks';
 import { PortfoliosGrid } from './PortfoliosGrid';
 import { PortfolioForm } from './PortfolioForm';
-import { PortfolioDashboard } from './PortfolioDashboard';
+import { PortfolioAnalyticsView } from './PortfolioAnalyticsView';
 import { addPortfolioLine, getPortfolioById } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { Portfolio, PortfolioLine, AddPortfolioLineRequest, RiskLevel } from '@/types';
@@ -20,10 +19,6 @@ interface PortfoliosClientProps {
 
 /**
  * PortfoliosClient - Client Island for portfolio management interactivity
- *
- * AI_DECISION: Extract interactive parts to Client Island for Server Component pattern
- * Justificación: Forms, modals, and state management require client-side interactivity
- * Impacto: Reduces First Load JS ~40KB, better SEO, faster initial load
  */
 export default function PortfoliosClient({ initialPortfolios }: PortfoliosClientProps) {
   usePageTitle('Carteras');
@@ -47,8 +42,6 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
 
   // Use initial portfolios if SWR hasn't loaded yet
   const displayPortfolios = portfolios.length > 0 ? portfolios : initialPortfolios;
-
-  const { benchmarks } = useBenchmarks();
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
   const [showPortfolioForm, setShowPortfolioForm] = useState(false);
@@ -90,11 +83,13 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   );
 
   const handleCreatePortfolio = useCallback(() => {
+    console.log('Opening Create Portfolio Form');
     setEditingPortfolio(null);
     setShowPortfolioForm(true);
   }, []);
 
   const handleEditPortfolio = useCallback((portfolio: Portfolio) => {
+    console.log('Opening Edit Portfolio Form for:', portfolio.name);
     setEditingPortfolio(portfolio);
     setShowPortfolioForm(true);
   }, []);
@@ -276,19 +271,14 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
         />
       </div>
 
-      {/* Dashboard Unificado: Gráfico + Bloomberg */}
+      {/* Dashboard Unificado: Gráfico + Watchlist */}
       <div
         className={`transition-all duration-500 ease-out ${
           mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
         style={{ transitionDelay: '150ms' }}
       >
-        <PortfolioDashboard
-          portfolios={displayPortfolios}
-          benchmarks={benchmarks}
-          selectedPortfolioId={selectedPortfolioId}
-          onPortfolioSelect={setSelectedPortfolioId}
-        />
+        <PortfolioAnalyticsView portfolios={displayPortfolios} />
       </div>
 
       {/* Portfolio Form Drawer */}

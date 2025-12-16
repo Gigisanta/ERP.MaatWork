@@ -155,6 +155,15 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
       ),
     },
     {
+      key: 'openTasks',
+      header: 'Tareas Pendientes',
+      render: (member) => (
+        <div className="text-center">
+          <Badge variant={member.openTasks > 5 ? 'warning' : 'default'}>{member.openTasks}</Badge>
+        </div>
+      ),
+    },
+    {
       key: 'contacts',
       header: 'Contactos (mes)',
       render: (member) => (
@@ -164,11 +173,20 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
       ),
     },
     {
-      key: 'notes',
-      header: 'Notas (30d)',
+      key: 'firstMeetings',
+      header: '1° Reunión (30d)',
       render: (member) => (
         <div className="text-center">
-          <Text>{member.notesCreatedLast30Days}</Text>
+          <Text>{member.firstMeetingsLast30Days}</Text>
+        </div>
+      ),
+    },
+    {
+      key: 'secondMeetings',
+      header: '2° Reunión (30d)',
+      render: (member) => (
+        <div className="text-center">
+          <Text>{member.secondMeetingsLast30Days}</Text>
         </div>
       ),
     },
@@ -306,10 +324,10 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
         <Card className="bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-900">
           <CardContent className="p-3 text-center">
             <Text size="xl" weight="bold" className="text-purple-700 dark:text-purple-400">
-              {summary.totalNotesLast30Days}
+              {summary.totalFirstMeetingsLast30Days || 0}
             </Text>
             <Text size="xs" color="secondary">
-              Notas (30d)
+              1° Reuniones (30d)
             </Text>
           </CardContent>
         </Card>

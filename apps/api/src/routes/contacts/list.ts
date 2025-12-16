@@ -4,7 +4,7 @@
  * GET /contacts - List contacts with filters and pagination
  */
 import { Router, type Request, type Response } from 'express';
-import { db, contacts, contactTags, tags } from '@cactus/db';
+import { db, contacts, contactTags, tags, contactStageInteractions } from '@cactus/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope } from '../../auth/authorization';
@@ -72,6 +72,13 @@ router.get(
       },
       'Iniciando listado de contactos'
     );
+
+    // AI_DECISION: Prevent browser caching for contacts list
+    // Justificación: Interaction counts and states change frequently, we want fresh data on navigation/reload
+    // Impacto: Prevents stale data issues (e.g. reverted interaction counts)
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     const { limit = '50', offset = '0', pipelineStageId, assignedAdvisorId } = req.query;
 
@@ -210,22 +217,30 @@ router.get(
             version: contacts.version,
             createdAt: contacts.createdAt,
             updatedAt: contacts.updatedAt,
+            interactionCount: contactStageInteractions.interactionCount,
             total: sql<number>`COUNT(*) OVER()`.as('total'),
           })
           .from(contacts)
+          .leftJoin(
+            contactStageInteractions,
+            and(
+              eq(contactStageInteractions.contactId, contacts.id),
+              eq(contactStageInteractions.pipelineStageId, contacts.pipelineStageId)
+            )
+          )
           .where(and(...conditions))
           .limit(parseInt(limit as string))
           .offset(parseInt(offset as string))
           .orderBy(desc(contacts.updatedAt))
       );
 
-      type ContactWithTotal = Contact & { total: number };
+      type ContactWithTotal = Contact & { total: number; interactionCount: number | null };
       const itemsTyped = items as ContactWithTotal[];
       const total = itemsTyped.length > 0 ? Number(itemsTyped[0].total) : 0;
 
       const contactsList = itemsTyped.map(
         ({ total: _total, ...contact }: ContactWithTotal) => contact
-      ) as Contact[];
+      ) as (Contact & { interactionCount: number | null })[];
 
       // Fetch tags for contacts
       const contactIds = contactsList.map((c: Contact) => c.id);
@@ -262,7 +277,7 @@ router.get(
       }
 
       const itemsWithTags = contactsList.map(
-        (contact: Contact): ContactWithTags => ({
+        (contact): ContactWithTags => ({
           ...contact,
           tags: contactTagsMap.get(contact.id) || [],
         })
@@ -378,22 +393,30 @@ router.get(
           version: contacts.version,
           createdAt: contacts.createdAt,
           updatedAt: contacts.updatedAt,
+          interactionCount: contactStageInteractions.interactionCount,
           total: sql<number>`COUNT(*) OVER()`.as('total'),
         })
         .from(contacts)
+        .leftJoin(
+          contactStageInteractions,
+          and(
+            eq(contactStageInteractions.contactId, contacts.id),
+            eq(contactStageInteractions.pipelineStageId, contacts.pipelineStageId)
+          )
+        )
         .where(and(...conditions))
         .limit(parseInt(limit as string))
         .offset(parseInt(offset as string))
         .orderBy(desc(contacts.updatedAt))
     );
 
-    type ContactWithTotal = Contact & { total: number };
+    type ContactWithTotal = Contact & { total: number; interactionCount: number | null };
     const itemsTyped = items as ContactWithTotal[];
     const total = itemsTyped.length > 0 ? Number(itemsTyped[0].total) : 0;
 
     const contactsListMain = itemsTyped.map(
       ({ total: _total, ...contact }: ContactWithTotal) => contact
-    ) as Contact[];
+    ) as (Contact & { interactionCount: number | null })[];
 
     // Fetch tags
     const contactIdsMain = contactsListMain.map((c: Contact) => c.id);
@@ -430,7 +453,7 @@ router.get(
     }
 
     const itemsWithTags = contactsListMain.map(
-      (contact: Contact): ContactWithTags => ({
+      (contact): ContactWithTags => ({
         ...contact,
         tags: contactTagsMapMain.get(contact.id) || [],
       })

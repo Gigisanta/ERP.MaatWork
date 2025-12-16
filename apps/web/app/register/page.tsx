@@ -1,7 +1,7 @@
 'use client';
 import { useAuth } from '../auth/AuthContext';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getManagers } from '@/lib/api';
 import { logger, toLogContext } from '../../lib/logger';
@@ -18,6 +18,8 @@ import {
   Select,
   Spinner,
 } from '@cactus/ui';
+import { Feather } from 'lucide-react';
+import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
 interface Manager {
   id: string;
@@ -25,13 +27,18 @@ interface Manager {
   fullName: string;
 }
 
-export default function RegisterPage() {
+function RegisterContent() {
   const { register } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // AI_DECISION: Detectar errores de OAuth y success
+  const oauthError = searchParams.get('error');
+  const googleAuthSuccess = searchParams.get('google_auth');
 
   // Form data
   const [email, setEmail] = useState('');
@@ -196,7 +203,9 @@ export default function RegisterPage() {
                 `}
                 style={{ transitionDelay: '200ms' }}
               >
-                <span className="text-3xl">⚖️</span>
+                <span className="text-primary">
+                  <Feather className="w-10 h-10" strokeWidth={1.5} />
+                </span>
               </div>
 
               {/* Title */}
@@ -207,8 +216,9 @@ export default function RegisterPage() {
                 `}
                 style={{ transitionDelay: '300ms' }}
               >
-                <Heading level={1} className="text-secondary text-3xl tracking-tight">
-                  Maat
+                <Heading level={1} className="text-3xl tracking-tight">
+                  <span className="text-primary">Maat</span>
+                  <span className="text-secondary">Work</span>
                 </Heading>
               </div>
 
@@ -227,6 +237,51 @@ export default function RegisterPage() {
           </CardHeader>
 
           <CardContent className="pt-6">
+            {/* OAuth Error Alert */}
+            {oauthError === 'account_exists' && (
+              <div className="mb-4 animate-fade-in">
+                <Alert variant="warning" title="Cuenta ya existe">
+                  Ya tienes una cuenta con este email de Google. Por favor inicia sesión.
+                </Alert>
+              </div>
+            )}
+
+            {/* Success Alert */}
+            {googleAuthSuccess === 'success' && (
+              <div className="mb-4 animate-fade-in">
+                <Alert variant="success" title="¡Bienvenido!">
+                  Tu cuenta ha sido creada exitosamente con Google.
+                </Alert>
+              </div>
+            )}
+
+            {/* Google OAuth Button - Prominent placement */}
+            <div
+              className={`
+                mb-6 transition-all duration-500 ease-out
+                ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+              `}
+              style={{ transitionDelay: '450ms' }}
+            >
+              <GoogleOAuthButton context="register" disabled={loading} />
+            </div>
+
+            {/* Divider */}
+            <div
+              className={`
+                relative mb-6 transition-all duration-500 ease-out
+                ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+              `}
+              style={{ transitionDelay: '500ms' }}
+            >
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-text-muted">O regístrate con email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit}>
               <Stack direction="column" gap="lg">
                 {/* Username Input */}
@@ -455,10 +510,25 @@ export default function RegisterPage() {
           style={{ transitionDelay: '900ms' }}
         >
           <Text size="xs" color="muted">
-            © 2024 Maat. Todos los derechos reservados.
+            © 2024 <span className="text-primary">Maat</span>
+            <span className="text-secondary">Work</span>. Todos los derechos reservados.
           </Text>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   );
 }

@@ -58,7 +58,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
       setError(null);
 
       try {
-        const { searchInstruments } = await import('@/lib/api');
+        const { searchInstruments } = await import('@/lib/api/instruments');
         const response = await searchInstruments(searchQuery);
 
         if (response.success && response.data) {
@@ -201,7 +201,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
       try {
         setLoading(true);
         setError(null);
-        const { validateSymbol } = await import('@/lib/api');
+        const { validateSymbol } = await import('@/lib/api/instruments');
         const response = await validateSymbol(symbol);
 
         if (response.success && response.data?.isValid) {

@@ -1,12 +1,18 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global console, process */
 
 /**
  * Script para agregar "use client" a archivos compilados que lo necesiten
  * TypeScript no preserva las directivas "use client" de Next.js, así que las agregamos post-build
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const srcDir = path.join(__dirname, '../src');
 const distDir = path.join(__dirname, '../dist');

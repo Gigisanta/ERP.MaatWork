@@ -14,13 +14,17 @@ description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de n
 **CACTUS** es un CRM para **advisors financieros** (wealth management). Gestiona:
 
 | Dominio | Descripción | Tablas principales |
-|---------|-------------|-------------------|
+|---|----|----|
 | **Contacts/Pipeline** | Leads y clientes con etapas de conversión | `contacts`, `pipelineStages`, `tags`, `segments` |
 | **AUM (Assets Under Management)** | Importación y tracking de patrimonio | `aumImportFiles`, `aumImportRows`, `aumMonthlySnapshots` |
 | **Portfolio Templates** | Modelos de inversión asignables | `portfolioTemplates`, `portfolioTemplateLines`, `clientPortfolioAssignments` |
 | **Benchmarks/Instruments** | Analytics financiero (precios, performance) | `instruments`, `benchmarkDefinitions`, `priceSnapshots` |
 | **Tasks/Notes** | Actividades y seguimiento | `tasks`, `notes`, `attachments` |
-| **Teams** | Equipos con métricas y goals | `teams`, `teamMembership`, `monthlyGoals` |
+| **Teams** | Equipos con métricas y goals | `teams`, `teamMembership`, `monthlyGoals`, `teamGoals` |
+| **Automations** | Workflows y disparadores automáticos | `automations` |
+| **Calendar** | Eventos personales y de equipo | `calendarEvents` |
+| **Capacitaciones** | Módulos de entrenamiento | `capacitaciones` |
+| **Audit/Admin** | Logs y mantenimiento del sistema | `auditLogs`, `adminLogs` |
 
 **Usuarios:** Advisors, Team Leads, Managers, Admins
 
@@ -31,7 +35,7 @@ description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de n
 ```
 cactus/
 ├── apps/
-│   ├── api/                # Express 5 + TypeScript + Pino (puerto 3001)
+│   ├── api/                # Express 4 + TypeScript + Pino (puerto 3001)
 │   ├── web/                # Next.js 15 App Router (puerto 3000)
 │   └── analytics-service/  # Python + yfinance (puerto 3002)
 ├── packages/
@@ -83,7 +87,7 @@ pnpm verify:all          # Incluye E2E
 ### Nombrado
 
 | Tipo | Convención | Ejemplo |
-|------|------------|---------|
+|---|---|---|
 | Variables/funciones | `camelCase` | `handleCreateContact`, `userId` |
 | Componentes/tipos | `PascalCase` | `ContactCard`, `CreateContactRequest` |
 | Constantes | `UPPER_SNAKE_CASE` | `MAX_RETRY_ATTEMPTS`, `DEFAULT_TIMEOUT_MS` |
@@ -120,7 +124,7 @@ export interface ListContactsResponse { ... }
 ## Mapeo Rápido: Necesidad → Código
 
 | Necesitas... | Busca en... |
-|--------------|-------------|
+|-----|----|
 | Endpoint de API | `apps/api/src/routes/[domain]/` o `[domain].ts` |
 | Validaciones Zod | Sección `// Zod Validation Schemas` en cada route |
 | Página web | `apps/web/app/[route]/page.tsx` |
@@ -138,7 +142,7 @@ export interface ListContactsResponse { ... }
 ### Backend (`apps/api/src/utils/`)
 
 | Archivo | Propósito | Uso Principal |
-|---------|-----------|---------------|
+|---|-----|---|
 | `route-handler.ts` | Wrapper para handlers async | `createRouteHandler()` - maneja errores automáticamente |
 | `error-response.ts` | Respuestas de error consistentes | `createErrorResponse()`, `getStatusCodeFromError()` |
 | `validation.ts` | Middleware validación Zod | `validate({ params, query, body })` |
@@ -149,7 +153,7 @@ export interface ListContactsResponse { ... }
 ### Frontend (`apps/web/lib/`)
 
 | Archivo | Propósito | Uso Principal |
-|---------|-----------|---------------|
+|---|-----|---|
 | `api/client.ts` | Cliente HTTP centralizado | `apiClient.get()`, `apiClient.post()` |
 | `api/[domain].ts` | Funciones API por dominio | `getContacts()`, `createContact()` |
 | `api-hooks.ts` | Hooks SWR compartidos | `useContacts()`, `usePipelineStages()` |
@@ -403,7 +407,7 @@ Formato estándar para documentar decisiones no obvias:
 Esta regla (`00-core`) siempre se aplica. Las demás se activan según contexto:
 
 | Regla | Cuándo aplica | Contenido principal |
-|-------|---------------|---------------------|
+|---|----|----|
 | `01-typescript` | Archivos .ts/.tsx | Tipos, exactOptionalPropertyTypes, herencia |
 | `02-testing` | Archivos .test.ts | Vitest, Playwright, Testing Library |
 | `domains/api` | Código en `apps/api/` | Express, Zod, middlewares, logging |
@@ -422,7 +426,7 @@ Esta regla (`00-core`) siempre se aplica. Las demás se activan según contexto:
 ## Dominios API Principales
 
 | Ruta base | Dominio | Archivo/Directorio |
-|-----------|---------|-------------------|
+|---|----|----|
 | `/contacts` | Pipeline CRM | `routes/contacts/` |
 | `/aum/*` | Gestión patrimonio | `routes/aum/` (upload, rows, commit) |
 | `/portfolios/*` | Carteras modelo | `routes/portfolio/` |
@@ -432,7 +436,13 @@ Esta regla (`00-core`) siempre se aplica. Las demás se activan según contexto:
 | `/teams` | Equipos y métricas | `routes/teams/` |
 | `/metrics/*` | Goals y métricas | `routes/metrics/` |
 | `/analytics/*` | Performance financiero | `routes/analytics/` |
-| `/auth` | Autenticación JWT | `routes/auth.ts` |
+| `/auth` | Autenticación JWT | `routes/auth/` |
+| `/automations` | Automatizaciones | `routes/automations/` |
+| `/calendar` | Calendario | `routes/calendar/` |
+| `/capacitaciones` | Entrenamientos | `routes/capacitaciones/` |
+| `/notes` | Notas | `routes/notes/` |
+| `/tags` | Etiquetas | `routes/tags/` |
+| `/users` | Gestión Usuarios | `routes/users/` |
 
 ---
 
@@ -450,13 +460,19 @@ Esta regla (`00-core`) siempre se aplica. Las demás se activan según contexto:
 - **benchmarks.ts** — Definiciones, componentes, precios
 - **reports.ts** — Métricas, goals, actividad
 - **broker.ts** — Integración broker
+- **audit.ts** — Auditoría y logs
+- **automations.ts** — Automatizaciones
+- **capacitaciones.ts** — Capacitaciones
+- **contact-interactions.ts** — Interacciones de contactos
+- **notifications.ts** — Notificaciones
+- **team-goals.ts** — Objetivos de equipo
 
 ---
 
 ## Documentación Extendida
 
 | Documento | Contenido |
-|-----------|-----------|
+|---|----|
 | [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) | Decisiones técnicas, estructuras |
 | [ARCHITECTURE-DECISIONS.md](../../docs/ARCHITECTURE-DECISIONS.md) | ADRs (por qué cada tecnología) |
 | [CODE-IMPROVEMENTS.md](../../docs/CODE-IMPROVEMENTS.md) | Patrones, convenciones, mejoras |

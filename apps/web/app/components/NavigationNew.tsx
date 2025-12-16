@@ -1,11 +1,13 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Header, type NavItem, type User, Drawer, Sidebar, type SidebarSection } from '@cactus/ui';
 import { useSidebar } from './SidebarContext';
 import CareerProgressBar from './CareerProgressBar';
+import { Feather } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 interface NavigationNewProps {
   onToggleSidebar?: () => void;
@@ -101,7 +103,6 @@ function getAdvisorSections(): SidebarSection[] {
     {
       title: 'Principal',
       items: [
-        { label: 'Inicio', href: '/home', icon: 'Home' as const },
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
         { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
@@ -136,7 +137,6 @@ function getManagerSections(): SidebarSection[] {
     {
       title: 'Principal',
       items: [
-        { label: 'Inicio', href: '/home', icon: 'Home' as const },
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
         { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
@@ -182,7 +182,6 @@ function getAdminSections(): SidebarSection[] {
     {
       title: 'Principal',
       items: [
-        { label: 'Inicio', href: '/home', icon: 'Home' as const },
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
         { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
@@ -253,10 +252,7 @@ function getOwnerSections(): SidebarSection[] {
   return [
     {
       title: 'Dashboard',
-      items: [
-        { label: 'Inicio', href: '/home', icon: 'Home' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
-      ],
+      items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
     },
     {
       title: 'Métricas',
@@ -277,7 +273,6 @@ function getStaffSections(): SidebarSection[] {
     {
       title: 'Principal',
       items: [
-        { label: 'Inicio', href: '/home', icon: 'Home' as const },
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
         { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
@@ -314,6 +309,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   const { user, logout, initialized } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const hasRedirectedRef = useRef(false);
 
   // AI_DECISION: Logging temporal para diagnosticar problemas de renderizado
   // Justificación: Necesario para identificar por qué los componentes no se muestran
@@ -361,6 +357,37 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     router.push('/login');
   }, [logout, router]);
 
+  // AI_DECISION: Redirigir al login cuando no hay usuario después de inicialización
+  // Justificación: Si la autenticación se inicializó y no hay usuario, significa que no hay sesión activa
+  // Impacto: Mejor UX redirigiendo al login en lugar de mostrar mensaje de debug
+  // IMPORTANTE: Este hook debe estar ANTES de cualquier return condicional para cumplir con las reglas de hooks
+  useEffect(() => {
+    // Solo procesar si ya se inicializó
+    if (!initialized) return;
+
+    // Si estamos en rutas públicas, no hacer nada
+    const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/';
+    if (isPublicRoute) {
+      return;
+    }
+
+    // Si hay usuario, resetear el flag y no hacer nada más
+    if (user) {
+      hasRedirectedRef.current = false;
+      return;
+    }
+
+    // Si no hay usuario y no hemos redirigido aún, redirigir al login
+    if (!user && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+        console.warn('[NavigationNew] No user found after initialization, redirecting to login');
+      }
+      // Usar replace en lugar de push para evitar problemas de historial
+      router.replace('/login');
+    }
+  }, [user, initialized, router, pathname]);
+
   // AI_DECISION: Mostrar skeleton mientras se inicializa autenticación en lugar de retornar null
   // Justificación: Retornar null hace que el componente desaparezca completamente, causando layout shift
   // Impacto: Mejor UX durante la carga inicial, evita parpadeos
@@ -378,28 +405,27 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     );
   }
 
-  // AI_DECISION: Siempre renderizar estructura básica incluso sin usuario para debugging
-  // Justificación: Retornar null hace imposible diagnosticar problemas de renderizado
-  // Impacto: Permite ver qué está pasando incluso cuando no hay usuario autenticado
-  if (!user) {
-    // Usuario no autenticado - mostrar estructura mínima para debugging
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.warn('[NavigationNew] No user found, but initialized:', initialized);
+  // Si no hay usuario después de inicialización, no renderizar navegación
+  // Si estamos en rutas públicas, retornar null inmediatamente
+  if (!user && initialized) {
+    const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/';
+    if (isPublicRoute) {
+      return null;
     }
-    // En producción, no mostrar nada si no hay usuario
+
+    // En producción, retornar null inmediatamente
     if (process.env.NODE_ENV === 'production') {
       return null;
     }
-    // En desarrollo, mostrar estructura básica para debugging
-    return (
-      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top">
-        <div className="flex h-12 sm:h-14 items-center justify-between px-2 xs:px-3 sm:px-4 lg:px-6">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="text-xs text-error">⚠️ No user - Debug mode</div>
-          </div>
-        </div>
-      </div>
-    );
+
+    // En desarrollo, mostrar mensaje temporal solo si realmente estamos redirigiendo
+    // (el useEffect ya se encargó de iniciar la redirección)
+    return null;
+  }
+
+  // Si no hay usuario, no renderizar nada (aún no inicializado o en proceso de redirección)
+  if (!user) {
+    return null;
   }
 
   // AI_DECISION: Logo optimizado para responsive
@@ -407,14 +433,20 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   // Impacto: Mejor experiencia en dispositivos móviles y tablets
   const logo = (
     <div className="flex items-center gap-2 min-w-0 w-full">
-      {/* Logo icon - always visible */}
-      <span className="text-xl sm:text-2xl shrink-0" aria-hidden="true">
-        ⚖️
-      </span>
-      {/* Logo text - hidden on very small screens */}
-      <span className="text-lg sm:text-xl font-bold text-secondary whitespace-nowrap shrink-0 hidden xs:inline">
-        Maat
-      </span>
+      <Link
+        href="/home"
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0"
+      >
+        {/* Logo icon - always visible */}
+        <span className="text-primary shrink-0" aria-hidden="true">
+          <Feather className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={1.5} />
+        </span>
+        {/* Logo text - hidden on very small screens */}
+        <span className="text-lg sm:text-xl font-bold whitespace-nowrap shrink-0 hidden xs:inline">
+          <span className="text-primary">Maat</span>
+          <span className="text-secondary">Work</span>
+        </span>
+      </Link>
       {/* Career Progress Bar - only on larger screens */}
       {/* AI_DECISION: Renderizar siempre el contenedor, ocultarlo con CSS en lugar de condicionalmente */}
       {/* Justificación: Asegura que el componente siempre se monte, mejor debugging */}
@@ -470,6 +502,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           logo={logo}
           navItems={navItems}
           user={headerUser}
+          notificationComponent={<NotificationBell />}
           onLogout={handleLogout}
           onToggleSidebar={handleToggle}
           sidebarOpen={open}

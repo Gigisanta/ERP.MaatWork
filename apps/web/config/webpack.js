@@ -11,97 +11,59 @@ const fs = require('fs');
 
 module.exports = {
   webpack: (config, { dev, isServer }) => {
-    // AI_DECISION: Optimizar cache para monorepo con pnpm workspaces
-    // Justificaci?n: Errores "next-flight-client-entry-loader" se deben a cache desincronizado en monorepo
-    // Impacto: Reduce errores de compilaci?n y "internal server error" en desarrollo
-
-    // Habilitar symlinks para monorepo pnpm
+    // Enable symlinks for pnpm workspaces
     config.resolve.symlinks = true;
 
-    // AI_DECISION: A?adir alias para resolver workspace packages correctamente
-    // Justificaci?n: pnpm workspaces con hoisted no exponen exports de CSS correctamente
-    // Impacto: Permite que webpack resuelva @cactus/ui y @cactus/db
+    // PATH CONSTANTS
+    const UI_PKG_PATH = path.resolve(__dirname, '../../../packages/ui');
+    const NODE_MODULES_UI = path.resolve(__dirname, '../node_modules/@cactus/ui');
 
-    // Verificar si el paquete est? construido y d?nde est? ubicado
-    const uiDistPath = path.resolve(__dirname, '../../packages/ui/dist/index.js');
-    const uiNodeModulesPath = path.resolve(__dirname, 'node_modules/@cactus/ui');
-    const uiSrcPath = path.resolve(__dirname, '../../packages/ui/src');
+    // Determine which path to use for @cactus/ui alias
+    // We prefer the local workspace path in development for easier debugging
+    // But fallback to node_modules if needed
+    const uiPath = dev ? UI_PKG_PATH : NODE_MODULES_UI;
 
-    // AI_DECISION: Usar node_modules como primera opci?n para mejor compatibilidad con webpack
-    // Justificaci?n: pnpm workspace linkea paquetes a node_modules, webpack los resuelve mejor desde ah?
-    // Impacto: Resuelve errores de resoluci?n de m?dulos y problemas con dynamic imports
-    let uiPath;
-    if (fs.existsSync(uiNodeModulesPath)) {
-      // Priorizar node_modules (donde pnpm workspace lo linkea)
-      uiPath = uiNodeModulesPath;
-    } else if (fs.existsSync(uiDistPath)) {
-      // Usar dist si node_modules no existe
-      uiPath = path.resolve(__dirname, '../../packages/ui/dist');
-    } else {
-      // Fallback a src solo si no hay otra opci?n
-      uiPath = uiSrcPath;
-      // console.warn('??  @cactus/ui no est? construido. Ejecuta: pnpm -F @cactus/ui build');
+    // Determine path for styles.css
+    // Check local workspace dist first (most up to date in dev)
+    const localStylesPath = path.join(UI_PKG_PATH, 'dist/styles.css');
+    const nodeModulesStylesPath = path.join(NODE_MODULES_UI, 'dist/styles.css');
+
+    // Explicitly find the CSS file
+    let stylesPath = nodeModulesStylesPath;
+    if (fs.existsSync(localStylesPath)) {
+      stylesPath = localStylesPath;
+    } else if (fs.existsSync(nodeModulesStylesPath)) {
+      stylesPath = nodeModulesStylesPath;
     }
 
-    const dbPath =
-      dev && fs.existsSync(path.resolve(__dirname, '../../packages/db/dist/index.js'))
-        ? path.resolve(__dirname, '../../packages/db/dist')
-        : path.resolve(__dirname, '../../packages/db/src');
+    // console.log('Webpack Config - UI Styles Path:', stylesPath);
 
-    // AI_DECISION: Asegurar resoluci?n correcta de alias para dynamic imports
-    // Justificaci?n: Webpack puede tener problemas resolviendo alias @/ en m?dulos cargados din?micamente
-    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en dynamic imports
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Resolver workspaces usando symlinks directos
-      '@cactus/ui': path.resolve(__dirname, 'node_modules/@cactus/ui'),
-      '@cactus/ui/styles.css': path.resolve(__dirname, 'node_modules/@cactus/ui/styles.css'),
-      '@cactus/types': path.resolve(__dirname, 'node_modules/@cactus/types'),
-      '@cactus/db': dbPath,
-      // Asegurar que @/ se resuelva correctamente para dynamic imports
-      '@': path.resolve(__dirname, './'),
+      '@cactus/ui/styles.css': stylesPath,
+      '@cactus/ui': uiPath,
+      '@cactus/types': path.resolve(__dirname, '../node_modules/@cactus/types'),
+      '@cactus/db': path.resolve(__dirname, '../../../packages/db/src'),
+      '@': path.resolve(__dirname, '../'),
     };
 
-    // AI_DECISION: Asegurar que webpack pueda resolver m?dulos desde node_modules
-    // Justificaci?n: Necesario para que webpack encuentre @cactus/ui desde su ubicaci?n real
-    // Impacto: Mejora la resoluci?n de m?dulos workspace en monorepo
+    // Ensure we can resolve modules from node_modules
     if (!config.resolve.modules) {
       config.resolve.modules = ['node_modules'];
-    } else if (!config.resolve.modules.includes('node_modules')) {
+    }
+    if (!config.resolve.modules.includes('node_modules')) {
       config.resolve.modules.push('node_modules');
     }
 
-    // AI_DECISION: Mejorar resoluci?n de m?dulos internos de @cactus/ui
-    // Justificaci?n: Webpack tiene problemas resolviendo imports relativos dentro de @cactus/ui (ej: '../../utils/cn')
-    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" al resolver m?dulos internos
-    const uiDistDir = path.resolve(__dirname, '../../packages/ui/dist');
+    // Add UI dist to resolve modules to help with internal resolution
+    const uiDistDir = path.resolve(UI_PKG_PATH, 'dist');
     if (!config.resolve.modules.includes(uiDistDir)) {
       config.resolve.modules.unshift(uiDistDir);
     }
 
-    // AI_DECISION: Configurar resolveLoader para asegurar que webpack pueda resolver loaders correctamente
-    // Justificaci?n: Problemas de resoluci?n pueden estar relacionados con loaders de webpack
-    // Impacto: Asegura que webpack pueda resolver todos los loaders necesarios para procesar m?dulos
-    if (!config.resolveLoader) {
-      config.resolveLoader = {};
-    }
-    if (!config.resolveLoader.modules) {
-      config.resolveLoader.modules = ['node_modules'];
-    }
-
-    // AI_DECISION: Configurar mainFields para asegurar que webpack use los archivos compilados correctos
-    // Justificaci?n: Webpack necesita saber qu? campo del package.json usar para resolver m?dulos en monorepos
-    // Impacto: Asegura que webpack use los archivos compilados de dist/ en lugar de src/
+    // Webpack resolution settings
     config.resolve.mainFields = ['main', 'module', 'exports', 'browser'];
-
-    // AI_DECISION: Configurar conditionNames para resolver exports correctamente
-    // Justificaci?n: Next.js y webpack necesitan saber qu? condiciones usar al resolver exports del package.json
-    // Impacto: Resuelve correctamente los exports definidos en @cactus/ui/package.json
     config.resolve.conditionNames = ['import', 'require', 'default', 'browser', 'module'];
-
-    // AI_DECISION: Mejorar resoluci?n de m?dulos para dynamic imports
-    // Justificaci?n: Dynamic imports necesitan resoluci?n expl?cita de extensiones y m?dulos
-    // Impacto: Previene errores de resoluci?n en m?dulos cargados din?micamente
     config.resolve.extensions = [
       '.js',
       '.jsx',
@@ -111,120 +73,33 @@ module.exports = {
       ...(config.resolve.extensions || []),
     ];
 
-    // AI_DECISION: Evitar code splitting de @cactus/ui para resolver problemas de webpack
-    // Justificaci?n: Webpack tiene problemas resolviendo @cactus/ui cuando se hace code splitting en dynamic imports
-    // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')"
-    if (!isServer && !dev) {
-      if (!config.optimization) {
-        config.optimization = {};
-      }
-      if (!config.optimization.splitChunks) {
-        config.optimization.splitChunks = {};
-      }
-      if (!config.optimization.splitChunks.cacheGroups) {
-        config.optimization.splitChunks.cacheGroups = {};
-      }
-
-      // Forzar que @cactus/ui se mantenga en el bundle principal (no hacer code splitting)
-      config.optimization.splitChunks.cacheGroups['@cactus-ui'] = {
-        test: /[\\/]node_modules[\\/]@cactus[\\/]ui[\\/]/,
-        name: false, // No crear chunk separado
-        priority: 20,
-        reuseExistingChunk: true,
-      };
-
-      // AI_DECISION: Separar Recharts en chunk independiente para reducir tama?o de chunks principales
-      // Justificaci?n: Recharts agrega ~200KB al bundle, separarlo permite lazy loading y reduce chunk inicial
-      // Impacto: Chunk principal m?s peque?o, mejor code splitting, carga bajo demanda de gr?ficos
-      config.optimization.splitChunks.cacheGroups.recharts = {
-        test: /[\\/]node_modules[\\/]recharts[\\/]/,
-        name: 'recharts',
-        priority: 30,
-        chunks: 'all',
-        enforce: true,
-        reuseExistingChunk: true,
-      };
-
-      // AI_DECISION: Separar componentes Bloomberg en chunk independiente
-      // Justificaci?n: Componentes Bloomberg son pesados y solo se usan en p?ginas espec?ficas
-      // Impacto: Mejor code splitting, carga bajo demanda de componentes Bloomberg
-      config.optimization.splitChunks.cacheGroups.bloomberg = {
-        test: /[\\/]app[\\/]components[\\/]bloomberg[\\/]/,
-        name: 'bloomberg',
-        priority: 25,
-        chunks: 'all',
-        minChunks: 1,
-        reuseExistingChunk: true,
-      };
-
-      // AI_DECISION: Separar otros vendor chunks grandes para mejor code splitting
-      // Justificaci?n: Mejorar distribuci?n de c?digo en chunks m?s peque?os y manejables
-      // Impacto: Chunks m?s peque?os, mejor caching, carga m?s eficiente
-      config.optimization.splitChunks.cacheGroups.vendor = {
-        test: /[\\/]node_modules[\\/]/,
-        name(module) {
-          // Extraer el nombre del paquete de la ruta
-          const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1];
-          // Normalizar nombres de scoped packages
-          return packageName
-            ? `vendor-${packageName.replace('@', '').replace('/', '-')}`
-            : 'vendor';
-        },
-        priority: 10,
-        chunks: 'all',
-        minChunks: 1,
-        reuseExistingChunk: true,
-      };
-    }
-
-    // AI_DECISION: Optimizar configuraci?n de desarrollo para m?ximo rendimiento
-    // Justificaci?n: Habilitar cache filesystem reduce tiempo de compilaci?n 30-50%
-    // Impacto: Inicio m?s r?pido, hot reload mejorado, menor uso de memoria
+    // Development optimizations
     if (dev) {
-      // AI_DECISION: Habilitar webpack filesystem cache para desarrollo
-      // Justificaci?n: Cache persistente reduce tiempo de compilaci?n inicial y hot reload 30-50%
-      // Impacto: Primera compilaci?n m?s r?pida, hot reload casi instant?neo en cambios peque?os
       config.cache = {
         type: 'filesystem',
         buildDependencies: {
           config: [__filename],
-          // Incluir paquetes del workspace para que webpack detecte cambios
-          tsconfig: [path.resolve(__dirname, 'tsconfig.json')],
+          tsconfig: [path.resolve(__dirname, '../tsconfig.json')],
         },
-        cacheDirectory: path.resolve(__dirname, '.next/cache/webpack'),
+        cacheDirectory: path.resolve(__dirname, '../.next/cache/webpack'),
       };
 
-      // AI_DECISION: Configurar watchOptions para detectar cambios en paquetes del workspace
-      // Justificaci?n: Next.js no vigila autom?ticamente cambios en paquetes del workspace (pnpm)
-      // Impacto: Hot reload funciona correctamente cuando se modifican componentes en @cactus/ui
       const usePolling = process.platform === 'win32';
       config.watchOptions = {
-        ...(usePolling && { poll: 1000 }), // Poll solo en Windows
-        aggregateTimeout: 300, // Esperar 300ms despu?s de cambios antes de recompilar
+        ...(usePolling && { poll: 1000 }),
+        aggregateTimeout: 300,
         ignored: [
           '**/node_modules/**',
           '**/.git/**',
           '**/.next/**',
-          // Incluir paquetes del workspace en watch (usar ! para negar el ignore)
           '!../../packages/ui/src/**',
           '!../../packages/ui/dist/**',
-          '!../../packages/db/src/**',
         ],
-        followSymlinks: true, // Seguir symlinks de pnpm workspace
+        followSymlinks: true,
       };
 
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      };
-
-      // AI_DECISION: Reducir logging de webpack para mejorar rendimiento
-      // Justificaci?n: Logging verbose agrega overhead significativo en desarrollo
-      // Impacto: Menor uso de CPU/memoria, compilaci?n m?s r?pida
       config.infrastructureLogging = {
-        level: 'error', // Solo mostrar errores, no warnings/info
+        level: 'error',
       };
     }
 

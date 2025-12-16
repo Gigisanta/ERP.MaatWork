@@ -6,13 +6,13 @@ export interface ErrorLog {
   timestamp: string;
   type: 'error' | 'warn' | 'info' | 'log';
   message: string;
-  stack?: string;
-  source?: string;
-  line?: number;
-  col?: number;
-  url?: string;
-  userAgent?: string;
-  details?: Record<string, unknown>;
+  stack?: string | undefined;
+  source?: string | undefined;
+  line?: number | undefined;
+  col?: number | undefined;
+  url?: string | undefined;
+  userAgent?: string | undefined;
+  details?: Record<string, unknown> | undefined;
   count?: number;
   collapsed?: boolean;
 }

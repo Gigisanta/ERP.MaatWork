@@ -1,12 +1,18 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global console, process */
 
 /**
  * Script para copiar archivos CSS desde src/styles a dist/styles
  * Reemplaza copyfiles que tiene problemas de compatibilidad con Node.js 22
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const srcDir = path.join(__dirname, '../src/styles');
 const destDir = path.join(__dirname, '../dist/styles');

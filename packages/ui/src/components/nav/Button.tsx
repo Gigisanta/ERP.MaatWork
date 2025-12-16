@@ -1,9 +1,12 @@
 import React from 'react';
 import { cn } from '../../utils/cn.js';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick'
+> {
   /** Visual style variant */
-  variant?: 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'destructive';
+  variant?: 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost' | 'destructive' | 'joy';
   /** Size of the button */
   size?: 'sm' | 'md' | 'lg';
   /** Full width button */
@@ -11,7 +14,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Loading state */
   loading?: boolean;
   children: React.ReactNode;
-  onClick?: () => void;
+  /** Click handler */
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 /**
@@ -24,6 +28,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  * - `outline`: Bordered button
  * - `ghost`: Transparent background
  * - `destructive`: Red background (dangerous actions)
+ * - `joy`: Orange background (delight/warning actions)
  *
  * @example
  * ```tsx
@@ -42,6 +47,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className = '',
       children,
       disabled,
+      onClick,
       ...props
     },
     ref
@@ -54,10 +60,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           // Base styles
           'inline-flex items-center justify-center font-body font-semibold',
-          'rounded-md transition-all-smooth',
+          'rounded-md transition-all-smooth relative overflow-hidden',
           'focus:outline-none focus:ring-2 focus:ring-offset-2',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
-          'active:scale-[0.98]',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none',
+          'active:scale-[0.98] active:brightness-95',
           // Variant styles with enhanced micro-interactions
           {
             // Primary - Purple with glow effect (main CTAs, highlights)
@@ -69,6 +75,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             // Accent - Green with glow
             'bg-accent text-secondary hover:bg-accent-hover hover:shadow-lg hover:-translate-y-0.5 focus:ring-accent':
               variant === 'accent',
+            // Joy - Orange with glow
+            'bg-joy text-text-inverse hover:bg-joy-hover hover:shadow-lg hover:-translate-y-0.5 focus:ring-joy':
+              variant === 'joy',
             // Outline - with purple hover and subtle lift
             'border border-border bg-transparent text-text hover:bg-primary-subtle hover:text-primary hover:border-primary hover:shadow-sm focus:ring-primary':
               variant === 'outline',
@@ -92,6 +101,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         disabled={isDisabled}
+        onClick={onClick}
         {...props}
       >
         {loading && (

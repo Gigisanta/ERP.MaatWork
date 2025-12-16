@@ -20,6 +20,22 @@ export interface ContactTag {
 }
 
 /**
+ * Meeting Status from Google Calendar sync
+ */
+export interface MeetingStatus {
+  scheduled: boolean;
+  completed: boolean;
+  at: string | null; // ISO string
+  eventId: string | null;
+}
+
+export interface ContactMeetingStatus {
+  firstMeeting: MeetingStatus;
+  secondMeeting: MeetingStatus;
+  lastCheckedAt: string;
+}
+
+/**
  * Tipos de valores permitidos para actualizar campos de contacto
  */
 export type ContactFieldValue = string | number | boolean | null | Date;
@@ -59,6 +75,8 @@ export interface Contact extends TimestampedEntity {
   deletedAt?: string | null;
   version?: number;
   tags?: ContactTag[];
+  interactionCount?: number | null;
+  meetingStatus?: ContactMeetingStatus;
 }
 
 /**
@@ -95,7 +113,7 @@ export type ContactFieldName =
   | 'excedente';
 
 /**
- * Campo de actualización de contacto
+ * Objeto para actualizar un campo específico
  */
 export interface ContactFieldUpdate {
   field: ContactFieldName | string; // string para flexibilidad con customFields
@@ -126,9 +144,8 @@ export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastN
 }
 
 /**
- * Request para actualizar contacto
+ * Request para actualizar contacto (partial)
  */
-export interface UpdateContactRequest {
-  fields?: ContactFieldUpdate[];
-  [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
-}
+export interface UpdateContactRequest extends Partial<
+  Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>
+> {}

@@ -2,7 +2,7 @@
  * Circuit Breaker para servicio Python de Instruments
  */
 
-import { CircuitBreaker } from '../../utils/circuit-breaker';
+import { CircuitBreaker } from '../../utils/validation/circuit-breaker';
 
 // AI_DECISION: Circuit breaker para servicio Python externo
 // Justificación: Previene llamadas repetidas cuando el servicio está caído, permite fallback rápido

@@ -27,6 +27,7 @@ import InlineTextInput from './components/InlineTextInput';
 import ContactsToolbar from './components/ContactsToolbar';
 import DeleteContactModal from './components/DeleteContactModal';
 import TagManagementModal from './components/TagManagementModal';
+import InteractionCounter from './components/InteractionCounter';
 import dynamic from 'next/dynamic';
 import {
   Card,
@@ -70,6 +71,20 @@ import { useViewport } from '../(shared)/useViewport';
 import { useToast } from '../../lib/hooks/useToast';
 import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
 import { logger } from '../../lib/logger';
+
+// Helper to format relative time
+const formatTimeAgo = (dateString?: string | null) => {
+  if (!dateString) return 'Sin interacción';
+  const date = new Date(dateString);
+  const now = new Date();
+  // Use floor to count full days passed, or just use strict day difference
+  const diffTime = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 1) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+  return `Hace ${diffDays} días`;
+};
 
 export default function ContactsPage() {
   const { isMd } = useViewport();
@@ -270,6 +285,54 @@ export default function ContactsPage() {
     }
   }, [filteredContacts, pipelineStages, showToast]);
 
+  // Helper function to get row style based on last interaction (Gradient)
+  const getRowStyle = useCallback(
+    (contact: Contact): React.CSSProperties => {
+      // Find the stage name
+      const stage = Array.isArray(pipelineStages)
+        ? (pipelineStages as PipelineStage[]).find((s) => s.id === contact.pipelineStageId)
+        : null;
+
+      // Always green for "Cliente" stage
+      if (stage?.name.toLowerCase() === 'cliente') {
+        return {
+          backgroundColor: 'hsl(var(--row-client-bg))',
+          borderLeft: '4px solid hsl(var(--row-client-border))',
+        };
+      }
+
+      if (!contact.contactLastTouchAt) {
+        return {
+          backgroundColor: 'hsl(var(--row-no-interaction-bg))',
+          borderLeft: '4px solid hsl(var(--row-no-interaction-border))',
+        };
+      }
+
+      const lastTouch = new Date(contact.contactLastTouchAt);
+      const now = new Date();
+      const daysSinceTouch = Math.max(
+        0,
+        Math.floor((now.getTime() - lastTouch.getTime()) / (1000 * 60 * 60 * 24))
+      );
+
+      // Gradient Logic:
+      // 0 days -> 120 (Green)
+      // 7 days -> 60 (Yellow)
+      // 14+ days -> 0 (Red)
+      const maxDays = 14;
+      // Calculate hue: start at 120, decrease by (120/14) per day
+      const hue = Math.max(0, 120 - (daysSinceTouch / maxDays) * 120);
+
+      return {
+        '--row-hue': hue,
+        backgroundColor: 'hsl(var(--row-hue) var(--row-dynamic-sat) var(--row-dynamic-light))',
+        borderLeft:
+          '4px solid hsl(var(--row-hue) var(--row-dynamic-border-sat) var(--row-dynamic-border-light))',
+      } as React.CSSProperties;
+    },
+    [pipelineStages]
+  );
+
   // Column definitions
   const columns: Column<Contact>[] = useMemo(
     () => [
@@ -333,6 +396,24 @@ export default function ContactsPage() {
             isSaving={contactActions.savingContactId === contact.id}
             onSave={contactActions.handleTextInputSave}
           />
+        ),
+      },
+      {
+        key: 'interactionCount',
+        header: 'Interacciones',
+        render: (contact) => (
+          <div className="flex flex-col gap-1">
+            <InteractionCounter
+              contact={contact}
+              onUpdate={mutateContacts}
+              onError={(error) =>
+                showToast('Error al actualizar interacción', error.message, 'error')
+              }
+            />
+            <Text size="xs" color="secondary" className="whitespace-nowrap">
+              {formatTimeAgo(contact.contactLastTouchAt)}
+            </Text>
+          </div>
         ),
       },
       {
@@ -491,6 +572,9 @@ export default function ContactsPage() {
                   }
                   virtualized={true}
                   virtualizedHeight={600}
+                  getRowStyle={(item: Record<string, unknown>) =>
+                    getRowStyle(item as unknown as Contact)
+                  }
                 />
               )}
             </CardContent>
@@ -630,16 +714,23 @@ function MobileContactList({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-3">
       {contacts.map((contact) => (
-        <div key={contact.id} className="p-2 rounded-md border border-border bg-surface">
-          <div className="flex items-center justify-between">
-            <div>
-              <Text weight="medium" className="text-sm">
+        <div
+          key={contact.id}
+          className="p-3 rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-shadow"
+        >
+          {/* Header: Name and Action */}
+          <div className="flex items-start justify-between mb-3">
+            <div
+              onClick={() => router.push(`/contacts/${contact.id}`)}
+              className="cursor-pointer flex-1"
+            >
+              <Text weight="semibold" className="text-base text-primary">
                 {contact.fullName}
               </Text>
               {contact.email && (
-                <Text size="xs" color="secondary" className="mt-0.5">
+                <Text size="xs" color="secondary" className="mt-0.5 block truncate">
                   {contact.email}
                 </Text>
               )}
@@ -648,38 +739,60 @@ function MobileContactList({
               variant="ghost"
               size="sm"
               onClick={() => router.push(`/contacts/${contact.id}`)}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 text-secondary shrink-0"
             >
-              <Icon name="ChevronRight" size={14} />
+              <Icon name="ChevronRight" size={18} />
             </Button>
           </div>
-          <div className="mt-1.5 flex items-center justify-between gap-2">
-            <InlineStageSelect
-              contact={contact}
-              pipelineStages={pipelineStages}
-              isSaving={savingContactId === contact.id}
-              onStageChange={onStageChange}
-              onMutate={mutateContacts}
-              onError={(error: Error) =>
-                showToast('Error al avanzar etapa', error.message, 'error')
-              }
-            />
-            <InlineTagsEditor
-              contact={contact}
-              allTags={allTags}
-              isSaving={savingContactId === contact.id}
-              onTagsChange={onTagsChange}
-              onManageTagsClick={onManageTagsClick}
-            />
+
+          {/* Middle: Stage and Interaction */}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <InlineStageSelect
+                contact={contact}
+                pipelineStages={pipelineStages}
+                isSaving={savingContactId === contact.id}
+                onStageChange={onStageChange}
+                onMutate={mutateContacts}
+                onError={(error: Error) =>
+                  showToast('Error al avanzar etapa', error.message, 'error')
+                }
+              />
+            </div>
+            <div className="flex flex-col items-end shrink-0 pl-2 border-l border-border/50">
+              <InteractionCounter
+                contact={contact}
+                onUpdate={mutateContacts}
+                onError={(error) =>
+                  showToast('Error al actualizar interacción', error.message, 'error')
+                }
+              />
+              <Text size="xs" color="muted" className="mt-1 text-[10px] uppercase tracking-wider">
+                {formatTimeAgo(contact.contactLastTouchAt)}
+              </Text>
+            </div>
           </div>
-          <div className="mt-1.5">
-            <InlineTextInput
-              contact={contact}
-              field="nextStep"
-              placeholder="Agregar prรณximo paso..."
-              isSaving={savingContactId === contact.id}
-              onSave={onTextInputSave}
-            />
+
+          {/* Bottom: Tags and Next Step */}
+          <div className="space-y-3 pt-2 border-t border-border/50">
+            <div className="w-full">
+              <InlineTagsEditor
+                contact={contact}
+                allTags={allTags}
+                isSaving={savingContactId === contact.id}
+                onTagsChange={onTagsChange}
+                onManageTagsClick={onManageTagsClick}
+              />
+            </div>
+            <div className="w-full">
+              <InlineTextInput
+                contact={contact}
+                field="nextStep"
+                placeholder="Agregar próximo paso..."
+                isSaving={savingContactId === contact.id}
+                onSave={onTextInputSave}
+              />
+            </div>
           </div>
         </div>
       ))}

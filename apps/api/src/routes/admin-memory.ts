@@ -23,8 +23,8 @@ router.get(
   requireAuth,
   requireRole(['admin']),
   createRouteHandler(async (req) => {
-    const { getCacheHealth } = await import('../utils/cache');
-    const { getQueryMetrics } = await import('../utils/db-logger');
+    const { getCacheHealth } = await import('../utils/performance/cache');
+    const { getQueryMetrics } = await import('../utils/database/db-logger');
     const { getEtagCacheStats } = await import('../utils/etag-cache');
 
     const memUsage = process.memoryUsage();

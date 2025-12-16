@@ -63,6 +63,7 @@ export interface Contact extends VersionedEntity {
   pipelineStageUpdatedAt?: string | null;
   // Tags (when included)
   tags?: ContactTag[];
+  interactionCount?: number | null;
 }
 
 /**
@@ -136,6 +137,7 @@ export interface UpdateContactRequest {
   fields?: ContactFieldUpdate[];
   [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
 }
+
 
 
 

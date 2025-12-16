@@ -58,6 +58,7 @@ export const Select = React.forwardRef<
       className,
       id,
       required = false,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ..._props
     },
     ref

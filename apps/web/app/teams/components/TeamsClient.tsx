@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   getTeamAdvisors,
@@ -7,15 +7,20 @@ import {
   createTeam,
   respondToMembershipRequest,
 } from '@/lib/api';
+import {
+  getPersonalCalendars,
+  connectTeamCalendar,
+  type CalendarListEntry,
+} from '@/lib/api/calendar';
 import { logger, toLogContext } from '@/lib/logger';
-import TeamMemberCard from '../components/TeamMemberCard';
+import TeamMemberCard from './TeamMemberCard';
+import CalendarConfigModal from './CalendarConfigModal';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   Button,
-  Heading,
   Text,
   Stack,
   Grid,
@@ -29,31 +34,32 @@ import {
   ModalFooter,
   Alert,
   Badge,
-  Spinner,
   Icon,
   type Column,
 } from '@cactus/ui';
 import type { Team, MembershipRequest, TeamAdvisor } from '@/types';
+// AI_DECISION: Import CalendarWidget statically
+import CalendarWidget from '@/app/components/CalendarWidget';
 
 interface TeamsClientProps {
   initialTeams: Team[];
   initialMembershipRequests: MembershipRequest[];
   userRole: string;
   userId: string;
+  teamCalendarUrl: string | null;
+  isGoogleConnected: boolean;
 }
 
 /**
  * TeamsClient - Client Island for team management interactivity
- *
- * AI_DECISION: Extract interactive parts to Client Island for Server Component pattern
- * Justificación: Forms and modals require client-side interactivity, data fetching can be server-side
- * Impacto: Reduces First Load JS ~40KB, better SEO, faster initial load
  */
 export default function TeamsClient({
   initialTeams,
   initialMembershipRequests,
   userRole,
   userId,
+  teamCalendarUrl: _initialCalendarUrl,
+  isGoogleConnected,
 }: TeamsClientProps) {
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>(initialTeams);
@@ -69,9 +75,6 @@ export default function TeamsClient({
     return () => clearTimeout(timer);
   }, []);
 
-  // AI_DECISION: Determinar permisos de edición basado en rol
-  // Justificación: Advisors solo pueden ver equipos, no editarlos
-  // Impacto: Mejora seguridad y UX diferenciando permisos por rol
   const canEdit = userRole === 'manager' || userRole === 'admin';
 
   // Form states
@@ -83,9 +86,29 @@ export default function TeamsClient({
   const [advisorCandidates, setAdvisorCandidates] = useState<TeamAdvisor[]>([]);
   const [inviteLoading, setInviteLoading] = useState<string | null>(null);
 
-  // AI_DECISION: Use useCallback to stabilize navigation functions for memoized component
-  // Justificación: TeamMemberCard is memoized, needs stable callback references
-  // Impacto: Prevents unnecessary re-renders of TeamMemberCard components
+  // Calendar Config State
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [configTeam, setConfigTeam] = useState<Team | null>(null);
+  const [availableCalendars, setAvailableCalendars] = useState<CalendarListEntry[]>([]);
+  const [calendarsLoaded, setCalendarsLoaded] = useState(false);
+  const [configLoading, setConfigLoading] = useState(false);
+
+  // Temporary state for the modal form
+  const [tempSelectedCalendarId, setTempSelectedCalendarId] = useState('');
+  const [tempSelectedMeetingRoomCalendarId, setTempSelectedMeetingRoomCalendarId] = useState('');
+
+  // Selected Team for Calendar Widget
+  const [selectedCalendarTeamId, setSelectedCalendarTeamId] = useState<string | null>(null);
+
+  // Initialize selected calendar team
+  useEffect(() => {
+    if (teams.length > 0 && !selectedCalendarTeamId) {
+      // Prioritize team with Google Calendar ID
+      const teamWithCalendar = teams.find((t) => t.calendarId) || teams[0];
+      setSelectedCalendarTeamId(teamWithCalendar.id);
+    }
+  }, [teams, selectedCalendarTeamId]);
+
   const handleNavigateToMember = useCallback(
     (teamId: string, memberId: string) => {
       router.push(`/teams/${teamId}/member/${memberId}`);
@@ -114,16 +137,6 @@ export default function TeamsClient({
     }
   };
 
-  const handleVincularAsesores = () => {
-    if (teams.length === 1) {
-      openLinkModal(teams[0]);
-      return;
-    }
-    if (teams.length > 0) {
-      openLinkModal(teams[0]);
-    }
-  };
-
   const inviteAdvisor = async (userId: string) => {
     if (!linkModalOpen) return;
     try {
@@ -148,8 +161,6 @@ export default function TeamsClient({
       setActionLoading('create');
       setError(null);
 
-      // Get user ID from somewhere - for now using a placeholder
-      // In real implementation, this should come from auth context or props
       const response = await createTeam({
         name: newTeamName.trim(),
         managerUserId: userId,
@@ -189,6 +200,98 @@ export default function TeamsClient({
     }
   };
 
+  // Calendar Config Handlers
+  const loadAvailableCalendars = async () => {
+    if (calendarsLoaded || !isGoogleConnected) return;
+
+    try {
+      const response = await getPersonalCalendars();
+      if (response.success && response.data) {
+        setAvailableCalendars(response.data);
+        setCalendarsLoaded(true);
+      }
+    } catch (err) {
+      console.error('Error loading calendars:', err);
+      // Fail silently
+    }
+  };
+
+  const handleOpenConfigModal = (team: Team) => {
+    setConfigTeam(team);
+    setTempSelectedCalendarId(team.calendarId || '');
+    setTempSelectedMeetingRoomCalendarId(team.meetingRoomCalendarId || '');
+    setConfigModalOpen(true);
+
+    if (isGoogleConnected && !calendarsLoaded) {
+      loadAvailableCalendars();
+    }
+  };
+
+  const handleConfigTeamChange = (teamId: string) => {
+    const newTeam = teams.find((t) => t.id === teamId);
+    if (newTeam) {
+      setConfigTeam(newTeam);
+      setTempSelectedCalendarId(newTeam.calendarId || '');
+      setTempSelectedMeetingRoomCalendarId(newTeam.meetingRoomCalendarId || '');
+    }
+  };
+
+  const handleCloseConfigModal = () => {
+    setConfigModalOpen(false);
+    setConfigTeam(null);
+    setTempSelectedCalendarId('');
+    setTempSelectedMeetingRoomCalendarId('');
+    setError(null);
+  };
+
+  const handleConnectCalendar = async (type: 'primary' | 'meetingRoom') => {
+    if (!configTeam) return;
+
+    const calendarIdToConnect =
+      type === 'meetingRoom' ? tempSelectedMeetingRoomCalendarId : tempSelectedCalendarId;
+
+    if (!calendarIdToConnect) return;
+
+    try {
+      setConfigLoading(true);
+      setError(null);
+
+      await connectTeamCalendar(configTeam.id, calendarIdToConnect, type);
+
+      setTeams((prev) =>
+        prev.map((team) => {
+          if (team.id === configTeam.id) {
+            return {
+              ...team,
+              [type === 'meetingRoom' ? 'meetingRoomCalendarId' : 'calendarId']:
+                calendarIdToConnect,
+            };
+          }
+          return team;
+        })
+      );
+
+      // Update configTeam to reflect the change
+      setConfigTeam((prev) =>
+        prev
+          ? {
+              ...prev,
+              [type === 'meetingRoom' ? 'meetingRoomCalendarId' : 'calendarId']:
+                calendarIdToConnect,
+            }
+          : null
+      );
+    } catch (err) {
+      logger.error(
+        'Error connecting team calendar',
+        toLogContext({ err, teamId: configTeam.id, calendarId: calendarIdToConnect, type })
+      );
+      setError(err instanceof Error ? err.message : 'Error al conectar calendario');
+    } finally {
+      setConfigLoading(false);
+    }
+  };
+
   // Configuración de columnas para la tabla de solicitudes
   const membershipColumns: Column<MembershipRequest>[] = [
     {
@@ -215,9 +318,6 @@ export default function TeamsClient({
         <Text size="sm">{new Date(request.createdAt).toLocaleDateString('es-ES')}</Text>
       ),
     },
-    // AI_DECISION: Ocultar columna de acciones para advisors
-    // Justificación: Solo managers y admins pueden aprobar/rechazar solicitudes
-    // Impacto: Mejora seguridad y UX diferenciando permisos por rol
     ...(canEdit
       ? [
           {
@@ -254,225 +354,256 @@ export default function TeamsClient({
         mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
       }`}
     >
-      {error && (
-        <Alert variant="error" title="Error">
-          {error}
-        </Alert>
-      )}
-
-      {/* Teams Grid */}
-      <Grid cols={1} gap="lg">
-        {teams.map((team, index) => (
-          <div
-            key={team.id}
-            className={`transition-all duration-500 ease-out ${
-              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            style={{ transitionDelay: `${50 + index * 50}ms` }}
-          >
-            <Card
-              className="rounded-md border border-border hover:border-border-hover hover:shadow-md hover-lift transition-all cursor-pointer"
-              onClick={() => router.push(`/teams/${team.id}`)}
-            >
-              <CardHeader className="p-4 pb-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base mb-1">{team.name}</CardTitle>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Text size="xs" color="secondary">
-                        Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
-                      </Text>
-                      <span className="text-text-secondary">•</span>
-                      <Text size="xs" color="secondary" weight="medium">
-                        {team.members?.length || 0} miembros
-                      </Text>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      router.push(`/teams/${team.id}`);
-                    }}
-                  >
-                    <Icon name="ChevronRight" size={16} />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                {team.members && team.members.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-                    {team.members.slice(0, 5).map((member) => (
-                      <TeamMemberCard
-                        key={member.id}
-                        member={member}
-                        teamId={team.id}
-                        onNavigateToMember={handleNavigateToMember}
-                        onNavigateToContacts={handleNavigateToContacts}
-                      />
-                    ))}
-                  </div>
-                )}
-                {team.members && team.members.length > 5 && (
-                  <div className="mt-2 text-center">
-                    <Text size="sm" color="secondary">
-                      +{team.members.length - 5} miembros más
-                    </Text>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ))}
-      </Grid>
-
-      {/* Empty state */}
-      {teams.length === 0 && (
-        <Card className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
-          <CardContent className="p-4">
-            <div className="text-center py-8">
-              <Text weight="medium" className="mb-2">
-                No hay equipos creados
-              </Text>
-              <Text color="secondary" className="mb-4">
-                {canEdit
-                  ? 'Crea tu primer equipo para comenzar a organizar a tu equipo de trabajo.'
-                  : 'Aún no perteneces a ningún equipo.'}
-              </Text>
-              <div className="flex flex-col items-center gap-2">
-                <Text size="sm" color="secondary">
-                  Si tienes invitaciones pendientes, puedes aceptarlas desde tu perfil.
-                </Text>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push('/profile')}
-                >
-                  Ir a mi perfil
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Membership Requests - Solo visible para managers y admins */}
-      {canEdit && membershipRequests.length > 0 && (
-        <Card className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
-          <CardHeader className="p-4">
-            <CardTitle className="text-base">Solicitudes de Membresía</CardTitle>
-            <Text size="sm" color="secondary">
-              {membershipRequests.length} solicitud(es) pendiente(s)
-            </Text>
-          </CardHeader>
-          <CardContent className="p-4">
-            <DataTable
-              data={membershipRequests as unknown as Record<string, unknown>[]}
-              columns={membershipColumns as unknown as Column<Record<string, unknown>>[]}
-              keyField="id"
-              emptyMessage="No hay solicitudes pendientes."
+      <Stack direction="column" gap="lg">
+        {/* Widget de Calendario del Equipo - Integrado */}
+        {teams.length > 0 && (
+          <section aria-label="Calendario del equipo">
+            <CalendarWidget
+              teams={teams}
+              selectedTeamId={selectedCalendarTeamId || undefined}
+              onSelectTeam={setSelectedCalendarTeamId}
+              onConfigure={handleOpenConfigModal}
+              canConfigure={canEdit}
             />
-          </CardContent>
-        </Card>
-      )}
+          </section>
+        )}
 
-      {/* Modal de crear equipo - Solo visible para managers y admins */}
-      {canEdit && (
-        <Modal open={showCreateTeam} onOpenChange={setShowCreateTeam}>
-          <ModalHeader>
-            <ModalTitle>Crear nuevo equipo</ModalTitle>
-            <ModalDescription>
-              Crea un nuevo equipo para organizar a tus colaboradores.
-            </ModalDescription>
-          </ModalHeader>
-          <ModalContent>
-            <form onSubmit={handleCreateTeam}>
-              <Stack direction="column" gap="md">
-                <Input
-                  label="Nombre del equipo"
-                  value={newTeamName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setNewTeamName(e.target.value)
-                  }
-                  placeholder="Ej: Equipo de Ventas Norte"
-                  required
-                />
-                <ModalFooter>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setShowCreateTeam(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={actionLoading === 'create' || !newTeamName.trim()}
-                  >
-                    Crear equipo
-                  </Button>
-                </ModalFooter>
-              </Stack>
-            </form>
-          </ModalContent>
-        </Modal>
-      )}
+        {error && (
+          <Alert variant="error" title="Error">
+            {error}
+          </Alert>
+        )}
 
-      {/* Modal agregar miembros - Solo visible para managers y admins */}
-      {canEdit && (
-        <Modal open={!!linkModalOpen} onOpenChange={() => setLinkModalOpen(null)}>
-          <ModalHeader>
-            <ModalTitle>
-              Agregar miembros {linkModalOpen ? `a ${linkModalOpen.teamName}` : ''}
-            </ModalTitle>
-            <ModalDescription>
-              Selecciona miembros (asesores, managers o administrativos) para enviar invitación al equipo.
-            </ModalDescription>
-          </ModalHeader>
-          <ModalContent>
-            <Stack direction="column" gap="sm">
-              {advisorCandidates.length === 0 && (
-                <Text color="secondary">No hay usuarios disponibles para invitar.</Text>
-              )}
-              {advisorCandidates.map((a: TeamAdvisor) => (
-                <div
-                  key={String(a.id)}
-                  className="flex items-center justify-between border rounded-md px-3 py-2"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Text weight="medium">{a.fullName || a.email}</Text>
-                      <Badge variant="default" className="text-xs">
-                        {a.role || 'N/A'}
-                      </Badge>
-                      {a.currentTeamId && (
-                        <Badge variant="outline" className="text-xs">
-                          En otro equipo
-                        </Badge>
-                      )}
+        {/* Teams Grid */}
+        <Grid cols={1} gap="lg">
+          {teams.map((team, index) => (
+            <div
+              key={team.id}
+              className={`transition-all duration-500 ease-out ${
+                mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+              style={{ transitionDelay: `${50 + index * 50}ms` }}
+            >
+              <Card
+                className="rounded-md border border-border hover:border-border-hover hover:shadow-md hover-lift transition-all cursor-pointer"
+                onClick={() => router.push(`/teams/${team.id}`)}
+              >
+                <CardHeader className="p-4 pb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base mb-1">{team.name}</CardTitle>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Text size="xs" color="secondary">
+                          Creado el {new Date(team.createdAt).toLocaleDateString('es-ES')}
+                        </Text>
+                        <span className="text-text-secondary">•</span>
+                        <Text size="xs" color="secondary" weight="medium">
+                          {team.members?.length || 0} miembros
+                        </Text>
+                      </div>
                     </div>
-                    <Text size="sm" color="secondary">
-                      {a.email}
-                    </Text>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        router.push(`/teams/${team.id}`);
+                      }}
+                    >
+                      <Icon name="ChevronRight" size={16} />
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    disabled={inviteLoading === String(a.id)}
-                    onClick={() => inviteAdvisor(String(a.id))}
-                  >
-                    Invitar
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  {team.members && team.members.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                      {team.members.slice(0, 5).map((member) => (
+                        <TeamMemberCard
+                          key={member.id}
+                          member={member}
+                          teamId={team.id}
+                          onNavigateToMember={handleNavigateToMember}
+                          onNavigateToContacts={handleNavigateToContacts}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {team.members && team.members.length > 5 && (
+                    <div className="mt-2 text-center">
+                      <Text size="sm" color="secondary">
+                        +{team.members.length - 5} miembros más
+                      </Text>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </Grid>
+
+        {/* Empty state */}
+        {teams.length === 0 && (
+          <Card className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
+            <CardContent className="p-4">
+              <div className="text-center py-8">
+                <Text weight="medium" className="mb-2">
+                  No hay equipos creados
+                </Text>
+                <Text color="secondary" className="mb-4">
+                  {canEdit
+                    ? 'Crea tu primer equipo para comenzar a organizar a tu equipo de trabajo.'
+                    : 'Aún no perteneces a ningún equipo.'}
+                </Text>
+                <div className="flex flex-col items-center gap-2">
+                  <Text size="sm" color="secondary">
+                    Si tienes invitaciones pendientes, puedes aceptarlas desde tu perfil.
+                  </Text>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/profile')}>
+                    Ir a mi perfil
                   </Button>
                 </div>
-              ))}
-            </Stack>
-            <ModalFooter>
-              <Button variant="secondary" onClick={() => setLinkModalOpen(null)}>
-                Cerrar
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Membership Requests */}
+        {canEdit && membershipRequests.length > 0 && (
+          <Card className="rounded-md border border-border hover:border-border-hover hover:shadow-sm transition-shadow">
+            <CardHeader className="p-4">
+              <CardTitle className="text-base">Solicitudes de Membresía</CardTitle>
+              <Text size="sm" color="secondary">
+                {membershipRequests.length} solicitud(es) pendiente(s)
+              </Text>
+            </CardHeader>
+            <CardContent className="p-4">
+              <DataTable
+                data={membershipRequests as unknown as Record<string, unknown>[]}
+                columns={membershipColumns as unknown as Column<Record<string, unknown>>[]}
+                keyField="id"
+                emptyMessage="No hay solicitudes pendientes."
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Modal de crear equipo */}
+        {canEdit && (
+          <Modal open={showCreateTeam} onOpenChange={setShowCreateTeam}>
+            <ModalHeader>
+              <ModalTitle>Crear nuevo equipo</ModalTitle>
+              <ModalDescription>
+                Crea un nuevo equipo para organizar a tus colaboradores.
+              </ModalDescription>
+            </ModalHeader>
+            <ModalContent>
+              <form onSubmit={handleCreateTeam}>
+                <Stack direction="column" gap="md">
+                  <Input
+                    label="Nombre del equipo"
+                    value={newTeamName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setNewTeamName(e.target.value)
+                    }
+                    placeholder="Ej: Equipo de Ventas Norte"
+                    required
+                  />
+                  <ModalFooter>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setShowCreateTeam(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={actionLoading === 'create' || !newTeamName.trim()}
+                    >
+                      Crear equipo
+                    </Button>
+                  </ModalFooter>
+                </Stack>
+              </form>
+            </ModalContent>
+          </Modal>
+        )}
+
+        {/* Modal agregar miembros */}
+        {canEdit && (
+          <Modal open={!!linkModalOpen} onOpenChange={() => setLinkModalOpen(null)}>
+            <ModalHeader>
+              <ModalTitle>
+                Agregar miembros {linkModalOpen ? `a ${linkModalOpen.teamName}` : ''}
+              </ModalTitle>
+              <ModalDescription>
+                Selecciona miembros (asesores, managers o administrativos) para enviar invitación al
+                equipo.
+              </ModalDescription>
+            </ModalHeader>
+            <ModalContent>
+              <Stack direction="column" gap="sm">
+                {advisorCandidates.length === 0 && (
+                  <Text color="secondary">No hay usuarios disponibles para invitar.</Text>
+                )}
+                {advisorCandidates.map((a: TeamAdvisor) => (
+                  <div
+                    key={String(a.id)}
+                    className="flex items-center justify-between border rounded-md px-3 py-2"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Text weight="medium">{a.fullName || a.email}</Text>
+                        <Badge variant="default" className="text-xs">
+                          {a.role || 'N/A'}
+                        </Badge>
+                        {a.currentTeamId && (
+                          <Badge variant="outline" className="text-xs">
+                            En otro equipo
+                          </Badge>
+                        )}
+                      </div>
+                      <Text size="sm" color="secondary">
+                        {a.email}
+                      </Text>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={inviteLoading === String(a.id)}
+                      onClick={() => inviteAdvisor(String(a.id))}
+                    >
+                      Invitar
+                    </Button>
+                  </div>
+                ))}
+              </Stack>
+              <ModalFooter>
+                <Button variant="secondary" onClick={() => setLinkModalOpen(null)}>
+                  Cerrar
+                </Button>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+        )}
+
+        {/* Modal Configuración Calendario */}
+        {canEdit && configTeam && (
+          <CalendarConfigModal
+            isOpen={configModalOpen}
+            onClose={handleCloseConfigModal}
+            teams={teams}
+            selectedTeam={configTeam}
+            onTeamChange={handleConfigTeamChange}
+            isGoogleConnected={isGoogleConnected}
+            availableCalendars={availableCalendars}
+            selectedCalendarId={tempSelectedCalendarId}
+            onSelectCalendarId={setTempSelectedCalendarId}
+            selectedMeetingRoomCalendarId={tempSelectedMeetingRoomCalendarId}
+            onSelectMeetingRoomCalendarId={setTempSelectedMeetingRoomCalendarId}
+            onConnectCalendar={handleConnectCalendar}
+            isLoading={configLoading}
+          />
+        )}
+      </Stack>
     </div>
   );
 }

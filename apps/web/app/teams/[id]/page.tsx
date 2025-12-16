@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  CardFooter,
   Button,
   Text,
   Stack,
@@ -42,6 +41,12 @@ import {
 } from '@cactus/ui';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import TeamActivityTable from '../components/TeamActivityTable';
+import TeamPerformanceSnapshot from '../components/TeamPerformanceSnapshot';
+import { TeamCalendarSection } from '../components/TeamCalendarSection';
+import TeamGoalsCard from '../components/TeamGoalsCard';
+import LeadDistributionPanel from '../components/LeadDistributionPanel';
+import CapacityHeatmap from '../components/CapacityHeatmap';
+import TeamHistoryChart from '../components/TeamHistoryChart';
 
 export default function TeamDetailsPage() {
   const { user, loading } = useRequireAuth();
@@ -88,15 +93,17 @@ export default function TeamDetailsPage() {
   });
 
   // Check if user can manage this team (admin or manager of this specific team)
-  // AI_DECISION: Verificar si el usuario es manager del equipo específico, no solo rol global
-  // Justificación: Solo el manager asignado al equipo puede gestionar configuraciones y ver actividad
-  // Impacto: Mejora seguridad y control de acceso granular por equipo
-  const canManageTeam = user && team && (user.role === 'admin' || (user.role === 'manager' && team.managerUserId === user.id));
+  const canManageTeam =
+    user &&
+    team &&
+    (user.role === 'admin' || (user.role === 'manager' && team.managerUserId === user.id));
 
   useEffect(() => {
     if (!user) return;
+    // Strict RBAC: Only managers and admins can view team details page
+    // Regular members see their dashboard at /teams
     if (!['manager', 'admin'].includes(user.role)) {
-      router.push('/home');
+      router.push('/teams');
       return;
     }
     fetchAll();
@@ -108,17 +115,25 @@ export default function TeamDetailsPage() {
       setError(null);
 
       // Get team detail (team + members + metrics) in a single request
+      // Backend validates permission (must be manager of this team or admin)
       const detailRes = await getTeamDetail(teamId);
+
       if (detailRes.success && detailRes.data) {
         setTeam(detailRes.data.team);
         setEditTeamName(detailRes.data.team.name);
         setMembers(detailRes.data.team.members || []);
         setTeamMetrics(detailRes.data.metrics);
       } else {
-        throw new Error('No se pudo cargar la información del equipo');
+        // If backend denies access or fails
+        throw new Error('No se pudo cargar la información del equipo o no tienes permisos');
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cargar equipo');
+      const errMsg = e instanceof Error ? e.message : 'Error al cargar equipo';
+      setError(errMsg);
+      // Optional: Redirect if permission error
+      if (errMsg.includes('permisos') || errMsg.includes('Access denied')) {
+        setTimeout(() => router.push('/teams'), 2000);
+      }
     } finally {
       setLoadingData(false);
     }
@@ -308,91 +323,79 @@ export default function TeamDetailsPage() {
           </Alert>
         )}
 
-        {/* Metrics Section */}
-        {teamMetrics && (
-          <Grid cols={{ base: 1, md: 2, lg: 4 }} gap="md">
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  AUM Total
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {formatCurrency(teamMetrics.teamAum)}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Miembros
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.memberCount}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Clientes
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.clientCount}
-                </Text>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <Text size="sm" color="secondary" className="mb-1">
-                  Portfolios Activos
-                </Text>
-                <Text weight="bold" className="text-xl">
-                  {teamMetrics.portfolioCount}
-                </Text>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+        <Grid cols={{ base: 1, lg: 3 }} gap="lg">
+          {/* Left Column: Goals & Metrics */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Performance Snapshot */}
+            <TeamPerformanceSnapshot teamId={teamId} />
 
-        {/* Risk Distribution */}
-        {teamMetrics && teamMetrics.riskDistribution.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribución de Riesgo</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Stack direction="column" gap="sm">
-                {teamMetrics.riskDistribution.map((item) => (
-                  <div key={item.riskLevel} className="flex items-center justify-between">
-                    <Text>{getRiskLevelLabel(item.riskLevel)}</Text>
-                    <Badge variant="default">{item.count}</Badge>
-                  </div>
-                ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        )}
+            {/* History Chart */}
+            <TeamHistoryChart teamId={teamId} />
 
-        {/* Members & Activity Tabs */}
-        <Tabs defaultValue={canManageTeam ? "activity" : "members"} className="w-full">
-          <TabsList className="mb-4">
-            {canManageTeam && (
-              <TabsTrigger value="activity">
-                <Icon name="Activity" size={16} className="mr-2" />
-                Control de Actividad
-              </TabsTrigger>
+            {/* Capacity Heatmap */}
+            <CapacityHeatmap teamId={teamId} />
+
+            {/* Risk Distribution */}
+            {teamMetrics && teamMetrics.riskDistribution.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribución de Riesgo</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Stack direction="column" gap="sm">
+                    {teamMetrics.riskDistribution.map((item) => (
+                      <div key={item.riskLevel} className="flex items-center justify-between">
+                        <Text>{getRiskLevelLabel(item.riskLevel)}</Text>
+                        <Badge variant="default">{item.count}</Badge>
+                      </div>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
             )}
-            <TabsTrigger value="members">
+          </div>
+
+          {/* Right Column: Goals & Calendar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Goals Card */}
+            <TeamGoalsCard teamId={teamId} />
+
+            {/* Manager Calendar View */}
+            {canManageTeam && team && (
+              <TeamCalendarSection
+                teamId={teamId}
+                isManager={true}
+                currentCalendarId={(team.calendarId || team.calendarUrl) ?? null}
+                members={members}
+              />
+            )}
+          </div>
+        </Grid>
+
+        {/* Tabs for Management */}
+        <Tabs defaultValue="activity" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="activity">
+              <Icon name="Activity" size={16} className="mr-2" />
+              Actividad
+            </TabsTrigger>
+            <TabsTrigger value="leads">
               <Icon name="Users" size={16} className="mr-2" />
+              Gestión de Leads
+            </TabsTrigger>
+            <TabsTrigger value="members">
+              <Icon name="Team" size={16} className="mr-2" />
               Miembros ({members.length})
             </TabsTrigger>
           </TabsList>
 
-          {canManageTeam && (
-            <TabsContent value="activity">
-              <TeamActivityTable teamId={teamId} teamName={team?.name} />
-            </TabsContent>
-          )}
+          <TabsContent value="activity">
+            <TeamActivityTable teamId={teamId} teamName={team?.name} />
+          </TabsContent>
+
+          <TabsContent value="leads">
+            <LeadDistributionPanel teamId={teamId} />
+          </TabsContent>
 
           <TabsContent value="members">
             {members.length === 0 ? (
@@ -476,7 +479,8 @@ export default function TeamDetailsPage() {
           <ModalHeader>
             <ModalTitle>Agregar miembros a {team?.name}</ModalTitle>
             <ModalDescription>
-              Selecciona miembros (asesores, managers o administrativos) para enviar invitación al equipo.
+              Selecciona miembros (asesores, managers o administrativos) para enviar invitación al
+              equipo.
             </ModalDescription>
           </ModalHeader>
           <ModalContent>

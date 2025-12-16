@@ -85,7 +85,7 @@ export const handleListNotes = createRouteHandler(async (req: Request) => {
  * GET /notes/batch - Get notes for multiple contacts (batch)
  */
 export const handleBatchNotes = createRouteHandler(async (req: Request) => {
-  const { validateBatchIds } = await import('../../../utils/batch-validation');
+  const { validateBatchIds } = await import('../../../utils/database/batch-validation');
 
   const validation = validateBatchIds(req.query.contactIds as string, {
     maxCount: 50, // Límite específico para notes batch
@@ -93,7 +93,7 @@ export const handleBatchNotes = createRouteHandler(async (req: Request) => {
   });
 
   if (!validation.valid) {
-    throw new HttpError(400, 'Invalid contact IDs', validation.errors);
+    throw new HttpError(400, 'Invalid contact IDs', { errors: validation.errors });
   }
 
   const userId = req.user!.id;

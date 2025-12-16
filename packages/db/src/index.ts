@@ -47,11 +47,16 @@ export {
   users,
   teamMembership,
   teamMembershipRequests,
+  teamGoals,
+  // OAuth
+  googleOAuthTokens,
   // Contacts & pipeline
   pipelineStages,
   contacts,
+  contactAliases,
   contactFieldHistory,
   pipelineStageHistory,
+  contactStageInteractions,
   // Attachments
   attachments,
   // Meetings & Notes (AI/manual/import)
@@ -121,6 +126,8 @@ export {
   capacitaciones,
   // Automatizaciones
   automationConfigs,
+  // Calendar
+  calendarEvents,
 } from './schema';
 
 /**

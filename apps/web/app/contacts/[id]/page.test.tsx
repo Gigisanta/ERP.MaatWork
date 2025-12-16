@@ -95,7 +95,7 @@ describe('ContactDetailPage', () => {
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // tasks
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // notes
 
-    const page = await ContactDetailPage({ params: { id: 'test-contact-id' } });
+    const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);
 
     await waitFor(() => {
@@ -108,7 +108,7 @@ describe('ContactDetailPage', () => {
     vi.mocked(apiCall).mockRejectedValue(new Error('Not found'));
 
     try {
-      await ContactDetailPage({ params: { id: 'non-existent-id' } });
+      await ContactDetailPage({ params: Promise.resolve({ id: 'non-existent-id' }) });
     } catch (error) {
       // Expected to throw or call notFound
     }
@@ -128,7 +128,7 @@ describe('ContactDetailPage', () => {
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
 
-    const page = await ContactDetailPage({ params: { id: 'test-contact-id' } });
+    const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);
 
     await waitFor(() => {
@@ -158,7 +158,7 @@ describe('ContactDetailPage', () => {
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
     vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
 
-    const page = await ContactDetailPage({ params: { id: 'test-contact-id' } });
+    const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);
 
     await waitFor(() => {

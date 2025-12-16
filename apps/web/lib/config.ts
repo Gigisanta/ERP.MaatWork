@@ -17,6 +17,9 @@ export const config = {
   // N8N Configuration
   n8nUrl: process.env.NEXT_PUBLIC_N8N_URL || 'http://localhost:5678',
 
+  // Google OAuth Configuration
+  googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+
   // Environment
   environment: process.env.NODE_ENV || 'development',
   isDevelopment: process.env.NODE_ENV === 'development',

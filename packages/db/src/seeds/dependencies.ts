@@ -45,6 +45,7 @@ const NOTIFICATION_TYPES = [
   { id: 'error', label: 'Error' },
   { id: 'success', label: 'Éxito' },
   { id: 'reminder', label: 'Recordatorio' },
+  { id: 'meeting_assignment', label: 'Asignación de Reunión' },
 ];
 
 const PIPELINE_STAGES = [

@@ -41,6 +41,9 @@ export default function SecondMeetingCard() {
         setLoading(true);
         setError(null);
 
+        // AI_DECISION: Handle 404 gracefully without generic error logging
+        // Justificación: 404 is expected on first load, so we shouldn't log "Network error"
+        // Note: The ApiClient might still log network errors if fetch fails, but 404 is a valid HTTP response.
         const response = await getAutomationConfigByName(AUTOMATION_NAME);
 
         if (response.success && response.data) {
@@ -48,7 +51,7 @@ export default function SecondMeetingCard() {
           setWebhookUrl(response.data.webhookUrl || '');
           setEnabled(response.data.enabled);
         } else {
-          // No existe configuración, usar valores por defecto
+          // Fallback if success=false but no error thrown (unlikely with current client)
           setWebhookUrl('http://localhost:5678/webhook-test/segunda-reunion');
           setEnabled(true);
         }
@@ -56,6 +59,10 @@ export default function SecondMeetingCard() {
         // Manejar 404 como "no existe configuración" (caso normal)
         if (err instanceof ApiError && err.status === 404) {
           // No existe configuración, usar valores por defecto
+          // AI_DECISION: Log debug instead of error for expected 404
+          logger.debug('Automation config not found (404), using defaults', {
+            name: AUTOMATION_NAME,
+          });
           setWebhookUrl('http://localhost:5678/webhook-test/segunda-reunion');
           setEnabled(true);
         } else {
@@ -75,98 +82,77 @@ export default function SecondMeetingCard() {
   }, []);
 
   const handleSave = useCallback(async () => {
+    if (!webhookUrl) {
+      showToast('Error', 'La URL del webhook es requerida', 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      // Validar URL si está habilitada
-      if (enabled && webhookUrl && !isValidUrl(webhookUrl)) {
-        setError('La URL del webhook no es válida');
-        return;
-      }
-
-      const updateData: UpdateAutomationConfigRequest = {
-        webhookUrl: webhookUrl || null,
-        enabled,
-      };
-
       if (config) {
-        // Actualizar configuración existente
-        const response = await updateAutomationConfig(config.id, updateData);
+        // Actualizar existente
+        const updateData: UpdateAutomationConfigRequest = {
+          webhookUrl,
+          enabled,
+          // Mantener otros campos
+          displayName: config.displayName,
+          triggerType: config.triggerType,
+          triggerConfig: config.triggerConfig,
+          config: config.config,
+        };
 
+        const response = await updateAutomationConfig(config.id, updateData);
         if (response.success && response.data) {
           setConfig(response.data);
-          setWebhookUrl(response.data.webhookUrl || '');
-          setEnabled(response.data.enabled);
-          showToast('Configuración guardada exitosamente', undefined, 'success');
-        } else {
-          throw new Error(response.error || 'Error al guardar');
+          showToast('Guardado', 'Configuración actualizada correctamente', 'success');
         }
       } else {
-        // Crear nueva configuración
-        const response = await createAutomationConfig({
+        // Crear nueva
+        const createData = {
           name: AUTOMATION_NAME,
-          displayName: 'Webhook Segunda Reunión',
+          displayName: 'Segunda Reunión Webhook',
           triggerType: 'pipeline_stage_change',
           triggerConfig: { stageName: 'Segunda reunion' },
-          webhookUrl: webhookUrl || null,
+          webhookUrl,
           enabled,
-          config: {},
-        });
+          config: {
+            payload: {
+              source: 'dashboard_crm',
+              eventType: 'segunda_reunion_agendada',
+            },
+          },
+        };
 
+        const response = await createAutomationConfig(createData);
         if (response.success && response.data) {
           setConfig(response.data);
-          setWebhookUrl(response.data.webhookUrl || '');
-          setEnabled(response.data.enabled);
-          showToast('Configuración creada exitosamente', undefined, 'success');
-        } else {
-          throw new Error(response.error || 'Error al crear');
+          showToast('Guardado', 'Configuración creada correctamente', 'success');
         }
       }
     } catch (err) {
       logger.error('Error saving automation config', {
         error: err instanceof Error ? err.message : String(err),
       });
-      setError(err instanceof Error ? err.message : 'Error al guardar la configuración');
-      showToast(
-        'Error al guardar',
-        err instanceof Error ? err.message : 'Error desconocido',
-        'error'
-      );
+      showToast('Error', 'No se pudo guardar la configuración. Revisa los logs.', 'error');
     } finally {
       setSaving(false);
     }
   }, [config, webhookUrl, enabled, showToast]);
 
-  const isValidUrl = (url: string): boolean => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
-
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <Stack direction="column" gap="md" align="center">
-            <Spinner size="lg" />
-            <Text color="secondary">Cargando configuración...</Text>
-          </Stack>
-        </CardContent>
-      </Card>
+      <div className="flex justify-center p-8">
+        <Spinner size="lg" />
+      </div>
     );
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Webhook Segunda Reunión</CardTitle>
-        <Text size="sm" color="secondary">
-          Configura el webhook que se activará cuando un contacto cambie a estado "Segunda reunion"
-        </Text>
+        <CardTitle>Automatización: Segunda Reunión</CardTitle>
       </CardHeader>
       <CardContent>
         <Stack direction="column" gap="md">
@@ -176,52 +162,35 @@ export default function SecondMeetingCard() {
             </Alert>
           )}
 
-          <div>
-            <label className="flex items-center gap-2 mb-2">
-              <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <Text size="sm" weight="medium">
-                Habilitar automatización
-              </Text>
-            </label>
-            <Text size="xs" color="secondary">
-              Cuando está habilitada, se enviará un webhook al cambiar un contacto a estado "Segunda
-              reunion"
-            </Text>
-          </div>
-
-          <div>
+          <div className="space-y-2">
+            <Text weight="medium">Webhook URL (N8N)</Text>
             <Input
-              label="URL del webhook de N8N"
-              type="url"
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="http://localhost:5678/webhook-test/segunda-reunion"
-              disabled={saving}
+              placeholder="https://n8n.tu-dominio.com/webhook/..."
             />
-            <Text size="xs" color="secondary" className="mt-1">
-              URL completa del webhook de N8N que recibirá los datos del contacto
+            <Text size="xs" color="secondary">
+              Se enviará una notificación a esta URL cuando un contacto pase a la etapa
+              &quot;Segunda reunión&quot;.
             </Text>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={saving || (enabled && !webhookUrl)}
-            >
-              {saving ? (
-                <>
-                  <Spinner size="sm" className="mr-2" />
-                  Guardando...
-                </>
-              ) : (
-                'Guardar configuración'
-              )}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="enabled-check"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="enabled-check" className="text-sm font-medium text-text-primary">
+              Habilitar automatización
+            </label>
+          </div>
+
+          <div className="pt-4">
+            <Button onClick={handleSave} disabled={saving || !webhookUrl} loading={saving}>
+              Guardar Configuración
             </Button>
           </div>
         </Stack>

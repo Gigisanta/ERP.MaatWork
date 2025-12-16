@@ -44,6 +44,11 @@ export {
   careerPlanLevels,
 } from './schema/users';
 
+export { teamGoals } from './schema/team-goals';
+
+// OAuth
+export { googleOAuthTokens } from './schema/auth';
+
 // Contactos, pipeline, etiquetas y segmentos
 export {
   pipelineStages,
@@ -56,6 +61,8 @@ export {
   segmentMembers,
   contactTags,
 } from './schema/contacts';
+
+export { contactStageInteractions } from './schema/contact-interactions';
 
 // Notas, archivos de audio, adjuntos, tareas
 export {
@@ -136,3 +143,9 @@ export { capacitaciones } from './schema/capacitaciones';
 
 // Automatizaciones
 export { automationConfigs } from './schema/automations';
+
+// Contact Aliases
+export { contactAliases } from './schema/contact-aliases';
+
+// Calendar
+export { calendarEvents } from './schema/calendar';

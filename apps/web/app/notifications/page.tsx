@@ -1,8 +1,24 @@
+import React from 'react';
+import PageContainer, { PageHeader, PageContent } from '../components/PageContainer';
+import { Heading } from '@cactus/ui';
+import NotificationsClient from './NotificationsClient';
+
+export const metadata = {
+  title: 'Notificaciones',
+  description: 'Centro de notificaciones y alertas',
+};
+
+// Default export explicitly defined
 export default function NotificationsPage() {
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
-      <h1>Notificaciones</h1>
-      <p>Página de notificaciones (pendiente de implementar)</p>
-    </div>
+    <PageContainer size="md">
+      <PageHeader>
+        <Heading level={1}>Notificaciones</Heading>
+      </PageHeader>
+
+      <PageContent>
+        <NotificationsClient />
+      </PageContent>
+    </PageContainer>
   );
 }

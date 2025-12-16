@@ -7,8 +7,8 @@
  * Se ejecuta diariamente vía cron job.
  */
 
-import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/db-logger';
-import { getCacheHealth } from '../utils/cache';
+import { getQueryMetrics, getSlowQueries, getNPlusOneQueries } from '../utils/database/db-logger';
+import { getCacheHealth } from '../utils/performance/cache';
 import pino from 'pino';
 import { db } from '@cactus/db';
 import { notifications } from '@cactus/db/schema';

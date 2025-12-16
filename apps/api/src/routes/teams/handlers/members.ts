@@ -8,13 +8,56 @@
  */
 import type { Request, Response } from 'express';
 import { db, teams, teamMembership, users } from '@cactus/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';
 import { invalidateAccessScope } from '../../../auth/cache';
 import { teamMetricsCacheUtil } from '../../../utils/performance/cache';
 import { addMemberSchema } from '../schemas';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
+
+/**
+ * GET /teams/members - Obtener todos los miembros de equipos (para admin/managers)
+ * IMPORTANTE: Esta ruta debe definirse antes de /:id para evitar colisiones
+ */
+export const getAllTeamMembers = createRouteHandler(async (req: Request) => {
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
+
+  // Solo admin y managers pueden ver miembros de equipo
+  if (userRole !== 'admin' && userRole !== 'manager') {
+    throw new HttpError(403, 'Access denied. Only managers and admins can view team members.');
+  }
+
+  let query = db()
+    .select({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      role: teamMembership.role,
+      teamId: teamMembership.teamId,
+      userId: teamMembership.userId,
+    })
+    .from(users)
+    .innerJoin(teamMembership, eq(users.id, teamMembership.userId));
+
+  // Si es manager, filtrar solo sus equipos
+  if (userRole === 'manager') {
+    const userTeams = await getUserTeams(userId, userRole);
+    // Filtrar equipos donde es manager
+    const managedTeamIds = userTeams.filter((t) => t.role === 'manager').map((t) => t.id);
+
+    if (managedTeamIds.length === 0) {
+      return [];
+    }
+
+    // Agregar filtro WHERE teamId IN (...)
+    query = query.where(inArray(teamMembership.teamId, managedTeamIds));
+  }
+
+  const members = await query;
+  return members;
+});
 
 /**
  * GET /teams/:id/members - Obtener miembros de un equipo

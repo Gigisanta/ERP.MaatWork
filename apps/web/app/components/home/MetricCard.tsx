@@ -41,27 +41,17 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
     return Math.min((actual / goal) * 100, 100);
   }, [actual, goal]);
 
-  // Handle both hex colors and CSS variables
+  // AI_DECISION: Use color-mix for robust color manipulation
+  // Justificación: Previous string manipulation of var() was fragile and invalid for some CSS variable formats.
+  // Impacto: Correctly renders background tints in all themes and with all color formats (hex, var, etc).
   const getBackgroundColor = (colorValue: string) => {
-    if (colorValue.startsWith('var(')) {
-      return colorValue.replace(')', ' / 0.08)');
-    }
-    const hex = colorValue.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, 0.08)`;
+    // 92% transparent = 0.08 opacity
+    return `color-mix(in srgb, ${colorValue}, transparent 92%)`;
   };
 
   const getGlowColor = (colorValue: string) => {
-    if (colorValue.startsWith('var(')) {
-      return colorValue.replace(')', ' / 0.15)');
-    }
-    const hex = colorValue.replace('#', '');
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    return `rgba(${r}, ${g}, ${b}, 0.15)`;
+    // 85% transparent = 0.15 opacity
+    return `color-mix(in srgb, ${colorValue}, transparent 85%)`;
   };
 
   return (
@@ -87,67 +77,67 @@ function MetricCardComponent({ title, actual, goal, color, index = 0 }: MetricCa
           }}
         />
 
-        <CardContent className="p-5 relative">
-          <Stack direction="column" gap="sm">
+        {/* AI_DECISION: Reduce padding for optimized layout */}
+        <CardContent className="p-3 relative">
+          <Stack direction="column" gap="xs">
             {/* Title */}
-            <Text size="sm" color="secondary" className="font-medium uppercase tracking-wide">
+            <Text
+              size="xs"
+              color="secondary"
+              className="font-medium uppercase tracking-wide truncate"
+            >
               {title}
             </Text>
 
             {/* Value with count-up animation feel */}
-            <div className="flex items-baseline gap-2">
+            <div className="flex flex-col items-start -space-y-0.5">
               <Text
-                size="xl"
-                className="font-bold text-3xl transition-all duration-300"
+                size="lg"
+                className="font-bold text-2xl transition-all duration-300 leading-tight"
                 style={{ color }}
               >
                 {actual}
               </Text>
               {goal > 0 && (
-                <Text size="sm" color="muted" className="font-medium">
+                <Text size="xs" color="muted" className="font-medium">
                   / {goal}
                 </Text>
               )}
             </div>
 
-            {/* Percentage badge */}
+            {/* Percentage badge and progress bar in one line to save space if needed, 
+                but here keeping stacked but tighter */}
             {goal > 0 && (
-              <div className="flex items-center gap-2">
-                <span
-                  className={`
-                    inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold
-                    transition-all duration-300
-                    ${
-                      percentage >= 100
-                        ? 'bg-success-subtle text-success'
-                        : percentage >= 75
-                          ? 'bg-accent-subtle text-accent-hover'
-                          : percentage >= 50
-                            ? 'bg-warning-subtle text-warning'
-                            : 'bg-surface-hover text-text-secondary'
-                    }
-                  `}
-                >
-                  {percentage.toFixed(0)}%
-                </span>
-                <Text size="xs" color="muted">
-                  del objetivo
-                </Text>
-              </div>
-            )}
-
-            {/* Progress bar with animation */}
-            {goal > 0 && (
-              <div className="w-full h-2 bg-surface rounded-full overflow-hidden mt-2">
-                <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{
-                    width: animateProgress ? `${percentage}%` : '0%',
-                    backgroundColor: color,
-                    boxShadow: `0 0 8px ${getGlowColor(color)}`,
-                  }}
-                />
-              </div>
+              <>
+                <div className="w-full h-1.5 bg-surface rounded-full overflow-hidden mt-1">
+                  <div
+                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    style={{
+                      width: animateProgress ? `${percentage}%` : '0%',
+                      backgroundColor: color,
+                      boxShadow: `0 0 8px ${getGlowColor(color)}`,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <span
+                    className={`
+                      text-xs font-semibold
+                      ${
+                        percentage >= 100
+                          ? 'text-success'
+                          : percentage >= 75
+                            ? 'text-accent-hover'
+                            : percentage >= 50
+                              ? 'text-warning'
+                              : 'text-text-secondary'
+                      }
+                    `}
+                  >
+                    {percentage.toFixed(0)}%
+                  </span>
+                </div>
+              </>
             )}
           </Stack>
         </CardContent>

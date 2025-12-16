@@ -39,6 +39,7 @@ export interface ContactTagWithInfo extends BaseEntity {
  */
 export type ContactWithTags = Contact & {
   tags: ContactTag[];
+  interactionCount?: number | null;
 };
 
 /**

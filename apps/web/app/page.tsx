@@ -54,6 +54,7 @@ async function getHomePageData() {
     let metricsData: MonthlyMetrics | null = null;
     let goalsData: MonthlyGoal | null = null;
     let teamCalendarUrl: string | null = null;
+    let teamId: string | null = null;
     let metricsError: string | null = null;
 
     if (user) {
@@ -74,6 +75,7 @@ async function getHomePageData() {
       if (teamsResponse.success && teamsResponse.data && teamsResponse.data.length > 0) {
         const teamWithCalendar = teamsResponse.data.find((team) => team.calendarUrl);
         teamCalendarUrl = teamWithCalendar?.calendarUrl || null;
+        teamId = teamWithCalendar?.id || null;
       }
     }
 
@@ -82,6 +84,7 @@ async function getHomePageData() {
       metricsData,
       goalsData,
       teamCalendarUrl,
+      teamId,
       metricsError,
     };
   } catch (error) {
@@ -91,6 +94,7 @@ async function getHomePageData() {
       metricsData: null,
       goalsData: null,
       teamCalendarUrl: null,
+      teamId: null,
       metricsError: 'No pudimos cargar las métricas del mes.',
     };
   }
@@ -100,7 +104,8 @@ async function getHomePageData() {
  * Home page component
  */
 export default async function HomePage() {
-  const { user, metricsData, goalsData, teamCalendarUrl, metricsError } = await getHomePageData();
+  const { user, metricsData, goalsData, teamCalendarUrl, teamId, metricsError } =
+    await getHomePageData();
 
   // If no user, show unauthenticated state
   if (!user) {
@@ -118,6 +123,7 @@ export default async function HomePage() {
         metricsData={metricsData}
         goalsData={goalsData}
         teamCalendarUrl={teamCalendarUrl}
+        teamId={teamId}
         metricsError={metricsError}
       />
     </Suspense>

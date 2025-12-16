@@ -126,13 +126,13 @@ export class DebugConsole {
         message: errorLog.message || '',
         count: 1,
         collapsed: true,
-        ...(errorLog.stack && { stack: errorLog.stack }),
-        ...(errorLog.source && { source: errorLog.source }),
-        ...(errorLog.line && { line: errorLog.line }),
-        ...(errorLog.col && { col: errorLog.col }),
-        ...(errorLog.url && { url: errorLog.url }),
-        ...(errorLog.userAgent && { userAgent: errorLog.userAgent }),
-        ...(errorLog.details && { details: errorLog.details }),
+        stack: errorLog.stack || undefined,
+        source: errorLog.source || undefined,
+        line: errorLog.line || undefined,
+        col: errorLog.col || undefined,
+        url: errorLog.url || undefined,
+        userAgent: errorLog.userAgent || undefined,
+        details: errorLog.details || undefined,
       };
 
       this.logs.unshift(completeLog);

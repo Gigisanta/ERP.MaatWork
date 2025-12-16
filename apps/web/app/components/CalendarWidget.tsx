@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardHeader,
@@ -11,206 +11,166 @@ import {
   Text,
   Stack,
   Button,
+  Icon,
+  Select,
 } from '@cactus/ui';
 import Link from 'next/link';
+import useSWR from 'swr';
+import { getTeamEvents } from '@/lib/api';
+import type { CalendarEvent } from '@/types/calendar';
+import { WeeklyCalendarView } from './home/WeeklyCalendarView';
+import type { Team } from '@/types';
 
 interface CalendarWidgetProps {
-  calendarUrl: string;
+  teams?: Team[];
+  selectedTeamId?: string | null | undefined;
+  onSelectTeam?: (teamId: string) => void;
   className?: string;
+  onConfigure?: (team: Team) => void;
+  canConfigure?: boolean;
 }
 
-/**
- * Convierte una URL de Google Calendar al formato de embed si es necesario
- * Si la URL ya es de embed, la devuelve tal cual con vista semanal por defecto
- * Si es una URL de visualización con cid, la convierte a embed con vista semanal
- */
-function normalizeCalendarUrl(url: string): string {
-  try {
-    const urlObj = new URL(url);
+export default function CalendarWidget({
+  teams = [],
+  selectedTeamId,
+  onSelectTeam,
+  className,
+  onConfigure,
+  canConfigure,
+}: CalendarWidgetProps) {
+  // Active team logic - assume single team context if usually one team
+  const activeTeamId = selectedTeamId || (teams.length > 0 ? teams[0].id : null);
+  const activeTeam = teams.find((t) => t.id === activeTeamId);
 
-    // Si ya es una URL de embed, agregar/actualizar el parámetro mode=week
-    if (urlObj.pathname.includes('/embed')) {
-      urlObj.searchParams.set('mode', 'week');
-      return urlObj.toString();
-    }
+  // State for switching between Primary and Meeting Room calendars
+  const [calendarType, setCalendarType] = useState<'primary' | 'meetingRoom'>('primary');
 
-    // Si tiene parámetro cid, convertir a embed con vista semanal
-    const cid = urlObj.searchParams.get('cid');
-    if (cid) {
-      return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(cid)}&mode=week`;
-    }
+  // Determine if we should show the toggle dropdown
+  // We show it if meeting room calendar is available OR if user just wants to see options?
+  // User asked to replace logic with "Team Name" and "Meeting Room".
+  // This implies a single dropdown that switches context.
 
-    // Si tiene parámetro src, asegurar que sea embed con vista semanal
-    const src = urlObj.searchParams.get('src');
-    if (src) {
-      return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(src)}&mode=week`;
-    }
+  const showDropdown = !!activeTeam;
+  const activeCalendarId =
+    calendarType === 'meetingRoom' ? activeTeam?.meetingRoomCalendarId : activeTeam?.calendarId;
 
-    // Si no se puede convertir, devolver la URL original
-    return url;
-  } catch {
-    // Si no es una URL válida, devolverla tal cual
-    return url;
-  }
-}
+  const {
+    data: response,
+    error,
+    isLoading,
+    mutate,
+  } = useSWR(
+    activeTeamId && activeCalendarId ? ['calendar', activeTeamId, calendarType] : null,
+    () =>
+      getTeamEvents(activeTeamId!, {
+        timeMin: new Date(),
+        maxResults: 50,
+        calendarType,
+      })
+  );
 
-export default function CalendarWidget({ calendarUrl, className }: CalendarWidgetProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const embedUrl = useMemo(() => normalizeCalendarUrl(calendarUrl), [calendarUrl]);
+  const events: CalendarEvent[] = response?.success && response.data ? response.data : [];
 
-  useEffect(() => {
-    // Reset states when URL changes
-    setLoading(true);
-    setError(null);
-
-    // Set a timeout to detect if iframe fails to load
-    const timeout = setTimeout(() => {
-      setLoading((prev) => {
-        if (prev) {
-          // Still loading after timeout, but don't set error - let iframe try
-          return false;
-        }
-        return prev;
-      });
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, [embedUrl]);
-
-  const handleIframeLoad = () => {
-    setLoading(false);
-    setError(null);
+  const handleRefresh = () => {
+    mutate();
   };
 
-  const handleIframeError = () => {
-    setLoading(false);
-    setError(
-      'No se pudo cargar el calendario. Verifica que la URL sea correcta y que el calendario esté compartido públicamente.'
+  if (!activeTeamId || teams.length === 0 || !activeTeam) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Agenda del Equipo</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center h-48 text-center p-4">
+            <Text color="secondary" className="mb-4">
+              No tienes equipos asignados.
+            </Text>
+            <Link href="/profile">
+              <Button variant="outline">Ir a mi perfil</Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     );
-  };
+  }
 
-  // Detectar errores 403 mediante mensaje de error en el iframe
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Google Calendar puede enviar mensajes de error
-      if (event.origin.includes('google.com') && event.data?.type === 'error') {
-        setLoading(false);
-        setError(
-          'Error 403: El calendario no está configurado como público o la URL no es correcta. Ve a tu perfil para configurar la URL correcta.'
-        );
-      }
-    };
+  // Construct options for the single dropdown
+  const calendarOptions = [
+    { value: 'primary', label: activeTeam.name }, // Option 1: Team Name
+  ];
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  if (activeTeam.meetingRoomCalendarId) {
+    calendarOptions.push({ value: 'meetingRoom', label: 'Reserva Sala de reunion' }); // Option 2
+  }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>Calendario del Equipo</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {error ? (
-          <Alert variant="error">
-            <Stack direction="column" gap="md">
-              <div>
-                <Text weight="medium">Error al cargar el calendario</Text>
-                <Text size="sm" color="secondary" className="mt-2 block">
-                  {error}
-                </Text>
-              </div>
-              <div>
-                <Text size="sm" weight="medium" className="mb-2 block">
-                  Solución:
-                </Text>
-                <Text size="sm" color="secondary" className="mb-3 block">
-                  1. Ve a Google Calendar → Configuración del calendario
-                  <br />
-                  2. En &quot;Compartir este calendario&quot;, marca &quot;Hacer público este
-                  calendario&quot;
-                  <br />
-                  3. En &quot;Integrar calendario&quot;, copia la URL de &quot;Código para
-                  incrustar&quot;
-                  <br />
-                  4. La URL debe tener el formato:
-                  https://calendar.google.com/calendar/embed?src=...
-                </Text>
-                <Link href="/profile">
-                  <Button variant="outline" size="sm">
-                    Configurar calendario en Perfil
-                  </Button>
-                </Link>
-              </div>
-            </Stack>
-          </Alert>
-        ) : (
-          <div className="relative w-full" style={{ minHeight: '400px' }}>
-            {loading && (
-              <div className="absolute inset-0 z-10 bg-background rounded-lg overflow-hidden">
-                {/* Calendar skeleton with improved animation */}
-                <div className="p-4 space-y-4">
-                  {/* Header skeleton */}
-                  <div className="flex items-center justify-between">
-                    <div className="h-8 w-32 skeleton-wave rounded-md" />
-                    <div className="flex gap-2">
-                      <div className="h-8 w-8 skeleton-wave rounded-md" />
-                      <div className="h-8 w-8 skeleton-wave rounded-md" />
-                    </div>
-                  </div>
-                  {/* Days header */}
-                  <div className="grid grid-cols-7 gap-2">
-                    {[...Array(7)].map((_, i) => (
-                      <div key={i} className="h-6 skeleton-wave rounded" />
-                    ))}
-                  </div>
-                  {/* Calendar grid */}
-                  <div className="space-y-2">
-                    {[...Array(5)].map((_, rowIndex) => (
-                      <div key={rowIndex} className="grid grid-cols-7 gap-2">
-                        {[...Array(7)].map((_, colIndex) => (
-                          <div
-                            key={colIndex}
-                            className="h-12 skeleton-wave rounded"
-                            style={{ animationDelay: `${(rowIndex * 7 + colIndex) * 30}ms` }}
-                          />
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {/* Loading text overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                  <Stack direction="column" gap="sm" align="center">
-                    <Spinner size="md" />
-                    <Text size="sm" color="secondary">
-                      Cargando calendario...
-                    </Text>
-                  </Stack>
-                </div>
-              </div>
-            )}
-            <iframe
-              src={embedUrl}
-              width="100%"
-              height="400"
-              frameBorder="0"
-              scrolling="no"
-              loading="lazy"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              style={{
-                border: 'none',
-                borderRadius: '8px',
-                minHeight: '400px',
-              }}
-              title="Calendario del Equipo"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            />
+    <div className={className}>
+      <Card>
+        <CardHeader className="border-b border-border pb-3">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="whitespace-nowrap">Agenda del Equipo</CardTitle>
+              <span className="text-muted-foreground hidden sm:inline">-</span>
+
+              {/* Single Dropdown for Calendar Selection */}
+              {showDropdown && (
+                <Select
+                  value={calendarType}
+                  onValueChange={(val) => setCalendarType(val as 'primary' | 'meetingRoom')}
+                  items={calendarOptions}
+                  className="w-[250px]"
+                  // If only one option (no meeting room), it acts as read-only label effectively
+                  disabled={calendarOptions.length <= 1}
+                />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 self-end xl:self-auto">
+              {canConfigure && activeTeam && onConfigure && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onConfigure(activeTeam)}
+                  title="Configurar calendarios"
+                >
+                  <Icon name="Settings" size={16} />
+                </Button>
+              )}
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-0 sm:p-0">
+          {activeCalendarId ? (
+            <WeeklyCalendarView
+              events={events}
+              isLoading={isLoading}
+              onRefresh={handleRefresh}
+              readOnly={true}
+              hideHeader={true} // Hide the internal header
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-4">
+              <Text color="secondary" className="mb-4">
+                {calendarType === 'meetingRoom'
+                  ? 'No hay calendario de sala de reuniones conectado.'
+                  : 'Este equipo no tiene un calendario conectado.'}
+              </Text>
+              {canConfigure && onConfigure && activeTeam ? (
+                <Button variant="outline" onClick={() => onConfigure(activeTeam)}>
+                  Conectar Calendario
+                </Button>
+              ) : (
+                <Text size="sm" color="secondary">
+                  Contacta a un administrador para configurar el calendario.
+                </Text>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

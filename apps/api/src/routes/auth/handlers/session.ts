@@ -6,18 +6,53 @@
  * POST /auth/logout - Logout
  */
 import type { Request, Response } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users, googleOAuthTokens } from '@cactus/db';
 import { eq } from 'drizzle-orm';
 import { signUserToken, verifyUserToken } from '../../../auth/jwt';
 import { type UserRole } from '../../../auth/types';
+import { getAuthCookieOptions, getAuthCookieClearOptions } from '../../../auth/cookie-config';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 
 /**
  * GET /auth/me - Get current user
  */
-export const handleGetCurrentUser = createRouteHandler(async (req: Request) => {
+export const handleGetCurrentUser = createRouteHandler(async (req: Request, res: Response) => {
   const user = req.user!;
-  return { user };
+
+  // AI_DECISION: Prevent caching of session data
+  // Justificación: Ensures changes like Google connection status are reflected immediately
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+
+  // AI_DECISION: Check if user has Google Calendar connected
+  // Justificación: Allows frontend to show connection UI without trying to fetch events first
+  // Impacto: Prevents infinite 400 error loops on home page
+  let isGoogleConnected = false;
+  try {
+    const [token] = await db()
+      .select({ id: googleOAuthTokens.id })
+      .from(googleOAuthTokens)
+      .where(eq(googleOAuthTokens.userId, user.id))
+      .limit(1);
+
+    isGoogleConnected = !!token;
+    req.log.info({ userId: user.id, isGoogleConnected }, 'Checked Google connection status');
+  } catch (error) {
+    // If table doesn't exist yet or DB error, assume not connected but don't fail request
+    req.log.warn({ err: error }, 'Failed to check Google connection status');
+  }
+
+  // AI_DECISION: Return user directly without wrapping in { user: ... }
+  // Justificación: createRouteHandler already wraps in { success: true, data: ... }
+  //                so returning { user: ... } creates double nesting: { success, data: { user } }
+  //                Frontend expects data.data to be the user directly
+  // Impacto: Consistent API response structure
+  return {
+    ...user,
+    isGoogleConnected,
+  };
 });
 
 /**
@@ -85,12 +120,8 @@ export const handleRefreshToken = createAsyncHandler(async (req: Request, res: R
   );
 
   // Establecer nueva cookie
-  res.cookie('token', newToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 1 día
-  });
+  const maxAge = 24 * 60 * 60 * 1000; // 1 día
+  res.cookie('token', newToken, getAuthCookieOptions(maxAge));
 
   req.log.info({ userId: dbUser.id }, 'Token refreshed successfully');
   return res.json({ success: true, requestId: req.requestId });
@@ -100,12 +131,8 @@ export const handleRefreshToken = createAsyncHandler(async (req: Request, res: R
  * POST /auth/logout - Logout
  */
 export const handleLogout = createAsyncHandler(async (req: Request, res: Response) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-  });
+  // Use exact same cookie options as login/refresh to ensure proper clearing
+  res.clearCookie('token', getAuthCookieClearOptions());
 
   req.log.info({ userId: req.user!.id }, 'User logged out');
   return res.json({ success: true, requestId: req.requestId });

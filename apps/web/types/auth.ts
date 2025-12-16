@@ -24,6 +24,7 @@ export interface User extends TimestampedEntity {
   phone?: string | null;
   role: UserRole;
   active: boolean;
+  isGoogleConnected?: boolean;
 }
 
 /**

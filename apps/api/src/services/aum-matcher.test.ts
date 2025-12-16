@@ -25,6 +25,12 @@ import {
   type MatchResult,
 } from './aum-matcher';
 
+// Mock alias service
+vi.mock('./alias', () => ({
+  findContactByName: vi.fn().mockResolvedValue(null),
+}));
+import { findContactByName } from './alias';
+
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
@@ -51,6 +57,7 @@ vi.mock('../utils/logger', () => ({
   logger: {
     warn: vi.fn(),
     error: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -161,6 +168,20 @@ describe('aumMatcher', () => {
   });
 
   describe('matchContactByHolderName', () => {
+    it('debería match exacto usando alias service', async () => {
+      // Mock alias match
+      (findContactByName as any).mockResolvedValueOnce('contact-alias-123');
+
+      const result = await matchContactByHolderName('J. Perez');
+
+      expect(result).toEqual({
+        contactId: 'contact-alias-123',
+        score: 1.0,
+        method: 'name_exact',
+      });
+      expect(findContactByName).toHaveBeenCalledWith('J. Perez');
+    });
+
     it('debería retornar match por similarity cuando sim_score > threshold', async () => {
       const mockExecute = vi.fn().mockResolvedValue({
         rows: [
@@ -206,14 +227,12 @@ describe('aumMatcher', () => {
       expect(result).toBeNull();
     });
 
-    it('debería hacer fallback a exact match cuando pg_trgm falla', async () => {
-      // First call fails (pg_trgm error)
-      const mockExecute = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('pg_trgm not available'))
-        .mockResolvedValueOnce({
-          rows: [{ id: 'contact-123' }],
-        });
+    it('debería retornar null cuando pg_trgm falla y alias service no encuentra nada', async () => {
+      // Alias service returns null
+      (findContactByName as any).mockResolvedValueOnce(null);
+
+      // pg_trgm error
+      const mockExecute = vi.fn().mockRejectedValue(new Error('pg_trgm not available'));
 
       mockDb.mockReturnValue({
         execute: mockExecute,
@@ -221,12 +240,9 @@ describe('aumMatcher', () => {
 
       const result = await matchContactByHolderName('Juan Perez');
 
-      expect(result).toEqual({
-        contactId: 'contact-123',
-        score: 1.0,
-        method: 'name_exact',
-      });
-      expect(mockExecute).toHaveBeenCalledTimes(2);
+      expect(result).toBeNull();
+      // Should log debug
+      expect(mockLogger.debug).toHaveBeenCalled();
     });
 
     it('debería retornar null cuando no encuentra contacto', async () => {
@@ -244,10 +260,9 @@ describe('aumMatcher', () => {
     });
 
     it('debería retornar null cuando ambos métodos fallan', async () => {
-      const mockExecute = vi
-        .fn()
-        .mockRejectedValueOnce(new Error('pg_trgm error'))
-        .mockRejectedValueOnce(new Error('exact match error'));
+      (findContactByName as any).mockResolvedValueOnce(null);
+
+      const mockExecute = vi.fn().mockRejectedValueOnce(new Error('pg_trgm error'));
 
       mockDb.mockReturnValue({
         execute: mockExecute,
@@ -256,7 +271,7 @@ describe('aumMatcher', () => {
       const result = await matchContactByHolderName('Juan Perez');
 
       expect(result).toBeNull();
-      expect(mockLogger.warn).toHaveBeenCalled();
+      expect(mockLogger.debug).toHaveBeenCalled();
     });
   });
 
@@ -846,15 +861,13 @@ describe('aumMatcher', () => {
     it('debería retornar similitud para substring match', () => {
       const result = calculateNameSimilarity('Juan Perez', 'Juan');
 
-      // Cuando uno contiene al otro, retorna shorter/longer
-      // "juan perez" (10 chars) vs "juan" (4 chars) = 4/10 = 0.4
-      expect(result).toBeGreaterThan(0);
-      expect(result).toBeLessThan(1.0);
-      expect(result).toBe(0.4);
+      // Cuando uno es substring significativo del otro (>3 chars), retorna 0.9
+      expect(result).toBe(0.9);
     });
 
-    it('debería calcular similitud por caracteres comunes', () => {
-      const result = calculateNameSimilarity('Juan', 'Jose');
+    it('debería calcular similitud por tokens', () => {
+      // "Juan Jose" vs "Jose" -> 0.5 (1/2 tokens match)
+      const result = calculateNameSimilarity('Juan Jose', 'Jose');
 
       expect(result).toBeGreaterThan(0);
       expect(result).toBeLessThan(1.0);

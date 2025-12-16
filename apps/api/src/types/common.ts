@@ -62,7 +62,7 @@ export type PinoLoggerOptions = {
 export type HelmetOptions = {
   crossOriginResourcePolicy: { policy: 'cross-origin' };
   crossOriginEmbedderPolicy: boolean;
-  contentSecurityPolicy?: boolean;
+  contentSecurityPolicy?: boolean | { directives: Record<string, string | string[]> };
   [key: string]: unknown;
 };
 

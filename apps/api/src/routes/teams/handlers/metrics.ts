@@ -5,9 +5,10 @@
  * GET /teams/:id/metrics - Get team metrics
  * GET /teams/:id/members/:memberId/metrics - Get member metrics
  * GET /teams/:id/members-activity - Get activity metrics for all team members
+ * GET /teams/:id/history - Get monthly history metrics
  */
 import type { Request, Response, NextFunction } from 'express';
-import { db, teamMembership, users } from '@cactus/db';
+import { db, teamMembership, users, pipelineStages, pipelineStageHistory } from '@cactus/db';
 import {
   contacts,
   aumSnapshots,
@@ -17,7 +18,7 @@ import {
   notes,
   tasks,
 } from '@cactus/db/schema';
-import { eq, and, sum, count, gte, sql, desc } from 'drizzle-orm';
+import { eq, and, sum, count, gte, sql, desc, inArray } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { validateUuidParam } from '../../../utils/validation/common-schemas';
@@ -266,6 +267,19 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
+    // Get pipeline stage IDs
+    const stages = await db()
+      .select({ id: pipelineStages.id, name: pipelineStages.name })
+      .from(pipelineStages)
+      .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
+
+    const firstMeetingStageId = stages.find(
+      (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
+    )?.id;
+    const secondMeetingStageId = stages.find(
+      (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
+    )?.id;
+
     // Execute all queries in parallel for better performance
     const [
       userInfo,
@@ -276,7 +290,8 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
       aumTrendResult,
       contactsThisMonth,
       contactsLast30Days,
-      notesLast30Days,
+      firstMeetingsLast30Days,
+      secondMeetingsLast30Days,
       tasksCompletedLast30Days,
     ] = await Promise.all([
       // Get user info including lastLogin
@@ -375,17 +390,36 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
           )
         ),
 
-      // Notes created last 30 days
-      db()
-        .select({ count: count() })
-        .from(notes)
-        .where(
-          and(
-            eq(notes.authorUserId, memberId),
-            sql`${notes.deletedAt} IS NULL`,
-            gte(notes.createdAt, thirtyDaysAgo)
-          )
-        ),
+      // First Meetings last 30 days
+      // Count contacts that entered 'Primera reunion' stage in last 30 days
+      firstMeetingStageId
+        ? db()
+            .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
+            .from(pipelineStageHistory)
+            .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
+            .where(
+              and(
+                eq(contacts.assignedAdvisorId, memberId),
+                eq(pipelineStageHistory.toStage, firstMeetingStageId),
+                gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
+              )
+            )
+        : Promise.resolve([{ count: 0 }]),
+
+      // Second Meetings last 30 days
+      secondMeetingStageId
+        ? db()
+            .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
+            .from(pipelineStageHistory)
+            .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
+            .where(
+              and(
+                eq(contacts.assignedAdvisorId, memberId),
+                eq(pipelineStageHistory.toStage, secondMeetingStageId),
+                gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
+              )
+            )
+        : Promise.resolve([{ count: 0 }]),
 
       // Tasks completed last 30 days
       db()
@@ -420,7 +454,9 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
         daysSinceLogin,
         contactsCreatedThisMonth: contactsThisMonth[0]?.count || 0,
         contactsCreatedLast30Days: contactsLast30Days[0]?.count || 0,
-        notesCreatedLast30Days: notesLast30Days[0]?.count || 0,
+        firstMeetingsLast30Days: Number(firstMeetingsLast30Days[0]?.count || 0),
+        secondMeetingsLast30Days: Number(secondMeetingsLast30Days[0]?.count || 0),
+        notesCreatedLast30Days: 0, // Deprecated
         tasksCompletedLast30Days: tasksCompletedLast30Days[0]?.count || 0,
       },
     });
@@ -467,6 +503,19 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
+    // Get pipeline stage IDs for team activity query
+    const stages = await db()
+      .select({ id: pipelineStages.id, name: pipelineStages.name })
+      .from(pipelineStages)
+      .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
+
+    const firstMeetingStageId = stages.find(
+      (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
+    )?.id;
+    const secondMeetingStageId = stages.find(
+      (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
+    )?.id;
+
     // Get all team members with their activity metrics
     const membersWithActivity = await db().execute(sql`
       WITH member_metrics AS (
@@ -493,14 +542,24 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
               AND c.deleted_at IS NULL 
               AND c.created_at >= ${thirtyDaysAgo}
           ) as contacts_created_last_30_days,
-          -- Notes created last 30 days
+          -- First Meetings last 30 days
           (
-            SELECT COUNT(*) 
-            FROM notes n 
-            WHERE n.author_user_id = u.id 
-              AND n.deleted_at IS NULL
-              AND n.created_at >= ${thirtyDaysAgo}
-          ) as notes_created_last_30_days,
+            SELECT COUNT(DISTINCT psh.contact_id)
+            FROM pipeline_stage_history psh
+            INNER JOIN contacts c ON c.id = psh.contact_id
+            WHERE c.assigned_advisor_id = u.id 
+              AND psh.to_stage = ${firstMeetingStageId}
+              AND psh.changed_at >= ${thirtyDaysAgo}
+          ) as first_meetings_last_30_days,
+          -- Second Meetings last 30 days
+          (
+            SELECT COUNT(DISTINCT psh.contact_id)
+            FROM pipeline_stage_history psh
+            INNER JOIN contacts c ON c.id = psh.contact_id
+            WHERE c.assigned_advisor_id = u.id 
+              AND psh.to_stage = ${secondMeetingStageId}
+              AND psh.changed_at >= ${thirtyDaysAgo}
+          ) as second_meetings_last_30_days,
           -- Tasks completed last 30 days
           (
             SELECT COUNT(*) 
@@ -510,6 +569,14 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
               AND t.deleted_at IS NULL
               AND t.completed_at >= ${thirtyDaysAgo}
           ) as tasks_completed_last_30_days,
+          -- Open Tasks (Pending)
+          (
+            SELECT COUNT(*) 
+            FROM tasks t 
+            WHERE t.assigned_to_user_id = u.id 
+              AND t.status = 'pending' 
+              AND t.deleted_at IS NULL
+          ) as open_tasks,
           -- Client count
           (
             SELECT COUNT(*) 
@@ -549,8 +616,11 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
         isActive: member.is_active as boolean,
         contactsCreatedThisMonth: Number(member.contacts_created_this_month) || 0,
         contactsCreatedLast30Days: Number(member.contacts_created_last_30_days) || 0,
-        notesCreatedLast30Days: Number(member.notes_created_last_30_days) || 0,
+        firstMeetingsLast30Days: Number(member.first_meetings_last_30_days) || 0,
+        secondMeetingsLast30Days: Number(member.second_meetings_last_30_days) || 0,
+        notesCreatedLast30Days: 0, // Deprecated
         tasksCompletedLast30Days: Number(member.tasks_completed_last_30_days) || 0,
+        openTasks: Number(member.open_tasks) || 0,
         clientCount: Number(member.client_count) || 0,
         totalAum: Number(member.total_aum) || 0,
         activityStatus: getActivityStatus(daysSinceLogin),
@@ -576,8 +646,8 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
         (acc: number, m: MemberActivity) => acc + m.contactsCreatedThisMonth,
         0
       ),
-      totalNotesLast30Days: membersActivity.reduce(
-        (acc: number, m: MemberActivity) => acc + m.notesCreatedLast30Days,
+      totalFirstMeetingsLast30Days: membersActivity.reduce(
+        (acc: number, m: MemberActivity) => acc + m.firstMeetingsLast30Days,
         0
       ),
     };
@@ -591,6 +661,94 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
     });
   } catch (err) {
     req.log.error({ err, teamId: req.params.id }, 'failed to get team members activity');
+    next(err);
+  }
+}
+
+/**
+ * GET /teams/:id/history - Obtener historial de métricas (últimos 12 meses)
+ *
+ * Muestra evolución de:
+ * - Nuevos clientes
+ * - AUM Total
+ */
+export async function getTeamHistory(req: Request, res: Response, next: NextFunction) {
+  try {
+    let id: string;
+    try {
+      id = validateUuidParam(req.params.id, 'teamId');
+    } catch (err) {
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
+    }
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Verify user is a manager of this team
+    const userTeams = await getUserTeams(userId, userRole);
+    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+
+    if (!isManager && userRole !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Access denied. Only team managers can view team history.' });
+    }
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+    twelveMonthsAgo.setDate(1); // Start of month 12 months ago
+
+    // Use SQL to aggregate by month
+    const result = await db().execute(sql`
+      WITH months AS (
+          SELECT generate_series(
+              date_trunc('month', ${twelveMonthsAgo.toISOString()}::date),
+              date_trunc('month', CURRENT_DATE),
+              '1 month'
+          ) as month_start
+      ),
+      team_advisors AS (
+          SELECT user_id FROM team_membership WHERE team_id = ${id}
+      )
+      SELECT
+          to_char(m.month_start, 'YYYY-MM') as month,
+          -- New Clients count
+          (
+              SELECT COUNT(*)
+              FROM contacts c
+              WHERE c.assigned_advisor_id IN (SELECT user_id FROM team_advisors)
+              AND date_trunc('month', c.created_at) = m.month_start
+              AND c.deleted_at IS NULL
+          ) as "newClients",
+          -- AUM Average for the month
+          COALESCE((
+              SELECT AVG(daily_sum)
+              FROM (
+                  SELECT date, SUM(aum_total) as daily_sum
+                  FROM aum_snapshots s
+                  JOIN contacts c ON s.contact_id = c.id
+                  WHERE c.assigned_advisor_id IN (SELECT user_id FROM team_advisors)
+                  AND date_trunc('month', s.date) = m.month_start
+                  GROUP BY date
+              ) as daily_sums
+          ), 0) as "totalAum"
+      FROM months m
+      ORDER BY m.month_start ASC
+    `);
+
+    const history = result.rows.map((row: any) => ({
+      month: row.month,
+      newClients: Number(row.newClients),
+      totalAum: Number(row.totalAum),
+    }));
+
+    res.json({
+      success: true,
+      data: history,
+    });
+  } catch (err) {
+    req.log.error({ err, teamId: req.params.id }, 'failed to get team history');
     next(err);
   }
 }

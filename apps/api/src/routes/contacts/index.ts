@@ -26,6 +26,7 @@ import batchRouter from './batch';
 import webhookRouter from './webhook';
 import historyRouter from './history';
 import assignmentRouter from './assignment';
+import interactionRouter from './interactions';
 
 const router = Router();
 
@@ -35,6 +36,7 @@ router.use(batchRouter); // GET /contacts/batch
 router.use(webhookRouter); // POST /contacts/webhook
 router.use(listRouter); // GET /contacts
 router.use(historyRouter); // GET /contacts/:id/history (must come before getRouter)
+router.use(interactionRouter); // POST /contacts/:id/interaction
 router.use(assignmentRouter); // PATCH /contacts/:id/next-step (must come before updateRouter)
 router.use(getRouter); // GET /contacts/:id, GET /contacts/:id/detail
 router.use(createRouter); // POST /contacts

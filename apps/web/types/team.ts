@@ -19,6 +19,8 @@ export interface Team extends TimestampedEntity {
   name: string;
   managerUserId: string;
   calendarUrl?: string | null;
+  calendarId?: string | null; // Added calendarId for compatibility with TeamCalendarSection
+  meetingRoomCalendarId?: string | null;
   members?: TeamMember[];
   role?: string; // Role del usuario actual en el equipo
 }
@@ -38,11 +40,11 @@ export interface TeamMember {
 
 /**
  * Usuario candidato para equipo (puede ser advisor, manager, o admin)
- * 
+ *
  * AI_DECISION: Rename from TeamAdvisor to reflect that it's not just advisors
  * Justificación: Teams can now include managers, administratives, and advisors
  * Impacto: More accurate type naming, better reflects actual usage
- * 
+ *
  * AI_DECISION: Use isActive instead of active to match API response format
  * Justificación: Backend returns isActive (from UserApiResponse), not active (from User)
  * Impacto: Type matches actual API response structure
@@ -150,8 +152,10 @@ export interface TeamMemberMetrics {
   daysSinceLogin: number | null;
   contactsCreatedThisMonth: number;
   contactsCreatedLast30Days: number;
-  notesCreatedLast30Days: number;
+  firstMeetingsLast30Days: number;
+  secondMeetingsLast30Days: number;
   tasksCompletedLast30Days: number;
+  notesCreatedLast30Days: number;
 }
 
 /**
@@ -169,10 +173,66 @@ export interface TeamMemberActivity {
   // Métricas de rendimiento
   contactsCreatedThisMonth: number;
   contactsCreatedLast30Days: number;
-  notesCreatedLast30Days: number;
+  firstMeetingsLast30Days: number;
+  secondMeetingsLast30Days: number;
   tasksCompletedLast30Days: number;
+  openTasks: number;
   clientCount: number;
   totalAum: number;
   // Status de actividad
   activityStatus: 'active' | 'moderate' | 'inactive' | 'critical';
+}
+
+/**
+ * Objetivos de equipo
+ */
+export interface TeamGoal {
+  type: string;
+  target: number;
+  actual: number;
+  month: number;
+  year: number;
+}
+
+/**
+ * Request para establecer objetivos
+ */
+export interface SetTeamGoalRequest {
+  type: string;
+  target: number;
+  month: number;
+  year: number;
+}
+
+/**
+ * Lead estancado
+ */
+export interface StalledLead {
+  id: string;
+  fullName: string;
+  assignedAdvisorId: string;
+  contactLastTouchAt: string;
+}
+
+/**
+ * Request para reasignar leads
+ */
+export interface ReassignLeadsRequest {
+  contactIds: string[];
+  newAdvisorId: string;
+}
+
+/**
+ * Capacidad de miembro de equipo
+ */
+export interface TeamCapacityMember {
+  id: string;
+  name: string;
+  metrics: {
+    activeClients: number;
+    openTasks: number;
+    newLeads: number;
+  };
+  score: number;
+  status: 'optimal' | 'low' | 'overloaded';
 }

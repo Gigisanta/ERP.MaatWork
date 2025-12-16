@@ -18,7 +18,7 @@ import { logger } from './logger';
 
 export interface FetchOptions extends RequestInit {
   skipLogging?: boolean;
-  requestId?: string;
+  requestId?: string | undefined;
   timeout?: number; // Timeout en milisegundos (por defecto: 30000)
 }
 
