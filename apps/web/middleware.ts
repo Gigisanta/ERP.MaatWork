@@ -49,6 +49,9 @@ export async function middleware(request: NextRequest) {
 
   const baseUrl = getBaseUrl(request);
 
+  // DEBUG: Log all middleware invocations
+  console.log(`[MW] path=${pathname} baseUrl=${baseUrl} origin=${request.nextUrl.origin}`);
+
   // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
   if (pathname === '/login') {
     const token = request.cookies.get('token')?.value;
@@ -93,7 +96,9 @@ export async function middleware(request: NextRequest) {
         const now = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp >= now) {
           // Token válido y no expirado, redirigir a /home
-          return NextResponse.redirect(new URL('/home', baseUrl));
+          const redirectUrl = new URL('/home', baseUrl);
+          console.log(`[MW] REDIRECT / -> ${redirectUrl.toString()}`);
+          return NextResponse.redirect(redirectUrl);
         }
       } catch {
         // si el token es inválido/expirado, continuar al flujo normal (mostrar página pública)
