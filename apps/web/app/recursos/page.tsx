@@ -13,12 +13,13 @@ interface ResourceCard {
 }
 
 const cards: ResourceCard[] = [
-  {
-    title: 'Material Visual',
-    description: 'Accede a presentaciones, plantillas y material gráfico para clientes.',
-    href: '/recursos/material-visual',
-    icon: 'Book',
-  },
+  // TODO: Descomentar cuando se implemente la página
+  // {
+  //   title: 'Material Visual',
+  //   description: 'Accede a presentaciones, plantillas y material gráfico para clientes.',
+  //   href: '/recursos/material-visual',
+  //   icon: 'Book',
+  // },
   {
     title: 'Datos de Facturación',
     description: 'Consulta y gestiona información de facturación y datos fiscales.',

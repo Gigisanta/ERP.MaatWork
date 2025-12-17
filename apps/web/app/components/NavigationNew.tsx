@@ -104,7 +104,8 @@ function getAdvisorSections(): SidebarSection[] {
       title: 'Principal',
       items: [
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
+        // TODO: Descomentar cuando se implemente /tasks
+        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
     },
     {
@@ -138,7 +139,8 @@ function getManagerSections(): SidebarSection[] {
       title: 'Principal',
       items: [
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
+        // TODO: Descomentar cuando se implemente /tasks
+        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
     },
     {
@@ -183,7 +185,8 @@ function getAdminSections(): SidebarSection[] {
       title: 'Principal',
       items: [
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
+        // TODO: Descomentar cuando se implemente /tasks
+        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
     },
     {
@@ -274,7 +277,8 @@ function getStaffSections(): SidebarSection[] {
       title: 'Principal',
       items: [
         { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
+        // TODO: Descomentar cuando se implemente /tasks
+        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
       ],
     },
     {
