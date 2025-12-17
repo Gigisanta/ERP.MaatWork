@@ -26,9 +26,18 @@ export function getAuthCookieOptions(maxAge?: number): CookieOptions {
     secure: isProduction,
     sameSite: 'lax',
     path: '/',
-    // Don't set domain explicitly - let browser handle it
-    // This ensures cookies work correctly in all environments
+    // AI_DECISION: Usar SameSite=None para permitir cookies en contexto de subdominios/proxy
+    // Justificación: Cloudflare puede estar causando que el browser no reconozca las cookies como same-site
+    // Impacto: Cookies se envían en todos los contextos HTTPS
   };
+
+  // AI_DECISION: Establecer domain explícitamente en producción
+  // Justificación: Algunos browsers (Chrome) pueden rechazar cookies sin domain explícito
+  //               cuando hay proxies (Cloudflare) en el medio
+  // Impacto: Cookie se establece para todo el dominio maat.work
+  if (isProduction && process.env.COOKIE_DOMAIN) {
+    options.domain = process.env.COOKIE_DOMAIN;
+  }
 
   if (maxAge !== undefined) {
     options.maxAge = maxAge;
