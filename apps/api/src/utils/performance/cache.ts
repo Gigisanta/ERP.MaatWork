@@ -207,10 +207,21 @@ function createCacheWithRedis(
     }
 
     // Call originalSet with proper types
-    if (ttl !== undefined) {
-      return originalSet(key, value, ttl);
-    } else {
-      return originalSet(key, value);
+    // AI_DECISION: Wrap originalSet in try-catch to prevent cache errors from crashing requests
+    // Justificación: NodeCache can throw ECACHEFULL even with maxKeys: 0 in some edge cases
+    // Impacto: Cache failures don't crash requests
+    try {
+      if (ttl !== undefined) {
+        return originalSet(key, value, ttl);
+      } else {
+        return originalSet(key, value);
+      }
+    } catch (err) {
+      logger.warn(
+        { err: err instanceof Error ? { message: err.message } : { message: String(err) }, key },
+        'NodeCache originalSet failed, continuing without caching'
+      );
+      return false;
     }
   };
 
@@ -288,42 +299,70 @@ async function setInRedis(key: string, value: unknown, ttl?: number): Promise<vo
 }
 
 // Helper function to create cache wrapper with Redis support
+// AI_DECISION: Cache operations should never crash the request
+// Justificación: Cache is an optimization, not critical - errors should be logged and ignored
+// Impacto: API requests continue working even if cache is full or fails
 function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default') {
   return {
     get: (key: string) => {
-      const value = nodeCache.get(key);
+      try {
+        const value = nodeCache.get(key);
 
-      // Track cache metrics (async, non-blocking)
-      if (value !== undefined) {
-        import('../metrics')
-          .then(({ cacheHitsTotal }) => {
-            cacheHitsTotal.inc({ cache_type: cacheType });
-          })
-          .catch(() => {
-            // Silently fail metrics
-          });
-      } else {
-        import('../metrics')
-          .then(({ cacheMissesTotal }) => {
-            cacheMissesTotal.inc({ cache_type: cacheType });
-          })
-          .catch(() => {
-            // Silently fail metrics
-          });
+        // Track cache metrics (async, non-blocking)
+        if (value !== undefined) {
+          import('../metrics')
+            .then(({ cacheHitsTotal }) => {
+              cacheHitsTotal.inc({ cache_type: cacheType });
+            })
+            .catch(() => {
+              // Silently fail metrics
+            });
+        } else {
+          import('../metrics')
+            .then(({ cacheMissesTotal }) => {
+              cacheMissesTotal.inc({ cache_type: cacheType });
+            })
+            .catch(() => {
+              // Silently fail metrics
+            });
+        }
+
+        return value as unknown;
+      } catch (err) {
+        // Cache get failed, return undefined (cache miss)
+        logger.warn(
+          {
+            err: err instanceof Error ? { message: err.message } : { message: String(err) },
+            key,
+            cacheType,
+          },
+          'Cache get failed, returning cache miss'
+        );
+        return undefined;
       }
-
-      return value as unknown;
     },
     set: (key: string, value: unknown, ttl?: number) => {
-      if (ttl) {
-        nodeCache.set(key, value, ttl);
-      } else {
-        nodeCache.set(key, value);
+      try {
+        if (ttl) {
+          nodeCache.set(key, value, ttl);
+        } else {
+          nodeCache.set(key, value);
+        }
+        // Write-through to Redis (async, non-blocking)
+        setInRedis(key, value, ttl).catch(() => {
+          // Silently fail, NodeCache is primary
+        });
+      } catch (err) {
+        // Cache set failed, log and continue (cache is not critical)
+        logger.warn(
+          {
+            err: err instanceof Error ? { message: err.message } : { message: String(err) },
+            key,
+            cacheType,
+          },
+          'Cache set failed, continuing without caching'
+        );
       }
-      // Write-through to Redis (async, non-blocking)
-      setInRedis(key, value, ttl).catch(() => {
-        // Silently fail, NodeCache is primary
-      });
     },
     delete: (key: string) => {
       const result = nodeCache.del(key);
