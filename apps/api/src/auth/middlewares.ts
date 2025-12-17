@@ -22,7 +22,21 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       const m = /(?:^|; )token=([^;]+)/.exec(req.headers.cookie);
       if (m && m[1]) token = decodeURIComponent(m[1]);
     }
-    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+    if (!token) {
+      // AI_DECISION: Log detallado para debugging de auth issues
+      req.log?.warn(
+        {
+          hasAuthHeader: !!auth,
+          hasCookies: !!req.cookies,
+          hasCookieHeader: !!req.headers.cookie,
+          cookieKeys: req.cookies ? Object.keys(req.cookies) : [],
+          origin: req.headers.origin,
+          referer: req.headers.referer,
+        },
+        'No token found in request'
+      );
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
     const user = await verifyUserToken(token);
 
     // AI_DECISION: Validar role contra DB para detectar cambios de role
