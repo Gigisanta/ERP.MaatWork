@@ -23,9 +23,22 @@ vi.mock('@cactus/db', () => ({
   aumImportFiles: {},
   advisorAccountMapping: {},
   aumMonthlySnapshots: {},
-  eq: vi.fn(),
-  and: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function con join para monthly snapshots
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    {
+      raw: vi.fn((str: string) => ({ sql: str, values: [] })),
+      join: vi.fn((parts: unknown[], separator: unknown) => 'mocked-sql-join'),
+    }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
+  and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
 }));
 
 vi.mock('../utils/aum/aum-normalization', () => ({
@@ -58,7 +71,8 @@ vi.mock('../utils/logger', () => ({
 }));
 
 import { db } from '@cactus/db';
-import { aumImportRows, advisorAccountMapping, aumMonthlySnapshots, eq, sql } from '@cactus/db';
+import { aumImportRows, advisorAccountMapping, aumMonthlySnapshots } from '@cactus/db';
+import { eq, sql } from 'drizzle-orm';
 import { normalizeAccountNumber } from '../utils/aum/aum-normalization';
 import { isNameSimilarityHigh } from './aum-matcher';
 import { logger } from '../utils/logger';
@@ -313,6 +327,9 @@ describe('aumUpsert', () => {
     });
 
     it('debería procesar batches correctamente', async () => {
+      // AI_DECISION: El código actual usa 4 estrategias de búsqueda (idCuenta, reverseLookup, accountNumber, holderName)
+      // Justificación: findExistingRow ahora ejecuta hasta 4 queries secuenciales antes de insertar
+      // Impacto: Los mocks deben simular que todas las estrategias retornan vacío para que se inserte
       const mockExecute = vi.fn().mockResolvedValue({
         rows: [],
       });
@@ -322,16 +339,11 @@ describe('aumUpsert', () => {
         values: mockValues,
       });
 
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        // Each row with accountNumber: 1 execute call (strategy 3) + 1 insert
-        // For 3 rows: 3 execute calls + 3 insert calls = 6 total calls
-        // Execute calls: 1, 3, 5; Insert calls: 2, 4, 6
-        if (callCount % 2 === 1) {
-          return { execute: mockExecute } as any;
-        }
-        return { insert: mockInsert } as any;
+        return {
+          execute: mockExecute,
+          insert: mockInsert,
+        } as any;
       });
 
       // Create 3 rows (should process in one batch if BATCH_INSERT_SIZE > 3)
@@ -380,22 +392,38 @@ describe('aumUpsert', () => {
     });
 
     it('debería trackear updatedOnlyHolderName cuando corresponde', async () => {
-      // Mock findExistingRow returns existing row
-      const mockExecute = vi.fn().mockResolvedValue({
-        rows: [
-          {
-            id: 'row-123',
-            file_id: 'file-456',
-            account_number: null,
-            holder_name: 'Juan Perez',
-            id_cuenta: null,
-            matched_contact_id: null,
-            matched_user_id: null,
-            advisor_raw: null,
-            match_status: 'unmatched',
-            is_preferred: true,
-          },
-        ],
+      // AI_DECISION: Para que se trackee updatedOnlyHolderName:
+      // 1. findExistingRow debe encontrar una fila existente
+      // 2. La fila nueva debe tener solo holderName (hasOnlyHolderName = true)
+      // Justificación: El código verifica hasOnlyHolderName después de updateExistingRow exitoso
+      // Impacto: Los mocks deben simular que se encuentra fila existente por holderName
+
+      // Mock: estrategias 1-3 no encuentran nada, estrategia 4 (holderName) encuentra
+      let executeCallCount = 0;
+      const mockExecute = vi.fn().mockImplementation(() => {
+        executeCallCount++;
+        // Primeras 3 llamadas (estrategias 1-3) retornan vacío
+        if (executeCallCount <= 3) {
+          return Promise.resolve({ rows: [] });
+        }
+        // Estrategia 4 (holderName) encuentra fila existente
+        return Promise.resolve({
+          rows: [
+            {
+              id: 'row-123',
+              file_id: 'file-456',
+              account_number: null,
+              holder_name: 'Juan Perez',
+              id_cuenta: null,
+              matched_contact_id: null,
+              matched_user_id: null,
+              advisor_raw: null,
+              match_status: 'unmatched',
+              is_preferred: true,
+              is_normalized: false,
+            },
+          ],
+        });
       });
 
       const mockUpdate = vi.fn().mockReturnValue({
@@ -404,20 +432,11 @@ describe('aumUpsert', () => {
         }),
       });
 
-      const mockExecuteUpdate = vi.fn().mockResolvedValue({
-        rowCount: 0,
-      });
-
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) {
-          return { execute: mockExecute } as any;
-        }
-        if (callCount === 2) {
-          return { update: mockUpdate } as any;
-        }
-        return { execute: mockExecuteUpdate } as any;
+        return {
+          execute: mockExecute,
+          update: mockUpdate,
+        } as any;
       });
 
       // Row with only holderName (no accountNumber, no idCuenta)
@@ -458,11 +477,9 @@ describe('aumUpsert', () => {
     });
 
     it('debería insertar nuevo snapshot cuando no existe', async () => {
-      // Mock check for existing snapshot returns empty
-      // upsertAumMonthlySnapshots calls db() 3 times per snapshot:
-      // 1. execute (check in upsertAumMonthlySnapshots)
-      // 2. execute (check in upsertSingleMonthlySnapshot)
-      // 3. insert (in upsertSingleMonthlySnapshot)
+      // AI_DECISION: El código actual llama checkSnapshotExists + upsertSingleMonthlySnapshot
+      // Justificación: checkSnapshotExists hace 1 execute, upsertSingleMonthlySnapshot hace otro execute + insert
+      // Impacto: Todos los execute deben retornar rows vacío para que se inserte como nuevo
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: [],
       });
@@ -471,21 +488,16 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      const mockUpdate = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
-        }),
-      });
-
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        // Calls 1-2: execute (checks)
-        if (callCount <= 2) {
-          return { execute: mockExecuteCheck } as any;
-        }
-        // Call 3: insert
-        return { insert: mockInsert, update: mockUpdate } as any;
+        return {
+          execute: mockExecuteCheck,
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       const snapshots = [createMockSnapshot()];
@@ -498,11 +510,9 @@ describe('aumUpsert', () => {
     });
 
     it('debería actualizar snapshot existente cuando existe', async () => {
-      // Mock check for existing snapshot returns existing
-      // upsertAumMonthlySnapshots calls db() 3 times per snapshot:
-      // 1. execute (check in upsertAumMonthlySnapshots) - returns existing
-      // 2. execute (check in upsertSingleMonthlySnapshot) - returns existing
-      // 3. update (in upsertSingleMonthlySnapshot)
+      // AI_DECISION: checkSnapshotExists retorna true, upsertSingleMonthlySnapshot encuentra y actualiza
+      // Justificación: Ambos execute deben retornar el mismo snapshot existente
+      // Impacto: Se cuenta como updated, no inserted
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: [{ id: 'snapshot-123' }],
       });
@@ -513,15 +523,11 @@ describe('aumUpsert', () => {
         }),
       });
 
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        // Calls 1-2: execute (checks) - both return existing
-        if (callCount <= 2) {
-          return { execute: mockExecuteCheck } as any;
-        }
-        // Call 3: update
-        return { update: mockUpdate } as any;
+        return {
+          execute: mockExecuteCheck,
+          update: mockUpdate,
+        } as any;
       });
 
       const snapshots = [createMockSnapshot()];
@@ -534,6 +540,9 @@ describe('aumUpsert', () => {
     });
 
     it('debería procesar múltiples snapshots', async () => {
+      // AI_DECISION: Procesar 3 snapshots nuevos en paralelo
+      // Justificación: Promise.allSettled procesa todos en paralelo, cada uno hace 2 executes + 1 insert
+      // Impacto: Todos deben insertarse correctamente
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: [],
       });
@@ -542,22 +551,16 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      const mockUpdate = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
-        }),
-      });
-
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        // For 3 snapshots: 3 snapshots * 3 calls each = 9 total calls
-        // Each snapshot: 2 execute calls (checks) + 1 insert call
-        // Calls 1-6: execute (checks), Calls 7-9: insert
-        if (callCount <= 6) {
-          return { execute: mockExecuteCheck } as any;
-        }
-        return { insert: mockInsert, update: mockUpdate } as any;
+        return {
+          execute: mockExecuteCheck,
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       const snapshots = [
@@ -610,6 +613,9 @@ describe('aumUpsert', () => {
     });
 
     it('debería manejar snapshots con accountNumber null', async () => {
+      // AI_DECISION: Snapshot con accountNumber null pero idCuenta válido
+      // Justificación: El código usa condiciones SQL que manejan nulls correctamente
+      // Impacto: Debe insertarse usando idCuenta como identificador
       const mockExecuteCheck = vi.fn().mockResolvedValue({
         rows: [],
       });
@@ -618,21 +624,16 @@ describe('aumUpsert', () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      const mockUpdate = vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
-        }),
-      });
-
-      let callCount = 0;
       mockDb.mockImplementation(() => {
-        callCount++;
-        // Calls 1-2: execute (checks)
-        if (callCount <= 2) {
-          return { execute: mockExecuteCheck } as any;
-        }
-        // Call 3: insert
-        return { insert: mockInsert, update: mockUpdate } as any;
+        return {
+          execute: mockExecuteCheck,
+          insert: mockInsert,
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        } as any;
       });
 
       const snapshots = [createMockSnapshot({ accountNumber: null, idCuenta: 'cuenta-123' })];

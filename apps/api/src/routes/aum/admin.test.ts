@@ -13,15 +13,45 @@ import adminRouter from './admin';
 import { signUserToken } from '../../auth/jwt';
 import { createTestApp } from '../../__tests__/helpers/test-server';
 
+// AI_DECISION: Usar vi.hoisted para mocks de db disponibles en vi.mock
+const { mockDbInstance, mockExecute, mockSelect, mockDelete, mockInsert, mockUpdate } = vi.hoisted(
+  () => {
+    const mockExecute = vi.fn().mockResolvedValue({ rowCount: 0 });
+    const mockSelect = vi.fn();
+    const mockDelete = vi.fn();
+    const mockInsert = vi.fn();
+    const mockUpdate = vi.fn();
+    const mockDbInstance = {
+      execute: mockExecute,
+      select: mockSelect,
+      delete: mockDelete,
+      insert: mockInsert,
+      update: mockUpdate,
+    };
+    return { mockDbInstance, mockExecute, mockSelect, mockDelete, mockInsert, mockUpdate };
+  }
+);
+
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
-  db: vi.fn(),
+  db: vi.fn(() => mockDbInstance),
   aumImportFiles: {},
   aumImportRows: {},
   advisorAccountMapping: {},
   advisorAliases: {},
   eq: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    { raw: vi.fn((str: string) => ({ sql: str, values: [] })) }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
@@ -95,7 +125,8 @@ vi.mock('node:fs', () => ({
 }));
 
 import { db } from '@cactus/db';
-import { aumImportFiles, aumImportRows, eq, sql } from '@cactus/db';
+import { aumImportFiles, aumImportRows, eq } from '@cactus/db';
+import { sql } from 'drizzle-orm';
 import { parseAumFile } from '../../services/aumParser';
 import { normalizeAccountNumber, normalizeAdvisorAlias } from '../../utils/aum/aum-normalization';
 import { promises as fs } from 'node:fs';

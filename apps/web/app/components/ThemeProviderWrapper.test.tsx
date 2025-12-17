@@ -124,52 +124,50 @@ describe('ThemeProviderWrapper', () => {
     });
 
     it('should use saved theme from localStorage', async () => {
+      // AI_DECISION: localStorage debe establecerse ANTES de render para que useEffect lo lea
+      // Justificación: useEffect lee localStorage en el primer render
+      // Impacto: Test corregido para usar waitFor para timing correcto
       localStorage.setItem('cactus-theme', 'dark');
 
       const TestComponent = () => {
         const { theme } = useTheme();
-        return <div>{theme}</div>;
+        return <div data-testid="theme-value">{theme}</div>;
       };
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper>
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
-      });
+      render(
+        <ThemeProviderWrapper>
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
 
-      // Wait for useEffect to complete
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      // Wait for useEffect to complete and state to update
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
       });
-
-      expect(screen.getByText('dark')).toBeInTheDocument();
     });
 
     it('should migrate old high-contrast theme to light', async () => {
+      // AI_DECISION: Migración de high-contrast a light
+      // Justificación: El código migra themes antiguos en useEffect
+      // Impacto: Usar waitFor para timing correcto
       localStorage.setItem('cactus-theme', 'high-contrast');
 
       const TestComponent = () => {
         const { theme } = useTheme();
-        return <div>{theme}</div>;
+        return <div data-testid="theme-value">{theme}</div>;
       };
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper>
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
+      render(
+        <ThemeProviderWrapper>
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
+
+      // Wait for useEffect to complete and migration to happen
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
       });
 
-      // Wait for useEffect to complete
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      });
-
-      // Should migrate to 'light'
-      expect(screen.getByText('light')).toBeInTheDocument();
       // localStorage should be updated
       expect(localStorage.getItem('cactus-theme')).toBe('light');
     });
@@ -219,35 +217,31 @@ describe('ThemeProviderWrapper', () => {
         const { theme, setTheme } = useTheme();
         return (
           <div>
-            <div>{theme}</div>
+            <div data-testid="theme-value">{theme}</div>
             <button onClick={() => setTheme('dark')}>Set Dark</button>
           </div>
         );
       };
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper defaultTheme="light">
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
-      });
+      render(
+        <ThemeProviderWrapper defaultTheme="light">
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
 
-      // Wait for initial useEffect
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      // Wait for initial render
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
       });
-
-      expect(screen.getByText('light')).toBeInTheDocument();
 
       const button = screen.getByText('Set Dark');
       await act(async () => {
         button.click();
-        // Wait for state update
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      expect(screen.getByText('dark')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
+      });
       expect(localStorage.getItem('cactus-theme')).toBe('dark');
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
@@ -288,27 +282,20 @@ describe('ThemeProviderWrapper', () => {
         return <button onClick={() => setTheme('system')}>Set System</button>;
       };
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper defaultTheme="light">
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
-      });
-
-      // Wait for initial useEffect
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      });
+      render(
+        <ThemeProviderWrapper defaultTheme="light">
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
 
       const button = screen.getByText('Set System');
       await act(async () => {
         button.click();
-        // Wait for state update
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      expect(localStorage.getItem('cactus-theme')).toBe('system');
+      await waitFor(() => {
+        expect(localStorage.getItem('cactus-theme')).toBe('system');
+      });
     });
 
     it('should listen to system preference changes when theme is system', async () => {
@@ -344,51 +331,40 @@ describe('ThemeProviderWrapper', () => {
         );
       };
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper>
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
-      });
+      render(
+        <ThemeProviderWrapper>
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
 
       // Wait for useEffect to complete and verify the theme is set correctly
       await waitFor(() => {
         expect(screen.getByTestId('theme')).toHaveTextContent('system');
       });
 
-      // System prefers light initially (matches: false for dark query)
-      // Verify that matchMedia is being called correctly
-      const matchMediaCalls = (window.matchMedia as ReturnType<typeof vi.fn>).mock.calls;
-      const darkQueryCall = matchMediaCalls.find(
-        (call) => call[0] === '(prefers-color-scheme: dark)'
-      );
-      if (darkQueryCall) {
-        const result = (window.matchMedia as ReturnType<typeof vi.fn>)(darkQueryCall[0]);
-        // If matches is false, system prefers light
-        expect(result.matches).toBe(false);
-      }
-
-      expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light');
+      await waitFor(() => {
+        expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light');
+      });
 
       // Simulate system preference change
       if (mediaQueryHandler) {
-        await act(async () => {
+        act(() => {
           mediaQueryHandler!({
             matches: true,
             media: '(prefers-color-scheme: dark)',
           } as MediaQueryListEvent);
-          // Wait for state update
-          await new Promise((resolve) => setTimeout(resolve, 0));
         });
-        // Theme should still be 'system', but resolved theme should change
-        expect(screen.getByTestId('theme')).toHaveTextContent('system');
-        expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');
+
+        await waitFor(() => {
+          // Theme should still be 'system', but resolved theme should change
+          expect(screen.getByTestId('theme')).toHaveTextContent('system');
+          expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');
+        });
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
       }
     });
 
-    it('should not react to system preference changes when theme is fixed (light)', () => {
+    it('should not react to system preference changes when theme is fixed (light)', async () => {
       localStorage.setItem('cactus-theme', 'light');
 
       let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null;
@@ -426,7 +402,9 @@ describe('ThemeProviderWrapper', () => {
         </ThemeProviderWrapper>
       );
 
-      expect(screen.getByTestId('theme')).toHaveTextContent('light');
+      await waitFor(() => {
+        expect(screen.getByTestId('theme')).toHaveTextContent('light');
+      });
       expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light');
       expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 
@@ -472,29 +450,24 @@ describe('ThemeProviderWrapper', () => {
         };
       });
 
-      await act(async () => {
-        render(
-          <ThemeProviderWrapper defaultTheme="light">
-            <TestComponent />
-          </ThemeProviderWrapper>
-        );
-      });
+      render(
+        <ThemeProviderWrapper defaultTheme="light">
+          <TestComponent />
+        </ThemeProviderWrapper>
+      );
 
-      // Wait for initial useEffect
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0));
+      await waitFor(() => {
+        expect(screen.getByTestId('theme')).toHaveTextContent('light');
       });
-
-      expect(screen.getByTestId('theme')).toHaveTextContent('light');
 
       const button = screen.getByText('Set System');
       await act(async () => {
         button.click();
-        // Wait for state update
-        await new Promise((resolve) => setTimeout(resolve, 0));
       });
 
-      expect(screen.getByTestId('theme')).toHaveTextContent('system');
+      await waitFor(() => {
+        expect(screen.getByTestId('theme')).toHaveTextContent('system');
+      });
       expect(localStorage.getItem('cactus-theme')).toBe('system');
       // Resolved theme should follow system preference (dark in this mock)
       expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');

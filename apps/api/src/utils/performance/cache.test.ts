@@ -12,14 +12,33 @@ import {
   instrumentsSearchCache,
   benchmarksCacheUtil,
   normalizeCacheKey,
+  lookupTablesCacheUtil,
+  benchmarkComponentsCacheUtil,
+  contactsListCacheUtil,
+  teamMetricsCacheUtil,
+  portfolioAssignmentsCacheUtil,
+  aumAggregationsCacheUtil,
+  pipelineMetricsCacheUtil,
+  taskStatisticsCacheUtil,
+  dashboardKpisCacheUtil,
 } from './cache';
 
 describe('Cache Utilities', () => {
   beforeEach(() => {
-    // Limpiar cache antes de cada test
+    // AI_DECISION: Limpiar TODAS las caches antes de cada test
+    // para evitar ECACHEFULL de tests anteriores
     pipelineStagesCache.clear();
     instrumentsSearchCache.clear();
     benchmarksCacheUtil.clear();
+    lookupTablesCacheUtil.clear();
+    benchmarkComponentsCacheUtil.clear();
+    contactsListCacheUtil.clear();
+    teamMetricsCacheUtil.clear();
+    portfolioAssignmentsCacheUtil.clear();
+    aumAggregationsCacheUtil.clear();
+    pipelineMetricsCacheUtil.clear();
+    taskStatisticsCacheUtil.clear();
+    dashboardKpisCacheUtil.clear();
   });
 
   describe('pipelineStagesCache', () => {

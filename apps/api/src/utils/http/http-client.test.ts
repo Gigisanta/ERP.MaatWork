@@ -7,17 +7,19 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { HttpClient, getHttpClient } from './http-client';
-import http from 'node:http';
-import https from 'node:https';
 
-// Create mock Agent class
-class MockAgent {
-  destroy = vi.fn();
-  constructor(options?: unknown) {
-    // Constructor accepts options but doesn't need to do anything
+// AI_DECISION: Use vi.hoisted to declare MockAgent before vi.mock hoisting
+// Justificación: vi.mock se hoistea al inicio del archivo, pero las clases declaradas después no están disponibles
+// Impacto: Soluciona "Cannot access 'MockAgent' before initialization"
+const { MockAgent } = vi.hoisted(() => {
+  class MockAgent {
+    destroy = vi.fn();
+    constructor(_options?: unknown) {
+      // Constructor accepts options but doesn't need to do anything
+    }
   }
-}
+  return { MockAgent };
+});
 
 // Mock node:http and node:https
 vi.mock('node:http', () => ({
@@ -33,6 +35,10 @@ vi.mock('node:https', () => ({
     request: vi.fn(),
   },
 }));
+
+import { HttpClient, getHttpClient } from './http-client';
+import http from 'node:http';
+import https from 'node:https';
 
 describe('HttpClient', () => {
   let httpClient: HttpClient;

@@ -1,0 +1,30 @@
+# =============================================================================
+# Production Environment - Configuration
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+project_name = "cactus"
+aws_region   = "us-east-1"
+
+# Compute (Production sized)
+instance_type = "t3.medium"
+volume_size   = 50
+ssh_key_name  = "cactus-prod"  # Create this key pair in AWS console
+
+# Database (Production sized with longer backups)
+db_instance_class        = "db.t3.small"
+db_allocated_storage     = 50
+db_max_allocated_storage = 100
+db_multi_az              = false  # Set to true for high availability
+db_backup_retention_days = 7
+
+# Cloudflare (required for production)
+enable_cloudflare  = true
+cloudflare_zone_id = "your-zone-id-here"
+domain             = "your-domain.com"
+enable_waf         = true
+
+
+
+

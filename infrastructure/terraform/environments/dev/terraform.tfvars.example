@@ -1,0 +1,30 @@
+# =============================================================================
+# Development Environment - Configuration
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# =============================================================================
+
+project_name = "cactus"
+aws_region   = "us-east-1"
+
+# Compute (MVP optimized)
+instance_type = "t3.small"
+volume_size   = 30
+ssh_key_name  = "cactus-dev"  # Create this key pair in AWS console
+
+# Database (Free Tier eligible)
+db_instance_class        = "db.t3.micro"
+db_allocated_storage     = 20
+db_max_allocated_storage = 30
+db_multi_az              = false
+db_backup_retention_days = 1
+
+# Cloudflare (optional - set to true and configure below to enable)
+enable_cloudflare  = false
+# cloudflare_zone_id = "your-zone-id-here"
+# domain             = "your-domain.com"
+# enable_waf         = true
+
+
+
+

@@ -10,6 +10,7 @@ import aumRouter from './index';
 import { signUserToken } from '../../auth/jwt';
 import { createTestApp } from '../../__tests__/helpers/test-server';
 
+// AI_DECISION: Mock simple de db para permitir configuración en cada test
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   aumImportRows: {},
@@ -19,7 +20,26 @@ vi.mock('@cactus/db', () => ({
   advisorAliases: {},
   aumMonthlySnapshots: {},
   eq: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    { raw: vi.fn((str: string) => ({ sql: str, values: [] })) }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
+  and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
+  or: vi.fn((...conditions: unknown[]) => ({ or: conditions })),
+  desc: vi.fn((col: unknown) => ({ desc: col })),
+  asc: vi.fn((col: unknown) => ({ asc: col })),
+  isNull: vi.fn((col: unknown) => ({ isNull: col })),
+  isNotNull: vi.fn((col: unknown) => ({ isNotNull: col })),
+  inArray: vi.fn((col: unknown, arr: unknown) => ({ inArray: { col, arr } })),
+  ilike: vi.fn((col: unknown, val: unknown) => ({ ilike: { col, val } })),
 }));
 
 vi.mock('../../auth/middlewares', () => ({

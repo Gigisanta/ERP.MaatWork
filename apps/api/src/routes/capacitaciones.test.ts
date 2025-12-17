@@ -7,19 +7,29 @@ import express from 'express';
 import request from 'supertest';
 import capacitacionesRouter from './capacitaciones';
 import { signUserToken } from '../auth/jwt';
-import { createTestApp } from '../../__tests__/helpers/test-server';
+import { createTestApp } from '../__tests__/helpers/test-server';
 
 vi.mock('@cactus/db', () => ({
   db: vi.fn(),
   capacitaciones: {},
   users: {},
-  eq: vi.fn(),
-  and: vi.fn(),
-  ilike: vi.fn(),
-  or: vi.fn(),
-  desc: vi.fn(),
-  asc: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    { raw: vi.fn((str: string) => ({ sql: str, values: [] })) }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
+  and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
+  ilike: vi.fn((col: unknown, pattern: unknown) => ({ ilike: { col, pattern } })),
+  or: vi.fn((...conditions: unknown[]) => ({ or: conditions })),
+  desc: vi.fn((col: unknown) => ({ desc: col })),
+  asc: vi.fn((col: unknown) => ({ asc: col })),
 }));
 
 vi.mock('../auth/middlewares', () => ({
@@ -35,12 +45,33 @@ vi.mock('../utils/db-transactions', () => ({
   transactionWithLogging: vi.fn(),
 }));
 
-vi.mock('multer', () => ({
-  default: vi.fn(() => ({
-    single: vi.fn(() => (req, res, next) => next()),
-  })),
-  diskStorage: vi.fn(() => ({})),
-}));
+// AI_DECISION: Mock multer con diskStorage en default para ESM compatibility
+// Justificación: ESM importa multer como default y accede a diskStorage como multer.diskStorage
+// Impacto: Soluciona "diskStorage is not a function"
+vi.mock('multer', () => {
+  const mockDiskStorage = vi.fn(() => ({
+    _handleFile: vi.fn(),
+    _removeFile: vi.fn(),
+  }));
+
+  const mockMulter = vi.fn(() => ({
+    single: vi.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+    array: vi.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+    fields: vi.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+    any: vi.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+    none: vi.fn(() => (req: unknown, res: unknown, next: () => void) => next()),
+  }));
+
+  // Attach diskStorage to both default export and named export
+  mockMulter.diskStorage = mockDiskStorage;
+  mockMulter.memoryStorage = vi.fn(() => ({}));
+
+  return {
+    default: mockMulter,
+    diskStorage: mockDiskStorage,
+    memoryStorage: vi.fn(() => ({})),
+  };
+});
 
 vi.mock('node:fs', () => ({
   promises: {

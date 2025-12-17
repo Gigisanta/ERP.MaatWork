@@ -13,11 +13,45 @@ import purgeRouter from './purge';
 import { signUserToken } from '../../../auth/jwt';
 import { createTestApp } from '../../../__tests__/helpers/test-server';
 
+// AI_DECISION: Usar vi.hoisted para definir mocks antes del hoisting de vi.mock
+// Justificación: vi.mock se hoistea y necesita acceso a las funciones de mock
+// Impacto: El mock de db retorna un objeto con métodos por defecto
+const { mockExecute, mockDbInstance } = vi.hoisted(() => {
+  const mockExecute = vi.fn().mockResolvedValue({ rowCount: 0 });
+  const mockDbInstance = {
+    execute: mockExecute,
+    select: vi.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    values: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+  };
+  return { mockExecute, mockDbInstance };
+});
+
 // Mock dependencies
 vi.mock('@cactus/db', () => ({
-  db: vi.fn(),
+  db: vi.fn(() => mockDbInstance),
   eq: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function
+// Justificación: El código usa sql`...` como tagged template literal
+// Impacto: sql debe retornar un objeto que db().execute() pueda usar
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    {
+      raw: vi.fn((str: string) => ({ sql: str, values: [] })),
+    }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
 }));
 
 vi.mock('../../../auth/middlewares', () => ({
@@ -30,7 +64,7 @@ vi.mock('../../../utils/validation', () => ({
 }));
 
 import { db } from '@cactus/db';
-import { sql } from '@cactus/db';
+import { sql } from 'drizzle-orm';
 
 const mockDb = vi.mocked(db);
 const mockSql = vi.mocked(sql);
@@ -58,11 +92,7 @@ describe('AUM Admin - Purge Routes', () => {
 
   describe('DELETE /admin/aum/purge-all', () => {
     it('debería purgar todo el sistema AUM sin broker especificado', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 10 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 10 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -70,19 +100,19 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(200);
 
+      // AI_DECISION: createRouteHandler envuelve respuestas en { success: true, data: {...} }
       expect(res.body).toEqual({
-        ok: true,
-        message: 'Sistema AUM/broker purgado completamente',
+        success: true,
+        data: {
+          ok: true,
+          message: 'Sistema AUM/broker purgado completamente',
+        },
       });
       expect(mockExecute).toHaveBeenCalledTimes(3); // broker_accounts, aum_import_rows, aum_import_files
     });
 
     it('debería purgar por broker cuando se especifica', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 5 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 5 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -91,18 +121,17 @@ describe('AUM Admin - Purge Routes', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true,
-        message: 'Sistema AUM/broker purgado completamente',
+        success: true,
+        data: {
+          ok: true,
+          message: 'Sistema AUM/broker purgado completamente',
+        },
       });
       expect(mockExecute).toHaveBeenCalled();
     });
 
     it('debería manejar errores correctamente', async () => {
-      const mockExecute = vi.fn().mockRejectedValue(new Error('Database error'));
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockRejectedValue(new Error('Database error'));
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -110,19 +139,15 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'Database error',
-      });
+      // AI_DECISION: El error handler retorna { error, message, stack }
+      expect(res.body.error).toBe('An error occurred while processing your request');
+      expect(res.body.message).toBe('Database error');
     });
   });
 
   describe('POST /admin/aum/cleanup-duplicates', () => {
     it('debería limpiar duplicados exitosamente', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 5 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 5 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -131,18 +156,17 @@ describe('AUM Admin - Purge Routes', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true,
-        message: 'Se eliminaron 5 filas duplicadas',
-        deletedCount: 5,
+        success: true,
+        data: {
+          ok: true,
+          message: 'Se eliminaron 5 filas duplicadas',
+          deletedCount: 5,
+        },
       });
     });
 
     it('debería retornar 0 cuando no hay duplicados', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 0 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 0 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -151,18 +175,17 @@ describe('AUM Admin - Purge Routes', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true,
-        message: 'Se eliminaron 0 filas duplicadas',
-        deletedCount: 0,
+        success: true,
+        data: {
+          ok: true,
+          message: 'Se eliminaron 0 filas duplicadas',
+          deletedCount: 0,
+        },
       });
     });
 
     it('debería permitir acceso a manager', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 3 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 3 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -170,15 +193,11 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${managerToken}`)
         .expect(200);
 
-      expect(res.body.ok).toBe(true);
+      expect(res.body.data.ok).toBe(true);
     });
 
     it('debería manejar errores correctamente', async () => {
-      const mockExecute = vi.fn().mockRejectedValue(new Error('SQL error'));
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockRejectedValue(new Error('SQL error'));
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -186,19 +205,14 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'SQL error',
-      });
+      expect(res.body.error).toBe('An error occurred while processing your request');
+      expect(res.body.message).toBe('SQL error');
     });
   });
 
   describe('POST /admin/aum/reset-all', () => {
     it('debería resetear sistema AUM exitosamente', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 10 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 10 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -207,18 +221,17 @@ describe('AUM Admin - Purge Routes', () => {
         .expect(200);
 
       expect(res.body).toEqual({
-        ok: true,
-        message: 'Sistema AUM limpiado completamente. Listo para cargar el primer archivo.',
+        success: true,
+        data: {
+          ok: true,
+          message: 'Sistema AUM limpiado completamente. Listo para cargar el primer archivo.',
+        },
       });
       expect(mockExecute).toHaveBeenCalledTimes(2); // aum_import_rows, aum_import_files
     });
 
     it('debería permitir acceso a manager', async () => {
-      const mockExecute = vi.fn().mockResolvedValue({ rowCount: 0 });
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockResolvedValue({ rowCount: 0 });
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -226,15 +239,11 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${managerToken}`)
         .expect(200);
 
-      expect(res.body.ok).toBe(true);
+      expect(res.body.data.ok).toBe(true);
     });
 
     it('debería manejar errores correctamente', async () => {
-      const mockExecute = vi.fn().mockRejectedValue(new Error('Reset failed'));
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockRejectedValue(new Error('Reset failed'));
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -242,17 +251,12 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'Reset failed',
-      });
+      expect(res.body.error).toBe('An error occurred while processing your request');
+      expect(res.body.message).toBe('Reset failed');
     });
 
     it('debería manejar errores no-Error correctamente', async () => {
-      const mockExecute = vi.fn().mockRejectedValue('String error');
-
-      mockDb.mockReturnValue({
-        execute: mockExecute,
-      } as any);
+      mockExecute.mockRejectedValue('String error');
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -260,9 +264,7 @@ describe('AUM Admin - Purge Routes', () => {
         .set('Cookie', `token=${adminToken}`)
         .expect(500);
 
-      expect(res.body).toEqual({
-        error: 'String error',
-      });
+      expect(res.body.error).toBe('An error occurred while processing your request');
     });
   });
 });

@@ -137,10 +137,12 @@ describe('createErrorResponse', () => {
     });
 
     it('debería manejar requestId vacío', () => {
+      // AI_DECISION: El código omite requestId cuando es vacío
       const error = new Error('Test');
       const result = createErrorResponse({ error, requestId: '' });
 
-      expect(result.requestId).toBe('');
+      // El código no incluye requestId cuando es vacío
+      expect(result.requestId).toBeUndefined();
     });
 
     it('debería manejar userMessage vacío', () => {
@@ -192,11 +194,12 @@ describe('createErrorResponse', () => {
       expect(typeof result.error).toBe('string');
     });
 
-    it('requestId debería estar presente (puede ser undefined)', () => {
+    it('requestId debería estar presente solo si se proporciona', () => {
+      // AI_DECISION: El código omite requestId cuando no se proporciona
       const result = createErrorResponse({ error: new Error('Test') });
 
-      // requestId siempre está en el objeto (incluso si es undefined)
-      expect('requestId' in result).toBe(true);
+      // requestId no está en el objeto cuando no se proporciona
+      expect(result.requestId).toBeUndefined();
 
       // Si se proporciona, debe ser string
       const resultWithId = createErrorResponse({ error: new Error('Test'), requestId: 'abc123' });

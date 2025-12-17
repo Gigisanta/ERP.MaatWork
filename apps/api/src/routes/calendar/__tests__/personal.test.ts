@@ -190,6 +190,10 @@ describe('Personal Calendar Handlers', () => {
     });
 
     it('should not retry on permanent errors', async () => {
+      // AI_DECISION: Limpiar mock antes de configurarlo para evitar conflictos con test anterior
+      // Justificación: mockRejectedValueOnce del test anterior puede interferir si no se consume
+      // Impacto: Test aislado que no depende del orden de ejecución
+      vi.mocked(tokenRefresh.refreshGoogleToken).mockReset();
       vi.mocked(tokenRefresh.refreshGoogleToken).mockRejectedValue(new Error('invalid_grant'));
 
       await expect(tokenRefresh.refreshGoogleToken('token-id')).rejects.toThrow('invalid_grant');

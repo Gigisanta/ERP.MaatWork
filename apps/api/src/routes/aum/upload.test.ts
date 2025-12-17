@@ -21,7 +21,18 @@ vi.mock('@cactus/db', () => ({
   contacts: {},
   users: {},
   eq: vi.fn(),
-  sql: vi.fn(),
+}));
+
+// AI_DECISION: Mock sql como tagged template function
+vi.mock('drizzle-orm', () => ({
+  sql: Object.assign(
+    (strings: TemplateStringsArray, ...values: unknown[]) => ({
+      sql: strings.join('?'),
+      values,
+    }),
+    { raw: vi.fn((str: string) => ({ sql: str, values: [] })) }
+  ),
+  eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
 }));
 
 vi.mock('../../auth/middlewares', () => ({
