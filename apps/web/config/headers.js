@@ -59,16 +59,16 @@ function generateHeaders() {
         },
         {
           key: 'Content-Security-Policy',
+          // AI_DECISION: CSP permisivo para Cloudflare proxy
+          // Justificación: Cloudflare inyecta scripts, estilos y fuentes para analytics/security
+          // Impacto: No más errores de CSP. Seguridad manejada por Cloudflare WAF.
           value: [
             "default-src 'self'",
-            `connect-src 'self' ${apiUrl} https://fonts.googleapis.com https://fonts.gstatic.com`,
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
+            `connect-src 'self' ${apiUrl} https://fonts.googleapis.com https://fonts.gstatic.com https://static.cloudflareinsights.com https://cloudflareinsights.com`,
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.cloudflareinsights.com",
+            "font-src 'self' https://fonts.gstatic.com https://static.cloudflareinsights.com",
             "img-src 'self' data: https: blob:",
-            // AI_DECISION: Permitir scripts de Cloudflare Insights
-            // Justificación: Cloudflare inyecta beacon.min.js para analytics
-            // Impacto: No más errores de CSP por Cloudflare scripts
-            "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com",
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

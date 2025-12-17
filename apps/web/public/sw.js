@@ -62,6 +62,13 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // AI_DECISION: Solo manejar requests HTTP/HTTPS
+  // Justificación: chrome-extension:// y otros protocolos no pueden ser cacheados
+  // Impacto: Evita errores de "Request scheme 'chrome-extension' is unsupported"
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
@@ -69,6 +76,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests (use network only)
   if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  // Skip external resources (CDNs, analytics, etc.)
+  if (url.origin !== self.location.origin) {
     return;
   }
 
