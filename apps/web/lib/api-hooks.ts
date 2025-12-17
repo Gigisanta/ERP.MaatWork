@@ -207,14 +207,22 @@ export function useUsers(params?: { limit?: number; offset?: number }) {
   const url = `${API_BASE_URL}/v1/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user?.role === 'admin' || user?.role === 'manager' ? url : null;
 
-  interface UsersResponse extends ApiResponse<UserApiResponse[]> {
-    pagination?: {
-      total: number;
+  // AI_DECISION: Fix response type to match actual API structure
+  // Justificación: API returns { success, data: { data: [...users], pagination: {...} } }
+  //               because createRouteHandler wraps formatPaginatedResponse
+  // Impacto: Fix "R.map is not a function" error on /admin/users
+  interface PaginatedUsersData {
+    data: UserApiResponse[];
+    pagination: {
+      page: number;
       limit: number;
       offset: number;
-      hasMore: boolean;
+      total: number;
+      totalPages: number;
     };
   }
+
+  interface UsersResponse extends ApiResponse<PaginatedUsersData> {}
 
   const { data, error, isLoading, mutate } = useSWR<UsersResponse>(
     swrKey as string | null,
@@ -222,9 +230,11 @@ export function useUsers(params?: { limit?: number; offset?: number }) {
     swrConfigLonger
   );
 
-  // Extract users and pagination from response
-  const users = (data?.data as UserApiResponse[] | undefined) || [];
-  const pagination = data?.pagination;
+  // Extract users and pagination from nested response
+  // API structure: { success: true, data: { data: [...users], pagination: {...} } }
+  const paginatedData = data?.data as PaginatedUsersData | undefined;
+  const users = paginatedData?.data ?? [];
+  const pagination = paginatedData?.pagination;
 
   return {
     users,
