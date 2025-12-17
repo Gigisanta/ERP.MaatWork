@@ -37,7 +37,14 @@ export async function apiCall<T>(
     revalidate?: number | false;
   } = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${config.apiUrl}${endpoint}`;
+  // AI_DECISION: Usar URL interna para Server Components
+  // Justificación: Cuando Next.js (servidor) llama a https://maat.work/api,
+  //                Cloudflare intercepta con su challenge "Just a moment..."
+  //                que el servidor no puede resolver (requiere JavaScript).
+  //                Usando localhost:3001 evitamos Cloudflare para llamadas internas.
+  // Impacto: Server Components pueden autenticar usuarios sin bloqueos de Cloudflare
+  const internalApiUrl = process.env.API_URL_INTERNAL || config.apiUrl;
+  const url = `${internalApiUrl}${endpoint}`;
 
   // Obtener cookie de token automáticamente
   const cookieStore = await cookies();

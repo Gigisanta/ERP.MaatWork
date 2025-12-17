@@ -1,3 +1,15 @@
+/**
+ * PM2 Ecosystem Configuration
+ *
+ * AI_DECISION: Variables sensibles cargadas desde process.env
+ * Justificación: deploy.sh exporta JWT_SECRET y API_URL_INTERNAL antes de iniciar PM2
+ *                Esto permite mantener secretos fuera del código versionado
+ * Impacto: Autenticación funciona correctamente detrás de Cloudflare
+ *
+ * Variables requeridas (exportadas por deploy.sh):
+ * - JWT_SECRET: Secreto para validar tokens JWT (cargado de apps/api/.env)
+ * - API_URL_INTERNAL: URL interna del API para Server Components (http://127.0.0.1:3001)
+ */
 module.exports = {
   apps: [
     {
@@ -26,6 +38,10 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        // Estas variables son cargadas por deploy.sh desde apps/api/.env
+        // y pasadas a PM2 vía --update-env
+        JWT_SECRET: process.env.JWT_SECRET,
+        API_URL_INTERNAL: process.env.API_URL_INTERNAL || 'http://127.0.0.1:3001',
       },
       error_file: '/home/ec2-user/logs/web-error.log',
       out_file: '/home/ec2-user/logs/web-out.log',

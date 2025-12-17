@@ -352,11 +352,21 @@ log_success "Aplicaciones construidas"
 # =============================================================================
 log "🔄 Reiniciando servicios con PM2..."
 
+# AI_DECISION: Exportar variables necesarias para PM2
+# Justificación: JWT_SECRET y API_URL_INTERNAL deben estar disponibles en runtime
+#                para que el middleware de Next.js valide tokens correctamente
+# Impacto: Autenticación funciona correctamente detrás de Cloudflare
+if [ -f apps/api/.env ]; then
+    export JWT_SECRET=$(grep '^JWT_SECRET=' apps/api/.env | cut -d'=' -f2-)
+    log "   JWT_SECRET cargado desde apps/api/.env"
+fi
+export API_URL_INTERNAL="http://127.0.0.1:3001"
+
 # Detener servicios existentes (ignorar errores si no existen)
 pm2 stop all 2>/dev/null || true
 
-# Iniciar/reiniciar con ecosystem.config.js
-pm2 start ecosystem.config.js
+# Iniciar/reiniciar con ecosystem.config.js y actualizar env vars
+pm2 start ecosystem.config.js --update-env
 
 # Guardar configuración de PM2
 pm2 save

@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
+// AI_DECISION: Usar Node.js runtime en lugar de Edge
+// Justificación: Edge Runtime inline variables de entorno en build-time
+// Node.js runtime lee process.env en runtime, permitiendo acceso a JWT_SECRET
+// Impacto: Middleware puede validar JWT con secreto configurado en PM2
+export const runtime = 'nodejs';
+
 /**
  * AI_DECISION: Construir URL base correcta para redirecciones
  * Justificación: Cuando Next.js corre detrás de un proxy (Nginx), request.url puede ser localhost
