@@ -5,8 +5,19 @@ set -e
 # CACTUS CRM - Deploy Script
 # =============================================================================
 # Este script despliega la última versión de master en el servidor
-# Uso: ./deploy.sh
+# Uso: ./deploy.sh [--skip-tests]
 # =============================================================================
+
+# Opciones
+SKIP_TESTS=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --skip-tests) SKIP_TESTS=true ;;
+        *) echo "Opción desconocida: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # Colores para output
 RED='\033[0;31m'
@@ -153,7 +164,7 @@ fi
 
 # Exportar variables críticas para Next.js build
 export NODE_ENV=production
-export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-http://56.125.148.180/api}"
+export NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL:-https://maat.work/api}"
 
 log "   NODE_ENV=$NODE_ENV"
 log "   NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
@@ -161,7 +172,10 @@ log "   NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
 # =============================================================================
 # 8. EJECUTAR TESTS
 # =============================================================================
-log "🧪 Ejecutando tests..."
+if [ "$SKIP_TESTS" = true ]; then
+    log_warning "🧪 Tests SALTADOS (--skip-tests)"
+else
+    log "🧪 Ejecutando tests..."
 
 TEST_LOG="/tmp/cactus-test-output.log"
 
@@ -305,6 +319,8 @@ else
     exit 1
 fi
 
+fi  # End SKIP_TESTS check
+
 # =============================================================================
 # 9. BUILD DE PAQUETES COMPARTIDOS
 # =============================================================================
@@ -379,8 +395,8 @@ echo "  pm2 logs         - Ver logs en tiempo real"
 echo "  pm2 logs --lines 100  - Ver últimas 100 líneas"
 echo ""
 echo "URLs:"
-echo "  Web:       http://56.125.148.180"
-echo "  API:       http://56.125.148.180/api"
-echo "  Analytics: http://56.125.148.180/analytics"
+echo "  Web:       https://maat.work"
+echo "  API:       https://maat.work/api"
+echo "  Analytics: https://maat.work/analytics"
 echo ""
 
