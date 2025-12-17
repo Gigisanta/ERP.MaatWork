@@ -7,7 +7,11 @@
  */
 
 const CACHE_NAME = 'cactus-crm-v1';
-const STATIC_ASSETS = ['/', '/favicon.ico', '/manifest.json'];
+// AI_DECISION: Solo cachear archivos estáticos que no requieren autenticación
+// Justificación: Las rutas protegidas (como /) pueden redirigir a /login,
+//                causando que cache.addAll() falle
+// Impacto: Service Worker se instala correctamente sin errores
+const STATIC_ASSETS = ['/favicon.ico', '/manifest.json'];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -15,7 +19,21 @@ self.addEventListener('install', (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(STATIC_ASSETS);
+        // Usar Promise.allSettled para que un fallo no rompa todo
+        return Promise.allSettled(
+          STATIC_ASSETS.map((url) =>
+            fetch(url)
+              .then((response) => {
+                if (response.ok) {
+                  return cache.put(url, response);
+                }
+                console.warn(`[SW] Skipping cache for ${url}: ${response.status}`);
+              })
+              .catch((err) => {
+                console.warn(`[SW] Failed to cache ${url}:`, err);
+              })
+          )
+        );
       })
       .then(() => {
         return self.skipWaiting(); // Activate immediately
