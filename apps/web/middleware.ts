@@ -160,8 +160,14 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico, sw.js, manifest.json (PWA/static files)
+     * - *.png, *.jpg, *.svg, *.ico (static images)
+     *
+     * AI_DECISION: Excluir archivos estáticos del middleware
+     * Justificación: sw.js y manifest.json estaban siendo redirigidos a /login
+     *                causando errores de Service Worker registration
+     * Impacto: PWA funciona correctamente, archivos estáticos no pasan por auth
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
   ],
 };
