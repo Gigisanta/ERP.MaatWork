@@ -91,6 +91,16 @@ const logger = pino(loggerOptions);
 const app = express();
 app.set('etag', 'strong');
 
+// AI_DECISION: Trust proxy para producción con Cloudflare/Nginx
+// Justificación: Express necesita confiar en X-Forwarded-* headers para:
+// 1. Cookies secure funcionen correctamente (secure: true requiere HTTPS original)
+// 2. req.ip devuelva la IP real del cliente
+// 3. req.protocol devuelva 'https' cuando viene de Cloudflare
+// Impacto: Cookies de autenticación funcionan detrás de reverse proxy
+if (isProduction) {
+  app.set('trust proxy', 1); // Trust first proxy (Nginx/Cloudflare)
+}
+
 // REGLA CURSOR: Orden crítico de middlewares - NO CAMBIAR SIN JUSTIFICACIÓN EXPLÍCITA
 // CORS MUST be first, before any other middleware including body parsers
 // CORS config - restrict origins for security
