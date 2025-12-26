@@ -170,7 +170,7 @@ Este procedimiento es **crítico** después de:
 
 - Resolver errores de webpack en desarrollo
 - Limpiar cachés del servidor (`.next`, webpack cache)
-- Actualizar paquetes del workspace (`@cactus/ui`, etc.)
+- Actualizar paquetes del workspace (`@maatwork/ui`, etc.)
 - Cambios en configuración de webpack
 
 **Recuerda**: Los cachés del servidor y del navegador son independientes. Debes limpiar AMBOS.

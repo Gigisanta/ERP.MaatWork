@@ -8,31 +8,10 @@
  * Impacto: Prevenir errores en procesamiento de datos críticos
  */
 
-import { test, expect, type Page } from '@playwright/test';
-import { join } from 'node:path';
-
-const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
-
-async function login(page: Page, email: string = adminEmail, password: string = adminPassword) {
-  await page.goto('/login');
-  await page
-    .getByLabel(/email|usuario|correo/i)
-    .first()
-    .fill(email);
-  await page
-    .getByLabel(/contraseña|password/i)
-    .first()
-    .fill(password);
-  await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
-  await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
-}
+import { test, expect } from '@playwright/test';
+import path from 'node:path';
 
 test.describe('AUM Complete Workflow', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page);
-  });
-
   test('should complete full workflow: upload → parse → match → review → commit', async ({
     page,
   }) => {
@@ -43,7 +22,7 @@ test.describe('AUM Complete Workflow', () => {
     // Step 1: Upload file
     const fileInput = page.locator('input[type="file"]');
     if ((await fileInput.count()) > 0) {
-      const testFile = join(__dirname, '../../apps/api/test-fixtures/aum/sample-master.csv');
+      const testFile = path.join(process.cwd(), 'apps/api/test-fixtures/aum/sample-master.csv');
       await fileInput.first().setInputFiles(testFile);
 
       // Wait for upload to complete

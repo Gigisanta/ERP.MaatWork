@@ -8,12 +8,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, pipelineStages, contacts, pipelineStageHistory } from '@maatwork/db';
 import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   pipelineStages: {},
   contacts: {},

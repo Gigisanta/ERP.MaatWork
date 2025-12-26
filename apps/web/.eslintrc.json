@@ -1,6 +1,6 @@
 {
   "extends": ["next/core-web-vitals"],
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "react-hooks"],
   "rules": {
     "no-console": ["error", { "allow": ["error"] }],
     "@typescript-eslint/no-explicit-any": "error",

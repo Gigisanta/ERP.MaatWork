@@ -11,9 +11,9 @@ import {
   Grid,
   Badge,
   Tooltip,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { apiClient } from '@/lib/api-client';
-import type { TeamCapacityMember } from '@/types/team';
+import type { TeamCapacityMember } from '@/types';
 
 interface CapacityHeatmapProps {
   teamId: string;

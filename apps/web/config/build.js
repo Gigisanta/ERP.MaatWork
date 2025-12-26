@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Next.js Build and Optimization Configuration
  */
@@ -18,20 +19,17 @@ module.exports = {
   // Impacto: Assets servidos desde CDN más cercano, mejor tiempo de carga, menor carga en servidor
   assetPrefix: process.env.CDN_URL || undefined,
 
-  // AI_DECISION: Solo transpilar @cactus/ui, dejar que Next.js maneje Radix UI nativamente
+  // AI_DECISION: Solo transpilar @maatwork/ui, dejar que Next.js maneje Radix UI nativamente
   // Justificaci?n: Transpilar todos los paquetes Radix UI causa problemas de resoluci?n
   // Impacto: Evita problemas de resolución de módulos y truncamiento
-  transpilePackages: ['@cactus/ui'],
+  transpilePackages: ['@maatwork/ui', '@maatwork/types'],
 
-  serverExternalPackages: ['@cactus/db'],
+  serverExternalPackages: ['@maatwork/db'],
 
   // AI_DECISION: Enable Next.js 14 experimental optimizations for package imports
   // Justificación: Tree-shaking improvements reduce bundle size by 20-30% for large packages
   // Impacto: Smaller JavaScript bundles, faster page loads
   experimental: {
-    // AI_DECISION: Desactivar optimizePackageImports por inestabilidad con monorepos y paquetes transitorios (Radix UI)
-    // Justificación: Evita generación de vendor-chunks inconsistentes como "./vendor-chunks/@radix-ui.js"
-    // Impacto: Build de desarrollo estable; menor riesgo de errores MODULE_NOT_FOUND
-    externalDir: true,
+    // externalDir: true,
   },
 };

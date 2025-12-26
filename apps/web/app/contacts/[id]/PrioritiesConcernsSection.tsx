@@ -13,7 +13,7 @@ import {
   ModalContent,
   ModalTitle,
   ModalFooter,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { useRouter } from 'next/navigation';
 import { logger, toLogContext } from '@/lib/logger';
 import SortableList from './SortableList';

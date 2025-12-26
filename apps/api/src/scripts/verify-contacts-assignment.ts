@@ -4,12 +4,12 @@
  *
  * Verifica que todos los contactos estén correctamente asignados a asesores.
  *
- * Uso: pnpm -F @cactus/api verify-contacts-assignment
+ * Uso: pnpm -F @maatwork/api verify-contacts-assignment
  */
 
 import { config } from 'dotenv';
 import { join } from 'path';
-import { db, contacts, users } from '@cactus/db';
+import { db, contacts, users } from '@maatwork/db';
 import { eq, and, isNull, sql } from 'drizzle-orm';
 
 // Cargar .env
@@ -181,7 +181,7 @@ function printReport(result: VerificationResult): void {
     if (result.unassignedContacts > 10) {
       console.log(`   ... y ${result.unassignedContacts - 10} más`);
     }
-    console.log('\n   💡 Ejecuta: pnpm -F @cactus/api assign-unassigned-contacts');
+    console.log('\n   💡 Ejecuta: pnpm -F @maatwork/api assign-unassigned-contacts');
   } else {
     console.log('\n✅ Todos los contactos están correctamente asignados');
   }

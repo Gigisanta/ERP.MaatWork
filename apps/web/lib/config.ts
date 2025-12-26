@@ -32,4 +32,4 @@ export const config = {
   },
 } as const;
 
-export type Config = typeof config;
+type Config = typeof config;

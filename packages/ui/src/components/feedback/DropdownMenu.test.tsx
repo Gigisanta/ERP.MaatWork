@@ -7,7 +7,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuGroup,
 } from './DropdownMenu';
-import Button from '../nav/Button';
+import { Button } from '../nav/Button';
 
 describe('DropdownMenu Component', () => {
   describe('Rendering', () => {

@@ -20,7 +20,7 @@ export async function getAdvisors(): Promise<ApiResponse<Advisor[]>> {
 /**
  * Listar usuarios
  */
-export async function getUsers(): Promise<ApiResponse<UserApiResponse[]>> {
+async function getUsers(): Promise<ApiResponse<UserApiResponse[]>> {
   return apiClient.get<UserApiResponse[]>('/v1/users');
 }
 

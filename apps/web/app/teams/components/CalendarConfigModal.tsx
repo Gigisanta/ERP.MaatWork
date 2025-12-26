@@ -14,7 +14,7 @@ import {
   Badge,
   Icon,
   Tooltip,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Team } from '@/types';
 import type { CalendarListEntry } from '@/lib/api';
 

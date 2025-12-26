@@ -9,12 +9,12 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Input, Icon, Text } from '@cactus/ui';
+import { Input, Icon, Text } from '@maatwork/ui';
 
 const STORAGE_KEY = 'contacts_search_history';
 const MAX_HISTORY_ITEMS = 10;
 
-export interface SearchAutocompleteProps {
+interface SearchAutocompleteProps {
   /** Controlled search value */
   value: string;
   /** Callback when search value changes */

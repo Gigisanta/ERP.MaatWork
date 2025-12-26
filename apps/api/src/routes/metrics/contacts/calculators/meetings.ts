@@ -44,3 +44,11 @@ export function calculateMeetings(
     secondMeetingsCount: countFirstTimeEntriesInMonth(secondMeetingByContact, range),
   };
 }
+
+
+
+
+
+
+
+

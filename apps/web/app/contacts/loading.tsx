@@ -1,12 +1,12 @@
 /**
  * Loading component for contacts page
  *
- * AI_DECISION: Avoid @cactus/ui imports in loading components to prevent webpack module resolution issues
- * Justificación: @cactus/ui has circular dependency issues with SkeletonLoader in loading contexts
+ * AI_DECISION: Avoid @maatwork/ui imports in loading components to prevent webpack module resolution issues
+ * Justificación: @maatwork/ui has circular dependency issues with SkeletonLoader in loading contexts
  * Impacto: Eliminates "Cannot read properties of undefined (reading 'call')" webpack errors
  */
 
-import { Skeleton, SkeletonTable } from '../components/SkeletonLoader';
+import { Skeleton, SkeletonTable } from '@maatwork/ui';
 
 export default function ContactsLoading() {
   return (

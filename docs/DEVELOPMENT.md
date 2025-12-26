@@ -1,6 +1,6 @@
 # Guía de Desarrollo
 
-Esta guía proporciona información esencial para desarrolladores que trabajan en el proyecto CACTUS CRM.
+Esta guía proporciona información esencial para desarrolladores que trabajan en el proyecto MAATWORK.
 
 ## Índice
 
@@ -62,13 +62,13 @@ cp apps/api/config-example.env apps/api/.env
 # Editar apps/api/.env con tus valores
 
 # 4. Ejecutar migraciones
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db migrate
 
 # 5. Crear usuario admin (opcional)
 tsx scripts/create-admin-user.js
 
 # 6. Instalar dependencias Python (opcional)
-pnpm -F @cactus/analytics-service install
+pnpm -F @maatwork/analytics-service install
 ```
 
 ### Desarrollo
@@ -94,7 +94,7 @@ pnpm dev:fast
 - N8N: http://localhost:5678
 
 **Usuario por defecto (después del setup):**
-- Email: `admin@cactus.local`
+- Email: `admin@maatwork.local`
 - Rol: `admin` (acceso completo)
 - Contraseña: No requerida en desarrollo
 
@@ -103,7 +103,7 @@ pnpm dev:fast
 ## Estructura del Proyecto
 
 ```
-CactusDashboard-epic-D/
+MaatWork/
 ├── apps/
 │   ├── api/                 # API Express + TypeScript
 │   ├── web/                 # Frontend Next.js App Router
@@ -134,7 +134,7 @@ CactusDashboard-epic-D/
 1. **Prioridad:** Solución MÁS ESTABLE, no la más creativa
 2. **Verificar primero:** ¿Es necesario? ¿Es seguro? ¿Romperá código? ¿Está documentado?
 3. **Ejecutar typecheck ANTES:** `pnpm typecheck` (todos los workspaces)
-4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @cactus/ui build` antes de typecheck
+4. **Construir paquetes compartidos si hay cambios en tipos:** `pnpm -F @maatwork/ui build` antes de typecheck
 
 ### Logging Estructurado
 
@@ -348,8 +348,8 @@ export interface BenchmarkComponentForm { ... }  // ERROR
 
 ```bash
 # Si modificas tipos exportados:
-pnpm -F @cactus/ui build
-pnpm -F @cactus/db build
+pnpm -F @maatwork/ui build
+pnpm -F @maatwork/db build
 # Luego:
 pnpm typecheck
 ```
@@ -457,7 +457,7 @@ router.post('/',
 **Antes de cambiar código:**
 
 - [ ] Ejecutar `pnpm typecheck` para verificar estado actual
-- [ ] Construir paquetes compartidos si hay cambios en tipos (`pnpm -F @cactus/ui build`)
+- [ ] Construir paquetes compartidos si hay cambios en tipos (`pnpm -F @maatwork/ui build`)
 - [ ] Verificar tipos de componentes UI antes de usar
 - [ ] Sin tipos `any` sin justificación
 - [ ] Sin dependencias nuevas sin justificación
@@ -690,35 +690,41 @@ cat CHANGELOG.md
 
 ## Scripts de Auditoría
 
-### Auditoría Completa
+### Auditoría Unificada (Recomendado)
 
-Ejecutar todas las auditorías:
+Ejecutar el sistema de auditoría optimizado para verificar la salud del código:
 
 ```bash
-pnpm audit:all
+pnpm audit:code
 ```
 
-Esto ejecuta:
-- `pnpm audit` - Verifica vulnerabilidades de seguridad
-- `pnpm audit:deps` - Detecta dependencias no usadas
+Este comando realiza una auditoría completa que incluye:
+- **Knip**: Detecta archivos no usados, exportaciones huérfanas y dependencias no utilizadas en todo el monorepo.
+- **Any Audit**: Escaneo de uso de tipos `any` para control de deuda técnica.
+- **Barrel Audit**: Detección de `export *` que impactan negativamente el performance de build y bundle size.
+- **Cleanliness Score**: Proporciona una puntuación de 0 a 100 sobre la limpieza del código.
+
+### Comandos de Reparación
+
+```bash
+pnpm audit:fix
+```
+Intenta corregir automáticamente problemas de Knip (elimina exportaciones no usadas y dependencias huérfanas).
 
 ### Auditorías Específicas
 
 ```bash
-# Verificar uso de `any`
+# Verificar solo uso de `any`
 pnpm audit:types
 
-# Verificar barrel exports
+# Verificar solo barrel exports
 pnpm audit:barrels
-
-# Verificar dependencias no usadas
-pnpm audit:deps
 ```
 
 **Cuándo ejecutar:**
-- Antes de cada release
-- Semanalmente durante desarrollo
-- Después de refactorizaciones grandes
+- Antes de cada commit (el pre-commit ejecuta una versión rápida).
+- Antes de cada release para asegurar un despliegue limpio.
+- Después de refactorizaciones grandes.
 
 ---
 
@@ -757,8 +763,8 @@ pnpm lint             # Ejecutar lint
 
 ```bash
 pnpm build            # Build completo
-pnpm -F @cactus/ui build    # Build solo UI
-pnpm -F @cactus/db build    # Build solo DB
+pnpm -F @maatwork/ui build    # Build solo UI
+pnpm -F @maatwork/db build    # Build solo DB
 ```
 
 ### Tests
@@ -772,9 +778,9 @@ pnpm test:e2e         # E2E tests (Playwright)
 ### Base de Datos
 
 ```bash
-pnpm -F @cactus/db generate    # Generar migración
-pnpm -F @cactus/db migrate     # Aplicar migraciones
-pnpm -F @cactus/db seed:all    # Seed completo
+pnpm -F @maatwork/db generate    # Generar migración
+pnpm -F @maatwork/db migrate     # Aplicar migraciones
+pnpm -F @maatwork/db seed:all    # Seed completo
 ```
 
 **⚠️ Importante:** Nunca usar `drizzle-kit push` en producción (es destructivo)

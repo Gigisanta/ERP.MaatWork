@@ -4,7 +4,7 @@
  * POST /users/change-password - Change current user password
  */
 import type { Request } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
@@ -64,3 +64,11 @@ export const handleChangePassword = createRouteHandler(async (req: Request) => {
     message: 'Contraseña actualizada exitosamente',
   };
 });
+
+
+
+
+
+
+
+

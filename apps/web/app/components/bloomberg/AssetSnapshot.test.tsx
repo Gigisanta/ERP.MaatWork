@@ -9,33 +9,40 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import AssetSnapshot from './AssetSnapshot';
-import { getAssetSnapshot } from '@/lib/api';
 
 // Mock dependencies
-vi.mock('@/lib/api', () => ({
-  getAssetSnapshot: vi.fn(),
-}));
+// Note: Component uses global fetch directly to avoid webpack resolution issues
+global.fetch = vi.fn();
+const mockFetch = vi.mocked(global.fetch);
 
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className }: any) => (
+interface MockComponentProps {
+  children?: React.ReactNode;
+  className?: string;
+  [key: string]: unknown;
+}
+
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children, className }: MockComponentProps) => (
     <div data-testid="card" className={className}>
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
-  Text: ({ children, size, weight, color, className, style }: any) => (
-    <span className={className} style={style}>
+  CardContent: ({ children, className }: MockComponentProps) => <div className={className}>{children}</div>,
+  CardHeader: ({ children }: MockComponentProps) => <div>{children}</div>,
+  CardTitle: ({ children }: MockComponentProps) => <h3>{children}</h3>,
+  Text: ({ children, className, style }: MockComponentProps) => (
+    <span className={className} style={style as React.CSSProperties}>
       {children}
     </span>
   ),
-  Heading: ({ children, level }: any) => <h2>{children}</h2>,
-  Stack: ({ children, direction, gap, align, style }: any) => <div style={style}>{children}</div>,
-  Badge: ({ children, variant }: any) => <span>{children}</span>,
-  Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  Alert: ({ children, variant }: any) => <div role="alert">{children}</div>,
-  Button: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+  Heading: ({ children }: MockComponentProps) => <h2>{children}</h2>,
+  Stack: ({ children, style }: MockComponentProps) => <div style={style as React.CSSProperties}>{children}</div>,
+  Badge: ({ children }: MockComponentProps) => <span>{children}</span>,
+  Spinner: () => <div data-testid="spinner">Loading...</div>,
+  Alert: ({ children }: MockComponentProps) => <div role="alert">{children}</div>,
+  Button: ({ children, onClick }: MockComponentProps) => (
+    <button onClick={onClick as React.MouseEventHandler}>{children}</button>
+  ),
 }));
 
 describe('AssetSnapshot', () => {
@@ -44,7 +51,7 @@ describe('AssetSnapshot', () => {
   });
 
   it('debería mostrar loading inicialmente', () => {
-    (getAssetSnapshot as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => {}));
+    mockFetch.mockImplementation(() => new Promise(() => {}));
 
     render(<AssetSnapshot symbol="AAPL" />);
 
@@ -66,10 +73,11 @@ describe('AssetSnapshot', () => {
       asof: '2024-01-15T10:00:00Z',
     };
 
-    (getAssetSnapshot as ReturnType<typeof vi.fn>).mockResolvedValue({
-      success: true,
-      data: mockSnapshot,
-    });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: new Headers(),
+      json: async () => mockSnapshot,
+    } as Response);
 
     render(<AssetSnapshot symbol="AAPL" />);
 
@@ -81,19 +89,20 @@ describe('AssetSnapshot', () => {
   });
 
   it('debería mostrar error cuando falla el fetch', async () => {
-    (getAssetSnapshot as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
+    mockFetch.mockRejectedValue(new Error('Network error'));
 
     render(<AssetSnapshot symbol="AAPL" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText(/Data not available/i)).toBeInTheDocument();
     });
   });
 
-  it('debería llamar getAssetSnapshot con el symbol correcto', async () => {
-    (getAssetSnapshot as ReturnType<typeof vi.fn>).mockResolvedValue({
-      success: true,
-      data: {
+  it('debería llamar fetch con la URL correcta', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: new Headers(),
+      json: async () => ({
         symbol: 'MSFT',
         price: 350.0,
         change: 5.0,
@@ -104,18 +113,21 @@ describe('AssetSnapshot', () => {
         currency: 'USD',
         source: 'Bloomberg',
         asof: '2024-01-15T10:00:00Z',
-      },
-    });
+      }),
+    } as Response);
 
     render(<AssetSnapshot symbol="MSFT" />);
 
     await waitFor(() => {
-      expect(getAssetSnapshot).toHaveBeenCalledWith('MSFT');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/bloomberg/assets/MSFT/snapshot'),
+        expect.any(Object)
+      );
     });
   });
 
   it('debería aplicar className cuando se proporciona', () => {
-    (getAssetSnapshot as ReturnType<typeof vi.fn>).mockImplementation(() => new Promise(() => {}));
+    mockFetch.mockImplementation(() => new Promise(() => {}));
 
     const { container } = render(<AssetSnapshot symbol="AAPL" className="custom-class" />);
 

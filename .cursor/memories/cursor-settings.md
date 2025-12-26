@@ -1,7 +1,7 @@
-# Memoria: Configuración de Cursor para Proyecto CACTUS
+# Memoria: Configuración de Cursor para Proyecto MAATWORK
 
 ## Propósito
-Configuración recomendada de Cursor IDE y VS Code para optimizar el desarrollo en el monorepo CACTUS CRM con TypeScript strict mode y pnpm workspaces.
+Configuración recomendada de Cursor IDE y VS Code para optimizar el desarrollo en el monorepo MAATWORK con TypeScript strict mode y pnpm workspaces.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -118,7 +118,7 @@ Set-PSReadLineOption -PredictionSource None
 }
 ```
 
-## Configuración del Proyecto CACTUS
+## Configuración del Proyecto MAATWORK
 
 ### package.json Scripts Optimizados
 

@@ -8,12 +8,12 @@
  * GET /teams/:id/advisors - List eligible advisors
  */
 import type { Request, Response } from 'express';
-import { db, teams, teamMembership, users, teamMembershipRequests } from '@cactus/db';
+import { db, teams, teamMembership, users, teamMembershipRequests } from '@maatwork/db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';
 import { validateUuidParam } from '../../../utils/validation/common-schemas';
-import type { PendingInvite } from '../../../types/teams';
+import type { PendingInvite } from '@maatwork/types';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 
 /**

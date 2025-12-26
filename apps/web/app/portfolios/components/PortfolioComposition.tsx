@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Card, CardContent, Button, Text, Stack, Badge } from '@cactus/ui';
+import { Card, CardContent, Button, Text, Stack, Badge } from '@maatwork/ui';
 // AI_DECISION: Import AssetSearcher statically to avoid webpack module resolution issues
 // Justificación: Dynamic import causes "Cannot read properties of undefined (reading 'call')" in webpack
 // Impacto: Fixes development crash, consistent with BenchmarksSection.tsx

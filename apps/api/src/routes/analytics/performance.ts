@@ -5,8 +5,8 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db } from '@cactus/db';
-import { portfolioTemplates, portfolioTemplateLines, instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { portfolioTemplates, portfolioTemplateLines, instruments } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { TIMEOUTS } from '../../config/timeouts';
@@ -193,7 +193,7 @@ router.get(
             errorType,
             pythonServiceUrl: PYTHON_SERVICE_URL,
             hint: isConnectionError
-              ? 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
+              ? 'Analytics service may not be running. Start it with: pnpm -F @maatwork/analytics-service dev'
               : 'Check analytics service logs for details',
           },
           `Python analytics service unavailable (${errorType}), returning empty performance`

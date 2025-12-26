@@ -254,7 +254,7 @@ locals {
     #!/bin/bash
     set -e
 
-    echo "🚀 Starting Cactus server setup..."
+    echo "🚀 Starting MaatWork server setup..."
 
     # Update system
     dnf update -y

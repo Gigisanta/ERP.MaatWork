@@ -9,9 +9,9 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Modal, ModalHeader, ModalTitle, ModalContent, Text, Icon, Badge } from '@cactus/ui';
+import { Modal, ModalHeader, ModalTitle, ModalContent, Text, Icon } from '@maatwork/ui';
 
-export interface KeyboardShortcut {
+interface KeyboardShortcut {
   /** Keys to press (e.g., ['Cmd', 'K']) */
   keys: string[];
   /** Description of what the shortcut does */
@@ -22,7 +22,7 @@ export interface KeyboardShortcut {
   available?: boolean;
 }
 
-export interface KeyboardShortcutsModalProps {
+interface KeyboardShortcutsModalProps {
   /** Whether the modal is open */
   open: boolean;
   /** Callback when modal state changes */
@@ -211,7 +211,7 @@ export default function KeyboardShortcutsModal({
  * }
  * ```
  */
-export function useKeyboardShortcutsModal() {
+function useKeyboardShortcutsModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   const open = useCallback(() => setIsOpen(true), []);
@@ -246,7 +246,7 @@ export function useKeyboardShortcutsModal() {
 /**
  * Provider component that adds global keyboard shortcut modal
  */
-export function KeyboardShortcutsProvider({ children }: { children: React.ReactNode }) {
+function KeyboardShortcutsProvider({ children }: { children: React.ReactNode }) {
   const { isOpen, close } = useKeyboardShortcutsModal();
 
   return (

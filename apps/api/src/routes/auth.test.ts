@@ -8,14 +8,14 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, users, teamMembershipRequests } from '@cactus/db';
+import { db, users, teamMembershipRequests } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { signUserToken } from '../auth/jwt';
 import { requireAuth } from '../auth/middlewares';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   users: { id: 'users.id', email: 'users.email', usernameNormalized: 'users.usernameNormalized' },
   teamMembershipRequests: {},

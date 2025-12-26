@@ -20,7 +20,7 @@ import {
   Text,
   Stack,
   Badge,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getYieldCurve, getYieldSpreads } from '@/lib/api/bloomberg';
 import type { YieldCurve } from '@/lib/api/bloomberg';
 import {
@@ -76,8 +76,9 @@ export default function YieldCurveChart({
             // If data is array, we need to convert it
             setError('Yield curve data format not supported');
           }
-        } else if (spreadsResponse.success && spreadsResponse.data) {
-          // If curve failed but spreads succeeded, we can still show spreads
+        }
+
+        if (spreadsResponse.success && spreadsResponse.data) {
           setSpreads(spreadsResponse.data.spreads);
         }
 

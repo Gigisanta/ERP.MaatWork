@@ -1,4 +1,4 @@
-# Checklist de Calidad - CACTUS CRM
+# Checklist de Calidad - MAATWORK
 
 ## Propósito
 Checklist completo para asegurar calidad de código antes de commits y deploys.
@@ -29,7 +29,7 @@ Checklist completo para asegurar calidad de código antes de commits y deploys.
 - [ ] Tipos Request/Response consistentes con backend
 
 #### Cambios en Base de Datos (`packages/db/`)
-- [ ] Migraciones generadas con `pnpm -F @cactus/db generate`
+- [ ] Migraciones generadas con `pnpm -F @maatwork/db generate`
 - [ ] NO usar `drizzle-kit push` (destructivo)
 - [ ] Migraciones aplicadas localmente antes de commit
 - [ ] Schema cambios documentados si son breaking
@@ -38,7 +38,7 @@ Checklist completo para asegurar calidad de código antes de commits y deploys.
 - [ ] Exports específicos (no `export *`)
 - [ ] Tipos exportados explícitamente
 - [ ] Tests co-ubicados pasan
-- [ ] Build exitoso: `pnpm -F @cactus/ui build`
+- [ ] Build exitoso: `pnpm -F @maatwork/ui build`
 
 ## Verificaciones Pre-Deploy
 
@@ -164,6 +164,14 @@ pnpm audit:unused-exports
 - [Guía de desarrollo](../../docs/DEVELOPMENT.md)
 - [Arquitectura](../../docs/ARCHITECTURE.md)
 - [Flujos de trabajo comunes](./common-workflows.md)
+
+
+
+
+
+
+
+
 
 
 

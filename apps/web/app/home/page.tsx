@@ -17,7 +17,7 @@ import {
   getTeamsServer,
 } from '@/lib/api-server-helpers';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
-import { Card, CardContent, Spinner, Stack, Text, Alert } from '@cactus/ui';
+import { Card, CardContent, Spinner, Stack, Text, Alert } from '@maatwork/ui';
 
 // AI_DECISION: Force dynamic rendering for home page
 // Justificación: Page requires authentication, can't be pre-rendered at build time
@@ -193,8 +193,6 @@ export default async function HomePage() {
         metricsData={metricsData}
         goalsData={goalsData}
         metricsError={metricsError}
-        teamCalendarUrl={teamCalendarUrl}
-        teamId={teamId}
       />
     </Suspense>
   );

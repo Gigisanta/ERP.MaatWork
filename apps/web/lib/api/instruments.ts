@@ -43,8 +43,8 @@ export async function getInstruments(params?: {
   if (params?.search) queryParams.append('search', params.search);
   if (params?.assetClass) queryParams.append('assetClass', params.assetClass);
   if (params?.active !== undefined) queryParams.append('active', String(params.active));
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.limit !== undefined) queryParams.append('limit', String(params.limit));
+  if (params?.offset !== undefined) queryParams.append('offset', String(params.offset));
 
   const endpoint = `/v1/instruments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   return apiClient.get<{ instruments: Instrument[]; total: number }>(endpoint);

@@ -1,24 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { onContactAliasesChanged } from './sync-manager';
-import { db, contactAliases, contacts } from '@cactus/db';
+import { db, contactAliases, contacts } from '@maatwork/db';
 
 // Mocks
 const { mockDb } = vi.hoisted(() => ({
   mockDb: vi.fn(),
 }));
 
-const createMockQueryBuilder = (result: any) => {
-  const builder: any = {
+const createMockQueryBuilder = (result: unknown) => {
+  const builder = {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
-    then: (resolve: any) => resolve(result),
+    then: (resolve: (value: unknown) => void) => resolve(result),
   };
-  return builder;
+  return builder as unknown as ReturnType<typeof db>;
 };
 
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: mockDb,
   contactAliases: {
     contactId: 'contact_aliases.contact_id',
@@ -34,7 +34,7 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
-vi.mock('./aum-matcher', () => ({
+vi.mock('./aum/matcher', () => ({
   reprocessUnmatchedRowsForContact: vi.fn(),
 }));
 
@@ -42,7 +42,7 @@ vi.mock('./contact-matcher', () => ({
   updateSingleContactMeetingStatus: vi.fn(),
 }));
 
-import { reprocessUnmatchedRowsForContact } from './aum-matcher';
+import { reprocessUnmatchedRowsForContact } from '@/services/aum/matcher';
 import { updateSingleContactMeetingStatus } from './contact-matcher';
 
 describe('SyncManager', () => {
@@ -91,8 +91,8 @@ describe('SyncManager', () => {
         select: vi.fn().mockReturnThis(),
         from: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
-        then: (_resolve: any, reject: any) => reject(new Error('DB Error')),
-      });
+        then: (_resolve: (value: unknown) => void, reject: (reason: Error) => void) => reject(new Error('DB Error')),
+      } as unknown as ReturnType<typeof db>);
 
       await expect(onContactAliasesChanged('contact-123')).resolves.not.toThrow();
     });

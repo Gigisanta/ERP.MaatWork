@@ -6,7 +6,7 @@
  * Impacto: Mantiene la integridad de asignaciones manuales de asesores
  */
 
-import { db, aumImportRows } from '@cactus/db';
+import { db, aumImportRows } from '@maatwork/db';
 import { eq, sql, type SQL } from 'drizzle-orm';
 import { logger } from '../../utils/logger';
 import type { AumRowInsert, ExistingRow } from './types';

@@ -2,10 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import PortfolioAssetsSnapshot from './PortfolioAssetsSnapshot';
 import { usePortfolioAssets } from '@/lib/hooks/usePortfolioAssets';
+import { useAssetSnapshots } from '@/lib/hooks/useAssetSnapshots';
 import { useRouter } from 'next/navigation';
 
 vi.mock('@/lib/hooks/usePortfolioAssets', () => ({
   usePortfolioAssets: vi.fn(),
+}));
+
+vi.mock('@/lib/hooks/useAssetSnapshots', () => ({
+  useAssetSnapshots: vi.fn(() => ({ snapshots: [], isLoading: false, error: null })),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -73,7 +78,8 @@ describe('PortfolioAssetsSnapshot', () => {
     render(<PortfolioAssetsSnapshot portfolios={[{ id: 'p1' }] as any} maxAssets={10} />);
 
     expect(screen.getByText(/15 activos únicos/i)).toBeInTheDocument();
-    expect(screen.getByText(/mostrando 10/i)).toBeInTheDocument();
+    // Use getAllByText because it appears in both header and footer
+    expect(screen.getAllByText(/mostrando 10/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('debería mostrar contador correcto para singular', () => {

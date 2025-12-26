@@ -4,15 +4,16 @@
  * Provides utilities to create and manage Express server instances for testing
  */
 
-import express, { type Express, type Request, type Response, type NextFunction } from 'express';
+import express, { type Express, type Request, type Response, type NextFunction, type Router } from 'express';
+import cookieParser from 'cookie-parser';
 import type { Server } from 'http';
 import { vi } from 'vitest';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { initializeDatabase } from '../../db-init';
 
 // Re-export common test utilities
-export * from './test-mocks';
-export * from './test-setup';
+;
+;
 
 let testServer: Server | null = null;
 let testApp: Express | null = null;
@@ -27,17 +28,31 @@ export function createTestApp(): Express;
  * Create a test Express app with custom routes
  * @param routes Array of route configurations to add to the app
  */
-export function createTestApp(routes: Array<{ path: string; router: any }>): Express;
+export function createTestApp(routes: Array<{ path: string; router: Router }>): Express;
 
 /**
  * Create a test Express app with optional custom routes
  */
-export function createTestApp(routes?: Array<{ path: string; router: any }>): Express {
+export function createTestApp(routes?: Array<{ path: string; router: Router }>): Express {
   const app = express();
 
   // Basic middleware
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    // Extend Request with log and requestId
+    Object.assign(req, {
+      log: {
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+      },
+      requestId: 'test-request-id',
+    });
+    next();
+  });
 
   // Health check endpoint
   app.get('/health', (_req: Request, res: Response) => {
@@ -82,7 +97,7 @@ export async function cleanupTestServer(): Promise<void> {
 /**
  * Start test server on a random port
  */
-export async function startTestServer(app: Express, port?: number): Promise<Server> {
+async function startTestServer(app: Express, port?: number): Promise<Server> {
   return new Promise((resolve, reject) => {
     const serverPort = port || 0; // 0 = random available port
 
@@ -99,7 +114,7 @@ export async function startTestServer(app: Express, port?: number): Promise<Serv
 /**
  * Stop test server
  */
-export async function stopTestServer(): Promise<void> {
+async function stopTestServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!testServer) {
       resolve();
@@ -121,7 +136,7 @@ export async function stopTestServer(): Promise<void> {
 /**
  * Get test server port
  */
-export function getTestServerPort(): number | null {
+function getTestServerPort(): number | null {
   if (!testServer) {
     return null;
   }
@@ -137,7 +152,7 @@ export function getTestServerPort(): number | null {
 /**
  * Get test server URL
  */
-export function getTestServerUrl(): string | null {
+function getTestServerUrl(): string | null {
   const port = getTestServerPort();
   if (port === null) {
     return null;
@@ -149,7 +164,7 @@ export function getTestServerUrl(): string | null {
 /**
  * Create authenticated request helper
  */
-export function createAuthenticatedRequest(user: {
+function createAuthenticatedRequest(user: {
   id: string;
   email: string;
   role: 'admin' | 'manager' | 'advisor';
@@ -170,7 +185,7 @@ export function createAuthenticatedRequest(user: {
 /**
  * Mock Express request for testing
  */
-export function createMockRequest(overrides?: Partial<Request>): Partial<Request> {
+function createMockRequest(overrides?: Partial<Request>): Partial<Request> {
   return {
     params: {},
     query: {},
@@ -191,7 +206,7 @@ export function createMockRequest(overrides?: Partial<Request>): Partial<Request
 /**
  * Mock Express response for testing
  */
-export function createMockResponse(): Partial<Response> {
+function createMockResponse(): Partial<Response> {
   const res = {
     status: vi.fn().mockReturnThis(),
     json: vi.fn().mockReturnThis(),
@@ -209,6 +224,6 @@ export function createMockResponse(): Partial<Response> {
 /**
  * Mock Express next function for testing
  */
-export function createMockNext(): NextFunction {
+function createMockNext(): NextFunction {
   return vi.fn() as unknown as NextFunction;
 }

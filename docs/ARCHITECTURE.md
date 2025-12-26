@@ -1,4 +1,4 @@
-# CACTUS Monorepo — Arquitectura y Decisiones
+# MAATWORK Monorepo — Arquitectura y Decisiones
 
 ## Estructura general
 - **Monorepo:** `pnpm workspaces` + `turborepo`
@@ -241,8 +241,8 @@ POST   /analytics/compare                 # Comparar portfolios
 ## DB (Drizzle)
 - **Schema:** `packages/db/src/schema.ts` (definiciones de tablas)
 - **Migraciones:** `packages/db/migrations` es la fuente de verdad
-- **Flujo:** Modificar schema → `pnpm -F @cactus/db generate` → `pnpm -F @cactus/db migrate`
-- **Seeds:** Idempotentes; `pnpm -F @cactus/db seed:all` compone seeds esenciales
+- **Flujo:** Modificar schema → `pnpm -F @maatwork/db generate` → `pnpm -F @maatwork/db migrate`
+- **Seeds:** Idempotentes; `pnpm -F @maatwork/db seed:all` compone seeds esenciales
 - **Prohibido:** Usar `drizzle-kit push` en CI/producción (es destructivo)
 
 ## Analytics (Python)
@@ -429,7 +429,7 @@ lib/hooks/
 - ✅ Prefijo `use` obligatorio
 - ✅ Tests co-ubicados (`useHook.test.ts`)
 
-## UI (@cactus/ui)
+## UI (@maatwork/ui)
 
 **Estructura:**
 - **Componentes:** Organizados por categoría (`forms/`, `feedback/`, `nav/`)

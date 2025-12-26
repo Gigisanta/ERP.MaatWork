@@ -1,6 +1,6 @@
 'use client';
 import React, { memo } from 'react';
-import { Button, Badge, Heading, Text } from '@cactus/ui';
+import { Button, Badge, Heading, Text } from '@maatwork/ui';
 import type { PortfolioAssignment } from '@/types';
 
 interface PortfolioAssignmentItemProps {

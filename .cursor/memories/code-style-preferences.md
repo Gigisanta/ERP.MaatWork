@@ -1,7 +1,7 @@
 # Memoria: Preferencias de Código y Estilo
 
 ## Propósito
-Convenciones de código y estilo específicas del proyecto CACTUS CRM para mantener consistencia y legibilidad.
+Convenciones de código y estilo específicas del proyecto MAATWORK para mantener consistencia y legibilidad.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -161,7 +161,7 @@ const name = user.name;
 
 ### Orden de Imports
 1. Imports de librerías externas
-2. Imports de paquetes internos (`@cactus/*`)
+2. Imports de paquetes internos (`@maatwork/*`)
 3. Imports relativos del proyecto
 4. Imports de tipos (con `type`)
 
@@ -171,8 +171,8 @@ import { useState } from 'react';
 import { z } from 'zod';
 
 // 2. Paquetes internos
-import { db } from '@cactus/db';
-import { Button } from '@cactus/ui';
+import { db } from '@maatwork/db';
+import { Button } from '@maatwork/ui';
 
 // 3. Imports relativos
 import { apiClient } from '@/lib/api';
@@ -188,10 +188,10 @@ import type { ComponentProps } from 'react';
 
 ```typescript
 // ✅ BIEN - Import específico
-import { Button, Text } from '@cactus/ui';
+import { Button, Text } from '@maatwork/ui';
 
 // ⚠️ Evitar - Namespace import (solo si necesario)
-import * as UI from '@cactus/ui';
+import * as UI from '@maatwork/ui';
 ```
 
 ## Preferencias de Formato

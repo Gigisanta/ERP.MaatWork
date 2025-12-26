@@ -22,13 +22,15 @@ import {
 export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
+  description: text('description'),
   managerUserId: uuid('manager_user_id'),
   calendarUrl: text('calendar_url'), // URL de embed (existente, para compatibilidad)
   calendarId: text('calendar_id'), // Google Calendar ID (nuevo, para API integration)
   meetingRoomCalendarId: text('meeting_room_calendar_id'), // Calendario secundario (Sala de reuniones)
   calendarConnectedAt: timestamp('calendar_connected_at', { withTimezone: true }), // Cuándo se conectó
   calendarConnectedByUserId: uuid('calendar_connected_by_user_id').references(() => users.id), // Manager que conectó
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 });
 
 /**
@@ -82,7 +84,8 @@ export const teamMembership = pgTable(
     teamId: uuid('team_id').notNull().references(() => teams.id),
     userId: uuid('user_id').notNull().references(() => users.id),
     role: text('role').notNull(), // member, lead
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
   },
   (table) => ({
     teamUserUnique: uniqueIndex('team_membership_unique').on(table.teamId, table.userId)
@@ -101,6 +104,7 @@ export const teamMembershipRequests = pgTable(
     managerId: uuid('manager_id').notNull().references(() => users.id),
     status: text('status').notNull().default('pending'), // pending, approved, rejected
     createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
     resolvedAt: timestamp('resolved_at'),
     resolvedByUserId: uuid('resolved_by_user_id').references(() => users.id)
   },

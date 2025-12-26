@@ -8,8 +8,8 @@
 
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '@cactus/db';
-import { benchmarkDefinitions, benchmarkComponents, instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { benchmarkDefinitions, benchmarkComponents, instruments } from '@maatwork/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   benchmarksCacheUtil,

@@ -4,7 +4,7 @@
  * GET /capacitaciones - List capacitaciones with filters and pagination
  */
 import type { Request } from 'express';
-import { db, capacitaciones } from '@cactus/db';
+import { db, capacitaciones } from '@maatwork/db';
 import { eq, and, ilike, desc, sql } from 'drizzle-orm';
 import { createRouteHandler } from '../../../utils/route-handler';
 import { parsePaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
@@ -57,3 +57,11 @@ export const handleListCapacitaciones = createRouteHandler(async (req: Request) 
 
   return formatPaginatedResponse(data, total, pagination);
 });
+
+
+
+
+
+
+
+

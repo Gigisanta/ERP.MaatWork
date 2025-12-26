@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request } from 'express';
-import { db, contacts, contactFieldHistory } from '@cactus/db';
+import { db, contacts, contactFieldHistory } from '@maatwork/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';

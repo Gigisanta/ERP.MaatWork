@@ -8,8 +8,9 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Button, Text, Icon } from '@cactus/ui';
+import { Button, Text, Icon } from '@maatwork/ui';
 import { updateContactInteraction } from '@/lib/api/contacts';
+import { logger, toLogContextValue } from '@/lib/logger';
 import type { Contact } from '@/types';
 
 interface InteractionCounterProps {
@@ -18,7 +19,10 @@ interface InteractionCounterProps {
   onError?: (error: Error) => void;
 }
 
-export default function InteractionCounter({
+// AI_DECISION: Wrap InteractionCounter in React.memo to prevent unnecessary re-renders in large lists
+// Justificación: In large contact lists, re-rendering every interaction counter on any state change is expensive.
+// Impacto: Better scroll and interaction performance in the contacts table.
+export default React.memo(function InteractionCounter({
   contact,
   onUpdate,
   onError,
@@ -42,7 +46,7 @@ export default function InteractionCounter({
       }
 
       if (!contact.pipelineStageId) {
-        console.warn('InteractionCounter: Missing stageId');
+        logger.warn('InteractionCounter: Missing stageId');
         return;
       }
 
@@ -64,7 +68,7 @@ export default function InteractionCounter({
       setOptimisticCount(newCount);
       setIsUpdating(true);
 
-      console.log('InteractionCounter: Optimistic update', {
+      logger.debug('InteractionCounter: Optimistic update', {
         action,
         newCount,
         contactId: contact.id,
@@ -82,7 +86,9 @@ export default function InteractionCounter({
           throw new Error(response.error || 'Error al actualizar interacción');
         }
 
-        console.log('InteractionCounter: Update successful', response.data);
+        logger.debug('InteractionCounter: Update successful', {
+          data: toLogContextValue(response.data),
+        });
 
         // 3. Sync with server response if needed, but onUpdate will trigger re-fetch
         // response.data.interactionCount should match newCount if no one else touched it
@@ -93,7 +99,10 @@ export default function InteractionCounter({
         // Call onUpdate to refresh the contact list (background revalidation)
         onUpdate?.();
       } catch (error) {
-        console.error('InteractionCounter: Error updating interaction', error);
+        logger.error('InteractionCounter: Error updating interaction', {
+          error: toLogContextValue(error),
+          contactId: contact.id,
+        });
 
         // 4. Rollback on Error
         setOptimisticCount(previousCount);
@@ -147,4 +156,4 @@ export default function InteractionCounter({
       </button>
     </div>
   );
-}
+});

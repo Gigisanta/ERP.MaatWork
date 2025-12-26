@@ -11,12 +11,27 @@ import {
   Stack,
   Badge,
   Spinner,
-} from '@cactus/ui';
-import type { CalendarEvent, WeekDay, TimeSlot, CreateEventRequest } from '@/types/calendar';
+  cn,
+} from '@maatwork/ui';
+import type { CalendarEvent, CreateEventRequest } from '@/types';
 import { EventDetailsModal } from './EventDetailsModal';
 import { CalendarEventForm } from './CalendarEventForm';
-import { ChevronLeft, ChevronRight, RefreshCw, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Plus, Clock, MapPin } from 'lucide-react';
 import { createEvent, updateEvent, deleteEvent } from '@/lib/api/calendar';
+import { logger, toLogContextValue } from '@/lib/logger';
+
+interface WeekDay {
+  date: Date;
+  dayName: string;
+  dayNumber: number;
+  isToday: boolean;
+  events: CalendarEvent[];
+}
+
+interface TimeSlot {
+  hour: number;
+  label: string;
+}
 
 /**
  * Weekly Calendar View
@@ -62,14 +77,14 @@ export function WeeklyCalendarView({
     return () => clearInterval(timer);
   }, []);
 
-  // Generate time slots (8:00 - 00:00)
+  // Generate time slots (8:00 - 22:00)
   const timeSlots: TimeSlot[] = useMemo(() => {
     const slots: TimeSlot[] = [];
-    // From 8 AM to 12 AM (24h)
-    for (let hour = 8; hour <= 24; hour++) {
+    // From 8 AM to 10 PM
+    for (let hour = 8; hour <= 22; hour++) {
       slots.push({
         hour,
-        label: hour === 24 ? '00:00' : `${hour.toString().padStart(2, '0')}:00`,
+        label: `${hour.toString().padStart(2, '0')}:00`,
       });
     }
     return slots;
@@ -228,7 +243,7 @@ export function WeeklyCalendarView({
       setIsFormOpen(false);
       onRefresh(); // Refresh calendar events
     } catch (error) {
-      console.error('Error saving event:', error);
+      logger.error('Error saving event', { error: toLogContextValue(error) });
       setFormError('Error al guardar el evento. Inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);
@@ -244,7 +259,7 @@ export function WeeklyCalendarView({
       setSelectedEvent(null);
       onRefresh();
     } catch (error) {
-      console.error('Error deleting event:', error);
+      logger.error('Error deleting event', { error: toLogContextValue(error) });
       // Toast functionality removed
     } finally {
       setIsDeleting(false);
@@ -258,56 +273,80 @@ export function WeeklyCalendarView({
   const timeIndicatorRow = currentHour - 8 + 2;
   const timeIndicatorOffset = (currentMinutes / 60) * 100;
 
+  // AI_DECISION: Encontrar el índice del día de hoy para mostrar la línea de tiempo solo ahí
+  const todayIndex = useMemo(() => {
+    return weekDays.findIndex(day => day.isToday);
+  }, [weekDays]);
+
   return (
     <>
       {hideHeader ? (
         <CardContent className="p-0 sm:p-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Spinner size="md" />
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <Spinner size="lg" />
+              <Text color="secondary" className="animate-pulse font-medium">Sincronizando calendario...</Text>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               {/* Desktop view */}
               <div className="hidden md:block">
                 {/* Scrollable container with fixed height */}
                 <div
                   ref={scrollContainerRef}
-                  className="max-h-[400px] overflow-y-auto border border-border rounded-lg relative scroll-smooth"
+                  className="max-h-[480px] overflow-y-auto border border-border/60 rounded-xl relative scroll-smooth shadow-inner bg-surface/10"
                 >
-                  <div className="grid grid-cols-8 gap-px bg-border min-w-[800px] relative">
+                  <div className="grid grid-cols-8 gap-px bg-border/20 min-w-[900px] relative border-b border-border/20">
                     {/* Header row - Sticky */}
-                    <div className="sticky top-0 z-20 bg-background p-2 border-b border-border shadow-sm"></div>
+                    <div className="sticky top-0 left-0 z-40 bg-background/80 backdrop-blur-3xl p-4 border-b border-border/80 shadow-sm flex items-end justify-end">
+                       <Text size="xs" color="secondary" className="font-bold tracking-tighter opacity-50">GMT-3</Text>
+                    </div>
                     {weekDays.map((day) => (
                       <div
                         key={day.date.toISOString()}
-                        className={`sticky top-0 z-20 bg-background p-2 text-center border-b border-border shadow-sm ${day.isToday ? 'bg-primary/5' : ''}`}
+                        className={cn(
+                          "sticky top-0 z-30 bg-background/80 backdrop-blur-3xl p-4 text-center border-b border-border/80 shadow-sm transition-colors",
+                          day.isToday ? 'relative bg-primary/[0.03]' : ''
+                        )}
                       >
-                        <Text size="xs" color="secondary" className="uppercase">
+                        {day.isToday && (
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-full mx-8" />
+                        )}
+                        <Text size="xs" color="secondary" className={cn(
+                          "uppercase font-bold tracking-widest mb-1",
+                          day.isToday ? 'text-primary' : 'opacity-60'
+                        )}>
                           {day.dayName}
                         </Text>
-                        <Text weight="medium" className={day.isToday ? 'text-primary' : ''}>
-                          {day.dayNumber}
-                        </Text>
+                        <div className={cn(
+                          "inline-flex items-center justify-center w-9 h-9 rounded-full transition-all",
+                          day.isToday ? 'bg-primary text-primary-foreground shadow-primary' : 'text-text hover:bg-surface'
+                        )}>
+                          <Text weight="bold" size="lg">
+                            {day.dayNumber}
+                          </Text>
+                        </div>
                       </div>
                     ))}
 
-                    {/* Time Indicator Line */}
-                    {showTimeIndicator && (
+                    {/* Time Indicator Line - AI_DECISION: Solo mostrar en la columna de hoy */}
+                    {showTimeIndicator && todayIndex !== -1 && (
                       <div
-                        className="col-span-full pointer-events-none z-30"
+                        className="pointer-events-none z-30"
                         style={{
                           gridRow: timeIndicatorRow,
+                          gridColumn: todayIndex + 2, // 1 for time labels + today's index
                           height: '100%',
                           position: 'relative',
-                          marginTop: '-1px', // Align with grid lines
+                          marginTop: '-1px',
                         }}
                       >
                         <div
-                          className="absolute w-full border-t-2 border-error flex items-center"
+                          className="absolute w-full border-t-2 border-primary flex items-center"
                           style={{ top: `${timeIndicatorOffset}%` }}
                         >
-                          <div className="absolute -left-1 w-2 h-2 rounded-full bg-error" />
+                          <div className="absolute -left-1 w-2.5 h-2.5 rounded-full bg-primary shadow-glow ring-2 ring-background" />
+                          <div className="h-0.5 flex-1 bg-primary opacity-30" />
                         </div>
                       </div>
                     )}
@@ -316,68 +355,86 @@ export function WeeklyCalendarView({
                     {timeSlots.map((slot) => (
                       <React.Fragment key={slot.hour}>
                         <div
-                          className="bg-background p-2 text-right border-t border-border"
+                          className="bg-background/80 backdrop-blur-3xl p-3 text-right border-t border-r border-border/30 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]"
                           style={{
                             gridRow: slot.hour - 8 + 2,
-                            gridColumn: 1, // Explicitly place in first column
+                            gridColumn: 1,
                           }}
                         >
-                          <Text size="xs" color="secondary">
+                          <Text size="xs" color="secondary" weight="medium" className="opacity-70">
                             {slot.label}
                           </Text>
                         </div>
                         {weekDays.map((day, index) => (
                           <div
                             key={`${day.date.toISOString()}-${slot.hour}`}
-                            className={`bg-background p-1 border-t border-border min-h-[60px] relative group ${day.isToday ? 'bg-primary/5' : ''}`}
+                            className={cn(
+                              "bg-background/20 p-1 border-t border-l border-border/10 min-h-[70px] relative group transition-colors",
+                              day.isToday ? 'bg-primary/[0.01]' : ''
+                            )}
                             style={{
                               gridRow: slot.hour - 8 + 2,
-                              gridColumn: index + 2, // Explicitly place in day columns (2-8)
+                              gridColumn: index + 2,
                             }}
                             onClick={() => {
                               if (readOnly) return;
-                              // Create event on this slot
                               const slotDate = new Date(day.date);
                               slotDate.setHours(slot.hour, 0, 0, 0);
                               handleOpenCreateForm(slotDate);
                             }}
                           >
-                            {/* Hover effect for slot creation */}
                             {!readOnly && (
-                              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors cursor-pointer" />
+                              <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.04] transition-colors cursor-pointer flex items-center justify-center">
+                                <Plus className="w-5 h-5 text-primary opacity-0 group-hover:opacity-30 transition-opacity" />
+                              </div>
                             )}
 
                             {/* Render events for this time slot */}
-                            {day.events.map((event) => {
+                            {day.events.map((event: CalendarEvent) => {
                               const position = getEventPosition(event);
                               if (!position || position.gridRow !== slot.hour - 8 + 2) return null;
 
                               const duration = getEventDuration(event);
+                              const isPersonal = !event.id.startsWith('team_');
 
                               return (
                                 <button
                                   key={event.id}
                                   onClick={(e) => {
-                                    e.stopPropagation(); // Prevent slot click
-                                    if (readOnly) return; // Or show read-only details if preferred
+                                    e.stopPropagation();
                                     setSelectedEvent(event);
                                   }}
-                                  className={`absolute left-1 right-1 bg-primary/10 border-l-2 border-primary rounded px-2 py-1 text-left ${!readOnly ? 'hover:bg-primary/20 cursor-pointer' : 'cursor-default'} transition-colors z-10`}
+                                  className={cn(
+                                    "absolute left-1 right-1 rounded-lg px-2 py-1.5 text-left transition-all z-10 shadow-sm ring-1 ring-inset overflow-hidden group/event",
+                                    isPersonal 
+                                      ? "bg-primary/10 border-l-4 border-primary ring-primary/20 hover:bg-primary/15" 
+                                      : "bg-joy/10 border-l-4 border-joy ring-joy/20 hover:bg-joy/15",
+                                    readOnly ? "cursor-default" : "cursor-pointer hover:shadow-md hover:-translate-y-0.5"
+                                  )}
                                   style={{
                                     top: `${position.minuteOffset}%`,
-                                    height: `${duration * 60}px`,
+                                    height: `${duration * 70}px`,
+                                    minHeight: '24px'
                                   }}
                                 >
-                                  <Text size="xs" weight="medium" className="line-clamp-1">
-                                    {event.summary || 'Sin título'}
-                                  </Text>
-                                  <Text size="xs" color="secondary" className="line-clamp-1">
-                                    {event.start.dateTime &&
-                                      new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                  </Text>
+                                  <div className="flex flex-col h-full justify-start overflow-hidden">
+                                    <Text size="xs" weight="bold" className={cn(
+                                      "line-clamp-1 leading-tight mb-0.5",
+                                      isPersonal ? "text-primary" : "text-joy"
+                                    )}>
+                                      {event.summary || 'Sin título'}
+                                    </Text>
+                                    {duration >= 0.75 && (
+                                      <Text size="xs" color="secondary" className="line-clamp-1 opacity-80 flex items-center gap-1">
+                                        <Clock className="w-2.5 h-2.5" />
+                                        {event.start.dateTime &&
+                                          new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          })}
+                                      </Text>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -390,66 +447,105 @@ export function WeeklyCalendarView({
               </div>
 
               {/* Mobile view - List of events by day */}
-              <div className="md:hidden">
-                <Stack direction="column" gap="md">
-                  {weekDays.map((day) => (
-                    <div key={day.date.toISOString()}>
-                      <div
-                        className={`flex items-center gap-2 mb-2 ${day.isToday ? 'text-primary' : ''}`}
-                      >
-                        <Text weight="medium" className="capitalize">
-                          {day.dayName} {day.dayNumber}
-                        </Text>
-                        {day.isToday && (
-                          <Badge variant="primary" size="sm">
-                            Hoy
-                          </Badge>
-                        )}
+              <div className="md:hidden space-y-8 p-1">
+                {weekDays.map((day) => (
+                  <div key={day.date.toISOString()} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div
+                      className={`flex items-center justify-between mb-4 pb-2 border-b ${day.isToday ? 'border-primary' : 'border-border'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg",
+                          day.isToday ? "bg-primary text-white shadow-primary" : "bg-surface text-text"
+                        )}>
+                          {day.dayNumber}
+                        </div>
+                        <div className="flex flex-col">
+                          <Text weight="bold" className="capitalize text-sm tracking-wide">
+                            {day.dayName}
+                          </Text>
+                          <Text size="xs" color="secondary">
+                            {day.date.toLocaleDateString('es-ES', { month: 'long' })}
+                          </Text>
+                        </div>
                       </div>
+                      {day.isToday && (
+                        <Badge variant="primary" size="sm" className="rounded-full px-3">
+                          Hoy
+                        </Badge>
+                      )}
+                    </div>
+
+                    {!readOnly && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full mb-2 border border-dashed border-border text-muted"
+                        className="w-full mb-4 border border-dashed border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 rounded-xl py-6"
                         onClick={() => {
-                          if (readOnly) return;
                           const d = new Date(day.date);
-                          d.setHours(9, 0, 0, 0); // Default to 9am for mobile quick add
+                          d.setHours(9, 0, 0, 0);
                           handleOpenCreateForm(d);
                         }}
-                        disabled={readOnly}
                       >
-                        <Plus className="w-4 h-4 mr-2" /> Añadir evento
+                        <Plus className="w-4 h-4 mr-2" /> Nuevo evento
                       </Button>
-                      {day.events.length > 0 ? (
-                        <Stack direction="column" gap="xs">
-                          {day.events.map((event) => (
+                    )}
+
+                    {day.events.length > 0 ? (
+                      <Stack direction="column" gap="sm">
+                        {day.events.map((event: CalendarEvent) => {
+                          const isPersonal = !event.id.startsWith('team_');
+                          return (
                             <button
                               key={event.id}
-                              onClick={() => !readOnly && setSelectedEvent(event)}
-                              className={`w-full text-left p-3 border border-border rounded-lg ${!readOnly ? 'hover:bg-surface' : ''} transition-colors`}
+                              onClick={() => setSelectedEvent(event)}
+                              className={cn(
+                                "w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] flex items-center gap-4",
+                                isPersonal 
+                                  ? "bg-background border-border hover:border-primary/50 hover:shadow-sm" 
+                                  : "bg-background border-border hover:border-joy/50 hover:shadow-sm"
+                              )}
                             >
-                              <Text weight="medium" size="sm">
-                                {event.summary || 'Sin título'}
-                              </Text>
-                              <Text size="xs" color="secondary">
-                                {event.start.dateTime
-                                  ? new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  : 'Todo el día'}
-                              </Text>
+                              <div className={cn(
+                                "w-1.5 h-12 rounded-full shrink-0",
+                                isPersonal ? "bg-primary" : "bg-joy"
+                              )} />
+                              <div className="flex-1 min-w-0">
+                                <Text weight="bold" size="sm" className="truncate mb-1">
+                                  {event.summary || 'Sin título'}
+                                </Text>
+                                <div className="flex items-center gap-3">
+                                  <Text size="xs" color="secondary" className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {event.start.dateTime
+                                      ? new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })
+                                      : 'Todo el día'}
+                                  </Text>
+                                  {event.location && (
+                                    <Text size="xs" color="secondary" className="flex items-center gap-1 truncate max-w-[150px]">
+                                      <MapPin className="w-3 h-3" />
+                                      {event.location}
+                                    </Text>
+                                  )}
+                                </div>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-text-secondary opacity-30" />
                             </button>
-                          ))}
-                        </Stack>
-                      ) : (
-                        <Text size="sm" color="secondary">
-                          Sin eventos
+                          );
+                        })}
+                      </Stack>
+                    ) : (
+                      <div className="py-8 text-center bg-surface/20 rounded-xl border border-dashed border-border/50">
+                        <Text size="sm" color="secondary" className="italic opacity-50">
+                          No hay eventos para este día
                         </Text>
-                      )}
-                    </div>
-                  ))}
-                </Stack>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -458,7 +554,7 @@ export function WeeklyCalendarView({
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Mi Calendario</CardTitle>
+              <CardTitle>AGENDA_TEST_HEADER</CardTitle>
               <div className="flex items-center gap-2">
                 {!readOnly && (
                   <Button variant="outline" size="sm" onClick={() => handleOpenCreateForm()}>
@@ -481,59 +577,84 @@ export function WeeklyCalendarView({
                 <Button variant="ghost" size="sm" onClick={goToNextWeek} disabled={isLoading}>
                   <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isLoading}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRefresh}
+                  disabled={isLoading}
+                  aria-label="Actualizar"
+                >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner size="md" />
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <Spinner size="lg" />
+                <Text color="secondary" className="animate-pulse font-medium">Sincronizando calendario...</Text>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto custom-scrollbar">
                 {/* Desktop view */}
                 <div className="hidden md:block">
                   {/* Scrollable container with fixed height */}
                   <div
                     ref={scrollContainerRef}
-                    className="max-h-[400px] overflow-y-auto border border-border rounded-lg relative scroll-smooth"
+                    className="max-h-[480px] overflow-y-auto border border-border/60 rounded-xl relative scroll-smooth shadow-inner bg-surface/10"
                   >
-                    <div className="grid grid-cols-8 gap-px bg-border min-w-[800px] relative">
+                    <div className="grid grid-cols-8 gap-px bg-border/20 min-w-[900px] relative border-b border-border/20">
                       {/* Header row - Sticky */}
-                      <div className="sticky top-0 z-20 bg-background p-2 border-b border-border shadow-sm"></div>
+                      <div className="sticky top-0 left-0 z-40 bg-background/80 backdrop-blur-3xl p-4 border-b border-border/80 shadow-sm flex items-end justify-end">
+                         <Text size="xs" color="secondary" className="font-bold tracking-tighter opacity-50">GMT-3</Text>
+                      </div>
                       {weekDays.map((day) => (
                         <div
                           key={day.date.toISOString()}
-                          className={`sticky top-0 z-20 bg-background p-2 text-center border-b border-border shadow-sm ${day.isToday ? 'bg-primary/5' : ''}`}
+                          className={cn(
+                            "sticky top-0 z-30 bg-background/80 backdrop-blur-3xl p-4 text-center border-b border-border/80 shadow-sm transition-colors",
+                            day.isToday ? 'relative bg-primary/[0.03]' : ''
+                          )}
                         >
-                          <Text size="xs" color="secondary" className="uppercase">
+                          {day.isToday && (
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-full mx-8" />
+                          )}
+                          <Text size="xs" color="secondary" className={cn(
+                            "uppercase font-bold tracking-widest mb-1",
+                            day.isToday ? 'text-primary' : 'opacity-60'
+                          )}>
                             {day.dayName}
                           </Text>
-                          <Text weight="medium" className={day.isToday ? 'text-primary' : ''}>
-                            {day.dayNumber}
-                          </Text>
+                          <div className={cn(
+                            "inline-flex items-center justify-center w-9 h-9 rounded-full transition-all",
+                            day.isToday ? 'bg-primary text-primary-foreground shadow-primary' : 'text-text hover:bg-surface'
+                          )}>
+                            <Text weight="bold" size="lg">
+                              {day.dayNumber}
+                            </Text>
+                          </div>
                         </div>
                       ))}
 
-                      {/* Time Indicator Line */}
-                      {showTimeIndicator && (
+                      {/* Time Indicator Line - AI_DECISION: Solo mostrar en la columna de hoy */}
+                      {showTimeIndicator && todayIndex !== -1 && (
                         <div
-                          className="col-span-full pointer-events-none z-30"
+                          className="pointer-events-none z-30"
                           style={{
                             gridRow: timeIndicatorRow,
+                            gridColumn: todayIndex + 2, // 1 for time labels + today's index
                             height: '100%',
                             position: 'relative',
-                            marginTop: '-1px', // Align with grid lines
+                            marginTop: '-1px',
                           }}
                         >
                           <div
-                            className="absolute w-full border-t-2 border-error flex items-center"
+                            className="absolute w-full border-t-2 border-primary flex items-center"
                             style={{ top: `${timeIndicatorOffset}%` }}
                           >
-                            <div className="absolute -left-1 w-2 h-2 rounded-full bg-error" />
+                            <div className="absolute -left-1 w-2.5 h-2.5 rounded-full bg-primary shadow-glow ring-2 ring-background" />
+                            <div className="h-0.5 flex-1 bg-primary opacity-30" />
                           </div>
                         </div>
                       )}
@@ -542,69 +663,87 @@ export function WeeklyCalendarView({
                       {timeSlots.map((slot) => (
                         <React.Fragment key={slot.hour}>
                           <div
-                            className="bg-background p-2 text-right border-t border-border"
+                            className="bg-background/80 backdrop-blur-3xl p-3 text-right border-t border-r border-border/30 sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]"
                             style={{
                               gridRow: slot.hour - 8 + 2,
-                              gridColumn: 1, // Explicitly place in first column
+                              gridColumn: 1,
                             }}
                           >
-                            <Text size="xs" color="secondary">
+                            <Text size="xs" color="secondary" weight="medium" className="opacity-70">
                               {slot.label}
                             </Text>
                           </div>
                           {weekDays.map((day, index) => (
                             <div
                               key={`${day.date.toISOString()}-${slot.hour}`}
-                              className={`bg-background p-1 border-t border-border min-h-[60px] relative group ${day.isToday ? 'bg-primary/5' : ''}`}
+                              className={cn(
+                                "bg-background/20 p-1 border-t border-l border-border/10 min-h-[70px] relative group transition-colors",
+                                day.isToday ? 'bg-primary/[0.01]' : ''
+                              )}
                               style={{
                                 gridRow: slot.hour - 8 + 2,
-                                gridColumn: index + 2, // Explicitly place in day columns (2-8)
+                                gridColumn: index + 2,
                               }}
                               onClick={() => {
                                 if (readOnly) return;
-                                // Create event on this slot
                                 const slotDate = new Date(day.date);
                                 slotDate.setHours(slot.hour, 0, 0, 0);
                                 handleOpenCreateForm(slotDate);
                               }}
                             >
-                              {/* Hover effect for slot creation */}
                               {!readOnly && (
-                                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors cursor-pointer" />
+                                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/[0.04] transition-colors cursor-pointer flex items-center justify-center">
+                                  <Plus className="w-5 h-5 text-primary opacity-0 group-hover:opacity-30 transition-opacity" />
+                                </div>
                               )}
 
                               {/* Render events for this time slot */}
-                              {day.events.map((event) => {
+                              {day.events.map((event: CalendarEvent) => {
                                 const position = getEventPosition(event);
                                 if (!position || position.gridRow !== slot.hour - 8 + 2)
                                   return null;
 
                                 const duration = getEventDuration(event);
+                                const isPersonal = !event.id.startsWith('team_');
 
                                 return (
                                   <button
                                     key={event.id}
                                     onClick={(e) => {
-                                      e.stopPropagation(); // Prevent slot click
-                                      if (readOnly) return; // Or show read-only details if preferred
+                                      e.stopPropagation();
                                       setSelectedEvent(event);
                                     }}
-                                    className={`absolute left-1 right-1 bg-primary/10 border-l-2 border-primary rounded px-2 py-1 text-left ${!readOnly ? 'hover:bg-primary/20 cursor-pointer' : 'cursor-default'} transition-colors z-10`}
+                                    className={cn(
+                                      "absolute left-1 right-1 rounded-lg px-2 py-1.5 text-left transition-all z-10 shadow-sm ring-1 ring-inset overflow-hidden group/event",
+                                      isPersonal 
+                                        ? "bg-primary/10 border-l-4 border-primary ring-primary/20 hover:bg-primary/15" 
+                                        : "bg-joy/10 border-l-4 border-joy ring-joy/20 hover:bg-joy/15",
+                                      readOnly ? "cursor-default" : "cursor-pointer hover:shadow-md hover:-translate-y-0.5"
+                                    )}
                                     style={{
                                       top: `${position.minuteOffset}%`,
-                                      height: `${duration * 60}px`,
+                                      height: `${duration * 70}px`,
+                                      minHeight: '24px'
                                     }}
                                   >
-                                    <Text size="xs" weight="medium" className="line-clamp-1">
-                                      {event.summary || 'Sin título'}
-                                    </Text>
-                                    <Text size="xs" color="secondary" className="line-clamp-1">
-                                      {event.start.dateTime &&
-                                        new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
-                                          hour: '2-digit',
-                                          minute: '2-digit',
-                                        })}
-                                    </Text>
+                                    <div className="flex flex-col h-full justify-start overflow-hidden">
+                                      <Text size="xs" weight="bold" className={cn(
+                                        "line-clamp-1 leading-tight mb-0.5",
+                                        isPersonal ? "text-primary" : "text-joy"
+                                      )}>
+                                        {event.summary || 'Sin título'}
+                                      </Text>
+                                      {duration >= 0.75 && (
+                                        <Text size="xs" color="secondary" className="line-clamp-1 opacity-80 flex items-center gap-1">
+                                          <Clock className="w-2.5 h-2.5" />
+                                          {event.start.dateTime &&
+                                            new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
+                                              hour: '2-digit',
+                                              minute: '2-digit',
+                                            })}
+                                        </Text>
+                                      )}
+                                    </div>
                                   </button>
                                 );
                               })}
@@ -617,66 +756,105 @@ export function WeeklyCalendarView({
                 </div>
 
                 {/* Mobile view - List of events by day */}
-                <div className="md:hidden">
-                  <Stack direction="column" gap="md">
-                    {weekDays.map((day) => (
-                      <div key={day.date.toISOString()}>
-                        <div
-                          className={`flex items-center gap-2 mb-2 ${day.isToday ? 'text-primary' : ''}`}
-                        >
-                          <Text weight="medium" className="capitalize">
-                            {day.dayName} {day.dayNumber}
-                          </Text>
-                          {day.isToday && (
-                            <Badge variant="primary" size="sm">
-                              Hoy
-                            </Badge>
-                          )}
+                <div className="md:hidden space-y-8 p-1">
+                  {weekDays.map((day) => (
+                    <div key={day.date.toISOString()} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div
+                        className={`flex items-center justify-between mb-4 pb-2 border-b ${day.isToday ? 'border-primary' : 'border-border'}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg",
+                            day.isToday ? "bg-primary text-white shadow-primary" : "bg-surface text-text"
+                          )}>
+                            {day.dayNumber}
+                          </div>
+                          <div className="flex flex-col">
+                            <Text weight="bold" className="capitalize text-sm tracking-wide">
+                              {day.dayName}
+                            </Text>
+                            <Text size="xs" color="secondary">
+                              {day.date.toLocaleDateString('es-ES', { month: 'long' })}
+                            </Text>
+                          </div>
                         </div>
+                        {day.isToday && (
+                          <Badge variant="primary" size="sm" className="rounded-full px-3">
+                            Hoy
+                          </Badge>
+                        )}
+                      </div>
+
+                      {!readOnly && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="w-full mb-2 border border-dashed border-border text-muted"
+                          className="w-full mb-4 border border-dashed border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 rounded-xl py-6"
                           onClick={() => {
-                            if (readOnly) return;
                             const d = new Date(day.date);
-                            d.setHours(9, 0, 0, 0); // Default to 9am for mobile quick add
+                            d.setHours(9, 0, 0, 0);
                             handleOpenCreateForm(d);
                           }}
-                          disabled={readOnly}
                         >
-                          <Plus className="w-4 h-4 mr-2" /> Añadir evento
+                          <Plus className="w-4 h-4 mr-2" /> Nuevo evento
                         </Button>
-                        {day.events.length > 0 ? (
-                          <Stack direction="column" gap="xs">
-                            {day.events.map((event) => (
+                      )}
+
+                      {day.events.length > 0 ? (
+                        <Stack direction="column" gap="sm">
+                          {day.events.map((event: CalendarEvent) => {
+                            const isPersonal = !event.id.startsWith('team_');
+                            return (
                               <button
                                 key={event.id}
-                                onClick={() => !readOnly && setSelectedEvent(event)}
-                                className={`w-full text-left p-3 border border-border rounded-lg ${!readOnly ? 'hover:bg-surface' : ''} transition-colors`}
+                                onClick={() => setSelectedEvent(event)}
+                                className={cn(
+                                  "w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] flex items-center gap-4",
+                                  isPersonal 
+                                    ? "bg-background border-border hover:border-primary/50 hover:shadow-sm" 
+                                    : "bg-background border-border hover:border-joy/50 hover:shadow-sm"
+                                )}
                               >
-                                <Text weight="medium" size="sm">
-                                  {event.summary || 'Sin título'}
-                                </Text>
-                                <Text size="xs" color="secondary">
-                                  {event.start.dateTime
-                                    ? new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })
-                                    : 'Todo el día'}
-                                </Text>
+                                <div className={cn(
+                                  "w-1.5 h-12 rounded-full shrink-0",
+                                  isPersonal ? "bg-primary" : "bg-joy"
+                                )} />
+                                <div className="flex-1 min-w-0">
+                                  <Text weight="bold" size="sm" className="truncate mb-1">
+                                    {event.summary || 'Sin título'}
+                                  </Text>
+                                  <div className="flex items-center gap-3">
+                                    <Text size="xs" color="secondary" className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {event.start.dateTime
+                                        ? new Date(event.start.dateTime).toLocaleTimeString('es-ES', {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          })
+                                        : 'Todo el día'}
+                                    </Text>
+                                    {event.location && (
+                                      <Text size="xs" color="secondary" className="flex items-center gap-1 truncate max-w-[150px]">
+                                        <MapPin className="w-3 h-3" />
+                                        {event.location}
+                                      </Text>
+                                    )}
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-text-secondary opacity-30" />
                               </button>
-                            ))}
-                          </Stack>
-                        ) : (
-                          <Text size="sm" color="secondary">
-                            Sin eventos
+                            );
+                          })}
+                        </Stack>
+                      ) : (
+                        <div className="py-8 text-center bg-surface/20 rounded-xl border border-dashed border-border/50">
+                          <Text size="sm" color="secondary" className="italic opacity-50">
+                            No hay eventos para este día
                           </Text>
-                        )}
-                      </div>
-                    ))}
-                  </Stack>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

@@ -14,7 +14,7 @@ import {
   Stack,
   Alert,
   Text,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface ImportCSVModalProps {
   onClose: () => void;
@@ -121,7 +121,7 @@ export default function ImportCSVModal({ onClose, onSuccess }: ImportCSVModalPro
                     Errores:
                   </Text>
                   <ul className="list-disc list-inside mt-1 text-sm max-h-40 overflow-y-auto">
-                    {result.errors.slice(0, 10).map((err, idx) => (
+                    {result.errors.slice(0, 10).map((err: string, idx: number) => (
                       <li key={idx}>{err}</li>
                     ))}
                     {result.errors.length > 10 && <li>... y {result.errors.length - 10} más</li>}

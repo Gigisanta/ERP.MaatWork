@@ -282,8 +282,8 @@ describe('verifyUserToken', () => {
         .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
         .setSubject(mockUser.id)
         .setIssuedAt()
-        .setIssuer('cactus-api')
-        .setAudience('cactus-web')
+        .setIssuer('maatwork-api')
+        .setAudience('maatwork-web')
         .setExpirationTime('7d')
         .sign(secret);
 
@@ -323,8 +323,8 @@ describe('verifyUserToken', () => {
         .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
         .setSubject(mockUser.id)
         .setIssuedAt()
-        .setIssuer('cactus-api')
-        .setAudience('cactus-web')
+        .setIssuer('maatwork-api')
+        .setAudience('maatwork-web')
         .setExpirationTime('7d')
         .sign(secret);
 

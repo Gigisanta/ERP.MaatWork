@@ -9,7 +9,7 @@
  */
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Toast, type ToastVariant } from '@cactus/ui';
+import { Toast, type ToastVariant } from '@maatwork/ui';
 
 interface ToastState {
   show: boolean;

@@ -1,13 +1,5 @@
-/**
- * Users List Handlers
- *
- * GET /users - List users with pagination
- * GET /users/pending - List pending users
- * GET /users/managers - List active managers
- * GET /users/advisors - List active advisors
- */
 import type { Request } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq, and, sql } from 'drizzle-orm';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { parsePaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
@@ -18,11 +10,20 @@ import { parsePaginationParams, formatPaginatedResponse } from '../../../utils/p
 export const handleListUsers = createRouteHandler(async (req: Request) => {
   const pagination = parsePaginationParams(req.query);
   const { limit, offset } = pagination;
+  const { isActive } = req.query as { isActive?: 'true' | 'false' };
+
+  // Construct where clause
+  const whereConditions = [];
+  if (isActive !== undefined) {
+    whereConditions.push(eq(users.isActive, isActive === 'true'));
+  }
+  const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
   // Get total count for pagination metadata
   const [countResult] = await db()
     .select({ count: sql<number>`count(*)` })
-    .from(users);
+    .from(users)
+    .where(whereClause);
   const total = Number(countResult?.count || 0);
 
   // Get paginated users with only necessary fields (exclude passwordHash)
@@ -39,6 +40,7 @@ export const handleListUsers = createRouteHandler(async (req: Request) => {
       updatedAt: users.updatedAt,
     })
     .from(users)
+    .where(whereClause)
     .orderBy(users.createdAt)
     .limit(limit)
     .offset(offset);

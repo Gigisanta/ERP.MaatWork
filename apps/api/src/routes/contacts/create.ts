@@ -4,12 +4,12 @@
  * POST /contacts - Create new contact
  */
 import { Router, type Request, type Response } from 'express';
-import { db, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, contacts, pipelineStageHistory } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
 import { createDrizzleLogger } from '../../utils/database/db-logger';
 import { validate } from '../../utils/validation';
-import { type Contact } from '../../types/contacts';
+import { type Contact } from '@maatwork/types';
 import { contactsListCacheUtil } from '../../utils/performance/cache';
 import { createContactSchema } from './schemas';
 import { invalidateCache } from '../../middleware/cache';

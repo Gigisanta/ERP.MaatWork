@@ -1,6 +1,6 @@
 # Guía de Optimización
 
-Esta guía documenta las estrategias de optimización implementadas y recomendadas para el proyecto CACTUS CRM.
+Esta guía documenta las estrategias de optimización implementadas y recomendadas para el proyecto MAATWORK.
 
 ## Índice
 
@@ -135,11 +135,11 @@ pnpm typecheck
 
 ```bash
 # Build y verificar
-pnpm -F @cactus/web build
-pnpm -F @cactus/web check:bundle
+pnpm -F @maatwork/web build
+pnpm -F @maatwork/web check:bundle
 
 # Análisis detallado
-pnpm -F @cactus/web analyze
+pnpm -F @maatwork/web analyze
 ```
 
 ### Code Splitting Configurado
@@ -182,7 +182,7 @@ import * as Icons from 'lucide-react';
 | `@/hooks/*` | `./lib/hooks/*` | Custom hooks |
 | `@/auth/*` | `./app/auth/*` | Autenticación |
 | `@/utils/*` | `./lib/utils/*` | Utilidades |
-| `@cactus/ui` | UI package | Design system |
+| `@maatwork/ui` | UI package | Design system |
 
 ### Ejemplo de Uso
 
@@ -259,25 +259,22 @@ Los siguientes scripts están deprecados y serán removidos:
 ### Comandos de Auditoría
 
 ```bash
-# Verificar dependencias no usadas
-pnpm audit:deps
+# Auditoría unificada (Recomendado)
+pnpm audit:code
 
-# Verificar exports no usados
-pnpm audit:unused-exports
+# Auditoría rápida de pre-commit
+pnpm verify:all:no-e2e
 
-# Verificar uso de `any`
+# Auditorías específicas
 pnpm audit:types
-
-# Verificar barrel exports
 pnpm audit:barrels
 ```
 
 ### Herramientas de Análisis
 
-Para análisis más detallados, se pueden usar herramientas externas como:
-- `ts-prune` - Detecta exports no usados
-- `depcheck` - Detecta dependencias no usadas
-- `grep` - Búsqueda de patrones específicos en el código
+Para análisis profundos, el sistema utiliza:
+- **Knip**: Motor principal para detección de código muerto y dependencias huérfanas en monorepo. Reemplaza a `ts-prune` y `depcheck`.
+- **Custom Scanners**: Scripts internos para monitorear el uso de `any` y barrel exports.
 
 ---
 
@@ -287,7 +284,7 @@ Antes de cada release, verificar:
 
 - [ ] `pnpm typecheck` pasa sin errores
 - [ ] `pnpm test` pasa sin errores
-- [ ] `pnpm -F @cactus/web check:bundle` dentro de límites
+- [ ] `pnpm -F @maatwork/web check:bundle` dentro de límites
 - [ ] No hay dependencias duplicadas (`pnpm dedupe --check`)
 - [ ] Archivos nuevos siguen límites de tamaño
 

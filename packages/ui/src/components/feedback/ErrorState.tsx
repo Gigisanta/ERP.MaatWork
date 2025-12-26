@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn.js';
-import Icon, { type IconName } from '../Icon.js';
-import Button from '../nav/Button.js';
+import { Icon, type IconName } from '../Icon.js';
+import { Button } from '../nav/Button.js';
 
 export type ErrorStateVariant = 'error' | 'warning' | 'info' | 'network';
 export type ErrorStateSize = 'sm' | 'md' | 'lg';
@@ -312,4 +312,3 @@ export const InlineErrorState = React.forwardRef<HTMLDivElement, InlineErrorStat
 
 InlineErrorState.displayName = 'InlineErrorState';
 
-export default ErrorState;

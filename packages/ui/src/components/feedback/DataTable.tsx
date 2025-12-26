@@ -1,10 +1,10 @@
 'use client';
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import Icon from '../Icon.js';
+import { Icon } from '../Icon.js';
 import { cn } from '../../utils/cn.js';
 import { Checkbox } from '../forms/Checkbox.js';
-import EmptyState from './EmptyState.js';
+import { EmptyState } from './EmptyState.js';
 import { Spinner } from './Spinner.js';
 
 // AI_DECISION: Hook para detectar scroll y mostrar indicadores

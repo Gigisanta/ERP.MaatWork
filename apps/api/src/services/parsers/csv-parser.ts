@@ -7,7 +7,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import type { ParseResult } from '../aumParser';
+import type { ParseResult } from '../aum-parser';
 
 /**
  * Parse CSV file to AUM rows

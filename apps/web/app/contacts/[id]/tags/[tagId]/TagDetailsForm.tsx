@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { Input, Button, Stack, Text, Spinner, Alert } from '@cactus/ui';
+import { Input, Button, Stack, Text, Spinner, Alert } from '@maatwork/ui';
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';

@@ -17,7 +17,7 @@ import {
   Icon,
   Grid,
   Badge,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 

@@ -13,7 +13,7 @@ import { config } from '../config';
 import { fetchWithLogging, postJson } from '../fetch-client';
 import type { AuthUser } from '../../app/auth/AuthContext';
 
-export interface SessionCheckResult {
+interface SessionCheckResult {
   success: boolean;
   user: AuthUser | null;
   error?: {

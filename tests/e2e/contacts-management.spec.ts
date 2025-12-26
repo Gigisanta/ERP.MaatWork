@@ -4,30 +4,9 @@
  * Tests complete CRUD operations and workflows for contacts
  */
 
-import { test, expect, type Page } from '@playwright/test';
-
-const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page
-    .getByLabel(/email|usuario|correo/i)
-    .first()
-    .fill(adminEmail);
-  await page
-    .getByLabel(/contraseña|password/i)
-    .first()
-    .fill(adminPassword);
-  await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
-  await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
-}
+import { test, expect } from '@playwright/test';
 
 test.describe('Contacts Management', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page);
-  });
-
   test('should create a new contact', async ({ page }) => {
     await page.goto('/contacts');
 

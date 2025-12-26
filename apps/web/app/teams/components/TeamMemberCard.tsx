@@ -1,6 +1,6 @@
 'use client';
 import React, { memo } from 'react';
-import { Button, Badge, Text } from '@cactus/ui';
+import { Button, Badge, Text } from '@maatwork/ui';
 import type { TeamMember } from '@/types';
 
 interface TeamMemberCardProps {

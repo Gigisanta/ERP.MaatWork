@@ -14,7 +14,7 @@ import { optionalEmailSchema } from '../../utils/validation/validation-common';
 export const createTeamSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional().nullable(),
-  managerUserId: z.string().uuid().optional().nullable(),
+  managerUserId: uuidSchema.optional().nullable(),
   calendarUrl: z.string().url().max(500).optional().nullable(),
 });
 
@@ -25,13 +25,13 @@ export const updateTeamSchema = createTeamSchema.partial();
 // ==========================================================
 
 export const addMemberSchema = z.object({
-  userId: z.string().uuid(),
+  userId: uuidSchema,
   role: z.enum(['member', 'manager']).default('member'),
 });
 
-export const inviteMemberSchema = z
+const inviteMemberSchema = z
   .object({
-    userId: z.string().uuid().optional(),
+    userId: uuidSchema.optional(),
     email: optionalEmailSchema,
   })
   .refine((data) => data.userId || data.email, {
@@ -39,7 +39,7 @@ export const inviteMemberSchema = z
   });
 
 export const createInvitationSchema = z.object({
-  userId: z.string().uuid(),
+  userId: uuidSchema,
 });
 
 // ==========================================================
@@ -60,8 +60,8 @@ export const teamMemberDeleteParamsSchema = z.object({
 // Type Exports
 // ==========================================================
 
-export type CreateTeamInput = z.infer<typeof createTeamSchema>;
-export type UpdateTeamInput = z.infer<typeof updateTeamSchema>;
-export type AddMemberInput = z.infer<typeof addMemberSchema>;
-export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
-export type CreateInvitationInput = z.infer<typeof createInvitationSchema>;
+type CreateTeamInput = z.infer<typeof createTeamSchema>;
+type UpdateTeamInput = z.infer<typeof updateTeamSchema>;
+type AddMemberInput = z.infer<typeof addMemberSchema>;
+type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+type CreateInvitationInput = z.infer<typeof createInvitationSchema>;

@@ -2,7 +2,7 @@
  * API methods para tags
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type { ApiResponse } from '../api-client';
 import type {
   Tag,
@@ -10,7 +10,7 @@ import type {
   UpdateTagRequest,
   ContactTagWithDetails,
   UpdateContactTagRequest,
-} from '@/types/tag';
+} from '@/types';
 
 // ==========================================================
 // API Methods

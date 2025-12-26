@@ -5,7 +5,7 @@
  * GET /notes/batch - Get notes for multiple contacts (batch)
  */
 import type { Request } from 'express';
-import { db, notes } from '@cactus/db';
+import { db, notes } from '@maatwork/db';
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm';
 import { canAccessContact } from '../../../auth/authorization';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, Text, Stack } from '@cactus/ui';
+import { Card, CardContent, Text, Stack } from '@maatwork/ui';
 import { useMemo, useEffect, useState, memo } from 'react';
 
 interface MetricCardProps {

@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import { z } from 'zod';
-import { db, advisorAliases, users } from '@cactus/db';
+import { db, advisorAliases, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
@@ -72,7 +72,7 @@ router.post(
     }
     // Ensure user exists and is active
     const [user] = await dbi.select().from(users).where(eq(users.id, userId)).limit(1);
-    if (!user || (user as any).isActive === false) {
+    if (!user || user.isActive === false) {
       throw new HttpError(400, 'El asesor no existe o está inactivo');
     }
 
@@ -113,7 +113,7 @@ router.put(
         .from(advisorAliases)
         .where(eq(advisorAliases.id, id))
         .limit(1);
-      if (!existing || (existing as any).userId !== requesterId) {
+      if (!existing || existing.userId !== requesterId) {
         throw new HttpError(403, 'Forbidden');
       }
       if (userId && userId !== requesterId) {
@@ -131,7 +131,7 @@ router.put(
     if (typeof userId === 'string') {
       // Ensure user exists
       const [u] = await dbi.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!u || (u as any).isActive === false) {
+      if (!u || u.isActive === false) {
         throw new HttpError(400, 'El asesor no existe o está inactivo');
       }
       updates.userId = userId;
@@ -171,7 +171,7 @@ router.delete(
         .from(advisorAliases)
         .where(eq(advisorAliases.id, id))
         .limit(1);
-      if (!existing || (existing as any).userId !== requesterId) {
+      if (!existing || existing.userId !== requesterId) {
         throw new HttpError(403, 'Forbidden');
       }
     } else if (!['admin', 'manager'].includes(requesterRole || '')) {

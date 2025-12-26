@@ -1,6 +1,6 @@
-# Cactus CRM - Terraform Infrastructure
+# MaatWork - Terraform Infrastructure
 
-Infrastructure as Code para Cactus CRM usando Terraform. Soporta AWS y Cloudflare.
+Infrastructure as Code para MaatWork usando Terraform. Soporta AWS y Cloudflare.
 
 ## Arquitectura
 
@@ -89,11 +89,11 @@ export CLOUDFLARE_API_TOKEN="tu-token-aqui"
 
 ```bash
 # Crear bucket S3 para el estado
-aws s3 mb s3://cactus-terraform-state --region us-east-1
+aws s3 mb s3://maatwork-terraform-state --region us-east-1
 
 # Crear tabla DynamoDB para bloqueo
 aws dynamodb create-table \
-  --table-name cactus-terraform-locks \
+  --table-name maatwork-terraform-locks \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
@@ -131,23 +131,23 @@ Si tienes recursos existentes creados con CDK, puedes importarlos a Terraform:
 
 ```bash
 # EC2 Instance
-aws ec2 describe-instances --filters "Name=tag:Name,Values=cactus-*" \
+aws ec2 describe-instances --filters "Name=tag:Name,Values=maatwork-*" \
   --query 'Reservations[].Instances[].InstanceId' --output text
 
 # Elastic IP
-aws ec2 describe-addresses --filters "Name=tag:Name,Values=cactus-*" \
+aws ec2 describe-addresses --filters "Name=tag:Name,Values=maatwork-*" \
   --query 'Addresses[].AllocationId' --output text
 
 # RDS
 aws rds describe-db-instances \
-  --query 'DBInstances[?starts_with(DBInstanceIdentifier, `cactus-`)].DBInstanceIdentifier' --output text
+  --query 'DBInstances[?starts_with(DBInstanceIdentifier, `maatwork-`)].DBInstanceIdentifier' --output text
 
 # S3 Bucket
-aws s3 ls | grep cactus
+aws s3 ls | grep maatwork
 
 # Secrets Manager
 aws secretsmanager list-secrets \
-  --query 'SecretList[?starts_with(Name, `cactus-`)].ARN' --output text
+  --query 'SecretList[?starts_with(Name, `maatwork-`)].ARN' --output text
 ```
 
 ### 2. Importar recursos
@@ -159,9 +159,9 @@ Ver [MIGRATION.md](./MIGRATION.md) para instrucciones detalladas.
 cd environments/dev
 terraform init
 
-terraform import module.cactus.module.compute.aws_instance.main i-0123456789abcdef0
-terraform import module.cactus.module.compute.aws_eip.main eipalloc-0123456789abcdef0
-terraform import module.cactus.module.database.aws_db_instance.main cactus-dev-database
+terraform import module.maatwork.module.compute.aws_instance.main i-0123456789abcdef0
+terraform import module.maatwork.module.compute.aws_eip.main eipalloc-0123456789abcdef0
+terraform import module.maatwork.module.database.aws_db_instance.main maatwork-dev-database
 # ... etc
 ```
 

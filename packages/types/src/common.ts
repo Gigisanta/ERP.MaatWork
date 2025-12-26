@@ -1,7 +1,7 @@
 /**
  * Common Types - Shared across all domains
  *
- * AI_DECISION: Consolidar tipos base en @cactus/types para eliminar duplicación
+ * AI_DECISION: Consolidar tipos base en @maatwork/types para eliminar duplicación
  * Justificación: Evita divergencia de tipos entre frontend y backend, facilita mantenimiento
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
  *
@@ -88,17 +88,41 @@ export interface ApiResponse<T> {
  */
 export interface PaginatedResponse<T> {
   data: T[];
-  meta: {
+  meta?: {
     limit: number;
     offset: number;
     total?: number;
+    page?: number;
+    totalPages?: number;
+  };
+  pagination?: {
+    page?: number;
+    limit: number;
+    offset: number;
+    total: number;
+    totalPages: number;
   };
 }
 
 /**
- * User roles in the system
+ * API error response with optional messages
  */
-export type UserRole = 'admin' | 'manager' | 'advisor';
+export interface ApiErrorWithMessage {
+  message?: string;
+  userMessage?: string;
+  error?: string;
+}
+
+/**
+ * User roles in the system
+ * AI_DECISION: Hierarchical role system
+ * - admin: Total access
+ * - owner: Direction - global metrics read-only
+ * - staff: Administrative - operational support
+ * - manager: Team manager
+ * - advisor: Advisor
+ */
+export type UserRole = 'admin' | 'owner' | 'staff' | 'manager' | 'advisor';
 
 /**
  * Risk profile levels
@@ -110,3 +134,8 @@ export type RiskProfile = 'low' | 'mid' | 'high';
  */
 export type ActiveStatus = 'active' | 'inactive';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+/**
+ * Business lines available for categorizing tags and AUM
+ */
+export type BusinessLine = 'inversiones' | 'zurich' | 'patrimonial';

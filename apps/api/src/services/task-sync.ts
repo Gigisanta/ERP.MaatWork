@@ -6,12 +6,13 @@
  * and Personal Calendar (future expansion, primarily focuses on Team Calendar for now).
  */
 
-import { db, tasks, teams, contacts, googleOAuthTokens } from '@cactus/db';
+import { db, tasks, teams, contacts, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from './google-calendar';
 import { decryptToken } from '../utils/encryption';
 import { env } from '../config/env';
 import { refreshGoogleToken } from '../jobs/google-token-refresh';
+import { logger } from '../utils/logger';
 
 type SyncAction = 'create' | 'update' | 'delete';
 
@@ -36,7 +37,7 @@ export async function syncTaskToGoogle(taskId: string, action: SyncAction) {
       .limit(1);
 
     if (!task) {
-      console.warn(`[TaskSync] Task ${taskId} not found`);
+      logger.warn({ taskId }, '[TaskSync] Task not found');
       return;
     }
 
@@ -111,9 +112,9 @@ export async function syncTaskToGoogle(taskId: string, action: SyncAction) {
       // Update existing event
       try {
         await updateCalendarEvent(accessToken, targetCalendarId, task.googleEventId, eventData);
-        console.info(`[TaskSync] Updated event ${task.googleEventId} for task ${taskId}`);
+        logger.info({ googleEventId: task.googleEventId, taskId }, '[TaskSync] Updated event');
       } catch (error) {
-        console.error(`[TaskSync] Failed to update event:`, error);
+        logger.error({ err: error, taskId, googleEventId: task.googleEventId }, '[TaskSync] Failed to update event');
         // If 404, maybe recreate?
       }
     } else {
@@ -130,14 +131,14 @@ export async function syncTaskToGoogle(taskId: string, action: SyncAction) {
             })
             .where(eq(tasks.id, taskId));
 
-          console.info(`[TaskSync] Created event ${newEvent.id} for task ${taskId}`);
+          logger.info({ googleEventId: newEvent.id, taskId }, '[TaskSync] Created event');
         }
       } catch (error) {
-        console.error(`[TaskSync] Failed to create event:`, error);
+        logger.error({ err: error, taskId }, '[TaskSync] Failed to create event');
       }
     }
   } catch (error) {
-    console.error(`[TaskSync] Error syncing task ${taskId}:`, error);
+    logger.error({ err: error, taskId }, '[TaskSync] Error syncing task');
   }
 }
 
@@ -171,9 +172,9 @@ async function deleteEventInternal(
       if (accessToken) {
         try {
           await deleteCalendarEvent(accessToken, googleCalendarId, googleEventId);
-          console.info(`[TaskSync] Deleted event ${googleEventId}`);
+          logger.info({ googleEventId }, '[TaskSync] Deleted event');
         } catch (error) {
-          console.error(`[TaskSync] Failed to delete event:`, error);
+          logger.error({ err: error, googleEventId }, '[TaskSync] Failed to delete event');
         }
       }
     }
@@ -203,7 +204,7 @@ async function getValidAccessToken(userId: string): Promise<string | null> {
         return decryptToken(updated.accessTokenEncrypted, env.GOOGLE_ENCRYPTION_KEY);
       }
     } catch (e) {
-      console.error(`[TaskSync] Failed to refresh token for user ${userId}`, e);
+      logger.error({ err: e, userId }, '[TaskSync] Failed to refresh token');
       return null;
     }
   }
@@ -211,15 +212,22 @@ async function getValidAccessToken(userId: string): Promise<string | null> {
   return decryptToken(tokenRecord.accessTokenEncrypted, env.GOOGLE_ENCRYPTION_KEY);
 }
 
-function mapTaskToEvent(task: any) {
+interface TaskForSync {
+  title: string;
+  description: string | null;
+  dueDate: string | Date | null;
+  dueTime: string | null;
+}
+
+function mapTaskToEvent(task: TaskForSync) {
   // Construct Date/Time
   // If dueTime is present (HH:MM), combine with dueDate
   // If not, use All Day Event (date only)
 
-  let start: any;
-  let end: any;
+  let start: { dateTime: string; timeZone: string } | { date: string };
+  let end: { dateTime: string; timeZone: string } | { date: string };
 
-  if (task.dueTime) {
+  if (task.dueTime && task.dueDate) {
     // Assuming task.dueDate is YYYY-MM-DD string from Postgres driver or Date object
     // Drizzle date returns string usually
     const dateStr =
@@ -235,12 +243,17 @@ function mapTaskToEvent(task: any) {
     const endDateTime = endDate.toISOString().split('.')[0]; // remove ms
 
     end = { dateTime: endDateTime, timeZone: 'America/Argentina/Buenos_Aires' };
-  } else {
+  } else if (task.dueDate) {
     // All day
     const dateStr =
       typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0];
     start = { date: dateStr };
     end = { date: dateStr };
+  } else {
+    // Should not happen as we check for dueDate before calling mapTaskToEvent
+    const today = new Date().toISOString().split('T')[0];
+    start = { date: today };
+    end = { date: today };
   }
 
   return {
@@ -250,3 +263,6 @@ function mapTaskToEvent(task: any) {
     end,
   };
 }
+
+
+

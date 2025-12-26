@@ -9,12 +9,12 @@
 import { getHttpClient } from './http-client';
 import type { Logger } from 'pino';
 
-export interface WebhookPayload {
+interface WebhookPayload {
   nombre: string;
   email: string | null;
 }
 
-export interface WebhookOptions {
+interface WebhookOptions {
   timeout?: number;
   logger?: Logger;
 }

@@ -15,7 +15,7 @@ import {
 } from './calculators';
 import type { AccessFilter, PipelineStageIds, MonthlyMetrics, CalculatorContext } from './types';
 
-export interface CalculateMonthlyMetricsParams {
+interface CalculateMonthlyMetricsParams {
   month: number;
   year: number;
   stageIds: PipelineStageIds;

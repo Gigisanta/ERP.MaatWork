@@ -94,7 +94,7 @@ function cleanupExpiredEntries(): void {
 /**
  * Invalida el cache para una ruta específica (útil cuando los datos cambian)
  */
-export function invalidateEtagCache(path: string, query?: Record<string, unknown>): void {
+function invalidateEtagCache(path: string, query?: Record<string, unknown>): void {
   if (query) {
     const cacheKey = generateCacheKey(path, query);
     etagCache.delete(cacheKey);
@@ -153,6 +153,6 @@ export function getEtagCacheStats(): {
   return {
     size: etagCache.size,
     maxSize: MAX_CACHE_SIZE,
-    hitRate: 0, // TODO: Implementar tracking de hits/misses si es necesario
+    hitRate: 0,
   };
 }

@@ -1,7 +1,8 @@
 import React from 'react';
+import Image from 'next/image';
 import { cn } from '../../utils/cn.js';
-import Button from './Button.js';
-import Icon, { type IconName } from '../Icon.js';
+import { Button } from './Button.js';
+import { Icon, type IconName } from '../Icon.js';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 export interface NavItem {
@@ -166,11 +167,16 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
                       aria-label={`Menú de usuario: ${user.name}`}
                     >
                       {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt=""
-                          className="h-8 w-8 sm:h-9 sm:w-9 rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200 object-cover"
-                        />
+                        <div className="relative h-8 w-8 sm:h-9 sm:w-9">
+                          <Image
+                            src={user.avatar}
+                            alt={user.name}
+                            fill
+                            sizes="(max-width: 640px) 32px, 36px"
+                            className="rounded-full ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200 object-cover"
+                            priority={true}
+                          />
+                        </div>
                       ) : (
                         <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-primary text-xs sm:text-sm font-medium text-text-inverse ring-2 ring-transparent hover:ring-primary/30 transition-all duration-200">
                           {user.name.charAt(0).toUpperCase()}

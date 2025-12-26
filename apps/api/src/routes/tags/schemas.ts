@@ -22,7 +22,7 @@ export const listTagsQuerySchema = z.object({
 });
 
 export const listRulesQuerySchema = z.object({
-  tagId: z.string().uuid().optional(),
+  tagId: uuidSchema.optional(),
 });
 
 export const listSegmentsQuerySchema = z.object({
@@ -56,12 +56,12 @@ export const createTagSchema = z.object({
 export const updateTagSchema = createTagSchema.partial().omit({ scope: true });
 
 export const assignTagsSchema = z.object({
-  contactIds: z.array(z.string().uuid()).min(1),
+  contactIds: z.array(uuidSchema).min(1),
 });
 
 export const updateContactTagsSchema = z.object({
-  add: z.array(z.union([z.string().uuid(), z.string()])).default([]),
-  remove: z.array(z.string().uuid()).default([]),
+  add: z.array(z.union([uuidSchema, z.string()])).default([]),
+  remove: z.array(uuidSchema).default([]),
 });
 
 export const updateContactTagSchema = z.object({
@@ -70,7 +70,7 @@ export const updateContactTagSchema = z.object({
 });
 
 export const createTagRuleSchema = z.object({
-  tagId: z.string().uuid(),
+  tagId: uuidSchema,
   name: z.string().min(VALIDATION_LIMITS.MIN_NAME_LENGTH).max(VALIDATION_LIMITS.MAX_NAME_LENGTH),
   conditions: z.record(z.unknown()),
   isActive: z.boolean().default(true),
@@ -85,9 +85,13 @@ export const createSegmentSchema = z.object({
 });
 
 // Type exports
-export type CreateTagInput = z.infer<typeof createTagSchema>;
-export type UpdateTagInput = z.infer<typeof updateTagSchema>;
-export type UpdateContactTagsInput = z.infer<typeof updateContactTagsSchema>;
-export type UpdateContactTagInput = z.infer<typeof updateContactTagSchema>;
-export type CreateTagRuleInput = z.infer<typeof createTagRuleSchema>;
-export type CreateSegmentInput = z.infer<typeof createSegmentSchema>;
+type CreateTagInput = z.infer<typeof createTagSchema>;
+type UpdateTagInput = z.infer<typeof updateTagSchema>;
+type UpdateContactTagsInput = z.infer<typeof updateContactTagsSchema>;
+type UpdateContactTagInput = z.infer<typeof updateContactTagSchema>;
+type CreateTagRuleInput = z.infer<typeof createTagRuleSchema>;
+type CreateSegmentInput = z.infer<typeof createSegmentSchema>;
+
+
+
+

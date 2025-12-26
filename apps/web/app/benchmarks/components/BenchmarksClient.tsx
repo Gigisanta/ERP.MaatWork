@@ -12,7 +12,7 @@ import {
   Button,
   Text,
   EmptyState,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 // Extender Benchmark con campos adicionales de la respuesta de API
 type BenchmarkWithCount = Benchmark & {

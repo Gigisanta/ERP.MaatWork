@@ -60,7 +60,7 @@ function Write-ColorOutput($ForegroundColor) {
 # Banner
 Write-Host ""
 Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║              CACTUS INFRASTRUCTURE DEPLOYMENT              ║" -ForegroundColor Cyan
+Write-Host "║              MAATWORK INFRASTRUCTURE DEPLOYMENT              ║" -ForegroundColor Cyan
 Write-Host "╠════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
 Write-Host "║  Mode:        $($Mode.ToUpper().PadRight(44))║" -ForegroundColor Cyan
 Write-Host "║  Environment: $($Environment.ToUpper().PadRight(44))║" -ForegroundColor Cyan

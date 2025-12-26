@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '@/auth/AuthContext';
 import { canImportFiles } from '@/lib/auth-helpers';
 import { uploadAdvisorMapping } from '@/lib/api';
-import type { ApiErrorWithMessage } from '@/types/aum';
-import { Button, Text, Spinner, Alert } from '@cactus/ui';
+import type { ApiErrorWithMessage } from '@/types';
+import { Button, Text, Spinner, Alert } from '@maatwork/ui';
 
 // AI_DECISION: File upload limits aligned with backend
 // Justificación: Client-side validation prevents unnecessary uploads and provides better UX

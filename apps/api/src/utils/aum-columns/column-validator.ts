@@ -190,7 +190,7 @@ export function safeToNumber(value: unknown): number | null {
   }
 }
 
-export interface ColumnMappingValidation {
+interface ColumnMappingValidation {
   isValid: boolean;
   fileType: 'master' | 'monthly' | 'unknown';
   warnings: string[];
@@ -297,3 +297,11 @@ export function validateColumnMapping(
     },
   };
 }
+
+
+
+
+
+
+
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import Icon, { type IconName } from '../Icon.js';
+import { Icon, type IconName } from '../Icon.js';
 import { cn } from '../../utils/cn.js';
 
 /**

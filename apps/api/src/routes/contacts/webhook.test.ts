@@ -17,7 +17,7 @@ vi.mock('../../auth/middlewares', () => ({
   requireAuth: vi.fn((req, res, next) => next()),
 }));
 
-vi.mock('../../utils/http-client', () => ({
+vi.mock('../../utils/http/http-client', () => ({
   getHttpClient: vi.fn(),
 }));
 

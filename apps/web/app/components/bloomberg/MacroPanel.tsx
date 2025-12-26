@@ -23,8 +23,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-  TabsContent,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getMacroSeries, getMacroSeriesList } from '@/lib/api/bloomberg';
 import type { MacroSeriesPoint, MacroSeriesListItem } from '@/lib/api/bloomberg';
 import {

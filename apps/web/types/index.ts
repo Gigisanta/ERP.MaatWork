@@ -8,31 +8,32 @@
 // Common types
 export type {
   ApiResponse,
-  Pagination,
+  
   PaginatedResponse,
-  FilterOptions,
+  
   RiskLevel,
   AssetType,
   Currency,
   TimePeriod,
-  ToastVariant,
-  LoadingState,
-  ComponentBase,
+  
+  
+  
   ApiError,
   ApiResponseWithHint,
+  ApiErrorWithMessage,
 } from './common';
 
 // Auth types
 export type {
-  User,
+  
   UserRole,
   UserApiResponse,
-  UserWithTeam,
-  Advisor,
-  AuthResponse,
-  LoginCredentials,
-  RegisterData,
-} from './auth';
+  
+  AdvisorMinimal as Advisor,
+  
+  
+  
+} from '@maatwork/types';
 
 // Instrument types
 export type {
@@ -41,7 +42,7 @@ export type {
   InstrumentValidation,
   CreateInstrumentRequest,
   CreateInstrumentResponse,
-  PriceSnapshot,
+  
 } from './instrument';
 
 // Portfolio types
@@ -52,26 +53,26 @@ export type {
   UpdatePortfolioRequest,
   AddPortfolioLineRequest,
   PortfolioWithLines,
-  PortfolioComponent,
-  PortfolioFormData,
+  
+  
 } from './portfolio';
 
 // Benchmark types
 export type {
   Benchmark,
-  BenchmarkType,
+  
   BenchmarkComponent,
-  BenchmarkComponentForm,
+  
   CreateBenchmarkRequest,
   UpdateBenchmarkRequest,
   AddBenchmarkComponentRequest,
   BenchmarkWithComponents,
-  BenchmarkFormData,
+  
 } from './benchmark';
 
 // Analytics types
 export type {
-  PerformanceMetrics,
+  
   PerformanceDataPoint,
   PortfolioPerformance,
   ComparisonResult,
@@ -93,71 +94,71 @@ export type {
   TeamMemberMetrics,
   TeamMemberActivity,
   AumTrendItem,
-} from './team';
+  TeamGoal,
+  SetTeamGoalRequest,
+  StalledLead,
+  ReassignLeadsRequest,
+  TeamCapacityMember,
+} from '@maatwork/types';
 
 // Contact types
 export type {
   Contact,
+  ContactWithTags,
   ContactFieldValue,
-  ContactFieldName,
-  ContactFieldUpdate,
-  CreateContactRequest,
-  UpdateContactRequest,
-} from './contact';
+  
+  
+  
+  
+  ImportStats,
+  
+} from '@maatwork/types';
 
 // Pipeline types
-export type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from './pipeline';
+export type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from '@maatwork/types';
 
 // Tag types
 export type {
   Tag,
   CreateTagRequest,
   UpdateTagRequest,
-  ContactTag,
+  
   ContactTagWithDetails,
   UpdateContactTagRequest,
-} from './tag';
+} from '@maatwork/types';
 
 // Broker Account types
-export type { BrokerAccount, CreateBrokerAccountRequest } from './broker-account';
+export type { BrokerAccount, CreateBrokerAccountRequest } from '@maatwork/types';
 
 // Task types
-export type { Task, CreateTaskRequest, UpdateTaskRequest } from './task';
+export type { Task, CreateTaskRequest, UpdateTaskRequest } from '@maatwork/types';
 
 // Note types
-export type { Note, CreateNoteRequest, UpdateNoteRequest } from './note';
+export type { Note, CreateNoteRequest, UpdateNoteRequest } from '@maatwork/types';
 
 // AUM types
 export type {
   AumFile,
   AumRow,
-  DuplicateRow,
+  
   Row,
-  AumUploadSummary,
+  
   AumUploadResponse,
   AumMatchRequest,
   AumRowsResponse,
   AumDuplicatesResponse,
-  ApiErrorWithMessage,
-} from './aum';
+} from '@maatwork/types';
 
 // Portfolio Assignment types
 export type {
   PortfolioAssignment,
   AssignPortfolioRequest,
   AssignPortfolioResponse,
-} from './portfolio-assignment';
+} from '@maatwork/types';
 
 // Metrics types
-export type {
-  BusinessLine,
-  MonthlyMetrics,
-  BusinessLineClosures,
-  StageTransitionTime,
-  MonthlyGoal,
-  SaveMonthlyGoalRequest,
-  ContactsMetricsResponse,
-} from './metrics';
+;
+;
 
 // Capacitaciones types
 export type {
@@ -167,13 +168,30 @@ export type {
   ImportCapacitacionesResponse,
   ListCapacitacionesParams,
   CapacitacionesListResponse,
-} from './capacitaciones';
+} from '@maatwork/types';
 
 // Automation types
+;
+
+// Calendar types
 export type {
-  AutomationConfig,
-  TriggerConfig,
-  AutomationConfigData,
-  CreateAutomationConfigRequest,
-  UpdateAutomationConfigRequest,
-} from './automation';
+  CalendarEvent,
+  CalendarEventAttendee,
+  
+  CalendarListEntry,
+  GetEventsParams,
+  CreateEventRequest,
+  UpdateEventRequest,
+  ConnectTeamCalendarRequest,
+  ConnectTeamCalendarResponse,
+  
+  
+} from '@maatwork/types';
+
+// Career Plan types
+export type {
+  CareerPlanLevel,
+  CareerPlanLevelCreateRequest,
+  CareerPlanLevelUpdateRequest,
+  UserCareerProgress,
+} from '@maatwork/types';

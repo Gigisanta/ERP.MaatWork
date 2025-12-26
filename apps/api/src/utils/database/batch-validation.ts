@@ -15,7 +15,7 @@ export const BATCH_LIMITS = {
   MAX_IDS_GENERAL: 100,
 } as const;
 
-export interface BatchValidationResult {
+interface BatchValidationResult {
   valid: boolean;
   ids: string[];
   errors?: string[];

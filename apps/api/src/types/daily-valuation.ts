@@ -4,13 +4,13 @@
  */
 
 import { type InferSelectModel } from 'drizzle-orm';
-import { brokerPositions } from '@cactus/db/schema';
-import type { BaseEntity } from '@cactus/types';
+import { brokerPositions } from '@maatwork/db/schema';
+import type { BaseEntity } from '@maatwork/types';
 
 /**
  * BrokerPosition inferido del schema
  */
-export type BrokerPosition = InferSelectModel<typeof brokerPositions>;
+type BrokerPosition = InferSelectModel<typeof brokerPositions>;
 
 /**
  * Posición con market value para cálculos de AUM

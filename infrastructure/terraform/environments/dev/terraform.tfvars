@@ -2,7 +2,7 @@
 # Development Environment - Configuration with CDK Migration
 # =============================================================================
 
-project_name = "cactus"
+project_name = "maatwork"
 aws_region   = "sa-east-1"  # Based on discovered resources
 
 # Compute
@@ -38,13 +38,13 @@ restrict_to_cloudflare = true
 # These are the actual names from your CDK deployment
 
 # Compute resources
-cdk_compute_sg_name       = "Cactus-Mvp-Dev-MvpComputeInstanceSGAB303A71-jdzIvL2Uq1ym"
-cdk_iam_role_name         = "Cactus-Mvp-Dev-MvpComputeInstanceRole4387A1AA-YeFYVN6l5bFq"
-cdk_instance_profile_name = "Cactus-Mvp-Dev-MvpComputeInstanceInstanceProfileB9644836-ZAErVIeYmtZo"
+cdk_compute_sg_name       = "MaatWork-Mvp-Dev-MvpComputeInstanceSGAB303A71-jdzIvL2Uq1ym"
+cdk_iam_role_name         = "MaatWork-Mvp-Dev-MvpComputeInstanceRole4387A1AA-YeFYVN6l5bFq"
+cdk_instance_profile_name = "MaatWork-Mvp-Dev-MvpComputeInstanceInstanceProfileB9644836-ZAErVIeYmtZo"
 
 # Database resources
-cdk_db_identifier     = "cactus-mvp-dev-databaseb269d8bb-s5qrpp48ux92"
-cdk_db_sg_name        = "Cactus-Mvp-Dev-DatabaseSG2A23C222-AwJlGvUbvZDi"
-cdk_secret_name       = "cactus-dev/db-credentials"
-cdk_subnet_group_name = "cactus-mvp-dev-databasesubnetgroup7d60f180-puvsiy02kmwi"
+cdk_db_identifier     = "maatwork-mvp-dev-databaseb269d8bb-s5qrpp48ux92"
+cdk_db_sg_name        = "MaatWork-Mvp-Dev-DatabaseSG2A23C222-AwJlGvUbvZDi"
+cdk_secret_name       = "maatwork-dev/db-credentials"
+cdk_subnet_group_name = "maatwork-mvp-dev-databasesubnetgroup7d60f180-puvsiy02kmwi"
 

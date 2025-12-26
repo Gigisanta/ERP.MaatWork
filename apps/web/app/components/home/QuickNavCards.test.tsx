@@ -9,6 +9,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+import React from 'react';
+
 // Mock Next.js Link
 vi.mock('next/link', () => ({
   default: ({
@@ -28,22 +30,22 @@ vi.mock('next/link', () => ({
   },
 }));
 
-// Mock @cactus/ui antes de importar el componente
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
-  Icon: ({ name, size, className }: any) => (
+// Mock @maatwork/ui antes de importar el componente
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  Icon: ({ name, className }: { name: string; className?: string }) => (
     <span className={className} data-icon={name}>
       {name}
     </span>
   ),
-  Heading: ({ children, level, size, className }: any) => <h3 className={className}>{children}</h3>,
-  Text: ({ children, size, color, className }: any) => (
+  Heading: ({ children, className }: { children: React.ReactNode; className?: string }) => <h3 className={className}>{children}</h3>,
+  Text: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <span className={className}>{children}</span>
   ),
-  Stack: ({ children, direction, gap, align }: any) => <div>{children}</div>,
-  Grid: ({ children, cols, gap }: any) => <div>{children}</div>,
-  GridItem: ({ children }: any) => <div>{children}</div>,
+  Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Grid: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  GridItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 import { QuickNavCards } from './QuickNavCards';
@@ -77,7 +79,7 @@ describe('QuickNavCards', () => {
   it('debería tener descripciones para cada card', () => {
     render(<QuickNavCards />);
 
-    expect(screen.getByText('Gestiona tu red de clientes')).toBeInTheDocument();
+    expect(screen.getByText('Gestiona tu red de clientes y prospectos')).toBeInTheDocument();
     expect(screen.getByText('Analiza el rendimiento de tus carteras')).toBeInTheDocument();
     expect(screen.getByText('Administra usuarios y permisos del sistema')).toBeInTheDocument();
     expect(screen.getByText('Crea y gestiona equipos de trabajo')).toBeInTheDocument();

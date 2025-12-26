@@ -12,8 +12,8 @@
  */
 
 import { getSlowQueries, getPerformanceSummary, type SlowQuery } from '../utils/pg-stat-statements';
-import { db } from '@cactus/db';
-import { notifications } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { notifications } from '@maatwork/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import pino from 'pino';
 

@@ -5,6 +5,9 @@
  * Justificación: Validar renderizado y apertura de N8N
  * Impacto: Prevenir errores en acceso a automatizaciones
  */
+import { useRequireAuth } from '../auth/useRequireAuth';
+import { usePageTitle } from '../components/PageTitleContext';
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -31,6 +34,10 @@ vi.mock('./components/WelcomeEmailCard', () => ({
   default: () => <div>WelcomeEmailCard Component</div>,
 }));
 
+vi.mock('./components/SecondMeetingCard', () => ({
+  default: () => <div>SecondMeetingCard Component</div>,
+}));
+
 describe('AutomationsPage', () => {
   const mockUseRequireAuth = vi.fn();
   const originalOpen = window.open;
@@ -39,8 +46,7 @@ describe('AutomationsPage', () => {
     vi.clearAllMocks();
     window.open = vi.fn();
 
-    const { useRequireAuth } = require('../auth/useRequireAuth');
-    mockUseRequireAuth.mockReturnValue({
+        mockUseRequireAuth.mockReturnValue({
       loading: false,
     });
     useRequireAuth.mockImplementation(mockUseRequireAuth);
@@ -53,7 +59,7 @@ describe('AutomationsPage', () => {
   it('debería renderizar página de automatizaciones', () => {
     render(<AutomationsPage />);
 
-    expect(screen.getByText(/Automatizaciones/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /^Automatizaciones$/i })).toBeInTheDocument();
     expect(screen.getByText(/WelcomeEmailCard Component/i)).toBeInTheDocument();
   });
 
@@ -68,8 +74,7 @@ describe('AutomationsPage', () => {
   });
 
   it('debería llamar usePageTitle con título correcto', () => {
-    const { usePageTitle } = require('../components/PageTitleContext');
-
+    
     render(<AutomationsPage />);
 
     expect(usePageTitle).toHaveBeenCalledWith('Automatizaciones');

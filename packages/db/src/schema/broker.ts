@@ -101,6 +101,10 @@ export const brokerAccounts = pgTable(
   },
   (table) => ({
     brokerAccountUnique: uniqueIndex('broker_accounts_unique').on(table.broker, table.accountNumber),
+    // AI_DECISION: Add index for soft-delete filtering
+    // Justificación: Optimiza queries que filtran cuentas de broker activas
+    // Impacto: Faster queries for broker accounts
+    brokerAccountsDeletedAtIdx: index('idx_broker_accounts_deleted_at').on(table.deletedAt),
     // AI_DECISION: Add index for contact + status + deletedAt queries
     // Justificación: Contact detail page carga broker accounts filtradas por contacto
     // Impacto: Faster broker accounts loading in contact detail page
@@ -214,6 +218,11 @@ export const brokerPositions = pgTable(
     )
   })
 );
+
+
+
+
+
 
 
 

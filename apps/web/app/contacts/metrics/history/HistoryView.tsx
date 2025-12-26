@@ -17,8 +17,8 @@ import {
   Alert,
   Icon,
   DataTable,
-} from '@cactus/ui';
-import type { Column } from '@cactus/ui';
+} from '@maatwork/ui';
+import type { Column } from '@maatwork/ui';
 
 const MONTH_NAMES = [
   'Enero',

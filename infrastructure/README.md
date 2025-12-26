@@ -1,6 +1,6 @@
 # Cactus Infrastructure
 
-Infraestructura como código (IaC) para Cactus CRM usando **Terraform** con soporte para AWS y Cloudflare.
+Infraestructura como código (IaC) para MaatWork usando **Terraform** con soporte para AWS y Cloudflare.
 
 ## Arquitectura
 
@@ -89,11 +89,11 @@ infrastructure/
 
 ```bash
 # Crear bucket S3 para el estado
-aws s3 mb s3://cactus-terraform-state --region us-east-1
+aws s3 mb s3://maatwork-terraform-state --region us-east-1
 
 # Crear tabla DynamoDB para bloqueo
 aws dynamodb create-table \
-  --table-name cactus-terraform-locks \
+  --table-name maatwork-terraform-locks \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST \
@@ -137,7 +137,7 @@ Los logs se gestionan de forma económica:
 pm2 logs
 
 # Ver logs de un servicio específico
-pm2 logs cactus-api
+pm2 logs maatwork-api
 ```
 
 ## Mantenimiento

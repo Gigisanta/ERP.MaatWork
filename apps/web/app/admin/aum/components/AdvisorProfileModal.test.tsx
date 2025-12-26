@@ -5,7 +5,7 @@ import type { AumRow } from '@/types';
 
 const mockGetUserById = vi.fn();
 
-vi.mock('@cactus/ui', () => ({
+vi.mock('@maatwork/ui', () => ({
   __esModule: true,
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Button: ({

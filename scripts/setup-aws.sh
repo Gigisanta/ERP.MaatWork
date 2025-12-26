@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Función para configurar una cuenta AWS
 configure_account() {
     local env_name=$1
-    local profile_name="cactus-$env_name"
+    local profile_name="maatwork-$env_name"
     
     echo -e "${BLUE}📋 Configurando cuenta ${env_name}...${NC}"
     echo ""
@@ -36,14 +36,14 @@ configure_account() {
     echo -e "${GREEN}Región: $REGION${NC}"
     
     # Guardar en archivo temporal
-    echo "AWS_ACCOUNT_ID_${env_name^^}=$ACCOUNT_ID" >> /tmp/cactus_aws_config.env
-    echo "AWS_REGION_${env_name^^}=$REGION" >> /tmp/cactus_aws_config.env
+    echo "AWS_ACCOUNT_ID_${env_name^^}=$ACCOUNT_ID" >> /tmp/maatwork_aws_config.env
+    echo "AWS_REGION_${env_name^^}=$REGION" >> /tmp/maatwork_aws_config.env
     
     echo ""
 }
 
 # Limpiar archivo temporal anterior
-rm -f /tmp/cactus_aws_config.env
+rm -f /tmp/maatwork_aws_config.env
 
 echo -e "${YELLOW}¿Deseas configurar la cuenta DEV? (y/n):${NC} "
 read -r setup_dev
@@ -68,8 +68,8 @@ echo -e "${BLUE}📝 Valores para GitHub Secrets${NC}"
 echo "=================================="
 echo ""
 
-if [ -f /tmp/cactus_aws_config.env ]; then
-    cat /tmp/cactus_aws_config.env
+if [ -f /tmp/maatwork_aws_config.env ]; then
+    cat /tmp/maatwork_aws_config.env
     echo ""
 fi
 
@@ -86,7 +86,7 @@ echo "Para PROD:"
 echo "  - AWS_ACCOUNT_ID_PROD"
 echo "  - AWS_ACCESS_KEY_ID_PROD"
 echo "  - AWS_SECRET_ACCESS_KEY_PROD"
-echo "  - PROD_API_URL (ejemplo: http://cactus-prod-alb-123456789.us-east-1.elb.amazonaws.com)"
+echo "  - PROD_API_URL (ejemplo: http://maatwork-prod-alb-123456789.us-east-1.elb.amazonaws.com)"
 echo ""
 echo "=================================="
 echo -e "${BLUE}🔧 Próximos pasos${NC}"
@@ -96,22 +96,22 @@ echo "1. Crear IAM users con permisos de deployment:"
 echo "   - ECS, ECR, CloudFormation, RDS, VPC, CloudWatch"
 echo ""
 echo "2. Bootstrap CDK en ambas cuentas:"
-echo "   export AWS_PROFILE=cactus-dev"
+echo "   export AWS_PROFILE=maatwork-dev"
 echo "   cd infrastructure/cdk"
 echo "   pnpm cdk bootstrap"
 echo ""
-echo "   export AWS_PROFILE=cactus-prod"
+echo "   export AWS_PROFILE=maatwork-prod"
 echo "   pnpm cdk bootstrap"
 echo ""
 echo "3. Deploy infraestructura inicial:"
-echo "   export AWS_PROFILE=cactus-dev"
+echo "   export AWS_PROFILE=maatwork-dev"
 echo "   pnpm cdk deploy --all --context env=dev"
 echo ""
-echo "   export AWS_PROFILE=cactus-prod"
+echo "   export AWS_PROFILE=maatwork-prod"
 echo "   pnpm cdk deploy --all --context env=prod"
 echo ""
 echo "4. Configurar billing alerts en AWS Console para ambas cuentas"
 echo ""
 
 # Limpiar archivo temporal
-rm -f /tmp/cactus_aws_config.env
+rm -f /tmp/maatwork_aws_config.env

@@ -10,16 +10,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AUM Rows Workflow', () => {
   test.beforeEach(async ({ page }) => {
-    // Login como admin
-    await page.goto('/login');
-    await page.fill('input[name="email"]', 'admin@cactus.com');
-    await page.fill('input[name="password"]', 'admin123');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect
-    await page.waitForURL('/admin');
-
-    // Navigate to AUM rows page
+    // Navigate directly to AUM rows page (already logged in)
     await page.goto('/admin/aum/rows');
     await page.waitForLoadState('networkidle');
   });

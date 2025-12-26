@@ -1,15 +1,15 @@
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   portfolioTemplateLines,
   clientPortfolioAssignments,
   instruments,
   lookupAssetClass,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { canAccessContact } from '../auth/authorization';
 import type { UserRole } from '../auth/types';
 
-export interface PortfolioLine {
+interface PortfolioLine {
   id: string;
   targetType: string;
   assetClass: string | null;
@@ -20,7 +20,7 @@ export interface PortfolioLine {
   assetClassName: string | null;
 }
 
-export interface GetPortfolioLinesOptions {
+interface GetPortfolioLinesOptions {
   includeMetadata?: boolean;
 }
 
@@ -64,7 +64,7 @@ export async function getPortfolioTemplateLines(
   return query;
 }
 
-export interface AssignmentWithContact {
+interface AssignmentWithContact {
   id: string;
   contactId: string;
   templateId: string;

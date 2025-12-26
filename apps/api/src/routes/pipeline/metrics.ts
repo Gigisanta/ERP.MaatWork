@@ -5,13 +5,13 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, pipelineStages, contacts, pipelineStageHistory } from '@maatwork/db';
 import { eq, and, isNull, sql, count, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
-import { dateSchema } from '../../utils/validation/common-schemas';
+import { dateSchema, uuidSchema } from '../../utils/validation/common-schemas';
 import { pipelineMetricsCacheUtil, normalizeCacheKey } from '../../utils/performance/cache';
 
 const router = Router();
@@ -25,8 +25,8 @@ type PipelineStage = InferSelectModel<typeof pipelineStages>;
 const metricsQuerySchema = z.object({
   fromDate: dateSchema.optional(),
   toDate: dateSchema.optional(),
-  assignedAdvisorId: z.string().uuid().optional(),
-  assignedTeamId: z.string().uuid().optional(),
+  assignedAdvisorId: uuidSchema.optional(),
+  assignedTeamId: uuidSchema.optional(),
 });
 
 const metricsExportQuerySchema = z.object({

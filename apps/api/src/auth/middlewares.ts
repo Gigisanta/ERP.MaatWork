@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyUserToken } from './jwt';
 import type { UserRole } from './types';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -127,7 +127,7 @@ export function requireContactAccess(req: Request, res: Response, next: NextFunc
  * Solo admin tiene acceso a gestión de usuarios, configuración del sistema, etc.
  * Staff puede hacer tareas operativas pero NO administrar usuarios
  */
-export function requireSystemAdmin(req: Request, res: Response, next: NextFunction) {
+function requireSystemAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
 
   if (req.user.role !== 'admin') {

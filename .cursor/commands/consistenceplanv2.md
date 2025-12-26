@@ -1,80 +1,90 @@
 <role>
-Eres un ingeniero senior experto en monorepos TypeScript con pnpm workspaces, Next.js/App Router, Zod validation, Pino logging y patrones de API limpios. Priorizas código profesional: DRY, SOLID, escalable, sin dead code/duplicados, con logging consistente y rutas estandarizadas. Sé conservador: verifica exhaustivamente antes de eliminar/modificar.
+Eres un Arquitecto de Software Senior y experto en DevOps especializado en Monorepos TypeScript, pnpm workspaces, Next.js (App Router), Zod, y patrones de diseño SOLID. Tu estándar de calidad es obsesivo: buscas código "Production-Ready", DRY, escalable y completamente tipado.
 </role>
 
 <objective>
-Audita y optimiza TODO el repositorio para máxima consistencia, limpieza y preparación para producción. Enfócate en:
-- Eliminar código muerto/duplicado/no usado (exports, deps, archivos, TODOs obsoletos).
-- Estandarizar patrones: rutas API (validate + createRouteHandler), logging (req.log / logger.ts), validaciones (schemas centralizados), imports, naming.
-- Reemplazar console.log, export * from, try/catch manuales.
-- Asegurar typecheck, lint, tests, build pasen limpios.
+Tu objetivo es realizar una AUDITORÍA PROFUNDA del repositorio actual y generar un "MASTER PLAN" de ejecución para elevar la calidad del código, eliminar deuda técnica y estandarizar patrones.
+NO te fíes de la documentación existente; basa tus hallazgos estrictamente en la lectura actual del código.
+NO ejecutes cambios de código todavía. Tu entregable es un plan detallado.
 </objective>
 
-<instructions>
-ACTIVA PLAN MODE: Primero, analiza TODO el codebase (tree, package.jsons, src/routes, lib, utils, common-schemas.ts, etc.). Usa herramientas internas para grep, audit scripts y búsquedas.
+<tools_and_context>
+- Stack: TypeScript, pnpm workspaces, Next.js, Zod, Pino.
+- Herramientas de auditoría requeridas: `ts-prune` (para exports no usados), `husky` (verificar hooks de git), `pnpm audit`, `grep`.
+</tools_and_context>
 
-Paso a paso en el plan:
-1. Haz preguntas aclaratorias si necesitas (e.g., "¿Qué schemas centralizados existen ya?").
-2. Genera un plan detallado en Markdown con TODOs específicos y accionables (NO vagos como "clean up results").
-   - Incluye comandos exactos (pnpm audit:unused-exports, pnpm audit:deps, greps concretos).
-   - Referencias precisas a archivos/folders (e.g., "En apps/api/src/routes/user.ts: reemplaza console.log por req.log.info").
-   - Prioriza: Alta (dead code, deps, console.log, export *), Media (consolidaciones), Baja (docs/naming polish).
-   - Incluye verificación después de cada sección grande (run tests/build).
-3. Estructura el plan con secciones claras, checkboxes y Mermaid si ayuda (e.g., flow de rutas API).
-4. Al final, checklist obligatorio con todos los verifies (typecheck, lint, test, build, verify:all:no-e2e sin errores; no dead code/deps/TODOs obsoletos/console.log/export *).
+<investigation_instructions>
+Antes de generar el plan, realiza una investigación silenciosa y exhaustiva del codebase:
+1.  **Análisis de Estructura:** Mapea el árbol de directorios, `package.json` de cada workspace y configs (eslint, tsconfig).
+2.  **Detección de Código Muerto:**
+    - Identifica exports no utilizados (simula o usa `ts-prune`).
+    - Identifica dependencias no usadas en `package.json` (simula `pnpm audit:deps` o `depcheck`).
+    - Busca código comentado, archivos huérfanos y `console.log` olvidados.
+3.  **Análisis de Patrones y Consistencia:**
+    - Verifica rutas API: ¿Usan `createRouteHandler`, validación Zod y manejo de errores centralizado?
+    - Verifica Logging: ¿Se usa `pino` (backend) / `logger.ts` (frontend) o hay `console.log` dispersos?
+    - Busca duplicidad: Validaciones repetidas (email, UUID) que deberían estar en `common-schemas.ts`.
+4.  **Limpieza:** Busca `TODO`, `FIXME`, `HACK` que sean obsoletos o irrelevantes.
 
-Solo genera el PLAN. No ejecutes cambios aún. Cuando yo apruebe/edit el plan, diré "Build" o "Execute plan".
-</instructions>
+<planning_instructions>
+Una vez terminada la investigación, genera un PLAN DE EJECUCIÓN en Markdown.
+Reglas críticas para el plan:
+- **Tareas de Ejecución, NO de Auditoría:** No escribas "Revisar archivo X". Escribe "Eliminar función Y en archivo X", "Refactorizar ruta Z para usar createRouteHandler".
+- **Atomicidad:** Cada tarea debe ser clara, pequeña y verificable.
+- **Priorización:** Clasifica por impacto (Alta = Bugs/Dead Code/Seguridad, Media = Estandarización, Baja = Cleanup menor).
+- **Enfoque Conservador:** Si algo parece crítico pero no se usa, marca para verificar, no borrar directamente.
+</planning_instructions>
 
-<specific_tasks>
-Integra estas tareas concretas en el plan:
-
-FASE 1: Detección
-- Ejecutar pnpm audit:unused-exports → verificar/eliminar exports no usados en utils/, lib/, ui/src/, db/src/.
-- Ejecutar pnpm audit:deps en cada workspace → eliminar deps no usadas.
-- Grep TODO/FIXME/XXX/HACK → limpiar obsoletos.
-- Buscar duplicados: validaciones UUID/email/paginación → consolidar en common-schemas.ts.
-- Buscar console.log → backend: req.log; frontend: logger.ts.
-
-FASE 2: Consolidaciones
-- Reemplazar export * from por named exports.
-- Unificar manejo errores → createRouteHandler/createAsyncHandler + createErrorResponse/ApiError.
-- Mover validaciones custom legítimas a common-schemas.ts.
-
-FASE 3: Estandarización
-- Rutas API: patrón con Zod sections, validate(), requireAuth/Role, createRouteHandler.
-- Imports: orden externo → @cactus/* → relativos; usar import type.
-- Naming: camelCase funcs, PascalCase components/tipos, UPPER_SNAKE constantes.
-- Agregar JSDoc a funcs públicas/complejas + // AI_DECISION para decisiones.
-
-FASE 4: Verificación
-- Secuencial: pnpm typecheck → lint → test → build → verify:all:no-e2e → fix hasta pasar todo.
-</specific_tasks>
+<specific_tasks_to_include>
+Asegúrate de que el plan cubra estos puntos obligatorios detectados en tu investigación:
+1.  **Limpieza (Dead Code):**
+    - Ejecutar limpieza basada en `ts-prune` para exports no usados en `utils/`, `lib/`, `ui/`, `db/`.
+    - Eliminar dependencias basura detectadas.
+    - Limpiar `TODO`s inútiles.
+2.  **Estandarización:**
+    - Reemplazar `export *` por named exports explícitos (tree-shaking).
+    - Unificar manejo de errores (`createAsyncHandler`/`ApiError`).
+    - Centralizar esquemas Zod en `common-schemas.ts`.
+    - Estandarizar imports: Orden (Externos -> Internos -> Relativos) y uso de `import type`.
+3.  **Logging & Observabilidad:**
+    - Reemplazo total de `console.log` por `req.log` (API) o `logger.ts` (Cliente).
+4.  **Calidad:**
+    - JSDoc para funciones complejas.
+    - Asegurar que `husky` esté configurado para prevenir commits con código roto.
 
 <output_format>
-## Análisis Inicial del Codebase
-[Resumen de findings clave]
+Genera la respuesta con esta estructura exacta:
 
-## Preguntas Aclaratorias (si aplica)
-- ...
+## 1. Reporte de Auditoría (Hallazgos)
+*Resumen breve de lo que encontraste (patrones rotos, cantidad de código muerto, estado de los tests).*
 
-## Plan Detallado de Optimización
-### Alta Prioridad
-- [ ] Tarea específica con archivo/comando...
+## 2. Plan de Ejecución Priorizado
 
-### Media Prioridad
-...
+### 🔴 Prioridad Alta (Crítico / Limpieza Masiva)
+- [ ] **[Scope: Dead Code]** Ejecutar `ts-prune` y eliminar exports no usados en: `[lista de archivos específicos]`.
+- [ ] **[Scope: Deps]** Desinstalar dependencias no usadas: `[lista de paquetes]`.
+- [ ] **[Scope: API]** Refactorizar rutas críticas `[rutas]` para usar `createRouteHandler` y Zod.
 
-### Baja Prioridad
-...
+### 🟡 Prioridad Media (Estandarización / Optimización)
+- [ ] **[Scope: Refactor]** Mover validaciones duplicadas a `common-schemas.ts`.
+- [ ] **[Scope: Logging]** Reemplazar `console.log` por logger estructurado en `[directorios]`.
+- [ ] **[Scope: Imports]** Corregir barrel exports (`export *`) en `[archivos]`.
 
-## Checklist Final Obligatorio
-- [ ] pnpm typecheck pasa
-- [ ] No dead code/exports/deps
-- ... (todos los checks)
+### 🟢 Prioridad Baja (Documentación / Polish)
+- [ ] **[Scope: Docs]** Agregar JSDoc en utilidades core `[archivos]`.
+- [ ] **[Scope: Cleanup]** Eliminar comentarios `TODO` obsoletos identificados en la auditoría.
 
-## Mermaid (opcional)
-```mermaid
-...
+## 3. Estrategia de Verificación
+*Define los comandos exactos para asegurar que no hubo regresiones:*
+1. `pnpm typecheck`
+2. `pnpm lint`
+3. `pnpm audit:code`
+3. `pnpm test`
+4. `pnpm build`
+5. `pnpm verify:all:no-e2e`
+
+## 4. Preguntas de Confirmación (Si aplica)
+*Si encontraste ambigüedades durante la investigación, pregúntalas aquí antes de que yo apruebe el plan.*
 </output_format>
-Analiza el repo y genera el plan ahora.
+
+COMIENZA AHORA EL MODO DE ANÁLISIS. NO GENERES CÓDIGO AÚN, SOLO EL REPORTE Y EL PLAN.

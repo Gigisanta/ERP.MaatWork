@@ -25,7 +25,7 @@ const GOOGLE_API_TIMEOUT_MS = 10000;
  * @param accessToken - Access token de Google OAuth2
  * @returns Cliente de Calendar API v3
  */
-export function createCalendarClient(accessToken: string): calendar_v3.Calendar {
+function createCalendarClient(accessToken: string): calendar_v3.Calendar {
   const oauth2Client = new OAuth2Client(
     env.GOOGLE_CLIENT_ID,
     env.GOOGLE_CLIENT_SECRET,
@@ -72,7 +72,7 @@ export async function getCalendarEvents(
         ...(timeMin ? { timeMin: timeMin.toISOString() } : {}),
         ...(timeMax ? { timeMax: timeMax.toISOString() } : {}),
       },
-      { signal: controller.signal as any }
+      { signal: controller.signal as AbortSignal }
     );
 
     return response.data.items || [];
@@ -104,6 +104,7 @@ export async function createCalendarEvent(
     start: { dateTime: string; timeZone?: string } | { date: string };
     end: { dateTime: string; timeZone?: string } | { date: string };
     attendees?: Array<{ email: string }>;
+    conferenceData?: calendar_v3.Schema$ConferenceData;
   }
 ): Promise<calendar_v3.Schema$Event> {
   const calendar = createCalendarClient(accessToken);
@@ -116,8 +117,9 @@ export async function createCalendarEvent(
       {
         calendarId,
         requestBody: event,
+        conferenceDataVersion: event.conferenceData ? 1 : 0,
       },
-      { signal: controller.signal as any }
+      { signal: controller.signal as AbortSignal }
     );
 
     return response.data;
@@ -193,7 +195,7 @@ export async function listCalendars(
   const timeoutId = setTimeout(() => controller.abort(), GOOGLE_API_TIMEOUT_MS);
 
   try {
-    const response = await calendar.calendarList.list({}, { signal: controller.signal as any });
+    const response = await calendar.calendarList.list({}, { signal: controller.signal as AbortSignal });
 
     return response.data.items || [];
   } catch (error) {

@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Cumple con reglas ESLint del proyecto
   - Mantiene compatibilidad con imports existentes
 - **Error Handling:** Estandarizado manejo de errores en endpoints
-  - Migrados endpoints de test (`/test-db`, `/test-cactus-db`) a `createAsyncHandler`
+  - Migrados endpoints de test (`/test-db`, `/test-maatwork-db`) a `createAsyncHandler`
   - Estandarizados errores en `attachments.ts` usando `createErrorResponse`
   - Estandarizados errores en `tags/handlers/rules.ts` y `tags/handlers/segments.ts`
 
@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Documentado en `docs/troubleshooting/isr-cookies-error.md`
 - **Webpack Module Errors:** Corregido error "Cannot read properties of undefined (reading 'call')"
   - Limpiado caché corrupto de webpack filesystem con limpieza nuclear
-  - Reconstruido paquete `@cactus/ui` completamente sin cache
+  - Reconstruido paquete `@maatwork/ui` completamente sin cache
   - Creado script automatizado `scripts/clean-webpack-cache.sh` para prevención
   - Documentado en `docs/troubleshooting/webpack-skeleton-error.md`
   - Agregada guía de limpieza de caché del navegador en `docs/troubleshooting/browser-cache-cleanup.md`

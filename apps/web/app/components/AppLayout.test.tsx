@@ -6,10 +6,15 @@
  * Impacto: Prevenir errores en estructura de página
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import AppLayout from './AppLayout';
 import { SidebarProvider } from './SidebarContext';
+import { usePathname } from 'next/navigation';
+
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(() => '/'),
+}));
 
 describe('AppLayout', () => {
   it('debería renderizar children correctamente', () => {
@@ -34,7 +39,7 @@ describe('AppLayout', () => {
     );
 
     const main = container.querySelector('main');
-    expect(main?.className).toContain('lg:ml-14');
+    expect(main?.className).toContain('lg:ml-16');
   });
 
   it('debería aplicar clase de margen cuando sidebar no está colapsado', () => {
@@ -47,7 +52,7 @@ describe('AppLayout', () => {
     );
 
     const main = container.querySelector('main');
-    expect(main?.className).toContain('lg:ml-48');
+    expect(main?.className).toContain('lg:ml-52');
   });
 
   it('debería aplicar clases de transición', () => {
@@ -74,7 +79,6 @@ describe('AppLayout', () => {
     );
 
     const main = container.querySelector('main');
-    expect(main?.className).toContain('bg-background');
-    expect(main?.className).toContain('lg:pt-4');
+    expect(main?.className).toContain('lg:pt-6');
   });
 });

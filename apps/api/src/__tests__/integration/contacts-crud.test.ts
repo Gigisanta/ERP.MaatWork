@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '@cactus/db';
-import { contacts } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { contacts } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
 import { createTestUser, deleteTestUser } from '../../helpers/test-auth';
 import { createTestContact, cleanupTestFixtures } from '../../helpers/test-fixtures';

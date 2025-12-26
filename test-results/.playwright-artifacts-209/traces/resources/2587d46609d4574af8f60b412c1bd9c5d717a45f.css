@@ -1,0 +1,906 @@
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ../../node_modules/.pnpm/next@15.5.9_@babel+core@7.28.5_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_react-dom@19._xjdl6qkngcbhoegccmj3q5zgbe/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!../../node_modules/.pnpm/next@15.5.9_@babel+core@7.28.5_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_react-dom@19._xjdl6qkngcbhoegccmj3q5zgbe/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!../../packages/ui/dist/styles/animations.css ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/* =============================================================================
+   MaatWork Design System v2.3.0 - Animation Utilities (Clean & Fluid)
+   Physics-based springs, exquisite interactions, and smooth entries
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Physics-based Spring Keyframes
+   ----------------------------------------------------------------------------- */
+
+/* Spring Scale - Smooth pop effect */
+@keyframes springScale {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Spring Slide Up - Fresh entry */
+@keyframes springSlideUp {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Subtle Pop - For badges and small elements */
+@keyframes subtlePop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Standard Keyframes
+   ----------------------------------------------------------------------------- */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Interaction Animations
+   ----------------------------------------------------------------------------- */
+
+/* Soft Pulse - Breathing effect */
+@keyframes pulseSoft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Glow Pulse - For highlights - Light Mode */
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(139, 92, 246, 0);
+  }
+}
+
+/* Glow Pulse - Dark Mode Enhanced (Brighter/More Visible) */
+@keyframes pulseGlowDark {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(167, 139, 250, 0);
+  }
+}
+
+/* Float - Gentle levitation */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Shimmer - Modern loading skeleton */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Animation Utility Classes
+   ----------------------------------------------------------------------------- */
+
+/* Entry Animations with Spring Physics */
+.animate-enter {
+  animation: springSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-pop {
+  animation: springScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Standard Fades with Spring Feel */
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: opacity;
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+.animate-fade-in-down {
+  animation: fadeInDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Continuous Animations */
+.animate-pulse {
+  animation: pulseSoft 2s ease-in-out infinite;
+  will-change: opacity;
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Skeleton Shimmer - Adaptive for Dark Mode */
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+  will-change: background-position;
+}
+
+/* Dark Mode Shimmer adjustment */
+.dark .animate-shimmer,
+[data-theme='dark'] .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* -----------------------------------------------------------------------------
+   Transition Utilities (Smooth interactions)
+   ----------------------------------------------------------------------------- */
+
+.transition-all-smooth {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity, box-shadow, background-color, color, border-color;
+}
+.transition-transform-spring {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+.transition-colors {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  will-change: color, background-color, border-color, box-shadow;
+}
+
+/* -----------------------------------------------------------------------------
+   Hover Effects (Exquisite)
+   ----------------------------------------------------------------------------- */
+
+/* Modern Lift - Subtle and smooth */
+.hover-lift {
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow;
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode lift shadow adjustment */
+.dark .hover-lift:hover,
+[data-theme='dark'] .hover-lift:hover {
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* Glow Lift - For primary actions */
+.hover-glow {
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, box-shadow;
+}
+.hover-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -4px rgba(139, 92, 246, 0.25);
+}
+
+/* Dark mode glow adjustment */
+.dark .hover-glow:hover,
+[data-theme='dark'] .hover-glow:hover {
+  box-shadow: 0 10px 30px -4px rgba(167, 139, 250, 0.35);
+}
+
+/* Scale - Playful feedback */
+.hover-scale {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+/* Active Press - Tactile feedback */
+.active-press:active {
+  transform: scale(0.98);
+}
+
+/* -----------------------------------------------------------------------------
+   Stagger Delays
+   ----------------------------------------------------------------------------- */
+
+.delay-0 {
+  animation-delay: 0ms;
+}
+.delay-75 {
+  animation-delay: 75ms;
+}
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-150 {
+  animation-delay: 150ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+.delay-500 {
+  animation-delay: 500ms;
+}
+.delay-700 {
+  animation-delay: 700ms;
+}
+
+.stagger-item {
+  opacity: 0;
+} /* Start hidden for staggered lists */
+
+/* -----------------------------------------------------------------------------
+   Reduced Motion
+   ----------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ../../node_modules/.pnpm/next@15.5.9_@babel+core@7.28.5_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_react-dom@19._xjdl6qkngcbhoegccmj3q5zgbe/node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[2]!../../node_modules/.pnpm/next@15.5.9_@babel+core@7.28.5_@opentelemetry+api@1.9.0_@playwright+test@1.57.0_react-dom@19._xjdl6qkngcbhoegccmj3q5zgbe/node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[10].use[3]!../../packages/ui/dist/styles/index.css ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/* =============================================================================
+   MaatWork Design System v2.3.0 - Base Styles (Refined & Readable)
+   Typography: Outfit (Display) + Plus Jakarta Sans (Body)
+   Colors: Primary (Soft Purple), Secondary (Warm Stone), Accent (Soft Green), Joy (Sunshine)
+   ============================================================================= */
+
+/* Import animation utilities */
+
+/* -----------------------------------------------------------------------------
+   CSS Custom Properties (Design Tokens)
+   ----------------------------------------------------------------------------- */
+:root {
+  /* Brand Colors - Primary (Soft Purple) */
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-primary-active: #6d28d9;
+  --color-primary-light: #a78bfa;
+  --color-primary-subtle: #f5f3ff;
+
+  /* Brand Colors - Secondary (Warm Stone/Black) */
+  --color-secondary: #1c1917;
+  --color-secondary-hover: #292524;
+  --color-secondary-light: #44403c;
+  --color-secondary-subtle: #fafaf9;
+
+  /* Brand Colors - Accent (Soft Green) */
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-light: #34d399;
+  --color-accent-subtle: #ecfdf5;
+
+  /* Brand Colors - Joy (Sunshine/Gold) */
+  --color-joy: #f59e0b;
+  --color-joy-hover: #d97706;
+  --color-joy-light: #fbbf24;
+  --color-joy-subtle: #fffbeb;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-success-hover: #16a34a;
+  --color-success-subtle: #f0fdf4;
+
+  --color-warning: #f97316;
+  --color-warning-hover: #ea580c;
+  --color-warning-subtle: #fff7ed;
+
+  --color-error: #ef4444;
+  --color-error-hover: #dc2626;
+  --color-error-subtle: #fef2f2;
+
+  --color-info: #3b82f6;
+  --color-info-hover: #2563eb;
+  --color-info-subtle: #eff6ff;
+
+  /* Surface Colors - Creamy & Warm */
+  --color-background: #fdfcf8;
+  --color-surface: #fafaf9;
+  --color-surface-hover: #f5f5f4;
+
+  /* Border Colors */
+  --color-border: #e7e5e4;
+  --color-border-hover: #d6d3d1;
+
+  /* Text Colors */
+  --color-text: #1c1917;
+  --color-text-secondary: #44403c;
+  --color-text-muted: #78716c;
+  --color-text-inverse: #ffffff;
+
+  /* Chart Colors */
+  --color-chart-1: #8b5cf6;
+  --color-chart-2: #10b981;
+  --color-chart-3: #f59e0b;
+  --color-chart-4: #ef4444;
+  --color-chart-5: #3b82f6;
+  --color-chart-6: #ec4899;
+
+  /* Shadows - Layered & Diffused (Cool Gray Base) */
+  --shadow-sm: 0 1px 2px 0 rgb(20 20 30 / 0.05);
+  --shadow-base: 
+    0 1px 3px 0 rgb(20 20 30 / 0.1), 
+    0 1px 2px -1px rgb(20 20 30 / 0.1);
+  --shadow-md: 
+    0 4px 6px -1px rgb(20 20 30 / 0.07), 
+    0 2px 4px -2px rgb(20 20 30 / 0.07);
+  --shadow-lg: 
+    0 10px 15px -3px rgb(20 20 30 / 0.08), 
+    0 4px 6px -4px rgb(20 20 30 / 0.08);
+  --shadow-xl: 
+    0 20px 25px -5px rgb(20 20 30 / 0.08), 
+    0 8px 10px -6px rgb(20 20 30 / 0.08);
+  --shadow-primary:
+    0 10px 30px -4px rgba(139, 92, 246, 0.2), 
+    0 6px 14px -4px rgba(139, 92, 246, 0.15);
+
+  /* Border Radius - Modern & Round */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-base: 300ms;
+  --transition-slow: 500ms;
+
+  /* Typography Fonts */
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Dark Mode - "Warm Dark" Stone 950 Base */
+.dark,
+[data-theme='dark'] {
+  --color-primary: #a78bfa;
+  --color-primary-hover: #c4b5fd;
+  --color-primary-active: #ddd6fe;
+  --color-primary-light: #8b5cf6;
+  --color-primary-subtle: #2e1065;
+
+  --color-secondary: #fafaf9;
+  --color-secondary-hover: #f5f5f4;
+  --color-secondary-light: #d6d3d1;
+  --color-secondary-subtle: #292524;
+
+  --color-accent: #34d399;
+  --color-accent-hover: #6ee7b7;
+  --color-accent-light: #10b981;
+  --color-accent-subtle: #064e3b;
+
+  --color-joy: #fbbf24;
+  --color-joy-hover: #fcd34d;
+  --color-joy-light: #f59e0b;
+  --color-joy-subtle: #451a03;
+
+  --color-success: #4ade80;
+  --color-success-hover: #86efac;
+  --color-success-subtle: #14532d;
+
+  --color-warning: #fb923c;
+  --color-warning-hover: #fdba74;
+  --color-warning-subtle: #431407;
+
+  --color-error: #f87171;
+  --color-error-hover: #fca5a5;
+  --color-error-subtle: #450a0a;
+
+  --color-info: #60a5fa;
+  --color-info-hover: #93c5fd;
+  --color-info-subtle: #172554;
+
+  /* Warm Dark Surfaces */
+  --color-background: #0c0a09; /* Stone 950 */
+  --color-surface: #1c1917; /* Stone 900 */
+  --color-surface-hover: #292524; /* Stone 800 */
+
+  --color-border: #292524; /* Stone 800 - Subtle border */
+  --color-border-hover: #44403c; /* Stone 700 */
+
+  /* High Contrast Warm Text */
+  --color-text: #fafaf9; /* Stone 50 */
+  --color-text-secondary: #a8a29e; /* Stone 400 */
+  --color-text-muted: #57534e; /* Stone 600 */
+  --color-text-inverse: #1c1917;
+
+  /* Deep Dark Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 16px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
+  --shadow-primary:
+    0 10px 30px -4px rgba(167, 139, 250, 0.25), 
+    0 6px 14px -4px rgba(167, 139, 250, 0.15);
+}
+
+/* -----------------------------------------------------------------------------
+   Base Button Styles
+   ----------------------------------------------------------------------------- */
+.maatwork-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  transition: all var(--transition-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.maatwork-button:active {
+  transform: scale(0.98);
+}
+
+.maatwork-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.maatwork-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.maatwork-button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-primary);
+}
+
+.maatwork-button-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  box-shadow:
+    0 15px 35px -5px rgba(139, 92, 246, 0.4),
+    0 8px 16px -5px rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Dark mode button adjustments */
+.dark .maatwork-button-primary:hover:not(:disabled),
+[data-theme='dark'] .maatwork-button-primary:hover:not(:disabled) {
+  box-shadow:
+    0 15px 35px -5px rgba(167, 139, 250, 0.35),
+    0 8px 16px -5px rgba(167, 139, 250, 0.25);
+}
+
+.maatwork-button-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-text-inverse);
+}
+
+.maatwork-button-secondary:hover:not(:disabled) {
+  background-color: var(--color-secondary-hover);
+  transform: translateY(-1px);
+}
+
+.maatwork-button-accent {
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  box-shadow:
+    0 10px 30px -4px rgba(16, 185, 129, 0.2),
+    0 6px 14px -4px rgba(16, 185, 129, 0.15);
+}
+
+.maatwork-button-accent:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-2px);
+}
+
+.maatwork-button-joy {
+  background-color: var(--color-joy);
+  color: var(--color-text-inverse);
+  box-shadow:
+    0 10px 30px -4px rgba(245, 158, 11, 0.2),
+    0 6px 14px -4px rgba(245, 158, 11, 0.15);
+}
+
+.maatwork-button-joy:hover:not(:disabled) {
+  background-color: var(--color-joy-hover);
+  transform: translateY(-2px);
+}
+
+.maatwork-button-outline {
+  background-color: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.maatwork-button-outline:hover:not(:disabled) {
+  background-color: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.maatwork-button-ghost {
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+.maatwork-button-ghost:hover:not(:disabled) {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+/* -----------------------------------------------------------------------------
+   Card Styles (Exquisite Glass)
+   ----------------------------------------------------------------------------- */
+.maatwork-card {
+  background-color: var(--color-background);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  padding: 1.5rem;
+}
+
+/* Dark Mode Card Adjustments */
+.dark .maatwork-card,
+[data-theme='dark'] .maatwork-card {
+  background-color: rgba(28, 25, 23, 0.6); /* Semi-transparent dark stone */
+  backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.maatwork-card-elevated {
+  box-shadow: var(--shadow-md);
+  border: none;
+}
+
+.maatwork-card-interactive {
+  transition: all var(--transition-base) cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.maatwork-card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+  border-color: var(--color-primary-subtle);
+}
+
+.dark .maatwork-card-interactive:hover,
+[data-theme='dark'] .maatwork-card-interactive:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* -----------------------------------------------------------------------------
+   Input Styles (Modern & Clear)
+   ----------------------------------------------------------------------------- */
+.maatwork-input {
+  width: 100%;
+  padding: 0.75rem 1rem; /* Larger touch target */
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.9375rem; /* Larger font (15px) */
+  line-height: 1.5;
+  outline: none;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.maatwork-input::-moz-placeholder {
+  color: var(--color-text-muted);
+}
+
+.maatwork-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.maatwork-input:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.maatwork-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-subtle); /* Thicker ring */
+  background-color: var(--color-background);
+}
+
+/* Dark mode input focus ring opacity */
+.dark .maatwork-input:focus,
+[data-theme='dark'] .maatwork-input:focus {
+  box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.2);
+  background-color: var(--color-surface-hover);
+}
+
+.maatwork-input:disabled {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.maatwork-input-error {
+  border-color: var(--color-error);
+}
+
+.maatwork-input-error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 4px var(--color-error-subtle);
+}
+
+/* -----------------------------------------------------------------------------
+   Label Styles
+   ----------------------------------------------------------------------------- */
+.maatwork-label {
+  display: block;
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600; /* Bolder labels */
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.maatwork-label-required::after {
+  content: ' *';
+  color: var(--color-error);
+}
+
+/* -----------------------------------------------------------------------------
+   Badge Styles
+   ----------------------------------------------------------------------------- */
+.maatwork-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem; /* More padding */
+  border-radius: var(--radius-full);
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.maatwork-badge-primary {
+  background-color: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.maatwork-badge-secondary {
+  background-color: var(--color-secondary-subtle);
+  color: var(--color-secondary);
+}
+
+.maatwork-badge-accent {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.maatwork-badge-joy {
+  background-color: var(--color-joy-subtle);
+  color: var(--color-joy);
+}
+
+.maatwork-badge-success {
+  background-color: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.maatwork-badge-warning {
+  background-color: var(--color-warning-subtle);
+  color: var(--color-warning-hover);
+}
+
+.maatwork-badge-error {
+  background-color: var(--color-error-subtle);
+  color: var(--color-error);
+}
+
+/* -----------------------------------------------------------------------------
+   Utility Classes
+   ----------------------------------------------------------------------------- */
+.font-display {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Heading utilities with Outfit */
+.heading-display {
+  font-family: var(--font-display), 'Outfit', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em; /* Tighter tracking for headings */
+  color: var(--color-text);
+}
+
+.heading-display-xl {
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.heading-display-lg {
+  font-size: 2.25rem;
+  line-height: 1.2;
+}
+
+.heading-display-md {
+  font-size: 1.875rem;
+  line-height: 1.25;
+}
+
+.heading-display-sm {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
+.heading-display-xs {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+/* Text utilities with Plus Jakarta Sans */
+.text-body {
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: var(--color-text);
+  line-height: 1.6; /* Increased for readability */
+}
+
+.text-body-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-body-muted {
+  color: var(--color-text-muted);
+}
+

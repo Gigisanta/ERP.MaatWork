@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, pipelineStages, contacts, pipelineStageHistory } from '@maatwork/db';
 import {
   getUserAccessScope,
   buildContactAccessFilter,
@@ -19,7 +19,7 @@ import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   pipelineStages: {},
   contacts: {},

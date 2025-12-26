@@ -20,8 +20,8 @@ alwaysApply: false
 
 **Packages:**
 
-- **@cactus/ui:** `src/**/*.test.tsx` (co-ubicados con componentes)
-- **@cactus/db:** Sin tests unit (validación vía migraciones y seeds)
+- **@maatwork/ui:** `src/**/*.test.tsx` (co-ubicados con componentes)
+- **@maatwork/db:** Sin tests unit (validación vía migraciones y seeds)
 
 ## Coverage Targets
 
@@ -119,13 +119,13 @@ vi.mock('@/lib/api', () => ({
 
 ## Reglas Específicas
 
-### @cactus/ui
+### @maatwork/ui
 
 - ✅ **Tests co-ubicados** (`Component.test.tsx` junto a `Component.tsx`)
 - ✅ **Testing Library** para queries accesibles
 - ✅ **Coverage 100%** requerido antes de merge
 
-### @cactus/db
+### @maatwork/db
 
 - ✅ **No tests unit** - Validación vía migraciones y seeds
 - ✅ **Seeds como tests** - Verifican integridad de schema

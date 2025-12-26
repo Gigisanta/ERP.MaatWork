@@ -8,13 +8,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, attachments, contacts } from '@cactus/db';
+import { db, attachments, contacts } from '@maatwork/db';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
 import multer from 'multer';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   attachments: {},
   contacts: {},

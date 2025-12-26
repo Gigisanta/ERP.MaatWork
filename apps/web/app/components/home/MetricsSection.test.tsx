@@ -7,14 +7,16 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MetricsSection } from './MetricsSection';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('./Charts/GoalsComparisonChart', () => ({
-  GoalsComparisonChart: ({ currentMonth, goals }: any) => (
+  GoalsComparisonChart: ({ currentMonth, goals }: { currentMonth: MonthlyMetrics; goals: MonthlyGoal | null }) => (
     <div data-testid="goals-chart">
       Goals Chart - Prospects: {currentMonth.newProspects}, Goal: {goals?.newProspectsGoal ?? 0}
     </div>
@@ -22,7 +24,7 @@ vi.mock('./Charts/GoalsComparisonChart', () => ({
 }));
 
 vi.mock('./Charts/BusinessLineChart', () => ({
-  BusinessLineChart: ({ businessLineClosures }: any) => (
+  BusinessLineChart: ({ businessLineClosures }: { businessLineClosures: MonthlyMetrics['businessLineClosures'] }) => (
     <div data-testid="business-line-chart">
       Business Line Chart - Inversiones: {businessLineClosures.inversiones}
     </div>
@@ -30,7 +32,7 @@ vi.mock('./Charts/BusinessLineChart', () => ({
 }));
 
 vi.mock('./Charts/TransitionTimesChart', () => ({
-  TransitionTimesChart: ({ transitionTimes }: any) => (
+  TransitionTimesChart: ({ transitionTimes }: { transitionTimes: MonthlyMetrics['transitionTimes'] }) => (
     <div data-testid="transition-times-chart">
       Transition Times Chart - Prospecto to First: {transitionTimes.prospectoToFirstMeeting ?? 0}
     </div>
@@ -38,39 +40,39 @@ vi.mock('./Charts/TransitionTimesChart', () => ({
 }));
 
 vi.mock('./MetricCard', () => ({
-  MetricCard: ({ title, actual, goal }: any) => (
+  MetricCard: ({ title, actual, goal }: { title: string; actual: number; goal: number }) => (
     <div data-testid={`metric-card-${title}`}>
       {title}: {actual} / {goal}
     </div>
   ),
 }));
 
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children }: any) => <div>{children}</div>,
-  CardHeader: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
-  Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  Alert: ({ children, variant }: any) => (
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CardHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+  CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
+  Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
     <div role="alert" data-alert-variant={variant}>
       {children}
     </div>
   ),
-  Text: ({ children, color }: any) => <span>{children}</span>,
-  Stack: ({ children, direction, gap, align, justify, className }: any) => (
+  Text: ({ children, color }: { children: React.ReactNode; color?: string }) => <span>{children}</span>,
+  Stack: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
-  Select: ({ items, value, onValueChange }: any) => (
+  Select: ({ items, value, onValueChange }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
-      {items.map((item: any) => (
+      {items.map((item) => (
         <option key={item.value} value={item.value}>
           {item.label}
         </option>
       ))}
     </select>
   ),
-  Grid: ({ children, cols, gap }: any) => <div>{children}</div>,
-  GridItem: ({ children }: any) => <div>{children}</div>,
+  Grid: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  GridItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('MetricsSection', () => {
@@ -160,7 +162,9 @@ describe('MetricsSection', () => {
     const select = screen.getByRole('combobox');
     await user.selectOptions(select, 'businessLines');
 
-    expect(screen.getByTestId('business-line-chart')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('business-line-chart')).toBeInTheDocument();
+    });
     expect(screen.queryByTestId('goals-chart')).not.toBeInTheDocument();
   });
 

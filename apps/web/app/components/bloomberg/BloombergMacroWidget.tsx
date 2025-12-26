@@ -20,7 +20,7 @@ import {
   Badge,
   Spinner,
   Alert,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getYieldSpreads } from '@/lib/api/bloomberg';
 import { useEffect } from 'react';
 

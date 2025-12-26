@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { db } from '@cactus/db';
-import { contacts } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { contacts } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('Query Performance Benchmarks', () => {

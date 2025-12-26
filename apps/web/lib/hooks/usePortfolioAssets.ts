@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 import type { Portfolio, PortfolioLine } from '@/types';
 
-export interface PortfolioAsset {
+interface PortfolioAsset {
   symbol: string;
   name?: string;
   instrumentId: string | null;

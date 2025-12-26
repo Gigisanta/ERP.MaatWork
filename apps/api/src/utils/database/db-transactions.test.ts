@@ -15,15 +15,15 @@ vi.mock('./db-logger', () => ({
   loggedTransaction: vi.fn(),
 }));
 
-// Mock de @cactus/db
-vi.mock('@cactus/db', () => ({
+// Mock de @maatwork/db
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(() => ({
     transaction: vi.fn(),
   })),
 }));
 
 import { loggedTransaction } from './db-logger';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 
 describe('transactionWithLogging', () => {
   let mockLogger: Logger;

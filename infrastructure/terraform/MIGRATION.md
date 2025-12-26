@@ -15,7 +15,7 @@ Ejecutar estos comandos para obtener los IDs de los recursos:
 ```bash
 # Configurar variables
 ENVIRONMENT="dev"  # o "prod"
-PROJECT="cactus"
+PROJECT="maatwork"
 
 # EC2 Instance
 EC2_INSTANCE_ID=$(aws ec2 describe-instances \
@@ -97,26 +97,26 @@ Ejecutar los imports en orden (respetando dependencias):
 
 ```bash
 # 1. Storage (sin dependencias)
-terraform import 'module.cactus.module.storage.aws_s3_bucket.logs' "$S3_BUCKET"
+terraform import 'module.maatwork.module.storage.aws_s3_bucket.logs' "$S3_BUCKET"
 
 # 2. IAM (sin dependencias)
-terraform import 'module.cactus.module.compute.aws_iam_role.instance' "$IAM_ROLE_NAME"
-terraform import 'module.cactus.module.compute.aws_iam_instance_profile.instance' "$IAM_PROFILE_NAME"
+terraform import 'module.maatwork.module.compute.aws_iam_role.instance' "$IAM_ROLE_NAME"
+terraform import 'module.maatwork.module.compute.aws_iam_instance_profile.instance' "$IAM_PROFILE_NAME"
 
 # 3. Security Groups
-terraform import 'module.cactus.module.compute.aws_security_group.instance' "$EC2_SG_ID"
-terraform import 'module.cactus.module.database.aws_security_group.database' "$RDS_SG_ID"
+terraform import 'module.maatwork.module.compute.aws_security_group.instance' "$EC2_SG_ID"
+terraform import 'module.maatwork.module.database.aws_security_group.database' "$RDS_SG_ID"
 
 # 4. Secrets Manager
-terraform import 'module.cactus.module.database.aws_secretsmanager_secret.db_credentials' "$SECRET_ARN"
+terraform import 'module.maatwork.module.database.aws_secretsmanager_secret.db_credentials' "$SECRET_ARN"
 
 # 5. Database
-terraform import 'module.cactus.module.database.aws_db_subnet_group.main' "$DB_SUBNET_GROUP"
-terraform import 'module.cactus.module.database.aws_db_instance.main' "$RDS_IDENTIFIER"
+terraform import 'module.maatwork.module.database.aws_db_subnet_group.main' "$DB_SUBNET_GROUP"
+terraform import 'module.maatwork.module.database.aws_db_instance.main' "$RDS_IDENTIFIER"
 
 # 6. Compute
-terraform import 'module.cactus.module.compute.aws_instance.main' "$EC2_INSTANCE_ID"
-terraform import 'module.cactus.module.compute.aws_eip.main' "$EIP_ALLOCATION_ID"
+terraform import 'module.maatwork.module.compute.aws_instance.main' "$EC2_INSTANCE_ID"
+terraform import 'module.maatwork.module.compute.aws_eip.main' "$EIP_ALLOCATION_ID"
 ```
 
 ## Paso 5: Verificar Estado
@@ -227,7 +227,7 @@ Crear `migrate.sh` con todo el proceso:
 set -e
 
 ENVIRONMENT="${1:-dev}"
-PROJECT="cactus"
+PROJECT="maatwork"
 
 echo "=== Migrando $ENVIRONMENT ==="
 
@@ -245,7 +245,7 @@ cd "infrastructure/terraform/environments/${ENVIRONMENT}"
 terraform init
 
 # Importar recursos
-terraform import 'module.cactus.module.storage.aws_s3_bucket.logs' "$S3_BUCKET"
+terraform import 'module.maatwork.module.storage.aws_s3_bucket.logs' "$S3_BUCKET"
 # ... (resto de imports)
 
 # Verificar
@@ -264,7 +264,7 @@ Si necesitas volver a CDK:
 
 ```bash
 # Remover del estado de Terraform (no elimina recursos)
-terraform state rm 'module.cactus.module.compute.aws_instance.main'
+terraform state rm 'module.maatwork.module.compute.aws_instance.main'
 # ... etc
 ```
 

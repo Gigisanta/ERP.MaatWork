@@ -1,36 +1,16 @@
 /**
  * AUM Upsert Service - Shared Types
- *
- * AI_DECISION: Centralizar tipos para mejor mantenibilidad
- * Justificación: Tipos compartidos entre múltiples módulos de AUM upsert
- * Impacto: Evita duplicación y facilita refactorizaciones futuras
+ * Re-exportados desde @maatwork/types para consistencia
  */
 
-export interface AumRowInsert {
-  fileId: string;
-  raw: Record<string, unknown>;
-  accountNumber: string | null;
-  holderName: string | null;
-  idCuenta: string | null;
-  advisorRaw: string | null;
-  matchedContactId: string | null;
-  matchedUserId: string | null;
-  matchStatus: 'matched' | 'ambiguous' | 'unmatched';
-  isPreferred: boolean;
-  conflictDetected: boolean;
-  aumDollars: number | null;
-  bolsaArg: number | null;
-  fondosArg: number | null;
-  bolsaBci: number | null;
-  pesos: number | null;
-  mep: number | null;
-  cable: number | null;
-  cv7000: number | null;
-}
+export type {
+  AumRowInsert,
+  UpsertStats,
+  UpsertResult,
+  AumMonthlySnapshotInsert,
+} from '@maatwork/types';
 
-/**
- * Tipo para filas devueltas por queries SQL directas en aumUpsert
- */
+// Tipos específicos de DB que no están en @maatwork/types
 export interface AumRowDbResult {
   id: string;
   file_id: string;
@@ -45,19 +25,6 @@ export interface AumRowDbResult {
   is_normalized: boolean | null;
 }
 
-export interface UpsertStats {
-  inserted: number;
-  updated: number;
-  errors: number;
-  updatedOnlyHolderName: number;
-}
-
-export interface UpsertResult {
-  success: boolean;
-  stats: UpsertStats;
-  error?: string;
-}
-
 export interface ExistingRow {
   id: string;
   fileId: string;
@@ -70,24 +37,6 @@ export interface ExistingRow {
   matchStatus: string;
   isPreferred: boolean;
   isNormalized: boolean;
-}
-
-// Monthly Snapshots Types
-
-export interface AumMonthlySnapshotInsert {
-  fileId: string;
-  accountNumber: string | null;
-  idCuenta: string | null;
-  reportMonth: number;
-  reportYear: number;
-  aumDollars: number | null;
-  bolsaArg: number | null;
-  fondosArg: number | null;
-  bolsaBci: number | null;
-  pesos: number | null;
-  mep: number | null;
-  cable: number | null;
-  cv7000: number | null;
 }
 
 export interface MonthlySnapshotUpsertStats {

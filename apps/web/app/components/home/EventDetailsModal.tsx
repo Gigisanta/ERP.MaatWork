@@ -11,8 +11,8 @@ import {
   Text,
   Stack,
   Badge,
-} from '@cactus/ui';
-import type { CalendarEvent } from '@/types/calendar';
+} from '@maatwork/ui';
+import type { CalendarEvent, CalendarEventAttendee } from '@/types';
 import {
   ExternalLink,
   MapPin,
@@ -106,192 +106,198 @@ export function EventDetailsModal({
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <ModalHeader className="border-b border-border pb-4">
-          <Stack direction="column" gap="xs">
-            <ModalTitle className="text-xl">{event.summary || 'Sin título'}</ModalTitle>
-            {getStatusBadge(event.status)}
-          </Stack>
+      <ModalContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0">
+        <ModalHeader className="px-6 py-5 border-b border-border bg-surface/30 sticky top-0 z-10">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              {getStatusBadge(event.status)}
+              <Text size="xs" color="secondary" className="font-bold tracking-widest uppercase">Detalle del Evento</Text>
+            </div>
+            <ModalTitle className="text-2xl font-display font-bold text-text leading-tight">{event.summary || 'Sin título'}</ModalTitle>
+          </div>
         </ModalHeader>
-        <div className="p-6">
-          <Stack direction="column" gap="lg">
-            {/* Date and Time */}
-            <div className="flex items-start gap-3">
-              <div className="mt-1 bg-primary/10 p-2 rounded-lg text-primary">
-                <Clock className="w-5 h-5" />
+        <div className="p-0">
+          <div className="p-6 space-y-8">
+            {/* Date and Time Section */}
+            <div className="flex items-start gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+              <div className="mt-0.5 bg-primary text-primary-foreground p-2.5 rounded-xl shadow-primary-sm">
+                <CalendarIcon className="w-5 h-5" />
               </div>
-              <div>
-                <Text weight="medium" size="lg" className="capitalize mb-1">
+              <div className="flex flex-col">
+                <Text weight="bold" size="lg" className="capitalize text-primary">
                   {dateString}
                 </Text>
-                <Text color="secondary">{timeString}</Text>
+                <div className="flex items-center gap-2 text-text-secondary mt-1">
+                  <Clock className="w-4 h-4 opacity-60" />
+                  <Text weight="medium">{timeString}</Text>
+                </div>
               </div>
             </div>
 
-            {/* Location */}
-            {event.location && (
-              <div className="flex items-start gap-3">
-                <div className="mt-1 bg-surface-hover p-2 rounded-lg text-text-secondary">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <Text weight="medium" className="mb-1">
-                    Ubicación
-                  </Text>
-                  <Text color="secondary">{event.location}</Text>
-                </div>
-              </div>
-            )}
-
-            {/* Video Link */}
-            {event.hangoutLink && (
-              <div className="flex items-start gap-3">
-                <div className="mt-1 bg-blue-500/10 p-2 rounded-lg text-blue-500">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <Text weight="medium" className="mb-2">
-                    Google Meet
-                  </Text>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => window.open(event.hangoutLink, '_blank')}
-                    className="w-full sm:w-auto"
-                  >
-                    Unirse a la reunión
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {event.description && (
-              <div className="bg-surface p-4 rounded-lg">
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-2 text-text-secondary uppercase tracking-wide"
-                >
-                  Descripción
-                </Text>
-                <div
-                  className="prose prose-sm max-w-none text-text-secondary"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
-                />
-              </div>
-            )}
-
-            {/* Organizer */}
-            {event.organizer && (
-              <div>
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-3 text-text-secondary uppercase tracking-wide flex items-center gap-2"
-                >
-                  <CalendarIcon className="w-4 h-4" /> Organizador
-                </Text>
-                <div className="flex items-center gap-3 bg-surface p-3 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-                    {event.organizer.displayName?.[0] || event.organizer.email?.[0] || '?'}
+            <Stack direction="column" gap="lg" className="px-1">
+              {/* Location */}
+              {event.location && (
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 bg-surface p-2.5 rounded-xl text-text-secondary border border-border">
+                    <MapPin className="w-5 h-5" />
                   </div>
-                  <div>
-                    <Text weight="medium">{event.organizer.displayName || 'Organizador'}</Text>
-                    <Text size="sm" color="secondary">
-                      {event.organizer.email}
+                  <div className="flex flex-col">
+                    <Text weight="bold" size="sm" className="uppercase tracking-wider text-text-secondary mb-1">
+                      Ubicación
                     </Text>
+                    <Text className="text-text leading-relaxed">{event.location}</Text>
                   </div>
-                  {event.organizer.self && (
-                    <Badge size="sm" variant="secondary" className="ml-auto">
-                      Tú
-                    </Badge>
-                  )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Attendees */}
-            {event.attendees && event.attendees.length > 0 && (
-              <div>
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-3 text-text-secondary uppercase tracking-wide flex items-center gap-2"
-                >
-                  <Users className="w-4 h-4" /> Asistentes ({event.attendees.length})
-                </Text>
-                <Stack direction="column" gap="xs">
-                  {event.attendees.map((attendee, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-2 hover:bg-surface rounded-lg transition-colors"
+              {/* Video Link */}
+              {event.hangoutLink && (
+                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/30">
+                  <div className="mt-0.5 bg-blue-500 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <Text weight="bold" className="text-blue-700 dark:text-blue-400">Google Meet</Text>
+                      <Text size="xs" className="text-blue-600/70 dark:text-blue-400/70">Videollamada disponible</Text>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => window.open(event.hangoutLink!, '_blank')}
+                      className="bg-blue-600 hover:bg-blue-700 shadow-blue-500/30"
                     >
-                      <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Text weight="medium" className="truncate">
-                          {attendee.displayName || attendee.email}
-                        </Text>
-                        {attendee.displayName && (
+                      Unirse ahora
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {event.description && (
+                <div className="flex flex-col gap-3">
+                  <Text weight="bold" size="sm" className="uppercase tracking-wider text-text-secondary flex items-center gap-2">
+                    <div className="w-1 h-4 bg-border rounded-full" /> Descripción
+                  </Text>
+                  <div className="bg-surface/50 p-5 rounded-2xl border border-border/50">
+                    <div
+                      className="prose prose-sm max-w-none text-text-secondary leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: event.description }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* People Section */}
+              {(event.organizer || (event.attendees && event.attendees.length > 0)) && (
+                <div className="space-y-4">
+                  <Text weight="bold" size="sm" className="uppercase tracking-wider text-text-secondary flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Personas
+                  </Text>
+                  
+                  <div className="grid grid-cols-1 gap-2">
+                    {/* Organizer */}
+                    {event.organizer && (
+                      <div className="flex items-center gap-3 bg-surface/40 p-3 rounded-xl border border-border/50 group">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold ring-2 ring-background group-hover:scale-110 transition-transform">
+                          {event.organizer.displayName?.[0] || event.organizer.email?.[0] || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Text weight="bold" size="sm" className="truncate">{event.organizer.displayName || 'Organizador'}</Text>
+                            <Badge size="sm" variant="outline" className="text-[10px] uppercase h-4 px-1">Org</Badge>
+                          </div>
                           <Text size="xs" color="secondary" className="truncate">
-                            {attendee.email}
+                            {event.organizer.email}
                           </Text>
+                        </div>
+                        {event.organizer.self && (
+                          <Badge size="sm" variant="secondary" className="rounded-full">Tú</Badge>
                         )}
                       </div>
-                      {attendee.responseStatus && (
-                        <Badge
-                          size="sm"
-                          variant={
-                            attendee.responseStatus === 'accepted'
-                              ? 'success'
-                              : attendee.responseStatus === 'declined'
-                                ? 'error'
-                                : 'secondary'
-                          }
-                        >
-                          {attendee.responseStatus === 'accepted'
-                            ? 'Aceptado'
-                            : attendee.responseStatus === 'declined'
-                              ? 'Rechazado'
-                              : attendee.responseStatus === 'tentative'
-                                ? 'Tentativo'
-                                : 'Pendiente'}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </Stack>
-              </div>
-            )}
-          </Stack>
+                    )}
+
+                    {/* Attendees */}
+                    {event.attendees?.map((attendee: CalendarEventAttendee, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-3 bg-surface/20 hover:bg-surface/40 rounded-xl transition-all border border-transparent hover:border-border/50"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary border border-border">
+                          <Mail className="w-4 h-4 opacity-40" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <Text weight="medium" size="sm" className="truncate">
+                            {attendee.displayName || attendee.email}
+                          </Text>
+                          {attendee.displayName && (
+                            <Text size="xs" color="secondary" className="truncate opacity-60">
+                              {attendee.email}
+                            </Text>
+                          )}
+                        </div>
+                        {attendee.responseStatus && (
+                          <div className="shrink-0">
+                            {attendee.responseStatus === 'accepted' ? (
+                              <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center text-green-600" title="Aceptado">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                              </div>
+                            ) : attendee.responseStatus === 'declined' ? (
+                              <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center text-red-600" title="Rechazado">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600" title="Pendiente">
+                                <Clock className="w-3.5 h-3.5" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Stack>
+          </div>
         </div>
-        <ModalFooter className="border-t border-border pt-4">
-          <div className="flex justify-between w-full">
+        <ModalFooter className="px-6 py-4 bg-surface/50 border-t border-border sticky bottom-0 z-10">
+          <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-4">
             <Button
               variant="outline"
               onClick={() => onDelete(event.id)}
               disabled={isDeleting}
-              className="text-error border-error/30 hover:bg-error/5 hover:border-error"
+              className="w-full sm:w-auto text-error border-error/20 hover:bg-error/5 hover:border-error transition-all order-2 sm:order-1"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Eliminar
             </Button>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto order-1 sm:order-2">
+              <Button 
+                variant="ghost" 
+                onClick={onClose}
+                className="order-3 sm:order-1"
+              >
+                Cerrar
+              </Button>
               {event.htmlLink && (
-                <Button variant="ghost" onClick={() => window.open(event.htmlLink, '_blank')}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.open(event.htmlLink!, '_blank')}
+                  className="order-2 sm:order-2"
+                >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Ver en Google
+                  Google Calendar
                 </Button>
               )}
-              <Button variant="outline" onClick={() => onEdit(event)}>
+              <Button 
+                variant="primary" 
+                onClick={() => onEdit(event)}
+                className="shadow-primary-lg order-1 sm:order-3"
+              >
                 <Edit2 className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
-              <Button variant="primary" onClick={onClose}>
-                Cerrar
+                Editar Evento
               </Button>
             </div>
           </div>

@@ -2,12 +2,12 @@
  * Tipos relacionados con métricas del pipeline de contactos
  */
 
-import type { TimestampedEntity } from '@cactus/types/common';
+import type { TimestampedEntity } from '@maatwork/types/common';
 
 /**
  * Líneas de negocio disponibles para categorizar etiquetas
  */
-export type BusinessLine = 'inversiones' | 'zurich' | 'patrimonial';
+type BusinessLine = 'inversiones' | 'zurich' | 'patrimonial';
 
 /**
  * Métricas de un mes específico
@@ -27,7 +27,7 @@ export interface MonthlyMetrics {
 /**
  * Cierres por línea de negocio
  */
-export interface BusinessLineClosures {
+interface BusinessLineClosures {
   inversiones: number;
   zurich: number;
   patrimonial: number;
@@ -36,7 +36,7 @@ export interface BusinessLineClosures {
 /**
  * Tiempos promedio entre avances de etapa (en días)
  */
-export interface StageTransitionTime {
+interface StageTransitionTime {
   prospectoToFirstMeeting: number | null; // Prospecto → Primera reunión
   firstToSecondMeeting: number | null; // Primera reunión → Segunda reunión
   secondMeetingToClient: number | null; // Segunda reunión → Cliente
@@ -45,7 +45,7 @@ export interface StageTransitionTime {
 /**
  * Datos de conversión para un tipo de mercado específico
  */
-export interface MarketTypeData {
+interface MarketTypeData {
   contacts: number;
   clients: number;
   conversionRate: number;
@@ -54,7 +54,7 @@ export interface MarketTypeData {
 /**
  * Desglose de sub-tipos de mercado frío
  */
-export interface ColdMarketBreakdown {
+interface ColdMarketBreakdown {
   redesSociales: MarketTypeData;
   llamadoFrio: MarketTypeData;
 }
@@ -62,7 +62,7 @@ export interface ColdMarketBreakdown {
 /**
  * Datos extendidos para mercado frío con desglose
  */
-export interface ColdMarketTypeData extends MarketTypeData {
+interface ColdMarketTypeData extends MarketTypeData {
   breakdown: ColdMarketBreakdown;
 }
 
@@ -70,7 +70,7 @@ export interface ColdMarketTypeData extends MarketTypeData {
  * Conversión de contactos a clientes por tipo de mercado
  * Incluye desglose por sub-tipos de mercado frío
  */
-export interface MarketTypeConversion {
+interface MarketTypeConversion {
   natural: MarketTypeData;
   referido: MarketTypeData;
   frio: ColdMarketTypeData;
@@ -103,7 +103,7 @@ export interface SaveMonthlyGoalRequest {
 /**
  * Promedio de interacciones por etapa
  */
-export interface AverageInteractionByStage {
+interface AverageInteractionByStage {
   stageId: string;
   stageName: string;
   averageInteractions: number;

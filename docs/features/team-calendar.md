@@ -146,7 +146,7 @@ GROUP BY t.id, t.name, t.calendar_url;
 - [ ] Configuración desde UI (sin SQL manual)
 - [ ] Soporte para Outlook Calendar
 - [ ] Vista de múltiples calendarios combinados
-- [ ] Sincronización bidireccional con tareas de Cactus CRM
+- [ ] Sincronización bidireccional con tareas de MaatWork
 
 ## Referencias
 

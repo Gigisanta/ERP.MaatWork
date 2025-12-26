@@ -4,7 +4,7 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { Note, CreateNoteRequest, UpdateNoteRequest } from '@/types/note';
+import type { Note, CreateNoteRequest, UpdateNoteRequest } from '@/types';
 
 // ==========================================================
 // API Methods

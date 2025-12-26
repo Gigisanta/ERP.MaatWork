@@ -1,6 +1,6 @@
 import { AuthProvider } from './auth/AuthContext';
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
 import AppLayout from './components/AppLayout';
 import { SidebarProvider } from './components/SidebarContext';
@@ -16,8 +16,8 @@ import {
 } from './components/LayoutDynamicWrappers';
 import type { Metadata } from 'next';
 
-// Styles from @cactus/ui
-import '@cactus/ui/styles.css';
+// Styles from @maatwork/ui
+import '@maatwork/ui/styles.css';
 import './globals.css';
 
 // AI_DECISION: Only load DebugConsole in development to reduce production bundle
@@ -60,7 +60,8 @@ export const metadata: Metadata = {
   },
   description: 'Gestión profesional de clientes e inversiones',
   icons: {
-    icon: '/favicon.ico', // Assuming this exists or will fallback
+    icon: '/icon',
+    apple: '/apple-icon',
   },
 };
 

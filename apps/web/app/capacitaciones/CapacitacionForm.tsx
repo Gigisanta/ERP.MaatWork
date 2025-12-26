@@ -13,7 +13,7 @@ import {
   Input,
   Stack,
   Alert,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface CapacitacionFormProps {
   capacitacion?: Capacitacion | undefined;
@@ -37,11 +37,17 @@ export default function CapacitacionForm({
 
   useEffect(() => {
     if (capacitacion) {
+      const fechaStr = capacitacion.fecha
+        ? (typeof capacitacion.fecha === 'string'
+          ? capacitacion.fecha.split('T')[0]
+          : capacitacion.fecha.toISOString().split('T')[0])
+        : null;
+
       setFormData({
         titulo: capacitacion.titulo,
         tema: capacitacion.tema,
         link: capacitacion.link,
-        fecha: capacitacion.fecha ? capacitacion.fecha.split('T')[0] : null,
+        fecha: fechaStr,
       });
     }
   }, [capacitacion]);
@@ -126,7 +132,7 @@ export default function CapacitacionForm({
             <Input
               label="Fecha (opcional)"
               type="date"
-              value={formData.fecha || ''}
+              value={typeof formData.fecha === 'string' ? formData.fecha : ''}
               onChange={(e) => setFormData({ ...formData, fecha: e.target.value || null })}
             />
           </Stack>

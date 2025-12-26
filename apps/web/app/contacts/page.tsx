@@ -19,16 +19,30 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useContacts, usePipelineStages, useAdvisors, useTags } from '../../lib/api-hooks';
 import { deleteTag } from '@/lib/api';
-import type { Contact, PipelineStage, Tag, Advisor } from '@/types';
+import type {
+  Contact,
+  ContactWithTags,
+  PipelineStage,
+  Tag,
+  Advisor,
+  ApiResponse,
+} from '@/types';
+import type { KeyedMutator } from 'swr';
 import { usePageTitle } from '../components/PageTitleContext';
 import InlineStageSelect from './components/InlineStageSelect';
 import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
 import ContactsToolbar from './components/ContactsToolbar';
-import DeleteContactModal from './components/DeleteContactModal';
-import TagManagementModal from './components/TagManagementModal';
 import InteractionCounter from './components/InteractionCounter';
 import dynamic from 'next/dynamic';
+
+// Lazy load Modals
+const DeleteContactModal = dynamic(() => import('./components/DeleteContactModal'), {
+  ssr: false,
+});
+const TagManagementModal = dynamic(() => import('./components/TagManagementModal'), {
+  ssr: false,
+});
 import {
   Card,
   CardHeader,
@@ -46,31 +60,20 @@ import {
   ProgressBar,
   Modal,
   ModalContent,
+  DataTable,
+  ConfirmDialog,
   type Column,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { useSearchShortcut, useEscapeShortcut } from '../../lib/hooks/useKeyboardShortcuts';
 
 // Hooks
 import { useContactsFilters, filterContacts, useTagManagement, useContactActions } from './hooks';
 
-// Lazy load DataTable
-const DataTable = dynamic(() => import('@cactus/ui').then((mod) => ({ default: mod.DataTable })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <Spinner size="md" />
-    </div>
-  ),
-});
-
-// Lazy load ConfirmDialog
-const ConfirmDialog = dynamic(() => import('../components/ConfirmDialog'), {
-  ssr: false,
-});
 import { useViewport } from '../(shared)/useViewport';
 import { useToast } from '../../lib/hooks/useToast';
 import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
 import { logger } from '../../lib/logger';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 // Helper to format relative time
 const formatTimeAgo = (dateString?: string | null) => {
@@ -678,7 +681,7 @@ function MobileContactList({
   onTagsChange: (contactId: string, add: string[], remove: string[]) => void;
   onTextInputSave: (contactId: string, field: string, value: string) => void;
   onManageTagsClick: () => void;
-  mutateContacts: () => void;
+  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[]>>;
   showToast: (
     title: string,
     description: string | undefined,
@@ -688,6 +691,17 @@ function MobileContactList({
   onClearFilters: () => void;
 }) {
   const router = useRouter();
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  // AI_DECISION: Virtualization for mobile list
+  // Justificación: Mejora drásticamente el performance en dispositivos móviles con muchos contactos
+  // Impacto: Scroll más fluido, menor consumo de memoria y CPU
+  const rowVirtualizer = useVirtualizer({
+    count: contacts.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 200, // Estimated height of a contact card
+    overscan: 5,
+  });
 
   if (contacts.length === 0) {
     return (
@@ -714,88 +728,119 @@ function MobileContactList({
   }
 
   return (
-    <div className="space-y-3">
-      {contacts.map((contact) => (
-        <div
-          key={contact.id}
-          className="p-3 rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-shadow"
-        >
-          {/* Header: Name and Action */}
-          <div className="flex items-start justify-between mb-3">
+    <div
+      ref={parentRef}
+      className="h-[600px] overflow-auto pr-1"
+      style={{
+        scrollbarWidth: 'thin',
+      }}
+    >
+      <div
+        style={{
+          height: `${rowVirtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const contact = contacts[virtualItem.index];
+          return (
             <div
-              onClick={() => router.push(`/contacts/${contact.id}`)}
-              className="cursor-pointer flex-1"
+              key={contact.id}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${virtualItem.size}px`,
+                transform: `translateY(${virtualItem.start}px)`,
+                paddingBottom: '12px', // Gap between items
+              }}
             >
-              <Text weight="semibold" className="text-base text-primary">
-                {contact.fullName}
-              </Text>
-              {contact.email && (
-                <Text size="xs" color="secondary" className="mt-0.5 block truncate">
-                  {contact.email}
-                </Text>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push(`/contacts/${contact.id}`)}
-              className="h-8 w-8 p-0 text-secondary shrink-0"
-            >
-              <Icon name="ChevronRight" size={18} />
-            </Button>
-          </div>
+              <div className="p-3 rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden">
+                {/* Header: Name and Action */}
+                <div className="flex items-start justify-between mb-3">
+                  <div
+                    onClick={() => router.push(`/contacts/${contact.id}`)}
+                    className="cursor-pointer flex-1"
+                  >
+                    <Text weight="semibold" className="text-base text-primary">
+                      {contact.fullName}
+                    </Text>
+                    {contact.email && (
+                      <Text size="xs" color="secondary" className="mt-0.5 block truncate">
+                        {contact.email}
+                      </Text>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push(`/contacts/${contact.id}`)}
+                    className="h-8 w-8 p-0 text-secondary shrink-0"
+                  >
+                    <Icon name="ChevronRight" size={18} />
+                  </Button>
+                </div>
 
-          {/* Middle: Stage and Interaction */}
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex-1 min-w-0">
-              <InlineStageSelect
-                contact={contact}
-                pipelineStages={pipelineStages}
-                isSaving={savingContactId === contact.id}
-                onStageChange={onStageChange}
-                onMutate={mutateContacts}
-                onError={(error: Error) =>
-                  showToast('Error al avanzar etapa', error.message, 'error')
-                }
-              />
-            </div>
-            <div className="flex flex-col items-end shrink-0 pl-2 border-l border-border/50">
-              <InteractionCounter
-                contact={contact}
-                onUpdate={mutateContacts}
-                onError={(error) =>
-                  showToast('Error al actualizar interacción', error.message, 'error')
-                }
-              />
-              <Text size="xs" color="muted" className="mt-1 text-[10px] uppercase tracking-wider">
-                {formatTimeAgo(contact.contactLastTouchAt)}
-              </Text>
-            </div>
-          </div>
+                {/* Middle: Stage and Interaction */}
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <InlineStageSelect
+                      contact={contact}
+                      pipelineStages={pipelineStages}
+                      isSaving={savingContactId === contact.id}
+                      onStageChange={onStageChange}
+                      onMutate={mutateContacts}
+                      onError={(error: Error) =>
+                        showToast('Error al avanzar etapa', error.message, 'error')
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col items-end shrink-0 pl-2 border-l border-border/50">
+                    <InteractionCounter
+                      contact={contact}
+                      onUpdate={mutateContacts}
+                      onError={(error) =>
+                        showToast('Error al actualizar interacción', error.message, 'error')
+                      }
+                    />
+                    <Text
+                      size="xs"
+                      color="muted"
+                      className="mt-1 text-[10px] uppercase tracking-wider"
+                    >
+                      {formatTimeAgo(contact.contactLastTouchAt)}
+                    </Text>
+                  </div>
+                </div>
 
-          {/* Bottom: Tags and Next Step */}
-          <div className="space-y-3 pt-2 border-t border-border/50">
-            <div className="w-full">
-              <InlineTagsEditor
-                contact={contact}
-                allTags={allTags}
-                isSaving={savingContactId === contact.id}
-                onTagsChange={onTagsChange}
-                onManageTagsClick={onManageTagsClick}
-              />
+                {/* Bottom: Tags and Next Step */}
+                <div className="space-y-3 pt-2 border-t border-border/50">
+                  <div className="w-full">
+                    <InlineTagsEditor
+                      contact={contact}
+                      allTags={allTags}
+                      isSaving={savingContactId === contact.id}
+                      onTagsChange={onTagsChange}
+                      onManageTagsClick={onManageTagsClick}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <InlineTextInput
+                      contact={contact}
+                      field="nextStep"
+                      placeholder="Agregar próximo paso..."
+                      isSaving={savingContactId === contact.id}
+                      onSave={onTextInputSave}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="w-full">
-              <InlineTextInput
-                contact={contact}
-                field="nextStep"
-                placeholder="Agregar próximo paso..."
-                isSaving={savingContactId === contact.id}
-                onSave={onTextInputSave}
-              />
-            </div>
-          </div>
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }

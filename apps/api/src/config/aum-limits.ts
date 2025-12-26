@@ -27,7 +27,8 @@ export const AUM_LIMITS = {
 
   // Matching thresholds
   SIMILARITY_THRESHOLD: 0.5,
+  MIN_NAME_SIMILARITY: 0.7, // AI_DECISION: Threshold for automatic name matching
   MAX_SIMILARITY_RESULTS: 5,
 } as const;
 
-export type AumLimits = typeof AUM_LIMITS;
+type AumLimits = typeof AUM_LIMITS;

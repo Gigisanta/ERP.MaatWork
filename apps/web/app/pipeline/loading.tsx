@@ -6,8 +6,7 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, CardHeader, Stack } from '@cactus/ui';
-import { Skeleton, SkeletonCard } from '../components/SkeletonLoader';
+import { Card, CardContent, CardHeader, Stack, Skeleton, SkeletonCard } from '@maatwork/ui';
 
 export default function PipelineLoading() {
   return (

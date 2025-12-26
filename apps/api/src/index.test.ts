@@ -387,6 +387,10 @@ describe('API Entry Point', () => {
         { reason: 'Test rejection', promise: testPromise },
         'Unhandled promise rejection'
       );
+
+      // AI_DECISION: Catch the promise to avoid Vitest warning/error
+      // Justificación: Unhandled rejections in tests cause Vitest to fail the run
+      testPromise.catch(() => {});
     });
   });
 });

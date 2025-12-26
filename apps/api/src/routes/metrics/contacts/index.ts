@@ -16,7 +16,7 @@ import {
   pipelineStageHistory,
   contactStageInteractions,
   pipelineStages,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { and, isNull, sql, desc, eq } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';
@@ -25,6 +25,7 @@ import { validate } from '../../../utils/validation';
 import { createErrorResponse } from '../../../utils/error-response';
 import { getPipelineStagesByNames } from './helpers';
 import { calculateMonthlyMetrics } from './calculate-monthly';
+import { calculateBatchMonthlyMetrics } from './calculate-batch';
 import type { PipelineStageIds } from './types';
 
 const router = Router();
@@ -125,19 +126,6 @@ router.get(
       const targetMonth = month ? Number(month) : now.getMonth() + 1;
       const targetYear = year ? Number(year) : now.getFullYear();
 
-      // Calculate current month metrics
-      const currentMonthMetrics = await calculateMonthlyMetrics({
-        month: targetMonth,
-        year: targetYear,
-        stageIds,
-        accessFilter,
-      });
-
-      req.log.info(
-        { month: targetMonth, year: targetYear, metrics: currentMonthMetrics },
-        'Monthly metrics calculated successfully'
-      );
-
       // Calculate history: all months with available data
       const allHistoryEntries = await db()
         .select({
@@ -170,39 +158,43 @@ router.get(
         );
 
       // Combine and deduplicate months
-      const allMonths = new Set<string>();
+      const allMonthsSet = new Set<string>();
       for (const entry of allHistoryEntries) {
-        allMonths.add(`${entry.year}-${entry.month}`);
+        allMonthsSet.add(`${entry.year}-${entry.month}`);
       }
       for (const entry of contactCreationMonths) {
-        allMonths.add(`${entry.year}-${entry.month}`);
+        allMonthsSet.add(`${entry.year}-${entry.month}`);
       }
+      
+      // Ensure target month is included
+      allMonthsSet.add(`${targetYear}-${targetMonth}`);
 
-      // AI_DECISION: Excluir mes actual del historial para evitar cálculo duplicado.
-      const currentMonthKey = `${targetYear}-${targetMonth}`;
-      allMonths.delete(currentMonthKey);
+      // AI_DECISION: Batch calculation of all monthly metrics
+      // Justificación: Replaces N * 12 queries with ~3 queries total for all history
+      // Impacto: Reducción drástica de latencia en dashboard de métricas (especialmente con mucho historial)
+      const monthsToCalculate = Array.from(allMonthsSet).map(m => {
+        const [y, mon] = m.split('-');
+        return { year: Number(y), month: Number(mon) };
+      });
 
-      // Calculate metrics for each month in parallel (excluding current month)
-      const monthPromises = Array.from(allMonths)
-        .sort()
-        .reverse()
-        .map(async (monthKey) => {
-          const [yearStr, monthStr] = monthKey.split('-');
-          const histYear = Number(yearStr);
-          const histMonth = Number(monthStr);
-          if (histYear && histMonth) {
-            return await calculateMonthlyMetrics({
-              month: histMonth,
-              year: histYear,
-              stageIds,
-              accessFilter,
-            });
-          }
-          return null;
+      const allMetrics = await calculateBatchMonthlyMetrics({
+        months: monthsToCalculate,
+        stageIds,
+        accessFilter,
+      });
+
+      // Split into current month and history
+      const currentMonthMetrics = allMetrics.find(m => m.month === targetMonth && m.year === targetYear)!;
+      const historyMetrics = allMetrics
+        .filter(m => !(m.month === targetMonth && m.year === targetYear))
+        .sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
         });
 
-      const historyMetrics = (await Promise.all(monthPromises)).filter(
-        (m): m is Awaited<ReturnType<typeof calculateMonthlyMetrics>> => m !== null
+      req.log.info(
+        { month: targetMonth, year: targetYear, historyCount: historyMetrics.length },
+        'All metrics calculated successfully via batch process'
       );
 
       // Calculate average interactions per stage

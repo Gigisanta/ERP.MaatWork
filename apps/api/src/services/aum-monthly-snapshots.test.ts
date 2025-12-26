@@ -3,13 +3,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db, aumImportFiles, aumMonthlySnapshots, users } from '@cactus/db';
+import { db, aumImportFiles, aumMonthlySnapshots, users } from '@maatwork/db';
 import { eq, sql } from 'drizzle-orm';
 import { upsertAumMonthlySnapshots, type AumMonthlySnapshotInsert } from './aum';
 
 // Mock dependencies
-vi.mock('@cactus/db', async () => {
-  const actual = await vi.importActual('@cactus/db');
+vi.mock('@maatwork/db', async () => {
+  const actual = await vi.importActual('@maatwork/db');
   return {
     ...actual,
     db: vi.fn(),

@@ -26,7 +26,7 @@ export interface DeduplicationKey {
 export type FilterType = 'all' | 'error' | 'warn' | 'info' | 'log';
 export type SortOrder = 'newest' | 'oldest' | 'type';
 
-export interface FilterConfig {
+interface FilterConfig {
   value: FilterType;
   label: string;
   emoji: string;
@@ -46,3 +46,11 @@ export const LOG_COLORS: Record<ErrorLog['type'], string> = {
   info: '#3b82f6',
   log: '#6b7280',
 };
+
+
+
+
+
+
+
+

@@ -6,12 +6,11 @@ import {
   listAdvisorAliases,
   createAdvisorAlias,
   deleteAdvisorAlias,
-  updateAdvisorAlias,
   type AdvisorAliasDto,
 } from '@/lib/api/settings';
 import { getAdvisors } from '@/lib/api/users';
 import type { ApiErrorWithMessage, Advisor } from '@/types';
-import { Button, Input, Select, Stack, Text, Card } from '@cactus/ui';
+import { Button, Input, Select, Stack, Text, Card } from '@maatwork/ui';
 
 export default function AumAdvisorSettingsPage() {
   const [aliases, setAliases] = useState<AdvisorAliasDto[]>([]);

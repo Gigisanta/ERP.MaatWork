@@ -34,7 +34,7 @@ export interface TransitionTimes {
 /**
  * Conversion data for a specific market type
  */
-export interface MarketTypeData {
+interface MarketTypeData {
   contacts: number;
   clients: number;
   conversionRate: number;
@@ -51,7 +51,7 @@ export interface ColdMarketBreakdown {
 /**
  * Extended market type data for cold market with breakdown
  */
-export interface ColdMarketTypeData extends MarketTypeData {
+interface ColdMarketTypeData extends MarketTypeData {
   breakdown: ColdMarketBreakdown;
 }
 

@@ -17,9 +17,9 @@ import {
   ModalFooter,
   Input,
   Select,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { apiClient } from '@/lib/api-client';
-import type { TeamGoal } from '@/types/team';
+import type { TeamGoal } from '@/types';
 
 interface TeamGoalsCardProps {
   teamId: string;

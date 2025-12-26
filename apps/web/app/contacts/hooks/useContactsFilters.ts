@@ -17,7 +17,7 @@ const MAX_SAVED_VIEWS = 10;
 /**
  * Saved filter view
  */
-export interface SavedView {
+interface SavedView {
   id: string;
   name: string;
   filters: {
@@ -28,7 +28,7 @@ export interface SavedView {
   createdAt: string;
 }
 
-export interface ContactsFiltersState {
+interface ContactsFiltersState {
   searchTerm: string;
   debouncedSearchTerm: string;
   selectedStage: string;
@@ -38,7 +38,7 @@ export interface ContactsFiltersState {
   savedViews: SavedView[];
 }
 
-export interface ContactsFiltersActions {
+interface ContactsFiltersActions {
   setSearchTerm: (term: string) => void;
   setSelectedStage: (stage: string) => void;
   handleTagToggle: (tagId: string) => void;
@@ -52,7 +52,7 @@ export interface ContactsFiltersActions {
   renameSavedView: (viewId: string, newName: string) => void;
 }
 
-export interface UseContactsFiltersProps {
+interface UseContactsFiltersProps {
   advisors?: Advisor[];
 }
 

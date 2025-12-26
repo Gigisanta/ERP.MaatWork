@@ -110,7 +110,10 @@ pnpm deps:update:major
 # 1. Ver qué está desactualizado
 pnpm deps:outdated
 
-# 2. Ver qué se actualizaría (sin hacer cambios)
+# 2. Ejecutar auditoría de dependencias no usadas
+pnpm audit:code
+
+# 3. Ver qué se actualizaría (sin hacer cambios)
 pnpm deps:update:check
 
 # 3. Actualizar patch y minor
@@ -174,6 +177,10 @@ pnpm install
 - [Renovate Documentation](https://docs.renovatebot.com/)
 - [Dependabot Documentation](https://docs.github.com/en/code-security/dependabot)
 - [pnpm Update Documentation](https://pnpm.io/cli/update)
+
+
+
+
 
 
 

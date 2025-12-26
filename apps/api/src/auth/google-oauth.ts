@@ -12,7 +12,7 @@ import { env } from '../config/env';
 /**
  * Cliente OAuth2 de Google configurado con credenciales del entorno
  */
-export const googleOAuthClient = new OAuth2Client(
+const googleOAuthClient = new OAuth2Client(
   env.GOOGLE_CLIENT_ID,
   env.GOOGLE_CLIENT_SECRET,
   env.GOOGLE_REDIRECT_URI

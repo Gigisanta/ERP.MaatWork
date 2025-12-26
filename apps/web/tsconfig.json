@@ -35,10 +35,10 @@
       "@/hooks/*": ["./lib/hooks/*"],
       "@/auth/*": ["./app/auth/*"],
       "@/utils/*": ["./lib/utils/*"],
-      "@cactus/ui": ["node_modules/@cactus/ui"],
-      "@cactus/ui/*": ["node_modules/@cactus/ui/*"],
-      "@cactus/types": ["node_modules/@cactus/types"],
-      "@cactus/types/*": ["node_modules/@cactus/types/*"]
+      "@maatwork/ui": ["node_modules/@maatwork/ui"],
+      "@maatwork/ui/*": ["node_modules/@maatwork/ui/*"],
+      "@maatwork/types": ["node_modules/@maatwork/types"],
+      "@maatwork/types/*": ["node_modules/@maatwork/types/*"]
     },
     "baseUrl": "."
   },

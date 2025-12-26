@@ -125,16 +125,22 @@ describe('ClientLogger', () => {
       navigator: { userAgent: 'test-agent' },
     } as any;
 
-    // Mock localStorage
-    global.localStorage = {
+    // AI_DECISION: Usar stubGlobal para localStorage
+    // Justificación: Evitar error "Cannot assign to read only property 'localStorage'"
+    // Impacto: Test funcional
+    vi.stubGlobal('localStorage', {
       getItem: vi.fn().mockReturnValue(null),
       setItem: vi.fn(),
       removeItem: vi.fn(),
-    } as any;
+      clear: vi.fn(),
+      length: 0,
+      key: vi.fn(),
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   describe('Constructor', () => {

@@ -6,20 +6,20 @@
  * PUT /teams/:id - Update team
  * DELETE /teams/:id - Delete team
  */
-import type { Request } from 'express';
-import { db, teams, teamMembership } from '@cactus/db';
+import type { Request, Response } from 'express';
+import { db, teams, teamMembership } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { HttpError } from '../../../utils/route-handler';
+import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { invalidateAccessScope } from '../../../auth/cache';
 import { teamMetricsCacheUtil } from '../../../utils/performance/cache';
 import { createTeamSchema, updateTeamSchema } from '../schemas';
-import { checkTeamAccess, requireTeamManageAccessOrThrow, getTeamMembers } from './utils';
+import { checkTeamAccess, requireTeamManageAccessOrThrow, getTeamMembers as getMembers } from './utils';
 
 /**
  * GET /teams/:id - Obtener equipo individual con sus miembros
  */
-export async function getTeam(req: Request) {
+export const getTeam = createRouteHandler(async (req: Request) => {
   const teamId = req.params.id;
 
   const userId = req.user!.id;
@@ -39,15 +39,15 @@ export async function getTeam(req: Request) {
   // Get team members only if user has manager access
   const canViewMembers =
     access.isManager || access.userTeams.some((t) => t.id === teamId && t.role === 'manager');
-  const teamMembers = canViewMembers ? await getTeamMembers(teamId) : [];
+  const teamMembers = canViewMembers ? await getMembers(teamId) : [];
 
   return { ...team, members: teamMembers };
-}
+});
 
 /**
  * POST /teams - Crear nuevo equipo (managers y admin)
  */
-export async function createTeam(req: Request) {
+export const createTeam = createAsyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const userRole = req.user!.role;
 
@@ -75,13 +75,17 @@ export async function createTeam(req: Request) {
 
   req.log.info({ teamId: newTeam.id }, 'team created');
 
-  return newTeam;
-}
+  return res.status(201).json({
+    success: true,
+    data: newTeam,
+    requestId: req.requestId,
+  });
+});
 
 /**
  * PUT /teams/:id - Actualizar equipo (solo admin o manager del equipo)
  */
-export async function updateTeam(req: Request) {
+export const updateTeam = createRouteHandler(async (req: Request) => {
   const teamId = req.params.id;
 
   const userId = req.user!.id;
@@ -106,12 +110,12 @@ export async function updateTeam(req: Request) {
   req.log.info({ teamId }, 'team updated');
 
   return updated;
-}
+});
 
 /**
  * DELETE /teams/:id - Eliminar equipo (solo admin o manager del equipo)
  */
-export async function deleteTeam(req: Request) {
+export const deleteTeam = createRouteHandler(async (req: Request) => {
   const teamId = req.params.id;
 
   const userId = req.user!.id;
@@ -129,4 +133,4 @@ export async function deleteTeam(req: Request) {
 
   req.log.info({ teamId }, 'team deleted');
   return { deleted: true };
-}
+});

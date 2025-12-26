@@ -12,12 +12,12 @@
 $ErrorActionPreference = "Stop"
 
 $EC2_IP = "56.125.148.180"
-$SSH_KEY = "$HOME\.ssh\cactus-dev"
+$SSH_KEY = "$HOME\.ssh\maatwork-dev"
 $SSH_USER = "ec2-user"
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "           CACTUS - Conectando a EC2 Development            " -ForegroundColor Cyan
+Write-Host "           MAATWORK - Conectando a EC2 Development            " -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  IP:   $EC2_IP" -ForegroundColor Cyan
 Write-Host "  User: $SSH_USER" -ForegroundColor Cyan

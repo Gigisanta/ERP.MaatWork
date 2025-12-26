@@ -1,4 +1,4 @@
-# Guía de Deployment CI/CD para Cactus
+# Guía de Deployment CI/CD para MaatWork
 
 Esta guía te llevará paso a paso desde cero hasta tener tu aplicación corriendo en AWS con CI/CD completo.
 
@@ -54,7 +54,7 @@ Esta guía te llevará paso a paso desde cero hasta tener tu aplicación corrien
 
 1. Inicia sesión en AWS Console
 2. Ve a IAM > Users > Create User
-3. Nombre: `cactus-deployer`
+3. Nombre: `maatwork-deployer`
 4. Habilita "Access key - Programmatic access"
 5. Adjunta las siguientes políticas:
    - `AdministratorAccess` (para simplificar, en producción usar política más restrictiva)
@@ -79,14 +79,14 @@ Este script te pedirá:
 - Output format (dejar: `json`)
 
 Creará dos perfiles:
-- `cactus-dev`
-- `cactus-prod`
+- `maatwork-dev`
+- `maatwork-prod`
 
 Verifica que funcione:
 
 ```bash
-aws sts get-caller-identity --profile cactus-dev
-aws sts get-caller-identity --profile cactus-prod
+aws sts get-caller-identity --profile maatwork-dev
+aws sts get-caller-identity --profile maatwork-prod
 ```
 
 ---
@@ -106,11 +106,11 @@ Esto prepara tu cuenta AWS para usar CDK (solo la primera vez):
 
 ```bash
 # Cuenta DEV
-export AWS_PROFILE=cactus-dev
+export AWS_PROFILE=maatwork-dev
 pnpm cdk bootstrap
 
 # Cuenta PROD
-export AWS_PROFILE=cactus-prod
+export AWS_PROFILE=maatwork-prod
 pnpm cdk bootstrap
 ```
 
@@ -128,7 +128,7 @@ Deberías ver:
 Antes de deployar, revisa qué se va a crear:
 
 ```bash
-export AWS_PROFILE=cactus-dev
+export AWS_PROFILE=maatwork-dev
 cd infrastructure/cdk
 pnpm synth:dev
 ```
@@ -138,24 +138,24 @@ Esto genera CloudFormation templates en `cdk.out/`.
 ### Paso 2: Deploy a DEV
 
 ```bash
-export AWS_PROFILE=cactus-dev
+export AWS_PROFILE=maatwork-dev
 pnpm deploy:dev
 ```
 
 CDK desplegará 4 stacks en orden:
 
-1. ✅ **CactusDev-Network** (~5 min)
+1. ✅ **MaatWorkDev-Network** (~5 min)
    - VPC, subnets, NAT gateway, VPC endpoints
 
-2. ✅ **CactusDev-Database** (~10 min)
+2. ✅ **MaatWorkDev-Database** (~10 min)
    - RDS PostgreSQL 16 (db.t3.micro)
 
-3. ✅ **CactusDev-Compute** (~8 min)
+3. ✅ **MaatWorkDev-Compute** (~8 min)
    - ECS Cluster
    - ALB
    - ECR repositories (vacíos por ahora)
 
-4. ✅ **CactusDev-Monitoring** (~3 min)
+4. ✅ **MaatWorkDev-Monitoring** (~3 min)
    - CloudWatch Dashboard
    - Alarmas
    - Budget alerts
@@ -168,10 +168,10 @@ Al final del deployment, verás outputs importantes:
 
 ```
 Outputs:
-CactusDev-Compute.LoadBalancerDNS = cactus-dev-alb-123456789.us-east-1.elb.amazonaws.com
-CactusDev-Compute.ApiRepoUri = 123456789.dkr.ecr.us-east-1.amazonaws.com/cactus/api-dev
-CactusDev-Compute.WebRepoUri = 123456789.dkr.ecr.us-east-1.amazonaws.com/cactus/web-dev
-CactusDev-Database.DBEndpoint = cactusdb-dev.abc123.us-east-1.rds.amazonaws.com
+MaatWorkDev-Compute.LoadBalancerDNS = maatwork-dev-alb-123456789.us-east-1.elb.amazonaws.com
+MaatWorkDev-Compute.ApiRepoUri = 123456789.dkr.ecr.us-east-1.amazonaws.com/maatwork/api-dev
+MaatWorkDev-Compute.WebRepoUri = 123456789.dkr.ecr.us-east-1.amazonaws.com/maatwork/web-dev
+MaatWorkDev-Database.DBEndpoint = maatworkdb-dev.abc123.us-east-1.rds.amazonaws.com
 ```
 
 **Guarda estos valores**, los necesitarás para GitHub Secrets.
@@ -179,7 +179,7 @@ CactusDev-Database.DBEndpoint = cactusdb-dev.abc123.us-east-1.rds.amazonaws.com
 ### Paso 4: Configurar Email de Alarmas
 
 1. Ve a AWS Console > Simple Notification Service (SNS)
-2. Busca el topic `cactus-dev-alarms`
+2. Busca el topic `maatwork-dev-alarms`
 3. Subscripciones > Create subscription
 4. Protocol: Email
 5. Endpoint: tu email
@@ -190,7 +190,7 @@ CactusDev-Database.DBEndpoint = cactusdb-dev.abc123.us-east-1.rds.amazonaws.com
 **Solo cuando estés listo para producción:**
 
 ```bash
-export AWS_PROFILE=cactus-prod
+export AWS_PROFILE=maatwork-prod
 cd infrastructure/cdk
 pnpm deploy:prod
 ```
@@ -245,13 +245,13 @@ Primero, verifica que los Dockerfiles funcionan:
 # Desde la raíz del proyecto
 
 # Build API
-docker build -f apps/api/Dockerfile -t cactus-api:local .
+docker build -f apps/api/Dockerfile -t maatwork-api:local .
 
 # Build Web
-docker build -f apps/web/Dockerfile -t cactus-web:local .
+docker build -f apps/web/Dockerfile -t maatwork-web:local .
 
 # Build Analytics
-docker build -f apps/analytics-service/Dockerfile -t cactus-analytics:local .
+docker build -f apps/analytics-service/Dockerfile -t maatwork-analytics:local .
 ```
 
 Si hay errores, corrígelos antes de continuar.
@@ -262,25 +262,25 @@ Como las task definitions de ECS esperan imágenes en ECR, necesitamos hacer un 
 
 ```bash
 # Login a ECR
-export AWS_PROFILE=cactus-dev
+export AWS_PROFILE=maatwork-dev
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
 # Tag y push API
-docker tag cactus-api:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/api-dev:latest
+docker tag maatwork-api:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/api-dev:latest
 docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/api-dev:latest
 
 # Tag y push Web
-docker tag cactus-web:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/web-dev:latest
+docker tag maatwork-web:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/web-dev:latest
 docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/web-dev:latest
 
 # Tag y push Analytics
-docker tag cactus-analytics:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/analytics-dev:latest
+docker tag maatwork-analytics:local ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/analytics-dev:latest
 docker push ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/cactus/analytics-dev:latest
 ```
 
 ### Paso 3: Verificar Deployment
 
-1. Ve a AWS Console > ECS > Clusters > cactus-dev
+1. Ve a AWS Console > ECS > Clusters > maatwork-dev
 2. Verifica que los 3 servicios estén corriendo:
    - `api` (1 task running en dev)
    - `web` (1 task running)
@@ -371,7 +371,7 @@ Esto solo rebuildeará y deployará la API, ahorrando tiempo.
 ### CloudWatch Dashboard
 
 1. Ve a AWS Console > CloudWatch > Dashboards
-2. Selecciona `Cactus-dev` o `Cactus-prod`
+2. Selecciona `MaatWork-dev` o `MaatWork-prod`
 3. Verás métricas en tiempo real:
    - CPU/Memory de ECS
    - Request count del ALB
@@ -384,13 +384,13 @@ Esto solo rebuildeará y deployará la API, ahorrando tiempo.
 **Desde AWS Console:**
 1. CloudWatch > Log groups
 2. Busca:
-   - `/ecs/cactus-dev/api`
-   - `/ecs/cactus-dev/web`
-   - `/ecs/cactus-dev/analytics`
+   - `/ecs/maatwork-dev/api`
+   - `/ecs/maatwork-dev/web`
+   - `/ecs/maatwork-dev/analytics`
 
 **Desde CLI:**
 ```bash
-aws logs tail /ecs/cactus-dev/api --follow --profile cactus-dev
+aws logs tail /ecs/maatwork-dev/api --follow --profile maatwork-dev
 ```
 
 ### Alarmas
@@ -407,7 +407,7 @@ Recibirás emails cuando:
 Revisa gastos semanalmente:
 1. AWS Console > Billing > Bills
 2. Filtra por tags:
-   - `Project: Cactus`
+   - `Project: MaatWork`
    - `Environment: dev` o `prod`
 
 ### Backup de Base de Datos
@@ -426,14 +426,14 @@ Si un deployment falla:
 
 ```bash
 # Ver versiones anteriores de task definition
-aws ecs list-task-definitions --family-prefix cactus-api-dev --profile cactus-dev
+aws ecs list-task-definitions --family-prefix maatwork-api-dev --profile maatwork-dev
 
 # Rollback a versión anterior
 aws ecs update-service \
-  --cluster cactus-dev \
+  --cluster maatwork-dev \
   --service api \
-  --task-definition cactus-api-dev:PREVIOUS_VERSION \
-  --profile cactus-dev
+  --task-definition maatwork-api-dev:PREVIOUS_VERSION \
+  --profile maatwork-dev
 ```
 
 O simplemente hacer otro deployment con código anterior.
@@ -447,7 +447,7 @@ O simplemente hacer otro deployment con código anterior.
 **Causa**: ECS tasks están crasheando.
 
 **Solución**:
-1. Ve a ECS > Cluster > cactus-dev > Service > Tasks
+1. Ve a ECS > Cluster > maatwork-dev > Service > Tasks
 2. Click en el task que falló
 3. Revisa logs en "Logs" tab
 4. Corrige el error en código

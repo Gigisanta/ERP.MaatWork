@@ -4,7 +4,7 @@
 
 import { useReducer, useCallback } from 'react';
 
-export interface AumSearchState {
+interface AumSearchState {
   term: string;
   debounced: string;
 }
@@ -52,3 +52,11 @@ export function useAumSearch() {
     setDebouncedSearch,
   };
 }
+
+
+
+
+
+
+
+

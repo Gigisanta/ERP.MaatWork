@@ -6,7 +6,7 @@
  * Impacto: Prevenir errores por configuración incorrecta
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { config } from './config';
 
 describe('config', () => {
@@ -100,10 +100,10 @@ describe('config', () => {
   });
 
   describe('config.isProduction', () => {
-    it('debería ser true cuando NODE_ENV es production', () => {
+    it('debería ser true cuando NODE_ENV es production', async () => {
       process.env.NODE_ENV = 'production';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.isProduction).toBe(true);
       expect(testConfig.isDevelopment).toBe(false);
@@ -111,42 +111,42 @@ describe('config', () => {
   });
 
   describe('config.features', () => {
-    it('debería tener analytics deshabilitado por defecto', () => {
+    it('debería tener analytics deshabilitado por defecto', async () => {
       delete process.env.NEXT_PUBLIC_ENABLE_ANALYTICS;
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.analytics).toBe(false);
     });
 
-    it('debería habilitar analytics cuando NEXT_PUBLIC_ENABLE_ANALYTICS es true', () => {
+    it('debería habilitar analytics cuando NEXT_PUBLIC_ENABLE_ANALYTICS es true', async () => {
       process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = 'true';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.analytics).toBe(true);
     });
 
-    it('debería tener debug deshabilitado por defecto', () => {
+    it('debería tener debug deshabilitado por defecto', async () => {
       delete process.env.NEXT_PUBLIC_DEBUG;
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(false);
     });
 
-    it('debería habilitar debug cuando NEXT_PUBLIC_DEBUG es true', () => {
+    it('debería habilitar debug cuando NEXT_PUBLIC_DEBUG es true', async () => {
       process.env.NEXT_PUBLIC_DEBUG = 'true';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(true);
     });
 
-    it('debería mantener debug deshabilitado cuando NEXT_PUBLIC_DEBUG no es true', () => {
+    it('debería mantener debug deshabilitado cuando NEXT_PUBLIC_DEBUG no es true', async () => {
       process.env.NEXT_PUBLIC_DEBUG = 'false';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(false);
     });

@@ -31,8 +31,8 @@ import {
   Grid,
   Button,
   Alert,
-} from '@cactus/ui';
-import ConfirmDialog from '../components/ConfirmDialog';
+} from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
 import { useToast } from '../../lib/hooks/useToast';
 
 // Hooks especializados
@@ -225,7 +225,7 @@ export default function ProfilePage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => router.push('/plandecarrera')}
+                      onClick={() => router.push('/career-plan')}
                       className="w-fit"
                     >
                       Configurar Plan de Carrera

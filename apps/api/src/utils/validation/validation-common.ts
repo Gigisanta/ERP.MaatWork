@@ -31,22 +31,34 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema, emailSchema, dateSchema } from './common-schemas';
+import {
+  uuidSchema,
+  emailSchema,
+  optionalEmailSchema,
+  optionalUuidSchema,
+  dateSchema,
+  phoneSchema as basePhoneSchema,
+  dniSchema as baseDniSchema,
+  percentageSchema as basePercentageSchema,
+  countryCodeSchema as baseCountryCodeSchema,
+} from './common-schemas';
 
 /**
  * Schema para validar email opcional (puede ser null o undefined)
+ * @deprecated Use optionalEmailSchema from common-schemas.ts
  */
-export const optionalEmailSchema = emailSchema.optional().nullable();
+export { optionalEmailSchema };
 
 /**
  * Schema para validar UUID opcional (puede ser null o undefined)
+ * @deprecated Use optionalUuidSchema from common-schemas.ts
  */
-export const optionalUuidSchema = uuidSchema.optional().nullable();
+export { optionalUuidSchema };
 
 /**
  * Schema para validar rango de fechas
  */
-export const dateRangeSchema = z
+const dateRangeSchema = z
   .object({
     from: dateSchema.optional(),
     to: dateSchema.optional(),
@@ -62,21 +74,21 @@ export const dateRangeSchema = z
 /**
  * Schema para validar número positivo
  */
-export function positiveNumberSchema(fieldName: string = 'number') {
+function positiveNumberSchema(fieldName: string = 'number') {
   return z.number().positive(`${fieldName} must be positive`);
 }
 
 /**
  * Schema para validar número no negativo
  */
-export function nonNegativeNumberSchema(fieldName: string = 'number') {
+function nonNegativeNumberSchema(fieldName: string = 'number') {
   return z.number().nonnegative(`${fieldName} must be non-negative`);
 }
 
 /**
  * Schema para validar string con longitud mínima y máxima
  */
-export function stringLengthSchema(min: number, max: number, fieldName: string = 'string') {
+function stringLengthSchema(min: number, max: number, fieldName: string = 'string') {
   return z
     .string()
     .min(min, `${fieldName} must be at least ${min} characters`)
@@ -86,14 +98,14 @@ export function stringLengthSchema(min: number, max: number, fieldName: string =
 /**
  * Schema para validar string no vacío
  */
-export function nonEmptyStringSchema(fieldName: string = 'string') {
+function nonEmptyStringSchema(fieldName: string = 'string') {
   return z.string().min(1, `${fieldName} cannot be empty`).trim();
 }
 
 /**
  * Helper para validar que un valor esté en un array de valores permitidos
  */
-export function enumSchema<T extends [string, ...string[]]>(
+function enumSchema<T extends [string, ...string[]]>(
   values: T,
   fieldName: string = 'value'
 ) {
@@ -103,30 +115,30 @@ export function enumSchema<T extends [string, ...string[]]>(
 }
 
 /**
- * Helper para validar formato de teléfono (básico)
+ * Helper para validar formato de teléfono (básico) - Versión estricta (no opcional)
  */
-export const phoneSchema = z
+const phoneSchema = z
   .string()
   .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid phone format')
   .max(50);
 
 /**
- * Helper para validar formato de DNI (básico)
+ * Helper para validar formato de DNI (básico) - Versión estricta (no opcional)
  */
-export const dniSchema = z
+const dniSchema = z
   .string()
   .regex(/^[\d\.]+$/, 'Invalid DNI format')
   .max(50);
 
 /**
- * Helper para validar porcentaje (0-100)
+ * Helper para validar porcentaje (0-100) - Versión estricta (no opcional)
  */
-export const percentageSchema = z.number().min(0).max(100);
+const percentageSchema = z.number().min(0).max(100);
 
 /**
- * Helper para validar código de país ISO 3166-1 alpha-2
+ * Helper para validar código de país ISO 3166-1 alpha-2 - Versión estricta (no opcional)
  */
-export const countryCodeSchema = z
+const countryCodeSchema = z
   .string()
   .length(2)
   .regex(/^[A-Z]{2}$/, 'Invalid country code (must be ISO 3166-1 alpha-2)');
@@ -134,7 +146,7 @@ export const countryCodeSchema = z
 /**
  * Helper para validar que un array no esté vacío
  */
-export function nonEmptyArraySchema<T extends z.ZodTypeAny>(
+function nonEmptyArraySchema<T extends z.ZodTypeAny>(
   itemSchema: T,
   fieldName: string = 'array'
 ) {
@@ -144,6 +156,6 @@ export function nonEmptyArraySchema<T extends z.ZodTypeAny>(
 /**
  * Helper para validar que un valor sea uno de varios tipos
  */
-export function oneOfSchema<T extends z.ZodTypeAny>(schemas: T[], fieldName: string = 'value') {
+function oneOfSchema<T extends z.ZodTypeAny>(schemas: T[], fieldName: string = 'value') {
   return z.union(schemas as [T, T, ...T[]]);
 }

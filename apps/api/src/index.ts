@@ -6,51 +6,56 @@ import { resolve } from 'node:path';
 // Cargar .env desde el directorio local de la API
 config();
 
-import { env } from './config/env';
+// 1. External Dependencies
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
+import cors, { type CorsOptions } from 'cors';
+import crypto from 'crypto';
 import express, { type Request, type Response, type NextFunction } from 'express';
+import helmet from 'helmet';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { v4 as uuidv4 } from 'uuid';
-import compression from 'compression';
-import crypto from 'crypto';
+
+// 2. Internal Packages & Config
+import { env } from './config/env';
+import { initializeDatabase } from './db-init';
+import { getScheduler } from './jobs/scheduler';
 import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
+import { handleEtag } from './utils/etag-cache';
 import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/performance';
-import usersRouter from './routes/users';
-import authRouter from './routes/auth';
-import contactsRouter from './routes/contacts';
-import tasksRouter from './routes/tasks';
-import tagsRouter from './routes/tags';
-import pipelineRouter from './routes/pipeline';
-import notificationsRouter from './routes/notifications';
-import attachmentsRouter from './routes/attachments';
-import notesRouter from './routes/notes';
-import teamsRouter from './routes/teams';
-import portfolioRouter from './routes/portfolio/index';
-import benchmarksRouter from './routes/benchmarks/index';
+import { createAsyncHandler } from './utils/route-handler';
+
+// 3. Routes
+import adminMaintenanceRouter from './routes/admin-maintenance';
+import adminMemoryRouter from './routes/admin-memory';
+import adminMetricsRouter from './routes/admin-metrics';
+import adminQueryMetricsRouter from './routes/admin-query-metrics';
 import analyticsRouter from './routes/analytics';
+import attachmentsRouter from './routes/attachments';
+import authRouter from './routes/auth';
+import automationsRouter from './routes/automations';
+import benchmarksRouter from './routes/benchmarks/index';
+import bloombergRouter from './routes/bloomberg';
+import brokerAccountsRouter from './routes/broker-accounts';
+import calendarRouter from './routes/calendar';
+import capacitacionesRouter from './routes/capacitaciones';
+import careerPlanRouter from './routes/career-plan';
+import contactsRouter from './routes/contacts';
+import healthRouter from './routes/health';
 import instrumentsRouter from './routes/instruments/index';
 import logsRouter from './routes/logs';
-import brokerAccountsRouter from './routes/broker-accounts';
-import aumRouter from './routes/aum';
-import settingsAdvisorsRouter from './routes/settings-advisors';
-import careerPlanRouter from './routes/career-plan';
 import metricsRouter from './routes/metrics';
-import adminMetricsRouter from './routes/admin-metrics';
-import adminMaintenanceRouter from './routes/admin-maintenance';
-import adminQueryMetricsRouter from './routes/admin-query-metrics';
-import adminMemoryRouter from './routes/admin-memory';
-import capacitacionesRouter from './routes/capacitaciones';
-import automationsRouter from './routes/automations';
-import healthRouter from './routes/health';
-import calendarRouter from './routes/calendar';
-import { handleEtag } from './utils/etag-cache';
-import cors, { type CorsOptions } from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import { initializeDatabase } from './db-init';
-import bloombergRouter from './routes/bloomberg';
-import { getScheduler } from './jobs/scheduler';
-import { createAsyncHandler } from './utils/route-handler';
+import notesRouter from './routes/notes';
+import notificationsRouter from './routes/notifications';
+import pipelineRouter from './routes/pipeline';
+import portfolioRouter from './routes/portfolio/index';
+import settingsAdvisorsRouter from './routes/settings-advisors';
+import tagsRouter from './routes/tags';
+import tasksRouter from './routes/tasks';
+import teamsRouter from './routes/teams';
+import usersRouter from './routes/users';
+import aumRouter from './routes/aum';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -430,7 +435,7 @@ if (!isProduction) {
   app.get(
     '/test-db',
     createAsyncHandler(async (req, res) => {
-      const { db } = await import('@cactus/db');
+      const { db } = await import('@maatwork/db');
       const { sql } = await import('drizzle-orm');
       const result = await db().execute(sql`SELECT 1 as test`);
 
@@ -446,13 +451,13 @@ if (!isProduction) {
   );
 
   app.get(
-    '/test-cactus-db',
+    '/test-maatwork-db',
     createAsyncHandler(async (req, res) => {
-      const { db, users } = await import('@cactus/db');
+      const { db, users } = await import('@maatwork/db');
       if (!db || !users) {
         return res.status(500).json(
           createErrorResponse({
-            error: new Error('Package @cactus/db not working correctly'),
+            error: new Error('Package @maatwork/db not working correctly'),
             requestId: req.requestId,
             userMessage: 'Database package not working correctly',
           })

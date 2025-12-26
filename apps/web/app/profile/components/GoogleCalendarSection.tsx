@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Text, Stack } from '@cactus/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Text, Stack } from '@maatwork/ui';
 import { useAuth } from '../../auth/AuthContext';
 import { API_BASE_URL } from '@/lib/api-url';
 import { apiClient } from '@/lib/api-client';
@@ -21,7 +21,6 @@ export function GoogleCalendarSection() {
       const params = new URLSearchParams(window.location.search);
       // Check for specific success param from backend
       if (params.get('google_connect') === 'success') {
-        console.log('[GoogleCalendarSection] OAuth callback detected, refreshing user');
         mutateUser();
         // Clean up URL
         const newUrl = window.location.pathname;
@@ -32,7 +31,6 @@ export function GoogleCalendarSection() {
     // AI_DECISION: Solo ejecutar una vez al montar
     // Justificación: El query param solo aparece una vez después del OAuth
     //                No necesitamos re-ejecutar este efecto
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Ejecutar solo al montar
 
   const handleConnect = () => {
@@ -55,7 +53,6 @@ export function GoogleCalendarSection() {
       showToast('Cuenta de Google desconectada correctamente', 'success');
       await mutateUser(); // Recargar datos del usuario para actualizar estado
     } catch (error) {
-      console.error('Error disconnecting Google account:', error);
       showToast('Error al desconectar la cuenta', 'error');
     } finally {
       setLoading(false);
@@ -63,17 +60,6 @@ export function GoogleCalendarSection() {
   };
 
   if (!user) return null;
-
-  // AI_DECISION: Agregar logging para debugging
-  // Justificación: Ayuda a diagnosticar problemas de sincronización de estado
-  React.useEffect(() => {
-    console.log('[GoogleCalendarSection] User state:', {
-      hasUser: !!user,
-      userId: user?.id,
-      isGoogleConnected: user?.isGoogleConnected,
-      userKeys: user ? Object.keys(user) : [],
-    });
-  }, [user?.isGoogleConnected, user?.id]);
 
   return (
     <Card padding="sm" className="p-2">

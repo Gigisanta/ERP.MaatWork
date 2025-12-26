@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { db } from '@cactus/db';
-import { contacts, notes, tasks } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { contacts, notes, tasks } from '@maatwork/db/schema';
 import { sql, eq, and, isNull, desc } from 'drizzle-orm';
 
 describe('Query Optimization Tests', () => {

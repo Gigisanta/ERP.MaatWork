@@ -4,7 +4,7 @@
  * Calculates closures by business line (inversiones, zurich, patrimonial)
  */
 
-import { db, contacts, contactTags, tags } from '@cactus/db';
+import { db, contacts, contactTags, tags } from '@maatwork/db';
 import { and, eq, isNotNull, inArray } from 'drizzle-orm';
 import type { BusinessLineClosures } from '../types';
 
@@ -65,3 +65,11 @@ export async function calculateBusinessLineClosures(
 
   return businessLineClosures;
 }
+
+
+
+
+
+
+
+

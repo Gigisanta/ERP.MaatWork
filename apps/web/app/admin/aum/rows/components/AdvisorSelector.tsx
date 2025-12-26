@@ -12,14 +12,14 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Select, type SelectItem } from '@cactus/ui';
+import { Select, type SelectItem } from '@maatwork/ui';
 import { useAdvisors } from '@/lib/api-hooks';
 import type { Advisor } from '@/types';
 
 /**
  * Props del componente AdvisorSelector
  */
-export interface AdvisorSelectorProps {
+interface AdvisorSelectorProps {
   /** Valor seleccionado (ID del asesor) */
   value?: string;
   /** Callback cuando se selecciona un asesor */

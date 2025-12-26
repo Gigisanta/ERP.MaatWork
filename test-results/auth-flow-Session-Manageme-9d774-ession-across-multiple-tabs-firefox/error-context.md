@@ -1,0 +1,199 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "MaatWork" [ref=e8] [cursor=pointer]:
+        - /url: /home
+        - img [ref=e10]
+        - generic [ref=e14]: MaatWork
+      - generic [ref=e19]:
+        - button "Notificaciones" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e26] [cursor=pointer]':
+          - generic [ref=e27]: G
+  - complementary "Navegación principal" [ref=e28]:
+    - generic [ref=e29]:
+      - navigation "Navegación principal" [ref=e30]:
+        - generic [ref=e31]:
+          - paragraph [ref=e32]: Principal
+          - link "👤 Contactos" [ref=e34] [cursor=pointer]:
+            - /url: /contacts
+            - generic [ref=e35]: 👤
+            - generic [ref=e36]: Contactos
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: Inversiones
+          - generic [ref=e39]:
+            - link "📊 Carteras" [ref=e40] [cursor=pointer]:
+              - /url: /portfolios
+              - generic [ref=e41]: 📊
+              - generic [ref=e42]: Carteras
+            - link "📊 Benchmarks" [ref=e43] [cursor=pointer]:
+              - /url: /benchmarks
+              - generic [ref=e44]: 📊
+              - generic [ref=e45]: Benchmarks
+        - generic [ref=e46]:
+          - paragraph [ref=e47]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e49] [cursor=pointer]:
+            - /url: /teams
+            - generic [ref=e50]: 👨‍👩‍👧‍👦
+            - generic [ref=e51]: Equipos
+        - generic [ref=e52]:
+          - paragraph [ref=e53]: Métricas
+          - generic [ref=e54]:
+            - link "📈 Métricas de Contactos" [ref=e55] [cursor=pointer]:
+              - /url: /contacts/metrics
+              - generic [ref=e56]: 📈
+              - generic [ref=e57]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e58] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e59]: 📈
+              - generic [ref=e60]: Analytics
+        - generic [ref=e61]:
+          - paragraph [ref=e62]: Automatización
+          - generic [ref=e63]:
+            - link "☰ Pipeline" [ref=e64] [cursor=pointer]:
+              - /url: /pipeline
+              - generic [ref=e65]: ☰
+              - generic [ref=e66]: Pipeline
+            - link "⚙️ Automations" [ref=e67] [cursor=pointer]:
+              - /url: /automations
+              - generic [ref=e68]: ⚙️
+              - generic [ref=e69]: Automations
+            - link "📚 Plan de Carrera" [ref=e70] [cursor=pointer]:
+              - /url: /career-plan
+              - generic [ref=e71]: 📚
+              - generic [ref=e72]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e73] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=e74]: ℹ️
+              - generic [ref=e75]: Notificaciones
+        - generic [ref=e76]:
+          - paragraph [ref=e77]: Herramientas
+          - generic [ref=e78]:
+            - link "🎓 Capacitaciones" [ref=e79] [cursor=pointer]:
+              - /url: /capacitaciones
+              - generic [ref=e80]: 🎓
+              - generic [ref=e81]: Capacitaciones
+            - link "📝 Recursos" [ref=e82] [cursor=pointer]:
+              - /url: /resources
+              - generic [ref=e83]: 📝
+              - generic [ref=e84]: Recursos
+            - link "📈 Finviz" [ref=e85] [cursor=pointer]:
+              - /url: https://finviz.com
+              - generic [ref=e86]: 📈
+              - generic [ref=e87]: Finviz
+            - link "💼 Productores Balanz" [ref=e88] [cursor=pointer]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e89]: 💼
+              - generic [ref=e90]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e91] [cursor=pointer]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e92]: 🛡️
+              - generic [ref=e93]: Zurich Point
+        - generic [ref=e94]:
+          - paragraph [ref=e95]: Administración
+          - generic [ref=e96]:
+            - link "⚙️ Panel Principal" [ref=e97] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e98]: ⚙️
+              - generic [ref=e99]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e100] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e101]: 👥
+              - generic [ref=e102]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e103] [cursor=pointer]:
+              - /url: /admin/aum
+              - generic [ref=e104]: 📈
+              - generic [ref=e105]: AUM y Brokers
+            - link "📈 Performance" [ref=e106] [cursor=pointer]:
+              - /url: /admin/performance
+              - generic [ref=e107]: 📈
+              - generic [ref=e108]: Performance
+            - link "⚙️ Configuración AUM" [ref=e109] [cursor=pointer]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e110]: ⚙️
+              - generic [ref=e111]: Configuración AUM
+        - generic [ref=e112]:
+          - paragraph [ref=e113]: Perfil
+          - link "👤 Mi Perfil" [ref=e115] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e116]: 👤
+            - generic [ref=e117]: Mi Perfil
+      - button "Colapsar menú" [ref=e119] [cursor=pointer]:
+        - generic [ref=e120]: ◀
+        - generic [ref=e121]: Colapsar
+  - main [ref=e122]:
+    - main [ref=e126]:
+      - generic [ref=e127]:
+        - region "Mi calendario" [ref=e129]:
+          - generic [ref=e130]:
+            - heading "Agenda MaatWork" [level=3] [ref=e132]
+            - generic [ref=e134]:
+              - img [ref=e136]
+              - generic [ref=e138]:
+                - paragraph [ref=e139]: Conecta tu Calendario
+                - paragraph [ref=e140]: Sincroniza tus eventos de Google Calendar para gestionar tus reuniones directamente desde aquí.
+              - link "Conectar ahora" [ref=e141] [cursor=pointer]:
+                - /url: /profile
+                - button "Conectar ahora" [ref=e142]
+        - region "Métricas del mes" [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - heading "Métricas del Mes" [level=3] [ref=e148]
+                - combobox [ref=e151] [cursor=pointer]:
+                  - generic: Objetivos vs Actuales
+                  - img [ref=e152]
+              - generic [ref=e157]:
+                - list [ref=e159]:
+                  - listitem [ref=e160]:
+                    - img "Actual legend icon" [ref=e161]
+                    - text: Actual
+                  - listitem [ref=e163]:
+                    - img "Objetivo legend icon" [ref=e164]
+                    - text: Objetivo
+                - application "Gráfico de comparación de objetivos vs actuales" [ref=e166]:
+                  - generic [ref=e175]:
+                    - generic [ref=e176]:
+                      - generic [ref=e178]: Nuevos Contactos
+                      - generic [ref=e180]: Primeras Reuniones
+                      - generic [ref=e182]: Segundas Reuniones
+                      - generic [ref=e184]: Nuevos Clientes
+                    - generic [ref=e185]:
+                      - generic [ref=e187]: "0"
+                      - generic [ref=e189]: "2000"
+                      - generic [ref=e191]: "4000"
+                      - generic [ref=e193]: "6000"
+                      - generic [ref=e195]: "8000"
+            - generic [ref=e196]:
+              - generic [ref=e200]:
+                - paragraph [ref=e201]: Nuevos Contactos
+                - generic [ref=e202]:
+                  - paragraph [ref=e203]: "0"
+                  - paragraph [ref=e204]: / 10
+                - generic [ref=e207]: 0%
+              - generic [ref=e211]:
+                - paragraph [ref=e212]: Primeras Reuniones
+                - generic [ref=e213]:
+                  - paragraph [ref=e214]: "0"
+                  - paragraph [ref=e215]: / 2
+                - generic [ref=e218]: 0%
+              - generic [ref=e222]:
+                - paragraph [ref=e223]: Segundas Reuniones
+                - generic [ref=e224]:
+                  - paragraph [ref=e225]: "0"
+                  - paragraph [ref=e226]: / 45
+                - generic [ref=e229]: 0%
+              - generic [ref=e233]:
+                - paragraph [ref=e234]: Nuevos Clientes
+                - generic [ref=e235]:
+                  - paragraph [ref=e236]: "0"
+                  - paragraph [ref=e237]: / 6090
+                - generic [ref=e240]: 0%
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e241]
+  - generic [ref=e242]: "0"
+```

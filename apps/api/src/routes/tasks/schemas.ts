@@ -11,6 +11,10 @@ import {
   uuidSchema,
   paginationQuerySchema,
   dateSchema,
+  timeSchema,
+  titleSchema,
+  descriptionSchema,
+  idParamSchema,
 } from '../../utils/validation/common-schemas';
 
 // Query parameter schemas
@@ -20,8 +24,8 @@ import {
 export const listTasksQuerySchema = paginationQuerySchema.and(
   z.object({
     status: z.string().optional(),
-    assignedToUserId: z.string().uuid().optional(),
-    contactId: z.string().uuid().optional(),
+    assignedToUserId: uuidSchema.optional(),
+    contactId: uuidSchema.optional(),
     dueDateFrom: dateSchema.optional(),
     dueDateTo: dateSchema.optional(),
     priority: z.string().optional(),
@@ -31,26 +35,22 @@ export const listTasksQuerySchema = paginationQuerySchema.and(
 
 export const exportTasksQuerySchema = z.object({
   status: z.string().optional(),
-  assignedToUserId: z.string().uuid().optional(),
+  assignedToUserId: uuidSchema.optional(),
   dueDateFrom: dateSchema.optional(),
   dueDateTo: dateSchema.optional(),
 });
 
 // Body schemas
 export const createTaskSchema = z.object({
-  contactId: z.string().uuid(),
-  meetingId: z.string().uuid().optional().nullable(),
-  title: z.string().min(1).max(500),
-  description: z.string().optional().nullable(),
+  contactId: uuidSchema,
+  meetingId: uuidSchema.optional().nullable(),
+  title: titleSchema,
+  description: descriptionSchema,
   status: z.string(), // Referencia a lookupTaskStatus
   dueDate: z.string().optional().nullable(), // ISO date
-  dueTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional()
-    .nullable(), // HH:MM
+  dueTime: timeSchema.optional().nullable(), // HH:MM
   priority: z.string(), // Referencia a lookupPriority
-  assignedToUserId: z.string().uuid(),
+  assignedToUserId: uuidSchema,
   recurrence: z
     .object({
       rrule: z.string(),
@@ -64,12 +64,12 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = createTaskSchema.omit({ contactId: true }).partial();
 
 export const bulkActionSchema = z.object({
-  taskIds: z.array(z.string().uuid()).min(1),
+  taskIds: z.array(uuidSchema).min(1),
   action: z.enum(['complete', 'delete', 'reassign', 'change_status']),
   params: z.record(z.any()).optional(),
 });
 
-export const taskIdParamsSchema = z.object({ id: uuidSchema });
+export const taskIdParamsSchema = idParamSchema;
 
 export const batchTasksQuerySchema = z.object({
   contactIds: z.string().min(1),
@@ -78,3 +78,7 @@ export const batchTasksQuerySchema = z.object({
   status: z.string().optional(),
   includeCompleted: z.enum(['true', 'false']).optional().default('false'),
 });
+
+
+
+

@@ -9,7 +9,7 @@
  * - Benchmarks/instruments (must be fetched from yfinance based on user needs)
  * - Notification templates (system functionality, pre-configured separately)
  *
- * Can be run manually via: pnpm -F @cactus/db seed:all
+ * Can be run manually via: pnpm -F @maatwork/db seed:all
  *
  * REGLA CURSOR: This script is idempotent - safe to run multiple times
  */

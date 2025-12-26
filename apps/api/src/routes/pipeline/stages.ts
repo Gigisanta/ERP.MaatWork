@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, pipelineStages, contacts } from '@cactus/db';
+import { db, pipelineStages, contacts } from '@maatwork/db';
 import { eq, and, isNull, count, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';

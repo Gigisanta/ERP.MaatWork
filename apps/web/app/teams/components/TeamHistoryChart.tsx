@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Spinner, Text, Alert } from '@cactus/ui';
+import { Card, CardHeader, CardTitle, CardContent, Spinner, Text, Alert } from '@maatwork/ui';
 import {
   ComposedChart,
   Line,

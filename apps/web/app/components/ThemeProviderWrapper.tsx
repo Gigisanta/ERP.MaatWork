@@ -53,7 +53,7 @@ export default function ThemeProviderWrapper({
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('cactus-theme', newTheme);
+      localStorage.setItem('maatwork-theme', newTheme);
 
       // Resolve theme: if 'system', use system preference, otherwise use the theme directly
       const themeToApply = newTheme === 'system' ? getSystemTheme() : newTheme;
@@ -71,7 +71,7 @@ export default function ThemeProviderWrapper({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const savedThemeRaw = localStorage.getItem('cactus-theme');
+    const savedThemeRaw = localStorage.getItem('maatwork-theme');
 
     // Determine initial theme: use saved theme, or defaultTheme/system if nothing saved
     // If saved theme is 'high-contrast' (old value), treat as 'light' for compatibility
@@ -79,7 +79,7 @@ export default function ThemeProviderWrapper({
     if (savedThemeRaw === 'high-contrast') {
       // Migrate old 'high-contrast' to 'light'
       initialTheme = 'light';
-      localStorage.setItem('cactus-theme', 'light');
+      localStorage.setItem('maatwork-theme', 'light');
     } else if (
       savedThemeRaw &&
       (savedThemeRaw === 'light' || savedThemeRaw === 'dark' || savedThemeRaw === 'system')
@@ -108,7 +108,7 @@ export default function ThemeProviderWrapper({
     // Only listen to system preference changes if theme is 'system'
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
-      const currentSavedTheme = localStorage.getItem('cactus-theme') as Theme | null;
+      const currentSavedTheme = localStorage.getItem('maatwork-theme') as Theme | null;
       // Only react to system changes if current theme is 'system'
       if (currentSavedTheme === 'system') {
         const newResolvedTheme = e.matches ? 'dark' : 'light';

@@ -5,7 +5,7 @@ import { Logger } from 'pino';
  * Proporciona métricas detalladas para identificar bottlenecks
  */
 
-export interface QueryMetrics {
+interface QueryMetrics {
   operation: string;
   duration: number;
   success: boolean;
@@ -183,7 +183,7 @@ export async function loggedQuery<T>(
     if (Array.isArray(result)) {
       rowCount = result.length;
     } else if (result && typeof result === 'object' && 'length' in result) {
-      rowCount = (result as any).length;
+      rowCount = (result as { length: number }).length;
     }
 
     const metrics: QueryMetrics = {
@@ -194,7 +194,7 @@ export async function loggedQuery<T>(
       nPlusOneDetected,
     };
     if (rowCount !== undefined) {
-      (metrics as any).rowCount = rowCount;
+      metrics.rowCount = rowCount;
     }
     if (options?.cacheHit !== undefined) {
       metrics.cacheHit = options.cacheHit;

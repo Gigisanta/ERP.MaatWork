@@ -17,11 +17,11 @@ Esta guía te permitirá deployar Cactus a producción en menos de 2 horas con u
 ```bash
 # En AWS Console
 # EC2 > Key Pairs > Create key pair
-# Nombre: cactus-mvp-key
+# Nombre: maatwork-mvp-key
 # Formato: .pem
-# Guardar en ~/.ssh/cactus-mvp-key.pem
+# Guardar en ~/.ssh/maatwork-mvp-key.pem
 
-chmod 400 ~/.ssh/cactus-mvp-key.pem
+chmod 400 ~/.ssh/maatwork-mvp-key.pem
 ```
 
 ### Paso 2: Deploy Infraestructura con CDK (15 min)
@@ -60,7 +60,7 @@ echo "EC2 IP: $EC2_IP"
 # Esperar 2-3 minutos para que termine user-data script
 
 # SSH a la instancia
-ssh -i ~/.ssh/cactus-mvp-key.pem ec2-user@$EC2_IP
+ssh -i ~/.ssh/maatwork-mvp-key.pem ec2-user@$EC2_IP
 
 # En la instancia EC2:
 # Verificar que Docker esté instalado
@@ -69,8 +69,8 @@ docker-compose --version
 
 # Clonar repo
 cd ~
-git clone https://github.com/YOUR_USER/CACTUS.git cactus
-cd cactus
+git clone https://github.com/YOUR_USER/MAATWORK.git maatwork
+cd maatwork
 
 # Configurar Git credentials para futuros pulls
 git config --global credential.helper store
@@ -83,7 +83,7 @@ git config --global credential.helper store
 
 # Obtener DATABASE_URL desde Secrets Manager
 aws secretsmanager get-secret-value \
-  --secret-id cactus/mvp/db-credentials \
+  --secret-id maatwork/mvp/db-credentials \
   --region us-east-1 \
   --query SecretString \
   --output text | jq -r
@@ -91,7 +91,7 @@ aws secretsmanager get-secret-value \
 # Crear .env
 cat > .env << EOF
 NODE_ENV=production
-DATABASE_URL=postgresql://USERNAME:PASSWORD@RDS_ENDPOINT:5432/cactus
+DATABASE_URL=postgresql://USERNAME:PASSWORD@RDS_ENDPOINT:5432/maatwork
 JWT_SECRET=$(openssl rand -base64 32)
 NEXT_PUBLIC_API_URL=http://$EC2_IP/api
 CORS_ORIGINS=*
@@ -187,8 +187,8 @@ Agrega:
 # - Run workflow
 
 # Opción 2: Manual desde EC2
-ssh -i ~/.ssh/cactus-mvp-key.pem ec2-user@$EC2_IP
-cd ~/cactus
+ssh -i ~/.ssh/maatwork-mvp-key.pem ec2-user@$EC2_IP
+cd ~/maatwork
 git pull
 docker-compose build
 docker-compose up -d
@@ -198,10 +198,10 @@ docker-compose up -d
 
 ```bash
 # SSH a EC2
-ssh -i ~/.ssh/cactus-mvp-key.pem ec2-user@$EC2_IP
+ssh -i ~/.ssh/maatwork-mvp-key.pem ec2-user@$EC2_IP
 
 # Logs de todos los servicios
-cd ~/cactus
+cd ~/maatwork
 docker-compose logs -f
 
 # Logs de un servicio específico
@@ -235,7 +235,7 @@ df -h
 
 ```bash
 # Ver logs desde AWS CLI
-aws logs tail /ec2/cactus/application --follow
+aws logs tail /ec2/maatwork/application --follow
 ```
 
 ### Métricas en AWS Console

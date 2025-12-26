@@ -18,7 +18,7 @@ import {
   attachments,
   pipelineStages,
   users,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
 import {
   getUserAccessScope,
@@ -29,7 +29,7 @@ import {
 import { requireAuth, requireRole } from '../auth/middlewares';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   contacts: {},
   contactFieldHistory: {},
@@ -129,7 +129,7 @@ describe('GET /contacts', () => {
 
       mockDb.mockReturnValue({
         select: mockSelect,
-      } as any);
+      } as unknown as ReturnType<typeof db>);
 
       // Test admin access
       expect(accessScope.role).toBe('admin');
@@ -319,7 +319,7 @@ describe('POST /contacts', () => {
 
     mockDb.mockReturnValue({
       insert: mockInsert,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test contact creation
     expect(mockReq.body.firstName).toBe('John');
@@ -381,7 +381,7 @@ describe('PATCH /contacts/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test contact update
     expect(mockReq.body.firstName).toBe('Jane');
@@ -430,7 +430,7 @@ describe('DELETE /contacts/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test soft delete
     expect(true).toBe(true);
@@ -484,7 +484,7 @@ describe('GET /contacts/:id/history', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test history retrieval
     expect(mockReq.query.limit).toBe('50');

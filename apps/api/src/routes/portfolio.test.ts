@@ -11,20 +11,12 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import {
   db,
-  portfolioTemplates,
-  portfolioTemplateLines,
-  clientPortfolioAssignments,
-  contacts,
-  instruments,
-  lookupAssetClass,
-} from '@cactus/db';
-import { requireAuth, requireRole } from '../auth/middlewares';
+} from '@maatwork/db';
 import { getUserAccessScope } from '../auth/authorization';
-import { eq, and, sql, desc, asc } from 'drizzle-orm';
 import { uuidSchema } from '../utils/validation/common-schemas';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   portfolioTemplates: {},
   portfolioTemplateLines: {},
@@ -40,8 +32,8 @@ vi.mock('@cactus/db', () => ({
 }));
 
 vi.mock('../auth/middlewares', () => ({
-  requireAuth: vi.fn((req, res, next) => next()),
-  requireRole: vi.fn(() => (req, res, next) => next()),
+  requireAuth: vi.fn((_req, _res, next) => next()),
+  requireRole: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
 }));
 
 vi.mock('../auth/authorization', () => ({
@@ -49,7 +41,7 @@ vi.mock('../auth/authorization', () => ({
 }));
 
 vi.mock('../utils/validation', () => ({
-  validate: vi.fn(() => (req: Request, res: Response, next: NextFunction) => next()),
+  validate: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
 }));
 
 const mockDb = vi.mocked(db);
@@ -78,7 +70,7 @@ describe('Portfolio Templates - GET /templates', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockSelect).toBeDefined();
   });
@@ -98,7 +90,7 @@ describe('Portfolio Templates - GET /templates', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockSelect).toBeDefined();
   });
@@ -160,7 +152,7 @@ describe('Portfolio Templates - GET /templates/:id', () => {
         .fn()
         .mockReturnValueOnce(mockSelectTemplate())
         .mockReturnValueOnce(mockSelectLines()),
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(templateId).toBe('template-123');
   });
@@ -176,7 +168,7 @@ describe('Portfolio Templates - GET /templates/:id', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect([]).toHaveLength(0);
   });
@@ -204,7 +196,7 @@ describe('Portfolio Templates - POST /templates', () => {
 
     mockDb.mockReturnValue({
       insert: mockInsert,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     const validData = {
       name: 'Nueva Cartera',
@@ -268,7 +260,7 @@ describe('Portfolio Templates - PUT /templates/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(templateId).toBe('template-123');
   });
@@ -284,7 +276,7 @@ describe('Portfolio Templates - PUT /templates/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect([]).toHaveLength(0);
   });
@@ -332,7 +324,7 @@ describe('Portfolio Template Lines - GET /templates/:id/lines', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockSelect).toBeDefined();
   });
@@ -485,7 +477,7 @@ describe('Portfolio Template Lines - DELETE /templates/:id/lines/:lineId', () =>
 
     mockDb.mockReturnValue({
       delete: mockDelete,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockDelete).toBeDefined();
   });
@@ -520,7 +512,7 @@ describe('Portfolio Template Lines - GET /templates/lines/batch', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(templateIds).toHaveLength(2);
   });
@@ -593,7 +585,7 @@ describe('Portfolio Assignments - POST /assignments', () => {
       select: mockSelect,
       update: mockUpdate,
       insert: mockInsert,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(accessScope.role).toBe('advisor');
   });
@@ -618,7 +610,7 @@ describe('Portfolio Assignments - POST /assignments', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect([]).toHaveLength(0);
   });
@@ -642,7 +634,7 @@ describe('Portfolio Assignments - POST /assignments', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockUpdate).toBeDefined();
   });
@@ -707,7 +699,7 @@ describe('Portfolio Assignments - GET /contacts/:id/portfolio', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(accessScope.role).toBe('advisor');
   });
@@ -734,7 +726,7 @@ describe('Portfolio Assignments - GET /contacts/:id/portfolio', () => {
 
     mockDb.mockReturnValue({
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect([]).toHaveLength(0);
   });
@@ -775,7 +767,7 @@ describe('Portfolio Assignments - DELETE /assignments/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockUpdate).toBeDefined();
   });

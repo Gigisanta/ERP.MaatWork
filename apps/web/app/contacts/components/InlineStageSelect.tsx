@@ -9,10 +9,10 @@ import {
   Icon,
   Spinner,
   Button,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { moveContactToStage, getNextPipelineStage } from '@/lib/api/pipeline';
 import { logger } from '@/lib/logger';
-import ConfirmDialog from '@/app/components/ConfirmDialog';
+import { ConfirmDialog } from '@maatwork/ui';
 
 interface InlineStageSelectProps {
   contact: Contact;
@@ -184,7 +184,7 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(
               <div className="flex items-center w-full">
                 <div
                   className="w-2.5 h-2.5 rounded-full mr-2"
-                  style={{ backgroundColor: stage.color }}
+                  style={{ backgroundColor: stage.color || undefined }}
                 />
                 <Text size="sm">{stage.name}</Text>
                 {contact.pipelineStageId === stage.id && (

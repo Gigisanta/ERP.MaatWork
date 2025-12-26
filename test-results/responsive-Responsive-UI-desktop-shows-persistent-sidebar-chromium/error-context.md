@@ -1,0 +1,54 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e7]:
+    - main [ref=e11]:
+      - generic [ref=e12]:
+        - region "Mi calendario" [ref=e14]:
+          - generic [ref=e15]:
+            - heading "Agenda MaatWork" [level=3] [ref=e17]
+            - generic [ref=e19]:
+              - img [ref=e21]
+              - generic [ref=e23]:
+                - paragraph [ref=e24]: Conecta tu Calendario
+                - paragraph [ref=e25]: Sincroniza tus eventos de Google Calendar para gestionar tus reuniones directamente desde aquí.
+              - link "Conectar ahora" [ref=e26] [cursor=pointer]:
+                - /url: /profile
+                - button "Conectar ahora" [ref=e27]
+        - region "Métricas del mes" [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e32]:
+              - heading "Métricas del Mes" [level=3] [ref=e33]
+              - generic [ref=e35]:
+                - combobox [ref=e36] [cursor=pointer]:
+                  - img [ref=e37]
+                - combobox [ref=e39]
+            - generic [ref=e43]:
+              - generic [ref=e47]:
+                - paragraph [ref=e48]: Nuevos Contactos
+                - generic [ref=e49]:
+                  - paragraph [ref=e50]: "0"
+                  - paragraph [ref=e51]: / 10
+                - generic [ref=e54]: 0%
+              - generic [ref=e58]:
+                - paragraph [ref=e59]: Primeras Reuniones
+                - generic [ref=e60]:
+                  - paragraph [ref=e61]: "0"
+                  - paragraph [ref=e62]: / 2
+                - generic [ref=e65]: 0%
+              - generic [ref=e69]:
+                - paragraph [ref=e70]: Segundas Reuniones
+                - generic [ref=e71]:
+                  - paragraph [ref=e72]: "0"
+                  - paragraph [ref=e73]: / 45
+                - generic [ref=e76]: 0%
+              - generic [ref=e80]:
+                - paragraph [ref=e81]: Nuevos Clientes
+                - generic [ref=e82]:
+                  - paragraph [ref=e83]: "0"
+                  - paragraph [ref=e84]: / 6090
+                - generic [ref=e87]: 0%
+  - region "Notifications (F8)":
+    - list
+```

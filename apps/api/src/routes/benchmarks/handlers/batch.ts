@@ -7,8 +7,8 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
-import { benchmarkComponents, instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { benchmarkComponents, instruments } from '@maatwork/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { HttpError } from '../../../utils/route-handler';
 import { createRouteHandler } from '../../../utils/route-handler';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../../utils/cn.js';
-import Icon from '../Icon.js';
+import { Icon } from '../Icon.js';
 
 export interface BreadcrumbItem {
   label: string;

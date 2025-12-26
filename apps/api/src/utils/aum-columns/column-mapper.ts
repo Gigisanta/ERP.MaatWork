@@ -442,6 +442,6 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
  * Justificación: Permite que cada archivo parseado tenga su propio logging inicial
  * Impacto: Mejor debugging sin necesidad de usar variables globales
  */
-export function resetAumMapperLogging(): void {
+function resetAumMapperLogging(): void {
   aumMapperLogged = false;
 }

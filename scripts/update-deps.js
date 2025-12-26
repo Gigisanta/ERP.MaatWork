@@ -33,23 +33,37 @@ function getOutdatedPackages() {
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    const lines = output.trim().split('\n').filter(line => line.trim());
-    // pnpm outdated --json puede devolver múltiples objetos JSON, uno por línea
-    const packages = {};
-    for (const line of lines) {
-      try {
-        const parsed = JSON.parse(line);
-        if (parsed && typeof parsed === 'object') {
-          Object.assign(packages, parsed);
+    
+    if (!output || !output.trim()) return {};
+
+    try {
+      // Intentar parsear todo el output como un solo JSON
+      return JSON.parse(output.trim());
+    } catch (e) {
+      // Si falla, intentar el método de línea por línea (por si acaso pnpm devuelve ndjson)
+      const lines = output.trim().split('\n').filter(line => line.trim());
+      const packages = {};
+      for (const line of lines) {
+        try {
+          const parsed = JSON.parse(line);
+          if (parsed && typeof parsed === 'object') {
+            Object.assign(packages, parsed);
+          }
+        } catch (innerE) {
+          // Ignorar líneas que no son JSON válido
         }
-      } catch (e) {
-        // Ignorar líneas que no son JSON válido
       }
+      return packages;
     }
-    return packages;
   } catch (error) {
     // Si no hay paquetes desactualizados, pnpm outdated sale con código 1
     // También puede fallar si hay problemas de red, etc.
+    try {
+      // A veces el error.stdout contiene el JSON parcial o el error real es solo que hay paquetes outdated (exit 1)
+      if (error.stdout) {
+        return JSON.parse(error.stdout.toString().trim());
+      }
+    } catch (e) {}
     return {};
   }
 }

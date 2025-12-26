@@ -2,7 +2,7 @@
  * API methods para teams
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type { ApiResponse } from '../api-client';
 import type {
   Team,
@@ -19,19 +19,19 @@ import type {
   StalledLead,
   ReassignLeadsRequest,
   TeamCapacityMember,
-} from '@/types/team';
+} from '@/types';
 
 // ==========================================================
 // Request Types
 // ==========================================================
 
-export interface CreateTeamRequest {
+interface CreateTeamRequest {
   name: string;
   managerUserId: string;
   calendarUrl?: string | null;
 }
 
-export interface AddTeamMemberRequest {
+interface AddTeamMemberRequest {
   userId: string;
   role?: 'member' | 'lead';
 }
@@ -88,14 +88,14 @@ export async function getTeamById(id: string): Promise<ApiResponse<Team>> {
 /**
  * Obtener dashboard del miembro (legacy? user MemberTeamDashboardData instead if applicable)
  */
-export async function getMemberDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
+async function getMemberDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
   return apiClient.get<MemberDashboardResponse>('/v1/teams/member-dashboard');
 }
 
 /**
  * Obtener equipo con miembros y métricas combinados
  */
-export interface TeamDetailResponse {
+interface TeamDetailResponse {
   team: Team;
   metrics: TeamMetrics;
 }
@@ -281,32 +281,32 @@ export async function getTeamHistory(teamId: string): Promise<ApiResponse<TeamHi
 }
 
 // New API calls added in previous steps
-export async function getMemberTeamDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
+async function getMemberTeamDashboard(): Promise<ApiResponse<MemberDashboardResponse>> {
   return apiClient.get<MemberDashboardResponse>('/v1/teams/my-dashboard', { cache: 'no-store' });
 }
 
-export async function getTeamGoals(teamId: string): Promise<ApiResponse<TeamGoal[]>> {
+async function getTeamGoals(teamId: string): Promise<ApiResponse<TeamGoal[]>> {
   return apiClient.get<TeamGoal[]>(`/v1/teams/${teamId}/goals`, { cache: 'no-store' });
 }
 
-export async function setTeamGoal(
+async function setTeamGoal(
   teamId: string,
   data: SetTeamGoalRequest
 ): Promise<ApiResponse<TeamGoal>> {
   return apiClient.post<TeamGoal>(`/v1/teams/${teamId}/goals`, data);
 }
 
-export async function listStalledLeads(teamId: string): Promise<ApiResponse<StalledLead[]>> {
+async function listStalledLeads(teamId: string): Promise<ApiResponse<StalledLead[]>> {
   return apiClient.get<StalledLead[]>(`/v1/teams/${teamId}/leads/stalled`, { cache: 'no-store' });
 }
 
-export async function reassignTeamLeads(
+async function reassignTeamLeads(
   teamId: string,
   data: ReassignLeadsRequest
 ): Promise<ApiResponse<void>> {
   return apiClient.post<void>(`/v1/teams/${teamId}/leads/reassign`, data);
 }
 
-export async function getTeamCapacity(teamId: string): Promise<ApiResponse<TeamCapacityMember[]>> {
+async function getTeamCapacity(teamId: string): Promise<ApiResponse<TeamCapacityMember[]>> {
   return apiClient.get<TeamCapacityMember[]>(`/v1/teams/${teamId}/capacity`, { cache: 'no-store' });
 }

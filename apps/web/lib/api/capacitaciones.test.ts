@@ -3,9 +3,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { apiClient } from './client';
 import * as apiIndex from './capacitaciones';
 
-vi.mock('../api-client', () => {
+vi.mock('./client', () => {
   return {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
@@ -17,7 +18,7 @@ vi.mock('../api-client', () => {
 });
 
 describe('capacitaciones api client endpoints', () => {
-  const { apiClient } = require('../api-client');
+  
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,6 +61,10 @@ describe('capacitaciones api client endpoints', () => {
   it('calls import capacitaciones CSV endpoint', async () => {
     const file = new File(['test'], 'test.csv', { type: 'text/csv' });
     await apiIndex.importCapacitacionesCSV(file);
-    expect(apiClient.post).toHaveBeenCalledWith('/v1/capacitaciones/import', expect.any(FormData));
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/v1/capacitaciones/import',
+      expect.any(FormData),
+      expect.objectContaining({ retries: 0 })
+    );
   });
 });

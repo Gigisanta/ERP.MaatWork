@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import InlineStageSelect from './InlineStageSelect';
 import { moveContactToStage, getNextPipelineStage } from '@/lib/api/pipeline';
 import { logger } from '@/lib/logger';
@@ -78,6 +79,8 @@ describe('InlineStageSelect', () => {
   });
 
   it('debería llamar moveContactToStage cuando se avanza etapa', async () => {
+    const nextStage = { id: 'stage-3', name: 'Interesado', color: '#0000FF', order: 3 };
+    (getNextPipelineStage as any).mockReturnValue(nextStage);
     (moveContactToStage as any).mockResolvedValue({ success: true });
 
     render(<InlineStageSelect {...defaultProps} />);
@@ -86,20 +89,21 @@ describe('InlineStageSelect', () => {
     fireEvent.click(advanceButton);
 
     await waitFor(() => {
-      expect(moveContactToStage).toHaveBeenCalledWith('contact-1', 'stage-2');
+      expect(moveContactToStage).toHaveBeenCalledWith('contact-1', 'stage-3');
     });
   });
 
   it('debería mostrar confirmación cuando se intenta cambiar a etapa Cliente', async () => {
+    const user = userEvent.setup();
     render(<InlineStageSelect {...defaultProps} />);
 
     // Abrir dropdown y seleccionar etapa Cliente
     const stageButton = screen.getByText('Prospecto');
-    fireEvent.click(stageButton);
+    await user.click(stageButton);
 
     // Buscar y hacer click en Cliente
-    const clienteOption = screen.getByText('Cliente');
-    fireEvent.click(clienteOption);
+    const clienteOption = await screen.findByText('Cliente');
+    await user.click(clienteOption);
 
     // Debería mostrar diálogo de confirmación
     await waitFor(() => {

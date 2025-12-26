@@ -13,10 +13,10 @@ import {
   ModalContent,
   ModalFooter,
   Button,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Contact } from '@/types';
 
-export interface DeleteContactModalProps {
+interface DeleteContactModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contact: Contact | null;
@@ -51,3 +51,11 @@ export default function DeleteContactModal({
     </Modal>
   );
 }
+
+
+
+
+
+
+
+

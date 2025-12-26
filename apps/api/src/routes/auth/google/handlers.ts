@@ -6,7 +6,7 @@
  */
 
 import type { Request, Response } from 'express';
-import { db, users, googleOAuthTokens } from '@cactus/db';
+import { db, users, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createAsyncHandler, createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { getGoogleAuthUrl, exchangeCodeForTokens } from '../../../auth/google-oauth';

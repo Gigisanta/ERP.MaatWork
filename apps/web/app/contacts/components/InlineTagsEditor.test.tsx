@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import InlineTagsEditor from './InlineTagsEditor';
 import { useRouter } from 'next/navigation';
 
@@ -53,16 +54,17 @@ describe('InlineTagsEditor', () => {
   });
 
   it('debería llamar onTagsChange cuando se agrega etiqueta', async () => {
+    const user = userEvent.setup();
     const onTagsChange = vi.fn();
     render(<InlineTagsEditor {...defaultProps} onTagsChange={onTagsChange} />);
 
     // Abrir dropdown
-    const addButton = screen.getByRole('button');
-    fireEvent.click(addButton);
+    const addButton = screen.getByRole('button', { name: /Agregar etiqueta/i });
+    await user.click(addButton);
 
     // Seleccionar etiqueta
-    const tagOption = screen.getByText('VIP');
-    fireEvent.click(tagOption);
+    const tagOption = await screen.findByText('VIP');
+    await user.click(tagOption);
 
     await waitFor(() => {
       expect(onTagsChange).toHaveBeenCalledWith('contact-1', ['tag-1'], []);
@@ -70,6 +72,7 @@ describe('InlineTagsEditor', () => {
   });
 
   it('debería llamar onTagsChange cuando se remueve etiqueta', async () => {
+    const user = userEvent.setup();
     const onTagsChange = vi.fn();
     render(
       <InlineTagsEditor
@@ -80,12 +83,20 @@ describe('InlineTagsEditor', () => {
     );
 
     // Abrir dropdown
-    const addButton = screen.getByRole('button');
-    fireEvent.click(addButton);
+    const addButton = screen.getByRole('button', { name: /Agregar etiqueta/i });
+    await user.click(addButton);
 
     // Deseleccionar etiqueta (ya está seleccionada)
-    const tagOption = screen.getByText('VIP');
-    fireEvent.click(tagOption);
+    // El texto 'VIP' aparece dos veces: en el tag visible y en el menú
+    const tagOptions = await screen.findAllByText('VIP');
+    // El del menú suele ser el último o podemos buscar por rol
+    const menuTagOption = tagOptions.find((el) => el.closest('[role="menuitem"]'));
+    if (menuTagOption) {
+      await user.click(menuTagOption);
+    } else {
+      // Fallback
+      await user.click(tagOptions[tagOptions.length - 1]);
+    }
 
     await waitFor(() => {
       expect(onTagsChange).toHaveBeenCalledWith('contact-1', [], ['tag-1']);
@@ -109,17 +120,18 @@ describe('InlineTagsEditor', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('debería llamar onManageTagsClick cuando se hace click en gestionar', () => {
+  it('debería llamar onManageTagsClick cuando se hace click en gestionar', async () => {
+    const user = userEvent.setup();
     const onManageTagsClick = vi.fn();
     render(<InlineTagsEditor {...defaultProps} onManageTagsClick={onManageTagsClick} />);
 
     // Abrir dropdown
-    const addButton = screen.getByRole('button');
-    fireEvent.click(addButton);
+    const addButton = screen.getByRole('button', { name: /Agregar etiqueta/i });
+    await user.click(addButton);
 
     // Buscar y hacer click en gestionar
-    const manageOption = screen.getByText(/Gestionar etiquetas/i);
-    fireEvent.click(manageOption);
+    const manageOption = await screen.findByText(/Gestionar etiquetas/i);
+    await user.click(manageOption);
 
     expect(onManageTagsClick).toHaveBeenCalled();
   });

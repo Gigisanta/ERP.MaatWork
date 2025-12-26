@@ -1,26 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
-
-const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page
-    .getByLabel(/email|usuario|correo/i)
-    .first()
-    .fill(adminEmail);
-  await page
-    .getByLabel(/contraseña|password/i)
-    .first()
-    .fill(adminPassword);
-  await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
-  await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
-}
+import { test, expect } from '@playwright/test';
 
 test.describe('Contacts CRUD happy path', () => {
   test('create, view and delete contact', async ({ page }) => {
-    await login(page);
-
     await page.goto('/contacts');
     const newBtn = page.getByRole('button', { name: /nuevo|new|crear/i });
     if ((await newBtn.count()) === 0) test.skip();

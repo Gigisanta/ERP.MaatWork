@@ -6,8 +6,7 @@
  * Impacto: Unified loading experience matching app design
  */
 
-import { Stack, Card, CardHeader, CardTitle, CardContent } from '@cactus/ui';
-import { Skeleton, SkeletonText, SkeletonAvatar } from '../../components/SkeletonLoader';
+import { Stack, Card, CardHeader, CardTitle, CardContent, Skeleton, SkeletonText, SkeletonAvatar } from '@maatwork/ui';
 
 export default function Loading() {
   return (

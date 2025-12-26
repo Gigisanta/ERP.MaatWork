@@ -9,7 +9,7 @@ import type {
   CareerPlanLevelCreateRequest,
   CareerPlanLevelUpdateRequest,
   UserCareerProgress,
-} from '@/types/career-plan';
+} from '@/types';
 
 // ==========================================================
 // API Methods

@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn.js';
-import Button from './Button.js';
-import Icon from '../Icon.js';
+import { Button } from './Button.js';
+import { Icon } from '../Icon.js';
 import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
 
 export interface PaginationProps {

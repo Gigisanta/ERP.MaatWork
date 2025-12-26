@@ -14,7 +14,7 @@
  * Impacto: App funciona sin materialized views opcionales, solo loguea warning
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import pino from 'pino';
 

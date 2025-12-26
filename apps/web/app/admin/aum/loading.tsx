@@ -6,8 +6,7 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, Stack } from '@cactus/ui';
-import { Skeleton, SkeletonPageHeader, SkeletonTable } from '../../components/SkeletonLoader';
+import { Card, CardContent, Stack, Skeleton, SkeletonPageHeader, SkeletonTable } from '@maatwork/ui';
 
 export default function AdminAumLoading() {
   return (

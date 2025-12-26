@@ -2,8 +2,8 @@
  * API methods para capacitaciones
  */
 
-import { apiClient } from '../api-client';
-import type { ApiResponse } from '../api-client';
+import { apiClient } from './client';
+import type { ApiResponse } from '@/types';
 import type {
   Capacitacion,
   CreateCapacitacionRequest,
@@ -11,7 +11,7 @@ import type {
   ImportCapacitacionesResponse,
   ListCapacitacionesParams,
   CapacitacionesListResponse,
-} from '@/types/capacitaciones';
+} from '@/types';
 
 // ==========================================================
 // API Methods
@@ -26,8 +26,8 @@ export async function getCapacitaciones(
   const queryParams = new URLSearchParams();
   if (params?.tema) queryParams.append('tema', params.tema);
   if (params?.search) queryParams.append('search', params.search);
-  if (params?.limit) queryParams.append('limit', String(params.limit));
-  if (params?.offset) queryParams.append('offset', String(params.offset));
+  if (params?.limit !== undefined) queryParams.append('limit', String(params.limit));
+  if (params?.offset !== undefined) queryParams.append('offset', String(params.offset));
 
   const endpoint = `/v1/capacitaciones${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const response = await apiClient.get<CapacitacionesListResponse>(endpoint);

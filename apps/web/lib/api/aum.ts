@@ -17,7 +17,7 @@ import type {
   AumMatchRequest,
   AumRowsResponse,
   AumDuplicatesResponse,
-} from '@/types/aum';
+} from '@/types';
 import {
   aumRowsResponseSchema,
   aumUploadResponseSchema,
@@ -178,7 +178,7 @@ export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> 
 /**
  * Limpiar duplicados AUM manteniendo solo la fila más reciente por broker+accountNumber
  */
-export async function cleanupAumDuplicates(): Promise<
+async function cleanupAumDuplicates(): Promise<
   ApiResponse<{
     ok: boolean;
     message: string;
@@ -344,7 +344,7 @@ export interface AdvisorSummaryItem {
 /**
  * Totales de resumen AUM
  */
-export interface AdvisorSummaryTotals {
+interface AdvisorSummaryTotals {
   clientCount: number;
   aumDollars: number;
   bolsaArg: number;
@@ -359,7 +359,7 @@ export interface AdvisorSummaryTotals {
 /**
  * Response de resumen por asesor
  */
-export interface AdvisorSummaryResponse {
+interface AdvisorSummaryResponse {
   ok: boolean;
   summary: AdvisorSummaryItem[];
   totals: AdvisorSummaryTotals;
@@ -373,7 +373,7 @@ export interface AdvisorSummaryResponse {
 /**
  * Período disponible para filtro
  */
-export interface AvailablePeriod {
+interface AvailablePeriod {
   month: number;
   year: number;
   fileCount: number;
@@ -383,7 +383,7 @@ export interface AvailablePeriod {
 /**
  * Response de períodos disponibles
  */
-export interface AvailablePeriodsResponse {
+interface AvailablePeriodsResponse {
   ok: boolean;
   periods: AvailablePeriod[];
 }

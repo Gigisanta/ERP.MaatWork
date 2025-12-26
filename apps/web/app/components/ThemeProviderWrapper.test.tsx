@@ -17,11 +17,40 @@ import ThemeProviderWrapper, { useTheme } from './ThemeProviderWrapper';
 
 describe('ThemeProviderWrapper', () => {
   const originalMatchMedia = window.matchMedia;
+  const originalLocalStorage = window.localStorage;
 
   beforeEach(() => {
-    // Reset localStorage
-    localStorage.clear();
+    // Mock localStorage
+    const mockStorage: Record<string, string> = {};
+    const storageMock = {
+      getItem: vi.fn((key: string) => mockStorage[key] || null),
+      setItem: vi.fn((key: string, value: string) => {
+        mockStorage[key] = value;
+      }),
+      clear: vi.fn(() => {
+        for (const key in mockStorage) delete mockStorage[key];
+      }),
+      removeItem: vi.fn((key: string) => {
+        delete mockStorage[key];
+      }),
+      length: 0,
+      key: vi.fn((index: number) => Object.keys(mockStorage)[index] || null),
+    };
+
+    Object.defineProperty(window, 'localStorage', {
+      value: storageMock,
+      writable: true,
+    });
+
     vi.clearAllMocks();
+
+    // AI_DECISION: Mock matchMedia and localStorage to ensure test consistency
+    // Justificación: jsdom matchMedia and localStorage can be flaky in some environments
+    // Impacto: Reliable tests for theme switching and persistence
+    
+    // Reset document element
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.classList.remove('dark');
 
     // Mock matchMedia with proper event handling
     const mockMediaQueryList = {
@@ -55,7 +84,7 @@ describe('ThemeProviderWrapper', () => {
 
   afterEach(() => {
     cleanup(); // Clean up DOM between tests
-    localStorage.clear();
+    window.localStorage = originalLocalStorage;
     window.matchMedia = originalMatchMedia;
   });
 
@@ -69,7 +98,7 @@ describe('ThemeProviderWrapper', () => {
       expect(screen.getByText('Test Content')).toBeInTheDocument();
     });
 
-    it('should use defaultTheme when provided', () => {
+    it('should use defaultTheme when provided', async () => {
       const TestComponent = () => {
         const { theme } = useTheme();
         return <div>{theme}</div>;
@@ -80,7 +109,10 @@ describe('ThemeProviderWrapper', () => {
           <TestComponent />
         </ThemeProviderWrapper>
       );
-      expect(screen.getByText('dark')).toBeInTheDocument();
+      
+      await waitFor(() => {
+        expect(screen.getByText('dark')).toBeInTheDocument();
+      });
     });
 
     it('should default to system theme when no saved theme and no defaultTheme', async () => {
@@ -127,7 +159,7 @@ describe('ThemeProviderWrapper', () => {
       // AI_DECISION: localStorage debe establecerse ANTES de render para que useEffect lo lea
       // Justificación: useEffect lee localStorage en el primer render
       // Impacto: Test corregido para usar waitFor para timing correcto
-      localStorage.setItem('cactus-theme', 'dark');
+      localStorage.setItem('maatwork-theme', 'dark');
 
       const TestComponent = () => {
         const { theme } = useTheme();
@@ -142,7 +174,8 @@ describe('ThemeProviderWrapper', () => {
 
       // Wait for useEffect to complete and state to update
       await waitFor(() => {
-        expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
+        const element = screen.getByTestId('theme-value');
+        expect(element.textContent).toBe('dark');
       });
     });
 
@@ -150,7 +183,7 @@ describe('ThemeProviderWrapper', () => {
       // AI_DECISION: Migración de high-contrast a light
       // Justificación: El código migra themes antiguos en useEffect
       // Impacto: Usar waitFor para timing correcto
-      localStorage.setItem('cactus-theme', 'high-contrast');
+      localStorage.setItem('maatwork-theme', 'high-contrast');
 
       const TestComponent = () => {
         const { theme } = useTheme();
@@ -165,20 +198,24 @@ describe('ThemeProviderWrapper', () => {
 
       // Wait for useEffect to complete and migration to happen
       await waitFor(() => {
-        expect(screen.getByTestId('theme-value')).toHaveTextContent('light');
+        const element = screen.getByTestId('theme-value');
+        expect(element.textContent).toBe('light');
       });
 
       // localStorage should be updated
-      expect(localStorage.getItem('cactus-theme')).toBe('light');
+      expect(localStorage.getItem('maatwork-theme')).toBe('light');
     });
 
-    it('should set data-theme attribute on document element', () => {
+    it('should set data-theme attribute on document element', async () => {
       render(
         <ThemeProviderWrapper defaultTheme="dark">
           <div>Test</div>
         </ThemeProviderWrapper>
       );
-      expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      
+      await waitFor(() => {
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+      });
     });
   });
 
@@ -242,16 +279,16 @@ describe('ThemeProviderWrapper', () => {
       await waitFor(() => {
         expect(screen.getByTestId('theme-value')).toHaveTextContent('dark');
       });
-      expect(localStorage.getItem('cactus-theme')).toBe('dark');
+      expect(localStorage.getItem('maatwork-theme')).toBe('dark');
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     });
 
-    it('should toggle theme between light and dark', () => {
+    it('should toggle theme between light and dark', async () => {
       const TestComponent = () => {
         const { theme, toggleTheme } = useTheme();
         return (
           <div>
-            <div>{theme}</div>
+            <div data-testid="theme-val">{theme}</div>
             <button onClick={toggleTheme}>Toggle</button>
           </div>
         );
@@ -262,18 +299,27 @@ describe('ThemeProviderWrapper', () => {
           <TestComponent />
         </ThemeProviderWrapper>
       );
-      expect(screen.getByText('light')).toBeInTheDocument();
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-val')).toHaveTextContent('light');
+      });
 
       const button = screen.getByText('Toggle');
-      act(() => {
+      await act(async () => {
         button.click();
       });
-      expect(screen.getByText('dark')).toBeInTheDocument();
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-val')).toHaveTextContent('dark');
+      });
 
-      act(() => {
+      await act(async () => {
         button.click();
       });
-      expect(screen.getByText('light')).toBeInTheDocument();
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('theme-val')).toHaveTextContent('light');
+      });
     });
 
     it('should persist theme to localStorage', async () => {
@@ -294,12 +340,12 @@ describe('ThemeProviderWrapper', () => {
       });
 
       await waitFor(() => {
-        expect(localStorage.getItem('cactus-theme')).toBe('system');
+        expect(localStorage.getItem('maatwork-theme')).toBe('system');
       });
     });
 
     it('should listen to system preference changes when theme is system', async () => {
-      localStorage.setItem('cactus-theme', 'system');
+      localStorage.setItem('maatwork-theme', 'system');
       let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null;
 
       // Mock system prefers light initially (matches: false for dark query)
@@ -365,7 +411,7 @@ describe('ThemeProviderWrapper', () => {
     });
 
     it('should not react to system preference changes when theme is fixed (light)', async () => {
-      localStorage.setItem('cactus-theme', 'light');
+      localStorage.setItem('maatwork-theme', 'light');
 
       let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null;
 
@@ -468,7 +514,7 @@ describe('ThemeProviderWrapper', () => {
       await waitFor(() => {
         expect(screen.getByTestId('theme')).toHaveTextContent('system');
       });
-      expect(localStorage.getItem('cactus-theme')).toBe('system');
+      expect(localStorage.getItem('maatwork-theme')).toBe('system');
       // Resolved theme should follow system preference (dark in this mock)
       expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');
       expect(document.documentElement.getAttribute('data-theme')).toBe('dark');

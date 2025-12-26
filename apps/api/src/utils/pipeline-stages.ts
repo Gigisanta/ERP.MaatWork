@@ -7,7 +7,7 @@
  * REGLA CURSOR: Esta configuración es la fuente de verdad única para las etapas por defecto.
  */
 
-import { db, pipelineStages } from '@cactus/db';
+import { db, pipelineStages } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import pino from 'pino';
 
@@ -16,7 +16,7 @@ const logger = pino({ name: 'pipeline-stages-utils' });
 /**
  * Definición de una etapa del pipeline por defecto
  */
-export interface DefaultPipelineStage {
+interface DefaultPipelineStage {
   name: string;
   description: string;
   order: number;

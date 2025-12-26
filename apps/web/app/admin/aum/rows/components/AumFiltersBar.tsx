@@ -8,9 +8,9 @@
 
 'use client';
 
-import { Select, Input, Checkbox, Text } from '@cactus/ui';
+import { Select, Input, Checkbox, Text } from '@maatwork/ui';
 
-export interface AumFiltersBarProps {
+interface AumFiltersBarProps {
   // Filter values
   broker: string;
   status: string;

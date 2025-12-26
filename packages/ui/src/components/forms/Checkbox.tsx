@@ -3,7 +3,7 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check, Minus } from 'lucide-react';
 import { cn } from '../../utils/cn.js';
 
-export interface CheckboxProps extends Omit<
+interface CheckboxProps extends Omit<
   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
   'className' | 'id' | 'onCheckedChange'
 > {

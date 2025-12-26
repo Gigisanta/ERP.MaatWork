@@ -18,4 +18,4 @@
 
 // Re-export everything from the modular structure
 export { apiClient, ApiClient, ApiError } from './api';
-export type { ApiResponse, RequestOptions, RequestConfig } from './api';
+export type { ApiResponse,   } from './api';

@@ -9,7 +9,7 @@
  * DELETE /automations/:id - Delete automation config
  */
 import type { Request, Response } from 'express';
-import { db, automationConfigs } from '@cactus/db';
+import { db, automationConfigs } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { createAutomationConfigSchema, updateAutomationConfigSchema } from '../schemas';
@@ -151,3 +151,11 @@ export const handleDeleteAutomation = createRouteHandler(async (req: Request) =>
 
   return { success: true };
 });
+
+
+
+
+
+
+
+

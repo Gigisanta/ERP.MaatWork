@@ -87,21 +87,23 @@ describe('fetchWithLogging', () => {
   });
 
   it('debería manejar timeout correctamente', async () => {
-    mockFetch.mockImplementation(() => {
+    mockFetch.mockImplementation((_url, options) => {
       return new Promise((_, reject) => {
-        setTimeout(() => {
-          const error = new Error('Aborted');
-          error.name = 'AbortError';
-          reject(error);
-        }, 100);
+        if (options?.signal) {
+          options.signal.addEventListener('abort', () => {
+            const error = new Error('Aborted');
+            error.name = 'AbortError';
+            reject(error);
+          });
+        }
       });
     });
 
     const promise = fetchWithLogging('https://example.com/test', { timeout: 50 });
-    vi.advanceTimersByTime(50);
-    await vi.runAllTimersAsync();
 
-    await expect(promise).rejects.toThrow();
+    vi.advanceTimersByTime(50);
+
+    await expect(promise).rejects.toThrow(/timeout after 50ms/i);
     expect(mockLogger.logNetworkError).toHaveBeenCalled();
   });
 

@@ -87,20 +87,20 @@ jobs:
       - name: Build API image
         if: inputs.service == 'all' || inputs.service == 'api'
         run: |
-          docker build -f apps/api/Dockerfile -t cactus-api:latest .
-          docker save cactus-api:latest | gzip > api-image.tar.gz
+          docker build -f apps/api/Dockerfile -t maatwork-api:latest .
+          docker save maatwork-api:latest | gzip > api-image.tar.gz
 
       - name: Build Web image
         if: inputs.service == 'all' || inputs.service == 'web'
         run: |
-          docker build -f apps/web/Dockerfile -t cactus-web:latest .
-          docker save cactus-web:latest | gzip > web-image.tar.gz
+          docker build -f apps/web/Dockerfile -t maatwork-web:latest .
+          docker save maatwork-web:latest | gzip > web-image.tar.gz
 
       - name: Build Analytics image
         if: inputs.service == 'all' || inputs.service == 'analytics'
         run: |
-          docker build -f apps/analytics-service/Dockerfile -t cactus-analytics:latest .
-          docker save cactus-analytics:latest | gzip > analytics-image.tar.gz
+          docker build -f apps/analytics-service/Dockerfile -t maatwork-analytics:latest .
+          docker save maatwork-analytics:latest | gzip > analytics-image.tar.gz
 
       # ==================== Transfer to EC2 ====================
       

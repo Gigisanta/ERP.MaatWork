@@ -37,7 +37,7 @@ export interface ButtonProps extends Omit<
  * <Button variant="accent">Start Free Trial</Button>
  * ```
  */
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       variant = 'primary',
@@ -133,5 +133,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-
-export default Button;

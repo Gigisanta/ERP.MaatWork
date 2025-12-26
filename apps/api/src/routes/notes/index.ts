@@ -60,13 +60,6 @@ router.delete('/:id', requireAuth, validate({ params: idParamSchema }), handleDe
 
 export default router;
 
-// Re-export schemas for external use
-export {
-  createNoteSchema,
-  updateNoteSchema,
-  listNotesQuerySchema,
-  batchNotesQuerySchema,
-  idParamSchema,
-  type CreateNoteInput,
-  type UpdateNoteInput,
-} from './schemas';
+
+
+

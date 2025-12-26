@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -19,8 +19,12 @@ interface MarketTypeConversionChartProps {
 
 /**
  * Gráfico de barras mostrando conversión de contactos a clientes por tipo de mercado
+ * 
+ * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
+ * Justificación: Charts are heavy components, memoization improves overall dashboard responsiveness
+ * Impacto: Reduced rendering overhead, better user experience
  */
-export function MarketTypeConversionChart({
+export const MarketTypeConversionChart = memo(function MarketTypeConversionChart({
   marketTypeConversion,
 }: MarketTypeConversionChartProps) {
   const chartData = useMemo(
@@ -82,4 +86,9 @@ export function MarketTypeConversionChart({
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});
+
+
+
+
+

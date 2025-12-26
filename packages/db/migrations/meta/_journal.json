@@ -288,6 +288,27 @@
       "when": 1765912092056,
       "tag": "0040_typical_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1766437164776,
+      "tag": "0041_mature_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1766437714174,
+      "tag": "0042_early_kitty_pryde",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1766437900575,
+      "tag": "0043_superb_frightful_four",
+      "breakpoints": true
     }
   ]
 }

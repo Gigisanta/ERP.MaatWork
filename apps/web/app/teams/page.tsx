@@ -7,7 +7,7 @@ import {
 } from '@/lib/api-server';
 import TeamsClient from './components/TeamsClient';
 import MemberTeamDashboard from './components/MemberTeamDashboard';
-import { Heading, Stack } from '@cactus/ui';
+import { Heading, Stack } from '@maatwork/ui';
 import type { Team, MembershipRequest } from '@/types';
 import type { MemberDashboardResponse } from '@/lib/api/teams';
 

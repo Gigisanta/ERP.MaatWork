@@ -1,0 +1,84 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e7]:
+    - generic [ref=e12]:
+      - generic [ref=e14]:
+        - navigation "Breadcrumb" [ref=e16]:
+          - list [ref=e17]:
+            - listitem [ref=e18]:
+              - link "Administración" [ref=e19] [cursor=pointer]:
+                - /url: /admin
+            - listitem [ref=e20]:
+              - generic [ref=e22]: ▶
+              - link "AUM" [ref=e23] [cursor=pointer]:
+                - /url: /admin/aum
+            - listitem [ref=e24]:
+              - generic [ref=e26]: ▶
+              - generic [ref=e27]: Filas
+        - generic [ref=e28]:
+          - heading "AUM - Normalización de Cuentas" [level=1] [ref=e30]
+          - generic [ref=e31]:
+            - link "📋" [ref=e32] [cursor=pointer]:
+              - /url: /admin/aum/history
+              - button "📋" [ref=e33]
+            - link "←" [ref=e34] [cursor=pointer]:
+              - /url: /admin/aum
+              - button "←" [ref=e35]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - combobox [ref=e39] [cursor=pointer]:
+              - img [ref=e40]
+            - combobox [ref=e42]
+          - generic [ref=e43]:
+            - combobox [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+            - combobox [ref=e47]
+          - generic [ref=e49]:
+            - generic:
+              - generic: 🔍
+            - textbox "Buscar..." [ref=e50]
+          - generic [ref=e51]:
+            - generic [ref=e53]:
+              - checkbox [ref=e54] [cursor=pointer]
+              - checkbox
+            - paragraph [ref=e55]: Solo actualizados
+      - generic [ref=e56]:
+        - generic [ref=e58]:
+          - generic [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]:
+              - img [ref=e63]
+              - heading "Resumen por Asesor" [level=3] [ref=e66]
+            - generic [ref=e67]:
+              - generic [ref=e68]: "Período:"
+              - combobox "Período:" [disabled] [ref=e69]:
+                - option "Cargando..." [selected]
+          - paragraph [ref=e75]: Cargando resumen de asesores...
+        - generic [ref=e76]:
+          - generic [ref=e79] [cursor=pointer]:
+            - img [ref=e81]
+            - heading "Detalle de Cuentas" [level=3] [ref=e84]
+          - table [ref=e87]:
+            - rowgroup [ref=e102]:
+              - row "Comitente ID Cuenta Cuenta Asesor AUM USD Bolsa Arg Fondos Arg Bolsa BCI Pesos MEP Cable CV7000 Acciones" [ref=e103]:
+                - columnheader "Comitente" [ref=e104]
+                - columnheader "ID Cuenta" [ref=e105]
+                - columnheader "Cuenta" [ref=e106]
+                - columnheader "Asesor" [ref=e107]
+                - columnheader "AUM USD" [ref=e108]
+                - columnheader "Bolsa Arg" [ref=e109]
+                - columnheader "Fondos Arg" [ref=e110]
+                - columnheader "Bolsa BCI" [ref=e111]
+                - columnheader "Pesos" [ref=e112]
+                - columnheader "MEP" [ref=e113]
+                - columnheader "Cable" [ref=e114]
+                - columnheader "CV7000" [ref=e115]
+                - columnheader "Acciones" [ref=e116]
+            - rowgroup [ref=e117]:
+              - row "No se encontraron filas. Intenta ajustar los filtros o cargar un archivo nuevo." [ref=e118]:
+                - cell "No se encontraron filas. Intenta ajustar los filtros o cargar un archivo nuevo." [ref=e119]:
+                  - paragraph [ref=e121]: No se encontraron filas. Intenta ajustar los filtros o cargar un archivo nuevo.
+  - region "Notifications (F8)":
+    - list
+```

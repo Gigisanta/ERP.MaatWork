@@ -1,5 +1,5 @@
 'use client';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -15,8 +15,8 @@ import {
   Toast,
   Breadcrumbs,
   BreadcrumbItem,
-} from '@cactus/ui';
-import ConfirmDialog from '../../components/ConfirmDialog';
+} from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
 import PortfolioLineRow from './components/PortfolioLineRow';
 import { PortfolioLineForm } from './components/PortfolioLineForm';
 import { PortfolioHeader } from './components/PortfolioHeader';

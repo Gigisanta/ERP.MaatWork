@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Este directorio contiene memorias contextuales para Cursor AI que documentan preferencias, decisiones, flujos de trabajo y soluciones específicas del proyecto CACTUS CRM.
+Este directorio contiene memorias contextuales para Cursor AI que documentan preferencias, decisiones, flujos de trabajo y soluciones específicas del proyecto MAATWORK.
 
 ## Diferencia entre Memorias y Reglas
 
@@ -27,7 +27,7 @@ Guía completa para evitar cuelgues de terminal y usar comandos de forma segura.
 - Comandos no-interactivos con flags específicos
 - Timeouts y límites
 - Troubleshooting de cuelgues
-- Comandos específicos del proyecto CACTUS
+- Comandos específicos del proyecto MAATWORK
 
 **Cuándo usar:** Al ejecutar comandos de terminal desde Cursor o troubleshooting de cuelgues.
 

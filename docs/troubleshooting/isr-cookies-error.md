@@ -119,7 +119,7 @@ Para verificar que no hay más errores de ISR+cookies:
 
 ```bash
 # Build de producción
-pnpm -F @cactus/web build
+pnpm -F @maatwork/web build
 
 # Si hay errores, buscar en el output:
 grep "couldn't be rendered statically" build.log

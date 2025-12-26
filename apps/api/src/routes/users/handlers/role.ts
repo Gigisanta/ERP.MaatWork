@@ -4,7 +4,7 @@
  * PATCH /users/:id/role - Update user role
  */
 import type { Request } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { updateRoleSchema } from '../schemas';
@@ -22,7 +22,7 @@ export const handleUpdateUserRole = createRouteHandler(async (req: Request) => {
     throw new HttpError(404, 'User not found');
   }
 
-  req.log.info({ userId: id, role }, 'user role updated');
+  req.log.info({ userId: id, role }, 'User role updated successfully');
 
   return updatedUser;
 });

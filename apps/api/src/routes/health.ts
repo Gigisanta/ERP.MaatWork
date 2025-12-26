@@ -7,7 +7,7 @@
 
 import { Router, type Request, type Response } from 'express';
 import { sql } from 'drizzle-orm';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { getCacheHealth } from '../utils/performance/cache';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../utils/route-handler';

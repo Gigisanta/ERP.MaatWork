@@ -7,20 +7,22 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import AppShell from './AppShell';
 
+import React from 'react';
+
 // Mock UI components
-vi.mock('@cactus/ui', () => ({
-  Drawer: ({ children, open, onOpenChange }: any) => (
+vi.mock('@maatwork/ui', () => ({
+  Drawer: ({ children, open, onOpenChange }: { children: React.ReactNode; open: boolean; onOpenChange: (open: boolean) => void }) => (
     <div data-testid="drawer" data-open={open}>
       {children}
       <button onClick={() => onOpenChange(false)}>Close</button>
     </div>
   ),
-  Sidebar: ({ sections }: any) => (
+  Sidebar: ({ sections }: { sections: Array<{ title: string }> }) => (
     <nav data-testid="sidebar">
-      {sections.map((section: any) => (
+      {sections.map((section) => (
         <div key={section.title}>{section.title}</div>
       ))}
     </nav>
@@ -29,7 +31,7 @@ vi.mock('@cactus/ui', () => ({
 
 // Mock NavigationNew
 vi.mock('./NavigationNew', () => ({
-  default: ({ onToggleSidebar, sidebarOpen }: any) => (
+  default: ({ onToggleSidebar, sidebarOpen }: { onToggleSidebar: () => void; sidebarOpen: boolean }) => (
     <nav data-testid="navigation">
       <button onClick={onToggleSidebar} data-open={sidebarOpen}>
         Toggle Sidebar
@@ -80,7 +82,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('drawer')).toBeInTheDocument();
   });
 
-  it('debería toggle sidebar cuando se hace click en NavigationNew', () => {
+  it('debería toggle sidebar cuando se hace click en NavigationNew', async () => {
     render(
       <AppShell>
         <div>Test</div>
@@ -92,12 +94,14 @@ describe('AppShell', () => {
 
     expect(drawer.getAttribute('data-open')).toBe('false');
 
-    toggleButton.click();
+    await act(async () => {
+      fireEvent.click(toggleButton);
+    });
 
     expect(drawer.getAttribute('data-open')).toBe('true');
   });
 
-  it('debería cerrar drawer cuando se hace click en close', () => {
+  it('debería cerrar drawer cuando se hace click en close', async () => {
     render(
       <AppShell>
         <div>Test</div>
@@ -105,13 +109,17 @@ describe('AppShell', () => {
     );
 
     const toggleButton = screen.getByText('Toggle Sidebar');
-    toggleButton.click();
+    await act(async () => {
+      fireEvent.click(toggleButton);
+    });
 
     const drawer = screen.getByTestId('drawer');
     expect(drawer.getAttribute('data-open')).toBe('true');
 
     const closeButton = screen.getByText('Close');
-    closeButton.click();
+    await act(async () => {
+      fireEvent.click(closeButton);
+    });
 
     expect(drawer.getAttribute('data-open')).toBe('false');
   });

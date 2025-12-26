@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import {
   Card,
   CardHeader,
@@ -13,67 +12,13 @@ import {
   Stack,
   Select,
   type SelectItem,
-  Grid,
-  GridItem,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 import { MetricCard } from './MetricCard';
-// AI_DECISION: Import GoalsComparisonChart statically to avoid webpack module resolution issues
-// Justificación: Dynamic import of GoalsComparisonChart causes webpack to fail resolving recharts Cell component
-// Impacto: Adds ~50KB to initial bundle, but fixes "Cannot read properties of undefined (reading 'call')" error
-// Note: Other charts still use dynamic import to minimize bundle size impact
 import { GoalsComparisonChart } from './Charts/GoalsComparisonChart';
-
-// AI_DECISION: Dynamic import of chart components to reduce initial bundle size
-// Justificación: Recharts (~200KB) is heavy; lazy loading reduces First Load JS significantly
-// Impacto: Faster initial page load, charts load on demand when user scrolls to metrics section
-
-const BusinessLineChart = dynamic(
-  async () => {
-    const mod = await import('./Charts/BusinessLineChart');
-    return { default: mod.BusinessLineChart };
-  },
-  {
-    loading: () => <ChartLoadingFallback />,
-    ssr: false,
-  }
-);
-
-const TransitionTimesChart = dynamic(
-  async () => {
-    const mod = await import('./Charts/TransitionTimesChart');
-    return { default: mod.TransitionTimesChart };
-  },
-  {
-    loading: () => <ChartLoadingFallback />,
-    ssr: false,
-  }
-);
-
-const MarketTypeConversionChart = dynamic(
-  async () => {
-    const mod = await import('./Charts/MarketTypeConversionChart');
-    return { default: mod.MarketTypeConversionChart };
-  },
-  {
-    loading: () => <ChartLoadingFallback />,
-    ssr: false,
-  }
-);
-
-// Loading fallback for charts
-function ChartLoadingFallback() {
-  return (
-    <div className="flex items-center justify-center h-[220px]">
-      <Stack direction="row" gap="sm" align="center">
-        <Spinner size="sm" />
-        <Text color="secondary" size="sm">
-          Cargando gráfico...
-        </Text>
-      </Stack>
-    </div>
-  );
-}
+import { BusinessLineChart } from './Charts/BusinessLineChart';
+import { TransitionTimesChart } from './Charts/TransitionTimesChart';
+import { MarketTypeConversionChart } from './Charts/MarketTypeConversionChart';
 
 interface MetricsSectionProps {
   metricsData: MonthlyMetrics | null;
@@ -132,7 +77,22 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
   }
 
   if (!metricsData) {
-    return null;
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Stack direction="column" gap="md" align="center">
+            <Text color="secondary" italic>
+              No hay datos de métricas disponibles para el período seleccionado.
+            </Text>
+            {error && (
+              <Alert variant="error" className="max-w-md mx-auto">
+                <Text size="sm">{error}</Text>
+              </Alert>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
+    );
   }
 
   // AI_DECISION: Changed layout to side-by-side grid

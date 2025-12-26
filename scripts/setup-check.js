@@ -221,11 +221,11 @@ if (require.main === module) {
 }
 
 module.exports = {
-  main,
-  checkNodeVersion,
-  checkPnpm,
-  checkDocker,
-  checkPostgreSQL,
-  checkEnvFile,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
 };
 

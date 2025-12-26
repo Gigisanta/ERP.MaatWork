@@ -78,7 +78,7 @@ export function getFilteredAndSortedLogs(
 /**
  * Escapa caracteres especiales para regex
  */
-export function escapeRegex(str: string): string {
+function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
@@ -97,3 +97,11 @@ export function highlightText(text: string, query: string): string {
 export function isNextRedirectError(message: string): boolean {
   return message === 'NEXT_REDIRECT' || message.includes('NEXT_REDIRECT');
 }
+
+
+
+
+
+
+
+

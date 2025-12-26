@@ -8,12 +8,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, automationConfigs } from '@cactus/db';
+import { db, automationConfigs } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   automationConfigs: {},
   eq: vi.fn(),

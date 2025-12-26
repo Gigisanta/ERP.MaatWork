@@ -54,7 +54,7 @@
 /**
  * Opciones para crear una respuesta de error
  */
-export interface ErrorResponseOptions {
+interface ErrorResponseOptions {
   /** El error capturado (puede ser Error, string, o cualquier valor) */
   error: unknown;
   /** ID de la request para trazabilidad (de req.requestId) */
@@ -68,7 +68,7 @@ export interface ErrorResponseOptions {
 /**
  * Respuesta de error en produccion (sin detalles internos)
  */
-export interface ProductionErrorResponse {
+interface ProductionErrorResponse {
   error: string;
   requestId?: string;
 }
@@ -76,7 +76,7 @@ export interface ProductionErrorResponse {
 /**
  * Respuesta de error en desarrollo (con detalles para debugging)
  */
-export interface DevelopmentErrorResponse extends ProductionErrorResponse {
+interface DevelopmentErrorResponse extends ProductionErrorResponse {
   message?: string;
   stack?: string;
   context?: Record<string, unknown>;
@@ -85,12 +85,12 @@ export interface DevelopmentErrorResponse extends ProductionErrorResponse {
 /**
  * Union type para respuesta de error
  */
-export type ErrorResponse = ProductionErrorResponse | DevelopmentErrorResponse;
+type ErrorResponse = ProductionErrorResponse | DevelopmentErrorResponse;
 
 /**
  * Codigos HTTP de error comunes
  */
-export const HTTP_STATUS = {
+const HTTP_STATUS = {
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
@@ -102,7 +102,7 @@ export const HTTP_STATUS = {
   SERVICE_UNAVAILABLE: 503,
 } as const;
 
-export type HttpStatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];
+type HttpStatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS];
 
 // ==========================================================
 // Functions
@@ -258,7 +258,7 @@ export function getStatusCodeFromError(error: unknown): number {
  * res.status(400).json(response);
  * ```
  */
-export function createValidationErrorResponse(
+function createValidationErrorResponse(
   validationErrors: Array<{ field: string; message: string }>,
   requestId?: string
 ): {
@@ -287,24 +287,24 @@ export function createValidationErrorResponse(
  * }
  * ```
  */
-export function isErrorOfType(error: unknown, statusCode: number): boolean {
+function isErrorOfType(error: unknown, statusCode: number): boolean {
   return getStatusCodeFromError(error) === statusCode;
 }
 
 /**
  * Helpers para verificar tipos comunes de errores
  */
-export const isNotFoundError = (error: unknown): boolean =>
+const isNotFoundError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.NOT_FOUND);
 
-export const isUnauthorizedError = (error: unknown): boolean =>
+const isUnauthorizedError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.UNAUTHORIZED);
 
-export const isForbiddenError = (error: unknown): boolean =>
+const isForbiddenError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.FORBIDDEN);
 
-export const isValidationError = (error: unknown): boolean =>
+const isValidationError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.BAD_REQUEST);
 
-export const isConflictError = (error: unknown): boolean =>
+const isConflictError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.CONFLICT);

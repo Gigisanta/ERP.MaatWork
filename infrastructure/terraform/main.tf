@@ -1,5 +1,5 @@
 # =============================================================================
-# Cactus CRM - Main Terraform Configuration
+# MaatWork - Main Terraform Configuration
 # =============================================================================
 #
 # This is the root module that orchestrates all infrastructure components.

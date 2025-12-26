@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@cactus/ui';
+import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@maatwork/ui';
 
 interface EventsTabProps {
   symbol: string;
@@ -17,7 +17,7 @@ interface EventsTabProps {
 
 export default function EventsTab({ symbol }: EventsTabProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     // AI_DECISION: Placeholder para eventos regulatorios (Earnings, Dividends, Splits, SEC Filings, CNV Hechos Relevantes)

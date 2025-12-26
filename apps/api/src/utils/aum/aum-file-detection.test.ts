@@ -12,9 +12,9 @@ import {
 describe('aum-file-detection', () => {
   describe('detectAumFileType', () => {
     it('debe detectar archivo master por nombre', () => {
-      expect(detectAumFileType('Balanz Cactus 2025 - AUM Balanz.csv')).toBe('master');
-      expect(detectAumFileType('balanz cactus 2025 - aum balanz.xlsx')).toBe('master');
-      expect(detectAumFileType('BALANZ CACTUS 2025 - AUM BALANZ.CSV')).toBe('master');
+      expect(detectAumFileType('Balanz MaatWork 2025 - AUM Balanz.csv')).toBe('master');
+      expect(detectAumFileType('balanz maatwork 2025 - aum balanz.xlsx')).toBe('master');
+      expect(detectAumFileType('BALANZ MAATWORK 2025 - AUM BALANZ.CSV')).toBe('master');
     });
 
     it('debe detectar archivo mensual por nombre', () => {
@@ -32,7 +32,7 @@ describe('aum-file-detection', () => {
 
   describe('extractReportPeriod', () => {
     it('debe retornar null para archivos master', () => {
-      const result = extractReportPeriod('Balanz Cactus 2025 - AUM Balanz.csv', 'master');
+      const result = extractReportPeriod('Balanz MaatWork 2025 - AUM Balanz.csv', 'master');
       expect(result).toBeNull();
     });
 
@@ -108,7 +108,7 @@ describe('aum-file-detection', () => {
     });
 
     it('debe retornar null para mes/año en archivos master sin valores manuales', () => {
-      const result = detectAumFileMetadata('Balanz Cactus 2025 - AUM Balanz.csv');
+      const result = detectAumFileMetadata('Balanz MaatWork 2025 - AUM Balanz.csv');
       expect(result.fileType).toBe('master');
       expect(result.reportMonth).toBeNull();
       expect(result.reportYear).toBeNull();

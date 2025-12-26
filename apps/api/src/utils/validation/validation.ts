@@ -85,19 +85,19 @@ import { z } from 'zod';
 /**
  * Schemas de validacion para params, query y body
  */
-export interface ValidationSchemas {
+interface ValidationSchemas {
   /** Schema para validar req.params (ej: { id: uuidSchema }) */
-  params?: z.ZodSchema;
+  params?: any;
   /** Schema para validar req.query (ej: paginationQuerySchema) */
-  query?: z.ZodSchema;
+  query?: any;
   /** Schema para validar req.body (ej: createContactSchema) */
-  body?: z.ZodSchema;
+  body?: any;
 }
 
 /**
  * Resultado de validacion exitosa
  */
-export interface ValidationSuccess<T> {
+interface ValidationSuccess<T> {
   success: true;
   data: T;
 }
@@ -105,7 +105,7 @@ export interface ValidationSuccess<T> {
 /**
  * Resultado de validacion fallida
  */
-export interface ValidationFailure {
+interface ValidationFailure {
   success: false;
   error: z.ZodError;
 }
@@ -113,12 +113,12 @@ export interface ValidationFailure {
 /**
  * Resultado de validacion (union)
  */
-export type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
+type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
 
 /**
  * Detalle de error de validacion
  */
-export interface ValidationErrorDetail {
+interface ValidationErrorDetail {
   path: string;
   message: string;
   code: string;
@@ -358,7 +358,7 @@ export function safeParseRequest<T>(schema: z.ZodSchema<T>, data: unknown): Vali
  * // page: number, limit: number, active: boolean | undefined
  * ```
  */
-export function validateQuery<T>(schema: z.ZodSchema<T>, query: Record<string, unknown>): T {
+function validateQuery<T>(schema: z.ZodSchema<T>, query: Record<string, unknown>): T {
   return schema.parse(query);
 }
 
@@ -374,7 +374,7 @@ export function validateQuery<T>(schema: z.ZodSchema<T>, query: Record<string, u
  * router.get('/:id', validate({ params: idParamSchema }), handler);
  * ```
  */
-export const idParamSchema = z.object({
+const idParamSchema = z.object({
   id: z.string().uuid('Invalid ID format'),
 });
 
@@ -386,7 +386,7 @@ export const idParamSchema = z.object({
  * router.get('/', validate({ query: basicPaginationSchema }), handler);
  * ```
  */
-export const basicPaginationSchema = z.object({
+const basicPaginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });

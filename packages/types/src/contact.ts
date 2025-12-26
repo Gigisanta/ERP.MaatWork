@@ -13,7 +13,24 @@ export interface ContactTag {
   id: string;
   name: string;
   color: string | null;
-  icon?: string | null;
+  icon?: string | null | undefined;
+  businessLine?: string | null | undefined;
+}
+
+/**
+ * Meeting Status from Google Calendar sync
+ */
+export interface MeetingStatus {
+  scheduled: boolean;
+  completed: boolean;
+  at: string | null; // ISO string
+  eventId: string | null;
+}
+
+export interface ContactMeetingStatus {
+  firstMeeting: MeetingStatus;
+  secondMeeting: MeetingStatus;
+  lastCheckedAt: string;
 }
 
 /**
@@ -39,7 +56,9 @@ export interface Contact extends VersionedEntity {
   dni?: string | null;
   pipelineStageId?: string | null;
   assignedAdvisorId?: string | null;
+  assignedAdvisorName?: string | null;
   assignedTeamId?: string | null;
+  assignedTeamName?: string | null;
   source?: string | null;
   riskProfile?: RiskProfile | null;
   nextStep?: string | null;
@@ -61,9 +80,17 @@ export interface Contact extends VersionedEntity {
   // Timestamps
   contactLastTouchAt?: string | null;
   pipelineStageUpdatedAt?: string | null;
-  // Tags (when included)
+  // Metadata for UI/Analytics
   tags?: ContactTag[];
   interactionCount?: number | null;
+  meetingStatus?: ContactMeetingStatus;
+}
+
+/**
+ * ContactTag with contactId for join results
+ */
+export interface ContactTagWithInfo extends ContactTag {
+  contactId: string | null;
 }
 
 /**
@@ -74,9 +101,21 @@ export interface ContactWithTags extends Contact {
 }
 
 /**
+ * Import statistics for mass contact import
+ */
+export interface ImportStats {
+  total: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+  unknownAdvisors: string[];
+}
+
+/**
  * Contact field names for updates
  */
-export type ContactFieldName = 
+export type ContactFieldName =
   | 'firstName'
   | 'lastName'
   | 'email'
@@ -107,6 +146,29 @@ export type ContactFieldName =
   | 'excedente';
 
 /**
+ * Contact update object for backend use
+ */
+export interface ContactUpdateFields extends Partial<Record<ContactFieldName, ContactFieldValue>> {
+  version: number;
+  updatedAt: Date | string;
+  [key: string]: ContactFieldValue | number | Date | string | undefined;
+}
+
+/**
+ * Timeline item for contact history
+ */
+export interface TimelineItem {
+  id: string;
+  type: 'interaction' | 'note' | 'task' | 'attachment' | 'stage_change' | 'field_change';
+  title: string;
+  description?: string | null;
+  timestamp: string | Date;
+  userId?: string | null;
+  userName?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Contact field update
  */
 export interface ContactFieldUpdate {
@@ -128,51 +190,21 @@ export interface CreateContactRequest {
   riskProfile?: RiskProfile | null;
   assignedAdvisorId?: string | null;
   notes?: string | null;
+  queSeDedica?: string | null;
+  familia?: string | null;
+  expectativas?: string | null;
+  objetivos?: string | null;
+  requisitosPlanificacion?: string | null;
+  prioridades?: string[];
+  preocupaciones?: string[];
+  ingresos?: number | null;
+  gastos?: number | null;
+  excedente?: number | null;
 }
 
 /**
  * Update contact request
  */
-export interface UpdateContactRequest {
+export interface UpdateContactRequest extends Partial<Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'version'>> {
   fields?: ContactFieldUpdate[];
-  [key: string]: ContactFieldValue | ContactFieldUpdate[] | undefined;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

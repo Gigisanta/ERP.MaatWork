@@ -64,13 +64,13 @@ export type IconName =
   | 'Command'
   | 'calendar';
 
-interface IconProps {
+export interface IconProps {
   name: IconName;
   size?: number;
   className?: string;
 }
 
-export default function Icon({ name, size = 16, className = '' }: IconProps) {
+export function Icon({ name, size = 16, className = '' }: IconProps) {
   // Mapeo básico de iconos a caracteres Unicode o símbolos
   const iconMap: Record<string, string> = {
     Home: '🏠',

@@ -21,13 +21,13 @@ import {
   Stack,
   Spinner,
   Alert,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { ExternalLink } from 'lucide-react';
 import { usePortfolioAssets } from '@/lib/hooks/usePortfolioAssets';
 import { useAssetSnapshots } from '@/lib/hooks/useAssetSnapshots';
 import type { Portfolio } from '@/types';
 // AI_DECISION: Importar AssetSnapshot estáticamente en lugar de dinámicamente
-// Justificación: Los dynamic imports anidados causan problemas de resolución de webpack con @cactus/ui.
+// Justificación: Los dynamic imports anidados causan problemas de resolución de webpack con @maatwork/ui.
 // Cuando PortfolioAssetsSnapshot ya se carga dinámicamente, no necesitamos cargar AssetSnapshot también
 // dinámicamente. Esto evita la cadena problemática de resolución de módulos.
 // Impacto: Resuelve errores "Cannot read properties of undefined (reading 'call')" en webpack

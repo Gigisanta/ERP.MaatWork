@@ -157,7 +157,7 @@ function main() {
 
   // Verificar dependencias
   if (!checkDependencies(python.cmd)) {
-    console.log(warning('⚠️  Dependencias Python no instaladas. Ejecuta: pnpm -F @cactus/analytics-service install'));
+    console.log(warning('⚠️  Dependencias Python no instaladas. Ejecuta: pnpm -F @maatwork/analytics-service install'));
     process.exit(1);
   }
 

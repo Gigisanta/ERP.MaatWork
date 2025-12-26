@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { MonthlyMetrics } from '@/types/metrics';
 
@@ -10,8 +10,12 @@ interface BusinessLineChartProps {
 
 /**
  * Gráfico de barras mostrando cierres por línea de negocio
+ * 
+ * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
+ * Justificación: Charts are heavy to render, memoization reduces CPU usage on dashboard updates
+ * Impacto: Smoother dashboard interactions, reduced re-render frequency
  */
-export function BusinessLineChart({ businessLineClosures }: BusinessLineChartProps) {
+export const BusinessLineChart = memo(function BusinessLineChart({ businessLineClosures }: BusinessLineChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -48,4 +52,4 @@ export function BusinessLineChart({ businessLineClosures }: BusinessLineChartPro
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

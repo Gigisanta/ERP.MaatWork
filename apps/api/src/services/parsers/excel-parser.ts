@@ -6,7 +6,7 @@
  * Impacto: Mejor seguridad, exceljs es mantenido activamente
  */
 
-import type { ParseResult } from '../aumParser';
+import type { ParseResult } from '../aum-parser';
 import ExcelJS from 'exceljs';
 
 /**

@@ -9,7 +9,7 @@
  * Impacto: Detección proactiva de problemas, alertas automáticas, mejor visibilidad
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import pino from 'pino';
 
@@ -32,7 +32,7 @@ export interface SlowQuery {
 /**
  * Interfaz para query frecuente
  */
-export interface FrequentQuery {
+interface FrequentQuery {
   query: string;
   calls: number;
   totalExecTime: number;
@@ -43,7 +43,7 @@ export interface FrequentQuery {
 /**
  * Interfaz para query por tiempo total
  */
-export interface QueryByTotalTime {
+interface QueryByTotalTime {
   query: string;
   calls: number;
   totalExecTime: number;
@@ -55,7 +55,7 @@ export interface QueryByTotalTime {
 /**
  * Verificar si pg_stat_statements está habilitado
  */
-export async function isPgStatStatementsEnabled(): Promise<boolean> {
+async function isPgStatStatementsEnabled(): Promise<boolean> {
   try {
     const result = await db().execute(sql`
       SELECT EXISTS (
@@ -122,7 +122,7 @@ export async function getSlowQueries(
  *
  * @param limitCount Número máximo de resultados (default: 20)
  */
-export async function getMostFrequentQueries(limitCount: number = 20): Promise<FrequentQuery[]> {
+async function getMostFrequentQueries(limitCount: number = 20): Promise<FrequentQuery[]> {
   try {
     const enabled = await isPgStatStatementsEnabled();
     if (!enabled) {
@@ -152,7 +152,7 @@ export async function getMostFrequentQueries(limitCount: number = 20): Promise<F
  *
  * @param limitCount Número máximo de resultados (default: 20)
  */
-export async function getQueriesByTotalTime(limitCount: number = 20): Promise<QueryByTotalTime[]> {
+async function getQueriesByTotalTime(limitCount: number = 20): Promise<QueryByTotalTime[]> {
   try {
     const enabled = await isPgStatStatementsEnabled();
     if (!enabled) {
@@ -185,7 +185,7 @@ export async function getQueriesByTotalTime(limitCount: number = 20): Promise<Qu
  *
  * Advertencia: Solo usar en desarrollo o cuando se necesite reiniciar el monitoreo
  */
-export async function resetPgStatStatements(): Promise<void> {
+async function resetPgStatStatements(): Promise<void> {
   try {
     const enabled = await isPgStatStatementsEnabled();
     if (!enabled) {

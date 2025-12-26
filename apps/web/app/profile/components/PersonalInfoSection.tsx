@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Grid, Text, Badge, Input, Button, Stack, Alert } from '@cactus/ui';
+import { Grid, Text, Badge, Input, Button, Stack, Alert } from '@maatwork/ui';
 import type { UserApiResponse as User } from '@/types';
 
 interface PersonalInfoSectionProps {

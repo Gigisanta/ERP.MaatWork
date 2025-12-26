@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { uuidSchema } from '../../utils/validation/common-schemas';
+import { uuidSchema, emailSchema } from '../../utils/validation/common-schemas';
 
 // ==========================================================
 // Query Schemas
@@ -23,7 +23,7 @@ export const getEventsQuerySchema = z.object({
 // Event Schemas
 // ==========================================================
 
-export const eventDateTimeSchema = z
+const eventDateTimeSchema = z
   .object({
     dateTime: z.string().datetime().optional(),
     date: z
@@ -44,7 +44,7 @@ export const createEventSchema = z.object({
   attendees: z
     .array(
       z.object({
-        email: z.string().email(),
+        email: emailSchema,
         displayName: z.string().optional(),
       })
     )
@@ -72,7 +72,7 @@ export const assignEventSchema = z.object({
   targetUserId: uuidSchema,
   eventSummary: z.string(),
   eventDescription: z.string().optional(),
-  attendees: z.array(z.string().email()).optional(),
-  clientEmail: z.string().email().optional(), // Optional explicit override
+  attendees: z.array(emailSchema).optional(),
+  clientEmail: emailSchema.optional(), // Optional explicit override
   clientName: z.string().optional(),
 });

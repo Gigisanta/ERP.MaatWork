@@ -1,6 +1,6 @@
 'use client';
 import React, { memo } from 'react';
-import { Button, Badge, Text } from '@cactus/ui';
+import { Button, Badge, Text } from '@maatwork/ui';
 import { Trash2 } from 'lucide-react';
 import type { PortfolioLine } from '@/types';
 

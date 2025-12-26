@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { usePageTitle } from '../../components/PageTitleContext';
-import { Stack, Heading, Text, Button, Alert, Spinner, Toast } from '@cactus/ui';
+import { Stack, Heading, Text, Button, Alert, Spinner, Toast } from '@maatwork/ui';
 import { usePortfolios } from '../hooks/usePortfolios';
 import { PortfoliosGrid } from './PortfoliosGrid';
 import { PortfolioForm } from './PortfolioForm';
@@ -11,7 +11,7 @@ import { addPortfolioLine, getPortfolioById } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { Portfolio, PortfolioLine, AddPortfolioLineRequest, RiskLevel } from '@/types';
 import { ensureInstrumentsExist, syncPortfolioLines } from '../utils/portfolio-helpers';
-import ConfirmDialogComponent from '../../components/ConfirmDialog';
+import { ConfirmDialog as ConfirmDialogComponent } from '@maatwork/ui';
 
 interface PortfoliosClientProps {
   initialPortfolios: Portfolio[];
@@ -83,13 +83,13 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   );
 
   const handleCreatePortfolio = useCallback(() => {
-    console.log('Opening Create Portfolio Form');
+    logger.debug('Opening Create Portfolio Form');
     setEditingPortfolio(null);
     setShowPortfolioForm(true);
   }, []);
 
   const handleEditPortfolio = useCallback((portfolio: Portfolio) => {
-    console.log('Opening Edit Portfolio Form for:', portfolio.name);
+    logger.debug('Opening Edit Portfolio Form', toLogContext({ portfolioName: portfolio.name }));
     setEditingPortfolio(portfolio);
     setShowPortfolioForm(true);
   }, []);

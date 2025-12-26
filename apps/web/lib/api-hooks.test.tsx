@@ -414,7 +414,7 @@ describe('api-hooks', () => {
         ]),
         expect.any(Function),
         expect.objectContaining({
-          revalidateIfStale: true,
+          revalidateIfStale: false,
         })
       );
     });
@@ -509,7 +509,8 @@ describe('api-hooks', () => {
         total: 0,
         limit: 50,
         offset: 0,
-        hasMore: false,
+        page: 1,
+        totalPages: 0,
       });
     });
   });
@@ -567,7 +568,8 @@ describe('api-hooks', () => {
         total: 0,
         limit: 50,
         offset: 0,
-        hasMore: false,
+        page: 1,
+        totalPages: 0,
       });
     });
   });

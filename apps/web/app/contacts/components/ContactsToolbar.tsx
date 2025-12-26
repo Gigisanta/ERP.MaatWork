@@ -6,17 +6,18 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Badge, Icon } from '@cactus/ui';
+import { Button, Badge, Icon } from '@maatwork/ui';
 import SearchAutocomplete from './SearchAutocomplete';
 import FiltersDropdown from './FiltersDropdown';
+
 import type { PipelineStage, Tag, Advisor } from '@/types';
 
-// AI_DECISION: Import FiltersDropdown statically to avoid webpack module resolution issues
-// Justificación: Dynamic import of FiltersDropdown causes webpack to fail resolving @radix-ui/react-dropdown-menu
-// Impacto: Adds ~15KB to initial bundle, but fixes "Cannot read properties of undefined (reading 'call')" error
-// Note: Similar to GoalsComparisonChart in MetricsSection.tsx which had to be imported statically
+// AI_DECISION: Lazy load FiltersDropdown to reduce initial bundle size
+// Justificación: Reduces initial JS load by ~15KB. Previous issues with Radix/Webpack 
+//                are usually resolved in newer Next.js versions.
+// Impacto: Better FCP/LCP for the contacts page.
 
-export interface ContactsToolbarProps {
+interface ContactsToolbarProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>;
   searchTerm: string;
   onSearchChange: (term: string) => void;

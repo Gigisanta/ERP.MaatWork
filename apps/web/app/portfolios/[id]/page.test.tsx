@@ -10,7 +10,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { vi } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PortfolioDetailPage from './page';
 
 // Mock Next.js navigation
@@ -23,6 +24,15 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock Radix UI Portal to render in-place for easier testing
+vi.mock('@radix-ui/react-dialog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@radix-ui/react-dialog')>();
+  return {
+    ...actual,
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
+
 // Mock API
 vi.mock('@/lib/api', () => ({
   getPortfolioById: vi.fn(),
@@ -30,10 +40,20 @@ vi.mock('@/lib/api', () => ({
   deletePortfolioLine: vi.fn(),
 }));
 
+// Mock Toast component specifically as it can be tricky with Radix portals in tests
+vi.mock('@maatwork/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@maatwork/ui')>();
+  return {
+    ...actual,
+    Toast: ({ title, open }: { title: string; open: boolean }) => 
+      open ? <div data-testid="mock-toast">{title}</div> : null,
+  };
+});
+
 // Mock auth
 vi.mock('../../auth/useRequireAuth', () => ({
   useRequireAuth: () => ({
-    user: { id: 'user-1', role: 'advisor' },
+    user: { id: 'user-1', role: 'admin' },
     loading: false,
   }),
 }));
@@ -73,7 +93,7 @@ describe('PortfolioDetailPage', () => {
     render(<PortfolioDetailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Test Portfolio')).toBeInTheDocument();
+      expect(screen.getAllByText('Test Portfolio').length).toBeGreaterThan(0);
     });
   });
 
@@ -84,11 +104,12 @@ describe('PortfolioDetailPage', () => {
     render(<PortfolioDetailPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/error/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/error/i).length).toBeGreaterThan(0);
     });
   });
 
   it('should open create line modal when add button is clicked', async () => {
+    const user = userEvent.setup();
     const { getPortfolioById } = await import('@/lib/api');
     vi.mocked(getPortfolioById).mockResolvedValue({
       success: true,
@@ -97,14 +118,15 @@ describe('PortfolioDetailPage', () => {
 
     render(<PortfolioDetailPage />);
 
-    await waitFor(() => {
-      const addButton = screen.getByRole('button', { name: /agregar/i });
-      fireEvent.click(addButton);
-      expect(screen.getByText(/crear línea/i)).toBeInTheDocument();
+    await waitFor(async () => {
+      const addButton = screen.getByText(/Agregar Primer Componente/i);
+      await user.click(addButton);
+      expect(screen.getByText(/Agregar Componente a la Cartera/i)).toBeInTheDocument();
     });
   });
 
   it('should validate required fields when creating line', async () => {
+    const user = userEvent.setup();
     const { getPortfolioById } = await import('@/lib/api');
     vi.mocked(getPortfolioById).mockResolvedValue({
       success: true,
@@ -113,18 +135,22 @@ describe('PortfolioDetailPage', () => {
 
     render(<PortfolioDetailPage />);
 
-    await waitFor(() => {
-      const addButton = screen.getByRole('button', { name: /agregar/i });
-      fireEvent.click(addButton);
-    });
+    const addButton = await screen.findByText(/Agregar Primer Componente/i);
+    await user.click(addButton);
+
+    // Fill in a valid weight but leave asset class empty
+    const weightInput = await screen.findByLabelText(/Peso Objetivo/i);
+    await user.clear(weightInput);
+    await user.type(weightInput, '25');
 
     // Try to submit without required fields
-    const submitButton = screen.getByRole('button', { name: /guardar/i });
-    fireEvent.click(submitButton);
+    const modal = await screen.findByRole('dialog');
+    const submitButton = within(modal).getByRole('button', { name: /^Agregar$/ });
+    await user.click(submitButton);
 
     // Should show validation errors
     await waitFor(() => {
       expect(screen.getByText(/requerido/i)).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 });

@@ -8,7 +8,7 @@
  * GET /teams/:id/history - Get monthly history metrics
  */
 import type { Request, Response, NextFunction } from 'express';
-import { db, teamMembership, users, pipelineStages, pipelineStageHistory } from '@cactus/db';
+import { db, teamMembership, users, pipelineStages, pipelineStageHistory } from '@maatwork/db';
 import {
   contacts,
   aumSnapshots,
@@ -17,11 +17,11 @@ import {
   portfolioMonitoringSnapshot,
   notes,
   tasks,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sum, count, gte, sql, desc, inArray } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
-import { validateUuidParam } from '../../../utils/validation/common-schemas';
+import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 
 /**
  * Calculate days since a date
@@ -53,57 +53,45 @@ function getActivityStatus(
 /**
  * GET /teams/:id/metrics - Obtener métricas del equipo
  */
-export async function getTeamMetrics(req: Request, res: Response, next: NextFunction) {
-  try {
-    let id: string;
-    try {
-      id = validateUuidParam(req.params.id, 'teamId');
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
-    }
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+export const getTeamMetrics = createRouteHandler(async (req: Request) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
 
-    // Verify user is a manager of this team
-    const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+  // Verify user is a manager of this team
+  const userTeams = await getUserTeams(userId, userRole);
+  const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
-    if (!isManager && userRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Access denied. Only team managers can view team metrics.' });
-    }
+  if (!isManager && userRole !== 'admin') {
+    throw new HttpError(403, 'Access denied. Only team managers can view team metrics.');
+  }
 
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const todayStr = today.toISOString().split('T')[0];
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const todayStr = today.toISOString().split('T')[0];
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
 
-    // AI_DECISION: Use cache + materialized view for team metrics
-    // Justificación: Caching reduces DB load, materialized view pre-calculates metrics
-    // Impacto: 70-90% reduction in query time for team metrics
-    const cacheKey = normalizeCacheKey('team', 'metrics', id);
-    const cachedResult = teamMetricsCacheUtil.get(cacheKey);
+  // AI_DECISION: Use cache + materialized view for team metrics
+  // Justificación: Caching reduces DB load, materialized view pre-calculates metrics
+  // Impacto: 70-90% reduction in query time for team metrics
+  const cacheKey = normalizeCacheKey('team', 'metrics', id);
+  const cachedResult = teamMetricsCacheUtil.get(cacheKey);
 
-    let basicMetricsResult: {
-      rows: Array<{ memberCount: number; clientCount: number; portfolioCount: number }>;
+  let basicMetricsResult: {
+    rows: Array<{ memberCount: number; clientCount: number; portfolioCount: number }>;
+  };
+
+  if (cachedResult) {
+    req.log.info({ cacheKey }, 'Serving team metrics from cache');
+    basicMetricsResult = {
+      rows: [cachedResult as { memberCount: number; clientCount: number; portfolioCount: number }],
     };
-
-    if (cachedResult) {
-      req.log.info({ cacheKey }, 'Serving team metrics from cache');
-      basicMetricsResult = {
-        rows: [
-          cachedResult as { memberCount: number; clientCount: number; portfolioCount: number },
-        ],
-      };
-    } else {
-      // AI_DECISION: Try materialized view first, fallback to direct query if MV doesn't exist
-      // Justificación: Resilience - code works even if migration hasn't been applied
-      // Impacto: Graceful degradation with slightly slower queries when MV is missing
-      try {
-        const result = await db().execute(sql`
+  } else {
+    // AI_DECISION: Try materialized view first, fallback to direct query if MV doesn't exist
+    // Justificación: Resilience - code works even if migration hasn't been applied
+    // Impacto: Graceful degradation with slightly slower queries when MV is missing
+    try {
+      const result = await db().execute(sql`
             SELECT 
               member_count AS "memberCount",
               client_count AS "clientCount",
@@ -111,18 +99,18 @@ export async function getTeamMetrics(req: Request, res: Response, next: NextFunc
             FROM mv_team_metrics_daily
             WHERE team_id = ${id}
           `);
-        basicMetricsResult = result;
+      basicMetricsResult = result;
 
-        // Cache the result
-        if (result.rows.length > 0) {
-          teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
-        }
-      } catch (mvError) {
-        // Fallback: Calculate metrics directly if materialized view doesn't exist (code 42P01)
-        const pgError = mvError as { code?: string };
-        if (pgError.code === '42P01') {
-          req.log.warn('mv_team_metrics_daily not found, using fallback query');
-          const fallbackResult = await db().execute(sql`
+      // Cache the result
+      if (result.rows.length > 0) {
+        teamMetricsCacheUtil.set(cacheKey, result.rows[0]);
+      }
+    } catch (mvError) {
+      // Fallback: Calculate metrics directly if materialized view doesn't exist (code 42P01)
+      const pgError = mvError as { code?: string };
+      if (pgError.code === '42P01') {
+        req.log.warn('mv_team_metrics_daily not found, using fallback query');
+        const fallbackResult = await db().execute(sql`
               SELECT 
                 COUNT(DISTINCT tm.user_id) AS "memberCount",
                 COUNT(DISTINCT CASE WHEN c.deleted_at IS NULL THEN c.id END) AS "clientCount",
@@ -135,90 +123,83 @@ export async function getTeamMetrics(req: Request, res: Response, next: NextFunc
               WHERE t.id = ${id}
               GROUP BY t.id
             `);
-          basicMetricsResult = fallbackResult;
+        basicMetricsResult = fallbackResult;
 
-          if (fallbackResult.rows.length > 0) {
-            teamMetricsCacheUtil.set(cacheKey, fallbackResult.rows[0]);
-          }
-        } else {
-          throw mvError;
+        if (fallbackResult.rows.length > 0) {
+          teamMetricsCacheUtil.set(cacheKey, fallbackResult.rows[0]);
         }
+      } else {
+        throw mvError;
       }
     }
-
-    // Execute remaining queries in parallel (AUM queries need separate handling due to date filters)
-    const [aumResult, riskDistributionResult, aumTrendResult] = await Promise.all([
-      // Get AUM total del equipo
-      db()
-        .select({
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), eq(aumSnapshots.date, todayStr)))
-        .limit(1),
-
-      // Get risk distribution
-      db()
-        .select({
-          riskLevel: portfolioTemplates.riskLevel,
-          count: count(),
-        })
-        .from(contacts)
-        .innerJoin(
-          clientPortfolioAssignments,
-          eq(clientPortfolioAssignments.contactId, contacts.id)
-        )
-        .innerJoin(
-          portfolioTemplates,
-          eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
-        )
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
-        .groupBy(portfolioTemplates.riskLevel),
-
-      // Get AUM trend (last 30 days)
-      db()
-        .select({
-          date: aumSnapshots.date,
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-        .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-        .where(and(eq(teamMembership.teamId, id), gte(aumSnapshots.date, thirtyDaysAgoStr)))
-        .groupBy(aumSnapshots.date)
-        .orderBy(aumSnapshots.date),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        teamAum: aumResult[0]?.totalAum ? Number(aumResult[0].totalAum) : 0,
-        memberCount: basicMetricsResult.rows[0]?.memberCount || 0,
-        clientCount: basicMetricsResult.rows[0]?.clientCount || 0,
-        portfolioCount: basicMetricsResult.rows[0]?.portfolioCount || 0,
-        riskDistribution: riskDistributionResult.map(
-          (r: { riskLevel: string | null; count: bigint | number }) => ({
-            riskLevel: r.riskLevel,
-            count: Number(r.count),
-          })
-        ),
-        aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
-          date: r.date,
-          value: r.totalAum ? Number(r.totalAum) : 0,
-        })),
-      },
-    });
-  } catch (err) {
-    req.log.error({ err, teamId: req.params.id }, 'failed to get team metrics');
-    next(err);
   }
-}
+
+  // Execute remaining queries in parallel (AUM queries need separate handling due to date filters)
+  const [aumResult, riskDistributionResult, aumTrendResult] = await Promise.all([
+    // Get AUM total del equipo
+    db()
+      .select({
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), eq(aumSnapshots.date, todayStr)))
+      .limit(1),
+
+    // Get risk distribution
+    db()
+      .select({
+        riskLevel: portfolioTemplates.riskLevel,
+        count: count(),
+      })
+      .from(contacts)
+      .innerJoin(
+        clientPortfolioAssignments,
+        eq(clientPortfolioAssignments.contactId, contacts.id)
+      )
+      .innerJoin(
+        portfolioTemplates,
+        eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+      )
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
+      .groupBy(portfolioTemplates.riskLevel),
+
+    // Get AUM trend (last 30 days)
+    db()
+      .select({
+        date: aumSnapshots.date,
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), gte(aumSnapshots.date, thirtyDaysAgoStr)))
+      .groupBy(aumSnapshots.date)
+      .orderBy(aumSnapshots.date),
+  ]);
+
+  return {
+    teamAum: aumResult[0]?.totalAum ? Number(aumResult[0].totalAum) : 0,
+    memberCount: basicMetricsResult.rows[0]?.memberCount || 0,
+    clientCount: basicMetricsResult.rows[0]?.clientCount || 0,
+    portfolioCount: basicMetricsResult.rows[0]?.portfolioCount || 0,
+    riskDistribution: riskDistributionResult.map(
+      (r: { riskLevel: string | null; count: bigint | number }) => ({
+        riskLevel: r.riskLevel,
+        count: Number(r.count),
+      })
+    ),
+    aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
+      date: r.date,
+      value: r.totalAum ? Number(r.totalAum) : 0,
+    })),
+  };
+});
 
 /**
  * GET /teams/:id/members/:memberId/metrics - Obtener métricas del miembro
@@ -227,247 +208,225 @@ export async function getTeamMetrics(req: Request, res: Response, next: NextFunc
  * Justificación: Managers necesitan visibilidad sobre la actividad de sus asesores
  * Impacto: Mejor control y seguimiento del trabajo del equipo
  */
-export async function getMemberMetrics(req: Request, res: Response, next: NextFunction) {
-  try {
-    let id: string;
-    let memberId: string;
-    try {
-      id = validateUuidParam(req.params.id, 'teamId');
-      memberId = validateUuidParam(req.params.memberId, 'memberId');
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : 'Invalid ID format' });
-    }
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+export const getMemberMetrics = createRouteHandler(async (req: Request) => {
+  const { id, memberId } = req.params;
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
 
-    // Verify user is a manager of this team
-    const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+  // Verify user is a manager of this team
+  const userTeams = await getUserTeams(userId, userRole);
+  const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
-    if (!isManager && userRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Access denied. Only team managers can view member metrics.' });
-    }
-
-    // Verify member belongs to this team
-    const [memberCheck] = await db()
-      .select()
-      .from(teamMembership)
-      .where(and(eq(teamMembership.teamId, id), eq(teamMembership.userId, memberId)))
-      .limit(1);
-
-    if (!memberCheck) {
-      return res.status(404).json({ error: 'Member not found in this team' });
-    }
-
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    // Get pipeline stage IDs
-    const stages = await db()
-      .select({ id: pipelineStages.id, name: pipelineStages.name })
-      .from(pipelineStages)
-      .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
-
-    const firstMeetingStageId = stages.find(
-      (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
-    )?.id;
-    const secondMeetingStageId = stages.find(
-      (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
-    )?.id;
-
-    // Execute all queries in parallel for better performance
-    const [
-      userInfo,
-      aumResult,
-      clientCountResult,
-      portfolioCountResult,
-      deviationAlertsResult,
-      aumTrendResult,
-      contactsThisMonth,
-      contactsLast30Days,
-      firstMeetingsLast30Days,
-      secondMeetingsLast30Days,
-      tasksCompletedLast30Days,
-    ] = await Promise.all([
-      // Get user info including lastLogin
-      db()
-        .select({
-          lastLogin: users.lastLogin,
-          isActive: users.isActive,
-        })
-        .from(users)
-        .where(eq(users.id, memberId))
-        .limit(1),
-
-      // Get AUM total del asesor
-      db()
-        .select({
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            eq(aumSnapshots.date, today.toISOString().split('T')[0])
-          )
-        ),
-
-      // Get client count
-      db()
-        .select({ count: count() })
-        .from(contacts)
-        .where(and(eq(contacts.assignedAdvisorId, memberId), sql`${contacts.deletedAt} IS NULL`)),
-
-      // Get portfolios count
-      db()
-        .select({ count: count() })
-        .from(clientPortfolioAssignments)
-        .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            eq(clientPortfolioAssignments.status, 'active')
-          )
-        ),
-
-      // Get deviation alerts count
-      db()
-        .select({ count: count() })
-        .from(portfolioMonitoringSnapshot)
-        .innerJoin(contacts, eq(contacts.id, portfolioMonitoringSnapshot.contactId))
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            eq(portfolioMonitoringSnapshot.asOfDate, today.toISOString().split('T')[0]),
-            sql`${portfolioMonitoringSnapshot.totalDeviationPct} > 10`
-          )
-        ),
-
-      // Get AUM trend (last 30 days)
-      db()
-        .select({
-          date: aumSnapshots.date,
-          totalAum: sum(aumSnapshots.aumTotal),
-        })
-        .from(aumSnapshots)
-        .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
-          )
-        )
-        .groupBy(aumSnapshots.date)
-        .orderBy(aumSnapshots.date),
-
-      // Contacts created this month
-      db()
-        .select({ count: count() })
-        .from(contacts)
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            sql`${contacts.deletedAt} IS NULL`,
-            gte(contacts.createdAt, monthStart)
-          )
-        ),
-
-      // Contacts created last 30 days
-      db()
-        .select({ count: count() })
-        .from(contacts)
-        .where(
-          and(
-            eq(contacts.assignedAdvisorId, memberId),
-            sql`${contacts.deletedAt} IS NULL`,
-            gte(contacts.createdAt, thirtyDaysAgo)
-          )
-        ),
-
-      // First Meetings last 30 days
-      // Count contacts that entered 'Primera reunion' stage in last 30 days
-      firstMeetingStageId
-        ? db()
-            .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
-            .from(pipelineStageHistory)
-            .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
-            .where(
-              and(
-                eq(contacts.assignedAdvisorId, memberId),
-                eq(pipelineStageHistory.toStage, firstMeetingStageId),
-                gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
-              )
-            )
-        : Promise.resolve([{ count: 0 }]),
-
-      // Second Meetings last 30 days
-      secondMeetingStageId
-        ? db()
-            .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
-            .from(pipelineStageHistory)
-            .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
-            .where(
-              and(
-                eq(contacts.assignedAdvisorId, memberId),
-                eq(pipelineStageHistory.toStage, secondMeetingStageId),
-                gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
-              )
-            )
-        : Promise.resolve([{ count: 0 }]),
-
-      // Tasks completed last 30 days
-      db()
-        .select({ count: count() })
-        .from(tasks)
-        .where(
-          and(
-            eq(tasks.assignedToUserId, memberId),
-            eq(tasks.status, 'completed'),
-            sql`${tasks.deletedAt} IS NULL`,
-            gte(tasks.completedAt, thirtyDaysAgo)
-          )
-        ),
-    ]);
-
-    const lastLogin = userInfo[0]?.lastLogin || null;
-    const daysSinceLogin = calculateDaysSince(lastLogin);
-
-    res.json({
-      success: true,
-      data: {
-        totalAum: aumResult[0]?.totalAum ? Number(aumResult[0].totalAum) : 0,
-        clientCount: clientCountResult[0]?.count || 0,
-        portfolioCount: portfolioCountResult[0]?.count || 0,
-        deviationAlerts: deviationAlertsResult[0]?.count || 0,
-        aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
-          date: r.date,
-          value: r.totalAum ? Number(r.totalAum) : 0,
-        })),
-        // Activity metrics
-        lastLogin: lastLogin ? lastLogin.toISOString() : null,
-        daysSinceLogin,
-        contactsCreatedThisMonth: contactsThisMonth[0]?.count || 0,
-        contactsCreatedLast30Days: contactsLast30Days[0]?.count || 0,
-        firstMeetingsLast30Days: Number(firstMeetingsLast30Days[0]?.count || 0),
-        secondMeetingsLast30Days: Number(secondMeetingsLast30Days[0]?.count || 0),
-        notesCreatedLast30Days: 0, // Deprecated
-        tasksCompletedLast30Days: tasksCompletedLast30Days[0]?.count || 0,
-      },
-    });
-  } catch (err) {
-    req.log.error(
-      { err, teamId: req.params.id, memberId: req.params.memberId },
-      'failed to get member metrics'
-    );
-    next(err);
+  if (!isManager && userRole !== 'admin') {
+    throw new HttpError(403, 'Access denied. Only team managers can view member metrics.');
   }
-}
+
+  // Verify member belongs to this team
+  const [memberCheck] = await db()
+    .select()
+    .from(teamMembership)
+    .where(and(eq(teamMembership.teamId, id), eq(teamMembership.userId, memberId)))
+    .limit(1);
+
+  if (!memberCheck) {
+    throw new HttpError(404, 'Member not found in this team');
+  }
+
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  // Get pipeline stage IDs
+  const stages = await db()
+    .select({ id: pipelineStages.id, name: pipelineStages.name })
+    .from(pipelineStages)
+    .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
+
+  const firstMeetingStageId = stages.find(
+    (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
+  )?.id;
+  const secondMeetingStageId = stages.find(
+    (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
+  )?.id;
+
+  // Execute all queries in parallel for better performance
+  const [
+    userInfo,
+    aumResult,
+    clientCountResult,
+    portfolioCountResult,
+    deviationAlertsResult,
+    aumTrendResult,
+    contactsThisMonth,
+    contactsLast30Days,
+    firstMeetingsLast30Days,
+    secondMeetingsLast30Days,
+    tasksCompletedLast30Days,
+  ] = await Promise.all([
+    // Get user info including lastLogin
+    db()
+      .select({
+        lastLogin: users.lastLogin,
+        isActive: users.isActive,
+      })
+      .from(users)
+      .where(eq(users.id, memberId))
+      .limit(1),
+
+    // Get AUM total del asesor
+    db()
+      .select({
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(aumSnapshots.date, today.toISOString().split('T')[0])
+        )
+      ),
+
+    // Get client count
+    db()
+      .select({ count: count() })
+      .from(contacts)
+      .where(and(eq(contacts.assignedAdvisorId, memberId), sql`${contacts.deletedAt} IS NULL`)),
+
+    // Get portfolios count
+    db()
+      .select({ count: count() })
+      .from(clientPortfolioAssignments)
+      .innerJoin(contacts, eq(contacts.id, clientPortfolioAssignments.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(clientPortfolioAssignments.status, 'active')
+        )
+      ),
+
+    // Get deviation alerts count
+    db()
+      .select({ count: count() })
+      .from(portfolioMonitoringSnapshot)
+      .innerJoin(contacts, eq(contacts.id, portfolioMonitoringSnapshot.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          eq(portfolioMonitoringSnapshot.asOfDate, today.toISOString().split('T')[0]),
+          sql`${portfolioMonitoringSnapshot.totalDeviationPct} > 10`
+        )
+      ),
+
+    // Get AUM trend (last 30 days)
+    db()
+      .select({
+        date: aumSnapshots.date,
+        totalAum: sum(aumSnapshots.aumTotal),
+      })
+      .from(aumSnapshots)
+      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          gte(aumSnapshots.date, thirtyDaysAgo.toISOString().split('T')[0])
+        )
+      )
+      .groupBy(aumSnapshots.date)
+      .orderBy(aumSnapshots.date),
+
+    // Contacts created this month
+    db()
+      .select({ count: count() })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          sql`${contacts.deletedAt} IS NULL`,
+          gte(contacts.createdAt, monthStart)
+        )
+      ),
+
+    // Contacts created last 30 days
+    db()
+      .select({ count: count() })
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.assignedAdvisorId, memberId),
+          sql`${contacts.deletedAt} IS NULL`,
+          gte(contacts.createdAt, thirtyDaysAgo)
+        )
+      ),
+
+    // First Meetings last 30 days
+    // Count contacts that entered 'Primera reunion' stage in last 30 days
+    firstMeetingStageId
+      ? db()
+          .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
+          .from(pipelineStageHistory)
+          .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
+          .where(
+            and(
+              eq(contacts.assignedAdvisorId, memberId),
+              eq(pipelineStageHistory.toStage, firstMeetingStageId),
+              gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
+            )
+          )
+      : Promise.resolve([{ count: 0 }]),
+
+    // Second Meetings last 30 days
+    secondMeetingStageId
+      ? db()
+          .select({ count: count(sql`DISTINCT ${pipelineStageHistory.contactId}`) })
+          .from(pipelineStageHistory)
+          .innerJoin(contacts, eq(contacts.id, pipelineStageHistory.contactId))
+          .where(
+            and(
+              eq(contacts.assignedAdvisorId, memberId),
+              eq(pipelineStageHistory.toStage, secondMeetingStageId),
+              gte(pipelineStageHistory.changedAt, thirtyDaysAgo)
+            )
+          )
+      : Promise.resolve([{ count: 0 }]),
+
+    // Tasks completed last 30 days
+    db()
+      .select({ count: count() })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.assignedToUserId, memberId),
+          eq(tasks.status, 'completed'),
+          sql`${tasks.deletedAt} IS NULL`,
+          gte(tasks.completedAt, thirtyDaysAgo)
+        )
+      ),
+  ]);
+
+  const lastLogin = userInfo[0]?.lastLogin || null;
+  const daysSinceLogin = calculateDaysSince(lastLogin);
+
+  return {
+    totalAum: aumResult[0]?.totalAum ? Number(aumResult[0].totalAum) : 0,
+    clientCount: clientCountResult[0]?.count || 0,
+    portfolioCount: portfolioCountResult[0]?.count || 0,
+    deviationAlerts: deviationAlertsResult[0]?.count || 0,
+    aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
+      date: r.date,
+      value: r.totalAum ? Number(r.totalAum) : 0,
+    })),
+    // Activity metrics
+    lastLogin: lastLogin ? lastLogin.toISOString() : null,
+    daysSinceLogin,
+    contactsCreatedThisMonth: contactsThisMonth[0]?.count || 0,
+    contactsCreatedLast30Days: contactsLast30Days[0]?.count || 0,
+    firstMeetingsLast30Days: Number(firstMeetingsLast30Days[0]?.count || 0),
+    secondMeetingsLast30Days: Number(secondMeetingsLast30Days[0]?.count || 0),
+    notesCreatedLast30Days: 0, // Deprecated
+    tasksCompletedLast30Days: tasksCompletedLast30Days[0]?.count || 0,
+  };
+});
 
 /**
  * GET /teams/:id/members-activity - Obtener resumen de actividad de todos los miembros
@@ -476,48 +435,38 @@ export async function getMemberMetrics(req: Request, res: Response, next: NextFu
  * Justificación: Permite a managers ver rápidamente qué asesores están activos o inactivos
  * Impacto: Vista consolidada de actividad, mejor gestión del equipo
  */
-export async function getTeamMembersActivity(req: Request, res: Response, next: NextFunction) {
-  try {
-    let id: string;
-    try {
-      id = validateUuidParam(req.params.id, 'teamId');
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
-    }
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+export const getTeamMembersActivity = createRouteHandler(async (req: Request) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
 
-    // Verify user is a manager of this team
-    const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+  // Verify user is a manager of this team
+  const userTeams = await getUserTeams(userId, userRole);
+  const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
-    if (!isManager && userRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Access denied. Only team managers can view team activity.' });
-    }
+  if (!isManager && userRole !== 'admin') {
+    throw new HttpError(403, 'Access denied. Only team managers can view team activity.');
+  }
 
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Get pipeline stage IDs for team activity query
-    const stages = await db()
-      .select({ id: pipelineStages.id, name: pipelineStages.name })
-      .from(pipelineStages)
-      .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
+  // Get pipeline stage IDs for team activity query
+  const stages = await db()
+    .select({ id: pipelineStages.id, name: pipelineStages.name })
+    .from(pipelineStages)
+    .where(inArray(pipelineStages.name, ['Primera reunion', 'Segunda reunion']));
 
-    const firstMeetingStageId = stages.find(
-      (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
-    )?.id;
-    const secondMeetingStageId = stages.find(
-      (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
-    )?.id;
+  const firstMeetingStageId = stages.find(
+    (s: { id: string; name: string | null }) => s.name === 'Primera reunion'
+  )?.id;
+  const secondMeetingStageId = stages.find(
+    (s: { id: string; name: string | null }) => s.name === 'Segunda reunion'
+  )?.id;
 
-    // Get all team members with their activity metrics
-    const membersWithActivity = await db().execute(sql`
+  // Get all team members with their activity metrics
+  const membersWithActivity = await db().execute(sql`
       WITH member_metrics AS (
         SELECT 
           u.id,
@@ -600,70 +549,60 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
       ORDER BY last_login DESC NULLS LAST
     `);
 
-    const membersActivity = membersWithActivity.rows.map((member: Record<string, unknown>) => {
-      // Raw SQL returns dates as strings, convert to Date if present
-      const lastLoginRaw = member.last_login;
-      const lastLogin = lastLoginRaw ? new Date(lastLoginRaw as string) : null;
-      const daysSinceLogin = calculateDaysSince(lastLogin);
+  const membersActivity = membersWithActivity.rows.map((member: Record<string, unknown>) => {
+    // Raw SQL returns dates as strings, convert to Date if present
+    const lastLoginRaw = member.last_login;
+    const lastLogin = lastLoginRaw ? new Date(lastLoginRaw as string) : null;
+    const daysSinceLogin = calculateDaysSince(lastLogin);
 
-      return {
-        id: member.id as string,
-        email: member.email as string,
-        fullName: member.full_name as string,
-        role: member.team_role as string,
-        lastLogin: lastLogin ? lastLogin.toISOString() : null,
-        daysSinceLogin,
-        isActive: member.is_active as boolean,
-        contactsCreatedThisMonth: Number(member.contacts_created_this_month) || 0,
-        contactsCreatedLast30Days: Number(member.contacts_created_last_30_days) || 0,
-        firstMeetingsLast30Days: Number(member.first_meetings_last_30_days) || 0,
-        secondMeetingsLast30Days: Number(member.second_meetings_last_30_days) || 0,
-        notesCreatedLast30Days: 0, // Deprecated
-        tasksCompletedLast30Days: Number(member.tasks_completed_last_30_days) || 0,
-        openTasks: Number(member.open_tasks) || 0,
-        clientCount: Number(member.client_count) || 0,
-        totalAum: Number(member.total_aum) || 0,
-        activityStatus: getActivityStatus(daysSinceLogin),
-      };
-    });
-
-    // Calculate summary stats
-    type MemberActivity = (typeof membersActivity)[number];
-    const summary = {
-      totalMembers: membersActivity.length,
-      activeMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'active')
-        .length,
-      moderateMembers: membersActivity.filter(
-        (m: MemberActivity) => m.activityStatus === 'moderate'
-      ).length,
-      inactiveMembers: membersActivity.filter(
-        (m: MemberActivity) => m.activityStatus === 'inactive'
-      ).length,
-      criticalMembers: membersActivity.filter(
-        (m: MemberActivity) => m.activityStatus === 'critical'
-      ).length,
-      totalContactsCreatedThisMonth: membersActivity.reduce(
-        (acc: number, m: MemberActivity) => acc + m.contactsCreatedThisMonth,
-        0
-      ),
-      totalFirstMeetingsLast30Days: membersActivity.reduce(
-        (acc: number, m: MemberActivity) => acc + m.firstMeetingsLast30Days,
-        0
-      ),
+    return {
+      id: member.id as string,
+      email: member.email as string,
+      fullName: member.full_name as string,
+      role: member.team_role as string,
+      lastLogin: lastLogin ? lastLogin.toISOString() : null,
+      daysSinceLogin,
+      isActive: member.is_active as boolean,
+      contactsCreatedThisMonth: Number(member.contacts_created_this_month) || 0,
+      contactsCreatedLast30Days: Number(member.contacts_created_last_30_days) || 0,
+      firstMeetingsLast30Days: Number(member.first_meetings_last_30_days) || 0,
+      secondMeetingsLast30Days: Number(member.second_meetings_last_30_days) || 0,
+      notesCreatedLast30Days: 0, // Deprecated
+      tasksCompletedLast30Days: Number(member.tasks_completed_last_30_days) || 0,
+      openTasks: Number(member.open_tasks) || 0,
+      clientCount: Number(member.client_count) || 0,
+      totalAum: Number(member.total_aum) || 0,
+      activityStatus: getActivityStatus(daysSinceLogin),
     };
+  });
 
-    res.json({
-      success: true,
-      data: {
-        members: membersActivity,
-        summary,
-      },
-    });
-  } catch (err) {
-    req.log.error({ err, teamId: req.params.id }, 'failed to get team members activity');
-    next(err);
-  }
-}
+  // Calculate summary stats
+  type MemberActivity = (typeof membersActivity)[number];
+  const summary = {
+    totalMembers: membersActivity.length,
+    activeMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'active')
+      .length,
+    moderateMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'moderate')
+      .length,
+    inactiveMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'inactive')
+      .length,
+    criticalMembers: membersActivity.filter((m: MemberActivity) => m.activityStatus === 'critical')
+      .length,
+    totalContactsCreatedThisMonth: membersActivity.reduce(
+      (acc: number, m: MemberActivity) => acc + m.contactsCreatedThisMonth,
+      0
+    ),
+    totalFirstMeetingsLast30Days: membersActivity.reduce(
+      (acc: number, m: MemberActivity) => acc + m.firstMeetingsLast30Days,
+      0
+    ),
+  };
+
+  return {
+    members: membersActivity,
+    summary,
+  };
+});
 
 /**
  * GET /teams/:id/history - Obtener historial de métricas (últimos 12 meses)
@@ -672,35 +611,25 @@ export async function getTeamMembersActivity(req: Request, res: Response, next: 
  * - Nuevos clientes
  * - AUM Total
  */
-export async function getTeamHistory(req: Request, res: Response, next: NextFunction) {
-  try {
-    let id: string;
-    try {
-      id = validateUuidParam(req.params.id, 'teamId');
-    } catch (err) {
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : 'Invalid team ID format' });
-    }
-    const userId = req.user!.id;
-    const userRole = req.user!.role;
+export const getTeamHistory = createRouteHandler(async (req: Request) => {
+  const { id } = req.params;
+  const userId = req.user!.id;
+  const userRole = req.user!.role;
 
-    // Verify user is a manager of this team
-    const userTeams = await getUserTeams(userId, userRole);
-    const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
+  // Verify user is a manager of this team
+  const userTeams = await getUserTeams(userId, userRole);
+  const isManager = userTeams.some((t) => t.id === id && t.role === 'manager');
 
-    if (!isManager && userRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Access denied. Only team managers can view team history.' });
-    }
+  if (!isManager && userRole !== 'admin') {
+    throw new HttpError(403, 'Access denied. Only team managers can view team history.');
+  }
 
-    const twelveMonthsAgo = new Date();
-    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
-    twelveMonthsAgo.setDate(1); // Start of month 12 months ago
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+  twelveMonthsAgo.setDate(1); // Start of month 12 months ago
 
-    // Use SQL to aggregate by month
-    const result = await db().execute(sql`
+  // Use SQL to aggregate by month
+  const result = await db().execute(sql`
       WITH months AS (
           SELECT generate_series(
               date_trunc('month', ${twelveMonthsAgo.toISOString()}::date),
@@ -737,18 +666,17 @@ export async function getTeamHistory(req: Request, res: Response, next: NextFunc
       ORDER BY m.month_start ASC
     `);
 
-    const history = result.rows.map((row: any) => ({
-      month: row.month,
-      newClients: Number(row.newClients),
-      totalAum: Number(row.totalAum),
-    }));
-
-    res.json({
-      success: true,
-      data: history,
-    });
-  } catch (err) {
-    req.log.error({ err, teamId: req.params.id }, 'failed to get team history');
-    next(err);
+  interface HistoryRow {
+    month: string;
+    newClients: string | number;
+    totalAum: string | number;
   }
-}
+
+  const history = (result.rows as unknown as HistoryRow[]).map((row) => ({
+    month: row.month,
+    newClients: Number(row.newClients),
+    totalAum: Number(row.totalAum),
+  }));
+
+  return history;
+});

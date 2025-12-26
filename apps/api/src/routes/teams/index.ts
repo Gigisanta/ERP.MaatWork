@@ -120,28 +120,15 @@ router.post(
 // ==========================================================
 // Team CRUD Routes
 // ==========================================================
-router.get('/:id', requireAuth, validate({ params: idParamSchema }), createRouteHandler(getTeam));
-router.post(
-  '/',
-  requireAuth,
-  validate({ body: createTeamSchema }),
-  createAsyncHandler(async (req, res) => {
-    const result = await createTeam(req);
-    return res.status(201).json({ success: true, data: result, requestId: req.requestId });
-  })
-);
+router.get('/:id', requireAuth, validate({ params: idParamSchema }), getTeam);
+router.post('/', requireAuth, validate({ body: createTeamSchema }), createTeam);
 router.put(
   '/:id',
   requireAuth,
   validate({ params: idParamSchema, body: updateTeamSchema }),
-  createRouteHandler(updateTeam)
+  updateTeam
 );
-router.delete(
-  '/:id',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  createRouteHandler(deleteTeam)
-);
+router.delete('/:id', requireAuth, validate({ params: idParamSchema }), deleteTeam);
 
 // ==========================================================
 // Team Members Routes
@@ -169,12 +156,7 @@ router.delete(
 // ==========================================================
 // Team Detail and Metrics Routes
 // ==========================================================
-router.get(
-  '/:id/detail',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  createRouteHandler(getTeamDetail)
-);
+router.get('/:id/detail', requireAuth, validate({ params: idParamSchema }), getTeamDetail);
 router.get('/:id/metrics', requireAuth, validate({ params: idParamSchema }), getTeamMetrics);
 router.get('/:id/history', requireAuth, validate({ params: idParamSchema }), getTeamHistory);
 router.get(
@@ -183,24 +165,34 @@ router.get(
   validate({ params: idParamSchema }),
   getTeamMembersActivity
 );
-router.get('/:id/members/:memberId/metrics', requireAuth, getMemberMetrics);
+router.get(
+  '/:id/members/:memberId/metrics',
+  requireAuth,
+  validate({ params: teamMemberParamsSchema }),
+  getMemberMetrics
+);
 
 // ==========================================================
 // Team Goals Routes
 // ==========================================================
-router.get('/:id/goals', requireAuth, getTeamGoals);
-router.post('/:id/goals', requireAuth, updateTeamGoal);
+router.get('/:id/goals', requireAuth, validate({ params: idParamSchema }), getTeamGoals);
+router.post('/:id/goals', requireAuth, validate({ params: idParamSchema }), updateTeamGoal);
 
 // ==========================================================
 // Lead Distribution Routes
 // ==========================================================
-router.get('/:id/leads/unassigned', requireAuth, getUnassignedOrStalledLeads);
-router.post('/:id/leads/reassign', requireAuth, reassignLeads);
+router.get(
+  '/:id/leads/unassigned',
+  requireAuth,
+  validate({ params: idParamSchema }),
+  getUnassignedOrStalledLeads
+);
+router.post('/:id/leads/reassign', requireAuth, validate({ params: idParamSchema }), reassignLeads);
 
 // ==========================================================
 // Capacity Routes
 // ==========================================================
-router.get('/:id/capacity', requireAuth, getTeamCapacity);
+router.get('/:id/capacity', requireAuth, validate({ params: idParamSchema }), getTeamCapacity);
 
 // ==========================================================
 // Team Invitations Routes (manager perspective)
@@ -208,21 +200,9 @@ router.get('/:id/capacity', requireAuth, getTeamCapacity);
 router.post(
   '/:id/invitations',
   requireAuth,
-  validate({ body: createInvitationSchema }),
+  validate({ params: idParamSchema, body: createInvitationSchema }),
   createInvitation
 );
-router.get('/:id/advisors', requireAuth, listEligibleAdvisors);
+router.get('/:id/advisors', requireAuth, validate({ params: idParamSchema }), listEligibleAdvisors);
 
 export default router;
-
-// Export schemas for external use
-export {
-  createTeamSchema,
-  updateTeamSchema,
-  addMemberSchema,
-  inviteMemberSchema,
-  type CreateTeamInput,
-  type UpdateTeamInput,
-  type AddMemberInput,
-  type InviteMemberInput,
-} from './schemas';

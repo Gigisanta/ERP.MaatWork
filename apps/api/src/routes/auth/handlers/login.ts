@@ -4,7 +4,7 @@
  * POST /auth/login - User login
  */
 import type { Request, Response } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq, or } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { signUserToken } from '../../../auth/jwt';

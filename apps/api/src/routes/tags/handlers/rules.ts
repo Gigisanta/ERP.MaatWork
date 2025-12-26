@@ -11,7 +11,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db, tagRules } from '@cactus/db';
+import { db, tagRules } from '@maatwork/db';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';

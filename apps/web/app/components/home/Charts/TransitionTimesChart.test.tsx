@@ -11,9 +11,11 @@ import { render } from '@testing-library/react';
 import { TransitionTimesChart } from './TransitionTimesChart';
 import type { MonthlyMetrics } from '@/types/metrics';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('recharts', () => ({
-  BarChart: ({ children, data }: any) => (
+  BarChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
     <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
@@ -23,7 +25,7 @@ vi.mock('recharts', () => ({
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('TransitionTimesChart', () => {
@@ -74,7 +76,7 @@ describe('TransitionTimesChart', () => {
     const chart = container.querySelector('[data-testid="bar-chart"]');
     const chartData = JSON.parse(chart?.getAttribute('data-chart-data') || '[]');
 
-    const transitionNames = chartData.map((item: any) => item.name);
+    const transitionNames = chartData.map((item: { name: string }) => item.name);
     expect(transitionNames).toContain('Prospecto → Primera Reunión');
     expect(transitionNames).toContain('Primera → Segunda Reunión');
     expect(transitionNames).toContain('Segunda Reunión → Cliente');

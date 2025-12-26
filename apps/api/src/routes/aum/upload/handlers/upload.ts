@@ -13,22 +13,22 @@
 import type { Request, Response } from 'express';
 import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 import { promises as fs } from 'node:fs';
-import { db, aumImportFiles, aumImportRows } from '@cactus/db';
+import { db, aumImportFiles, aumImportRows } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import { normalizeAccountNumber } from '../../../../utils/aum/aum-normalization';
-import { parseAumFile } from '@/services/aumParser';
+import { parseAumFile } from '@/services/aum-parser';
 import {
   matchContactByAccountNumber,
   matchContactByHolderName,
   matchAdvisor,
-} from '@/services/aum-matcher';
+  applyAdvisorAccountMapping,
+} from '@/services/aum';
 import {
   upsertAumRows,
-  applyAdvisorAccountMapping,
   type AumRowInsert,
   upsertAumMonthlySnapshots,
   type AumMonthlySnapshotInsert,
-} from '@/services/aum-upsert';
+} from '@/services/aum';
 import {
   inheritAdvisorFromExisting,
   inheritMatchedUserIdFromExisting,
@@ -464,8 +464,8 @@ export const handleUpload = createAsyncHandler(async (req: Request, res: Respons
       .filter((row) => row.accountNumber || row.idCuenta)
       .map((row) => ({
         fileId: fileRow.id,
-        accountNumber: row.accountNumber,
-        idCuenta: row.idCuenta,
+        accountNumber: row.accountNumber ?? null,
+        idCuenta: row.idCuenta ?? null,
         reportMonth: fileMetadata.reportMonth!,
         reportYear: fileMetadata.reportYear!,
         aumDollars: row.aumDollars,

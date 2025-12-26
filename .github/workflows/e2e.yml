@@ -37,9 +37,9 @@ jobs:
       - name: Migrate DB + seed
         run: |
           pnpm db:migrate || true
-          pnpm -F @cactus/db run db:init || true
+          pnpm -F @maatwork/db run db:init || true
       - name: Build API
-        run: pnpm -F @cactus/api build
+        run: pnpm -F @maatwork/api build
       - name: Start API
         run: node apps/api/dist/index.js &
       - name: Wait for API
@@ -50,9 +50,9 @@ jobs:
           done
           echo API failed to start; exit 1
       - name: Build Web
-        run: pnpm -F @cactus/web build
+        run: pnpm -F @maatwork/web build
       - name: Start Web
-        run: pnpm -F @cactus/web start &
+        run: pnpm -F @maatwork/web start &
       - name: Wait for Web
         run: |
           for i in {1..30}; do

@@ -8,19 +8,36 @@ interface SidebarContextType {
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
-export function SidebarProvider({ children }: { children: ReactNode }) {
+export function SidebarProvider({
+  children,
+  defaultCollapsed = false,
+}: {
+  children: ReactNode;
+  defaultCollapsed?: boolean;
+}) {
   // Default to expanded (false)
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   // Load from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebar-collapsed');
       if (saved !== null) {
-        setCollapsed(JSON.parse(saved));
-      } else {
-        // If no saved value, default to expanded
-        setCollapsed(false);
+        if (saved === 'true') {
+          setCollapsed(true);
+        } else if (saved === 'false') {
+          setCollapsed(false);
+        } else if (saved !== 'undefined' && saved !== 'null') {
+          try {
+            const parsed = JSON.parse(saved);
+            if (typeof parsed === 'boolean') {
+              setCollapsed(parsed);
+            }
+          } catch (e) {
+            console.warn('[SidebarContext] Error parsing sidebar-collapsed:', e);
+            localStorage.removeItem('sidebar-collapsed');
+          }
+        }
       }
     }
   }, []);

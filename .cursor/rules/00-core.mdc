@@ -1,9 +1,9 @@
 ---
 alwaysApply: true
-description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de negocio, patrones y convenciones"
+description: "Contexto base del proyecto MAATWORK - arquitectura, dominio de negocio, patrones y convenciones"
 ---
 
-# CACTUS CRM — Contexto Base
+# MAATWORK — Contexto Base
 
 > **Esta regla siempre se aplica.** Define el contexto fundamental que la IA necesita para entender y trabajar correctamente con este codebase.
 
@@ -11,7 +11,7 @@ description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de n
 
 ## Dominio de Negocio
 
-**CACTUS** es un CRM para **advisors financieros** (wealth management). Gestiona:
+**MAATWORK** es un CRM para **advisors financieros** (wealth management). Gestiona:
 
 | Dominio | Descripción | Tablas principales |
 |---|----|----|
@@ -33,15 +33,15 @@ description: "Contexto base del proyecto CACTUS CRM - arquitectura, dominio de n
 ## Arquitectura del Monorepo
 
 ```
-cactus/
+maatwork/
 ├── apps/
 │   ├── api/                # Express 4 + TypeScript + Pino (puerto 3001)
 │   ├── web/                # Next.js 15 App Router (puerto 3000)
 │   └── analytics-service/  # Python + yfinance (puerto 3002)
 ├── packages/
 │   ├── db/                 # Drizzle ORM + PostgreSQL 16
-│   ├── ui/                 # Design System React (@cactus/ui)
-│   └── types/              # Tipos compartidos (@cactus/types)
+│   ├── ui/                 # Design System React (@maatwork/ui)
+│   └── types/              # Tipos compartidos (@maatwork/types)
 ├── tests/e2e/              # Playwright E2E
 ├── docs/                   # Documentación técnica
 ├── .templates/             # Templates para nuevos archivos
@@ -69,8 +69,8 @@ cactus/
 # 1. Verificar estado actual
 pnpm typecheck
 
-# 2. Si modificaste @cactus/ui o @cactus/db
-pnpm -F @cactus/ui build && pnpm -F @cactus/db build
+# 2. Si modificaste @maatwork/ui o @maatwork/db
+pnpm -F @maatwork/ui build && pnpm -F @maatwork/db build
 ```
 
 ### Verificación Completa (pre-commit)
@@ -326,8 +326,8 @@ try {
 
 ```bash
 pnpm dev              # Inicia api + web + analytics en paralelo
-pnpm -F @cactus/api dev   # Solo backend (puerto 3001)
-pnpm -F @cactus/web dev   # Solo frontend (puerto 3000)
+pnpm -F @maatwork/api dev   # Solo backend (puerto 3001)
+pnpm -F @maatwork/web dev   # Solo frontend (puerto 3000)
 ```
 
 ### Cambios en Base de Datos
@@ -335,11 +335,11 @@ pnpm -F @cactus/web dev   # Solo frontend (puerto 3000)
 ```bash
 # 1. Editar packages/db/src/schema/*.ts
 # 2. Generar migración
-pnpm -F @cactus/db generate
+pnpm -F @maatwork/db generate
 # 3. Aplicar migración
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db migrate
 # 4. Seeds opcionales
-pnpm -F @cactus/db seed:all
+pnpm -F @maatwork/db seed:all
 ```
 
 > ⚠️ **NUNCA** usar `drizzle-kit push` en producción — es destructivo

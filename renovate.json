@@ -6,7 +6,7 @@
       "description": "Group monorepo packages together",
       "matchDepTypes": ["dependencies", "devDependencies"],
       "groupName": "monorepo packages",
-      "matchPackagePatterns": ["^@cactus/"]
+      "matchPackagePatterns": ["^@maatwork/"]
     },
     {
       "description": "Group TypeScript types together",
@@ -65,3 +65,11 @@
     "labels": ["security", "dependencies"]
   }
 }
+
+
+
+
+
+
+
+

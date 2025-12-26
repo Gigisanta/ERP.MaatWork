@@ -9,7 +9,7 @@ import { uuidSchema } from '../../utils/validation/common-schemas';
 // Benchmark Component Schemas
 // ==========================================================
 
-export const benchmarkComponentSchema = z.object({
+const benchmarkComponentSchema = z.object({
   instrumentId: uuidSchema,
   weight: z.number().min(0).max(1),
 });
@@ -48,3 +48,11 @@ export const addComponentSchema = z.object({
 export const updateComponentSchema = z.object({
   weight: z.number().min(0).max(1),
 });
+
+
+
+
+
+
+
+

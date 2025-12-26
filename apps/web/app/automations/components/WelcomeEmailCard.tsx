@@ -12,7 +12,7 @@ import {
   Stack,
   Alert,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import {
   getAutomationConfigByName,
   createAutomationConfig,

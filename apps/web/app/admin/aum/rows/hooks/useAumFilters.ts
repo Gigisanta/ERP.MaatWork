@@ -4,7 +4,7 @@
 
 import { useReducer, useCallback } from 'react';
 
-export interface AumFiltersState {
+interface AumFiltersState {
   broker: string;
   status: string;
 }
@@ -49,3 +49,11 @@ export function useAumFilters() {
     resetFilters,
   };
 }
+
+
+
+
+
+
+
+

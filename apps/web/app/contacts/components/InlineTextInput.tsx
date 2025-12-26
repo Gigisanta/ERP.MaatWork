@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Contact } from '@/types';
-import { Input, Spinner } from '@cactus/ui';
+import { Input, Spinner } from '@maatwork/ui';
 
 interface InlineTextInputProps {
   contact: Contact;

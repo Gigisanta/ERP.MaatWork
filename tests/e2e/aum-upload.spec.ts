@@ -1,36 +1,13 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 // Path to test fixture CSV
 const fixtureCsv = path.join(
-  __dirname,
-  '../../apps/api/test-fixtures/aum/1761781426170-8hqr5uut5jr.csv'
+  process.cwd(),
+  'apps/api/test-fixtures/aum/1761781426170-8hqr5uut5jr.csv'
 );
 
 test.describe('AUM File Upload', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/login');
-
-    const emailInput = page.getByLabel(/email|usuario|correo/i).first();
-    await emailInput.fill(adminEmail);
-
-    const passwordInput = page.getByLabel(/contraseña|password/i).first();
-    await passwordInput.fill(adminPassword);
-
-    await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
-
-    // Wait for navigation
-    await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
-  });
-
   test('should display AUM admin page', async ({ page }) => {
     await page.goto('/admin/aum');
 

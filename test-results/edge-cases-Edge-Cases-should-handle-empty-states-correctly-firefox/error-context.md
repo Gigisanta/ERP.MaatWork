@@ -1,0 +1,181 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - link "MaatWork" [ref=e8] [cursor=pointer]:
+          - /url: /home
+          - img [ref=e10]
+          - generic [ref=e14]: MaatWork
+        - 'button "Plan de carrera: Nivel 1 Junior, 50% completado" [ref=e16] [cursor=pointer]':
+          - generic [ref=e17]: Nivel 1 Junior
+          - generic [ref=e21]: 37.5% • 50%
+          - generic [ref=e22]: / 30.000 USD
+      - generic [ref=e23]:
+        - button "Notificaciones" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e30] [cursor=pointer]':
+          - generic [ref=e31]: G
+  - complementary "Navegación principal" [ref=e32]:
+    - generic [ref=e33]:
+      - navigation "Navegación principal" [ref=e34]:
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Principal
+          - link "👤 Contactos" [ref=e38] [cursor=pointer]:
+            - /url: /contacts
+            - generic [ref=e39]: 👤
+            - generic [ref=e40]: Contactos
+        - generic [ref=e41]:
+          - paragraph [ref=e42]: Inversiones
+          - generic [ref=e43]:
+            - link "📊 Carteras" [ref=e44] [cursor=pointer]:
+              - /url: /portfolios
+              - generic [ref=e45]: 📊
+              - generic [ref=e46]: Carteras
+            - link "📊 Benchmarks" [ref=e47] [cursor=pointer]:
+              - /url: /benchmarks
+              - generic [ref=e48]: 📊
+              - generic [ref=e49]: Benchmarks
+        - generic [ref=e50]:
+          - paragraph [ref=e51]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e53] [cursor=pointer]:
+            - /url: /teams
+            - generic [ref=e54]: 👨‍👩‍👧‍👦
+            - generic [ref=e55]: Equipos
+        - generic [ref=e56]:
+          - paragraph [ref=e57]: Métricas
+          - generic [ref=e58]:
+            - link "📈 Métricas de Contactos" [ref=e59] [cursor=pointer]:
+              - /url: /contacts/metrics
+              - generic [ref=e60]: 📈
+              - generic [ref=e61]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e62] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e63]: 📈
+              - generic [ref=e64]: Analytics
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: Automatización
+          - generic [ref=e67]:
+            - link "☰ Pipeline" [ref=e68] [cursor=pointer]:
+              - /url: /pipeline
+              - generic [ref=e69]: ☰
+              - generic [ref=e70]: Pipeline
+            - link "⚙️ Automations" [ref=e71] [cursor=pointer]:
+              - /url: /automations
+              - generic [ref=e72]: ⚙️
+              - generic [ref=e73]: Automations
+            - link "📚 Plan de Carrera" [ref=e74] [cursor=pointer]:
+              - /url: /career-plan
+              - generic [ref=e75]: 📚
+              - generic [ref=e76]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e77] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=e78]: ℹ️
+              - generic [ref=e79]: Notificaciones
+        - generic [ref=e80]:
+          - paragraph [ref=e81]: Herramientas
+          - generic [ref=e82]:
+            - link "🎓 Capacitaciones" [ref=e83] [cursor=pointer]:
+              - /url: /capacitaciones
+              - generic [ref=e84]: 🎓
+              - generic [ref=e85]: Capacitaciones
+            - link "📝 Recursos" [ref=e86] [cursor=pointer]:
+              - /url: /resources
+              - generic [ref=e87]: 📝
+              - generic [ref=e88]: Recursos
+            - link "📈 Finviz" [ref=e89] [cursor=pointer]:
+              - /url: https://finviz.com
+              - generic [ref=e90]: 📈
+              - generic [ref=e91]: Finviz
+            - link "💼 Productores Balanz" [ref=e92] [cursor=pointer]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e93]: 💼
+              - generic [ref=e94]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e95] [cursor=pointer]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e96]: 🛡️
+              - generic [ref=e97]: Zurich Point
+        - generic [ref=e98]:
+          - paragraph [ref=e99]: Administración
+          - generic [ref=e100]:
+            - link "⚙️ Panel Principal" [ref=e101] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e102]: ⚙️
+              - generic [ref=e103]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e104] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e105]: 👥
+              - generic [ref=e106]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e107] [cursor=pointer]:
+              - /url: /admin/aum
+              - generic [ref=e108]: 📈
+              - generic [ref=e109]: AUM y Brokers
+            - link "📈 Performance" [ref=e110] [cursor=pointer]:
+              - /url: /admin/performance
+              - generic [ref=e111]: 📈
+              - generic [ref=e112]: Performance
+            - link "⚙️ Configuración AUM" [ref=e113] [cursor=pointer]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e114]: ⚙️
+              - generic [ref=e115]: Configuración AUM
+        - generic [ref=e116]:
+          - paragraph [ref=e117]: Perfil
+          - link "👤 Mi Perfil" [ref=e119] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e120]: 👤
+            - generic [ref=e121]: Mi Perfil
+      - button "Colapsar menú" [ref=e123] [cursor=pointer]:
+        - generic [ref=e124]: ◀
+        - generic [ref=e125]: Colapsar
+  - main [ref=e126]:
+    - generic [ref=e131]:
+      - alert [ref=e132]:
+        - generic [ref=e133]:
+          - generic [ref=e134]: ❌
+          - generic [ref=e135]:
+            - heading "Error" [level=4] [ref=e136]
+            - generic [ref=e137]: Request timeout after 30000ms
+      - generic [ref=e142]:
+        - generic [ref=e146]:
+          - generic:
+            - generic: 🔍
+          - textbox "Buscar contactos... (Ctrl+K)" [ref=e147]
+        - button "Todas las etapas • Etiquetas ▼" [ref=e149] [cursor=pointer]:
+          - generic [ref=e150]: Todas las etapas • Etiquetas
+          - generic [ref=e151]: ▼
+        - button "▦ Pipeline" [ref=e152] [cursor=pointer]:
+          - generic [ref=e153]: ▦
+          - text: Pipeline
+        - button "⚙️ Automatizaciones" [ref=e154] [cursor=pointer]:
+          - generic [ref=e155]: ⚙️
+          - text: Automatizaciones
+        - button "Métricas" [ref=e156] [cursor=pointer]
+        - button "➕ Nuevo Contacto" [ref=e157] [cursor=pointer]:
+          - generic [ref=e158]: ➕
+          - text: Nuevo Contacto
+      - generic [ref=e160]:
+        - generic [ref=e162]:
+          - heading "Contactos (0)" [level=3] [ref=e163]
+          - button "📥 Descargar CSV" [disabled] [ref=e164]:
+            - generic [ref=e165]: 📥
+            - generic [ref=e166]: Descargar CSV
+        - heading "Comienza agregando tu primer contacto al sistema." [level=3] [ref=e169]
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e174] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e175]:
+      - img [ref=e176]
+    - generic [ref=e180]:
+      - button "Open issues overlay" [ref=e181]:
+        - generic [ref=e182]:
+          - generic [ref=e183]: "1"
+          - generic [ref=e184]: "2"
+        - generic [ref=e185]:
+          - text: Issue
+          - generic [ref=e186]: s
+      - button "Collapse issues badge" [ref=e187]:
+        - img [ref=e188]
+  - alert [ref=e190]
+```

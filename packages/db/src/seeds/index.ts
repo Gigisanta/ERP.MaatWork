@@ -208,4 +208,4 @@ export async function seedFull(options: SeedFullOptions = {}) {
 }
 
 // Export default for direct execution
-export default seedFull;
+

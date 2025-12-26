@@ -41,6 +41,7 @@ describe('api-server', () => {
 
       const mockResponse = {
         ok: true,
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -70,6 +71,7 @@ describe('api-server', () => {
 
       const mockResponse = {
         ok: true,
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -96,6 +98,7 @@ describe('api-server', () => {
 
       const mockResponse = {
         ok: true,
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -155,6 +158,7 @@ describe('api-server', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({ error: 'Not found' }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -172,6 +176,7 @@ describe('api-server', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
+        headers: new Headers(),
         json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -187,6 +192,7 @@ describe('api-server', () => {
 
       const mockResponse = {
         ok: true,
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
@@ -224,6 +230,7 @@ describe('api-server', () => {
 
       const mockResponse = {
         ok: true,
+        headers: new Headers(),
         json: vi.fn().mockResolvedValue({
           success: true,
           data: { id: 'contact-123', firstName: 'John' },

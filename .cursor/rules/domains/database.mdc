@@ -24,16 +24,16 @@ packages/db/src/
 **Flujo correcto:**
 
 1. Modificar schema: `packages/db/src/schema.ts`
-2. Generar migración: `pnpm -F @cactus/db generate`
-3. Aplicar migración: `pnpm -F @cactus/db migrate`
+2. Generar migración: `pnpm -F @maatwork/db generate`
+3. Aplicar migración: `pnpm -F @maatwork/db migrate`
 
 **Comandos:**
 
 ```bash
-pnpm -F @cactus/db build         # Compilar TypeScript
-pnpm -F @cactus/db generate      # Generar migración
-pnpm -F @cactus/db migrate       # Aplicar migración
-pnpm -F @cactus/db seed:all      # Seed completo
+pnpm -F @maatwork/db build         # Compilar TypeScript
+pnpm -F @maatwork/db generate      # Generar migración
+pnpm -F @maatwork/db migrate       # Aplicar migración
+pnpm -F @maatwork/db seed:all      # Seed completo
 ```
 
 ### Singleton db()
@@ -41,7 +41,7 @@ pnpm -F @cactus/db seed:all      # Seed completo
 **✅ BIEN - Usar singleton db():**
 
 ```typescript
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 
 const result = await db().select().from(users);
 ```
@@ -55,10 +55,10 @@ const pool = new Pool({ ... });
 
 ### Exportar Schema
 
-**Exportar schema** como `@cactus/db/schema` para tipos:
+**Exportar schema** como `@maatwork/db/schema` para tipos:
 
 ```typescript
-import { contacts } from '@cactus/db/schema';
+import { contacts } from '@maatwork/db/schema';
 import { type InferSelectModel } from 'drizzle-orm';
 
 export type Contact = InferSelectModel<typeof contacts>;
@@ -66,9 +66,9 @@ export type Contact = InferSelectModel<typeof contacts>;
 
 ## Seeds Disponibles
 
-- `pnpm -F @cactus/db seed:all` - Seed sistema completo
-- `pnpm -F @cactus/db seed:pipeline` - Solo etapas de pipeline
-- `pnpm -F @cactus/db seed:benchmarks` - Benchmarks e instrumentos
+- `pnpm -F @maatwork/db seed:all` - Seed sistema completo
+- `pnpm -F @maatwork/db seed:pipeline` - Solo etapas de pipeline
+- `pnpm -F @maatwork/db seed:benchmarks` - Benchmarks e instrumentos
 
 ## Testing
 

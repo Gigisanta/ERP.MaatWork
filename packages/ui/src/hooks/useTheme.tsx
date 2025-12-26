@@ -22,7 +22,7 @@ export function ThemeProvider({
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('cactus-theme', newTheme);
+    localStorage.setItem('maatwork-theme', newTheme);
 
     // Apply theme to document
     document.documentElement.setAttribute('data-theme', newTheme);
@@ -35,7 +35,7 @@ export function ThemeProvider({
 
   useEffect(() => {
     // Load theme from localStorage or system preference
-    const savedTheme = localStorage.getItem('cactus-theme') as Theme;
+    const savedTheme = localStorage.getItem('maatwork-theme') as Theme;
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
@@ -46,7 +46,7 @@ export function ThemeProvider({
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem('cactus-theme')) {
+      if (!localStorage.getItem('maatwork-theme')) {
         const newTheme = e.matches ? 'dark' : 'light';
         setThemeState(newTheme);
         document.documentElement.setAttribute('data-theme', newTheme);

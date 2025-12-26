@@ -1,33 +1,12 @@
 /**
  * Validation utilities barrel export
+ * 
+ * AI_DECISION: Centralizar exportaciones de validación para evitar conflictos e imports circulares
+ * Justificación: Asegura que todos los esquemas y el middleware estén disponibles desde un solo punto
+ * Impacto: Mejora la mantenibilidad y consistencia de los imports en las rutas
  */
 
-// Re-export all validation utilities (selective to avoid conflicts)
-export * from './circuit-breaker';
-// Export common-schemas selectively to avoid duplicate exports
-export {
-  uuidSchema,
-  emailSchema,
-  urlSchema,
-  isoDateSchema,
-  dateSchema,
-  timeSchema,
-  paginationQuerySchema,
-  sortQuerySchema,
-  searchQuerySchema,
-  dateRangeQuerySchema,
-  fileIdParamSchema,
-  contactIdParamSchema,
-  userIdParamSchema,
-  rowIdParamSchema,
-  userRoleSchema,
-  brokerSchema,
-  statusSchema,
-  aumStatusSchema,
-  matchStatusSchema,
-} from './common-schemas';
-// Export idParamSchema and optionalUuidSchema separately to avoid conflicts
-export { idParamSchema } from './common-schemas';
-export { optionalUuidSchema } from './common-schemas';
 export * from './validation';
+export * from './common-schemas';
 export * from './validation-common';
+export * from './circuit-breaker';

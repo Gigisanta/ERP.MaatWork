@@ -4,7 +4,7 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { BrokerAccount, CreateBrokerAccountRequest } from '@/types/broker-account';
+import type { BrokerAccount, CreateBrokerAccountRequest } from '@/types';
 
 // ==========================================================
 // API Methods

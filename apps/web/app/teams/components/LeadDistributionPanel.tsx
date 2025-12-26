@@ -16,10 +16,10 @@ import {
   DataTable,
   type Column,
   Select,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { apiClient } from '@/lib/api-client';
 import { getTeamMembers } from '@/lib/api/teams';
-import type { TeamMember, StalledLead } from '@/types/team';
+import type { TeamMember, StalledLead } from '@/types';
 
 interface LeadDistributionPanelProps {
   teamId: string;

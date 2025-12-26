@@ -148,7 +148,7 @@ async function runMigrations() {
   console.log(info('\n🗄️  Ejecutando migraciones de base de datos...\n'));
 
   try {
-    execSync('pnpm -F @cactus/db migrate', {
+    execSync('pnpm -F @maatwork/db migrate', {
       cwd: projectRoot,
       stdio: 'inherit',
     });
@@ -168,9 +168,9 @@ async function createInitialAdmin() {
 
   try {
     // Usar el script existente de la API que ya funciona correctamente
-    // Primero intentar crear el usuario admin@cactus.local
+    // Primero intentar crear el usuario admin@maatwork.local
     execSync(
-      "pnpm -F @cactus/api exec tsx -e \"import { db, users } from '@cactus/db'; import { eq } from 'drizzle-orm'; (async () => { const email = 'admin@cactus.local'; const existing = await db().query.users.findMany({ where: eq(users.email, email), limit: 1 }); if (existing.length > 0) { console.log('✅ Usuario admin ya existe:', email); process.exit(0); } const admins = await db().select().from(users).where(eq(users.role, 'admin')).limit(1); if (admins.length > 0) { console.log('✅ Ya existe un usuario admin en la base de datos'); process.exit(0); } const [newUser] = await db().insert(users).values({ email, fullName: 'Admin Usuario', role: 'admin', isActive: true, username: email.split('@')[0], usernameNormalized: email.split('@')[0].toLowerCase() }).returning(); console.log('✅ Usuario admin creado:', newUser.email); process.exit(0); })().catch(err => { console.error('Error:', err.message); process.exit(1); });\"",
+      "pnpm -F @maatwork/api exec tsx -e \"import { db, users } from '@maatwork/db'; import { eq } from 'drizzle-orm'; (async () => { const email = 'admin@maatwork.local'; const existing = await db().query.users.findMany({ where: eq(users.email, email), limit: 1 }); if (existing.length > 0) { console.log('✅ Usuario admin ya existe:', email); process.exit(0); } const admins = await db().select().from(users).where(eq(users.role, 'admin')).limit(1); if (admins.length > 0) { console.log('✅ Ya existe un usuario admin en la base de datos'); process.exit(0); } const [newUser] = await db().insert(users).values({ email, fullName: 'Admin Usuario', role: 'admin', isActive: true, username: email.split('@')[0], usernameNormalized: email.split('@')[0].toLowerCase() }).returning(); console.log('✅ Usuario admin creado:', newUser.email); process.exit(0); })().catch(err => { console.error('Error:', err.message); process.exit(1); });\"",
       {
         cwd: projectRoot,
         stdio: 'inherit',
@@ -185,11 +185,11 @@ async function createInitialAdmin() {
       console.log(info('  Intentando método alternativo...'));
       // Crear un script temporal que funcione
       const tempScript = `
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 
 (async () => {
-  const email = 'admin@cactus.local';
+  const email = 'admin@maatwork.local';
   const existing = await db().query.users.findMany({ where: eq(users.email, email), limit: 1 });
   if (existing.length > 0) {
     console.log('✅ Usuario admin ya existe:', email);
@@ -217,7 +217,7 @@ import { eq } from 'drizzle-orm';
 `;
       const tempPath = path.join(projectRoot, 'apps', 'api', 'src', 'create-admin-temp.ts');
       fs.writeFileSync(tempPath, tempScript);
-      execSync('pnpm -F @cactus/api exec tsx src/create-admin-temp.ts', {
+      execSync('pnpm -F @maatwork/api exec tsx src/create-admin-temp.ts', {
         cwd: projectRoot,
         stdio: 'inherit',
       });
@@ -227,7 +227,7 @@ import { eq } from 'drizzle-orm';
     } catch (err2) {
       console.log(warning(`  ⚠️  No se pudo crear usuario admin automáticamente`));
       console.log(warning('     Puedes crearlo manualmente después con:'));
-      console.log(warning('     pnpm -F @cactus/api run add-user'));
+      console.log(warning('     pnpm -F @maatwork/api run add-user'));
       console.log(warning('     O edita apps/api/src/add-user.ts y ejecútalo'));
       return { success: false };
     }
@@ -248,7 +248,7 @@ function showFinalInstructions() {
   console.log('  2. Abre tu navegador en:');
   console.log(bold('     http://localhost:3000\n'));
   console.log('  3. Haz login con el usuario admin:');
-  console.log(bold('     Email: admin@cactus.local\n'));
+  console.log(bold('     Email: admin@maatwork.local\n'));
   console.log('  4. Si tienes problemas de autenticación:');
   console.log('     - Limpia las cookies del navegador para localhost');
   console.log('     - O usa modo incógnito\n');
@@ -263,7 +263,7 @@ function showFinalInstructions() {
  */
 async function main() {
   console.log(bold.cyan('\n' + '='.repeat(60)));
-  console.log(bold.cyan('🌵 CACTUS CRM - Setup Inicial'));
+  console.log(bold.cyan('🌵 MAATWORK - Setup Inicial'));
   console.log(bold.cyan('='.repeat(60) + '\n'));
 
   // 1. Verificar prerequisitos

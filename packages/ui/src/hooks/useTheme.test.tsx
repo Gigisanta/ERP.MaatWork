@@ -84,7 +84,7 @@ describe('ThemeProvider', () => {
   });
 
   it('debería cargar tema desde localStorage', () => {
-    localStorageMock.setItem('cactus-theme', 'dark');
+    localStorageMock.setItem('maatwork-theme', 'dark');
 
     const TestComponent = () => {
       const { theme } = useTheme();
@@ -254,7 +254,7 @@ describe('useTheme hook', () => {
       screen.getByText('Set Dark').click();
     });
 
-    expect(localStorageMock.getItem('cactus-theme')).toBe('dark');
+    expect(localStorageMock.getItem('maatwork-theme')).toBe('dark');
   });
 
   it('debería aplicar tema al document al cambiar', () => {
@@ -326,7 +326,7 @@ describe('useTheme hook', () => {
   });
 
   it('debería respetar tema guardado sobre system preference', () => {
-    localStorageMock.setItem('cactus-theme', 'light');
+    localStorageMock.setItem('maatwork-theme', 'light');
     window.matchMedia = createMatchMedia(true); // System prefiere dark
 
     const TestComponent = () => {
@@ -345,7 +345,7 @@ describe('useTheme hook', () => {
   });
 
   it('debería no actualizar por system preference cuando hay tema guardado', () => {
-    localStorageMock.setItem('cactus-theme', 'light');
+    localStorageMock.setItem('maatwork-theme', 'light');
     const mockMediaQuery = createMatchMedia(false);
     window.matchMedia = mockMediaQuery;
 

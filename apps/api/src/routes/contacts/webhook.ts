@@ -13,6 +13,7 @@ import { env } from '@/config/env';
 import { RETRY_LIMITS, PAYLOAD_LIMITS, ERROR_LIMITS } from '@/config/api-limits';
 import { z } from 'zod';
 import { createAsyncHandler } from '@/utils/route-handler';
+import { uuidSchema } from '@/utils/validation/common-schemas';
 
 const router = Router();
 
@@ -34,7 +35,7 @@ const webhookRateLimiter = createUserRateLimiter({
 // Usa .passthrough() para aceptar cualquier campo adicional que pueda venir del frontend
 const webhookContactSchema = z
   .object({
-    id: z.string().uuid(),
+    id: uuidSchema,
     firstName: z.string(),
     lastName: z.string(),
     fullName: z.string().optional(), // Puede no estar presente en algunos casos
@@ -42,11 +43,11 @@ const webhookContactSchema = z
     phone: z.union([z.string(), z.null()]).optional(),
     country: z.union([z.string(), z.null()]).optional(),
     dni: z.union([z.string(), z.null()]).optional(),
-    pipelineStageId: z.union([z.string().uuid(), z.null()]).optional(),
+    pipelineStageId: z.union([uuidSchema, z.null()]).optional(),
     source: z.union([z.string(), z.null()]).optional(),
     riskProfile: z.union([z.enum(['low', 'mid', 'high']), z.null()]).optional(),
-    assignedAdvisorId: z.union([z.string().uuid(), z.null()]).optional(),
-    assignedTeamId: z.union([z.string().uuid(), z.null()]).optional(),
+    assignedAdvisorId: z.union([uuidSchema, z.null()]).optional(),
+    assignedTeamId: z.union([uuidSchema, z.null()]).optional(),
     nextStep: z.union([z.string(), z.null()]).optional(),
     notes: z.union([z.string(), z.null()]).optional(),
     queSeDedica: z.union([z.string(), z.null()]).optional(),

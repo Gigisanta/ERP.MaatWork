@@ -5,12 +5,13 @@
  */
 
 import { Router, type Request } from 'express';
-import { db, pipelineStages, contacts } from '@cactus/db';
+import { db, pipelineStages, contacts } from '@maatwork/db';
 import { eq, and, isNull, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { z } from 'zod';
 import { validate } from '../../utils/validation';
+import { uuidSchema } from '../../utils/validation/common-schemas';
 import { cache } from '../../middleware/cache';
 import { REDIS_TTL } from '../../config/redis';
 import { buildCacheKey } from '../../config/redis';
@@ -25,8 +26,8 @@ type PipelineStage = InferSelectModel<typeof pipelineStages>;
 // ==========================================================
 
 const boardQuerySchema = z.object({
-  assignedAdvisorId: z.string().uuid().optional(),
-  assignedTeamId: z.string().uuid().optional(),
+  assignedAdvisorId: uuidSchema.optional(),
+  assignedTeamId: uuidSchema.optional(),
 });
 
 // ==========================================================

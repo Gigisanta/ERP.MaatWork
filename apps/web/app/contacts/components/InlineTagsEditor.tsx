@@ -10,7 +10,7 @@ import {
   Text,
   Icon,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface InlineTagsEditorProps {
   contact: Contact;

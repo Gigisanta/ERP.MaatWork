@@ -6,8 +6,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { db } from '@cactus/db';
-import { users } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { users } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
 import { signUserToken, verifyUserToken } from '../../../auth/jwt';
 import { createTestUser, deleteTestUser, createTestToken } from '../../helpers/test-auth';

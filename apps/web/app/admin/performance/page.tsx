@@ -12,7 +12,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/lib/api-client';
-import { Card } from '@cactus/ui';
+import { Card } from '@maatwork/ui';
 import { logger } from '@/lib/logger';
 
 interface QueryMetrics {

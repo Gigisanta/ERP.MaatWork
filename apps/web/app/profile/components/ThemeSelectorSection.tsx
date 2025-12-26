@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Select, Text, Stack } from '@cactus/ui';
+import { Select, Text, Stack } from '@maatwork/ui';
 import { useTheme } from '../../components/ThemeProviderWrapper';
 
 /**

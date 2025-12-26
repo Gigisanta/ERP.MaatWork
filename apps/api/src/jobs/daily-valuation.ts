@@ -1,4 +1,4 @@
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   instruments,
   priceSnapshots,
@@ -11,14 +11,13 @@ import {
   portfolioMonitoringDetails,
   portfolioTemplateLines,
   contacts,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sql, desc, gte, lte, sum, type InferSelectModel } from 'drizzle-orm';
-import axios from 'axios';
-import pino from 'pino';
+import { logger } from '../utils/logger';
 import { PositionWithMarketValue } from '../types/daily-valuation';
 import { CircuitBreaker, CircuitBreakerOpenError } from '../utils/validation/circuit-breaker';
 
-const logger = pino({ name: 'daily-valuation' });
+const jobLogger = logger.child({ module: 'daily-valuation' });
 
 // Tipos inferidos del schema
 type Instrument = InferSelectModel<typeof instruments>;
@@ -72,53 +71,53 @@ export class DailyValuationJob {
    * Ejecutar job completo de valuación
    */
   async run(): Promise<void> {
-    logger.info('🚀 Iniciando job de valuación diaria...');
+    jobLogger.info('🚀 Iniciando job de valuación diaria...');
 
     try {
       // 1. Obtener instrumentos activos
-      logger.info('📊 Obteniendo instrumentos activos...');
+      jobLogger.info('📊 Obteniendo instrumentos activos...');
       const activeInstruments = await this.getActiveInstruments();
 
       if (activeInstruments.length === 0) {
-        logger.warn('⚠️ No hay instrumentos activos para valuar');
+        jobLogger.warn('⚠️ No hay instrumentos activos para valuar');
         return;
       }
 
-      logger.info({ count: activeInstruments.length }, '📈 Instrumentos activos encontrados');
+      jobLogger.info({ count: activeInstruments.length }, '📈 Instrumentos activos encontrados');
 
       // 2. Obtener precios actuales del microservicio Python
-      logger.info('💰 Obteniendo precios actuales...');
+      jobLogger.info('💰 Obteniendo precios actuales...');
       const prices = await this.fetchCurrentPrices(activeInstruments);
 
       if (!prices || Object.keys(prices).length === 0) {
-        logger.warn('⚠️ No se pudieron obtener precios');
+        jobLogger.warn('⚠️ No se pudieron obtener precios');
         return;
       }
 
-      logger.info({ count: Object.keys(prices).length }, '✅ Precios obtenidos');
+      jobLogger.info({ count: Object.keys(prices).length }, '✅ Precios obtenidos');
 
       // 3. Guardar precios en price_snapshots
-      logger.info('💾 Guardando snapshots de precios...');
+      jobLogger.info('💾 Guardando snapshots de precios...');
       const today = new Date().toISOString().split('T')[0];
       await this.savePriceSnapshots(prices, today);
 
       // 4. Calcular AUM por contacto
-      logger.info('📊 Calculando AUM por contacto...');
+      jobLogger.info('📊 Calculando AUM por contacto...');
       await this.calculateAUMByContact(today);
 
       // 5. Calcular desvíos de carteras
-      logger.info('📏 Calculando desvíos de carteras...');
+      jobLogger.info('📏 Calculando desvíos de carteras...');
       await this.calculatePortfolioDeviations(today);
 
       // 6. Refrescar materialized views después de cálculos
-      logger.info('🔄 Refrescando materialized views...');
+      jobLogger.info('🔄 Refrescando materialized views...');
       const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
       const refreshJob = new RefreshMaterializedViewsJob();
       await refreshJob.refreshAll();
 
-      logger.info('✅ Job de valuación diaria completado exitosamente');
+      jobLogger.info('✅ Job de valuación diaria completado exitosamente');
     } catch (error) {
-      logger.error({ err: error }, '❌ Error en job de valuación diaria');
+      jobLogger.error({ err: error }, '❌ Error en job de valuación diaria');
       throw error;
     }
   }
@@ -144,7 +143,7 @@ export class DailyValuationJob {
   private async fetchCurrentPrices(instrumentsList: InstrumentSelect[]): Promise<PriceData | null> {
     // Si el circuit breaker está abierto, usar fallback inmediato
     if (this.circuitBreaker.isOpen()) {
-      logger.warn(
+      jobLogger.warn(
         {
           circuitState: this.circuitBreaker.getState(),
           metrics: this.circuitBreaker.getMetrics(),
@@ -159,34 +158,45 @@ export class DailyValuationJob {
       const prices = await this.circuitBreaker.execute(async () => {
         const symbols = instrumentsList.map((inst) => inst.symbol);
 
-        const response = await axios.post<YFinanceResponse>(
-          `${this.analyticsServiceUrl}/prices/fetch`,
-          { symbols },
-          {
-            timeout: 30000, // 30 segundos timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+          const response = await fetch(`${this.analyticsServiceUrl}/prices/fetch`, {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ symbols }),
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error en respuesta del servicio de precios: ${response.statusText}`);
           }
-        );
 
-        if (!response.data.success) {
-          throw new Error('Error en respuesta del servicio de precios');
+          const responseData = (await response.json()) as YFinanceResponse;
+
+          if (!responseData.success) {
+            throw new Error('Error en respuesta del servicio de precios');
+          }
+
+          return responseData.data;
+        } finally {
+          clearTimeout(timeoutId);
         }
-
-        return response.data.data;
       });
 
       return prices;
     } catch (error) {
       // Si es CircuitBreakerOpenError, ya usamos fallback arriba
       if (error instanceof CircuitBreakerOpenError) {
-        logger.warn('Circuit breaker abierto - usando fallback');
+        jobLogger.warn('Circuit breaker abierto - usando fallback');
         return await this.getLastAvailablePrices(instrumentsList);
       }
 
       // Para otros errores, loguear y usar fallback
-      logger.error(
+      jobLogger.error(
         {
           err: error,
           circuitState: this.circuitBreaker.getState(),
@@ -197,12 +207,12 @@ export class DailyValuationJob {
 
       // Si el circuit breaker se abrió debido a este error, usar fallback
       if (this.circuitBreaker.isOpen()) {
-        logger.warn('🔄 Circuit breaker se abrió - usando últimos precios disponibles...');
+        jobLogger.warn('🔄 Circuit breaker se abrió - usando últimos precios disponibles...');
         return await this.getLastAvailablePrices(instrumentsList);
       }
 
       // Si aún no está abierto pero falló, intentar fallback de todas formas
-      logger.warn('🔄 Intentando usar últimos precios disponibles...');
+      jobLogger.warn('🔄 Intentando usar últimos precios disponibles...');
       return await this.getLastAvailablePrices(instrumentsList);
     }
   }
@@ -262,7 +272,7 @@ export class DailyValuationJob {
       logger.info({ count: Object.keys(result).length }, '📈 Usando precios de fallback');
       return result;
     } catch (error) {
-      logger.error({ err: error }, 'Error obteniendo precios de fallback');
+      jobLogger.error({ err: error }, 'Error obteniendo precios de fallback');
       return null;
     }
   }
@@ -307,7 +317,7 @@ export class DailyValuationJob {
           },
         });
 
-      logger.info({ count: snapshotsToInsert.length }, '💾 Snapshots de precios guardados');
+      jobLogger.info({ count: snapshotsToInsert.length }, '💾 Snapshots de precios guardados');
     }
   }
 
@@ -349,7 +359,7 @@ export class DailyValuationJob {
             },
           });
 
-        logger.info({ count: aumSnapshotsToInsert.length }, '📊 AUM calculado para contactos');
+        jobLogger.info({ count: aumSnapshotsToInsert.length }, '📊 AUM calculado para contactos');
 
         // Refresh materialized view after AUM calculation
         const { RefreshMaterializedViewsJob } = await import('./refresh-materialized-views');
@@ -357,7 +367,7 @@ export class DailyValuationJob {
         await refreshJob.refreshContactAumSummary();
       }
     } catch (error) {
-      logger.error({ err: error }, 'Error calculando AUM');
+      jobLogger.error({ err: error }, 'Error calculando AUM');
       throw error;
     }
   }
@@ -383,7 +393,7 @@ export class DailyValuationJob {
           )
         );
 
-      logger.info({ count: contactsWithPortfolios.length }, '📏 Calculando desvíos');
+      jobLogger.info({ count: contactsWithPortfolios.length }, '📏 Calculando desvíos');
 
       for (const contact of contactsWithPortfolios) {
         await this.calculateContactPortfolioDeviation(
@@ -399,7 +409,7 @@ export class DailyValuationJob {
       const refreshJob = new RefreshMaterializedViewsJob();
       await refreshJob.refreshPortfolioDeviationSummary();
     } catch (error) {
-      logger.error({ err: error }, 'Error calculando desvíos de carteras');
+      jobLogger.error({ err: error }, 'Error calculando desvíos de carteras');
       throw error;
     }
   }
@@ -442,7 +452,7 @@ export class DailyValuationJob {
       );
 
       if (totalAUM === 0) {
-        logger.warn({ contactId }, '⚠️ Contacto sin AUM para calcular desvíos');
+        jobLogger.warn({ contactId }, '⚠️ Contacto sin AUM para calcular desvíos');
         return;
       }
 
@@ -528,8 +538,95 @@ export class DailyValuationJob {
         }
       }
     } catch (error) {
-      logger.error({ err: error, contactId }, 'Error calculando desvío para contacto');
+      jobLogger.error({ err: error, contactId }, 'Error calculando desvío para contacto');
       // No lanzar error para no interrumpir el procesamiento de otros contactos
+    }
+  }
+
+  /**
+   * Ejecutar backfill de precios históricos
+   */
+  async runPriceBackfill(days: number = 365): Promise<void> {
+    jobLogger.info({ days }, '🔄 Iniciando backfill de precios históricos');
+
+    try {
+      const activeInstruments = await this.getActiveInstruments();
+
+      if (activeInstruments.length === 0) {
+        jobLogger.warn('⚠️ No hay instrumentos activos para backfill');
+        return;
+      }
+
+      const symbols = activeInstruments.map((inst: InstrumentSelect) => inst.symbol);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+
+      try {
+        const response = await fetch(`${this.analyticsServiceUrl}/prices/backfill`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ symbols, days }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error en respuesta del servicio de backfill: ${response.statusText}`);
+        }
+
+        const responseData = (await response.json()) as {
+          success: boolean;
+          total_records: number;
+          symbols_count: number;
+          data: {
+            [symbol: string]: Array<{
+              date: string;
+              price: number;
+              currency: string;
+            }>;
+          };
+        };
+
+        if (!responseData.success) {
+          throw new Error('Error en respuesta del servicio de backfill');
+        }
+
+        jobLogger.info(
+          { totalRecords: responseData.total_records, symbols: responseData.symbols_count },
+          '✅ Backfill completado'
+        );
+
+        // Guardar datos históricos en price_snapshots
+        const historicalData = responseData.data;
+
+        for (const [symbol, records] of Object.entries(historicalData)) {
+          if (Array.isArray(records) && records.length > 0) {
+            const instrument = activeInstruments.find(
+              (inst: InstrumentSelect) => inst.symbol === symbol
+            );
+            if (instrument) {
+              const snapshotsToInsert = records.map((record) => ({
+                instrumentId: instrument.id,
+                asOfDate: record.date,
+                closePrice: record.price,
+                currency: record.currency || instrument.currency || 'USD',
+                source: 'yfinance',
+              }));
+
+              await db().insert(priceSnapshots).values(snapshotsToInsert).onConflictDoNothing(); // Ignorar duplicados
+            }
+          }
+        }
+
+        jobLogger.info('💾 Datos históricos guardados en price_snapshots');
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    } catch (error) {
+      jobLogger.error({ err: error }, '❌ Error en backfill de precios');
+      throw error;
     }
   }
 }
@@ -542,72 +639,6 @@ export async function runDailyValuationJob(): Promise<void> {
 
 // Función para ejecutar backfill de precios históricos
 export async function runPriceBackfillJob(days: number = 365): Promise<void> {
-  logger.info({ days }, '🔄 Iniciando backfill de precios históricos');
-
-  try {
-    const job = new DailyValuationJob();
-    const activeInstruments = await job['getActiveInstruments']();
-
-    if (activeInstruments.length === 0) {
-      logger.warn('⚠️ No hay instrumentos activos para backfill');
-      return;
-    }
-
-    const symbols = activeInstruments.map((inst: InstrumentSelect) => inst.symbol);
-
-    const response = await axios.post(
-      `${job['analyticsServiceUrl']}/prices/backfill`,
-      { symbols, days },
-      {
-        timeout: 300000, // 5 minutos timeout para backfill
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.data.success) {
-      throw new Error('Error en respuesta del servicio de backfill');
-    }
-
-    logger.info(
-      { totalRecords: response.data.total_records, symbols: response.data.symbols_count },
-      '✅ Backfill completado'
-    );
-
-    // Guardar datos históricos en price_snapshots
-    const historicalData = response.data.data;
-
-    type HistoricalRecord = {
-      date: string;
-      price: number;
-      currency: string;
-    };
-
-    for (const [symbol, records] of Object.entries(historicalData)) {
-      if (Array.isArray(records) && records.length > 0) {
-        const instrument = activeInstruments.find(
-          (inst: InstrumentSelect) => inst.symbol === symbol
-        );
-        if (instrument) {
-          const snapshotsToInsert = (records as HistoricalRecord[]).map(
-            (record: HistoricalRecord) => ({
-              instrumentId: instrument.id,
-              asOfDate: record.date,
-              closePrice: record.price,
-              currency: record.currency || instrument.currency || 'USD',
-              source: 'yfinance',
-            })
-          );
-
-          await db().insert(priceSnapshots).values(snapshotsToInsert).onConflictDoNothing(); // Ignorar duplicados
-        }
-      }
-    }
-
-    logger.info('💾 Datos históricos guardados en price_snapshots');
-  } catch (error) {
-    logger.error({ err: error }, '❌ Error en backfill de precios');
-    throw error;
-  }
+  const job = new DailyValuationJob();
+  await job.runPriceBackfill(days);
 }

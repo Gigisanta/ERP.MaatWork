@@ -1,7 +1,7 @@
 # Memoria: Decisiones Arquitectónicas
 
 ## Propósito
-Documentación de decisiones arquitectónicas clave del proyecto CACTUS CRM en formato ADR (Architecture Decision Record) para proporcionar contexto histórico y justificar elecciones técnicas.
+Documentación de decisiones arquitectónicas clave del proyecto MAATWORK en formato ADR (Architecture Decision Record) para proporcionar contexto histórico y justificar elecciones técnicas.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -185,13 +185,13 @@ Drizzle ORM ofrece `drizzle-kit push` para aplicar cambios directamente a la DB,
 # packages/db/src/schema.ts
 
 # 2. Generar migración
-pnpm -F @cactus/db generate
+pnpm -F @maatwork/db generate
 
 # 3. Revisar SQL generado
 # packages/db/migrations/[timestamp]_[name].sql
 
 # 4. Aplicar migración
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db migrate
 ```
 
 ### Consecuencias

@@ -7,7 +7,7 @@ import type { TimestampedEntity, CreateRequest, UpdateRequest } from './common';
 /**
  * Configuración de trigger para automatizaciones
  */
-export interface TriggerConfig {
+interface TriggerConfig {
   stageName?: string;
   [key: string]: unknown;
 }
@@ -15,7 +15,7 @@ export interface TriggerConfig {
 /**
  * Configuración adicional de automatización
  */
-export interface AutomationConfigData {
+interface AutomationConfigData {
   [key: string]: unknown;
 }
 

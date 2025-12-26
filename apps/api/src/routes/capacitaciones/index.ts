@@ -82,12 +82,6 @@ router.delete(
 
 export default router;
 
-// Re-export schemas for external use
-export {
-  createCapacitacionSchema,
-  updateCapacitacionSchema,
-  listCapacitacionesQuerySchema,
-  idParamSchema,
-  type CreateCapacitacionInput,
-  type UpdateCapacitacionInput,
-} from './schemas';
+
+
+

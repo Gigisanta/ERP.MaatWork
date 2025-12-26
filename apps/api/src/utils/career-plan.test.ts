@@ -16,7 +16,7 @@ import {
   users,
   teamMembership,
   teams,
-} from '@cactus/db';
+} from '@maatwork/db';
 import {
   calculateUserAnnualProduction,
   determineUserLevel,
@@ -26,7 +26,7 @@ import {
 } from './career-plan';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   careerPlanLevels: {},
   contactTags: {},

@@ -16,7 +16,7 @@
 
 import { logger } from './logger';
 
-export interface FetchOptions extends RequestInit {
+interface FetchOptions extends RequestInit {
   skipLogging?: boolean;
   requestId?: string | undefined;
   timeout?: number; // Timeout en milisegundos (por defecto: 30000)
@@ -77,8 +77,9 @@ export async function fetchWithLogging(
 
     // Log de la respuesta
     if (!skipLogging) {
-      logger.logResponse(method, fullUrl, response.status, duration, requestId, {
-        responseHeaders: Object.fromEntries(response.headers.entries()),
+      const responseHeaders = response && response.headers ? Object.fromEntries(response.headers.entries()) : {};
+      logger.logResponse(method, fullUrl, response?.status || 0, duration, requestId, {
+        responseHeaders,
       });
     }
 

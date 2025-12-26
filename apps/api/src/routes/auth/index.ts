@@ -48,6 +48,3 @@ router.post('/logout', requireAuth, handleLogout);
 router.use('/google', googleAuthRouter);
 
 export default router;
-
-// Re-export schemas for external use
-export { loginSchema, registerSchema, type LoginInput, type RegisterInput } from './schemas';

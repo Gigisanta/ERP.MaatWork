@@ -8,14 +8,14 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, pipelineStages, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, pipelineStages, contacts, pipelineStageHistory } from '@maatwork/db';
 import { requireAuth } from '../../auth/middlewares';
 import { canAccessContact } from '../../auth/authorization';
 import { transactionWithLogging } from '../../utils/database/db-transactions';
 import { sendWebhook } from '../../utils/http/webhook-client';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   pipelineStages: {},
   contacts: {},
@@ -36,11 +36,11 @@ vi.mock('../../auth/authorization', () => ({
   canAccessContact: vi.fn(),
 }));
 
-vi.mock('../../utils/db-transactions', () => ({
+vi.mock('../../utils/database/db-transactions', () => ({
   transactionWithLogging: vi.fn(),
 }));
 
-vi.mock('../../utils/webhook-client', () => ({
+vi.mock('../../utils/http/webhook-client', () => ({
   sendWebhook: vi.fn(),
 }));
 

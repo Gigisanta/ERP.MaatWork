@@ -14,7 +14,7 @@ import type {
   UpdateBenchmarkRequest,
 } from '@/types';
 import { useEntityWithComponents } from './useEntityWithComponents';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 
 export function useBenchmarks() {
   const { user } = useRequireAuth();

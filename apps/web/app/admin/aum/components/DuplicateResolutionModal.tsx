@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getAumDuplicates, matchAumRow } from '@/lib/api';
-import type { AumRow, ApiErrorWithMessage } from '@/types/aum';
-import { Button, Modal, Spinner, Text } from '@cactus/ui';
+import type { AumRow, ApiErrorWithMessage } from '@/types';
+import { Button, Modal, Spinner, Text } from '@maatwork/ui';
 
 interface DuplicateResolutionModalProps {
   accountNumber: string;

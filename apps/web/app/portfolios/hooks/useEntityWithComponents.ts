@@ -5,7 +5,7 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { logger, toLogContext } from '@/lib/logger';
 import type { AuthUser } from '@/auth/AuthContext';
 
-export interface UseEntityWithComponentsConfig<
+interface UseEntityWithComponentsConfig<
   TEntity extends { id: string },
   TComponent,
   TCreateData = Partial<Omit<TEntity, 'id' | 'createdAt' | 'updatedAt'>>,

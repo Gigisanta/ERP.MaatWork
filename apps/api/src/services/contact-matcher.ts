@@ -4,9 +4,9 @@
  * Logic to match calendar events with contacts and update their status.
  */
 
-import { db, contacts, calendarEvents, contactAliases } from '@cactus/db';
+import { db, contacts, calendarEvents, contactAliases } from '@maatwork/db';
 import { eq, and, or, ilike, sql, asc } from 'drizzle-orm';
-import type { Contact } from '@cactus/db/schema'; // Assuming type availability, or infer
+import type { Contact } from '@maatwork/db/schema'; // Assuming type availability, or infer
 import { logger } from '../utils/logger';
 import { normalizeName } from './normalization';
 
@@ -84,10 +84,14 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
     .orderBy(asc(calendarEvents.startAt));
 
   // 3. Filter events in memory using robust matching
+  // AI_DECISION: In-memory filtering for complex attendee matching
+  // Justificación: Matching contacts with calendar events requires checking nested JSON arrays (attendees) 
+  //                and name normalization which is easier and faster in memory than complex SQL for small datasets.
+  // Impacto: Improved matching accuracy without overly complex database queries.
   const events = allEvents.filter((event: typeof calendarEvents.$inferSelect) => {
     if (!event.attendees || !Array.isArray(event.attendees)) return false;
 
-    return event.attendees.some((attendee: any) => {
+    return (event.attendees as { email?: string; displayName?: string }[]).some((attendee) => {
       // Match by Email
       if (
         contactEmail &&
@@ -145,7 +149,10 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
   }
 
   // Update contact if status changed (using stringify to compare deep equality simply)
-  // We can also check if we need to update pipeline stages here, but let's stick to updating the metadata first.
+  // AI_DECISION: Simple deep equality check using JSON.stringify
+  // Justificación: MeetingStatus is a simple object, stringify is efficient enough for this comparison 
+  //                and avoids manual property checking or extra dependencies.
+  // Impacto: Clean code, avoids unnecessary DB updates if status hasn't changed.
 
   // Only update if changed significantly
   const currentStatus = contact.meetingStatus as ContactMeetingStatus | null;
@@ -159,12 +166,9 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
     await db()
       .update(contacts)
       .set({
-        meetingStatus: newStatus as any,
+        meetingStatus: newStatus,
         updatedAt: new Date(),
       })
       .where(eq(contacts.id, contact.id));
-
-    // TODO: Trigger pipeline stage automations if needed
-    // e.g. move to "First Meeting Scheduled" if current stage is "Lead"
   }
 }

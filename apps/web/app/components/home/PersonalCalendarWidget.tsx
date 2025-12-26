@@ -10,7 +10,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import {
   Card,
   CardHeader,
@@ -19,22 +19,25 @@ import {
   Button,
   Text,
   Stack,
-  Badge,
   Alert,
-} from '@cactus/ui';
-import { useCalendarEvents } from '@/lib/api-hooks';
+  Switch,
+  Label,
+  Heading,
+  cn,
+} from '@maatwork/ui';
+import { useCalendarEvents, useUserTeams, useTeamCalendar } from '@/lib/api-hooks';
 import { useAuth } from '../../auth/AuthContext';
 import { ApiError } from '@/lib/api-error';
-import { logger } from '@/lib/logger';
+import { logger, toLogContextValue } from '@/lib/logger';
 import Link from 'next/link';
 import { WeeklyCalendarView } from './WeeklyCalendarView';
-import type { CalendarEvent } from '@/types/calendar';
+import type { CalendarEvent } from '@/types';
 
 export function PersonalCalendarWidget() {
   const { user, mutateUser } = useAuth();
+  const [showTeamEvents, setShowTeamEvents] = useState(true);
 
   // AI_DECISION: Usar useMemo para mantener fechas estables y evitar re-renders infinitos
-  // Actualizado para traer toda la semana (domingo a sábado)
   const dateRange = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -49,75 +52,86 @@ export function PersonalCalendarWidget() {
       timeMin: startOfWeek.toISOString(),
       timeMax: endOfWeek.toISOString(),
     };
-  }, []); // Solo calcular una vez al montar
+  }, []);
 
-  const isConnected = user?.isGoogleConnected;
+  const isGoogleConnected = user?.isGoogleConnected;
 
-  // AI_DECISION: Revalidar usuario al montar componente SOLO UNA VEZ
-  // Justificación: Cuando el usuario vuelve de /profile después de conectar Google Calendar,
-  //                el estado del usuario en el contexto puede estar desactualizado.
-  //                Forzamos una revalidación para asegurar que tenemos el estado más reciente.
-  // Impacto: Garantiza que el widget muestre el estado correcto del calendario
-  // CRITICAL: useEffect con dependencias vacías [] para ejecutar SOLO al montar (una vez)
-  //           Si ponemos mutateUser en dependencias, causa bucle infinito
-  React.useEffect(() => {
-    logger.debug('[PersonalCalendarWidget] Component mounted, refreshing user state');
+  useEffect(() => {
     mutateUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // IMPORTANTE: [] para ejecutar solo al montar
+  }, []);
 
-  // AI_DECISION: Debug logging para troubleshooting - SOLO una vez al montar
-  // Justificación: Ayuda a diagnosticar problemas de conexión en producción
-  // Impacto: Logs solo en development, sin causar bucles infinitos
-  React.useEffect(() => {
-    logger.debug('[PersonalCalendarWidget] Component state', {
-      hasUser: !!user,
-      userId: user?.id,
-      isConnected,
-      isGoogleConnectedValue: user?.isGoogleConnected,
-      userKeys: user ? Object.keys(user) : [],
-    });
-    // Log solo cuando isConnected cambia (no cuando user cambia)
-  }, [isConnected]); // Dependencia solo en isConnected para evitar re-logs innecesarios
-
+  // Fetch Personal Events
   const {
-    data: events,
-    error,
-    isLoading,
-    mutate,
+    data: personalEvents,
+    error: personalError,
+    isLoading: personalLoading,
+    mutate: mutatePersonal,
   } = useCalendarEvents(
-    isConnected
+    isGoogleConnected
       ? {
           timeMin: dateRange.timeMin,
           timeMax: dateRange.timeMax,
-          maxResults: 100, // Aumentado para traer todos los eventos de la semana
+          maxResults: 100,
         }
       : undefined
   );
 
-  // AI_DECISION: Handler para actualización manual
-  // Justificación: Usuarios quieren poder refrescar eventos sin recargar página
-  // Impacto: Mejor UX, control explícito sobre sincronización
+  // Fetch Teams and Team Events
+  const { teams } = useUserTeams();
+  const activeTeam = teams?.[0]; // Default to first team for unified view
+
+  const {
+    data: teamEvents,
+    isLoading: teamLoading,
+    mutate: mutateTeam,
+  } = useTeamCalendar(showTeamEvents && activeTeam ? activeTeam.id : '', {
+    timeMin: dateRange.timeMin,
+    maxResults: 100,
+  });
+
+  // Merge events and mark them
+  const mergedEvents = useMemo(() => {
+    const pEvents = (personalEvents || []).map((e) => ({ ...e, isPersonal: true }));
+    const tEvents = (teamEvents || []).map((e) => ({ 
+      ...e, 
+      id: e.id ? `team_${e.id}` : `team_${Math.random()}`, // Safety check for ID
+      isPersonal: false 
+    }));
+    
+    return showTeamEvents ? [...pEvents, ...tEvents] : pEvents;
+  }, [personalEvents, teamEvents, showTeamEvents]);
+
   const handleRefresh = async () => {
     logger.info('[PersonalCalendarWidget] Manual refresh triggered');
-    await mutate();
+    try {
+      await Promise.all([mutatePersonal(), mutateTeam()]);
+    } catch (err) {
+      logger.error('[PersonalCalendarWidget] Refresh failed', { error: toLogContextValue(err) });
+    }
   };
 
-  // Si no está conectado, mostrar UI de conexión directamente
-  if (!isConnected) {
+  if (!isGoogleConnected) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Mi Calendario</CardTitle>
+      <Card className="border-none shadow-xl bg-surface/30 backdrop-blur-sm overflow-hidden">
+        <CardHeader className="bg-primary/5 border-b border-primary/10">
+          <CardTitle className="text-xl font-display font-bold">Agenda MaatWork</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Stack direction="column" gap="sm">
-            <Text color="secondary" size="sm">
-              Conecta tu Google Calendar para ver tus eventos
-            </Text>
+        <CardContent className="p-12 text-center">
+          <Stack direction="column" gap="lg" align="center">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-2">
+              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="space-y-2 max-w-sm">
+              <Text weight="bold" size="xl">Conecta tu Calendario</Text>
+              <Text color="secondary">
+                Sincroniza tus eventos de Google Calendar para gestionar tus reuniones directamente desde aquí.
+              </Text>
+            </div>
             <Link href="/profile">
-              <Button variant="outline" size="sm">
-                Conectar en Perfil
+              <Button size="lg" className="shadow-primary-lg">
+                Conectar ahora
               </Button>
             </Link>
           </Stack>
@@ -126,51 +140,25 @@ export function PersonalCalendarWidget() {
     );
   }
 
-  // AI_DECISION: Manejo detallado de errores con acciones específicas
-  // Justificación: Diferentes errores requieren diferentes acciones del usuario
-  // Impacto: Usuario sabe exactamente qué hacer cuando algo falla
+  const isLoading = personalLoading || (showTeamEvents && teamLoading);
+  const error = personalError;
+
   if (error) {
-    const apiError = error instanceof ApiError ? error : null;
-    const isAuthError =
-      apiError?.isAuthError || apiError?.status === 401 || apiError?.status === 403;
-    const errorMessage = apiError?.message || (error as Error).message || 'Error desconocido';
-
-    logger.error('[PersonalCalendarWidget] Error displaying calendar', {
-      error: errorMessage,
-      isAuthError,
-      status: apiError?.status,
-    });
-
     return (
-      <Card>
+      <Card className="border-error/20 bg-error/[0.02]">
         <CardHeader>
           <CardTitle>Mi Calendario</CardTitle>
         </CardHeader>
         <CardContent>
-          <Stack direction="column" gap="sm">
-            <Alert variant="error">
-              {isAuthError ? (
-                <Text size="sm">
-                  Tu conexión con Google Calendar expiró o necesita reconectarse.
-                </Text>
-              ) : (
-                <Text size="sm">Error al cargar eventos: {errorMessage}</Text>
-              )}
+          <Stack direction="column" gap="md">
+            <Alert variant="error" className="rounded-xl">
+              <Text size="sm">Hubo un problema al conectar con Google Calendar.</Text>
             </Alert>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Link href="/profile">
-                <Button variant="outline" size="sm">
-                  {isAuthError ? 'Reconectar cuenta' : 'Revisar conexión'}
-                </Button>
+                <Button variant="outline" size="sm" className="rounded-full">Reconectar</Button>
               </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  logger.info('[PersonalCalendarWidget] User triggered manual refresh');
-                  window.location.reload();
-                }}
-              >
+              <Button variant="ghost" size="sm" onClick={() => window.location.reload()} className="rounded-full">
                 Reintentar
               </Button>
             </div>
@@ -180,37 +168,40 @@ export function PersonalCalendarWidget() {
     );
   }
 
-  // AI_DECISION: Skeleton loading más informativo
-  // Justificación: Mejor UX durante carga, usuarios ven que algo está pasando
-  // Impacto: Percepción de velocidad mejorada
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Mi Calendario</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Stack direction="column" gap="sm">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-              </div>
-            ))}
-          </Stack>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // AI_DECISION: Usar WeeklyCalendarView en lugar de lista simple
-  // Justificación: Mejor visualización con timeline de horarios, permite ver distribución de eventos
-  // Impacto: UX mejorada, usuario puede ver qué días/horas están ocupados
   return (
-    <WeeklyCalendarView
-      events={events as CalendarEvent[]}
-      isLoading={isLoading}
-      onRefresh={handleRefresh}
-    />
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-text">Mi Agenda</h2>
+          <Text size="sm" color="secondary" className="opacity-70">Gestiona tus eventos personales y de equipo</Text>
+        </div>
+        
+        {activeTeam && (
+          <div className="flex items-center gap-3 bg-surface/50 p-2 pr-4 rounded-full border border-border shadow-sm">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
+              showTeamEvents ? "bg-joy text-white shadow-sm" : "bg-surface text-text-secondary"
+            )}>
+              {activeTeam.name[0]}
+            </div>
+            <Label htmlFor="team-toggle" className="text-sm font-medium cursor-pointer">
+              Eventos de {activeTeam.name}
+            </Label>
+            <Switch 
+              id="team-toggle" 
+              checked={showTeamEvents} 
+              onCheckedChange={setShowTeamEvents}
+            />
+          </div>
+        )}
+      </div>
+
+      <WeeklyCalendarView
+        events={mergedEvents as CalendarEvent[]}
+        isLoading={isLoading}
+        onRefresh={handleRefresh}
+        hideHeader={true}
+      />
+    </div>
   );
 }

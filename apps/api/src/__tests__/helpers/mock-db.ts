@@ -1,5 +1,5 @@
 /**
- * Mock helpers for @cactus/db
+ * Mock helpers for @maatwork/db
  *
  * Provides factory functions to create complete mocks of Drizzle ORM query chains
  * for unit tests that don't require a real database connection.
@@ -12,7 +12,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
  * Creates a mock query builder chain for Drizzle ORM
  * Supports: db().select().from().where().limit() etc.
  */
-export function createMockQueryBuilder<T = unknown>(mockData: T[] = []) {
+function createMockQueryBuilder<T = unknown>(mockData: T[] = []) {
   const mockLimit = vi.fn().mockResolvedValue(mockData);
   const mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
   const mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
@@ -162,7 +162,7 @@ export function createMockDbWithResponses(responses: {
  * Helper to create a mock db() that returns specific data for a query pattern
  * Example: createMockDbForQuery('users', [{ id: '1', email: 'test@test.com' }])
  */
-export function createMockDbForQuery(tableName: string, data: unknown[]) {
+function createMockDbForQuery(tableName: string, data: unknown[]) {
   return createMockDbWithResponses({
     select: { [tableName]: data },
   });

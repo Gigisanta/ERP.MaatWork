@@ -6,7 +6,7 @@
  * POST /auth/logout - Logout
  */
 import type { Request, Response } from 'express';
-import { db, users, googleOAuthTokens } from '@cactus/db';
+import { db, users, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { signUserToken, verifyUserToken } from '../../../auth/jwt';
 import { type UserRole } from '../../../auth/types';

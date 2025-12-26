@@ -18,13 +18,11 @@ import {
   Text,
   Stack,
   Spinner,
-  Alert,
-  Badge,
   Select,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getPortfolioPerformance } from '@/lib/api/analytics';
-import type { Portfolio, PortfolioPerformance, TimePeriod } from '@/types';
-import type { Column } from '@cactus/ui';
+import type { Portfolio, TimePeriod } from '@/types';
+import type { Column } from '@maatwork/ui';
 
 interface PortfolioPerformanceMetricsProps {
   portfolios: Portfolio[];

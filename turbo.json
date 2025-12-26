@@ -73,6 +73,23 @@
         "package.json"
       ]
     },
+    "test:unit": {
+      "dependsOn": [],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "lib/**/*.ts",
+        "lib/**/*.tsx",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "vitest.config.*",
+        "vitest.setup.*",
+        "package.json"
+      ]
+    },
     "test:watch": {
       "persistent": true,
       "cache": false
@@ -93,6 +110,18 @@
         "package.json"
       ],
       "outputs": ["coverage/**"]
+    },
+    "audit:code": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "package.json",
+        "tsconfig.json"
+      ]
     },
     "clean": {
       "cache": false,

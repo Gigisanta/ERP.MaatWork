@@ -7,12 +7,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db, pipelineStages } from '@cactus/db';
+import { db, pipelineStages } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { ensureDefaultPipelineStages, DEFAULT_PIPELINE_STAGES } from './pipeline-stages';
 
 // Mock DB
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   pipelineStages: {
     id: 'pipelineStages.id',

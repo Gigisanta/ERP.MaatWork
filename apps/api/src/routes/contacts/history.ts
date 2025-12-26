@@ -5,11 +5,13 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, contactFieldHistory } from '@cactus/db';
-import { eq, desc } from 'drizzle-orm';
+import { db, contactFieldHistory } from '@maatwork/db';
+import { eq, desc, sql } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
 import { idParamSchema, paginationQuerySchema } from '../../utils/validation/common-schemas';
+import { createRouteHandler } from '../../utils/route-handler';
+import { parsePaginationParams, formatPaginatedResponse } from '../../utils/pagination';
 
 const router = Router();
 
@@ -33,31 +35,43 @@ router.get(
     params: idParamSchema,
     query: historyQuerySchema,
   }),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id } = req.params;
-      const { limit = '50', offset = '0' } = req.query;
+  createRouteHandler(async (req: Request) => {
+    const { id } = req.params;
+    const paginationParams = parsePaginationParams(req.query);
 
-      const history = await db()
-        .select()
-        .from(contactFieldHistory)
-        .where(eq(contactFieldHistory.contactId, id))
-        .orderBy(desc(contactFieldHistory.changedAt))
-        .limit(parseInt(limit as string))
-        .offset(parseInt(offset as string));
-
-      res.json({
-        data: history,
-        meta: {
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-        },
-      });
-    } catch (err) {
-      req.log.error({ err, contactId: req.params.id }, 'failed to get contact history');
-      next(err);
+    interface HistoryItemWithTotal {
+      id: string;
+      contactId: string;
+      fieldName: string;
+      oldValue: string | null;
+      newValue: string | null;
+      changedByUserId: string;
+      changedAt: Date;
+      total: number;
     }
-  }
+
+    const historyItems = (await db()
+      .select({
+        id: contactFieldHistory.id,
+        contactId: contactFieldHistory.contactId,
+        fieldName: contactFieldHistory.fieldName,
+        oldValue: contactFieldHistory.oldValue,
+        newValue: contactFieldHistory.newValue,
+        changedByUserId: contactFieldHistory.changedByUserId,
+        changedAt: contactFieldHistory.changedAt,
+        total: sql<number>`COUNT(*) OVER()`.as('total'),
+      })
+      .from(contactFieldHistory)
+      .where(eq(contactFieldHistory.contactId, id))
+      .orderBy(desc(contactFieldHistory.changedAt))
+      .limit(paginationParams.limit)
+      .offset(paginationParams.offset)) as HistoryItemWithTotal[];
+
+    const total = historyItems.length > 0 ? Number(historyItems[0].total) : 0;
+    const history = historyItems.map(({ total: _total, ...item }) => item);
+
+    return formatPaginatedResponse(history, total, paginationParams);
+  })
 );
 
 export default router;

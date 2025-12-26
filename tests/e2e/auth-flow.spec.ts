@@ -11,19 +11,16 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
 async function login(page: Page, email: string = adminEmail, password: string = adminPassword) {
   await page.goto('/login');
-  await page
-    .getByLabel(/email|usuario|correo/i)
-    .first()
-    .fill(email);
-  await page
-    .getByLabel(/contraseña|password/i)
-    .first()
-    .fill(password);
-  await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
-  await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
+  await page.getByLabel(/email|usuario|correo/i).first().fill(email);
+  await page.getByLabel(/contraseña|password/i).first().fill(password);
+  await page.getByRole('button', { name: /ingresar|login|entrar|iniciar sesión/i }).click();
+  await page.waitForURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/, { timeout: 10000 });
 }
 
 test.describe('Authentication Flow', () => {
+  // Use empty state for testing the login flow itself
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   test('should redirect to login when unauthenticated', async ({ page }) => {
     await page.goto('/contacts');
     await expect(page).toHaveURL(/\/login/);
@@ -49,7 +46,7 @@ test.describe('Authentication Flow', () => {
       .getByLabel(/contraseña|password/i)
       .first()
       .fill('wrong-password');
-    await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
+    await page.getByRole('button', { name: /ingresar|login|entrar|iniciar sesión/i }).click();
 
     // Should show error or stay on login page
     await expect(page).toHaveURL(/\/login/);

@@ -6,7 +6,7 @@
  * Impacto: Easier to maintain and extend Bloomberg Terminal features
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type { ApiResponse } from '../api-client';
 
 // ==========================================================
@@ -46,7 +46,7 @@ export interface MacroSeriesPoint {
   value: number;
 }
 
-export interface YieldPoint {
+interface YieldPoint {
   tenor: string;
   value: number;
   provider: string;
@@ -59,7 +59,7 @@ export interface YieldCurve {
   spreads?: Record<string, number>;
 }
 
-export interface MacroSeries {
+interface MacroSeries {
   id: string;
   name: string;
   provider?: string;
@@ -118,17 +118,24 @@ export async function getOHLCV(
   // AI_DECISION: Normalize response data for OHLCV
   // Justificación: The API returns { data: [...], count: N } but the client expects { data: [...] }
   // We need to extract the array from the data property if it's wrapped
-  const response = await apiClient.get<any>(`/v1/bloomberg/assets/${symbol}/ohlcv?${params}`);
+  interface OHLCVResponse {
+    data: OHLCVPoint[];
+    count?: number;
+  }
+  const response = await apiClient.get<OHLCVResponse | OHLCVPoint[]>(
+    `/v1/bloomberg/assets/${symbol}/ohlcv?${params}`
+  );
 
   if (
     response.success &&
     response.data &&
     !Array.isArray(response.data) &&
+    'data' in response.data &&
     Array.isArray(response.data.data)
   ) {
     return {
       ...response,
-      data: response.data.data as OHLCVPoint[],
+      data: response.data.data,
     };
   }
 

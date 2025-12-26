@@ -36,7 +36,7 @@ import {
   Badge,
   Icon,
   type Column,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Team, MembershipRequest, TeamAdvisor } from '@/types';
 // AI_DECISION: Import CalendarWidget statically
 import CalendarWidget from '@/app/components/CalendarWidget';

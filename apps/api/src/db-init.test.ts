@@ -17,14 +17,14 @@ import {
   teams,
   users,
   teamMembership,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { eq } from 'drizzle-orm';
 import { ensureDefaultPipelineStages } from './utils/pipeline-stages';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   pipelineStages: {},
   lookupTaskStatus: {},
@@ -81,7 +81,7 @@ describe('db-init', () => {
     mockValues = vi.fn().mockReturnValue({ onConflictDoNothing: mockOnConflictDoNothing });
     mockInsert = vi.fn().mockReturnValue({ values: mockValues });
 
-    mockReturning = vi.fn().mockResolvedValue([{ id: 'team-1', name: 'cactus' }]);
+    mockReturning = vi.fn().mockResolvedValue([{ id: 'team-1', name: 'maatwork' }]);
     mockLimit = vi.fn().mockResolvedValue([]);
     mockWhere = vi.fn().mockReturnValue({ limit: mockLimit });
     mockFrom = vi.fn().mockReturnValue({ where: mockWhere });
@@ -310,16 +310,16 @@ describe('db-init', () => {
     });
   });
 
-  describe('seedCactusTeam', () => {
-    it('debería crear team cactus si no existe', async () => {
+  describe('seedMaatWorkTeam', () => {
+    it('debería crear team maatwork si no existe', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
       mockLimit.mockResolvedValue([]);
-      mockReturning.mockResolvedValue([{ id: 'team-1', name: 'cactus' }]);
+      mockReturning.mockResolvedValue([{ id: 'team-1', name: 'maatwork' }]);
       mockValues.mockReturnValue({ returning: mockReturning });
 
-      const seedCactusTeam = async () => {
+      const seedMaatWorkTeam = async () => {
         const dbi = db();
-        const existing = await dbi.select().from(teams).where(eq(teams.name, 'cactus')).limit(1);
+        const existing = await dbi.select().from(teams).where(eq(teams.name, 'maatwork')).limit(1);
         if (existing.length > 0) {
           return;
         }
@@ -329,13 +329,13 @@ describe('db-init', () => {
 
         const [teamRow] = await dbi
           .insert(teams)
-          .values({ name: 'cactus', managerUserId })
+          .values({ name: 'maatwork', managerUserId })
           .returning();
 
         return teamRow;
       };
 
-      const result = await seedCactusTeam();
+      const result = await seedMaatWorkTeam();
 
       expect(mockSelect).toHaveBeenCalled();
       expect(mockInsert).toHaveBeenCalledWith(teams);
@@ -344,18 +344,18 @@ describe('db-init', () => {
 
     it('debería no crear team si ya existe', async () => {
       process.env.DATABASE_URL = 'postgresql://user:pass@localhost:5432/testdb';
-      mockLimit.mockResolvedValue([{ id: 'existing-team', name: 'cactus' }]);
+      mockLimit.mockResolvedValue([{ id: 'existing-team', name: 'maatwork' }]);
 
-      const seedCactusTeam = async () => {
+      const seedMaatWorkTeam = async () => {
         const dbi = db();
-        const existing = await dbi.select().from(teams).where(eq(teams.name, 'cactus')).limit(1);
+        const existing = await dbi.select().from(teams).where(eq(teams.name, 'maatwork')).limit(1);
         if (existing.length > 0) {
           return null;
         }
         return {};
       };
 
-      const result = await seedCactusTeam();
+      const result = await seedMaatWorkTeam();
 
       expect(mockSelect).toHaveBeenCalled();
       expect(mockInsert).not.toHaveBeenCalled();

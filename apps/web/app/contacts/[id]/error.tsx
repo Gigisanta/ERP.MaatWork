@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Alert, Stack } from '@cactus/ui';
+import { Alert, Stack } from '@maatwork/ui';
 
 export default function Error({
   error,

@@ -12,7 +12,7 @@ const headersConfig = require('./config/headers');
 const webpackConfig = require('./config/webpack');
 
 const nextConfig = {
-  transpilePackages: ['@cactus/ui', '@cactus/types'],
+  transpilePackages: ['@maatwork/ui', '@maatwork/types'],
   ...buildConfig,
   ...imagesConfig,
   ...environmentConfig,

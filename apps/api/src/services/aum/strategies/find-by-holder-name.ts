@@ -12,7 +12,7 @@
  * Impacto: Mejor matching entre archivos con diferentes niveles de información
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import { logger } from '../../../utils/logger';
 import type { AumRowInsert, AumRowDbResult, ExistingRow } from '../types';

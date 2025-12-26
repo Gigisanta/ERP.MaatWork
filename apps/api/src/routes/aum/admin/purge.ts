@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request } from 'express';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import { requireAuth, requireRole } from '@/auth/middlewares';
 import { validate } from '@/utils/validation';

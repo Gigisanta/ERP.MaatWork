@@ -8,7 +8,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db, tags } from '@cactus/db';
+import { db, tags } from '@maatwork/db';
 import { eq, and, sql } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import { validate } from '../../../utils/validation';

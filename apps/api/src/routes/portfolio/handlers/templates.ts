@@ -3,14 +3,14 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   portfolioTemplates,
   portfolioTemplateLines,
   clientPortfolioAssignments,
   instruments,
   lookupAssetClass,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sql, desc, inArray } from 'drizzle-orm';
 import { createDrizzleLogger, createOperationName } from '../../../utils/database/db-logger';
 import { calculateTotalWeight, isValidTotalWeight } from '../../../utils/portfolio-utils';
@@ -57,7 +57,7 @@ export async function listTemplates(req: Request) {
  * Crear nueva plantilla de cartera
  */
 export async function createTemplate(req: Request) {
-  const userId = req.user?.id!;
+  const userId = req.user!.id;
   const { name, description, riskLevel } = req.body;
 
   const [template] = await db()

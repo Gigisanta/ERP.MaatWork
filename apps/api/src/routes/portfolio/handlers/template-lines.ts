@@ -3,8 +3,8 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
-import { portfolioTemplateLines } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { portfolioTemplateLines } from '@maatwork/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { calculateTotalWeight, isValidTotalWeight } from '../../../utils/portfolio-utils';
 import { getPortfolioTemplateLines } from '../../../services/portfolio-service';

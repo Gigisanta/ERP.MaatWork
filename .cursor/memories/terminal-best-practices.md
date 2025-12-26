@@ -1,14 +1,14 @@
 # Memoria: Mejores Prácticas para Terminal en Cursor
 
 ## Propósito
-Guía completa para evitar cuelgues de terminal en Cursor y usar comandos de forma segura y eficiente en el proyecto CACTUS CRM.
+Guía completa para evitar cuelgues de terminal en Cursor y usar comandos de forma segura y eficiente en el proyecto MAATWORK.
 
 ## Contexto
 Usar esta memoria cuando:
 - Ejecutar comandos de terminal desde Cursor
 - Troubleshooting de cuelgues de consola
 - Configurar comandos para desarrollo
-- Necesitar comandos específicos del proyecto CACTUS
+- Necesitar comandos específicos del proyecto MAATWORK
 
 ## Problema: Cuelgues de Terminal
 
@@ -48,7 +48,7 @@ pnpm dev  # usar is_background: true
 docker compose up  # usar is_background: true
 ```
 
-### 4. Comandos Específicos del Proyecto CACTUS
+### 4. Comandos Específicos del Proyecto MAATWORK
 
 ```bash
 # ✅ Seguros (no interactivos)
@@ -57,8 +57,8 @@ pnpm build
 pnpm lint
 pnpm test --passWithNoTests
 docker compose up -d
-pnpm -F @cactus/db generate  # migraciones Drizzle
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db generate  # migraciones Drizzle
+pnpm -F @maatwork/db migrate
 
 # ⚠️ Requieren cuidado
 pnpm dev  # usar background

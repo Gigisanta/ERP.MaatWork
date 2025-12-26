@@ -33,7 +33,7 @@ const { mockExecute, mockDbInstance } = vi.hoisted(() => {
 });
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(() => mockDbInstance),
   eq: vi.fn(),
 }));
@@ -63,7 +63,7 @@ vi.mock('../../../utils/validation', () => ({
   validate: vi.fn(() => (req, res, next) => next()),
 }));
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 
 const mockDb = vi.mocked(db);
@@ -107,6 +107,7 @@ describe('AUM Admin - Purge Routes', () => {
           ok: true,
           message: 'Sistema AUM/broker purgado completamente',
         },
+        requestId: 'test-request-id',
       });
       expect(mockExecute).toHaveBeenCalledTimes(3); // broker_accounts, aum_import_rows, aum_import_files
     });
@@ -126,6 +127,7 @@ describe('AUM Admin - Purge Routes', () => {
           ok: true,
           message: 'Sistema AUM/broker purgado completamente',
         },
+        requestId: 'test-request-id',
       });
       expect(mockExecute).toHaveBeenCalled();
     });
@@ -162,6 +164,7 @@ describe('AUM Admin - Purge Routes', () => {
           message: 'Se eliminaron 5 filas duplicadas',
           deletedCount: 5,
         },
+        requestId: 'test-request-id',
       });
     });
 
@@ -181,6 +184,7 @@ describe('AUM Admin - Purge Routes', () => {
           message: 'Se eliminaron 0 filas duplicadas',
           deletedCount: 0,
         },
+        requestId: 'test-request-id',
       });
     });
 
@@ -226,6 +230,7 @@ describe('AUM Admin - Purge Routes', () => {
           ok: true,
           message: 'Sistema AUM limpiado completamente. Listo para cargar el primer archivo.',
         },
+        requestId: 'test-request-id',
       });
       expect(mockExecute).toHaveBeenCalledTimes(2); // aum_import_rows, aum_import_files
     });

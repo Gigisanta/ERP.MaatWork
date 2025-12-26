@@ -198,4 +198,3 @@ export const AnimatedItem = React.forwardRef<HTMLDivElement, AnimatedItemProps>(
 
 AnimatedItem.displayName = 'AnimatedItem';
 
-export default AnimatedList;

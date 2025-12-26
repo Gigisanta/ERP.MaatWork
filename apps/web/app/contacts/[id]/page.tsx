@@ -17,7 +17,7 @@ import {
   Badge,
   Alert,
   type BreadcrumbItem,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type {
   Contact,
   PipelineStage,
@@ -142,7 +142,7 @@ export default async function ContactDetailPage(props: ContactDetailPageProps) {
             <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
               {currentStage && (
                 <Badge
-                  style={{ backgroundColor: currentStage.color, color: 'white' }}
+                  style={{ backgroundColor: currentStage.color || undefined, color: 'white' }}
                   className="text-xs"
                 >
                   {currentStage.name}

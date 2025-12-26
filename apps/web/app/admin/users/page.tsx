@@ -1,5 +1,5 @@
 'use client';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -35,21 +35,38 @@ import {
   Switch,
   Spinner,
   Icon,
+  Pagination,
   type Column,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 export default function AdminUsersPage() {
   const { user, loading } = useRequireAuth();
   const router = useRouter();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 20;
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserApiResponse | null>(null);
 
-  // Fetch users with SWR
-  const { users: allUsers = [], isLoading: dataLoading, error: fetchError, mutate } = useUsers();
+  // Calculate offset for pagination
+  const offset = (page - 1) * limit;
+
+  // Fetch users with SWR and pagination
+  const {
+    users = [],
+    pagination,
+    total,
+    isLoading: dataLoading,
+    error: fetchError,
+    mutate,
+  } = useUsers({
+    limit,
+    offset,
+    ...(showPendingOnly ? { isActive: false } : {}),
+  });
 
   // Local error state for action errors
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +77,6 @@ export default function AdminUsersPage() {
       ? fetchError.message
       : 'Error al cargar usuarios'
     : error;
-
-  // Filter users based on showPendingOnly
-  const users = useMemo(() => {
-    return showPendingOnly ? allUsers.filter((u) => !u.isActive) : allUsers;
-  }, [allUsers, showPendingOnly]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!user) return;
@@ -133,40 +145,6 @@ export default function AdminUsersPage() {
       setError(err instanceof Error ? err.message : 'Error al eliminar usuario');
     } finally {
       setActionLoading(null);
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'manager':
-        return 'warning';
-      case 'advisor':
-        return 'secondary';
-      case 'owner':
-        return 'default';
-      case 'staff':
-        return 'info';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrador';
-      case 'manager':
-        return 'Manager';
-      case 'advisor':
-        return 'Asesor';
-      case 'owner':
-        return 'Dirección';
-      case 'staff':
-        return 'Administrativo';
-      default:
-        return role;
     }
   };
 
@@ -300,7 +278,6 @@ export default function AdminUsersPage() {
           </div>
         ),
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     ],
     [actionLoading, router, mutate]
   );
@@ -357,25 +334,38 @@ export default function AdminUsersPage() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Usuarios ({users.length})</CardTitle>
+            <CardTitle>Usuarios ({total})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-3">
               <div />
               <div className="flex items-center gap-2">
                 <Text size="sm">Solo pendientes</Text>
-                <Switch checked={showPendingOnly} onCheckedChange={setShowPendingOnly} />
+                <Switch 
+                  checked={showPendingOnly} 
+                  onCheckedChange={(checked) => {
+                    setShowPendingOnly(checked);
+                    setPage(1); // Reset to first page when filter changes
+                  }} 
+                />
               </div>
             </div>
+            
             <DataTable<UserApiResponse & Record<string, unknown>>
-              data={
-                (showPendingOnly ? users.filter((u) => !u.isActive) : users) as (UserApiResponse &
-                  Record<string, unknown>)[]
-              }
+              data={users as (UserApiResponse & Record<string, unknown>)[]}
               columns={columns as Column<UserApiResponse & Record<string, unknown>>[]}
               keyField="id"
               emptyMessage="No hay usuarios registrados."
+              loading={dataLoading}
             />
+
+            <div className="mt-4 flex justify-center">
+              <Pagination
+                currentPage={page}
+                totalPages={pagination?.totalPages || 1}
+                onPageChange={setPage}
+              />
+            </div>
           </CardContent>
         </Card>
 

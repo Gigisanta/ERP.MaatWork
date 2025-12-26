@@ -113,7 +113,7 @@ describe('mapApiErrorToFields', () => {
   describe('Options', () => {
     it('should use default message when none provided', () => {
       const error = new ApiError('', 400, {
-        details: [{ path: 'field', message: '' }],
+        details: [{ path: 'field', message: undefined }],
       });
 
       const result = mapApiErrorToFields(error, {

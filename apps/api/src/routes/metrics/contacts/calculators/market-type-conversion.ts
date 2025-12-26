@@ -9,7 +9,7 @@
  * Impacto: Métrica nueva que permite analizar eficiencia de conversión por fuente de mercado
  */
 
-import { db, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, contacts, pipelineStageHistory } from '@maatwork/db';
 import { and, eq, isNull, sql, gte, lte, or, like } from 'drizzle-orm';
 import type { AccessFilter, MonthRange, MarketTypeConversion, ColdMarketBreakdown } from '../types';
 
@@ -19,14 +19,14 @@ import type { AccessFilter, MonthRange, MarketTypeConversion, ColdMarketBreakdow
  * - referido: Referrals
  * - frio: Cold market (no prior relationship)
  */
-export const MARKET_TYPES = ['natural', 'referido', 'frio'] as const;
-export type MarketType = (typeof MARKET_TYPES)[number];
+const MARKET_TYPES = ['natural', 'referido', 'frio'] as const;
+type MarketType = (typeof MARKET_TYPES)[number];
 
 /**
  * Cold market subtypes (stored as "frio:subtype")
  */
-export const COLD_MARKET_SUBTYPES = ['redes_sociales', 'llamado_frio'] as const;
-export type ColdMarketSubtype = (typeof COLD_MARKET_SUBTYPES)[number];
+const COLD_MARKET_SUBTYPES = ['redes_sociales', 'llamado_frio'] as const;
+type ColdMarketSubtype = (typeof COLD_MARKET_SUBTYPES)[number];
 
 /**
  * Helper to parse source and extract main type

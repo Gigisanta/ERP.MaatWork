@@ -84,7 +84,7 @@ jobs:
         if: inputs.service == 'all' || inputs.service == 'api'
         run: |
           aws ecs update-service \
-            --cluster cactus-prod \
+            --cluster maatwork-prod \
             --service api \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
@@ -110,7 +110,7 @@ jobs:
         if: inputs.service == 'all' || inputs.service == 'web'
         run: |
           aws ecs update-service \
-            --cluster cactus-prod \
+            --cluster maatwork-prod \
             --service web \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
@@ -134,7 +134,7 @@ jobs:
         if: inputs.service == 'all' || inputs.service == 'analytics'
         run: |
           aws ecs update-service \
-            --cluster cactus-prod \
+            --cluster maatwork-prod \
             --service analytics \
             --force-new-deployment \
             --region ${{ env.AWS_REGION }}
@@ -151,7 +151,7 @@ jobs:
           for service in $services; do
             echo "⏳ Waiting for $service to stabilize..."
             aws ecs wait services-stable \
-              --cluster cactus-prod \
+              --cluster maatwork-prod \
               --services $service \
               --region ${{ env.AWS_REGION }}
             echo "✅ $service is stable"

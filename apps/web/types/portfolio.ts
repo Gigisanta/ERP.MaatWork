@@ -74,7 +74,7 @@ export interface PortfolioWithLines extends Portfolio {
  * Tipos para composición de portfolio (UI)
  * Extiende ComponentBase para compartir estructura con BenchmarkComponent
  */
-export interface PortfolioComponent extends ComponentBase {
+interface PortfolioComponent extends ComponentBase {
   // targetWeight ya está definido en ComponentBase
   // Percentage (25 = 25%)
 }
@@ -82,7 +82,7 @@ export interface PortfolioComponent extends ComponentBase {
 /**
  * Datos de formulario de portfolio
  */
-export interface PortfolioFormData {
+interface PortfolioFormData {
   name: string;
   description: string;
   riskLevel: RiskLevel;

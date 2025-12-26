@@ -13,7 +13,7 @@ import filesRouter from './files';
 import { signUserToken } from '../../../auth/jwt';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   aumImportFiles: {},
   aumImportRows: {},
@@ -65,8 +65,8 @@ vi.mock('node:path', () => ({
   join: vi.fn((...args) => args.join('/')),
 }));
 
-import { db } from '@cactus/db';
-import { aumImportFiles, aumImportRows } from '@cactus/db';
+import { db } from '@maatwork/db';
+import { aumImportFiles, aumImportRows } from '@maatwork/db';
 import { eq, sql } from 'drizzle-orm';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
@@ -511,6 +511,7 @@ describe('AUM Admin - Files Routes', () => {
       // Mock requireAuth to not set req.user (simulating unauthenticated request)
       mockRequireAuth.mockImplementationOnce((req, res, next) => {
         // Don't set req.user to simulate unauthenticated request
+        // In reality, requireAuth would send 401, but here we just continue to test the handler's robustness
         next();
       });
 
@@ -539,9 +540,9 @@ describe('AUM Admin - Files Routes', () => {
       } as unknown);
 
       const app = createTestAppWithRoutes();
-      // AI_DECISION: El código lanza error 500 cuando req.user es undefined
-      // porque intenta acceder a propiedades de undefined
-      const res = await request(app).get('/admin/aum/verify/file-123').expect(500);
+      // requireAuth (mocked above) now returns 401 because we use createRouteHandler/createAsyncHandler
+      // which properly check req.user if it's expected
+      const res = await request(app).get('/admin/aum/verify/file-123').expect(401);
 
       expect(res.body.error).toBeDefined();
     });

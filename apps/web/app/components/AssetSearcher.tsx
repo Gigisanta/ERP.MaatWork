@@ -2,9 +2,10 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Search, Plus } from 'lucide-react';
-import { Input, Button, Text, Stack, Alert, Spinner, Card, CardContent } from '@cactus/ui';
+import { Input, Button, Text, Stack, Alert, Spinner, Card, CardContent } from '@maatwork/ui';
 import { useAuth } from '../auth/AuthContext';
 import { logger, toLogContext } from '@/lib/logger';
+import { searchInstruments, validateSymbol } from '@/lib/api/instruments';
 import type {
   InstrumentSearchResult,
   Currency,
@@ -58,7 +59,6 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
       setError(null);
 
       try {
-        const { searchInstruments } = await import('@/lib/api/instruments');
         const response = await searchInstruments(searchQuery);
 
         if (response.success && response.data) {
@@ -201,7 +201,6 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
       try {
         setLoading(true);
         setError(null);
-        const { validateSymbol } = await import('@/lib/api/instruments');
         const response = await validateSymbol(symbol);
 
         if (response.success && response.data?.isValid) {
@@ -301,56 +300,40 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
           </Stack>
         )}
 
-        {error && (
-          <Alert variant="error">
-            <Text size="sm">{error}</Text>
-          </Alert>
-        )}
-
-        {!loading && searchResults.length > 0 && (
-          <Card className="max-h-60 overflow-y-auto">
+        {searchResults.length > 0 && !loading && (
+          <Card className="mt-1 overflow-hidden">
             <CardContent className="p-0">
-              {searchResults.map((asset) => (
-                <div
-                  key={asset.symbol}
-                  className="flex items-center justify-between p-3 hover:bg-background-hover cursor-pointer border-b border-border-base last:border-b-0"
-                  onClick={() => handleSelectAsset(asset)}
-                >
-                  <div className="flex-1">
-                    <Stack direction="row" gap="sm" align="center">
-                      <Text weight="semibold">{asset.symbol}</Text>
-                      <span className="px-2 py-0.5 text-xs bg-background-surface text-foreground-secondary rounded">
-                        {asset.exchange || 'Unknown'}
-                      </span>
-                      {asset.currency && (
-                        <span className="px-2 py-0.5 text-xs bg-background-surface text-foreground-secondary rounded">
-                          {asset.currency}
-                        </span>
-                      )}
-                    </Stack>
-                    <Text size="sm" color="secondary">
-                      {asset.name || asset.shortName || asset.symbol}
-                    </Text>
-                    {asset.sector && (
-                      <Text size="xs" color="muted">
-                        {asset.sector} • {asset.industry || ''}
-                      </Text>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-accent-text hover:bg-accent-subtle"
+              <div className="divide-y divide-border">
+                {searchResults.map((result) => (
+                  <div
+                    key={result.symbol}
+                    className="flex items-center justify-between p-3 hover:bg-accent/50 cursor-pointer transition-colors"
+                    onClick={() => handleSelectAsset(result)}
                   >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex flex-col">
+                      <Text weight="semibold" size="sm">
+                        {result.symbol}
+                      </Text>
+                      <Text size="xs" color="secondary" className="line-clamp-1">
+                        {result.name}
+                      </Text>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <Text size="xs" weight="medium">
+                        {result.type}
+                      </Text>
+                      <Text size="xs" color="secondary">
+                        {result.currency}
+                      </Text>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
 
-        {!loading && !error && query.length >= 2 && searchResults.length === 0 && (
+        {!loading && searchResults.length === 0 && query.length >= 2 && !error && (
           <Alert variant="warning">
             <Text size="sm">No se encontraron resultados para &quot;{query}&quot;.</Text>
             <Text size="xs" color="muted" className="mt-1">
@@ -359,8 +342,8 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
           </Alert>
         )}
 
-        {error && !loading && query.length >= 2 && (
-          <Alert variant="info">
+        {error && !loading && (
+          <Alert variant="error">
             <Text size="sm">{error}</Text>
           </Alert>
         )}

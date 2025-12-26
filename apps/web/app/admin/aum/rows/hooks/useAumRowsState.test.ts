@@ -138,7 +138,7 @@ describe('useAumRowsState', () => {
 
     it('should open and close advisor modal', () => {
       const { result } = renderHook(() => useAumRowsState());
-      const mockRow = { id: '123', holderName: 'Test' } as any;
+      const mockRow = { id: '123', holderName: 'Test' } as unknown as import('@/types').AumRow;
 
       act(() => {
         result.current.actions.openAdvisorModal(mockRow);

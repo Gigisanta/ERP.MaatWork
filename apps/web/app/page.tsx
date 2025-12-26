@@ -15,7 +15,7 @@ import {
   getTeamsServer,
 } from '@/lib/api-server-helpers';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
-import { Card, CardContent, Spinner, Stack, Text } from '@cactus/ui';
+import { Card, CardContent, Spinner, Stack, Text } from '@maatwork/ui';
 
 /**
  * Loading component for home page
@@ -122,8 +122,6 @@ export default async function HomePage() {
       <HomePageClient
         metricsData={metricsData}
         goalsData={goalsData}
-        teamCalendarUrl={teamCalendarUrl}
-        teamId={teamId}
         metricsError={metricsError}
       />
     </Suspense>

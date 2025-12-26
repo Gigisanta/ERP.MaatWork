@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { usePageTitle } from '../components/PageTitleContext';
-import { Button, Heading, Text, Stack, Icon, Spinner } from '@cactus/ui';
+import { Button, Heading, Text, Stack, Icon, Spinner } from '@maatwork/ui';
 import { config } from '@/lib/config';
 import WelcomeEmailCard from './components/WelcomeEmailCard';
 import SecondMeetingCard from './components/SecondMeetingCard';

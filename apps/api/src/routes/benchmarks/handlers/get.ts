@@ -7,8 +7,8 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
-import { benchmarkDefinitions, benchmarkComponents, instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { benchmarkDefinitions, benchmarkComponents, instruments } from '@maatwork/db/schema';
 import { eq, desc, sum } from 'drizzle-orm';
 import { benchmarkComponentsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';

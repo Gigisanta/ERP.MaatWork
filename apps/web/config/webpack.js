@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Next.js Webpack Configuration
  *
@@ -16,9 +17,9 @@ module.exports = {
 
     // PATH CONSTANTS
     const UI_PKG_PATH = path.resolve(__dirname, '../../../packages/ui');
-    const NODE_MODULES_UI = path.resolve(__dirname, '../node_modules/@cactus/ui');
+    const NODE_MODULES_UI = path.resolve(__dirname, '../node_modules/@maatwork/ui');
 
-    // Determine which path to use for @cactus/ui alias
+    // Determine which path to use for @maatwork/ui alias
     // We prefer the local workspace path in development for easier debugging
     // But fallback to node_modules if needed
     const uiPath = dev ? UI_PKG_PATH : NODE_MODULES_UI;
@@ -40,11 +41,8 @@ module.exports = {
 
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@cactus/ui/styles.css': stylesPath,
-      '@cactus/ui': uiPath,
-      '@cactus/types': path.resolve(__dirname, '../node_modules/@cactus/types'),
-      '@cactus/db': path.resolve(__dirname, '../../../packages/db/src'),
-      '@': path.resolve(__dirname, '../'),
+      '@maatwork/ui/styles.css': stylesPath,
+      '@maatwork/ui': uiPath,
     };
 
     // Ensure we can resolve modules from node_modules

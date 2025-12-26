@@ -12,6 +12,7 @@
  * Impacto: Mantiene funcionalidad correcta de Server Components con autenticación vía cookies
  */
 
+import type { Contact } from '@maatwork/types';
 import type { ApiResponse } from './api-client';
 import { config } from './config';
 import { cookies } from 'next/headers';
@@ -121,7 +122,7 @@ export async function apiCall<T>(
  */
 export async function getContactById(
   id: string
-): Promise<ApiResponse<import('@/types/contact').Contact>> {
+): Promise<ApiResponse<Contact>> {
   return apiCall(`/v1/contacts/${id}`);
 }
 
@@ -135,8 +136,8 @@ export async function getDashboardKPIs(): Promise<ApiResponse<import('@/types').
 /**
  * Helper para obtener equipos en Server Components
  */
-export async function getTeams(): Promise<ApiResponse<import('@/types/team').Team[]>> {
-  return apiCall('/v1/teams');
+export async function getTeams(): Promise<ApiResponse<import('@/types').Team[]>> {
+  return apiCall('/v1/teams', { revalidate: 3600 });
 }
 
 /**
@@ -152,7 +153,7 @@ export async function getMemberDashboard(): Promise<
  * Helper para obtener solicitudes de membresía en Server Components
  */
 export async function getMembershipRequests(): Promise<
-  ApiResponse<import('@/types/team').MembershipRequest[]>
+  ApiResponse<import('@/types').MembershipRequest[]>
 > {
   return apiCall('/v1/teams/membership-requests');
 }
@@ -161,7 +162,7 @@ export async function getMembershipRequests(): Promise<
  * Helper para obtener portfolios en Server Components
  */
 export async function getPortfolios(): Promise<ApiResponse<import('@/types').Portfolio[]>> {
-  return apiCall('/v1/portfolios/templates');
+  return apiCall('/v1/portfolios/templates', { revalidate: 3600 });
 }
 
 /**
@@ -180,7 +181,7 @@ export async function getCurrentUser(): Promise<ApiResponse<import('@/types').Us
  * Helper para obtener benchmarks en Server Components
  */
 export async function getBenchmarks(): Promise<ApiResponse<import('@/types').Benchmark[]>> {
-  return apiCall('/v1/benchmarks');
+  return apiCall('/v1/benchmarks', { revalidate: 3600 });
 }
 
 /**
@@ -191,7 +192,7 @@ export async function getCapacitaciones(params?: {
   search?: string;
   limit?: number;
   offset?: number;
-}): Promise<ApiResponse<import('@/types/capacitaciones').CapacitacionesListResponse>> {
+}): Promise<ApiResponse<import('@/types').CapacitacionesListResponse>> {
   const queryParams = new URLSearchParams();
   if (params?.tema) queryParams.append('tema', params.tema);
   if (params?.search) queryParams.append('search', params.search);
@@ -206,7 +207,7 @@ export async function getCapacitaciones(params?: {
  * Helper para obtener pipeline board en Server Components
  */
 export async function getPipelineBoard(): Promise<
-  ApiResponse<import('@/types/pipeline').PipelineStageWithContacts[]>
+  ApiResponse<import('@/types').PipelineStageWithContacts[]>
 > {
   return apiCall('/v1/pipeline/board');
 }

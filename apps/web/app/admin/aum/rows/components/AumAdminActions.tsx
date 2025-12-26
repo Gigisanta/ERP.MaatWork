@@ -9,9 +9,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@cactus/ui';
+import { Button } from '@maatwork/ui';
 
-export interface AumAdminActionsProps {
+interface AumAdminActionsProps {
   // State
   isResetting: boolean;
   canImport: boolean;

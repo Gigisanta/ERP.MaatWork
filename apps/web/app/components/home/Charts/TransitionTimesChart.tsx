@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { MonthlyMetrics } from '@/types/metrics';
 
@@ -10,8 +10,12 @@ interface TransitionTimesChartProps {
 
 /**
  * Gráfico de barras horizontales mostrando tiempo promedio entre avances en el pipeline
+ * 
+ * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
+ * Justificación: Large SVG renderings like charts should be memoized to avoid frame drops on updates
+ * Impacto: Smoother scrolling and dashboard interaction
  */
-export function TransitionTimesChart({ transitionTimes }: TransitionTimesChartProps) {
+export const TransitionTimesChart = memo(function TransitionTimesChart({ transitionTimes }: TransitionTimesChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -74,4 +78,4 @@ export function TransitionTimesChart({ transitionTimes }: TransitionTimesChartPr
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

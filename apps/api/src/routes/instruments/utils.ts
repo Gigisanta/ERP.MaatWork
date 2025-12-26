@@ -2,8 +2,8 @@
  * Utilidades para Instruments
  */
 
-import { db } from '@cactus/db';
-import { instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { instruments } from '@maatwork/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import type { ExternalCodes } from '../../types/python-service';
 
@@ -93,3 +93,11 @@ export type DBInstrumentSearchResult = {
   sector: string | null;
   industry: string | null;
 };
+
+
+
+
+
+
+
+

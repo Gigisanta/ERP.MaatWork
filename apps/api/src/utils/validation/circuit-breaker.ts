@@ -13,7 +13,7 @@ export enum CircuitState {
   HALF_OPEN = 'HALF_OPEN', // Testing if service recovered
 }
 
-export interface CircuitBreakerOptions {
+interface CircuitBreakerOptions {
   /**
    * Número de fallos consecutivos antes de abrir el circuito
    * @default 5

@@ -10,13 +10,13 @@ import { useToast } from '@/lib/hooks/useToast';
 import { logger } from '@/lib/logger';
 import type { Tag } from '@/types';
 
-export interface TagFormState {
+interface TagFormState {
   name: string;
   color: string;
   businessLine: 'inversiones' | 'zurich' | 'patrimonial' | null;
 }
 
-export interface TagManagementState {
+interface TagManagementState {
   showCreateTagModal: boolean;
   showManageTagsModal: boolean;
   tagToEdit: Tag | null;
@@ -26,7 +26,7 @@ export interface TagManagementState {
   editedTag: TagFormState;
 }
 
-export interface TagManagementActions {
+interface TagManagementActions {
   setShowCreateTagModal: (show: boolean) => void;
   setShowManageTagsModal: (show: boolean) => void;
   setNewTagName: (name: string) => void;
@@ -44,7 +44,7 @@ export interface TagManagementActions {
   resetCreateForm: () => void;
 }
 
-export interface UseTagManagementProps {
+interface UseTagManagementProps {
   mutateTags: () => void;
   mutateContacts: () => void;
 }
@@ -226,3 +226,11 @@ export function useTagManagement({
     resetCreateForm,
   };
 }
+
+
+
+
+
+
+
+

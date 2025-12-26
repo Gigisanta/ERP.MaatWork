@@ -7,8 +7,8 @@
  */
 
 import { Router, type Request } from 'express';
-import { db } from '@cactus/db';
-import { instruments, pricesDaily, pricesIntraday } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { instruments, pricesDaily, pricesIntraday } from '@maatwork/db/schema';
 import { eq, and, gte, lte, desc, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { validate } from '../utils/validation';
@@ -122,8 +122,8 @@ router.post(
       return [];
     }
 
-    const instrumentIds = foundInstruments.map((i: any) => i.id);
-    const instrumentsMap = new Map(foundInstruments.map((i: any) => [i.id, i]));
+    const instrumentIds = foundInstruments.map((i: { id: string }) => i.id);
+    const instrumentsMap = new Map(foundInstruments.map((i: { id: string; symbol: string }) => [i.id, i]));
 
     // 2. Get latest prices for all instruments (using DISTINCT ON or similar logic via window function or just latest by date)
     // Since we can't easily do "latest per group" efficiently in one simple query without window functions,
@@ -152,17 +152,17 @@ router.post(
     // Justificación: Ensure portfolio view has data even for new assets
     const missingPriceSymbols: string[] = [];
     const instrumentsWithoutPrice = foundInstruments.filter(
-      (inst: any) => !latestPricesMap.has(inst.id)
+      (inst: { id: string }) => !latestPricesMap.has(inst.id)
     );
-    instrumentsWithoutPrice.forEach((inst: any) => missingPriceSymbols.push(inst.symbol));
+    instrumentsWithoutPrice.forEach((inst: { symbol: string }) => missingPriceSymbols.push(inst.symbol));
 
     if (missingPriceSymbols.length > 0) {
       try {
         const pythonData = await fetchCurrentPricesFromPython(missingPriceSymbols);
         if (pythonData) {
-          const newPricesToInsert: any[] = [];
+          const newPricesToInsert: (typeof pricesDaily.$inferInsert)[] = [];
 
-          instrumentsWithoutPrice.forEach((inst: any) => {
+          instrumentsWithoutPrice.forEach((inst: { id: string; symbol: string }) => {
             if (pythonData[inst.symbol] && pythonData[inst.symbol].success) {
               const pData = pythonData[inst.symbol];
               const price = parseFloat(pData.price);
@@ -183,7 +183,7 @@ router.post(
               };
 
               newPricesToInsert.push(newPrice);
-              latestPricesMap.set(inst.id, newPrice as any);
+              latestPricesMap.set(inst.id, newPrice as unknown as typeof pricesDaily.$inferSelect);
             }
           });
 
@@ -238,15 +238,17 @@ router.post(
     `);
 
     const yearStatsMap = new Map<string, { high: number; low: number }>(
-      yearStatsQuery.rows.map((row: any) => [
-        row.asset_id,
-        { high: parseFloat(row.year_high), low: parseFloat(row.year_low) },
-      ])
+      (yearStatsQuery.rows as { asset_id: string; year_high: string; year_low: string }[]).map(
+        (row) => [
+          row.asset_id,
+          { high: parseFloat(row.year_high), low: parseFloat(row.year_low) },
+        ]
+      )
     );
 
     // 5. Construct response
     const results = foundInstruments
-      .map((inst: any) => {
+      .map((inst: { id: string; symbol: string; name: string; assetClass: string | null }) => {
         const assetPrices = pricesByAsset.get(inst.id) || [];
         const latest = assetPrices.find((p) => p.rn === 1);
         const previous = assetPrices.find((p) => p.rn === 2);
@@ -639,7 +641,7 @@ router.get(
     // - Status: Awaiting data provider integration
 
     // FUTURE_FEATURE: Technical indicators calculated from price history
-    // - Can use: analytics-service (cactus_ingestors/utils/technical.py)
+    // - Can use: analytics-service (maatwork_ingestors/utils/technical.py)
     // - Indicators: SMA(20,50,200), EMA, RSI(14), MACD, Bollinger Bands
     // - Status: Python calculations ready, needs API endpoint wrapper
 
@@ -734,7 +736,12 @@ router.get(
       try {
         const backfillData = await backfillPricesFromPython([inst.symbol], 365);
         if (backfillData && backfillData[inst.symbol] && backfillData[inst.symbol].length > 0) {
-          const values = backfillData[inst.symbol].map((p: any) => ({
+          interface PythonPricePoint {
+            date: string;
+            close_price: number | string;
+            volume?: number | string;
+          }
+          const values = (backfillData[inst.symbol] as PythonPricePoint[]).map((p) => ({
             assetId: inst.id,
             date: p.date,
             open: p.close_price.toString(), // Approximate OHLC with Close

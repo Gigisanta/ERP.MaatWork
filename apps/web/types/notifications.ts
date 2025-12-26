@@ -26,3 +26,11 @@ export interface NotificationListResponse {
 export interface UnreadCountResponse {
   count: number;
 }
+
+
+
+
+
+
+
+

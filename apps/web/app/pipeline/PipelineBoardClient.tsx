@@ -4,11 +4,12 @@ import { useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { moveContactToStage } from '@/lib/api';
+import { usePageTitle } from '../components/PageTitleContext';
 import { usePipelineBoard } from '../../lib/api-hooks';
 import { logger, toLogContext } from '../../lib/logger';
 import type { ApiResponse } from '../../lib/api-client';
 import type { PipelineStageWithContacts } from '@/types';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { ConfirmDialog } from '@maatwork/ui';
 import {
   Card,
   CardHeader,
@@ -23,7 +24,7 @@ import {
   Alert,
   Spinner,
   Icon,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 // Alias para simplificar el código
 type PipelineStage = PipelineStageWithContacts;
@@ -37,6 +38,7 @@ export default function PipelineBoardClient({
   initialStages,
   initialError,
 }: PipelineBoardClientProps) {
+  usePageTitle('Pipeline de Ventas');
   const router = useRouter();
 
   // AI_DECISION: Use SWR with fallbackData for server-side initial data
@@ -48,7 +50,7 @@ export default function PipelineBoardClient({
     isLoading: dataLoading,
     mutate: mutateBoard,
   } = usePipelineBoard(
-    initialStages ? ({ data: initialStages, success: true } as ApiResponse<unknown[]>) : undefined
+    initialStages ? ({ data: initialStages, success: true } as ApiResponse<PipelineStageWithContacts[]>) : undefined
   );
 
   // Animation state for page transitions

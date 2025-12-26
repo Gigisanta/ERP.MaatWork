@@ -17,7 +17,7 @@ import {
   Stack,
   Icon,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { Feather } from 'lucide-react';
 import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
@@ -207,7 +207,7 @@ function LoginPageContent() {
 
           <CardContent className="pt-6">
             {/* Form with staggered animation */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <Stack direction="column" gap="lg">
                 {/* Email Input */}
                 <div

@@ -3,7 +3,7 @@ import request from 'supertest';
 import notesRouter from './notes';
 import { signUserToken } from '../auth/jwt';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createTestApp } from '../../__tests__/helpers/test-server';
+import { createTestApp } from '../__tests__/helpers/test-server';
 
 // Mock auth middleware
 vi.mock('../auth/middlewares', () => ({

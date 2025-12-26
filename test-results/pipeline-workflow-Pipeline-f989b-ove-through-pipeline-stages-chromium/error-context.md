@@ -1,0 +1,265 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - link "MaatWork" [ref=e8] [cursor=pointer]:
+          - /url: /home
+          - img [ref=e10]
+          - generic [ref=e13]: MaatWork
+        - 'button "Plan de carrera: Nivel 1 Junior, 50% completado" [ref=e15] [cursor=pointer]':
+          - generic [ref=e16]: Nivel 1 Junior
+          - generic [ref=e20]: 37.5% • 50%
+          - generic [ref=e21]: / 30.000 USD
+      - generic [ref=e22]:
+        - button "Notificaciones" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e29] [cursor=pointer]':
+          - generic [ref=e30]: G
+  - complementary "Navegación principal" [ref=e31]:
+    - generic [ref=e32]:
+      - navigation "Navegación principal" [ref=e33]:
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Principal
+          - link "👤 Contactos" [ref=e37] [cursor=pointer]:
+            - /url: /contacts
+            - generic [ref=e38]: 👤
+            - generic [ref=e39]: Contactos
+        - generic [ref=e40]:
+          - paragraph [ref=e41]: Inversiones
+          - generic [ref=e42]:
+            - link "📊 Carteras" [ref=e43] [cursor=pointer]:
+              - /url: /portfolios
+              - generic [ref=e44]: 📊
+              - generic [ref=e45]: Carteras
+            - link "📊 Benchmarks" [ref=e46] [cursor=pointer]:
+              - /url: /benchmarks
+              - generic [ref=e47]: 📊
+              - generic [ref=e48]: Benchmarks
+        - generic [ref=e49]:
+          - paragraph [ref=e50]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e52] [cursor=pointer]:
+            - /url: /teams
+            - generic [ref=e53]: 👨‍👩‍👧‍👦
+            - generic [ref=e54]: Equipos
+        - generic [ref=e55]:
+          - paragraph [ref=e56]: Métricas
+          - generic [ref=e57]:
+            - link "📈 Métricas de Contactos" [ref=e58] [cursor=pointer]:
+              - /url: /contacts/metrics
+              - generic [ref=e59]: 📈
+              - generic [ref=e60]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e61] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e62]: 📈
+              - generic [ref=e63]: Analytics
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Automatización
+          - generic [ref=e66]:
+            - link "☰ Pipeline" [ref=e67] [cursor=pointer]:
+              - /url: /pipeline
+              - generic [ref=e68]: ☰
+              - generic [ref=e69]: Pipeline
+            - link "⚙️ Automations" [ref=e70] [cursor=pointer]:
+              - /url: /automations
+              - generic [ref=e71]: ⚙️
+              - generic [ref=e72]: Automations
+            - link "📚 Plan de Carrera" [ref=e73] [cursor=pointer]:
+              - /url: /career-plan
+              - generic [ref=e74]: 📚
+              - generic [ref=e75]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e76] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=e77]: ℹ️
+              - generic [ref=e78]: Notificaciones
+        - generic [ref=e79]:
+          - paragraph [ref=e80]: Herramientas
+          - generic [ref=e81]:
+            - link "🎓 Capacitaciones" [ref=e82] [cursor=pointer]:
+              - /url: /capacitaciones
+              - generic [ref=e83]: 🎓
+              - generic [ref=e84]: Capacitaciones
+            - link "📝 Recursos" [ref=e85] [cursor=pointer]:
+              - /url: /resources
+              - generic [ref=e86]: 📝
+              - generic [ref=e87]: Recursos
+            - link "📈 Finviz" [ref=e88] [cursor=pointer]:
+              - /url: https://finviz.com
+              - generic [ref=e89]: 📈
+              - generic [ref=e90]: Finviz
+            - link "💼 Productores Balanz" [ref=e91] [cursor=pointer]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e92]: 💼
+              - generic [ref=e93]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e94] [cursor=pointer]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e95]: 🛡️
+              - generic [ref=e96]: Zurich Point
+        - generic [ref=e97]:
+          - paragraph [ref=e98]: Administración
+          - generic [ref=e99]:
+            - link "⚙️ Panel Principal" [ref=e100] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e101]: ⚙️
+              - generic [ref=e102]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e103] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e104]: 👥
+              - generic [ref=e105]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e106] [cursor=pointer]:
+              - /url: /admin/aum
+              - generic [ref=e107]: 📈
+              - generic [ref=e108]: AUM y Brokers
+            - link "📈 Performance" [ref=e109] [cursor=pointer]:
+              - /url: /admin/performance
+              - generic [ref=e110]: 📈
+              - generic [ref=e111]: Performance
+            - link "⚙️ Configuración AUM" [ref=e112] [cursor=pointer]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e113]: ⚙️
+              - generic [ref=e114]: Configuración AUM
+        - generic [ref=e115]:
+          - paragraph [ref=e116]: Perfil
+          - link "👤 Mi Perfil" [ref=e118] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e119]: 👤
+            - generic [ref=e120]: Mi Perfil
+      - button "Colapsar menú" [ref=e122] [cursor=pointer]:
+        - generic [ref=e123]: ◀
+        - generic [ref=e124]: Colapsar
+  - main [ref=e125]:
+    - generic [ref=e130]:
+      - generic [ref=e131]:
+        - generic [ref=e133]:
+          - generic [ref=e134]:
+            - heading "Prospecto" [level=3] [ref=e136]
+            - paragraph [ref=e137]: Contacto inicial identificado
+          - generic [ref=e142] [cursor=pointer]:
+            - paragraph [ref=e143]: gio gio
+            - paragraph [ref=e144]: Giolivosantarelli@gmail.com
+            - button "▶" [ref=e146]:
+              - generic [ref=e147]: ▶
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - heading "Contactado" [level=3] [ref=e152]
+            - paragraph [ref=e153]: Primer contacto realizado
+          - paragraph [ref=e158]: Arrastra contactos aquí
+        - generic [ref=e160]:
+          - generic [ref=e161]:
+            - heading "Primera reunion" [level=3] [ref=e163]
+            - paragraph [ref=e164]: Primera reunión agendada o realizada
+          - paragraph [ref=e169]: Arrastra contactos aquí
+        - generic [ref=e171]:
+          - generic [ref=e172]:
+            - heading "Segunda reunion" [level=3] [ref=e174]
+            - paragraph [ref=e175]: Segunda reunión agendada o realizada
+          - generic [ref=e180] [cursor=pointer]:
+            - paragraph [ref=e181]: aa aa
+            - button "▶" [ref=e183]:
+              - generic [ref=e184]: ▶
+        - generic [ref=e186]:
+          - generic [ref=e187]:
+            - heading "Cliente" [level=3] [ref=e189]
+            - paragraph [ref=e190]: Cliente activo
+          - generic [ref=e192]:
+            - generic [ref=e195] [cursor=pointer]:
+              - paragraph [ref=e196]: aa aaaaaa
+              - button "▶" [ref=e198]:
+                - generic [ref=e199]: ▶
+            - generic [ref=e202] [cursor=pointer]:
+              - paragraph [ref=e203]: dd dd
+              - button "▶" [ref=e205]:
+                - generic [ref=e206]: ▶
+            - generic [ref=e209] [cursor=pointer]:
+              - paragraph [ref=e210]: dsd ds
+              - button "▶" [ref=e212]:
+                - generic [ref=e213]: ▶
+            - generic [ref=e216] [cursor=pointer]:
+              - paragraph [ref=e217]: gigi santa
+              - button "▶" [ref=e219]:
+                - generic [ref=e220]: ▶
+            - generic [ref=e223] [cursor=pointer]:
+              - paragraph [ref=e224]: aa aa
+              - button "▶" [ref=e226]:
+                - generic [ref=e227]: ▶
+            - generic [ref=e230] [cursor=pointer]:
+              - paragraph [ref=e231]: pin gocho
+              - button "▶" [ref=e233]:
+                - generic [ref=e234]: ▶
+            - generic [ref=e237] [cursor=pointer]:
+              - paragraph [ref=e238]: loli jkhgkj
+              - button "▶" [ref=e240]:
+                - generic [ref=e241]: ▶
+            - generic [ref=e244] [cursor=pointer]:
+              - paragraph [ref=e245]: dasdas dasdsa
+              - button "▶" [ref=e247]:
+                - generic [ref=e248]: ▶
+            - generic [ref=e251] [cursor=pointer]:
+              - paragraph [ref=e252]: aa aa
+              - button "▶" [ref=e254]:
+                - generic [ref=e255]: ▶
+            - generic [ref=e258] [cursor=pointer]:
+              - paragraph [ref=e259]: sad asdas
+              - button "▶" [ref=e261]:
+                - generic [ref=e262]: ▶
+            - generic [ref=e265] [cursor=pointer]:
+              - paragraph [ref=e266]: hh h
+              - button "▶" [ref=e268]:
+                - generic [ref=e269]: ▶
+            - generic [ref=e272] [cursor=pointer]:
+              - paragraph [ref=e273]: ii i
+              - button "▶" [ref=e275]:
+                - generic [ref=e276]: ▶
+        - generic [ref=e278]:
+          - generic [ref=e279]:
+            - heading "Cuenta vacia" [level=3] [ref=e281]
+            - paragraph [ref=e282]: Cliente sin saldo
+          - generic [ref=e287] [cursor=pointer]:
+            - paragraph [ref=e288]: aa aa
+            - paragraph [ref=e289]: ddd
+            - button "▶" [ref=e291]:
+              - generic [ref=e292]: ▶
+        - generic [ref=e294]:
+          - generic [ref=e295]:
+            - heading "Caido" [level=3] [ref=e297]
+            - paragraph [ref=e298]: Cliente perdido o inactivo
+          - generic [ref=e303] [cursor=pointer]:
+            - paragraph [ref=e304]: Gio Santarelli
+            - paragraph [ref=e305]: giolivosantarelli@gmail.com
+            - button "▶" [ref=e307]:
+              - generic [ref=e308]: ▶
+      - generic [ref=e310]:
+        - heading "Estadísticas del Pipeline" [level=3] [ref=e312]
+        - generic [ref=e314]:
+          - generic [ref=e315]:
+            - paragraph [ref=e316]: "1"
+            - paragraph [ref=e317]: Prospecto
+          - generic [ref=e318]:
+            - paragraph [ref=e319]: "0"
+            - paragraph [ref=e320]: Contactado
+          - generic [ref=e321]:
+            - paragraph [ref=e322]: "0"
+            - paragraph [ref=e323]: Primera reunion
+          - generic [ref=e324]:
+            - paragraph [ref=e325]: "1"
+            - paragraph [ref=e326]: Segunda reunion
+          - generic [ref=e327]:
+            - paragraph [ref=e328]: "12"
+            - paragraph [ref=e329]: Cliente
+          - generic [ref=e330]:
+            - paragraph [ref=e331]: "1"
+            - paragraph [ref=e332]: Cuenta vacia
+          - generic [ref=e333]:
+            - paragraph [ref=e334]: "1"
+            - paragraph [ref=e335]: Caido
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e341] [cursor=pointer]:
+    - img [ref=e342]
+  - alert [ref=e345]
+  - button "🐛 1" [ref=e346] [cursor=pointer]:
+    - text: 🐛
+    - generic [ref=e347]: "1"
+```

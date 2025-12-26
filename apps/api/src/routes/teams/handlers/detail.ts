@@ -4,13 +4,13 @@
  * GET /teams/:id/detail - Get team with members and metrics combined
  */
 import type { Request } from 'express';
-import { db, teams, teamMembership, users } from '@cactus/db';
+import { db, teams, teamMembership, users } from '@maatwork/db';
 import {
   contacts,
   aumSnapshots,
   clientPortfolioAssignments,
   portfolioTemplates,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
