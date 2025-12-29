@@ -3,7 +3,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Header, type NavItem, type User, Drawer, Sidebar, type SidebarSection } from '@maatwork/ui';
+import {
+  Header,
+  type NavItem,
+  type User,
+  Drawer,
+  Sidebar,
+  type SidebarSection,
+} from '@maatwork/ui';
 import { useSidebar } from './SidebarContext';
 import CareerProgressBar from './CareerProgressBar';
 import { Feather } from 'lucide-react';
@@ -102,9 +109,7 @@ function getAdvisorSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -135,9 +140,7 @@ function getManagerSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -179,9 +182,7 @@ function getAdminSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -269,9 +270,7 @@ function getStaffSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -424,13 +423,6 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           <span className="text-secondary">Work</span>
         </span>
       </Link>
-      {/* Career Progress Bar - only on larger screens */}
-      {/* AI_DECISION: Renderizar siempre el contenedor, ocultarlo con CSS en lugar de condicionalmente */}
-      {/* Justificación: Asegura que el componente siempre se monte, mejor debugging */}
-      {/* Impacto: Componente siempre disponible, evita problemas de renderizado condicional */}
-      <div className="hidden md:flex items-center min-w-0 flex-1 ml-2">
-        <CareerProgressBar />
-      </div>
     </div>
   );
 
@@ -483,6 +475,12 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           onLogout={handleLogout}
           onToggleSidebar={handleToggle}
           sidebarOpen={open}
+          leftContent={
+            // Career Progress Bar - only on larger screens, right next to logo
+            <div className="hidden md:flex items-center min-w-0">
+              <CareerProgressBar />
+            </div>
+          }
         />
       </div>
 

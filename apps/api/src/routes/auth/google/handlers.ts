@@ -127,11 +127,13 @@ export const handleGoogleAuthCallback = createAsyncHandler(async (req: Request, 
 
   let userId: string;
   let userRole: UserRole;
+  let isActive: boolean; // Track active status
 
   if (existingUser) {
     // Usuario existe: actualizar con googleId y tokens
     userId = existingUser.id;
     userRole = existingUser.role as UserRole;
+    isActive = existingUser.isActive; // Mantener estado existente
 
     if (!ROLES.includes(userRole)) {
       req.log.error({ userId, invalidRole: userRole }, 'Invalid user role');
@@ -187,6 +189,11 @@ export const handleGoogleAuthCallback = createAsyncHandler(async (req: Request, 
     }
   } else {
     // Usuario no existe: crear nuevo usuario
+    // AI_DECISION: Forzar aprobación para nuevos usuarios de Google
+    // Justificación: Evitar spam y cuentas no autorizadas
+    // Impacto: Nuevos usuarios quedan inactivos hasta aprobación admin
+    isActive = false;
+
     const [newUser] = await db()
       .insert(users)
       .values({
@@ -194,7 +201,7 @@ export const handleGoogleAuthCallback = createAsyncHandler(async (req: Request, 
         fullName: userInfo.name || googleEmail.split('@')[0],
         role: 'advisor', // Default role
         googleId,
-        isActive: true,
+        isActive, // false
       })
       .returning();
 
@@ -218,7 +225,18 @@ export const handleGoogleAuthCallback = createAsyncHandler(async (req: Request, 
         scope: tokens.scope || '',
       });
 
-    req.log.info({ userId, email: googleEmail }, 'New user created via Google OAuth');
+    req.log.info(
+      { userId, email: googleEmail },
+      'New user created via Google OAuth (pending approval)'
+    );
+  }
+
+  // AI_DECISION: Si el usuario no está activo, redirigir a error y no crear sesión
+  // Justificación: Prevenir acceso a usuarios no aprobados o desactivados
+  // Impacto: Usuario ve mensaje de aprobación pendiente
+  if (!isActive) {
+    req.log.warn({ userId, email: googleEmail }, 'Inactive user attempted login via Google');
+    return res.redirect(`${frontendUrl}/login?error=pending_approval`);
   }
 
   // Generar JWT para la sesión local

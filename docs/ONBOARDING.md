@@ -48,7 +48,7 @@ Si alguna de estas herramientas no está instalada, consulta:
 
 ```bash
 git clone <repository-url>
-cd CactusDashboard
+cd maatwork
 ```
 
 ### Paso 2: Instalar Dependencias

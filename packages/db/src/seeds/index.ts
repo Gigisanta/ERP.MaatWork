@@ -52,6 +52,7 @@ export { seedNotifications } from './notifications';
 export { seedActivityEvents } from './activity-events';
 export { seedCapacitaciones } from './capacitaciones';
 export { seedSegments } from './segments';
+export { seedAutomations } from './automations';
 
 // Import for orchestration
 import { ensureDependencies } from './dependencies';
@@ -66,6 +67,7 @@ import { seedNotifications } from './notifications';
 import { seedActivityEvents } from './activity-events';
 import { seedCapacitaciones } from './capacitaciones';
 import { seedSegments } from './segments';
+import { seedAutomations } from './automations';
 
 /**
  * Configuration options for seedFull
@@ -84,6 +86,7 @@ export interface SeedFullOptions {
   skipActivityEvents?: boolean;
   skipCapacitaciones?: boolean;
   skipSegments?: boolean;
+  skipAutomations?: boolean;
 }
 
 /**
@@ -102,6 +105,7 @@ export interface SeedFullOptions {
  * 10. Activity Events
  * 11. Capacitaciones
  * 12. Segments
+ * 13. Automations
  */
 export async function seedFull(options: SeedFullOptions = {}) {
   console.log('\n🌱 Starting full database seed...\n');
@@ -185,6 +189,11 @@ export async function seedFull(options: SeedFullOptions = {}) {
     // 13. Segments
     if (!options.skipSegments && contactsList.length > 0 && advisorUsers) {
       await seedSegments(contactsList, advisorUsers);
+    }
+
+    // 14. Automations
+    if (!options.skipAutomations) {
+      await seedAutomations();
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);

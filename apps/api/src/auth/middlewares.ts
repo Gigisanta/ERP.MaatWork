@@ -3,6 +3,7 @@ import { verifyUserToken } from './jwt';
 import type { UserRole } from './types';
 import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
+import { getCachedUser, setCachedUser } from './cache';
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
@@ -39,18 +40,34 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
     const user = await verifyUserToken(token);
 
-    // AI_DECISION: Validar role contra DB para detectar cambios de role
-    // Justificación: Si el role cambió en DB, el token debe ser invalidado o actualizado
-    // Impacto: Previene que usuarios con roles cambiados mantengan permisos antiguos
-    const [dbUser] = await db()
-      .select({ id: users.id, role: users.role, isActive: users.isActive })
-      .from(users)
-      .where(eq(users.id, user.id))
-      .limit(1);
+    // AI_DECISION: Optimizar validación de usuario con cache
+    // Justificación: Evita queries redundantes a DB en cada request para datos que cambian poco
+    // Impacto: Reduce carga en DB y latencia de requests
+    let dbUser = getCachedUser(user.id);
 
     if (!dbUser) {
-      req.log?.warn({ userId: user.id }, 'User from token not found in database');
-      return res.status(401).json({ message: 'Unauthorized' });
+      const [foundUser] = await db()
+        .select({ id: users.id, role: users.role, isActive: users.isActive })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+
+      dbUser = foundUser;
+
+      if (dbUser) {
+        // Cachear solo usuarios válidos
+        // Castear role a string genérico para guardar en cache y luego validar
+        setCachedUser({ ...dbUser, role: dbUser.role as string });
+      }
+    }
+
+    if (!dbUser) {
+      // AI_DECISION: Limpiar cookie si el usuario no existe en DB
+      // Justificación: Evita loops infinitos de reintentos y logs de warning si el usuario fue borrado
+      // Impacto: El cliente detectará la sesión inválida y redirigirá a login limpiamente
+      res.clearCookie('token');
+      req.log?.warn({ userId: user.id }, 'User from token not found in database - clearing cookie');
+      return res.status(401).json({ message: 'Unauthorized - User not found' });
     }
 
     if (!dbUser.isActive) {

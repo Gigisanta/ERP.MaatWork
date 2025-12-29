@@ -12,8 +12,12 @@ import { API_BASE_URL } from '@/lib/api-url';
  */
 
 interface GoogleOAuthButtonProps {
-  context: 'login' | 'register';
+  context?: 'login' | 'register' | 'profile' | 'connect';
+  mode?: 'login' | 'register' | 'connect'; // Alias for context to match new usage
   disabled?: boolean;
+  redirect?: string;
+  onSuccess?: () => void; // Not used for redirect flow but good for API compatibility if we change later
+  label?: string;
 }
 
 function GoogleIcon() {
@@ -39,10 +43,17 @@ function GoogleIcon() {
   );
 }
 
-export function GoogleOAuthButton({ context, disabled }: GoogleOAuthButtonProps) {
+export function GoogleOAuthButton({
+  context,
+  mode,
+  disabled,
+  redirect = '/home',
+  label = 'Continuar con Google',
+}: GoogleOAuthButtonProps) {
   const handleGoogleAuth = () => {
-    const redirectAfterAuth = '/home';
-    window.location.href = `${API_BASE_URL}/v1/auth/google/init?context=${context}&redirect=${redirectAfterAuth}`;
+    // Determine context (mode takes precedence if supplied, otherwise context, default to profile/login)
+    const effectiveContext = mode || context || 'login';
+    window.location.href = `${API_BASE_URL}/v1/auth/google/init?context=${effectiveContext}&redirect=${encodeURIComponent(redirect)}`;
   };
 
   return (
@@ -54,15 +65,7 @@ export function GoogleOAuthButton({ context, disabled }: GoogleOAuthButtonProps)
       className="w-full h-12 text-base font-medium flex items-center justify-center gap-3"
     >
       <GoogleIcon />
-      Continuar con Google
+      {label}
     </Button>
   );
 }
-
-
-
-
-
-
-
-

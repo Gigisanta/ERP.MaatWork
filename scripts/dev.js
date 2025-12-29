@@ -144,7 +144,6 @@ async function ensureDockerServices() {
 
     // Check running containers
     let postgresRunning = false;
-    let n8nRunning = false;
 
     try {
       const { stdout } = await execAsync('docker compose ps --format json', { cwd: projectRoot });
@@ -155,7 +154,6 @@ async function ensureDockerServices() {
           .filter(c => c);
         
         postgresRunning = containers.some(c => c.Service === 'db' && c.State === 'running');
-        n8nRunning = containers.some(c => c.Service === 'n8n' && c.State === 'running');
       }
     } catch {
       // Fallback
@@ -163,11 +161,10 @@ async function ensureDockerServices() {
         const { stdout } = await execAsync('docker ps --format "{{.Names}}"', { cwd: projectRoot });
         const projectName = path.basename(projectRoot).toLowerCase().replace(/[^a-z0-9]/g, '');
         postgresRunning = stdout.includes('db') && stdout.includes(projectName);
-        n8nRunning = stdout.includes('n8n') && stdout.includes(projectName);
       } catch {}
     }
 
-    if (!postgresRunning || !n8nRunning) {
+    if (!postgresRunning) {
       console.log(warning('\n⚠️  Iniciando servicios...'));
       try {
         execSync('docker compose up -d', { stdio: 'inherit', cwd: projectRoot });

@@ -30,7 +30,7 @@ import {
   matchStatusSchema,
   fileUploadSchema,
   uuidFromString,
-  optionalUuidSchema,
+  createOptionalUuidSchema,
   paginationSchemaWithLimit,
 } from './common-schemas';
 
@@ -400,19 +400,19 @@ describe('uuidFromString', () => {
   });
 });
 
-describe('optionalUuidSchema', () => {
+describe('createOptionalUuidSchema', () => {
   it('debería aceptar UUID válido', () => {
-    const schema = optionalUuidSchema('id');
+    const schema = createOptionalUuidSchema('id');
     expect(() => schema.parse('550e8400-e29b-41d4-a716-446655440000')).not.toThrow();
   });
 
   it('debería aceptar undefined', () => {
-    const schema = optionalUuidSchema('id');
+    const schema = createOptionalUuidSchema('id');
     expect(() => schema.parse(undefined)).not.toThrow();
   });
 
   it('debería aceptar null', () => {
-    const schema = optionalUuidSchema('id');
+    const schema = createOptionalUuidSchema('id');
     expect(() => schema.parse(null)).not.toThrow();
   });
 });

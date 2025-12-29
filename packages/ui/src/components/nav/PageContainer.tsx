@@ -21,7 +21,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { cn } from '@maatwork/ui';
+import { cn } from '../../utils/cn';
 
 // =============================================================================
 // Types

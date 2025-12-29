@@ -30,15 +30,25 @@ export const handleGetCurrentUser = createRouteHandler(async (req: Request, res:
   // Justificación: Allows frontend to show connection UI without trying to fetch events first
   // Impacto: Prevents infinite 400 error loops on home page
   let isGoogleConnected = false;
+  let googleEmail: string | null = null;
   try {
     const [token] = await db()
-      .select({ id: googleOAuthTokens.id })
+      .select({
+        id: googleOAuthTokens.id,
+        email: googleOAuthTokens.email,
+      })
       .from(googleOAuthTokens)
       .where(eq(googleOAuthTokens.userId, user.id))
       .limit(1);
 
-    isGoogleConnected = !!token;
-    req.log.info({ userId: user.id, isGoogleConnected }, 'Checked Google connection status');
+    if (token) {
+      isGoogleConnected = true;
+      googleEmail = token.email;
+    }
+    req.log.info(
+      { userId: user.id, isGoogleConnected, googleEmail },
+      'Checked Google connection status'
+    );
   } catch (error) {
     // If table doesn't exist yet or DB error, assume not connected but don't fail request
     req.log.warn({ err: error }, 'Failed to check Google connection status');
@@ -52,6 +62,7 @@ export const handleGetCurrentUser = createRouteHandler(async (req: Request, res:
   return {
     ...user,
     isGoogleConnected,
+    googleEmail,
   };
 });
 

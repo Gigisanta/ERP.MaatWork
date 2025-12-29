@@ -1,0 +1,1 @@
+ALTER TABLE "automation_configs" DROP COLUMN "webhook_url";

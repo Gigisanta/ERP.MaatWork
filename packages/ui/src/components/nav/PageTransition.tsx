@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { cn } from '@maatwork/ui';
+import { cn } from '../../utils/cn';
 
 export interface PageTransitionProps {
   /** Content to animate */
@@ -82,5 +82,3 @@ function StaggeredSection({ children, index, className }: StaggeredSectionProps)
     </div>
   );
 }
-
-

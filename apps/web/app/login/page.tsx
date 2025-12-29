@@ -297,6 +297,15 @@ function LoginPageContent() {
                 </div>
 
                 {/* OAuth Error Alert */}
+                {oauthError === 'pending_approval' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="warning" title="Cuenta pendiente de aprobación">
+                      Tu cuenta ha sido creada y está pendiente de aprobación por un administrador.
+                      Te notificaremos cuando puedas iniciar sesión.
+                    </Alert>
+                  </div>
+                )}
+
                 {oauthError === 'no_account' && (
                   <div className="animate-fade-in">
                     <Alert variant="warning" title="Cuenta no encontrada">

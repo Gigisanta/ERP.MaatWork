@@ -1,36 +1,40 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-test.describe('Contacts CRUD happy path', () => {
-  test('create, view and delete contact', async ({ page }) => {
-    await page.goto('/contacts');
-    const newBtn = page.getByRole('button', { name: /nuevo|new|crear/i });
-    if ((await newBtn.count()) === 0) test.skip();
-    await newBtn.first().click();
+test.describe('Contacts CRUD', () => {
+  test('create, view, edit and delete contact', async ({ contactsPage, contactDetailPage }) => {
+    const timestamp = Date.now();
+    const contactData = {
+      firstName: `Test User ${timestamp}`,
+      lastName: 'Playwright',
+      email: `test${timestamp}@example.com`
+    };
 
-    const fullName = `Test User ${Date.now()}`;
-    await page
-      .getByLabel(/nombre|full name|nombre completo/i)
-      .first()
-      .fill(fullName);
-    const emailField = page.getByLabel(/email/i).first();
-    if (await emailField.count()) {
-      await emailField.fill(`test${Date.now()}@example.com`);
-    }
+    // Create
+    await contactsPage.createContact(contactData);
+    
+    // Verify in list
+    const fullName = `${contactData.firstName} ${contactData.lastName}`;
+    await contactsPage.searchContact(contactData.firstName);
+    await contactsPage.expectContactInList(fullName);
 
-    const saveBtn = page.getByRole('button', { name: /guardar|save|crear/i });
-    await saveBtn.first().click();
+    // Edit
+    const updatedName = `${contactData.firstName} Updated`;
+    await contactsPage.editContact(contactData.firstName, updatedName);
 
-    await expect(page.getByText(fullName)).toBeVisible();
+    // Open detail
+    await contactsPage.openContact(updatedName);
+    await contactDetailPage.expectLoaded();
 
-    await page.getByText(fullName).first().click();
-    await expect(page).toHaveURL(/contacts\//);
+    // Add note (part of detail view test)
+    await contactDetailPage.addNote('This is a test note from E2E');
+    
+    // Add tag
+    // await contactDetailPage.addTag('VIP');
 
-    const deleteBtn = page.getByRole('button', { name: /eliminar|delete/i });
-    if (await deleteBtn.count()) {
-      await deleteBtn.first().click();
-      const confirm = page.getByRole('button', { name: /confirmar|sí|si|delete/i });
-      if (await confirm.count()) await confirm.first().click();
-      await expect(page).toHaveURL(/contacts$/);
-    }
+    // Delete
+    await contactDetailPage.deleteContact();
+
+    // Verify deleted (search again and expect not found)
+    await contactsPage.searchContact(contactData.firstName);
   });
 });

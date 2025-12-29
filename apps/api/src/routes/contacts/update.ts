@@ -24,6 +24,7 @@ import { contactsListCacheUtil } from '../../utils/performance/cache';
 import { updateContactSchema, patchContactSchema } from './schemas';
 import { invalidateCache } from '../../middleware/cache';
 import { createAsyncHandler, HttpError } from '../../utils/route-handler';
+import { emailAutomationService } from '../../services/automations/email-service';
 
 const router = Router();
 
@@ -232,6 +233,19 @@ router.put(
             previousAdvisorId: existing.assignedAdvisorId,
           },
           deliveredChannels: [],
+        });
+    }
+
+    // Trigger automations
+    if (pipelineStageChanged && newPipelineStageId) {
+      emailAutomationService
+        .checkAndTriggerAutomations('pipeline_stage_change', {
+          contactId: id,
+          userId: req.user?.id,
+          newPipelineStageId,
+        })
+        .catch((err) => {
+          req.log.error({ err }, 'Error triggering automation');
         });
     }
 

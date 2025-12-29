@@ -29,6 +29,8 @@ export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   onToggleSidebar?: () => void;
   sidebarOpen?: boolean;
   className?: string;
+  children?: React.ReactNode;
+  leftContent?: React.ReactNode;
 }
 
 /**
@@ -50,6 +52,8 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
       onToggleSidebar,
       sidebarOpen = false,
       className,
+      children,
+      leftContent,
       ...props
     },
     ref
@@ -69,7 +73,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
         {...props}
       >
         <div className="flex h-12 sm:h-14 items-center justify-between flex-nowrap gap-2 sm:gap-3">
-          {/* Left section: Mobile menu button + Logo */}
+          {/* Left section: Mobile menu button + Logo + Left Content */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
             {onToggleSidebar && (
               <Button
@@ -89,62 +93,70 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
               </Button>
             )}
 
-            {logo && <div className="flex items-center min-w-0 flex-1 overflow-hidden">{logo}</div>}
+            {logo && <div className="flex items-center min-w-0 shrink-0">{logo}</div>}
+
+            {leftContent && (
+              <div className="flex items-center min-w-0 flex-1 ml-2">{leftContent}</div>
+            )}
           </div>
 
-          {/* Center section: Navigation (desktop) */}
-          {navItems.length > 0 && (
-            <nav
-              className="flex items-center space-x-4 overflow-x-auto whitespace-nowrap flex-1 justify-center min-w-0"
-              role="navigation"
-            >
-              {navItems.map((item) =>
-                item.href.startsWith('http') ? (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(
-                      'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
-                      'text-sm font-medium text-text-secondary',
-                      'hover:text-primary hover:bg-primary-subtle',
-                      'transition-all duration-200',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
-                    )}
-                  >
-                    {item.icon && <Icon name={item.icon} size={16} />}
-                    {item.label}
-                    {item.badge && (
-                      <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
-                        {item.badge}
-                      </span>
-                    )}
-                  </a>
-                ) : (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
-                      'text-sm font-medium text-text-secondary',
-                      'hover:text-primary hover:bg-primary-subtle',
-                      'transition-all duration-200',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
-                    )}
-                  >
-                    {item.icon && <Icon name={item.icon} size={16} />}
-                    {item.label}
-                    {item.badge && (
-                      <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
-                        {item.badge}
-                      </span>
-                    )}
-                  </a>
-                )
-              )}
-            </nav>
-          )}
+          {/* Center section: Navigation or Children (desktop) */}
+          <div className="flex-1 flex justify-center min-w-0 px-2 sm:px-4">
+            {children ? (
+              children
+            ) : navItems.length > 0 ? (
+              <nav
+                className="flex items-center space-x-4 overflow-x-auto whitespace-nowrap justify-center min-w-0 hide-scrollbar"
+                role="navigation"
+              >
+                {navItems.map((item) =>
+                  item.href.startsWith('http') ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
+                        'text-sm font-medium text-text-secondary',
+                        'hover:text-primary hover:bg-primary-subtle',
+                        'transition-all duration-200',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+                      )}
+                    >
+                      {item.icon && <Icon name={item.icon} size={16} />}
+                      {item.label}
+                      {item.badge && (
+                        <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
+                          {item.badge}
+                        </span>
+                      )}
+                    </a>
+                  ) : (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline',
+                        'text-sm font-medium text-text-secondary',
+                        'hover:text-primary hover:bg-primary-subtle',
+                        'transition-all duration-200',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+                      )}
+                    >
+                      {item.icon && <Icon name={item.icon} size={16} />}
+                      {item.label}
+                      {item.badge && (
+                        <span className="inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-text-inverse">
+                          {item.badge}
+                        </span>
+                      )}
+                    </a>
+                  )
+                )}
+              </nav>
+            ) : null}
+          </div>
 
           {/* Right section: User menu */}
           <div className="flex items-center shrink-0 gap-2 sm:gap-3">

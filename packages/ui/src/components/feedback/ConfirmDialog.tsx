@@ -7,8 +7,8 @@ import {
   ModalTitle,
   ModalDescription,
   ModalContent,
-  Button,
-} from '@maatwork/ui';
+} from './Modal';
+import { Button } from '../nav/Button';
 
 export interface ConfirmDialogProps {
   open: boolean;

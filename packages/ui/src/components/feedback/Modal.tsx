@@ -43,7 +43,10 @@ const sizeClasses = {
  * ```
  */
 export const Modal = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, ModalProps>(
-  ({ className, open, onOpenChange, title, description, children, size = 'md', trigger, ...props }, ref) => {
+  (
+    { className, open, onOpenChange, title, description, children, size = 'md', trigger, ...props },
+    ref
+  ) => {
     return (
       <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
         {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
@@ -94,9 +97,9 @@ export const Modal = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Co
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-6 top-7 rounded-full z-[100] opacity-30 transition-all duration-300 hover:opacity-100 hover:rotate-90 hover:bg-surface focus:outline-none focus:ring-0 disabled:pointer-events-none"
+                className="absolute right-4 top-4 rounded-full z-[100] opacity-50 transition-all duration-200 hover:opacity-100 hover:bg-secondary/10 focus:outline-none focus:ring-0 disabled:pointer-events-none"
               >
-                <Icon name="x" size={20} />
+                <Icon name="x" size={18} />
                 <span className="sr-only">Close</span>
               </Button>
             </DialogPrimitive.Close>

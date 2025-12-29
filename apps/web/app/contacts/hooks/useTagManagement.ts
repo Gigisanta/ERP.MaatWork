@@ -128,13 +128,13 @@ export function useTagManagement({
         color: newTagColor,
         businessLine: newTagBusinessLine,
       });
-      mutateTags();
+      await mutateTags();
       setNewTagName('');
       setNewTagColor('#6B7280');
       setNewTagBusinessLine(null);
       setIsCreatingTag(false);
       showToast('Etiqueta creada', undefined, 'success');
-      mutateContacts();
+      await mutateContacts();
     } catch (err) {
       showToast(
         'Error al crear etiqueta',
@@ -226,11 +226,3 @@ export function useTagManagement({
     resetCreateForm,
   };
 }
-
-
-
-
-
-
-
-

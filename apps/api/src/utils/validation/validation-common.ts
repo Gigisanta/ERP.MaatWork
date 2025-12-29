@@ -105,10 +105,7 @@ function nonEmptyStringSchema(fieldName: string = 'string') {
 /**
  * Helper para validar que un valor esté en un array de valores permitidos
  */
-function enumSchema<T extends [string, ...string[]]>(
-  values: T,
-  fieldName: string = 'value'
-) {
+function enumSchema<T extends [string, ...string[]]>(values: T, fieldName: string = 'value') {
   return z.enum(values, {
     errorMap: () => ({ message: `${fieldName} must be one of: ${values.join(', ')}` }),
   });
@@ -119,7 +116,7 @@ function enumSchema<T extends [string, ...string[]]>(
  */
 const phoneSchema = z
   .string()
-  .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid phone format')
+  .regex(/^[\d\s\-+()]+$/, 'Invalid phone format')
   .max(50);
 
 /**
@@ -127,7 +124,7 @@ const phoneSchema = z
  */
 const dniSchema = z
   .string()
-  .regex(/^[\d\.]+$/, 'Invalid DNI format')
+  .regex(/^[\d.]+$/, 'Invalid DNI format')
   .max(50);
 
 /**
@@ -146,10 +143,7 @@ const countryCodeSchema = z
 /**
  * Helper para validar que un array no esté vacío
  */
-function nonEmptyArraySchema<T extends z.ZodTypeAny>(
-  itemSchema: T,
-  fieldName: string = 'array'
-) {
+function nonEmptyArraySchema<T extends z.ZodTypeAny>(itemSchema: T, fieldName: string = 'array') {
   return z.array(itemSchema).min(1, `${fieldName} cannot be empty`);
 }
 

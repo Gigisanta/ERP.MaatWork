@@ -24,6 +24,7 @@ import type {
   Note,
   Capacitacion,
   PaginatedResponse,
+  Team,
 } from '@/types';
 import { logger } from './logger';
 
@@ -77,20 +78,31 @@ const swrConfigLonger: SWRConfiguration = {
 export function useContacts(assignedAdvisorId?: string | null) {
   const { user } = useAuth();
 
-  const url = assignedAdvisorId
-    ? `${API_BASE_URL}/v1/contacts?assignedAdvisorId=${assignedAdvisorId}`
-    : `${API_BASE_URL}/v1/contacts`;
+  const queryParams = new URLSearchParams();
+  // AI_DECISION: Request large limit to support client-side filtering until server-side is implemented
+  queryParams.append('limit', '1000');
+  if (assignedAdvisorId) queryParams.append('assignedAdvisorId', assignedAdvisorId);
+
+  const url = `${API_BASE_URL}/v1/contacts?${queryParams.toString()}`;
 
   const swrKey = user ? url : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<ContactWithTags[]>>(
-    swrKey,
-    fetcher,
-    swrConfig
-  );
+  // AI_DECISION: Handle paginated response structure
+  // The API returns { success: true, data: { data: Contact[], pagination: {...} } }
+  // We need to support both array (legacy) and paginated response
+  const { data, error, isLoading, mutate } = useSWR<
+    ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>>
+  >(swrKey, fetcher, swrConfig);
+
+  const contactsData = data?.data;
+  // Check if data is paginated response or direct array
+  const contactsList =
+    contactsData && !Array.isArray(contactsData) && 'data' in contactsData
+      ? (contactsData as PaginatedResponse<ContactWithTags>).data
+      : (contactsData as ContactWithTags[]) || [];
 
   return {
-    contacts: data?.data || [],
+    contacts: contactsList,
     error,
     isLoading,
     mutate,
@@ -137,7 +149,7 @@ export function useAdvisors() {
 export function useUserTeams() {
   const { user } = useAuth();
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<any[]>>(
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<Team[]>>(
     user ? `${API_BASE_URL}/v1/teams` : null,
     fetcher,
     swrConfigLonger
@@ -163,11 +175,9 @@ export function useUsers(params?: { limit?: number; offset?: number; isActive?: 
   const url = `${API_BASE_URL}/v1/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
   const swrKey = user?.role === 'admin' || user?.role === 'manager' ? url : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<PaginatedResponse<UserApiResponse>>>(
-    swrKey,
-    fetcher,
-    swrConfigLonger
-  );
+  const { data, error, isLoading, mutate } = useSWR<
+    ApiResponse<PaginatedResponse<UserApiResponse>>
+  >(swrKey, fetcher, swrConfigLonger);
 
   const paginatedData = data?.data;
   const users = Array.isArray(paginatedData?.data) ? paginatedData.data : [];
@@ -318,7 +328,9 @@ export function usePortfolioComparison(
 ) {
   const { user } = useAuth();
 
-  const postFetcher = async ([url, body]: [string, unknown]): Promise<ApiResponse<{ results: unknown[] }>> => {
+  const postFetcher = async ([url, body]: [string, unknown]): Promise<
+    ApiResponse<{ results: unknown[] }>
+  > => {
     return fetchJson<ApiResponse<{ results: unknown[] }>>(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -365,27 +377,32 @@ export function useAumRows(params?: {
   if (params?.status) queryParams.append('status', params.status);
   if (params?.fileId) queryParams.append('fileId', params.fileId);
   if (params?.search) queryParams.append('search', params.search);
-  
+
   // AI_DECISION: Default preferredOnly to false if not specified
   // Justificación: Matches backend expectation and ensures consistent query results
   // Impacto: Always includes preferredOnly in URL
   queryParams.append('preferredOnly', String(params?.preferredOnly ?? false));
-  
-  if (params?.onlyUpdated !== undefined) queryParams.append('onlyUpdated', String(params.onlyUpdated));
+
+  if (params?.onlyUpdated !== undefined)
+    queryParams.append('onlyUpdated', String(params.onlyUpdated));
 
   const url = `${API_BASE_URL}/v1/admin/aum/rows/all?${queryParams.toString()}`;
   const swrKey = user ? url : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<{ rows: AumRow[]; pagination: PaginatedResponse<AumRow>['pagination'] }>>(
-    swrKey,
-    fetcher,
-    swrConfig
-  );
+  const { data, error, isLoading, mutate } = useSWR<
+    ApiResponse<{ rows: AumRow[]; pagination: PaginatedResponse<AumRow>['pagination'] }>
+  >(swrKey, fetcher, swrConfig);
 
   return {
     rows: data?.data?.rows || [],
     totalRows: data?.data?.pagination?.total || 0,
-    pagination: data?.data?.pagination || { total: 0, limit: 50, offset: 0, page: 1, totalPages: 0 },
+    pagination: data?.data?.pagination || {
+      total: 0,
+      limit: 50,
+      offset: 0,
+      page: 1,
+      totalPages: 0,
+    },
     error,
     isLoading,
     mutate,
@@ -458,15 +475,11 @@ export function useCalendarEvents(params?: {
   const url = `${API_BASE_URL}/v1/calendar/personal/events${queryString ? `?${queryString}` : ''}`;
   const swrKey = user && params ? url : null;
 
-  const { data, error, isLoading, mutate } = useSWR<ApiResponse<CalendarEvent[]>>(
-    swrKey,
-    fetcher,
-    {
-      ...swrConfig,
-      dedupingInterval: 60000,
-      refreshInterval: 300000,
-    }
-  );
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<CalendarEvent[]>>(swrKey, fetcher, {
+    ...swrConfig,
+    dedupingInterval: 60000,
+    refreshInterval: 300000,
+  });
 
   return {
     data: data?.data || [],
@@ -477,7 +490,10 @@ export function useCalendarEvents(params?: {
 }
 
 // Hook for Team Calendar
-export function useTeamCalendar(teamId: string, params?: { timeMin?: string; maxResults?: number }) {
+export function useTeamCalendar(
+  teamId: string,
+  params?: { timeMin?: string; maxResults?: number }
+) {
   const { user } = useAuth();
 
   const queryParams = new URLSearchParams();

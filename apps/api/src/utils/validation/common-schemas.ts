@@ -83,7 +83,7 @@ const notesSchema = z.string().max(5000).trim().optional().nullable();
 
 export const phoneSchema = z
   .string()
-  .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid phone format')
+  .regex(/^[\d\s\-+()]+$/, 'Invalid phone format')
   .max(50)
   .optional()
   .nullable();
@@ -92,7 +92,7 @@ const addressSchema = z.string().max(500).optional().nullable();
 
 export const dniSchema = z
   .string()
-  .regex(/^[\d\.]+$/, 'Invalid DNI format')
+  .regex(/^[\d.]+$/, 'Invalid DNI format')
   .max(50)
   .optional()
   .nullable();
@@ -129,7 +129,7 @@ export const paginationBaseSchema = z.object({
     .string()
     .regex(/^\d+$/, 'Limit must be a number')
     .transform(Number)
-    .pipe(z.number().int().min(1).max(100))
+    .pipe(z.number().int().min(1).max(1000))
     .optional()
     .default('50'),
   offset: z

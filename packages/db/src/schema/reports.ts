@@ -153,7 +153,11 @@ export const aumSnapshots = pgTable(
     // AI_DECISION: Add composite index for aggregations by contact ordered by date DESC
     // Justificación: Analytics queries agregan AUM por contacto ordenado por fecha DESC
     // Impacto: Faster AUM analytics queries with proper ordering
-    aumSnapshotsContactDateIdx: index('idx_aum_snapshots_contact_date').on(table.contactId, table.date)
+    aumSnapshotsContactDateIdx: index('idx_aum_snapshots_contact_date').on(table.contactId, table.date),
+    // AI_DECISION: Add index on date for daily analytics aggregation
+    // Justificación: Optimiza queries que agregan AUM por fecha (team analytics)
+    // Impacto: Avoids seq scan on large aum_snapshots table for date-based queries
+    aumSnapshotsDateIdx: index('idx_aum_snapshots_date').on(table.date)
   })
 );
 

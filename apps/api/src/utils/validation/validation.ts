@@ -87,11 +87,11 @@ import { z } from 'zod';
  */
 interface ValidationSchemas {
   /** Schema para validar req.params (ej: { id: uuidSchema }) */
-  params?: any;
+  params?: z.ZodTypeAny;
   /** Schema para validar req.query (ej: paginationQuerySchema) */
-  query?: any;
+  query?: z.ZodTypeAny;
   /** Schema para validar req.body (ej: createContactSchema) */
-  body?: any;
+  body?: z.ZodTypeAny;
 }
 
 /**

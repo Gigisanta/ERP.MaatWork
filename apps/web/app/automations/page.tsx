@@ -1,20 +1,13 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { usePageTitle } from '../components/PageTitleContext';
-import { Button, Heading, Text, Stack, Icon, Spinner } from '@maatwork/ui';
-import { config } from '@/lib/config';
-import WelcomeEmailCard from './components/WelcomeEmailCard';
-import SecondMeetingCard from './components/SecondMeetingCard';
+import { Heading, Stack, Spinner, Text } from '@maatwork/ui';
+import EmailAutomationCard from './components/EmailAutomationCard';
 
 export default function AutomationsPage() {
   const { loading } = useRequireAuth();
   usePageTitle('Automatizaciones');
-
-  const handleOpenN8N = useCallback(() => {
-    window.open(config.n8nUrl, '_blank', 'noopener,noreferrer');
-  }, []);
 
   if (loading) {
     return (
@@ -32,25 +25,31 @@ export default function AutomationsPage() {
       <Stack direction="column" gap="lg">
         <div className="flex items-center justify-between">
           <Heading level={1}>Automatizaciones</Heading>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleOpenN8N}
-            title="Abrir N8N - Automatizaciones"
-          >
-            <Icon name="Settings" size={16} className="mr-1.5" />
-            N8N
-          </Button>
         </div>
 
         {/* Sección Automatizaciones base */}
         <div>
           <Heading level={2} className="text-xl mb-4">
-            Automatizaciones base
+            Emails Automáticos
           </Heading>
           <div className="max-w-2xl space-y-4">
-            <SecondMeetingCard />
-            <WelcomeEmailCard />
+            <EmailAutomationCard
+              automationName="segunda_reunion_webhook" // Keeping ID for continuity, though functionality changed
+              displayName="Email Segunda Reunión"
+              description="Envía un email automático cuando un contacto pasa a la etapa 'Segunda reunion'."
+              triggerStageName="Segunda reunion"
+              defaultSubject="Confirmación Segunda Reunión"
+              defaultBody="<p>Hola {contact.firstName},</p><p>Te confirmamos la segunda reunión...</p>"
+            />
+            
+            <EmailAutomationCard
+              automationName="mail_bienvenida"
+              displayName="Email de Bienvenida (Cliente)"
+              description="Envía un email automático cuando un contacto pasa a la etapa 'Cliente'."
+              triggerStageName="Cliente"
+              defaultSubject="Bienvenido a Cactus"
+              defaultBody="<p>Hola {contact.firstName},</p><p>Bienvenido a bordo...</p>"
+            />
           </div>
         </div>
       </Stack>

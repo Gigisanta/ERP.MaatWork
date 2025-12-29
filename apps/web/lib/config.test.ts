@@ -65,18 +65,6 @@ describe('config', () => {
     });
   });
 
-  describe('config.n8nUrl', () => {
-    it('debería tener valor por defecto', () => {
-      expect(config.n8nUrl).toBeDefined();
-      expect(config.n8nUrl).toBe('http://localhost:5678');
-    });
-
-    it('debería usar NEXT_PUBLIC_N8N_URL si está definida', () => {
-      // Config is evaluated at build time, just verify it has a valid URL
-      expect(config.n8nUrl).toMatch(/^https?:\/\//);
-    });
-  });
-
   describe('config.environment', () => {
     it('debería detectar NODE_ENV correctamente', () => {
       expect(config.environment).toBeDefined();
@@ -158,7 +146,6 @@ describe('config', () => {
       expect(config).toBeDefined();
       expect(config).toHaveProperty('apiUrl');
       expect(config).toHaveProperty('apiTimeout');
-      expect(config).toHaveProperty('n8nUrl');
       expect(config).toHaveProperty('environment');
       expect(config).toHaveProperty('isDevelopment');
       expect(config).toHaveProperty('isProduction');

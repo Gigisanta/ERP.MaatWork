@@ -21,6 +21,7 @@ export interface AuthUser {
   fullName?: string;
   isActive?: boolean;
   isGoogleConnected?: boolean;
+  googleEmail?: string | null;
 }
 
 interface RegisterData {

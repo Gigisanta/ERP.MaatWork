@@ -28,7 +28,6 @@ export interface AutomationConfig extends TimestampedEntity {
   displayName: string; // Nombre para mostrar (ej: "Mail de bienvenida")
   triggerType: string; // Tipo de trigger (ej: "pipeline_stage_change")
   triggerConfig: TriggerConfig; // Configuración del trigger (ej: { stageName: "Cliente" })
-  webhookUrl?: string | null; // URL del webhook de N8N
   enabled: boolean; // Si está habilitada
   config: AutomationConfigData; // Configuración adicional (payload personalizado, etc.)
 }
@@ -41,7 +40,6 @@ export interface CreateAutomationConfigRequest extends CreateRequest<AutomationC
   displayName: string;
   triggerType: string;
   triggerConfig: TriggerConfig;
-  webhookUrl?: string | null;
   enabled: boolean;
   config: AutomationConfigData;
 }
@@ -53,7 +51,6 @@ export interface UpdateAutomationConfigRequest extends UpdateRequest<AutomationC
   displayName?: string;
   triggerType?: string;
   triggerConfig?: TriggerConfig;
-  webhookUrl?: string | null;
   enabled?: boolean;
   config?: AutomationConfigData;
 }
