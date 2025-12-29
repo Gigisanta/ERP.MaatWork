@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
-import { Text } from '@cactus/ui';
+import { Text } from '@maatwork/ui';
 import {
   getAdvisorAumSummary,
   getAvailableAumPeriods,

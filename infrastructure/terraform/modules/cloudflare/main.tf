@@ -41,7 +41,7 @@ resource "cloudflare_record" "root" {
   proxied = true
   ttl     = 1  # Auto when proxied
 
-  comment = "Managed by Terraform - Cactus CRM"
+  comment = "Managed by Terraform - MaatWork"
 }
 
 # WWW subdomain CNAME
@@ -53,7 +53,7 @@ resource "cloudflare_record" "www" {
   proxied = true
   ttl     = 1
 
-  comment = "Managed by Terraform - Cactus CRM"
+  comment = "Managed by Terraform - MaatWork"
 }
 
 # API subdomain (optional, if you want api.domain.com)
@@ -66,7 +66,7 @@ resource "cloudflare_record" "api" {
   proxied = true
   ttl     = 1
 
-  comment = "Managed by Terraform - Cactus CRM API"
+  comment = "Managed by Terraform - MaatWork API"
 }
 
 # =============================================================================
@@ -85,7 +85,7 @@ resource "tls_cert_request" "origin" {
 
   subject {
     common_name  = var.domain
-    organization = "Cactus CRM"
+    organization = "MaatWork"
   }
 
   dns_names = [
@@ -143,8 +143,8 @@ resource "cloudflare_zone_settings_override" "ssl" {
 resource "cloudflare_ruleset" "rate_limiting" {
   count       = var.enable_waf ? 1 : 0
   zone_id     = local.zone_id
-  name        = "Cactus Rate Limiting"
-  description = "Rate limiting rules for Cactus CRM"
+  name        = "MaatWork Rate Limiting"
+  description = "Rate limiting rules for MaatWork"
   kind        = "zone"
   phase       = "http_ratelimit"
 
@@ -184,8 +184,8 @@ resource "cloudflare_ruleset" "rate_limiting" {
 resource "cloudflare_ruleset" "security" {
   count       = var.enable_waf ? 1 : 0
   zone_id     = local.zone_id
-  name        = "Cactus Security Rules"
-  description = "Custom security rules for Cactus CRM"
+  name        = "MaatWork Security Rules"
+  description = "Custom security rules for MaatWork"
   kind        = "zone"
   phase       = "http_request_firewall_custom"
 

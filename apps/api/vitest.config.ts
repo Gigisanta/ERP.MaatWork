@@ -13,9 +13,10 @@ import { resolve } from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@cactus/db': resolve(__dirname, '../../packages/db/src/index.ts'),
-      '@cactus/db/schema': resolve(__dirname, '../../packages/db/src/schema.ts'),
-      '@cactus/ui': resolve(__dirname, '../../packages/ui/src/index.ts'),
+      '@maatwork/db/schema': resolve(__dirname, '../../packages/db/src/schema.ts'),
+      '@maatwork/db': resolve(__dirname, '../../packages/db/src/index.ts'),
+      '@maatwork/db/': resolve(__dirname, '../../packages/db/src/'),
+      '@maatwork/ui': resolve(__dirname, '../../packages/ui/src/index.ts'),
       '@/utils': resolve(__dirname, './src/utils'),
       '@/routes': resolve(__dirname, './src/routes'),
       '@/services': resolve(__dirname, './src/services'),
@@ -32,13 +33,17 @@ export default defineConfig({
     exclude: [
       'node_modules/**',
       'dist/**',
-      'src/**/*.integration.test.ts', // Exclude integration tests from unit test runs
+      'src/**/*.integration.test.ts',
+      'src/__tests__/integration/**',
+      'src/__tests__/performance/**',
     ],
-    // Parallelization configuration
-    threads: true,
-    maxConcurrency: 5,
-    minThreads: 1,
-    maxThreads: 4,
+    // Parallelization configuration - Optimized to prevent system freezing
+    poolOptions: {
+      threads: {
+        maxThreads: 2, // Limit to 2 threads per Vitest instance
+        minThreads: 1,
+      },
+    },
     testTimeout: 10000, // 10 seconds default timeout
     hookTimeout: 10000,
     coverage: {

@@ -7,7 +7,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/api-server';
 import { CalendarClient } from './components/CalendarClient';
-import { Heading, Stack } from '@cactus/ui';
+import { Heading, Stack } from '@maatwork/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,3 +27,11 @@ export default async function CalendarPage() {
     </main>
   );
 }
+
+
+
+
+
+
+
+

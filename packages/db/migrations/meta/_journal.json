@@ -288,6 +288,41 @@
       "when": 1765912092056,
       "tag": "0040_typical_giant_man",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1766437164776,
+      "tag": "0041_mature_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1766437714174,
+      "tag": "0042_early_kitty_pryde",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1766437900575,
+      "tag": "0043_superb_frightful_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1766966124397,
+      "tag": "0044_worried_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1766969465051,
+      "tag": "0045_cool_arachne",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,10 @@
 import React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import Icon from '../Icon.js';
+import { Icon } from '../Icon.js';
 import { cn } from '../../utils/cn.js';
-import Button from '../nav/Button.js';
+import { Button } from '../nav/Button.js';
 
-export interface ModalProps {
+export interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   title?: string;
@@ -43,7 +43,10 @@ const sizeClasses = {
  * ```
  */
 export const Modal = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Content>, ModalProps>(
-  ({ open, onOpenChange, title, description, children, size = 'md', trigger, ...props }, ref) => {
+  (
+    { className, open, onOpenChange, title, description, children, size = 'md', trigger, ...props },
+    ref
+  ) => {
     return (
       <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
         {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
@@ -59,18 +62,16 @@ export const Modal = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Co
           <DialogPrimitive.Content
             ref={ref}
             className={cn(
-              'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4',
+              'fixed left-[50%] top-[50%] z-50 flex w-full translate-x-[-50%] translate-y-[-50%] flex-col',
               'border border-border bg-background p-6 shadow-2xl',
               // Use modern animation utilities
               'duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out',
               'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
               'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-              'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]',
-              'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
-              // Custom spring animation override
               'data-[state=open]:animate-pop',
               'sm:rounded-xl font-body',
-              sizeClasses[size]
+              sizeClasses[size],
+              className
             )}
             aria-describedby={!description ? undefined : undefined}
             {...props}
@@ -96,9 +97,9 @@ export const Modal = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Co
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-4 top-4 rounded-full opacity-70 transition-all duration-200 hover:opacity-100 hover:rotate-90 hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none"
+                className="absolute right-4 top-4 rounded-full z-[100] opacity-50 transition-all duration-200 hover:opacity-100 hover:bg-secondary/10 focus:outline-none focus:ring-0 disabled:pointer-events-none"
               >
-                <Icon name="x" size={16} />
+                <Icon name="x" size={18} />
                 <span className="sr-only">Close</span>
               </Button>
             </DialogPrimitive.Close>

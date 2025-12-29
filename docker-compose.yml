@@ -26,52 +26,7 @@ services:
       -c wal_buffers=16MB
       -c default_statistics_target=100
 
-  n8n:
-    # Usar latest para obtener la última versión estable
-    # Para producción, considerar usar un tag específico (ej: n8nio/n8n:1.x.x)
-    # Actualizar periódicamente con: docker compose pull n8n
-    image: n8nio/n8n:latest
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_HOST=localhost
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - N8N_BASIC_AUTH_ACTIVE=false
-      - N8N_CORS_ORIGIN=http://localhost:3000
-      # Optimizaciones de recursos - Reducción de overhead
-      - N8N_DISABLE_PRODUCTION_MAIN_PROCESS=true
-      - N8N_METRICS=false
-      - N8N_LOG_LEVEL=warn
-      - N8N_EXECUTIONS_DATA_PRUNE=true
-      - N8N_EXECUTIONS_DATA_MAX_AGE=168
-      - N8N_EXECUTIONS_DATA_PRUNE_MAX_COUNT=100
-      - NODE_ENV=production
-      # Optimizaciones adicionales - Reducción de recursos
-      - N8N_SKIP_WEBHOOK_DEREGISTRATION_SHUTDOWN=true
-      - N8N_PUSH_BACKEND=websocket
-      - N8N_DIAGNOSTICS_ENABLED=false
-      - N8N_WORKFLOW_CALLBACK_POLLING=false
-    volumes:
-      - n8n_data:/home/node/.n8n
-    deploy:
-      resources:
-        limits:
-          cpus: '0.75'
-          memory: 768M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5678/healthz"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
 volumes:
   pg: {}
-  n8n_data: {}
 
 

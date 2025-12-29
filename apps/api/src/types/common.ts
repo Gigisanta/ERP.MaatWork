@@ -1,7 +1,7 @@
 /**
  * Tipos comunes compartidos
  *
- * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
+ * AI_DECISION: Re-exportar tipos base desde @maatwork/types/common para eliminar duplicación
  * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
  *
@@ -10,16 +10,10 @@
  */
 
 // ==========================================================
-// Tipos Base - Re-exportados desde @cactus/types
+// Tipos Base - Re-exportados desde @maatwork/types
 // ==========================================================
 
-export type {
-  BaseEntity,
-  TimestampedEntity,
-  TimestampedEntityOptional,
-  CreateRequest,
-  UpdateRequest,
-} from '@cactus/types';
+;
 
 // ==========================================================
 // Tipos de Error y Configuración
@@ -28,7 +22,7 @@ export type {
 /**
  * Error con mensaje para manejo de excepciones
  */
-export type ErrorWithMessage = {
+type ErrorWithMessage = {
   message?: string;
   code?: string;
   [key: string]: unknown;
@@ -66,13 +60,15 @@ export type HelmetOptions = {
   [key: string]: unknown;
 };
 
+import type { AuthUser } from '../auth/types';
+
 // ==========================================================
 // Extensiones de Tipos Globales
 // ==========================================================
 
 /**
- * AI_DECISION: Extender Express.Request para incluir requestId y contactId tipados
- * Justificación: Elimina necesidad de casts (req as any).requestId y (req as any).contactId en todo el código
+ * AI_DECISION: Extender Express.Request para incluir requestId, contactId y user tipados
+ * Justificación: Elimina necesidad de casts (req as any).requestId, (req as any).contactId y (req as any).user
  * Impacto: Type safety mejorado, código más limpio, menos errores en runtime
  */
 declare global {
@@ -80,6 +76,7 @@ declare global {
     interface Request {
       requestId?: string;
       contactId?: string; // Establecido por requireContactAccess middleware
+      user?: AuthUser;
     }
   }
 }

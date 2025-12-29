@@ -9,10 +9,9 @@ import {
   ModalFooter,
   Button,
   Text,
-  Stack,
   Badge,
-} from '@cactus/ui';
-import type { CalendarEvent } from '@/types/calendar';
+} from '@maatwork/ui';
+import type { CalendarEvent, CalendarEventAttendee } from '@/types';
 import {
   ExternalLink,
   MapPin,
@@ -23,15 +22,8 @@ import {
   Calendar as CalendarIcon,
   Clock,
   Mail,
+  AlignLeft,
 } from 'lucide-react';
-
-/**
- * Event Details Modal
- *
- * AI_DECISION: Modal para mostrar detalles completos de eventos de calendario
- * Justificación: Mejor UX que mostrar todo en el grid, permite ver más información
- * Impacto: Usuario puede ver descripción, asistentes, links sin salir de la app
- */
 
 interface EventDetailsModalProps {
   event: CalendarEvent | null;
@@ -67,7 +59,6 @@ export function EventDetailsModal({
 
   const isAllDay = !event.start.dateTime && event.start.date;
 
-  // Format date and time
   const dateString = startDate?.toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
@@ -106,192 +97,142 @@ export function EventDetailsModal({
 
   return (
     <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <ModalContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <ModalHeader className="border-b border-border pb-4">
-          <Stack direction="column" gap="xs">
-            <ModalTitle className="text-xl">{event.summary || 'Sin título'}</ModalTitle>
-            {getStatusBadge(event.status)}
-          </Stack>
+      <ModalContent className="max-w-lg p-0 overflow-hidden sm:rounded-xl">
+        <ModalHeader className="px-6 py-4 border-b border-border/40 bg-background sticky top-0 z-40">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">{getStatusBadge(event.status)}</div>
+            </div>
+            <ModalTitle className="text-xl font-bold leading-tight">
+              {event.summary || 'Sin título'}
+            </ModalTitle>
+          </div>
         </ModalHeader>
-        <div className="p-6">
-          <Stack direction="column" gap="lg">
-            {/* Date and Time */}
+
+        <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+          {/* Date/Time */}
+          <div className="flex items-start gap-3">
+            <div className="mt-1 p-2 bg-primary/10 rounded-lg text-primary">
+              <CalendarIcon size={18} />
+            </div>
+            <div>
+              <Text weight="medium" className="capitalize text-base text-foreground">
+                {dateString}
+              </Text>
+              <Text size="sm" className="text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                <Clock size={14} /> {timeString}
+              </Text>
+            </div>
+          </div>
+
+          {/* Location */}
+          {event.location && (
             <div className="flex items-start gap-3">
-              <div className="mt-1 bg-primary/10 p-2 rounded-lg text-primary">
-                <Clock className="w-5 h-5" />
+              <div className="mt-1 p-2 bg-secondary/10 rounded-lg text-secondary-foreground">
+                <MapPin size={18} />
               </div>
               <div>
-                <Text weight="medium" size="lg" className="capitalize mb-1">
-                  {dateString}
+                <Text weight="medium" className="text-base text-foreground">
+                  Ubicación
                 </Text>
-                <Text color="secondary">{timeString}</Text>
+                <Text size="sm" className="text-muted-foreground mt-0.5">
+                  {event.location}
+                </Text>
               </div>
             </div>
+          )}
 
-            {/* Location */}
-            {event.location && (
-              <div className="flex items-start gap-3">
-                <div className="mt-1 bg-surface-hover p-2 rounded-lg text-text-secondary">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <Text weight="medium" className="mb-1">
-                    Ubicación
-                  </Text>
-                  <Text color="secondary">{event.location}</Text>
-                </div>
+          {/* Google Meet */}
+          {event.hangoutLink && (
+            <div className="flex items-start gap-3">
+              <div className="mt-1 p-2 bg-blue-500/10 rounded-lg text-blue-600">
+                <Video size={18} />
               </div>
-            )}
-
-            {/* Video Link */}
-            {event.hangoutLink && (
-              <div className="flex items-start gap-3">
-                <div className="mt-1 bg-blue-500/10 p-2 rounded-lg text-blue-500">
-                  <Video className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <Text weight="medium" className="mb-2">
-                    Google Meet
-                  </Text>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => window.open(event.hangoutLink, '_blank')}
-                    className="w-full sm:w-auto"
-                  >
-                    Unirse a la reunión
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            {event.description && (
-              <div className="bg-surface p-4 rounded-lg">
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-2 text-text-secondary uppercase tracking-wide"
-                >
-                  Descripción
+              <div className="flex-1">
+                <Text weight="medium" className="text-base text-foreground">
+                  Google Meet
                 </Text>
-                <div
-                  className="prose prose-sm max-w-none text-text-secondary"
-                  dangerouslySetInnerHTML={{ __html: event.description }}
-                />
-              </div>
-            )}
-
-            {/* Organizer */}
-            {event.organizer && (
-              <div>
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-3 text-text-secondary uppercase tracking-wide flex items-center gap-2"
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-blue-600 hover:text-blue-700 text-sm mt-0.5"
+                  onClick={() => window.open(event.hangoutLink!, '_blank')}
                 >
-                  <CalendarIcon className="w-4 h-4" /> Organizador
-                </Text>
-                <div className="flex items-center gap-3 bg-surface p-3 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">
-                    {event.organizer.displayName?.[0] || event.organizer.email?.[0] || '?'}
-                  </div>
-                  <div>
-                    <Text weight="medium">{event.organizer.displayName || 'Organizador'}</Text>
-                    <Text size="sm" color="secondary">
-                      {event.organizer.email}
-                    </Text>
-                  </div>
-                  {event.organizer.self && (
-                    <Badge size="sm" variant="secondary" className="ml-auto">
-                      Tú
-                    </Badge>
-                  )}
-                </div>
+                  Unirse a la videollamada
+                </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Attendees */}
-            {event.attendees && event.attendees.length > 0 && (
-              <div>
-                <Text
-                  weight="medium"
-                  size="sm"
-                  className="mb-3 text-text-secondary uppercase tracking-wide flex items-center gap-2"
-                >
-                  <Users className="w-4 h-4" /> Asistentes ({event.attendees.length})
-                </Text>
-                <Stack direction="column" gap="xs">
-                  {event.attendees.map((attendee, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-2 hover:bg-surface rounded-lg transition-colors"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <Text weight="medium" className="truncate">
-                          {attendee.displayName || attendee.email}
-                        </Text>
-                        {attendee.displayName && (
-                          <Text size="xs" color="secondary" className="truncate">
-                            {attendee.email}
-                          </Text>
-                        )}
-                      </div>
-                      {attendee.responseStatus && (
-                        <Badge
-                          size="sm"
-                          variant={
-                            attendee.responseStatus === 'accepted'
-                              ? 'success'
-                              : attendee.responseStatus === 'declined'
-                                ? 'error'
-                                : 'secondary'
-                          }
-                        >
-                          {attendee.responseStatus === 'accepted'
-                            ? 'Aceptado'
-                            : attendee.responseStatus === 'declined'
-                              ? 'Rechazado'
-                              : attendee.responseStatus === 'tentative'
-                                ? 'Tentativo'
-                                : 'Pendiente'}
-                        </Badge>
-                      )}
+          {/* Attendees */}
+          {(event.organizer || (event.attendees && event.attendees.length > 0)) && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Users size={16} /> Invitados
+              </div>
+              <div className="space-y-2 pl-1">
+                {event.organizer && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                      {event.organizer.displayName?.[0] || event.organizer.email?.[0] || '?'}
                     </div>
-                  ))}
-                </Stack>
+                    <span className="flex-1 truncate">
+                      {event.organizer.displayName || event.organizer.email}
+                      <span className="text-muted-foreground ml-1 text-xs">(Organizador)</span>
+                    </span>
+                  </div>
+                )}
+                {event.attendees?.map((attendee, index) => (
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    <div className="w-6 h-6 rounded-full bg-secondary/20 flex items-center justify-center text-secondary-foreground text-xs font-bold">
+                      <Mail size={12} />
+                    </div>
+                    <span className="flex-1 truncate text-muted-foreground">
+                      {attendee.displayName || attendee.email}
+                    </span>
+                    {attendee.responseStatus && (
+                      <span className="text-xs capitalize px-1.5 py-0.5 rounded bg-secondary/10 text-muted-foreground">
+                        {attendee.responseStatus}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
-          </Stack>
+            </div>
+          )}
+
+          {/* Description */}
+          {event.description && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <AlignLeft size={16} /> Descripción
+              </div>
+              <div
+                className="text-sm text-foreground/80 leading-relaxed pl-1"
+                dangerouslySetInnerHTML={{ __html: event.description }}
+              />
+            </div>
+          )}
         </div>
-        <ModalFooter className="border-t border-border pt-4">
+
+        <ModalFooter className="px-6 py-4 border-t border-border/40 bg-background/50">
           <div className="flex justify-between w-full">
             <Button
-              variant="outline"
+              variant="ghost"
+              className="text-error hover:text-error hover:bg-error/10"
               onClick={() => onDelete(event.id)}
               disabled={isDeleting}
-              className="text-error border-error/30 hover:bg-error/5 hover:border-error"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
+              <Trash2 size={16} className="mr-2" /> Eliminar
             </Button>
 
             <div className="flex gap-2">
               {event.htmlLink && (
-                <Button variant="ghost" onClick={() => window.open(event.htmlLink, '_blank')}>
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Ver en Google
+                <Button variant="outline" onClick={() => window.open(event.htmlLink!, '_blank')}>
+                  <ExternalLink size={16} className="mr-2" /> Google
                 </Button>
               )}
-              <Button variant="outline" onClick={() => onEdit(event)}>
-                <Edit2 className="w-4 h-4 mr-2" />
-                Editar
-              </Button>
-              <Button variant="primary" onClick={onClose}>
-                Cerrar
+              <Button onClick={() => onEdit(event)}>
+                <Edit2 size={16} className="mr-2" /> Editar
               </Button>
             </div>
           </div>

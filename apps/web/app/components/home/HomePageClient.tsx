@@ -9,7 +9,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardContent, Button, Heading, Text, Stack } from '@cactus/ui';
+import dynamic from 'next/dynamic';
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Button,
+  Heading,
+  Text,
+  Stack,
+  SkeletonCard,
+} from '@maatwork/ui';
 import { MetricsSection } from './MetricsSection';
 import { PersonalCalendarWidget } from './PersonalCalendarWidget';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
@@ -19,8 +29,6 @@ interface HomePageClientProps {
   goalsData: MonthlyGoal | null;
   metricsError: string | null;
   metricsLoading?: boolean;
-  teamCalendarUrl: string | null;
-  teamId: string | null;
 }
 
 export function HomePageClient({
@@ -28,8 +36,6 @@ export function HomePageClient({
   goalsData,
   metricsError,
   metricsLoading = false,
-  teamCalendarUrl,
-  teamId,
 }: HomePageClientProps) {
   return (
     <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">

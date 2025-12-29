@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Text, Stack, Button, Badge } from '@cactus/ui';
+import { Text, Stack, Button, Badge } from '@maatwork/ui';
 import type { UserApiResponse as User, Team } from '@/types';
 import type { AuthUser } from '@/app/auth/AuthContext';
 

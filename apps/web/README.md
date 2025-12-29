@@ -1,11 +1,11 @@
-# CACTUS CRM - Web App
+# MAATWORK - Web App
 
-Aplicación web frontend del CRM construida con Next.js 15 y el Design System @cactus/ui.
+Aplicación web frontend del CRM construida con Next.js 15 y el Design System @maatwork/ui.
 
 ## Características
 
 - **Next.js 15**: App Router con React Server Components
-- **Design System**: Componentes reutilizables de @cactus/ui
+- **Design System**: Componentes reutilizables de @maatwork/ui
 - **Theming**: Soporte para modo claro/oscuro
 - **Accesibilidad**: WCAG 2.2 AA compliant
 - **Responsive**: Diseño adaptativo para móviles y desktop
@@ -121,7 +121,7 @@ apps/web/
 
 ## Integración con Design System
 
-La aplicación utiliza componentes del design system @cactus/ui:
+La aplicación utiliza componentes del design system @maatwork/ui:
 
 ```tsx
 import { 
@@ -130,7 +130,7 @@ import {
   Input, 
   DataTable,
   useTheme 
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 // Los componentes automáticamente respetan el tema activo
 // y incluyen todas las optimizaciones de accesibilidad
@@ -141,7 +141,7 @@ import {
 El sistema de temas se maneja a través del ThemeProvider:
 
 ```tsx
-import { ThemeProvider } from '@cactus/ui';
+import { ThemeProvider } from '@maatwork/ui';
 
 export default function RootLayout({ children }) {
   return (

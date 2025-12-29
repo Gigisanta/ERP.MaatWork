@@ -21,6 +21,7 @@ export interface AuthUser {
   fullName?: string;
   isActive?: boolean;
   isGoogleConnected?: boolean;
+  googleEmail?: string | null;
 }
 
 interface RegisterData {
@@ -154,7 +155,6 @@ export function AuthProvider({
         setUser(null);
         logger.updateUser(null, null);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo ejecutar una vez al montar, initialUser se maneja en el estado inicial
 
   // Automatic token refresh
@@ -218,7 +218,7 @@ export function AuthProvider({
   React.useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       // If session changes in another tab, re-check session
-      if (e.key === 'cactus_session_changed' || e.key === null) {
+      if (e.key === 'maatwork_session_changed' || e.key === null) {
         logger.debug('Cambio de sesión detectado en otra pestaña, re-verificando');
         checkSession().catch((err) => {
           logger.warn('Error al re-verificar sesión después de cambio en otra pestaña', {
@@ -396,8 +396,8 @@ export function AuthProvider({
     // Notify other tabs
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('cactus_session_changed', Date.now().toString());
-        localStorage.removeItem('cactus_session_changed');
+        localStorage.setItem('maatwork_session_changed', Date.now().toString());
+        localStorage.removeItem('maatwork_session_changed');
       } catch {
         // Ignore localStorage errors
       }

@@ -15,7 +15,7 @@ import {
   notifications,
   lookupNotificationType,
   users,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { eq, or } from 'drizzle-orm';
 import { decryptToken } from '../../../utils/encryption';
 import { env } from '../../../config/env';
@@ -24,7 +24,7 @@ import { refreshGoogleToken } from '../../../jobs/google-token-refresh';
 import { z } from 'zod';
 import { getEventsQuerySchema, connectTeamCalendarSchema, assignEventSchema } from '../schemas';
 import { checkTeamAccess } from '../../teams/handlers/utils';
-import { contactsListCacheUtil } from '../../../utils/performance/cache';
+import { contactsListCacheUtil, calendarEventsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { invalidateCache } from '../../../middleware/cache';
 
 /**
@@ -35,6 +35,18 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
   const teamId = req.params.teamId;
   const userId = req.user!.id;
   const userRole = req.user!.role;
+
+  const { calendarType, timeMin, timeMax, maxResults } = req.query as unknown as z.infer<
+    typeof getEventsQuerySchema
+  >;
+
+  // Try cache first
+  const cacheKey = normalizeCacheKey('team_calendar', teamId, calendarType, timeMin, timeMax, maxResults);
+  const cachedEvents = calendarEventsCacheUtil.get(cacheKey);
+  if (cachedEvents) {
+    req.log.debug({ teamId, cacheKey }, 'Team calendar events cache hit');
+    return cachedEvents;
+  }
 
   // Verificar acceso al equipo
   const access = await checkTeamAccess(userId, userRole, teamId);
@@ -48,10 +60,6 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
     throw new HttpError(404, 'Team not found');
   }
 
-  const { calendarType, timeMin, timeMax, maxResults } = req.query as unknown as z.infer<
-    typeof getEventsQuerySchema
-  >;
-
   const targetCalendarId =
     calendarType === 'meetingRoom' ? team.meetingRoomCalendarId : team.calendarId;
 
@@ -64,9 +72,6 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
   }
 
   // Obtener tokens del manager que conectó el calendario
-  // Note: We use the same user for both calendars for simplicity, or we should track who connected which.
-  // Schema has only one calendarConnectedByUserId. We assume the same person or the person in that field manages both for now.
-  // Ideally, we should have meetingRoomCalendarConnectedByUserId, but let's reuse for now to minimize schema changes.
   if (!team.calendarConnectedByUserId) {
     throw new HttpError(500, 'Team calendar connection information missing');
   }
@@ -109,7 +114,12 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
     );
   };
 
-  return await fetchEvents(managerToken);
+  const events = await fetchEvents(managerToken);
+  
+  // Set cache
+  calendarEventsCacheUtil.set(cacheKey, events);
+  
+  return events;
 });
 
 /**

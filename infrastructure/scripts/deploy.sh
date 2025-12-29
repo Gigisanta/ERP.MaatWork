@@ -100,7 +100,7 @@ fi
 # Banner
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║              CACTUS INFRASTRUCTURE DEPLOYMENT              ║${NC}"
+echo -e "${CYAN}║              MAATWORK INFRASTRUCTURE DEPLOYMENT              ║${NC}"
 echo -e "${CYAN}╠════════════════════════════════════════════════════════════╣${NC}"
 printf "${CYAN}║  Mode:        %-44s║${NC}\n" "$(echo $MODE | tr '[:lower:]' '[:upper:]')"
 printf "${CYAN}║  Environment: %-44s║${NC}\n" "$(echo $ENVIRONMENT | tr '[:lower:]' '[:upper:]')"

@@ -1,6 +1,6 @@
-# CACTUS CRM Monorepo
+# MAATWORK Monorepo
 
-Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@cactus/db` (Drizzle + PostgreSQL) y `@cactus/ui` (Design System + React Components).
+Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@maatwork/db` (Drizzle + PostgreSQL) y `@maatwork/ui` (Design System + React Components).
 
 ## Primera Instalación
 
@@ -22,7 +22,7 @@ El script de setup (`pnpm setup`) automáticamente:
 - ✅ Configura variables de entorno (crea `.env` desde `config-example.env`)
 - ✅ Inicia servicios Docker (PostgreSQL y N8N)
 - ✅ Ejecuta migraciones de base de datos
-- ✅ Crea usuario admin inicial (`admin@cactus.local`)
+- ✅ Crea usuario admin inicial (`admin@maatwork.local`)
 
 **Nota:** Si encuentras errores 401 o problemas de autenticación después de clonar:
 - Limpia las cookies del navegador para `localhost`
@@ -51,6 +51,7 @@ pnpm typecheck        # Verificar tipos
 pnpm build            # Build completo
 pnpm test             # Tests unitarios
 pnpm test:e2e         # Tests E2E
+pnpm audit:code       # Auditoría completa (código muerto, tipos, barrels)
 ```
 
 Ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#comandos-útiles) para comandos completos.
@@ -68,13 +69,13 @@ Categorización de contactos con etiquetas personalizables.
 ### N8N - Automatizaciones
 Servicio Docker para crear y gestionar automatizaciones de flujos de trabajo. Acceso en http://localhost:5678.
 
-### Design System (@cactus/ui)
+### Design System (@maatwork/ui)
 Sistema de diseño moderno y accesible con 40+ componentes reutilizables. Ver [packages/ui/README.md](./packages/ui/README.md).
 
 ### Sistema de Logging
 - **Backend**: Pino con logs estructurados JSON
 - **Frontend**: Sistema estructurado con correlación de requests
-- Ver logs: `pnpm -F @cactus/api run dev:pretty`
+- Ver logs: `pnpm -F @maatwork/api run dev:pretty`
 
 Para información de deploy y troubleshooting, ver [Guía de Operaciones](./docs/OPERATIONS.md).
 

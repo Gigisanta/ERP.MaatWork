@@ -150,7 +150,7 @@ function main() {
     process.exit(1);
   } else if (hasWarnings) {
     console.log(warning('⚠️  Hay advertencias'));
-    console.log(warning('   Ejecuta: pnpm -F @cactus/analytics-service install'));
+    console.log(warning('   Ejecuta: pnpm -F @maatwork/analytics-service install'));
     process.exit(0);
   } else {
     console.log(success('✅ Python y dependencias están listas'));

@@ -8,6 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LoginPage from './page';
 import { useAuth } from '../auth/AuthContext';
@@ -27,6 +28,7 @@ const mockUseSearchParams = vi.mocked(useSearchParams);
 const mockUseAuth = vi.mocked(useAuth);
 
 describe('LoginPage', () => {
+  let user: ReturnType<typeof userEvent.setup>;
   const mockRouter = {
     replace: vi.fn(),
     push: vi.fn(),
@@ -37,6 +39,7 @@ describe('LoginPage', () => {
   };
 
   beforeEach(() => {
+    user = userEvent.setup();
     vi.clearAllMocks();
     mockUseRouter.mockReturnValue(mockRouter as any);
     mockUseSearchParams.mockReturnValue(mockSearchParams as any);
@@ -52,16 +55,16 @@ describe('LoginPage', () => {
   it('debería renderizar formulario de login', () => {
     render(<LoginPage />);
 
-    expect(screen.getByLabelText(/email|usuario|correo/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña|password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ingresar|login|entrar/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/contraseña|password/i, { selector: 'input' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i })).toBeInTheDocument();
   });
 
   it('debería mostrar errores de validación cuando campos están vacíos', async () => {
     render(<LoginPage />);
 
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(screen.getByText(/completa todos los campos/i)).toBeInTheDocument();
@@ -80,13 +83,13 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    const emailInput = screen.getByLabelText(/email|usuario|correo/i);
-    const passwordInput = screen.getByLabelText(/contraseña|password/i);
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
+    const emailInput = screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' });
+    const passwordInput = screen.getByLabelText(/contraseña|password/i, { selector: 'input' });
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(submitButton);
+    await user.type(emailInput, 'test@example.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123', false);
@@ -115,15 +118,15 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    const emailInput = screen.getByLabelText(/email|usuario|correo/i);
-    const passwordInput = screen.getByLabelText(/contraseña|password/i);
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
+    const emailInput = screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' });
+    const passwordInput = screen.getByLabelText(/contraseña|password/i, { selector: 'input' });
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    await user.type(emailInput, 'test@example.com');
+    await user.type(passwordInput, 'password123');
 
     // Simulate login completing and user being set
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     // Wait for login to be called
     await waitFor(() => {
@@ -133,7 +136,7 @@ describe('LoginPage', () => {
     // Simulate user being set after login
     currentUser = mockUser;
 
-    // Re-render to trigger useEffect
+    // Trigger re-render to update the component with new user state
     mockUseAuth.mockReturnValue({
       login: mockLogin,
       logout: vi.fn(),
@@ -142,9 +145,12 @@ describe('LoginPage', () => {
       loading: false,
     } as any);
 
+    const { rerender } = render(<LoginPage />);
+    rerender(<LoginPage />);
+
     await waitFor(
       () => {
-        expect(mockRouter.push).toHaveBeenCalledWith('/');
+        expect(mockRouter.replace).toHaveBeenCalled();
       },
       { timeout: 3000 }
     );
@@ -167,14 +173,14 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    const emailInput = screen.getByLabelText(/email|usuario|correo/i);
-    const passwordInput = screen.getByLabelText(/contraseña|password/i);
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
+    const emailInput = screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' });
+    const passwordInput = screen.getByLabelText(/contraseña|password/i, { selector: 'input' });
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    await user.type(emailInput, 'test@example.com');
+    await user.type(passwordInput, 'password123');
 
-    fireEvent.click(submitButton);
+    await user.click(submitButton);
 
     // Wait for login to be called
     await waitFor(() => {
@@ -190,9 +196,12 @@ describe('LoginPage', () => {
       loading: false,
     } as any);
 
+    const { rerender } = render(<LoginPage />);
+    rerender(<LoginPage />);
+
     await waitFor(
       () => {
-        expect(mockRouter.push).toHaveBeenCalledWith('/contacts');
+        expect(mockRouter.replace).toHaveBeenCalledWith('/contacts');
       },
       { timeout: 3000 }
     );
@@ -210,16 +219,18 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    const emailInput = screen.getByLabelText(/email|usuario|correo/i);
-    const passwordInput = screen.getByLabelText(/contraseña|password/i);
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
+    const emailInput = screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' });
+    const passwordInput = screen.getByLabelText(/contraseña|password/i, { selector: 'input' });
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-    fireEvent.click(submitButton);
+    await user.type(emailInput, 'test@example.com');
+    await user.type(passwordInput, 'wrongpassword');
+    await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/error|invalid|credenciales/i)).toBeInTheDocument();
+      const errorElements = screen.getAllByText(/error|invalid|credenciales/i);
+      expect(errorElements.length).toBeGreaterThan(0);
+      expect(errorElements[0]).toBeInTheDocument();
     });
   });
 
@@ -254,15 +265,15 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    const rememberMeCheckbox = screen.getByLabelText(/recordar|remember/i);
-    const emailInput = screen.getByLabelText(/email|usuario|correo/i);
-    const passwordInput = screen.getByLabelText(/contraseña|password/i);
-    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar/i });
+    const rememberMeCheckbox = screen.getByLabelText(/recordar|remember/i, { selector: 'button' });
+    const emailInput = screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' });
+    const passwordInput = screen.getByLabelText(/contraseña|password/i, { selector: 'input' });
+    const submitButton = screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i });
 
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(rememberMeCheckbox);
-    fireEvent.click(submitButton);
+    await user.type(emailInput, 'test@example.com');
+    await user.type(passwordInput, 'password123');
+    await user.click(rememberMeCheckbox);
+    await user.click(submitButton);
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123', true);

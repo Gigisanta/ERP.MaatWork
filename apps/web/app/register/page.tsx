@@ -17,7 +17,7 @@ import {
   Alert,
   Select,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { Feather } from 'lucide-react';
 import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
@@ -282,7 +282,7 @@ function RegisterContent() {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <Stack direction="column" gap="lg">
                 {/* Username Input */}
                 <div

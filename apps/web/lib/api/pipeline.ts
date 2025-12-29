@@ -4,7 +4,7 @@
 
 import { apiClient } from '../api-client';
 import type { ApiResponse } from '../api-client';
-import type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from '@/types/pipeline';
+import type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from '@/types';
 
 // ==========================================================
 // API Methods

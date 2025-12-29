@@ -3,7 +3,14 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Header, type NavItem, type User, Drawer, Sidebar, type SidebarSection } from '@cactus/ui';
+import {
+  Header,
+  type NavItem,
+  type User,
+  Drawer,
+  Sidebar,
+  type SidebarSection,
+} from '@maatwork/ui';
 import { useSidebar } from './SidebarContext';
 import CareerProgressBar from './CareerProgressBar';
 import { Feather } from 'lucide-react';
@@ -21,9 +28,9 @@ const routesWithoutPrefetch = [
   '/admin',
   '/capacitaciones',
   '/automations',
-  '/plandecarrera',
+  '/career-plan',
   '/profile',
-  '/recursos',
+  '/resources',
   '/contacts/metrics/history',
   '/contacts/[id]/tags',
   '/tasks',
@@ -102,11 +109,7 @@ function getAdvisorSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        // TODO: Descomentar cuando se implemente /tasks
-        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -120,7 +123,7 @@ function getAdvisorSections(): SidebarSection[] {
       title: 'Herramientas',
       items: [
         { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/recursos', icon: 'FileText' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
@@ -137,11 +140,7 @@ function getManagerSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        // TODO: Descomentar cuando se implemente /tasks
-        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -162,7 +161,7 @@ function getManagerSections(): SidebarSection[] {
       title: 'Herramientas',
       items: [
         { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/recursos', icon: 'FileText' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
@@ -183,11 +182,7 @@ function getAdminSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        // TODO: Descomentar cuando se implemente /tasks
-        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -212,7 +207,7 @@ function getAdminSections(): SidebarSection[] {
       items: [
         { label: 'Pipeline', href: '/pipeline', icon: 'list' as const },
         { label: 'Automations', href: '/automations', icon: 'Settings' as const },
-        { label: 'Plan de Carrera', href: '/plandecarrera', icon: 'Book' as const },
+        { label: 'Plan de Carrera', href: '/career-plan', icon: 'Book' as const },
         { label: 'Notificaciones', href: '/notifications', icon: 'Info' as const },
       ],
     },
@@ -220,7 +215,7 @@ function getAdminSections(): SidebarSection[] {
       title: 'Herramientas',
       items: [
         { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/recursos', icon: 'FileText' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
@@ -275,11 +270,7 @@ function getStaffSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        // TODO: Descomentar cuando se implemente /tasks
-        // { label: 'Tareas', href: '/tasks', icon: 'CheckCircle' as const },
-      ],
+      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
     },
     {
       title: 'Inversiones',
@@ -293,7 +284,7 @@ function getStaffSections(): SidebarSection[] {
       title: 'Herramientas',
       items: [
         { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/recursos', icon: 'FileText' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
@@ -314,21 +305,6 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   const router = useRouter();
   const pathname = usePathname();
   const hasRedirectedRef = useRef(false);
-
-  // AI_DECISION: Logging temporal para diagnosticar problemas de renderizado
-  // Justificación: Necesario para identificar por qué los componentes no se muestran
-  // Impacto: Ayuda a diagnosticar problemas de inicialización y renderizado
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.log('[NavigationNew] Render state:', {
-        hasUser: !!user,
-        initialized,
-        pathname,
-        sidebarCollapsed,
-        open,
-      });
-    }
-  }, [user, initialized, pathname, sidebarCollapsed, open]);
 
   // Memoized toggle function
   const handleToggle = useCallback(() => {
@@ -353,7 +329,6 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     if (typeof window !== 'undefined' && window.innerWidth < 1024 && open) {
       handleDrawerClose();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]); // Only depend on pathname to close on navigation
 
   const handleLogout = useCallback(() => {
@@ -384,9 +359,6 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     // Si no hay usuario y no hemos redirigido aún, redirigir al login
     if (!user && !hasRedirectedRef.current) {
       hasRedirectedRef.current = true;
-      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-        console.warn('[NavigationNew] No user found after initialization, redirecting to login');
-      }
       // Usar replace en lugar de push para evitar problemas de historial
       router.replace('/login');
     }
@@ -451,13 +423,6 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           <span className="text-secondary">Work</span>
         </span>
       </Link>
-      {/* Career Progress Bar - only on larger screens */}
-      {/* AI_DECISION: Renderizar siempre el contenedor, ocultarlo con CSS en lugar de condicionalmente */}
-      {/* Justificación: Asegura que el componente siempre se monte, mejor debugging */}
-      {/* Impacto: Componente siempre disponible, evita problemas de renderizado condicional */}
-      <div className="hidden md:flex items-center min-w-0 flex-1 ml-2">
-        <CareerProgressBar />
-      </div>
     </div>
   );
 
@@ -510,6 +475,12 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           onLogout={handleLogout}
           onToggleSidebar={handleToggle}
           sidebarOpen={open}
+          leftContent={
+            // Career Progress Bar - only on larger screens, right next to logo
+            <div className="hidden md:flex items-center min-w-0">
+              <CareerProgressBar />
+            </div>
+          }
         />
       </div>
 

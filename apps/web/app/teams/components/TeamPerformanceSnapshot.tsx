@@ -11,7 +11,7 @@ import {
   Icon,
   Grid,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getTeamMembersActivity, type TeamMembersActivityResponse } from '@/lib/api/teams';
 
 interface TeamPerformanceSnapshotProps {

@@ -7,11 +7,11 @@ export const notificationKeys = {
   unreadCount: '/notifications/unread/count',
 };
 
-export async function getNotifications(limit: number = 20, offset: number = 0) {
+async function getNotifications(limit: number = 20, offset: number = 0) {
   return apiClient.get<NotificationListResponse>(`/notifications?limit=${limit}&offset=${offset}`);
 }
 
-export async function getUnreadCount() {
+async function getUnreadCount() {
   return apiClient.get<UnreadCountResponse>('/notifications/unread/count');
 }
 
@@ -22,3 +22,11 @@ export async function markAsRead(id: string) {
 export async function markAllAsRead() {
   return apiClient.post<{ success: true }>('/notifications/read-all', {});
 }
+
+
+
+
+
+
+
+

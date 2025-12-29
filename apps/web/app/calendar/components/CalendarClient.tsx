@@ -6,10 +6,11 @@
 
 'use client';
 
-import { Card, CardHeader, CardTitle, CardContent, Text, Stack } from '@cactus/ui';
+import { Card, CardHeader, CardTitle, CardContent, Text, Stack } from '@maatwork/ui';
 import { useCalendarEvents } from '@/lib/api-hooks';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import Link from 'next/link';
+import type { CalendarEvent } from '@maatwork/types';
 
 interface CalendarClientProps {
   userId: string;
@@ -21,7 +22,6 @@ export function CalendarClient({ userId }: CalendarClientProps) {
     error,
     isLoading,
   } = useCalendarEvents({
-    timeMin: new Date().toISOString(),
     maxResults: 50,
   });
 
@@ -65,7 +65,7 @@ export function CalendarClient({ userId }: CalendarClientProps) {
           </CardHeader>
           <CardContent>
             <Stack direction="column" gap="xs">
-              {events.map((event: any) => (
+              {events.map((event: CalendarEvent) => (
                 <div key={event.id} className="py-2 border-b last:border-b-0">
                   <Text weight="medium">{event.summary || 'Sin título'}</Text>
                   {event.start?.dateTime && (
@@ -96,3 +96,6 @@ export function CalendarClient({ userId }: CalendarClientProps) {
     </div>
   );
 }
+
+
+

@@ -1,2 +1,0 @@
-necesito trabajar de lleno en el frontend, esta implementado el modo claro/oscuro, mejora la consistencia visual entre ambos modos, mejorando animaciones y colorimetria en la paleta colores complementarios para tener una armonia visual perfecta, mejorando asi la consistencia visual y experiencia de uso, investigalo todo y deja todas las interfaces, botones, fondo, colores, limpio, fresco, nuevo y moderno, ya implementado
-quiero una interfaz mas moderna, con animaciones que se sientan frescas y modernas, que sea muy agradable a la vista

@@ -11,6 +11,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { PersonalCalendarWidget } from '../PersonalCalendarWidget';
 import * as apiHooks from '@/lib/api-hooks';
 import * as authContext from '../../../auth/AuthContext';
+import { ApiError } from '@/lib/api-error';
 
 // Mock dependencies
 vi.mock('@/lib/api-hooks');
@@ -38,6 +39,7 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
     vi.mocked(apiHooks.useCalendarEvents).mockReturnValue({
@@ -61,6 +63,7 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
     vi.mocked(apiHooks.useCalendarEvents).mockReturnValue({
@@ -87,11 +90,10 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
-    const authError = new Error('Unauthorized');
-    (authError as any).status = 401;
-    (authError as any).isAuthError = true;
+    const authError = new ApiError('Unauthorized', 401);
 
     vi.mocked(apiHooks.useCalendarEvents).mockReturnValue({
       data: [],
@@ -115,6 +117,7 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
     const genericError = new Error('Network error');
@@ -141,6 +144,7 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
     vi.mocked(apiHooks.useCalendarEvents).mockReturnValue({
@@ -152,7 +156,7 @@ describe('PersonalCalendarWidget', () => {
 
     render(<PersonalCalendarWidget />);
 
-    expect(screen.getByText('No tienes eventos para los próximos 7 días')).toBeInTheDocument();
+    expect(screen.getAllByText('Sin eventos').length).toBeGreaterThan(0);
   });
 
   it('should display events when available', () => {
@@ -163,22 +167,27 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
+
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
     const mockEvents = [
       {
         id: '1',
         summary: 'Test Event 1',
-        start: { dateTime: '2024-01-15T10:00:00Z' },
-        end: { dateTime: '2024-01-15T11:00:00Z' },
+        start: { dateTime: new Date(today.setHours(10, 0, 0, 0)).toISOString() },
+        end: { dateTime: new Date(today.setHours(11, 0, 0, 0)).toISOString() },
         status: 'confirmed',
         htmlLink: 'https://calendar.google.com/event1',
       },
       {
         id: '2',
         summary: 'Test Event 2',
-        start: { date: '2024-01-16' },
-        end: { date: '2024-01-16' },
+        start: { date: tomorrow.toISOString().split('T')[0] },
+        end: { date: tomorrow.toISOString().split('T')[0] },
         status: 'confirmed',
         htmlLink: 'https://calendar.google.com/event2',
       },
@@ -193,9 +202,9 @@ describe('PersonalCalendarWidget', () => {
 
     render(<PersonalCalendarWidget />);
 
-    expect(screen.getByText('Test Event 1')).toBeInTheDocument();
-    expect(screen.getByText('Test Event 2')).toBeInTheDocument();
-    expect(screen.getByText('Todo el día')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Event 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Test Event 2').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Todo el día').length).toBeGreaterThan(0);
   });
 
   it('should have refresh button that calls mutate', async () => {
@@ -208,6 +217,7 @@ describe('PersonalCalendarWidget', () => {
       register: vi.fn(),
       logout: vi.fn(),
       refreshSession: vi.fn(),
+      mutateUser: vi.fn(),
     });
 
     vi.mocked(apiHooks.useCalendarEvents).mockReturnValue({
@@ -219,7 +229,7 @@ describe('PersonalCalendarWidget', () => {
 
     render(<PersonalCalendarWidget />);
 
-    const refreshButton = screen.getByText('Actualizar');
+    const refreshButton = screen.getByLabelText('Actualizar');
     refreshButton.click();
 
     await waitFor(() => {

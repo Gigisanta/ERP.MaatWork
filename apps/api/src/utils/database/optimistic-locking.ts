@@ -31,7 +31,7 @@ export function isVersionConflictError(error: unknown): error is VersionConflict
 /**
  * Resultado de un update con validación de versión
  */
-export interface VersionedUpdateResult<T> {
+interface VersionedUpdateResult<T> {
   success: boolean;
   data?: T;
   error?: VersionConflictError;

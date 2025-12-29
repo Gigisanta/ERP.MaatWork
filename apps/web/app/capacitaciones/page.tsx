@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { getCapacitaciones } from '@/lib/api-server';
 import CapacitacionesList from './CapacitacionesList';
-import type { CapacitacionesListResponse } from '@/types/capacitaciones';
+import type { CapacitacionesListResponse } from '@/types';
 
 // AI_DECISION: Convert to Server Component with Client Islands pattern
 // Justificación: Reduces First Load JS ~10-20KB, better SEO, faster initial load

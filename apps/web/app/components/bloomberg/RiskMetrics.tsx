@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@cactus/ui';
+import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@maatwork/ui';
 
 interface RiskMetricsProps {
   symbol: string;
@@ -17,11 +17,11 @@ interface RiskMetricsProps {
 
 export default function RiskMetrics({ symbol }: RiskMetricsProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
     // AI_DECISION: Placeholder para métricas de riesgo (Sharpe, Sortino, Max Drawdown, Beta, Volatility)
-    // Justificación: UI lista, cálculos de riesgo disponibles en analytics-service (cactus_ingestors/utils/risk.py)
+    // Justificación: UI lista, cálculos de riesgo disponibles en analytics-service (maatwork_ingestors/utils/risk.py)
     // Dependencies: Suficiente historial de precios en DB, endpoints API para exponer cálculos de riesgo
     // Impacto: Mejora análisis de riesgo una vez conectado con backend
     setLoading(false);

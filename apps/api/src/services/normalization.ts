@@ -63,3 +63,11 @@ export function calculateNameSimilarity(name1: string, name2: string): number {
 
   return intersection.size / union.size;
 }
+
+
+
+
+
+
+
+

@@ -12,7 +12,7 @@ import type { FieldError } from '@/lib/hooks/useFormValidation';
 /**
  * Error detail structure from backend (flexible to handle various formats)
  */
-export interface BackendErrorDetail {
+interface BackendErrorDetail {
   path?: string;
   field?: string;
   message?: string;
@@ -22,7 +22,7 @@ export interface BackendErrorDetail {
 /**
  * Structured error response from API
  */
-export interface ApiErrorResponse {
+interface ApiErrorResponse {
   error: string;
   message?: string;
   details?: string | string[] | BackendErrorDetail[];
@@ -32,12 +32,12 @@ export interface ApiErrorResponse {
 /**
  * Mapped form errors
  */
-export type MappedFormErrors<T extends string = string> = Partial<Record<T, FieldError>>;
+type MappedFormErrors<T extends string = string> = Partial<Record<T, FieldError>>;
 
 /**
  * Options for error mapping
  */
-export interface ErrorMapperOptions {
+interface ErrorMapperOptions {
   /** Custom field name mappings (backend field -> form field) */
   fieldMappings?: Record<string, string>;
   /** Default error message when no specific message is available */

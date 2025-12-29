@@ -5,7 +5,7 @@
 variable "project_name" {
   description = "Name of the project, used for resource naming and tagging"
   type        = string
-  default     = "cactus"
+  default     = "maatwork"
 }
 
 variable "environment" {

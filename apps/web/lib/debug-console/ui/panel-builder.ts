@@ -34,7 +34,7 @@ export interface PanelElements {
   filterButtons: Map<string, HTMLButtonElement>;
 }
 
-export interface PanelCallbacks {
+interface PanelCallbacks {
   onToggle: () => void;
   onClear: () => void;
   onExport: () => void;
@@ -422,3 +422,11 @@ export function renderEmptyState(hasFilters: boolean): HTMLDivElement {
     : 'No hay logs registrados';
   return empty;
 }
+
+
+
+
+
+
+
+

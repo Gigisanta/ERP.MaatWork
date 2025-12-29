@@ -38,7 +38,7 @@ describe('Cache Middleware', () => {
   let mockNext: NextFunction;
   let mockRedis: {
     get: ReturnType<typeof vi.fn>;
-    setEx: ReturnType<typeof vi.fn>;
+    setex: ReturnType<typeof vi.fn>;
     keys: ReturnType<typeof vi.fn>;
     del: ReturnType<typeof vi.fn>;
   };
@@ -62,7 +62,7 @@ describe('Cache Middleware', () => {
 
     mockRedis = {
       get: vi.fn(),
-      setEx: vi.fn(),
+      setex: vi.fn(),
       keys: vi.fn(),
       del: vi.fn(),
     };
@@ -109,7 +109,7 @@ describe('Cache Middleware', () => {
 
     it('debería cachear response cuando hay cache miss', async () => {
       mockRedis.get.mockResolvedValue(null);
-      mockRedis.setEx.mockResolvedValue('OK');
+      mockRedis.setex.mockResolvedValue('OK');
       mockGetRedisClient.mockReturnValue(mockRedis as any);
 
       // Store original json function
@@ -130,7 +130,7 @@ describe('Cache Middleware', () => {
       // Call the overridden json function
       await (mockRes.json as any)(responseData);
 
-      expect(mockRedis.setEx).toHaveBeenCalled();
+      expect(mockRedis.setex).toHaveBeenCalled();
       expect(mockRes.setHeader).toHaveBeenCalledWith('X-Cache', 'MISS');
     });
 

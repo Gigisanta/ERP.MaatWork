@@ -12,7 +12,7 @@ import {
   Grid,
   Icon,
   Button,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { TeamCalendarSection } from './TeamCalendarSection';
 import type { MemberDashboardResponse } from '@/lib/api/teams';
 import { useRouter } from 'next/navigation';

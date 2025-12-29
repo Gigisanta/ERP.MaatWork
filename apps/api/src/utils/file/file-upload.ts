@@ -20,7 +20,7 @@ import type { Request, Response, NextFunction } from 'express';
 // Types
 // ==========================================================
 
-export interface FileUploadOptions {
+interface FileUploadOptions {
   /** Maximum file size in bytes */
   maxFileSize: number;
   /** Custom upload directory (defaults to process.cwd()/uploads) */
@@ -42,7 +42,7 @@ type MulterFileFilterFn = (
   callback: multer.FileFilterCallback
 ) => void;
 
-export interface MulterErrorHandlerOptions {
+interface MulterErrorHandlerOptions {
   maxFileSize: number;
   logger?: {
     error?: (context: Record<string, unknown>, message: string) => void;
@@ -104,7 +104,7 @@ export const MIME_TYPES = {
 } as const;
 
 /** Extension to MIME type mapping for validation */
-export const EXTENSION_TO_MIME: Record<string, string[]> = {
+const EXTENSION_TO_MIME: Record<string, string[]> = {
   '.jpg': ['image/jpeg'],
   '.jpeg': ['image/jpeg'],
   '.png': ['image/png'],
@@ -168,7 +168,7 @@ export function sanitizeFilename(filename: string): string {
  * @param prefix - Optional prefix (e.g., 'capacitaciones', 'aum')
  * @returns Unique filename
  */
-export function generateUniqueFilename(originalname: string, prefix?: string): string {
+function generateUniqueFilename(originalname: string, prefix?: string): string {
   const sanitized = sanitizeFilename(originalname);
   const ext = extname(sanitized);
   const base = basename(sanitized, ext);
@@ -221,7 +221,7 @@ export async function ensureUploadDir(dir: string): Promise<void> {
  * @param options - Storage configuration options
  * @returns Configured multer.diskStorage instance
  */
-export function createMulterStorage(options: FileUploadOptions): multer.StorageEngine {
+function createMulterStorage(options: FileUploadOptions): multer.StorageEngine {
   const uploadDir = options.uploadDir || DEFAULT_UPLOAD_DIR;
 
   return multer.diskStorage({
@@ -251,7 +251,7 @@ export function createMulterStorage(options: FileUploadOptions): multer.StorageE
  * @param options - Filter options with allowedMimeTypes and/or allowedExtensions
  * @returns Multer file filter function
  */
-export function createFileFilter(
+function createFileFilter(
   options: Pick<FileUploadOptions, 'allowedMimeTypes' | 'allowedExtensions'>
 ): MulterFileFilterFn {
   return (req, file, cb) => {
@@ -287,7 +287,7 @@ export function createFileFilter(
  * @param options - Upload configuration options
  * @returns Configured multer instance
  */
-export function createMulterUpload(options: FileUploadOptions): multer.Multer {
+function createMulterUpload(options: FileUploadOptions): multer.Multer {
   const storage = createMulterStorage(options);
 
   // Build multer options, only including fileFilter if MIME types or extensions are specified
@@ -420,7 +420,7 @@ export function createCsvUpload(
  * @param uploadDir - Optional custom upload directory
  * @returns Configured multer instance
  */
-export function createAttachmentUpload(maxFileSize: number, uploadDir?: string): multer.Multer {
+function createAttachmentUpload(maxFileSize: number, uploadDir?: string): multer.Multer {
   return createMulterUpload({
     maxFileSize,
     uploadDir,

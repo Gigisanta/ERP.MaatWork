@@ -8,7 +8,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 
-export interface RateLimitConfig {
+interface RateLimitConfig {
   /**
    * Capacidad máxima del bucket (número de tokens)
    */
@@ -265,7 +265,7 @@ export function createUserRateLimiter(config: RateLimitConfig): RateLimiter {
   return new RateLimiter({
     ...config,
     keyExtractor: (req: Request) => {
-      const user = (req as any).user;
+      const user = req.user;
       if (user?.id) {
         return `user:${user.id}`;
       }

@@ -17,7 +17,7 @@ vi.mock('@tanstack/react-virtual', () => ({
   }),
 }));
 
-vi.mock('@cactus/ui', () => ({
+vi.mock('@maatwork/ui', () => ({
   Text: ({ children, ...rest }: { children: ReactNode }) => <span {...rest}>{children}</span>,
   Button: ({ children, ...rest }: { children: ReactNode }) => <button {...rest}>{children}</button>,
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,

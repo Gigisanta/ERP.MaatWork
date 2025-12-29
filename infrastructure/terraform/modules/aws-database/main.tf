@@ -46,13 +46,13 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
-    username = "cactus_admin"
+    username = "maatwork_admin"
     password = random_password.db_password.result
-    database = "cactus"
+    database = "maatwork"
     host     = aws_db_instance.main.address
     port     = aws_db_instance.main.port
     # Full connection string for convenience
-    connection_string = "postgresql://cactus_admin:${random_password.db_password.result}@${aws_db_instance.main.address}:${aws_db_instance.main.port}/cactus"
+    connection_string = "postgresql://maatwork_admin:${random_password.db_password.result}@${aws_db_instance.main.address}:${aws_db_instance.main.port}/cactus"
   })
 
   lifecycle {
@@ -131,8 +131,8 @@ resource "aws_db_instance" "main" {
   storage_type          = "gp3"
 
   # Credentials
-  db_name  = "cactus"
-  username = "cactus_admin"
+  db_name  = "maatwork"
+  username = "maatwork_admin"
   password = random_password.db_password.result
 
   # Network

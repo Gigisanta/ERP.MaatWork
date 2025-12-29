@@ -5,6 +5,10 @@
  * Justificación: Validar fetching, creación, actualización y eliminación de benchmarks
  * Impacto: Prevenir errores en gestión de benchmarks
  */
+import { useEntityWithComponents } from './useEntityWithComponents';
+import { useRequireAuth } from '@/auth/useRequireAuth';
+import { getBenchmarks, getBenchmarkComponentsBatch, createBenchmark, updateBenchmark, deleteBenchmark,  } from '@/lib/api';
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -37,11 +41,9 @@ describe('useBenchmarks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    const { useEntityWithComponents } = require('./useEntityWithComponents');
-    useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
+        useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
 
-    const { useRequireAuth } = require('../../auth/useRequireAuth');
-    mockUseRequireAuth.mockReturnValue({
+        mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
       loading: false,
     });
@@ -134,14 +136,7 @@ describe('useBenchmarks', () => {
   });
 
   it('debería pasar configuración correcta a useEntityWithComponents', () => {
-    const {
-      getBenchmarks,
-      getBenchmarkComponentsBatch,
-      createBenchmark,
-      updateBenchmark,
-      deleteBenchmark,
-    } = require('@/lib/api');
-
+    
     mockUseEntityWithComponents.mockReturnValue({
       entities: [],
       isLoading: false,

@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, tasks, taskRecurrences, contacts } from '@cactus/db';
+import { db, tasks, taskRecurrences, contacts } from '@maatwork/db';
 import {
   getUserAccessScope,
   buildContactAccessFilter,
@@ -17,7 +17,7 @@ import {
 import { requireAuth } from '../auth/middlewares';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   tasks: {},
   taskRecurrences: {},
@@ -150,7 +150,7 @@ describe('GET /tasks', () => {
 
       mockGetUserAccessScope.mockResolvedValue(accessScope);
       mockBuildContactAccessFilter.mockReturnValue({
-        whereClause: {} as any,
+        whereClause: {} as unknown as sql,
         description: 'advisor access',
       });
 
@@ -208,7 +208,7 @@ describe('POST /tasks', () => {
 
     mockDb.mockReturnValue({
       insert: mockInsert,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test task creation
     expect(mockReq.body.title).toBe('Nueva tarea');
@@ -280,7 +280,7 @@ describe('PATCH /tasks/:id', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test task update
     expect(mockReq.body.title).toBe('Tarea actualizada');
@@ -328,7 +328,7 @@ describe('DELETE /tasks/:id', () => {
 
     mockDb.mockReturnValue({
       delete: mockDelete,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     // Test task deletion
     expect(true).toBe(true);
@@ -476,7 +476,7 @@ describe('POST /tasks/:id/complete', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockReq.params.id).toBe('task-123');
   });
@@ -492,7 +492,7 @@ describe('POST /tasks/:id/complete', () => {
 
     mockDb.mockReturnValue({
       update: mockUpdate,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockReq.params.id).toBe('task-123');
   });
@@ -529,7 +529,7 @@ describe('POST /tasks/:id/complete', () => {
     mockDb.mockReturnValue({
       update: mockUpdate,
       select: mockSelect,
-    } as any);
+    } as unknown as ReturnType<typeof db>);
 
     expect(mockTask.recurrenceId).toBeDefined();
   });

@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Text, Badge } from '@cactus/ui';
+import { Card, CardContent, CardHeader, CardTitle, Text, Badge } from '@maatwork/ui';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useAssetSnapshots } from '@/lib/hooks/useAssetSnapshots';
 import type { Portfolio, PortfolioLine } from '@/types';
-import { cn } from '@cactus/ui';
+import { cn } from '@maatwork/ui';
 
 interface AssetWatchlistProps {
   portfolios: Portfolio[];

@@ -7,13 +7,13 @@
  * Impacto: Mejor developer experience y flexibilidad
  *
  * Uso:
- *   pnpm -F @cactus/api run assign-unassigned-contacts "Nombre Usuario"
+ *   pnpm -F @maatwork/api run assign-unassigned-contacts "Nombre Usuario"
  *
  * Ejemplo:
- *   pnpm -F @cactus/api run assign-unassigned-contacts "giolivo santarelli"
+ *   pnpm -F @maatwork/api run assign-unassigned-contacts "giolivo santarelli"
  */
 
-import { db, contacts, users } from '@cactus/db';
+import { db, contacts, users } from '@maatwork/db';
 import { eq, and, isNull, sql, or, ilike } from 'drizzle-orm';
 
 async function assignUnassignedContacts() {
@@ -22,7 +22,7 @@ async function assignUnassignedContacts() {
 
   if (process.argv.length <= 2) {
     console.log('\n💡 Tip: Puedes especificar un usuario como argumento:');
-    console.log('   pnpm -F @cactus/api run assign-unassigned-contacts "Nombre Usuario"\n');
+    console.log('   pnpm -F @maatwork/api run assign-unassigned-contacts "Nombre Usuario"\n');
   }
 
   console.log(`\n🔍 Buscando usuario "${targetUserName}"...\n`);

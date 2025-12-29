@@ -1,0 +1,47 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - generic [ref=e12]:
+        - img [ref=e15]
+        - heading "MaatWork" [level=1] [ref=e20]
+        - paragraph [ref=e22]: Gestión profesional de clientes e inversiones
+      - generic [ref=e23]:
+        - generic [ref=e25]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: Email o usuario
+            - textbox "Email o usuario" [active] [ref=e30]:
+              - /placeholder: tu@email.com
+          - generic [ref=e32]:
+            - generic [ref=e33]: Contraseña
+            - generic [ref=e34]:
+              - textbox "Contraseña" [ref=e35]:
+                - /placeholder: ••••••••
+              - button "Mostrar contraseña" [ref=e36] [cursor=pointer]:
+                - generic [ref=e37]: 👁
+          - generic [ref=e38]:
+            - generic [ref=e40]:
+              - checkbox "Recordarme" [ref=e41] [cursor=pointer]
+              - checkbox
+              - generic [ref=e42] [cursor=pointer]: Recordarme
+            - link "¿Olvidaste tu contraseña?" [ref=e43] [cursor=pointer]:
+              - /url: "#"
+          - button "Iniciar Sesión" [ref=e45] [cursor=pointer]
+          - generic [ref=e50]: O continúa con
+          - button "Continuar con Google" [ref=e52] [cursor=pointer]:
+            - img [ref=e53]
+            - text: Continuar con Google
+        - generic [ref=e59]:
+          - paragraph [ref=e61]:
+            - text: ¿No tienes cuenta?
+            - link "Regístrate aquí" [ref=e62] [cursor=pointer]:
+              - /url: /register
+          - link "← Volver al inicio" [ref=e64] [cursor=pointer]:
+            - /url: /home
+    - paragraph [ref=e66]: © 2024 MaatWork. Todos los derechos reservados.
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e67]
+```

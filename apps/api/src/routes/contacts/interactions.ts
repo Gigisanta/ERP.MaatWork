@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request } from 'express';
-import { db, contactStageInteractions, contacts, pipelineStages } from '@cactus/db';
+import { db, contactStageInteractions, contacts, pipelineStages } from '@maatwork/db';
 import { eq, and, sql, isNull, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { canAccessContact } from '../../auth/authorization';
@@ -16,6 +16,8 @@ import { createRouteHandler, HttpError } from '../../utils/route-handler';
 import { invalidateCache } from '../../middleware/cache';
 import { contactsListCacheUtil } from '../../utils/performance/cache';
 
+import { uuidSchema } from '../../utils/validation/common-schemas';
+
 const router = Router();
 
 // ==========================================================
@@ -23,7 +25,7 @@ const router = Router();
 // ==========================================================
 
 const interactionSchema = z.object({
-  stageId: z.string().uuid(),
+  stageId: uuidSchema,
   action: z.enum(['increment', 'decrement']),
 });
 
@@ -54,7 +56,7 @@ router.post(
   },
   requireAuth,
   validate({
-    params: z.object({ id: z.string().uuid() }),
+    params: z.object({ id: uuidSchema }),
     body: interactionSchema,
   }),
   createRouteHandler(async (req: Request) => {
@@ -76,148 +78,134 @@ router.post(
       'Iniciando actualización de interacción'
     );
 
-    try {
-      // Verify access
-      const hasAccess = await canAccessContact(userId, userRole, contactId);
-      if (!hasAccess) {
-        req.log.warn(
-          {
-            userId,
-            userRole,
-            contactId,
-          },
-          'Acceso denegado para actualizar interacción'
-        );
-        throw new HttpError(403, 'No tienes permiso para modificar este contacto');
-      }
-
-      // Verify contact exists and is not deleted
-      const [contact] = await db()
-        .select()
-        .from(contacts)
-        .where(and(eq(contacts.id, contactId), isNull(contacts.deletedAt)))
-        .limit(1);
-
-      if (!contact) {
-        req.log.warn({ contactId }, 'Contacto no encontrado o eliminado');
-        throw new HttpError(404, 'Contacto no encontrado');
-      }
-
-      // Verify stage exists
-      const [stage] = await db()
-        .select()
-        .from(pipelineStages)
-        .where(eq(pipelineStages.id, stageId))
-        .limit(1);
-
-      if (!stage) {
-        req.log.warn({ stageId }, 'Etapa no encontrada');
-        throw new HttpError(404, 'Etapa no encontrada');
-      }
-
-      // AI_DECISION: Usar transacción para asegurar atomicidad
-      // Justificación: Actualización de interactionCount y contactLastTouchAt deben ser atómicos
-      // Impacto: Previene inconsistencias si una operación falla
-      const result = await transactionWithLogging(
-        req.log,
-        'update-contact-interaction',
-        async (tx) => {
-          // Update or insert interaction count
-          const interactionResults = (await tx
-            .insert(contactStageInteractions)
-            .values({
-              contactId,
-              pipelineStageId: stageId,
-              interactionCount: action === 'increment' ? 1 : -1,
-              lastInteractionAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: [
-                contactStageInteractions.contactId,
-                contactStageInteractions.pipelineStageId,
-              ],
-              set: {
-                interactionCount: sql`${contactStageInteractions.interactionCount} + ${
-                  action === 'increment' ? 1 : -1
-                }`,
-                lastInteractionAt: new Date(),
-              },
-            })
-            .returning()) as Array<InferSelectModel<typeof contactStageInteractions>>;
-
-          const interaction = interactionResults[0];
-          if (!interaction) {
-            throw new Error('Failed to create or update interaction');
-          }
-
-          // Prevent negative counts
-          let finalCount = interaction.interactionCount;
-          if (finalCount < 0) {
-            req.log.warn(
-              { interactionId: interaction.id, finalCount },
-              'Negative interaction count detected, resetting to 0'
-            );
-            await tx
-              .update(contactStageInteractions)
-              .set({ interactionCount: 0 })
-              .where(eq(contactStageInteractions.id, interaction.id));
-            finalCount = 0;
-          }
-
-          // Update contact last touch and modification time
-          await tx
-            .update(contacts)
-            .set({
-              contactLastTouchAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(contacts.id, contactId));
-
-          return {
-            interactionCount: finalCount,
-            lastInteractionAt: interaction.lastInteractionAt,
-          };
-        }
-      );
-
-      // Invalidate caches
-      contactsListCacheUtil.clear();
-      await invalidateCache('crm:contacts:*');
-      // AI_DECISION: Invalidate specific user cache to ensure freshness
-      // Justificación: Wildcard might be too broad or miss if pattern matching is strict
-      // Impacto: Guarantees the requesting user sees their updates immediately
-      await invalidateCache(`crm:contacts:${userId}:*`);
-      await invalidateCache('crm:pipeline:*');
-
-      const duration = Date.now() - startTime;
-      req.log.info(
+    // Verify access
+    const hasAccess = await canAccessContact(userId, userRole, contactId);
+    if (!hasAccess) {
+      req.log.warn(
         {
           userId,
           userRole,
           contactId,
-          stageId,
-          action,
-          interactionCount: result.interactionCount,
-          duration,
-          requestId: req.requestId,
         },
-        'Interacción actualizada exitosamente'
+        'Acceso denegado para actualizar interacción'
       );
-
-      return result;
-    } catch (error) {
-      req.log.error(
-        {
-          err: error,
-          userId,
-          contactId,
-          action,
-          requestId: req.requestId,
-        },
-        'Error procesando interacción'
-      );
-      throw error;
+      throw new HttpError(403, 'No tienes permiso para modificar este contacto');
     }
+
+    // Verify contact exists and is not deleted
+    const [contact] = await db()
+      .select()
+      .from(contacts)
+      .where(and(eq(contacts.id, contactId), isNull(contacts.deletedAt)))
+      .limit(1);
+
+    if (!contact) {
+      req.log.warn({ contactId }, 'Contacto no encontrado o eliminado');
+      throw new HttpError(404, 'Contacto no encontrado');
+    }
+
+    // Verify stage exists
+    const [stage] = await db()
+      .select()
+      .from(pipelineStages)
+      .where(eq(pipelineStages.id, stageId))
+      .limit(1);
+
+    if (!stage) {
+      req.log.warn({ stageId }, 'Etapa no encontrada');
+      throw new HttpError(404, 'Etapa no encontrada');
+    }
+
+    // AI_DECISION: Usar transacción para asegurar atomicidad
+    // Justificación: Actualización de interactionCount y contactLastTouchAt deben ser atómicos
+    // Impacto: Previene inconsistencias si una operación falla
+    const result = await transactionWithLogging(
+      req.log,
+      'update-contact-interaction',
+      async (tx) => {
+        // Update or insert interaction count
+        const interactionResults = (await tx
+          .insert(contactStageInteractions)
+          .values({
+            contactId,
+            pipelineStageId: stageId,
+            interactionCount: action === 'increment' ? 1 : -1,
+            lastInteractionAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: [
+              contactStageInteractions.contactId,
+              contactStageInteractions.pipelineStageId,
+            ],
+            set: {
+              interactionCount: sql`${contactStageInteractions.interactionCount} + ${
+                action === 'increment' ? 1 : -1
+              }`,
+              lastInteractionAt: new Date(),
+            },
+          })
+          .returning()) as Array<InferSelectModel<typeof contactStageInteractions>>;
+
+        const interaction = interactionResults[0];
+        if (!interaction) {
+          throw new Error('Failed to create or update interaction');
+        }
+
+        // Prevent negative counts
+        let finalCount = interaction.interactionCount;
+        if (finalCount < 0) {
+          req.log.warn(
+            { interactionId: interaction.id, finalCount },
+            'Negative interaction count detected, resetting to 0'
+          );
+          await tx
+            .update(contactStageInteractions)
+            .set({ interactionCount: 0 })
+            .where(eq(contactStageInteractions.id, interaction.id));
+          finalCount = 0;
+        }
+
+        // Update contact last touch and modification time
+        await tx
+          .update(contacts)
+          .set({
+            contactLastTouchAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(contacts.id, contactId));
+
+        return {
+          interactionCount: finalCount,
+          lastInteractionAt: interaction.lastInteractionAt,
+        };
+      }
+    );
+
+    // Invalidate caches
+    contactsListCacheUtil.clear();
+    await invalidateCache('crm:contacts:*');
+    // AI_DECISION: Invalidate specific user cache to ensure freshness
+    // Justificación: Wildcard might be too broad or miss if pattern matching is strict
+    // Impacto: Guarantees the requesting user sees their updates immediately
+    await invalidateCache(`crm:contacts:${userId}:*`);
+    await invalidateCache('crm:pipeline:*');
+
+    const duration = Date.now() - startTime;
+    req.log.info(
+      {
+        userId,
+        userRole,
+        contactId,
+        stageId,
+        action,
+        interactionCount: result.interactionCount,
+        duration,
+        requestId: req.requestId,
+      },
+      'Interacción actualizada exitosamente'
+    );
+
+    return result;
   })
 );
 

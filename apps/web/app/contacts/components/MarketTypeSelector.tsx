@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Select } from '@cactus/ui';
+import { Select } from '@maatwork/ui';
 
 // AI_DECISION: Componente dedicado para selección de tipo de mercado con sub-opciones
 // Justificación: Encapsula la lógica condicional de mostrar sub-selector para "Frío"
@@ -9,7 +9,7 @@ import { Select } from '@cactus/ui';
 /**
  * Tipos de mercado principales
  */
-export const MARKET_TYPES = {
+const MARKET_TYPES = {
   natural: 'Natural',
   referido: 'Referido',
   frio: 'Frío',
@@ -18,13 +18,13 @@ export const MARKET_TYPES = {
 /**
  * Sub-tipos para mercado frío
  */
-export const COLD_MARKET_SUBTYPES = {
+const COLD_MARKET_SUBTYPES = {
   redes_sociales: 'Redes Sociales',
   llamado_frio: 'Llamado en frío',
 } as const;
 
-export type MarketType = keyof typeof MARKET_TYPES;
-export type ColdMarketSubtype = keyof typeof COLD_MARKET_SUBTYPES;
+type MarketType = keyof typeof MARKET_TYPES;
+type ColdMarketSubtype = keyof typeof COLD_MARKET_SUBTYPES;
 
 /**
  * Opciones para el selector principal de tipo de mercado

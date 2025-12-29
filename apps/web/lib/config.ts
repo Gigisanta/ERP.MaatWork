@@ -14,9 +14,6 @@ export const config = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   apiTimeout: parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT || '30000', 10),
 
-  // N8N Configuration
-  n8nUrl: process.env.NEXT_PUBLIC_N8N_URL || 'http://localhost:5678',
-
   // Google OAuth Configuration
   googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
 
@@ -32,4 +29,4 @@ export const config = {
   },
 } as const;
 
-export type Config = typeof config;
+type Config = typeof config;

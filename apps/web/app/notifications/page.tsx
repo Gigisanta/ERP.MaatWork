@@ -1,6 +1,5 @@
 import React from 'react';
-import PageContainer, { PageHeader, PageContent } from '../components/PageContainer';
-import { Heading } from '@cactus/ui';
+import { PageContainer, PageHeader, PageContent, Heading } from '@maatwork/ui';
 import NotificationsClient from './NotificationsClient';
 
 export const metadata = {

@@ -14,6 +14,8 @@ import { signUserToken } from '../../../auth/jwt';
 import multer from 'multer';
 import { createTestApp } from '../../../__tests__/helpers/test-server';
 
+import type { Request, Response, NextFunction } from 'express';
+
 // Mock multer before importing the route
 vi.mock('multer', () => {
   const MulterError = class MulterError extends Error {
@@ -34,10 +36,10 @@ vi.mock('multer', () => {
   });
 
   const mockMemoryStorage = vi.fn(() => ({}));
-  const mockMulter = vi.fn((options?: unknown) => ({
-    single: vi.fn(() => (req: any, _res: any, next: any) => {
+  const mockMulter = vi.fn((_options?: unknown) => ({
+    single: vi.fn(() => (req: Request, _res: Response, next: NextFunction) => {
       // Provide a default file so the route can progress
-      req.file = {
+      (req as any).file = {
         path: '/tmp/mock-upload.csv',
         originalname: 'mock-upload.csv',
         size: 10,
@@ -45,10 +47,10 @@ vi.mock('multer', () => {
       };
       next();
     }),
-    array: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-    fields: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-    any: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-    none: vi.fn(() => (_req: any, _res: any, next: any) => next()),
+    array: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+    fields: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+    any: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+    none: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
   }));
 
   // Attach diskStorage to the default export
@@ -65,7 +67,7 @@ vi.mock('multer', () => {
 });
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   advisorAccountMapping: {
     accountNumber: 'accountNumber',
@@ -110,7 +112,7 @@ vi.mock('../../../utils/aum/aum-normalization', () => ({
   normalizeAdvisorAlias: vi.fn((value: string) => value.trim().toLowerCase()),
 }));
 
-vi.mock('../../../services/aumParser', () => ({
+vi.mock('../../../services/aum-parser', () => ({
   parseAumFile: vi.fn(),
 }));
 
@@ -121,10 +123,10 @@ vi.mock('node:fs', () => ({
   },
 }));
 
-import { db } from '@cactus/db';
-import { advisorAccountMapping, advisorAliases } from '@cactus/db';
+import { db } from '@maatwork/db';
+import { advisorAccountMapping, advisorAliases } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
-import { parseAumFile } from '../../../services/aumParser';
+import { parseAumFile } from '../../../services/aum-parser';
 import {
   normalizeAccountNumber,
   normalizeAdvisorAlias,
@@ -157,8 +159,8 @@ describe('AUM Admin - Mapping Routes', () => {
 
     // Reset multer mock to default behavior (provides file)
     vi.mocked(multer).mockReturnValue({
-      single: vi.fn(() => (req: any, _res: any, next: any) => {
-        req.file = {
+      single: vi.fn(() => (req: Request, _res: Response, next: NextFunction) => {
+        (req as any).file = {
           path: '/tmp/mock-upload.csv',
           originalname: 'mock-upload.csv',
           size: 10,
@@ -166,11 +168,11 @@ describe('AUM Admin - Mapping Routes', () => {
         };
         next();
       }),
-      array: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-      fields: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-      any: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-      none: vi.fn(() => (_req: any, _res: any, next: any) => next()),
-    } as any);
+      array: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+      fields: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+      any: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+      none: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) => next()),
+    } as unknown as multer.Multer);
 
     // Reset requireAuth mock to default behavior (sets user)
     mockRequireAuth.mockImplementation((req, res, next) => {
@@ -212,8 +214,8 @@ describe('AUM Admin - Mapping Routes', () => {
         }),
       });
 
-      const mockInsert = vi.fn((table: any) => ({
-        values: vi.fn((data: any) => Promise.resolve(undefined)),
+      const mockInsert = vi.fn((_table: unknown) => ({
+        values: vi.fn((_data: unknown) => Promise.resolve(undefined)),
       }));
 
       let selectCallCount = 0;
@@ -231,12 +233,12 @@ describe('AUM Admin - Mapping Routes', () => {
       mockDb.mockImplementation(() => ({
         select: mockSelect,
         insert: mockInsert,
-        update: vi.fn((table: any) => ({
-          set: vi.fn((data: any) => ({
-            where: vi.fn((condition: any) => Promise.resolve(undefined)),
+        update: vi.fn((_table: unknown) => ({
+          set: vi.fn((_data: unknown) => ({
+            where: vi.fn((_condition: unknown) => Promise.resolve(undefined)),
           })),
         })),
-      }));
+      } as unknown as ReturnType<typeof db>));
 
       // Reset selectCallCount before test
       selectCallCount = 0;
@@ -602,7 +604,7 @@ describe('AUM Admin - Mapping Routes', () => {
               where: vi.fn().mockResolvedValue(undefined),
             }),
           }),
-        } as any;
+        } as unknown as ReturnType<typeof db>;
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -668,7 +670,7 @@ describe('AUM Admin - Mapping Routes', () => {
               where: vi.fn().mockResolvedValue(undefined),
             }),
           }),
-        } as any;
+        } as unknown as ReturnType<typeof db>;
       });
 
       mockFs.unlink.mockResolvedValue(undefined);
@@ -733,7 +735,7 @@ describe('AUM Admin - Mapping Routes', () => {
               where: vi.fn().mockResolvedValue(undefined),
             }),
           }),
-        } as any;
+        } as unknown as ReturnType<typeof db>;
       });
 
       mockFs.unlink.mockRejectedValue(new Error('File not found'));
@@ -749,11 +751,9 @@ describe('AUM Admin - Mapping Routes', () => {
       expect(res.body.ok).toBe(true);
     });
 
-    it('debería continuar cuando requireAuth permite sin usuario', async () => {
-      // AI_DECISION: El código no verifica req.user en el handler - requireAuth mock lo permite
-      // El test valida que el flujo continúa (comportamiento actual del código)
+    it('debería retornar 401 cuando no hay usuario autenticado', async () => {
       mockRequireAuth.mockImplementationOnce((req, res, next) => {
-        // Don't set req.user
+        // Simular que requireAuth deja pasar pero sin usuario (comportamiento mock)
         next();
       });
 
@@ -761,10 +761,10 @@ describe('AUM Admin - Mapping Routes', () => {
       const res = await request(app)
         .post('/admin/aum/advisor-mapping/upload')
         .attach('file', Buffer.from('test'), 'test.csv')
-        .expect(201);
+        .expect(401);
 
-      // El código procesa la request aunque no haya usuario
-      expect(res.body.ok).toBe(true);
+      // El código ahora retorna 401 correctamente
+      expect(res.body.error).toBe('Unauthorized');
     });
 
     it('debería manejar errores generales correctamente', async () => {

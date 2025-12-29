@@ -1,6 +1,6 @@
 // REGLA CURSOR: Broker Accounts CRUD - mantener RBAC, data isolation, validación Zod, logging estructurado
 import { Router, type Request, type Response } from 'express';
-import { db, brokerAccounts, contacts } from '@cactus/db';
+import { db, brokerAccounts, contacts } from '@maatwork/db';
 import { eq, and, isNull, inArray } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import {

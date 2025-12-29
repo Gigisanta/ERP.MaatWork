@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Text, Button, Icon } from '@cactus/ui';
+import { Text, Button, Icon } from '@maatwork/ui';
 import { logger } from '@/lib/logger';
 
 interface SortableListProps {

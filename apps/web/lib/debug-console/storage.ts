@@ -50,3 +50,11 @@ export function clearStoredLogs(): void {
     console.warn('No se pudieron limpiar logs', e);
   }
 }
+
+
+
+
+
+
+
+

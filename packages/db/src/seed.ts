@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 
 /**
  * Script de seeding para datos iniciales de EPIC B
- * Ejecutar con: pnpm -F @cactus/db tsx src/seed.ts
+ * Ejecutar con: pnpm -F @maatwork/db tsx src/seed.ts
  */
 
 async function seed() {

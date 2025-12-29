@@ -11,7 +11,7 @@ import {
   users,
   teamMembership,
   teams,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { eq, and, isNotNull, sql, inArray } from 'drizzle-orm';
 import type { CareerPlanLevel, UserCareerProgress } from '../types/career-plan';
 import type { UserRole } from '../auth/types';

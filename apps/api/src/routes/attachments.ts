@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { db, attachments } from '@cactus/db';
+import { db, attachments } from '@maatwork/db';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';

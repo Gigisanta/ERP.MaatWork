@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Next.js Image Configuration
  *
@@ -8,7 +9,14 @@
 module.exports = {
   images: {
     // Allow images from same origin and data URIs (for icons, etc.)
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
     // Disable static image imports optimization warnings in development
     unoptimized:
       process.env.NODE_ENV === 'development' &&

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Text, Stack, Input, Button, DataTable, Tooltip, Icon, type Column } from '@cactus/ui';
+import { Text, Stack, Input, Button, DataTable, Tooltip, Icon, type Column } from '@maatwork/ui';
 
 interface AliasData {
   id: string;

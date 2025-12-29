@@ -1,6 +1,6 @@
 # Guía de Onboarding
 
-Esta guía está diseñada para nuevos desarrolladores que están configurando el proyecto CACTUS CRM por primera vez.
+Esta guía está diseñada para nuevos desarrolladores que están configurando el proyecto MAATWORK por primera vez.
 
 ## Tabla de Contenidos
 
@@ -48,7 +48,7 @@ Si alguna de estas herramientas no está instalada, consulta:
 
 ```bash
 git clone <repository-url>
-cd CactusDashboard
+cd maatwork
 ```
 
 ### Paso 2: Instalar Dependencias
@@ -86,7 +86,7 @@ Este comando ejecuta automáticamente:
    - Crea las tablas necesarias
 
 5. **Creación de usuario admin inicial**
-   - Crea usuario: `admin@cactus.local`
+   - Crea usuario: `admin@maatwork.local`
    - Rol: `admin` (acceso completo)
 
 ### Paso 4: Iniciar Desarrollo
@@ -108,7 +108,7 @@ Esto iniciará todos los servicios:
 
 1. **Abre el navegador** en http://localhost:3000
 2. **Haz login** con:
-   - Email: `admin@cactus.local`
+   - Email: `admin@maatwork.local`
    - No se requiere contraseña en desarrollo
 3. **Verifica el dashboard** - deberías ver la página principal con métricas
 
@@ -236,12 +236,12 @@ pnpm install
 docker compose ps
 
 # Ejecutar migraciones manualmente
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db migrate
 
 # Si hay problemas, puedes resetear la base de datos (CUIDADO: borra todos los datos)
 docker compose down -v
 docker compose up -d
-pnpm -F @cactus/db migrate
+pnpm -F @maatwork/db migrate
 ```
 
 ---
@@ -309,7 +309,7 @@ pnpm db:studio       # Abrir Drizzle Studio (UI para DB)
 
 Si encuentras problemas que no están cubiertos en esta guía:
 
-1. Revisa los logs: `pnpm -F @cactus/api run dev:pretty`
+1. Revisa los logs: `pnpm -F @maatwork/api run dev:pretty`
 2. Busca en los issues de GitHub
 3. Pregunta en el canal de Slack/Discord del equipo
 4. Crea un nuevo issue con detalles del problema

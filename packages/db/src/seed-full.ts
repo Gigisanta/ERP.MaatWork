@@ -5,7 +5,7 @@
  * Generates realistic data for testing: users, teams, contacts, tasks, notes,
  * portfolios, broker data, notifications, and more.
  *
- * Can be run manually via: pnpm -F @cactus/db seed:full
+ * Can be run manually via: pnpm -F @maatwork/db seed:full
  *
  * REFACTORED: This file now re-exports from modular seed files in ./seeds/
  * See ./seeds/index.ts for the orchestrator and individual seed modules.
@@ -77,6 +77,14 @@ async function main() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+import { fileURLToPath } from 'url';
+
+const isMain = process.argv[1] && (
+  fileURLToPath(import.meta.url) === process.argv[1] ||
+  process.argv[1].endsWith('seed-full.ts') ||
+  process.argv[1].endsWith('seed-full')
+);
+
+if (isMain) {
   main();
 }

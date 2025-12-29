@@ -155,20 +155,6 @@ router.patch(
 
 export default router;
 
-// Re-export schemas for external use
-export {
-  createUserSchema,
-  updateStatusSchema,
-  updateRoleSchema,
-  updateProfileSchema,
-  changePasswordSchema,
-  createUserWithPasswordSchema,
-  listUsersQuerySchema,
-  idParamSchema,
-  type CreateUserInput,
-  type UpdateStatusInput,
-  type UpdateRoleInput,
-  type UpdateProfileInput,
-  type ChangePasswordInput,
-  type CreateUserWithPasswordInput,
-} from './schemas';
+
+
+

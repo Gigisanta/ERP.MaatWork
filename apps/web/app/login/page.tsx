@@ -17,7 +17,7 @@ import {
   Stack,
   Icon,
   Spinner,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { Feather } from 'lucide-react';
 import { GoogleOAuthButton } from '../components/auth/GoogleOAuthButton';
 
@@ -207,7 +207,7 @@ function LoginPageContent() {
 
           <CardContent className="pt-6">
             {/* Form with staggered animation */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <Stack direction="column" gap="lg">
                 {/* Email Input */}
                 <div
@@ -297,6 +297,15 @@ function LoginPageContent() {
                 </div>
 
                 {/* OAuth Error Alert */}
+                {oauthError === 'pending_approval' && (
+                  <div className="animate-fade-in">
+                    <Alert variant="warning" title="Cuenta pendiente de aprobación">
+                      Tu cuenta ha sido creada y está pendiente de aprobación por un administrador.
+                      Te notificaremos cuando puedas iniciar sesión.
+                    </Alert>
+                  </div>
+                )}
+
                 {oauthError === 'no_account' && (
                   <div className="animate-fade-in">
                     <Alert variant="warning" title="Cuenta no encontrada">

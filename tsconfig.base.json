@@ -8,10 +8,10 @@
     "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
-      "@cactus/db": ["packages/db/src/index.ts"],
-      "@cactus/db/*": ["packages/db/src/*"],
-      "@cactus/ui": ["packages/ui/src/index.ts"],
-      "@cactus/ui/*": ["packages/ui/src/*"]
+      "@maatwork/db": ["packages/db/src/index.ts"],
+      "@maatwork/db/*": ["packages/db/src/*"],
+      "@maatwork/ui": ["packages/ui/src/index.ts"],
+      "@maatwork/ui/*": ["packages/ui/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,

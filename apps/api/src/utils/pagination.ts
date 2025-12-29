@@ -7,14 +7,14 @@
 import { paginationQuerySchema } from './validation/common-schemas';
 import type { z } from 'zod';
 
-export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+type PaginationQuery = z.infer<typeof paginationQuerySchema>;
 
-export interface PaginationParams {
+interface PaginationParams {
   limit: number;
   offset: number;
 }
 
-export interface PaginationResponse {
+interface PaginationResponse {
   page?: number;
   limit: number;
   offset: number;
@@ -63,7 +63,7 @@ export function parsePaginationParams(query: Record<string, unknown>): Paginatio
  * @param maxLimit - Límite máximo permitido (default: 100)
  * @returns Parámetros validados o null si son inválidos
  */
-export function validatePaginationParams(
+function validatePaginationParams(
   limit: number,
   offset: number,
   maxLimit: number = 100
@@ -86,7 +86,7 @@ export function validatePaginationParams(
  * @param limit - Items por página
  * @returns Offset calculado
  */
-export function calculateOffsetFromPage(page: number, limit: number): number {
+function calculateOffsetFromPage(page: number, limit: number): number {
   return (page - 1) * limit;
 }
 
@@ -97,7 +97,7 @@ export function calculateOffsetFromPage(page: number, limit: number): number {
  * @param limit - Items por página
  * @returns Número de página (1-indexed)
  */
-export function calculatePageFromOffset(offset: number, limit: number): number {
+function calculatePageFromOffset(offset: number, limit: number): number {
   return Math.floor(offset / limit) + 1;
 }
 
@@ -108,7 +108,7 @@ export function calculatePageFromOffset(offset: number, limit: number): number {
  * @param limit - Items por página
  * @returns Total de páginas
  */
-export function calculateTotalPages(total: number, limit: number): number {
+function calculateTotalPages(total: number, limit: number): number {
   if (total === 0) return 0;
   return Math.ceil(total / limit);
 }
@@ -151,7 +151,7 @@ export function formatPaginatedResponse<T>(
  * @param params - Parámetros de paginación
  * @returns Query con límites aplicados
  */
-export function applyPagination<T extends { limit: (n: number) => T; offset: (n: number) => T }>(
+function applyPagination<T extends { limit: (n: number) => T; offset: (n: number) => T }>(
   query: T,
   params: PaginationParams
 ): T {

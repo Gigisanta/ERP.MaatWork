@@ -18,6 +18,8 @@ export interface TextProps {
     | 'inverse';
   /** Whether to use display font (Poppins) instead of body font (Open Sans) */
   display?: boolean;
+  /** Whether to use italic style */
+  italic?: boolean;
   // Allow all standard HTML attributes
   [key: string]: unknown;
 }
@@ -41,6 +43,7 @@ export function Text({
   weight = 'normal',
   color = 'default',
   display = false,
+  italic = false,
   ...props
 }: TextProps) {
   return (
@@ -48,6 +51,8 @@ export function Text({
       className={cn(
         // Font family
         display ? 'font-display' : 'font-body',
+        // Style
+        italic && 'italic',
         // Size classes
         {
           'text-xs leading-4': size === 'xs',

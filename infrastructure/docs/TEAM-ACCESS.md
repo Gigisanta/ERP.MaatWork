@@ -8,20 +8,20 @@
 
 ```bash
 # Windows (PowerShell)
-ssh-keygen -t ed25519 -C "tu-nombre" -f $HOME\.ssh\cactus-dev
+ssh-keygen -t ed25519 -C "tu-nombre" -f $HOME\.ssh\maatwork-dev
 
 # Mac/Linux
-ssh-keygen -t ed25519 -C "tu-nombre" -f ~/.ssh/cactus-dev
+ssh-keygen -t ed25519 -C "tu-nombre" -f ~/.ssh/maatwork-dev
 ```
 
 #### 2. Enviar tu clave pública al admin
 
 ```bash
 # Windows
-Get-Content $HOME\.ssh\cactus-dev.pub
+Get-Content $HOME\.ssh\maatwork-dev.pub
 
 # Mac/Linux
-cat ~/.ssh/cactus-dev.pub
+cat ~/.ssh/maatwork-dev.pub
 ```
 
 Envía el output al admin para que lo agregue al servidor.
@@ -45,7 +45,7 @@ Envía el output al admin para que lo agregue al servidor.
 #### Opción B: SSH directo
 
 ```bash
-ssh -i ~/.ssh/cactus-dev ec2-user@56.125.148.180
+ssh -i ~/.ssh/maatwork-dev ec2-user@56.125.148.180
 ```
 
 #### Opción C: Configurar SSH config (recomendado)
@@ -53,15 +53,15 @@ ssh -i ~/.ssh/cactus-dev ec2-user@56.125.148.180
 Agrega esto a tu `~/.ssh/config`:
 
 ```
-Host cactus-dev
+Host maatwork-dev
     HostName 56.125.148.180
     User ec2-user
-    IdentityFile ~/.ssh/cactus-dev
+    IdentityFile ~/.ssh/maatwork-dev
 ```
 
 Luego conectate con:
 ```bash
-ssh cactus-dev
+ssh maatwork-dev
 ```
 
 ---
@@ -122,7 +122,7 @@ Tu clave SSH no está en el servidor. Pide al admin que la agregue.
 
 2. Conectar a la EC2:
    ```bash
-   ssh -i ~/.ssh/cactus-dev ec2-user@56.125.148.180
+   ssh -i ~/.ssh/maatwork-dev ec2-user@56.125.148.180
    ```
 
 3. Agregar la clave:

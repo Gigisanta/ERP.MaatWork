@@ -3,18 +3,19 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db, aumImportRows } from '@cactus/db';
+import { db, aumImportRows } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '@/auth/middlewares';
 import { validate } from '@/utils/validation';
 import { createAsyncHandler, HttpError } from '@/utils/route-handler';
 import { syncContactAdvisorsFromAumRows } from '@/services/aum/contact-sync';
 import { z } from 'zod';
+import { uuidSchema } from '@/utils/validation/common-schemas';
 
 const router = Router();
 
 const syncContactsSchema = z.object({
-  fileId: z.string().uuid(),
+  fileId: uuidSchema,
 });
 
 /**
@@ -51,3 +52,7 @@ router.post(
 );
 
 export default router;
+
+
+
+

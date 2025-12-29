@@ -18,47 +18,11 @@
  */
 
 import NodeCache from 'node-cache';
-import Redis from 'ioredis';
+import { getRedisClient } from '../../config/redis';
 import { logger } from '../logger';
 
-// Initialize Redis if REDIS_URL is available
-let redisClient: Redis | null = null;
-const useRedis = !!process.env.REDIS_URL;
-
-if (useRedis) {
-  try {
-    redisClient = new Redis(process.env.REDIS_URL!, {
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-      maxRetriesPerRequest: 3,
-      enableReadyCheck: true,
-      lazyConnect: true,
-    });
-
-    redisClient.on('error', (err) => {
-      logger.error({ err: { message: err.message } }, 'Redis connection error');
-      redisClient = null; // Fallback to NodeCache
-    });
-
-    redisClient.on('connect', () => {
-      logger.info('Redis connected successfully');
-    });
-
-    // Connect asynchronously (non-blocking)
-    redisClient.connect().catch((err) => {
-      logger.warn(
-        { err: { message: err.message } },
-        'Redis failed to connect, using NodeCache fallback'
-      );
-      redisClient = null;
-    });
-  } catch (err) {
-    logger.warn(
-      { err: err instanceof Error ? { message: err.message } : { message: String(err) } },
-      'Redis failed to initialize, using NodeCache fallback'
-    );
-    redisClient = null;
-  }
-}
+// Use unified Redis client from config
+const getClient = () => getRedisClient();
 
 /**
  * Estimate memory size of a value in bytes (rough approximation)
@@ -134,130 +98,10 @@ function createCacheWithRedis(
   const cache = new NodeCache({
     stdTTL: defaultTtl,
     checkperiod: 600,
-    maxKeys: 0, // Disable internal eviction to prevent "silent" eviction messing up our tracking
+    maxKeys,
     useClones: false,
     deleteOnExpire: true,
-    enableLegacyCallbacks: false,
   });
-
-  // Initialize size tracker
-  const tracker: CacheSizeTracker = {
-    totalSizeBytes: 0,
-    keyCount: 0,
-    largestValueBytes: 0,
-    largestKey: null,
-    keySizes: new Map(),
-  };
-  cacheSizeTrackers.set(cache, tracker);
-
-  // Store original methods before wrapping to avoid recursion
-  const originalGet = cache.get.bind(cache);
-  const originalSet = cache.set.bind(cache);
-  const originalDel = cache.del.bind(cache);
-
-  // Wrap set method to check value size
-  cache.set = function (key: string, value: unknown, ttl?: number | string) {
-    const valueSize = estimateValueSize(value);
-
-    // Reject values that are too large
-    if (valueSize > maxValueSizeBytes) {
-      logger.warn(
-        { key, valueSize, maxValueSizeBytes, cacheType: 'unknown' },
-        'Cache value rejected: exceeds maximum size'
-      );
-      return false;
-    }
-
-    // Check if adding this value would exceed total cache size
-    const currentSize = tracker.totalSizeBytes;
-    const existingSize = tracker.keySizes.get(key) || 0; // Use map instead of originalGet
-    const newTotalSize = currentSize - existingSize + valueSize;
-
-    if (newTotalSize > MAX_TOTAL_CACHE_SIZE_BYTES || tracker.keyCount >= maxKeys) {
-      // Evict oldest entries (LRU) until we have space
-      const keysIterator = tracker.keySizes.keys();
-      // Simple eviction strategy based on our map order
-      let nextKey = keysIterator.next();
-
-      while (
-        (tracker.totalSizeBytes - existingSize + valueSize > MAX_TOTAL_CACHE_SIZE_BYTES ||
-          tracker.keyCount >= maxKeys) &&
-        !nextKey.done
-      ) {
-        const oldestKey = nextKey.value;
-        // Don't evict the key we are about to update if it's the oldest (unlikely but possible)
-        if (oldestKey !== key) {
-          cache.del(oldestKey); // Call our wrapper to handle cleanup
-        }
-        nextKey = keysIterator.next();
-      }
-    }
-
-    // Update tracker
-    tracker.totalSizeBytes = tracker.totalSizeBytes - existingSize + valueSize;
-    if (existingSize === 0) {
-      tracker.keyCount++;
-    }
-
-    tracker.keySizes.set(key, valueSize);
-
-    if (valueSize > tracker.largestValueBytes) {
-      tracker.largestValueBytes = valueSize;
-      tracker.largestKey = key;
-    }
-
-    // Call originalSet with proper types
-    // AI_DECISION: Wrap originalSet in try-catch to prevent cache errors from crashing requests
-    // Justificación: NodeCache can throw ECACHEFULL even with maxKeys: 0 in some edge cases
-    // Impacto: Cache failures don't crash requests
-    try {
-      if (ttl !== undefined) {
-        return originalSet(key, value, ttl);
-      } else {
-        return originalSet(key, value);
-      }
-    } catch (err) {
-      logger.warn(
-        { err: err instanceof Error ? { message: err.message } : { message: String(err) }, key },
-        'NodeCache originalSet failed, continuing without caching'
-      );
-      return false;
-    }
-  };
-
-  // Wrap del method to update tracker
-  // AI_DECISION: Use keySizes map instead of originalGet to avoid recursion
-  // Justificación: cache.get may be intercepted and call _check, which can call del again
-  // Impacto: Prevents "Maximum call stack size exceeded" error
-  cache.del = function (keys: string | string[]) {
-    const keysArray = Array.isArray(keys) ? keys : [keys];
-    for (const key of keysArray) {
-      const size = tracker.keySizes.get(key);
-      if (size !== undefined) {
-        tracker.totalSizeBytes -= size;
-        tracker.keyCount--;
-        tracker.keySizes.delete(key);
-
-        if (key === tracker.largestKey) {
-          // Reset largest tracking
-          tracker.largestValueBytes = 0;
-          tracker.largestKey = null;
-        }
-      }
-    }
-    return originalDel(keys);
-  };
-
-  // Wrap flushAll to reset tracker
-  const originalFlushAll = cache.flushAll.bind(cache);
-  cache.flushAll = function () {
-    tracker.totalSizeBytes = 0;
-    tracker.keyCount = 0;
-    tracker.largestValueBytes = 0;
-    tracker.largestKey = null;
-    tracker.keySizes.clear();
-    return originalFlushAll();
-  };
 
   return cache;
 }
@@ -270,9 +114,10 @@ const cache = createCacheWithRedis(1800, 600, 512 * 1024); // 512KB max per valu
 
 // Helper to get from Redis (async, used as fallback)
 async function getFromRedis(key: string): Promise<unknown | null> {
-  if (!redisClient) return null;
+  const client = getClient();
+  if (!client) return null;
   try {
-    const value = await redisClient.get(key);
+    const value = await client.get(key);
     return value ? JSON.parse(value) : null;
   } catch {
     return null;
@@ -281,13 +126,14 @@ async function getFromRedis(key: string): Promise<unknown | null> {
 
 // Helper to set in Redis (async, used for write-through)
 async function setInRedis(key: string, value: unknown, ttl?: number): Promise<void> {
-  if (!redisClient) return;
+  const client = getClient();
+  if (!client) return;
   try {
     const serialized = JSON.stringify(value);
     if (ttl) {
-      await redisClient.setex(key, ttl, serialized);
+      await client.setex(key, ttl, serialized);
     } else {
-      await redisClient.set(key, serialized);
+      await client.set(key, serialized);
     }
   } catch (err) {
     // Silently fail, NodeCache is the source of truth
@@ -367,8 +213,9 @@ function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default')
     delete: (key: string) => {
       const result = nodeCache.del(key);
       // Delete from Redis (async, non-blocking)
-      if (redisClient) {
-        redisClient.del(key).catch(() => {
+      const client = getClient();
+      if (client) {
+        client.del(key).catch(() => {
           // Silently fail
         });
       }
@@ -377,8 +224,9 @@ function createCacheWrapper(nodeCache: NodeCache, cacheType: string = 'default')
     clear: () => {
       nodeCache.flushAll();
       // Clear Redis (async, non-blocking)
-      if (redisClient) {
-        redisClient.flushdb().catch(() => {
+      const client = getClient();
+      if (client) {
+        client.flushdb().catch(() => {
           // Silently fail
         });
       }
@@ -463,7 +311,7 @@ export function normalizeCacheKey(
  * @param stats - Cache statistics from getStats()
  * @returns Hit rate as percentage (0-100)
  */
-export function calculateHitRate(stats: ReturnType<typeof cache.getStats>): number {
+function calculateHitRate(stats: ReturnType<typeof cache.getStats>): number {
   const total = stats.hits + stats.misses;
   if (total === 0) return 0;
   return (stats.hits / total) * 100;
@@ -569,8 +417,9 @@ export const pipelineMetricsCacheUtil = {
   invalidateOnStageChange: () => {
     // Clear all pipeline metrics cache when stages change
     pipelineMetricsCache.flushAll();
-    if (redisClient) {
-      redisClient.flushdb().catch(() => {});
+    const client = getClient();
+    if (client) {
+      client.flushdb().catch(() => {});
     }
   },
   /**
@@ -578,11 +427,12 @@ export const pipelineMetricsCacheUtil = {
    */
   invalidateByStage: (stageId: string) => {
     const keys = pipelineMetricsCache.keys();
+    const client = getClient();
     keys.forEach((key) => {
       if (String(key).includes(`stage:${stageId}`)) {
         pipelineMetricsCache.del(key);
-        if (redisClient) {
-          redisClient.del(String(key)).catch(() => {});
+        if (client) {
+          client.del(String(key)).catch(() => {});
         }
       }
     });
@@ -599,6 +449,17 @@ export const pipelineMetricsCacheUtil = {
 const taskStatisticsCache = createCacheWithRedis(300, 150, 128 * 1024); // 5min TTL, 128KB max per value
 
 export const taskStatisticsCacheUtil = createCacheWrapper(taskStatisticsCache, 'task_statistics');
+
+/**
+ * Calendar Events Cache
+ * Caches Google Calendar events with a short 5-minute TTL
+ * AI_DECISION: Short TTL for calendar to balance performance and freshness
+ * Justificación: Calendar data changes but hitting Google API on every refresh is slow
+ * Impacto: Faster dashboard loads, reduced Google API quota usage
+ */
+const calendarEventsCache = createCacheWithRedis(300, 100, 512 * 1024); // 5min TTL, 512KB max
+
+export const calendarEventsCacheUtil = createCacheWrapper(calendarEventsCache, 'calendar_events');
 
 /**
  * Dashboard KPIs Cache
@@ -620,14 +481,15 @@ export const dashboardKpisCacheUtil = {
    */
   invalidateByAdvisor: (advisorId: string) => {
     const keys = dashboardKpisCache.keys();
+    const client = getClient();
     keys.forEach((key) => {
       if (
         String(key).includes(`advisor:${advisorId}`) ||
         String(key).includes(`user:${advisorId}`)
       ) {
         dashboardKpisCache.del(key);
-        if (redisClient) {
-          redisClient.del(String(key)).catch(() => {});
+        if (client) {
+          client.del(String(key)).catch(() => {});
         }
       }
     });
@@ -637,11 +499,12 @@ export const dashboardKpisCacheUtil = {
    */
   invalidateByRole: (role: string) => {
     const keys = dashboardKpisCache.keys();
+    const client = getClient();
     keys.forEach((key) => {
       if (String(key).includes(`role:${role}`)) {
         dashboardKpisCache.del(key);
-        if (redisClient) {
-          redisClient.del(String(key)).catch(() => {});
+        if (client) {
+          client.del(String(key)).catch(() => {});
         }
       }
     });

@@ -3,7 +3,7 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   portfolioTemplates,
   clientPortfolioAssignments,
@@ -11,7 +11,7 @@ import {
   portfolioTemplateLines,
   instruments,
   lookupAssetClass,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { createDrizzleLogger, createOperationName } from '../../../utils/database/db-logger';
 import { UserRole } from '../../../auth/types';
@@ -57,7 +57,7 @@ export async function listAssignments(req: Request) {
  * Asignar cartera a contacto
  */
 export async function createAssignment(req: Request) {
-  const userId = req.user?.id!;
+  const userId = req.user!.id;
   const { contactId, templateId, startDate, notes } = req.body;
 
   // Verificar que la plantilla existe
@@ -250,8 +250,8 @@ export async function getContactPortfolio(req: Request) {
  * Actualizar overrides de asignación
  */
 export async function updateAssignmentOverrides(req: Request) {
-  const userId = req.user?.id!;
-  const role = req.user?.role as UserRole;
+  const userId = req.user!.id;
+  const role = req.user!.role as UserRole;
   const assignmentId = req.params.id;
 
   const { overrides } = req.body;
@@ -299,8 +299,8 @@ export async function updateAssignmentOverrides(req: Request) {
  * Actualizar estado de asignación de portfolio
  */
 export async function updateAssignmentStatus(req: Request) {
-  const userId = req.user?.id!;
-  const role = req.user?.role as UserRole;
+  const userId = req.user!.id;
+  const role = req.user!.role as UserRole;
   const assignmentId = req.params.id;
   const { status } = req.body;
 
@@ -327,8 +327,8 @@ export async function updateAssignmentStatus(req: Request) {
  * Eliminar asignación de portfolio (soft delete marcando como ended)
  */
 export async function deleteAssignment(req: Request) {
-  const userId = req.user?.id!;
-  const role = req.user?.role as UserRole;
+  const userId = req.user!.id;
+  const role = req.user!.role as UserRole;
   const assignmentId = req.params.id;
 
   const assignment = await getAssignmentWithAccessCheck(assignmentId, userId, role);

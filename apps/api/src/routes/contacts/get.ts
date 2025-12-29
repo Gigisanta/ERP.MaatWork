@@ -5,6 +5,7 @@
  * GET /contacts/:id/detail - Get contact detail (consolidated with all related data)
  */
 import { Router, type Request, type Response } from 'express';
+import { eq, desc, and, isNull, sql, type InferSelectModel } from 'drizzle-orm';
 import {
   db,
   contacts,
@@ -17,16 +18,15 @@ import {
   brokerAccounts,
   notes,
   clientPortfolioAssignments,
-} from '@cactus/db';
-import { eq, desc, and, isNull, sql, type InferSelectModel } from 'drizzle-orm';
+} from '@maatwork/db';
+import { type Contact, type TimelineItem } from '@maatwork/types';
 import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
 import { createDrizzleLogger, createOperationName } from '../../utils/database/db-logger';
 import { validate } from '../../utils/validation';
 import { idParamSchema } from '../../utils/validation/common-schemas';
-import { type Contact, type TimelineItem } from '../../types/contacts';
-import { contactDetailQuerySchema } from './schemas';
 import { createRouteHandler, HttpError } from '../../utils/route-handler';
+import { contactDetailQuerySchema } from './schemas';
 
 const router = Router();
 
@@ -108,9 +108,12 @@ router.get(
       timeline = recentTasks
         .map(
           (t: TaskForTimeline): TimelineItem => ({
-            ...t,
+            id: t.id,
+            title: t.title,
+            description: t.description,
             type: 'task',
             timestamp: t.createdAt,
+            userId: t.assignedToUserId,
           })
         )
         .sort(

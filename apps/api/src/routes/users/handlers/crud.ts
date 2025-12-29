@@ -7,7 +7,7 @@
  * DELETE /users/:id - Delete user
  */
 import type { Request, Response } from 'express';
-import { db, users, teamMembershipRequests } from '@cactus/db';
+import { db, users, teamMembershipRequests } from '@maatwork/db';
 import { eq, and, sql } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
@@ -97,7 +97,7 @@ export const handleGetUser = createRouteHandler(async (req: Request) => {
 /**
  * PATCH /users/:id - Update user
  */
-export const handleUpdateUser = createRouteHandler(async (req: Request) => {
+const handleUpdateUser = createRouteHandler(async (req: Request) => {
   const { id } = req.params;
   // Note: This handler is a placeholder - specific updates are handled by status.ts, role.ts, profile.ts
   throw new HttpError(400, 'Use specific update endpoints: /status, /role, or /profile');

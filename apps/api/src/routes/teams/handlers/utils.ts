@@ -10,7 +10,7 @@
  * - getTeamMembers: Fetches team members with user info
  */
 import type { Response } from 'express';
-import { db, teamMembership, users } from '@cactus/db';
+import { db, teamMembership, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { UserRole } from '../../../auth/types';
@@ -23,13 +23,13 @@ import { HttpError } from '../../../utils/route-handler';
 // Type from getUserTeams return
 type UserTeamInfo = { id: string; name: string; role: 'member' | 'manager' };
 
-export interface TeamAccessResult {
+interface TeamAccessResult {
   hasAccess: boolean;
   isManager: boolean;
   userTeams: UserTeamInfo[];
 }
 
-export interface TeamMember {
+interface TeamMember {
   id: string;
   email: string;
   fullName: string | null;
@@ -90,7 +90,7 @@ export async function checkTeamAccess(
  * @param action - The action being attempted (for error message)
  * @returns true if access granted, false if denied (response sent)
  */
-export async function requireTeamManageAccess(
+async function requireTeamManageAccess(
   userId: string,
   userRole: UserRole,
   teamId: string,

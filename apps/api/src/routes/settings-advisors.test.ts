@@ -8,12 +8,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, advisorAliases, users } from '@cactus/db';
+import { db, advisorAliases, users } from '@maatwork/db';
 import { requireAuth } from '../auth/middlewares';
 import { normalizeAdvisorAlias } from '../utils/aum/aum-normalization';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   advisorAliases: {},
   users: {},

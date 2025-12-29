@@ -11,9 +11,9 @@
  * - ✅ Filas con solo Descripcion (sin idCuenta ni comitente)
  *
  * Uso:
- *   pnpm -F @cactus/api verify-aum-import
- *   pnpm -F @cactus/api verify-aum-import --file "nombre-archivo.csv"
- *   pnpm -F @cactus/api verify-aum-import --file-id "uuid-del-archivo"
+ *   pnpm -F @maatwork/api verify-aum-import
+ *   pnpm -F @maatwork/api verify-aum-import --file "nombre-archivo.csv"
+ *   pnpm -F @maatwork/api verify-aum-import --file-id "uuid-del-archivo"
  *
  * Configuración:
  *   Edita las constantes CSV_FILE y BROKER al inicio del archivo, o usa argumentos de línea de comandos.
@@ -23,9 +23,9 @@ import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
 import { join } from 'path';
 import { config } from 'dotenv';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql, eq, desc } from 'drizzle-orm';
-import { aumImportFiles, aumImportRows } from '@cactus/db/schema';
+import { aumImportFiles, aumImportRows } from '@maatwork/db/schema';
 import { mapAumColumns } from '../utils/aum-columns';
 
 // Cargar .env

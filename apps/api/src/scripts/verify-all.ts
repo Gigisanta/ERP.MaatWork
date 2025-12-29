@@ -4,7 +4,7 @@
  *
  * Ejecuta todas las verificaciones del sistema en secuencia y genera un reporte consolidado.
  *
- * Uso: pnpm -F @cactus/api verify-all
+ * Uso: pnpm -F @maatwork/api verify-all
  */
 
 import { config } from 'dotenv';
@@ -26,12 +26,12 @@ interface VerificationResult {
 const VERIFICATIONS = [
   {
     name: 'AUM Import',
-    command: 'pnpm -F @cactus/api verify-aum-import',
+    command: 'pnpm -F @maatwork/api verify-aum-import',
     description: 'Verifica que las importaciones AUM se hayan cargado correctamente',
   },
   {
     name: 'Contacts Assignment',
-    command: 'pnpm -F @cactus/api verify-contacts-assignment',
+    command: 'pnpm -F @maatwork/api verify-contacts-assignment',
     description: 'Verifica que todos los contactos estén correctamente asignados',
   },
 ];

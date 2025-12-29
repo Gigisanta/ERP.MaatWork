@@ -17,7 +17,7 @@ import {
   Select,
   Grid,
   Badge,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface PerformanceChartProps {
   portfolioIds?: string[];
@@ -69,7 +69,14 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
   height = 400,
   className = '',
 }: PerformanceChartProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(period || '1Y');
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>(period);
+
+  // AI_DECISION: Update selectedPeriod when period prop changes
+  // Justificación: Ensures the component reacts to external period changes (e.g. from parent or URL)
+  // Impacto: Better sync between props and state
+  React.useEffect(() => {
+    setSelectedPeriod(period);
+  }, [period]);
 
   // AI_DECISION: Migrate from useState+useEffect to SWR hook
   // Justificación: Eliminates redundant requests, provides automatic caching and revalidation

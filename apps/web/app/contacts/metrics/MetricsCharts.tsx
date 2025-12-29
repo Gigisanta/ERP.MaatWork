@@ -13,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { Card, CardHeader, CardTitle, CardContent, Text } from '@cactus/ui';
+import { Card, CardHeader, CardTitle, CardContent, Text } from '@maatwork/ui';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 
 const MONTH_NAMES_SHORT = [

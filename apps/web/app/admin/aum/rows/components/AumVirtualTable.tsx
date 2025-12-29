@@ -15,10 +15,10 @@ import { AumTableHeader } from './AumTableHeader';
 import { AumTableRow } from './AumTableRow';
 import { AUM_ROWS_CONFIG, TOTAL_TABLE_WIDTH } from '../lib/aumRowsConstants';
 import { parseErrorMessage } from '../lib/aumRowsUtils';
-import { Text } from '@cactus/ui';
+import { Text } from '@maatwork/ui';
 import { logger } from '@/lib/logger';
 
-export interface AumVirtualTableProps {
+interface AumVirtualTableProps {
   rows: AumRow[];
   isLoading: boolean;
   error: unknown | null;

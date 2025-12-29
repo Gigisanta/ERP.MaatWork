@@ -1,18 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "entry": [
-    "apps/api/src/index.ts",
-    "apps/web/app/**/*.{ts,tsx}",
-    "apps/web/middleware.ts",
-    "packages/ui/src/index.ts",
-    "packages/db/src/index.ts"
-  ],
-  "project": [
-    "apps/**/*.{ts,tsx}",
-    "packages/**/*.{ts,tsx}",
-    "scripts/**/*.{ts,js}",
-    "tests/**/*.{ts,tsx}"
-  ],
+  "project": ["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}", "scripts/**/*.{ts,js}", "tests/**/*.{ts,tsx}"],
   "ignore": [
     "**/*.test.ts",
     "**/*.test.tsx",
@@ -25,7 +13,8 @@
     "**/coverage/**",
     "**/.turbo/**",
     "**/migrations/**",
-    "**/__pycache__/**"
+    "**/__pycache__/**",
+    "apps/analytics-service/**"
   ],
   "ignoreDependencies": [
     "@types/*",
@@ -42,22 +31,34 @@
     "@changesets/*",
     "@lhci/*",
     "rimraf",
-    "chalk"
+    "chalk",
+    "tsx",
+    "pino-pretty",
+    "pg",
+    "@types/pg"
   ],
+  "ignoreBinaries": ["python", "tsx", "test:coverage:check", "pm2"],
   "workspaces": {
-    ".": {
-      "entry": ["scripts/**/*.{ts,js}"]
-    },
     "apps/api": {
-      "entry": ["src/index.ts"]
+      "entry": ["src/index.ts", "src/routes/**/index.ts"]
     },
     "apps/web": {
-      "entry": ["app/**/*.{ts,tsx}", "middleware.ts"]
+      "entry": [
+        "app/**/page.tsx",
+        "app/**/layout.tsx",
+        "app/**/loading.tsx",
+        "app/**/error.tsx",
+        "middleware.ts",
+        "next.config.js"
+      ]
     },
     "packages/ui": {
-      "entry": ["src/index.ts"]
+      "entry": ["src/index.ts", "src/components/**/index.ts"]
     },
     "packages/db": {
+      "entry": ["src/index.ts", "src/schema/*.ts", "scripts/**/*.ts"]
+    },
+    "packages/types": {
       "entry": ["src/index.ts"]
     }
   }

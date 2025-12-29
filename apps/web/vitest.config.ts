@@ -19,7 +19,13 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**', '.next/**', 'out/**', 'dist/**'],
-    // Parallelization is handled automatically by Vitest 4.x
+    // Parallelization optimized to prevent system freezing
+    poolOptions: {
+      threads: {
+        maxThreads: 2,
+        minThreads: 1,
+      },
+    },
     testTimeout: 10000, // 10 seconds default timeout
     hookTimeout: 10000,
     coverage: {
@@ -47,8 +53,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@/app': path.resolve(__dirname, './app'),
+      '@/lib': path.resolve(__dirname, './lib'),
+      '@/components': path.resolve(__dirname, './app/components'),
+      '@/hooks': path.resolve(__dirname, './lib/hooks'),
+      '@/auth': path.resolve(__dirname, './app/auth'),
+      '@/utils': path.resolve(__dirname, './lib/utils'),
+      '@maatwork/ui': path.resolve(__dirname, '../../packages/ui/src'),
       '@': path.resolve(__dirname, './'),
-      '@cactus/ui': path.resolve(__dirname, '../../packages/ui/src'),
     },
   },
 });

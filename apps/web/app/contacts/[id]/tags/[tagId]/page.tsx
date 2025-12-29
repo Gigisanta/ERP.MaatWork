@@ -16,7 +16,7 @@ import {
   Badge,
   Alert,
   type BreadcrumbItem,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Contact, ContactTagWithDetails } from '@/types';
 import TagDetailsForm from './TagDetailsForm';
 

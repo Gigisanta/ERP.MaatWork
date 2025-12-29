@@ -6,7 +6,7 @@
  * Impacto: Reducción de tiempo de procesamiento y mejor manejo de errores
  */
 
-import { db, aumMonthlySnapshots } from '@cactus/db';
+import { db, aumMonthlySnapshots } from '@maatwork/db';
 import { eq, sql, type SQL } from 'drizzle-orm';
 import { AUM_LIMITS } from '../../config/aum-limits';
 import { logger } from '../../utils/logger';
@@ -208,3 +208,11 @@ export async function upsertAumMonthlySnapshots(
     stats,
   };
 }
+
+
+
+
+
+
+
+

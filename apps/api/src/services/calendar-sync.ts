@@ -4,7 +4,7 @@
  * Synchronizes Google Calendar events to local database and triggers matching logic.
  */
 
-import { db, calendarEvents, contacts } from '@cactus/db';
+import { db, calendarEvents, contacts } from '@maatwork/db';
 import { eq, sql, and } from 'drizzle-orm';
 import { getCalendarEvents } from './google-calendar';
 import { updateContactsMeetingStatus } from './contact-matcher';
@@ -34,6 +34,7 @@ export async function syncUserCalendar(
     }
 
     const affectedContactEmails = new Set<string>();
+    const syncedGoogleIds = new Set<string>();
 
     // Process events in transaction or batch
     // Since we want to capture all attendees to update their statuses later
@@ -41,6 +42,7 @@ export async function syncUserCalendar(
     // 1. Upsert events
     for (const event of googleEvents) {
       if (!event.id) continue;
+      syncedGoogleIds.add(event.id);
 
       const startAt = event.start?.dateTime
         ? new Date(event.start.dateTime)
@@ -55,7 +57,13 @@ export async function syncUserCalendar(
 
       if (!startAt) continue; // Skip if no start time
 
-      const attendees = event.attendees || [];
+      const attendees = (event.attendees || []).map(a => ({
+        email: a.email,
+        displayName: a.displayName,
+        responseStatus: a.responseStatus,
+        organizer: a.organizer,
+        self: a.self
+      }));
 
       // Collect emails to find contacts later
       attendees.forEach((a) => {
@@ -90,6 +98,24 @@ export async function syncUserCalendar(
             updatedAt: new Date(),
           },
         });
+    }
+
+    // 2. Handle deletions: remove events in DB that were NOT in Google's response for this range
+    // AI_DECISION: Implementar borrado de eventos eliminados en Google Calendar
+    // Justificación: El sync solo hacía upserts, dejando eventos fantasmas que fueron borrados en Google
+    // Impacto: Base de datos siempre sincronizada con el estado real del calendario
+    if (syncedGoogleIds.size > 0) {
+      const googleIdList = Array.from(syncedGoogleIds);
+      await db()
+        .delete(calendarEvents)
+        .where(
+          and(
+            eq(calendarEvents.userId, userId),
+            sql`${calendarEvents.startAt} >= ${timeMin} AND ${calendarEvents.startAt} <= ${timeMax}`,
+            sql`${calendarEvents.googleId} NOT IN ${googleIdList}`
+          )
+        );
+      logger.info({ userId, timeMin, timeMax }, 'Cleaned up deleted events in range');
     }
 
     logger.info({ userId, eventCount: googleEvents.length }, 'Events synced successfully');

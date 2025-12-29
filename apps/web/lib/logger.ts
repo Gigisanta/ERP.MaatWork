@@ -10,7 +10,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  * Tipo para valores de contexto en logs
  * Permite cualquier valor JSON-serializable
  */
-export type LogContextValue =
+type LogContextValue =
   | string
   | number
   | boolean
@@ -61,7 +61,7 @@ export function toLogContext(record: Record<string, unknown>): Record<string, Lo
   return result;
 }
 
-export interface LogEntry {
+interface LogEntry {
   timestamp: string;
   level: LogLevel;
   message: string;

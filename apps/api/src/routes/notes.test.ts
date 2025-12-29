@@ -8,13 +8,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, notes } from '@cactus/db';
+import { db, notes } from '@maatwork/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { requireAuth } from '../auth/middlewares';
 import { canAccessContact } from '../auth/authorization';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   notes: {},
   eq: vi.fn(),

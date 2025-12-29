@@ -5,6 +5,8 @@
  * Justificación: Validación de renderizado básico
  * Impacto: Prevenir errores críticos en página principal
  */
+import { usePageTitle } from '../components/PageTitleContext';
+
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -66,16 +68,31 @@ vi.mock('../(shared)/useViewport', () => ({
   }),
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 describe('ContactsPage', () => {
   it('debería renderizar correctamente', () => {
     render(<ContactsPage />);
 
-    // Verificar que la página se renderiza sin errores
-    expect(screen.getByRole('main') || screen.getByRole('article') || document.body).toBeDefined();
+    // Verificar que la página se renderiza sin errores buscando el título
+    expect(screen.getByText(/Contactos/i)).toBeInTheDocument();
   });
 
   it('debería mostrar título de página', () => {
-    const { usePageTitle } = require('../components/PageTitleContext');
+    
     render(<ContactsPage />);
 
     expect(usePageTitle).toHaveBeenCalledWith('Contactos');

@@ -92,6 +92,7 @@ describe('createApiErrorFromResponse', () => {
     const mockResponse = {
       status: 400,
       statusText: 'Bad Request',
+      headers: new Headers(),
       json: async () => ({
         error: 'Validation failed',
         details: ['Field 1 is required'],
@@ -108,6 +109,7 @@ describe('createApiErrorFromResponse', () => {
     const mockResponse = {
       status: 500,
       statusText: 'Internal Server Error',
+      headers: new Headers(),
       json: async () => {
         throw new Error('Not JSON');
       },
@@ -123,6 +125,7 @@ describe('createApiErrorFromResponse', () => {
     const mockResponse = {
       status: 404,
       statusText: 'Not Found',
+      headers: new Headers(),
       json: async () => ({}),
     } as unknown as Response;
 

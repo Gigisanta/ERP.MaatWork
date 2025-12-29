@@ -4,22 +4,25 @@
  * GET /teams/:id/detail - Get team with members and metrics combined
  */
 import type { Request } from 'express';
-import { db, teams, teamMembership, users } from '@cactus/db';
+import { db, teams, teamMembership, users } from '@maatwork/db';
 import {
   contacts,
   aumSnapshots,
   clientPortfolioAssignments,
   portfolioTemplates,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { HttpError } from '../../../utils/route-handler';
 
+import { inArray } from 'drizzle-orm';
+
 /**
  * GET /teams/:id/detail - Obtener equipo con miembros y métricas combinados
  */
 export async function getTeamDetail(req: Request) {
+  const start = Date.now();
   const id = req.params.id;
   const userId = req.user!.id;
   const userRole = req.user!.role;
@@ -122,51 +125,76 @@ export async function getTeamDetail(req: Request) {
     }
   }
 
-  // Execute remaining queries in parallel (AUM queries need separate handling due to date filters)
-  const [aumResult, riskDistributionResult, aumTrendResult] = await Promise.all([
-    // Get AUM total del equipo
-    db()
-      .select({
-        totalAum: sum(aumSnapshots.aumTotal),
-      })
-      .from(aumSnapshots)
-      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-      .where(and(eq(teamMembership.teamId, id), eq(aumSnapshots.date, todayStr)))
-      .limit(1),
+  // Pre-fetch contact IDs to optimize AUM queries
+  // This avoids joining 4 tables on the huge aumSnapshots table
+  const teamContacts = await db()
+    .select({ id: contacts.id })
+    .from(contacts)
+    .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+    .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+    .where(and(eq(teamMembership.teamId, id), sql`${contacts.deletedAt} IS NULL`));
 
-    // Get risk distribution
-    db()
-      .select({
-        riskLevel: portfolioTemplates.riskLevel,
-        count: count(),
-      })
-      .from(contacts)
-      .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
-      .innerJoin(
-        portfolioTemplates,
-        eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
-      )
-      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-      .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
-      .groupBy(portfolioTemplates.riskLevel),
+  const contactIds = teamContacts.map((c) => c.id);
 
-    // Get AUM trend (last 30 days)
-    db()
-      .select({
-        date: aumSnapshots.date,
-        totalAum: sum(aumSnapshots.aumTotal),
-      })
-      .from(aumSnapshots)
-      .innerJoin(contacts, eq(contacts.id, aumSnapshots.contactId))
-      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
-      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
-      .where(and(eq(teamMembership.teamId, id), gte(aumSnapshots.date, thirtyDaysAgoStr)))
-      .groupBy(aumSnapshots.date)
-      .orderBy(aumSnapshots.date),
-  ]);
+  let aumResult = { totalAum: '0' };
+  let riskDistributionResult: { riskLevel: string | null; count: number }[] = [];
+  let aumTrendResult: { date: string; totalAum: string | null }[] = [];
+
+  if (contactIds.length > 0) {
+    const [aumRes, riskRes, trendRes] = await Promise.all([
+      // Get AUM total using IN clause (optimized)
+      db()
+        .select({
+          totalAum: sum(aumSnapshots.aumTotal),
+        })
+        .from(aumSnapshots)
+        .where(and(inArray(aumSnapshots.contactId, contactIds), eq(aumSnapshots.date, todayStr)))
+        .limit(1),
+
+      // Get risk distribution
+      db()
+        .select({
+          riskLevel: portfolioTemplates.riskLevel,
+          count: count(),
+        })
+        .from(contacts)
+        .innerJoin(
+          clientPortfolioAssignments,
+          eq(clientPortfolioAssignments.contactId, contacts.id)
+        )
+        .innerJoin(
+          portfolioTemplates,
+          eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+        )
+        .where(
+          and(inArray(contacts.id, contactIds), eq(clientPortfolioAssignments.status, 'active'))
+        )
+        .groupBy(portfolioTemplates.riskLevel),
+
+      // Get AUM trend using IN clause (optimized)
+      db()
+        .select({
+          date: aumSnapshots.date,
+          totalAum: sum(aumSnapshots.aumTotal),
+        })
+        .from(aumSnapshots)
+        .where(
+          and(inArray(aumSnapshots.contactId, contactIds), gte(aumSnapshots.date, thirtyDaysAgoStr))
+        )
+        .groupBy(aumSnapshots.date)
+        .orderBy(aumSnapshots.date),
+    ]);
+
+    if (aumRes[0]) aumResult = aumRes[0] as any;
+    riskDistributionResult = riskRes as any;
+    aumTrendResult = trendRes as any;
+  }
+
+  const duration = Date.now() - start;
+  req.log.info(
+    { teamId: id, duration, contactCount: contactIds.length },
+    'getTeamDetail completed'
+  );
 
   return {
     team: {
@@ -184,13 +212,11 @@ export async function getTeamDetail(req: Request) {
       portfolioCount: basicMetricsResult?.rows?.[0]?.portfolioCount
         ? Number(basicMetricsResult.rows[0].portfolioCount)
         : 0,
-      riskDistribution: riskDistributionResult.map(
-        (r: { riskLevel: string | null; count: bigint | number }) => ({
-          riskLevel: r.riskLevel,
-          count: Number(r.count),
-        })
-      ),
-      aumTrend: aumTrendResult.map((r: { date: string; totalAum: bigint | number | null }) => ({
+      riskDistribution: riskDistributionResult.map((r) => ({
+        riskLevel: r.riskLevel,
+        count: Number(r.count),
+      })),
+      aumTrend: aumTrendResult.map((r) => ({
         date: r.date,
         value: r.totalAum ? Number(r.totalAum) : 0,
       })),

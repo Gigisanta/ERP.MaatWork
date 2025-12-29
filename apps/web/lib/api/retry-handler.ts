@@ -90,7 +90,7 @@ export function delay(ms: number): Promise<void> {
 /**
  * Options for retry with backoff
  */
-export interface RetryWithBackoffOptions {
+interface RetryWithBackoffOptions {
   /** Maximum number of retry attempts (default: 3) */
   maxRetries?: number;
   /** Base delay in milliseconds (default: 1000) */
@@ -156,7 +156,7 @@ function defaultShouldRetry(error: unknown): boolean {
  * );
  * ```
  */
-export async function retryWithBackoff<T>(
+async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   options: RetryWithBackoffOptions = {}
 ): Promise<T> {
@@ -229,7 +229,7 @@ export async function retryWithBackoff<T>(
  * const contact = await fetchWithRetry('123');
  * ```
  */
-export function withRetry<Args extends unknown[], Result>(
+function withRetry<Args extends unknown[], Result>(
   fn: (...args: Args) => Promise<Result>,
   options: RetryWithBackoffOptions = {}
 ): (...args: Args) => Promise<Result> {
@@ -239,7 +239,7 @@ export function withRetry<Args extends unknown[], Result>(
 /**
  * Hook-friendly retry status tracking
  */
-export interface RetryStatus {
+interface RetryStatus {
   isRetrying: boolean;
   attempt: number;
   lastError: unknown | null;
@@ -258,7 +258,7 @@ export interface RetryStatus {
  * await retryController.execute(() => fetchData());
  * ```
  */
-export function createRetryController(
+function createRetryController(
   options: {
     onStatusChange?: (status: RetryStatus) => void;
   } & RetryWithBackoffOptions = {}

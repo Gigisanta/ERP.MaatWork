@@ -6,8 +6,7 @@
  * Impacto: Mejor rendimiento, menos carga en API
  */
 
-import type { Contact } from '@/types/contact';
-import type { PipelineStage } from '@/types/pipeline';
+import type { Contact, PipelineStage } from '@/types';
 import { logger, toLogContextValue } from '../logger';
 
 /**

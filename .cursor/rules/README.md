@@ -1,4 +1,4 @@
-# Sistema de Reglas Cursor - CACTUS CRM
+# Sistema de Reglas Cursor - MAATWORK
 
 Este proyecto usa un sistema de reglas modular organizado por dominio y patrón para mejorar la calidad de código y comprensión contextual de Cursor AI.
 

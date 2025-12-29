@@ -7,7 +7,7 @@
  */
 
 import { OAuth2Client } from 'google-auth-library';
-import { db, googleOAuthTokens } from '@cactus/db';
+import { db, googleOAuthTokens } from '@maatwork/db';
 import { lt, eq } from 'drizzle-orm';
 import { encryptToken, decryptToken } from '../utils/encryption';
 import { env } from '../config/env';

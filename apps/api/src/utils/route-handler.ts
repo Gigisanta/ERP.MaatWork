@@ -35,12 +35,12 @@ import { createErrorResponse, getStatusCodeFromError } from './error-response';
  * Tipo para handlers que retornan datos directamente
  * El resultado se envuelve automaticamente en { success: true, data: result }
  */
-export type RouteHandlerFn<T = unknown> = (req: Request, res: Response) => Promise<T>;
+type RouteHandlerFn<T = unknown> = (req: Request, res: Response) => Promise<T>;
 
 /**
  * Tipo para handlers que manejan res directamente
  */
-export type AsyncHandlerFn = (
+type AsyncHandlerFn = (
   req: Request,
   res: Response,
   next: NextFunction
@@ -49,7 +49,7 @@ export type AsyncHandlerFn = (
 /**
  * Respuesta estandar de exito
  */
-export interface SuccessResponse<T> {
+interface SuccessResponse<T> {
   success: true;
   data: T;
   requestId?: string;
@@ -285,7 +285,7 @@ function getDefaultUserMessage(statusCode: number): string {
 /**
  * Type guard para verificar si un error tiene un codigo de estado especifico
  */
-export function isHttpError(error: unknown, statusCode: number): boolean {
+function isHttpError(error: unknown, statusCode: number): boolean {
   return getStatusCodeFromError(error) === statusCode;
 }
 
@@ -312,7 +312,7 @@ export class HttpError extends Error {
 
 // Extender getStatusCodeFromError para soportar HttpError
 const originalGetStatusCode = getStatusCodeFromError;
-export function getStatusCode(error: unknown): number {
+function getStatusCode(error: unknown): number {
   if (error instanceof HttpError) {
     return error.statusCode;
   }

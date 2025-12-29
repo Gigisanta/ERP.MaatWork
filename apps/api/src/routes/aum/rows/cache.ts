@@ -63,6 +63,14 @@ export function setCachedCount(cacheKey: string, total: number): void {
 /**
  * Limpia cache (útil para testing)
  */
-export function clearCache(): void {
+function clearCache(): void {
   countCache.clear();
 }
+
+
+
+
+
+
+
+

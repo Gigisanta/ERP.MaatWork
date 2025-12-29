@@ -2,7 +2,7 @@
  * API methods para contacts
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type { ApiResponse } from '../api-client';
 import type {
   Contact,
@@ -10,12 +10,13 @@ import type {
   UpdateContactRequest,
   ContactFieldValue,
   ContactFieldUpdate,
-} from '@/types/contact';
+  ImportStats,
+} from '@maatwork/types';
 import type {
   AssignPortfolioRequest,
   AssignPortfolioResponse,
   PortfolioAssignment,
-} from '@/types/portfolio-assignment';
+} from '@/types';
 
 // ==========================================================
 // API Methods
@@ -164,4 +165,13 @@ export async function sendContactsToWebhook(
     contacts,
     metadata,
   });
+}
+
+/**
+ * Importar contactos desde CSV
+ */
+export async function importContactsCsv(file: File): Promise<ApiResponse<{ stats: ImportStats; message: string }>> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return apiClient.post<{ stats: ImportStats; message: string }>('/v1/contacts/import', formData);
 }

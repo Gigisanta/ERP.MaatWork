@@ -27,13 +27,15 @@ import webhookRouter from './webhook';
 import historyRouter from './history';
 import assignmentRouter from './assignment';
 import interactionRouter from './interactions';
+import importRouter from './import-router';
 
 const router = Router();
 
 // Mount routes in order of specificity
-// IMPORTANT: Specific routes (/batch, /webhook) must come before parameterized routes (/:id)
+// IMPORTANT: Specific routes (/batch, /webhook, /import) must come before parameterized routes (/:id)
 router.use(batchRouter); // GET /contacts/batch
 router.use(webhookRouter); // POST /contacts/webhook
+router.use(importRouter); // POST /contacts/import
 router.use(listRouter); // GET /contacts
 router.use(historyRouter); // GET /contacts/:id/history (must come before getRouter)
 router.use(interactionRouter); // POST /contacts/:id/interaction
@@ -44,16 +46,3 @@ router.use(updateRouter); // PUT /contacts/:id, PATCH /contacts/:id
 router.use(deleteRouter); // DELETE /contacts/:id
 
 export default router;
-
-// Re-export schemas for external use
-export {
-  listContactsQuerySchema,
-  contactDetailQuerySchema,
-  batchContactsQuerySchema,
-  createContactSchema,
-  updateContactSchema,
-  patchContactSchema,
-  type CreateContactInput,
-  type UpdateContactInput,
-  type PatchContactInput,
-} from './schemas';

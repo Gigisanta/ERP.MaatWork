@@ -12,8 +12,6 @@
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "Node16",
-    "moduleResolution": "node16",
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
@@ -26,7 +24,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "node"]
+    "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "node", "next"]
   },
   "include": ["src/**/*", "src/tailwind-preset.ts"],
   "exclude": ["node_modules", "dist", "tests", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx"]

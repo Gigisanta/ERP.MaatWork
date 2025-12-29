@@ -13,7 +13,7 @@ import {
   automationConfigs,
   contactTags,
   tags,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { eq, and, isNull, count, sql } from 'drizzle-orm';
 import type { InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
@@ -24,6 +24,7 @@ import { transactionWithLogging } from '../../utils/database/db-transactions';
 import { sendWebhook } from '../../utils/http/webhook-client';
 import { invalidateCache } from '../../middleware/cache';
 import { HttpError } from '../../utils/route-handler';
+import { uuidSchema } from '../../utils/validation/common-schemas';
 
 const router = Router();
 
@@ -32,8 +33,8 @@ const router = Router();
 // ==========================================================
 
 const moveContactSchema = z.object({
-  contactId: z.string().uuid(),
-  toStageId: z.string().uuid(),
+  contactId: uuidSchema,
+  toStageId: uuidSchema,
   reason: z.string().max(500).optional().nullable(),
 });
 

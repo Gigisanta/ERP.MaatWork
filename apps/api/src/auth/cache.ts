@@ -13,10 +13,48 @@ interface CacheEntry {
   expiresAt: number;
 }
 
+interface UserCacheEntry {
+  user: { id: string; role: string; isActive: boolean };
+  expiresAt: number;
+}
+
 export const cache = new Map<string, CacheEntry>();
+const userCache = new Map<string, UserCacheEntry>();
 
 // TTL: 5 minutes (300000 ms)
 const TTL_MS = 5 * 60 * 1000;
+// User TTL: 1 minute (60000 ms) - shorter as status might change
+const USER_TTL_MS = 60 * 1000;
+
+/**
+ * Get cached user validation data
+ */
+export function getCachedUser(
+  userId: string
+): { id: string; role: string; isActive: boolean } | null {
+  const entry = userCache.get(userId);
+
+  if (!entry) {
+    return null;
+  }
+
+  if (Date.now() > entry.expiresAt) {
+    userCache.delete(userId);
+    return null;
+  }
+
+  return entry.user;
+}
+
+/**
+ * Cache user validation data
+ */
+export function setCachedUser(user: { id: string; role: string; isActive: boolean }): void {
+  userCache.set(user.id, {
+    user,
+    expiresAt: Date.now() + USER_TTL_MS,
+  });
+}
 
 /**
  * Get cached access scope or return null if not cached or expired

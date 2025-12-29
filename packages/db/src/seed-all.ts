@@ -9,12 +9,13 @@
  * - Benchmarks/instruments (must be fetched from yfinance based on user needs)
  * - Notification templates (system functionality, pre-configured separately)
  *
- * Can be run manually via: pnpm -F @cactus/db seed:all
+ * Can be run manually via: pnpm -F @maatwork/db seed:all
  *
  * REGLA CURSOR: This script is idempotent - safe to run multiple times
  */
 
-import 'dotenv/config';
+import './env-setup';
+import { fileURLToPath } from 'url';
 import {
   db,
   pipelineStages,
@@ -24,6 +25,7 @@ import {
   lookupAssetClass,
 } from './index';
 import { eq } from 'drizzle-orm';
+import { seedTags } from './seed-tags';
 
 /**
  * Seed the 7 required pipeline stages
@@ -239,6 +241,10 @@ async function seedAll() {
   console.log('🌱 Starting SYSTEM-ESSENTIAL database seeding...\n');
 
   try {
+    // Seed tags (SYSTEM-REQUIRED)
+    await seedTags();
+    console.log('');
+
     // Seed pipeline stages (SYSTEM-REQUIRED)
     await seedPipelineStages();
     console.log('');
@@ -261,7 +267,9 @@ async function seedAll() {
 }
 
 // Execute seeding if this script is run directly
-if (require.main === module) {
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
   seedAll()
     .then(() => {
       console.log('👋 Seeding finalizado. Puedes cerrar este proceso.');

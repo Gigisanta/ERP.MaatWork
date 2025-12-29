@@ -74,12 +74,6 @@ router.delete('/:id', requireAuth, validate({ params: idParamSchema }), handleDe
 
 export default router;
 
-// Re-export schemas for external use
-export {
-  createAutomationConfigSchema,
-  updateAutomationConfigSchema,
-  idParamSchema,
-  automationNameParamSchema,
-  type CreateAutomationConfigInput,
-  type UpdateAutomationConfigInput,
-} from './schemas';
+
+
+

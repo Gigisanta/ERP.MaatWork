@@ -2,17 +2,13 @@
 
 import React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-// AI_DECISION: Importar componentes en un solo statement para simplificar resoluci?n de webpack
-// Justificaci?n: Webpack tiene problemas resolviendo @cactus/ui cuando hay m?ltiples imports separados
-// Impacto: Un solo import statement ayuda a webpack a resolver todos los m?dulos de una vez
-import { Button, Icon, Text, Badge } from '@cactus/ui';
-// Utility function para combinar clases (similar a cn de @cactus/ui)
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
-}
+// AI_DECISION: Importar componentes en un solo statement para simplificar resolución de webpack
+// Justificación: Webpack tiene problemas resolviendo @maatwork/ui cuando hay múltiples imports separados
+// Impacto: Un solo import statement ayuda a webpack a resolver todos los módulos de una vez
+import { Button, Icon, Text, Badge, cn } from '@maatwork/ui';
 import type { PipelineStage, Tag } from '@/types';
 
-export interface FiltersDropdownProps {
+interface FiltersDropdownProps {
   selectedStage: string;
   selectedTags: string[];
   pipelineStages: PipelineStage[];

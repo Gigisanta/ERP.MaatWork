@@ -6,7 +6,7 @@
  * Impacto: Eliminación de errores CORS, mejor seguridad, manejo centralizado de errores
  */
 
-import type { Contact } from '@/types/contact';
+import type { Contact } from '@maatwork/types';
 import {
   sendContactsToWebhook as sendContactsToWebhookApi,
   type WebhookMetadata as ApiWebhookMetadata,
@@ -15,10 +15,10 @@ import {
 import { ApiError } from '@/lib/api-client';
 
 // Re-export types from API client for backward compatibility
-export type WebhookMetadata = ApiWebhookMetadata;
-export type WebhookResult = ApiWebhookResult;
+type WebhookMetadata = ApiWebhookMetadata;
+type WebhookResult = ApiWebhookResult;
 
-export interface WebhookPayload {
+interface WebhookPayload {
   contacts: Contact[];
   metadata: WebhookMetadata;
 }

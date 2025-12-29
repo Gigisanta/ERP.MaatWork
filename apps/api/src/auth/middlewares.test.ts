@@ -11,7 +11,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { requireAuth, requireRole } from './middlewares';
 import { verifyUserToken } from './jwt';
 import type { AuthUser } from './types';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 
 // Mock JWT module
 vi.mock('./jwt', () => ({
@@ -19,7 +19,7 @@ vi.mock('./jwt', () => ({
 }));
 
 // Mock database
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   users: {},
   eq: vi.fn(),

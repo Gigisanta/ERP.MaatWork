@@ -13,7 +13,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db, segments, segmentMembers, contacts } from '@cactus/db';
+import { db, segments, segmentMembers, contacts } from '@maatwork/db';
 import { eq, desc, sql, and, inArray, type InferSelectModel } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../../auth/authorization';

@@ -3,9 +3,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { apiClient } from './client';
 import * as apiIndex from './tasks';
 
-vi.mock('../api-client', () => {
+vi.mock('./client', () => {
   return {
     apiClient: {
       get: vi.fn(async (_p: string) => ({ success: true })),
@@ -17,7 +18,7 @@ vi.mock('../api-client', () => {
 });
 
 describe('tasks api client endpoints', () => {
-  const { apiClient } = require('../api-client');
+  
 
   beforeEach(() => {
     vi.clearAllMocks();

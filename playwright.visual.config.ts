@@ -50,7 +50,7 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: 'pnpm -F @cactus/web dev',
+        command: 'pnpm -F @maatwork/web dev',
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
         timeout: 120000,

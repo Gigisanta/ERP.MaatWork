@@ -11,7 +11,7 @@ type LogCallback = (log: Partial<ErrorLog>) => void;
 /**
  * Configura el handler para errores de JavaScript
  */
-export function setupErrorHandler(logCallback: LogCallback): void {
+function setupErrorHandler(logCallback: LogCallback): void {
   window.addEventListener('error', (event) => {
     // Filtrar errores NEXT_REDIRECT que son normales en Next.js Server Components
     if (event.message === 'NEXT_REDIRECT' || event.error?.message === 'NEXT_REDIRECT') {
@@ -38,7 +38,7 @@ export function setupErrorHandler(logCallback: LogCallback): void {
 /**
  * Configura el handler para promesas rechazadas sin catch
  */
-export function setupUnhandledRejectionHandler(logCallback: LogCallback): void {
+function setupUnhandledRejectionHandler(logCallback: LogCallback): void {
   window.addEventListener('unhandledrejection', (event) => {
     const reasonMessage = event.reason?.message || String(event.reason);
     if (isNextRedirectError(reasonMessage)) {
@@ -62,7 +62,7 @@ export function setupUnhandledRejectionHandler(logCallback: LogCallback): void {
 /**
  * Intercepta console.error para capturar errores
  */
-export function setupConsoleErrorInterceptor(
+function setupConsoleErrorInterceptor(
   logCallback: LogCallback,
   isLogging: () => boolean
 ): void {
@@ -117,7 +117,7 @@ export function setupConsoleErrorInterceptor(
 /**
  * Intercepta console.warn para capturar warnings
  */
-export function setupConsoleWarnInterceptor(
+function setupConsoleWarnInterceptor(
   logCallback: LogCallback,
   isLogging: () => boolean
 ): void {
@@ -149,3 +149,11 @@ export function setupAllErrorHandlers(logCallback: LogCallback, isLogging: () =>
   setupConsoleErrorInterceptor(logCallback, isLogging);
   setupConsoleWarnInterceptor(logCallback, isLogging);
 }
+
+
+
+
+
+
+
+

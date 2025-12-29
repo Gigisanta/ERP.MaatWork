@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSWRConfig } from 'swr';
 import { z } from 'zod';
-import { Input, Button, Stack, Text, Spinner, Alert } from '@cactus/ui';
+import { Input, Button, Stack, Text, Spinner, Alert } from '@maatwork/ui';
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';
@@ -30,6 +31,7 @@ interface TagDetailsFormProps {
 export default function TagDetailsForm({ contactId, tagId, initialData }: TagDetailsFormProps) {
   const router = useRouter();
   const { showToast } = useToast();
+  const { mutate } = useSWRConfig();
 
   const [formData, setFormData] = useState<UpdateContactTagRequest>({
     monthlyPremium: initialData.monthlyPremium ?? null,
@@ -172,6 +174,11 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
           monthlyPremium: response.data.monthlyPremium ?? null,
           policyNumber: response.data.policyNumber ?? null,
         });
+
+        // AI_DECISION: Invalidar cache de progreso de carrera
+        // Justificación: Cambios en prima mensual (Zurich) afectan el progreso de carrera
+        // Impacto: Barra de progreso en el header se actualiza automáticamente
+        await mutate('career-plan-user-progress', undefined, { revalidate: true });
       } else {
         const errorMsg = response.error || 'Error al guardar los datos';
         logger.error(

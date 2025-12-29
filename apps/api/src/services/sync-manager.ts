@@ -5,9 +5,9 @@
  * Ensures data consistency for Contacts, AUM, and Calendar.
  */
 
-import { db, contactAliases, contacts } from '@cactus/db';
+import { db, contactAliases, contacts } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
-import { reprocessUnmatchedRowsForContact } from './aum-matcher';
+import { reprocessUnmatchedRowsForContact } from './aum';
 import { updateSingleContactMeetingStatus } from './contact-matcher';
 import { logger } from '../utils/logger';
 
@@ -45,7 +45,7 @@ export async function onContactAliasesChanged(contactId: string) {
 /**
  * Triggered when contact basic info changes (name, email).
  */
-export async function onContactUpdated(contactId: string) {
+async function onContactUpdated(contactId: string) {
   // Same logic as aliases changed basically
   await onContactAliasesChanged(contactId);
 }

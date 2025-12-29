@@ -7,7 +7,7 @@
 
 import type { Request } from 'express';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
-import { db, googleOAuthTokens } from '@cactus/db';
+import { db, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { decryptToken } from '../../../utils/encryption';
 import { env } from '../../../config/env';
@@ -22,6 +22,7 @@ import { syncUserCalendar } from '../../../services/calendar-sync';
 import { refreshGoogleToken } from '../../../jobs/google-token-refresh';
 import { z } from 'zod';
 import { getEventsQuerySchema, createEventSchema, updateEventSchema } from '../schemas';
+import { calendarEventsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 
 /**
  * Helper para obtener tokens OAuth personales del usuario
@@ -129,8 +130,18 @@ export const getPersonalEvents = createRouteHandler(async (req: Request) => {
   const { calendarId, timeMin, timeMax, maxResults } = req.query as unknown as z.infer<
     typeof getEventsQuerySchema
   >;
+  const userId = req.user!.id;
+
+  // Try cache first
+  const cacheKey = normalizeCacheKey('personal_calendar', userId, calendarId, timeMin, timeMax, maxResults);
+  const cachedEvents = calendarEventsCacheUtil.get(cacheKey);
+  if (cachedEvents) {
+    req.log.debug({ userId, cacheKey }, 'Personal calendar events cache hit');
+    return cachedEvents;
+  }
+
   const { accessToken, calendarId: userCalendarId } = await getPersonalOAuthTokens(
-    req.user!.id,
+    userId,
     req
   );
 
@@ -143,14 +154,17 @@ export const getPersonalEvents = createRouteHandler(async (req: Request) => {
   );
 
   req.log.info(
-    { userId: req.user!.id, eventCount: events.length },
-    'Personal calendar events fetched'
+    { userId, eventCount: events.length },
+    'Personal calendar events fetched from Google'
   );
+
+  // Set cache
+  calendarEventsCacheUtil.set(cacheKey, events);
 
   // Async sync to keep DB up-to-date with meeting statuses
   // We don't await this to keep the response fast
-  syncUserCalendar(req.user!.id, accessToken, calendarId || userCalendarId).catch((err) => {
-    req.log.error({ userId: req.user!.id, err }, 'Background calendar sync failed');
+  syncUserCalendar(userId, accessToken, calendarId || userCalendarId).catch((err) => {
+    req.log.error({ userId, err }, 'Background calendar sync failed');
   });
 
   return events;
@@ -188,7 +202,20 @@ export const createPersonalEvent = createRouteHandler(async (req: Request) => {
       : { date: end.date! },
     ...(description ? { description } : {}),
     ...(attendees ? { attendees } : {}),
+    // AI_DECISION: Create Google Meet link by default for all new events
+    // Justificación: Requisito del usuario para simplificar la creación de reuniones
+    // Impacto: Todos los eventos nuevos tendrán un link de Meet generado automáticamente
+    conferenceData: {
+      createRequest: {
+        requestId: `meet-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' },
+      },
+    },
   });
+
+  // Invalidate cache
+  calendarEventsCacheUtil.clear();
+
   req.log.info(
     { userId: req.user!.id, eventId: event.id, summary },
     'Personal calendar event created'
@@ -206,7 +233,15 @@ export const updatePersonalEvent = createRouteHandler(async (req: Request) => {
   const eventData = req.body as z.infer<typeof updateEventSchema>;
 
   // Construct update body strictly omitting undefined values
-  const updateBody: any = {};
+  interface CalendarEventUpdate {
+    summary?: string;
+    description?: string | null;
+    location?: string | null;
+    attendees?: { email: string }[];
+    start?: { dateTime: string; timeZone?: string } | { date: string };
+    end?: { dateTime: string; timeZone?: string } | { date: string };
+  }
+  const updateBody: CalendarEventUpdate = {};
   if (eventData.summary !== undefined) updateBody.summary = eventData.summary;
   if (eventData.description !== undefined) updateBody.description = eventData.description;
   if (eventData.location !== undefined) updateBody.location = eventData.location;
@@ -231,6 +266,10 @@ export const updatePersonalEvent = createRouteHandler(async (req: Request) => {
   }
 
   const event = await updateCalendarEvent(accessToken, calendarId, eventId, updateBody);
+
+  // Invalidate cache
+  calendarEventsCacheUtil.clear();
+
   req.log.info({ userId: req.user!.id, eventId }, 'Personal calendar event updated');
   return event;
 });
@@ -243,6 +282,10 @@ export const deletePersonalEvent = createRouteHandler(async (req: Request) => {
   const { eventId } = req.params;
   const { accessToken, calendarId } = await getPersonalOAuthTokens(req.user!.id, req);
   await deleteCalendarEvent(accessToken, calendarId, eventId);
+
+  // Invalidate cache
+  calendarEventsCacheUtil.clear();
+
   req.log.info({ userId: req.user!.id, eventId }, 'Personal calendar event deleted');
   return { success: true };
 });

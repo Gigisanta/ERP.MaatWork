@@ -77,7 +77,7 @@ export interface SymbolInfoResponse {
 /**
  * Respuesta de precios históricos
  */
-export interface PriceRecord {
+interface PriceRecord {
   date: string;
   close_price: number;
 }
@@ -95,7 +95,7 @@ export interface PriceBackfillResponse {
  * Error de conexión con el servicio Python
  * Extiende Error pero agrega propiedades específicas de Node.js
  */
-export interface PythonServiceConnectionError extends Error {
+interface PythonServiceConnectionError extends Error {
   code?: string;
   errno?: number;
   syscall?: string;

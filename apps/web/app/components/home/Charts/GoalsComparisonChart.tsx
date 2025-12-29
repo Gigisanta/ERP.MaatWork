@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import {
   BarChart,
   Bar,
@@ -29,8 +29,12 @@ const METRIC_COLORS = {
 
 /**
  * Gráfico de barras comparando valores actuales vs objetivos mensuales
+ * 
+ * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
+ * Justificación: Recharts rendering is expensive, memoization prevents re-rendering on parent updates
+ * Impacto: Better dashboard performance, reduced CPU cycles
  */
-export function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonChartProps) {
+export const GoalsComparisonChart = memo(function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -123,4 +127,4 @@ export function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonCha
       </BarChart>
     </ResponsiveContainer>
   );
-}
+});

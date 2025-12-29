@@ -5,8 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { canImportFiles, canEditSharedResources } from '@/lib/auth-helpers';
 import { useCapacitaciones, useInvalidateCapacitacionesCache } from '@/lib/api-hooks';
 import { createCapacitacion, updateCapacitacion, deleteCapacitacion } from '@/lib/api';
-import type { Capacitacion, CreateCapacitacionRequest } from '@/types';
-import type { CapacitacionesListResponse } from '@/types/capacitaciones';
+import type { Capacitacion, CreateCapacitacionRequest, CapacitacionesListResponse } from '@/types';
 import {
   Card,
   CardHeader,
@@ -33,10 +32,17 @@ import {
   Spinner,
   Icon,
   type Column,
-} from '@cactus/ui';
-import ConfirmDialog from '../components/ConfirmDialog';
-import CapacitacionForm from './CapacitacionForm';
-import ImportCSVModal from './ImportCSVModal';
+} from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
+import dynamic from 'next/dynamic';
+
+const CapacitacionForm = dynamic(() => import('./CapacitacionForm'), {
+  ssr: false,
+});
+const ImportCSVModal = dynamic(() => import('./ImportCSVModal'), {
+  ssr: false,
+});
+
 import { useToast } from '../../lib/hooks/useToast';
 
 interface CapacitacionesListProps {

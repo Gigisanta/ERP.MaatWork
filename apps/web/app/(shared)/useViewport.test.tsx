@@ -136,9 +136,11 @@ describe('useViewport', () => {
       window.dispatchEvent(new Event('resize'));
     });
 
-    // El hook lee window.innerWidth en el callback, así que debería ser 600
+    // AI_DECISION: 600 es isXs (< 640)
+    // Justificación: Match real logic in useViewport.ts
     expect(result.current.width).toBe(600);
-    expect(result.current.isSm).toBe(true);
+    expect(result.current.isXs).toBe(true);
+    expect(result.current.isSm).toBe(false);
 
     // Segundo resize
     act(() => {

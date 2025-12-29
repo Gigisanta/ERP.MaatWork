@@ -54,7 +54,9 @@ describe('portfolio-helpers', () => {
       expect(result).toEqual(['new-inst-1']);
       expect(createInstrument).toHaveBeenCalledWith({
         symbol: 'AAPL',
-        backfill_days: 365,
+        name: 'AAPL',
+        type: 'EQUITY',
+        currency: 'USD',
       });
     });
 
@@ -139,7 +141,7 @@ describe('portfolio-helpers', () => {
 
     it('debería agregar nuevas líneas', async () => {
       const portfolioId = 'portfolio-1';
-      const currentLines: any[] = [];
+      const currentLines: unknown[] = [];
       const newLines = [{ id: 'temp-1', targetType: 'instrument', targetWeight: 0.5 }];
       const instrumentIds = ['inst-1'];
 
@@ -187,7 +189,7 @@ describe('portfolio-helpers', () => {
 
     it('debería manejar líneas con assetClass', async () => {
       const portfolioId = 'portfolio-1';
-      const currentLines: any[] = [];
+      const currentLines: unknown[] = [];
       const newLines = [
         { id: 'temp-1', targetType: 'assetClass', targetWeight: 0.3, assetClass: 'equity' },
       ];

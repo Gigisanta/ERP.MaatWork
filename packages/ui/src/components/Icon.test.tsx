@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import Icon from './Icon';
+import { Icon } from './Icon';
 import type { IconName } from './Icon';
 
 describe('Icon Component', () => {

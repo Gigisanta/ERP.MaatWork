@@ -4,10 +4,10 @@
  * Provides setup/teardown utilities for tests that require a real database connection
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '@cactus/db/schema';
+import type * as schema from '@maatwork/db/schema';
 
 let testDbInstance: NodePgDatabase<typeof schema> | null = null;
 
@@ -15,7 +15,7 @@ let testDbInstance: NodePgDatabase<typeof schema> | null = null;
  * Get test database instance
  * Uses a separate test database URL if TEST_DATABASE_URL is set
  */
-export function getTestDb(): NodePgDatabase<typeof schema> {
+function getTestDb(): NodePgDatabase<typeof schema> {
   if (testDbInstance) {
     return testDbInstance;
   }
@@ -24,7 +24,7 @@ export function getTestDb(): NodePgDatabase<typeof schema> {
   const testDbUrl = process.env.TEST_DATABASE_URL;
   if (testDbUrl) {
     // Create a new connection for tests
-    // Note: This requires importing createDb from @cactus/db or creating a new pool
+    // Note: This requires importing createDb from @maatwork/db or creating a new pool
     // For now, we'll use the regular db() but with test isolation via transactions
     testDbInstance = db();
   } else {
@@ -39,7 +39,7 @@ export function getTestDb(): NodePgDatabase<typeof schema> {
  * Execute a query in a transaction and rollback after test
  * Useful for tests that need to modify data but want automatic cleanup
  */
-export async function withTransaction<T>(
+async function withTransaction<T>(
   callback: (db: NodePgDatabase<typeof schema>) => Promise<T>
 ): Promise<T> {
   const testDb = getTestDb();
@@ -145,17 +145,17 @@ export async function cleanupTestDatabase(): Promise<void> {
  * Reset test database to clean state
  * Runs migrations and seeds if needed
  */
-export async function resetTestDatabase(): Promise<void> {
+async function resetTestDatabase(): Promise<void> {
   await cleanupTestDatabase();
 
   // Optionally run seeds for test data
-  // This would require importing seed functions from @cactus/db
+  // This would require importing seed functions from @maatwork/db
 }
 
 /**
  * Check if we're running in test mode
  */
-export function isTestMode(): boolean {
+function isTestMode(): boolean {
   return process.env.NODE_ENV === 'test' || process.env.VITEST === 'true';
 }
 
@@ -163,6 +163,6 @@ export function isTestMode(): boolean {
  * Get test database URL
  * Falls back to regular DATABASE_URL if TEST_DATABASE_URL is not set
  */
-export function getTestDatabaseUrl(): string {
+function getTestDatabaseUrl(): string {
   return process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || '';
 }

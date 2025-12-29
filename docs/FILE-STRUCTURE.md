@@ -1,13 +1,13 @@
 # Estructura de Archivos
 
-Guia de estructura estandar para diferentes tipos de codigo en el proyecto CACTUS CRM.
+Guia de estructura estandar para diferentes tipos de codigo en el proyecto MAATWORK.
 
 ---
 
 ## Estructura General del Monorepo
 
 ```
-cactus/
+maatwork/
 ├── apps/
 │   ├── api/                    # Backend Express + TypeScript
 │   ├── web/                    # Frontend Next.js

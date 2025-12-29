@@ -33,6 +33,14 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock Auth context
+vi.mock('@/app/auth/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id', name: 'Test User' },
+    isAuthenticated: true,
+  }),
+}));
+
 // Mock API server
 vi.mock('@/lib/api-server', () => ({
   apiCall: vi.fn(),
@@ -41,9 +49,17 @@ vi.mock('@/lib/api-server', () => ({
 // Mock config
 vi.mock('@/lib/config', () => ({
   config: {
-    API_URL: 'http://localhost:3001',
+    apiUrl: 'http://localhost:3001',
     apiTimeout: 10000,
   },
+}));
+
+// Mock api-hooks
+vi.mock('@/lib/api-hooks', () => ({
+  useNotes: vi.fn(() => ({ notes: [], isLoading: false, error: null, mutate: vi.fn() })),
+  useTasks: vi.fn(() => ({ tasks: [], isLoading: false, error: null, mutate: vi.fn() })),
+  useBrokerAccounts: vi.fn(() => ({ brokerAccounts: [], isLoading: false, error: null, mutate: vi.fn() })),
+  usePortfolioAssignments: vi.fn(() => ({ portfolioAssignments: [], isLoading: false, error: null, mutate: vi.fn() })),
 }));
 
 describe('ContactDetailPage', () => {
@@ -51,6 +67,7 @@ describe('ContactDetailPage', () => {
     id: 'test-contact-id',
     firstName: 'John',
     lastName: 'Doe',
+    fullName: 'John Doe',
     email: 'john.doe@example.com',
     phone: '+1234567890',
     assignedAdvisorId: 'advisor-1',
@@ -82,18 +99,20 @@ describe('ContactDetailPage', () => {
 
   it('should render contact details when data is loaded', async () => {
     const { apiCall } = await import('@/lib/api-server');
+    
+    // Mock consolidated detail endpoint
     vi.mocked(apiCall).mockResolvedValue({
-      data: mockContact,
+      data: {
+        contact: mockContact,
+        tags: [],
+        tasks: [],
+        notes: [],
+        brokerAccounts: [],
+        portfolioAssignments: [],
+        stages: [mockStage],
+        advisors: [mockAdvisor],
+      }
     });
-
-    // Mock additional data calls
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockContact });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockStage });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockAdvisor });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // brokerAccounts
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // portfolioAssignments
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // tasks
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] }); // notes
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);
@@ -105,28 +124,32 @@ describe('ContactDetailPage', () => {
 
   it('should call notFound when contact does not exist', async () => {
     const { apiCall } = await import('@/lib/api-server');
-    vi.mocked(apiCall).mockRejectedValue(new Error('Not found'));
+    vi.mocked(apiCall).mockResolvedValue({ data: null });
 
     try {
       await ContactDetailPage({ params: Promise.resolve({ id: 'non-existent-id' }) });
     } catch (error) {
-      // Expected to throw or call notFound
+      // Expected
     }
 
-    // Verify notFound was called or error was thrown
+    // Verify notFound was called
     expect(notFound).toHaveBeenCalled();
   });
 
   it('should render breadcrumbs with correct navigation', async () => {
     const { apiCall } = await import('@/lib/api-server');
-    vi.mocked(apiCall).mockResolvedValue({ data: mockContact });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockContact });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockStage });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockAdvisor });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
+    vi.mocked(apiCall).mockResolvedValue({
+      data: {
+        contact: mockContact,
+        tags: [],
+        tasks: [],
+        notes: [],
+        brokerAccounts: [],
+        portfolioAssignments: [],
+        stages: [mockStage],
+        advisors: [mockAdvisor],
+      }
+    });
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);
@@ -145,18 +168,24 @@ describe('ContactDetailPage', () => {
         contactId: 'test-contact-id',
         broker: 'IBKR',
         accountNumber: '123456',
+        status: 'active',
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       },
     ];
 
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockContact });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockStage });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockAdvisor });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: mockBrokerAccounts });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
-    vi.mocked(apiCall).mockResolvedValueOnce({ data: [] });
+    vi.mocked(apiCall).mockResolvedValue({
+      data: {
+        contact: mockContact,
+        tags: [],
+        tasks: [],
+        notes: [],
+        brokerAccounts: mockBrokerAccounts,
+        portfolioAssignments: [],
+        stages: [mockStage],
+        advisors: [mockAdvisor],
+      }
+    });
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
     const { container } = render(page);

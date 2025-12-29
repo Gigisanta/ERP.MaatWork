@@ -8,7 +8,7 @@
 
 'use client';
 
-import { Button } from '@cactus/ui';
+import { Button } from '@maatwork/ui';
 import { config } from '@/lib/config';
 
 interface GoogleLoginButtonProps {

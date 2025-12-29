@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { updateSingleContactMeetingStatus } from './contact-matcher';
-import { db, contacts, calendarEvents, contactAliases } from '@cactus/db';
+import { db, contacts, calendarEvents, contactAliases } from '@maatwork/db';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   contacts: {
     id: 'contacts.id',
@@ -24,7 +24,7 @@ vi.mock('@cactus/db', () => ({
   },
 }));
 
-vi.mock('@cactus/api/src/utils/logger', () => ({
+vi.mock('@maatwork/api/src/utils/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),

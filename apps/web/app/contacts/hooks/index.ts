@@ -7,17 +7,25 @@
 export {
   useContactsFilters,
   filterContacts,
-  type ContactsFiltersState,
-  type ContactsFiltersActions,
+  
+  
 } from './useContactsFilters';
 export {
   useTagManagement,
-  type TagManagementState,
-  type TagManagementActions,
-  type TagFormState,
+  
+  
+  
 } from './useTagManagement';
 export {
   useContactActions,
-  type ContactActionsState,
-  type ContactActionsActions,
+  
+  
 } from './useContactActions';
+
+
+
+
+
+
+
+

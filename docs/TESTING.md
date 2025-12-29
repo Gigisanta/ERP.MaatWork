@@ -1,6 +1,6 @@
 # Testing Guide
 
-Esta guía explica cómo escribir y ejecutar tests en el proyecto CACTUS CRM.
+Esta guía explica cómo escribir y ejecutar tests en el proyecto MAATWORK.
 
 ## Tipos de Tests
 
@@ -152,7 +152,7 @@ renderWithProviders(<MyComponent />);
 
 ```typescript
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { createTestUser, deleteTestUser } from '@/__tests__/helpers/test-auth';
 
 describe('Auth Integration', () => {

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script de desarrollo para Cactus CRM
+# Script de desarrollo para MaatWork
 # Ejecuta la API y Web App por separado para mejor control de logs
 
-echo "🚀 Iniciando Cactus CRM en modo desarrollo..."
+echo "🚀 Iniciando MaatWork en modo desarrollo..."
 echo ""
 
 # Arranque limpio: limpiar puertos y procesos comunes

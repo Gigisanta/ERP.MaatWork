@@ -7,7 +7,7 @@
  * DELETE /capacitaciones/:id - Delete capacitacion
  */
 import type { Request, Response } from 'express';
-import { db, capacitaciones } from '@cactus/db';
+import { db, capacitaciones } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { createCapacitacionSchema, updateCapacitacionSchema } from '../schemas';
@@ -136,3 +136,11 @@ export const handleDeleteCapacitacion = createRouteHandler(async (req: Request) 
 
   return { id, deleted: true };
 });
+
+
+
+
+
+
+
+

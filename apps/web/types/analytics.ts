@@ -4,7 +4,7 @@
 
 import type { TimePeriod } from './common';
 
-export interface PerformanceMetrics {
+interface PerformanceMetrics {
   totalReturn: number;
   annualizedReturn: number;
   volatility: number;

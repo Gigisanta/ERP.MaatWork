@@ -7,7 +7,7 @@
  */
 
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../../../auth/middlewares';
+import { requireAuth, requireRole } from '@/auth/middlewares';
 import { validate } from '../../../utils/validation';
 import { AUM_LIMITS } from '../../../config/aum-limits';
 import {
@@ -21,6 +21,7 @@ import {
   aumPreviewQuerySchema,
   aumHistoryQuerySchema,
   aumExportQuerySchema,
+  aumMatchRowBodySchema,
 } from '../../../utils/aum/aum-validation';
 
 // Import handlers
@@ -28,6 +29,7 @@ import { handleUpload } from './handlers/upload';
 import { handlePreview } from './handlers/preview';
 import { handleHistory } from './handlers/history';
 import { handleExport } from './handlers/export';
+import { matchRow } from '../rows/handlers/match';
 
 const router = Router();
 
@@ -87,6 +89,17 @@ router.get(
   requireAuth,
   validate({ query: aumHistoryQuerySchema }),
   handleHistory
+);
+
+/**
+ * POST /admin/aum/uploads/:fileId/match
+ * Manually match a row to a contact/user
+ */
+router.post(
+  '/uploads/:fileId/match',
+  requireAuth,
+  validate({ params: aumFileIdParamsSchema, body: aumMatchRowBodySchema }),
+  matchRow
 );
 
 /**

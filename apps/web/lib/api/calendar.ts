@@ -16,10 +16,10 @@ import type {
   ConnectTeamCalendarResponse,
   CreateEventRequest,
   UpdateEventRequest,
-} from '@/types/calendar';
+} from '@/types';
 
 // Re-export types for backward compatibility
-export type { CalendarEvent, CalendarListEntry, GetEventsParams };
+export type {  CalendarListEntry,  };
 
 /**
  * Get personal calendars from Google
@@ -35,7 +35,7 @@ export async function getPersonalCalendars(): Promise<ApiResponse<CalendarListEn
  * Justificación: Consistencia con tipos definidos en @/types/calendar
  * Impacto: Type safety mejorado, autocompletado correcto
  */
-export async function getCalendarEvents(
+async function getCalendarEvents(
   params?: GetEventsParams
 ): Promise<ApiResponse<CalendarEvent[]>> {
   const queryParams = new URLSearchParams();
@@ -88,7 +88,7 @@ export async function connectTeamCalendar(
 /**
  * Disconnect a Google Calendar from a Team
  */
-export async function disconnectTeamCalendar(
+async function disconnectTeamCalendar(
   teamId: string,
   calendarType: 'primary' | 'meetingRoom' = 'primary'
 ): Promise<ApiResponse<{ success: boolean }>> {
@@ -123,19 +123,19 @@ export async function getTeamEvents(
 /**
  * Alias for getTeamEvents to match api-hooks import
  */
-export const getTeamCalendarEvents = getTeamEvents;
+const getTeamCalendarEvents = getTeamEvents;
 
-export interface AssignEventRequest {
+interface AssignEventRequest {
   eventId: string;
   targetUserId: string;
   eventSummary: string;
-  eventDescription?: string;
-  attendees?: string[];
+  eventDescription?: string | null;
+  attendees?: string[] | null | undefined;
   clientEmail?: string;
   clientName?: string;
 }
 
-export interface AssignEventResponse {
+interface AssignEventResponse {
   success: boolean;
   contactId?: string;
 }

@@ -4,7 +4,7 @@
  * Calculates average time between pipeline stage transitions
  */
 
-import { db, contacts, pipelineStageHistory } from '@cactus/db';
+import { db, contacts, pipelineStageHistory } from '@maatwork/db';
 import { eq, and, isNull, gte, lte, inArray, asc } from 'drizzle-orm';
 import type { CalculatorContext, TransitionTimes, MonthRange, PipelineStageIds } from '../types';
 

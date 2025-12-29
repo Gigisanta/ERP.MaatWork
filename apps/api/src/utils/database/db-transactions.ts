@@ -7,10 +7,10 @@
  */
 
 import { Logger } from 'pino';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { loggedTransaction } from './db-logger';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type * as schema from '@cactus/db/schema';
+import type * as schema from '@maatwork/db/schema';
 
 /**
  * Error codes de PostgreSQL que indican errores transitorios (retry-safe)

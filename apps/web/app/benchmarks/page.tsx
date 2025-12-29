@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getBenchmarks, getCurrentUser } from '@/lib/api-server';
 import BenchmarksClient from './components/BenchmarksClient';
-import { Heading, Text, Alert } from '@cactus/ui';
+import { Heading, Text, Alert } from '@maatwork/ui';
 import type { Benchmark } from '@/types';
 
 // AI_DECISION: Convert to Server Component with Client Islands pattern

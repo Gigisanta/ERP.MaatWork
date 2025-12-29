@@ -1,32 +1,58 @@
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
-const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
-
-test.describe('Auth and protected routes', () => {
-  test('redirects to login when unauthenticated', async ({ page }) => {
-    await page.goto('/contacts');
-    await expect(page).toHaveURL(/\/login/);
+test.describe('Auth and Session Management', () => {
+  // This test uses the storageState from globalSetup
+  test('is already authenticated by global setup', async ({ authPage }) => {
+    await authPage.goto('/');
+    await authPage.expectToBeLoggedIn();
   });
 
-  test('can login and access protected page', async ({ page, context }) => {
-    await page.goto('/login');
+  test('can logout successfully', async ({ authPage }) => {
+    await authPage.goto('/');
+    await authPage.logout();
+    await authPage.expectToBeLoggedOut();
+  });
 
-    // Best-effort selectors accommodating localized labels
-    const emailInput = page.getByLabel(/email|usuario|correo/i).first();
-    await emailInput.fill(adminEmail);
+  // Test the login UI explicitly by clearing state
+  test.describe('Login UI Smoke Test', () => {
+    test.use({ storageState: { cookies: [], origins: [] } });
 
-    const passwordInput = page.getByLabel(/contraseña|password/i).first();
-    await passwordInput.fill(adminPassword);
+    test('redirects to login when unauthenticated', async ({ authPage, page }) => {
+      await authPage.goto('/contacts');
+      await expect(page).toHaveURL(/\/login/);
+    });
 
-    await page.getByRole('button', { name: /ingresar|login|entrar/i }).click();
+    test('shows error on invalid credentials', async ({ authPage, page }) => {
+      await authPage.gotoLogin();
+      
+      // Using page directly for negative test specific elements or extend AuthPage if this is common
+      await page.getByLabel(/email|usuario|correo/i).first().fill('wrong@example.com');
+      await page.getByLabel(/contraseña|password/i).first().fill('wrongpassword');
+      await page.getByRole('button', { name: /ingresar|login|entrar|iniciar sesión/i }).click();
+      
+      // Look for error message
+      await expect(page.getByText(/error|inválido|invalid/i).first()).toBeVisible();
+    });
 
-    // Should land on a known protected area
-    await expect(page).toHaveURL(/(contacts|pipeline|portfolios|profile|analytics|benchmarks|\/)$/);
+    test('can login with valid credentials', async ({ authPage }) => {
+        // We use the credentials from the env or default fallback as defined in AuthPage
+        await authPage.login();
+        await authPage.expectToBeLoggedIn();
+    });
+  });
 
-    // Cookie for middleware should be present
-    const cookies = await context.cookies();
-    const tokenCookie = cookies.find((c: { name: string; value: string }) => c.name === 'token');
-    expect(tokenCookie).toBeDefined();
+  test.describe('Advanced Session Scenarios', () => {
+      test('handles session timeout (cookie expiry)', async ({ authPage, context }) => {
+          await authPage.goto('/');
+          await context.clearCookies();
+          await authPage.reload();
+          await authPage.expectToBeLoggedOut();
+      });
+
+      test('admin role access check', async ({ authPage, page }) => {
+          await authPage.goto('/admin');
+          // Admin should have access
+          await expect(page).not.toHaveURL(/\/login/);
+      });
   });
 });

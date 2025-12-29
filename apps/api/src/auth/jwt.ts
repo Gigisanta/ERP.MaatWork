@@ -2,8 +2,8 @@ import { SignJWT, jwtVerify } from 'jose';
 import type { AuthUser } from './types';
 import { ROLES, type UserRole } from './types';
 
-const JWT_ISSUER = 'cactus-api';
-const JWT_AUDIENCE = 'cactus-web';
+const JWT_ISSUER = 'maatwork-api';
+const JWT_AUDIENCE = 'maatwork-web';
 
 function getSecretKey(): Uint8Array {
   const secret = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';

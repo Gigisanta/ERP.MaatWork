@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@cactus/ui';
+import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@maatwork/ui';
 
 interface FundamentalsTabProps {
   symbol: string;
@@ -17,14 +17,13 @@ interface FundamentalsTabProps {
 
 export default function FundamentalsTab({ symbol }: FundamentalsTabProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
-    // AI_DECISION: Placeholder para datos fundamentales (P/E, EV/EBITDA, ROE, Revenue Growth, Margins)
-    // Justificación: UI lista, requiere integración con proveedores de datos fundamentales (SEC EDGAR, Alpha Vantage, Polygon)
-    // Dependencies: Parsing XBRL de SEC EDGAR o integración con APIs de terceros, endpoints backend
-    // Impacto: Mejora análisis fundamental una vez implementada integración con fuentes de datos
-    setLoading(false);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [symbol]);
 
   if (loading) {

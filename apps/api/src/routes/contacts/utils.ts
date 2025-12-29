@@ -4,7 +4,7 @@
  * Shared utilities for contact operations
  */
 
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq, and } from 'drizzle-orm';
 import { canAssignContactTo } from '../../auth/authorization';
 import { getProspectoStageId } from '../../utils/pipeline-stages';
@@ -13,7 +13,7 @@ import type { Request } from 'express';
 /**
  * Result of advisor assignment validation
  */
-export interface AdvisorAssignmentResult {
+interface AdvisorAssignmentResult {
   validatedAdvisorId: string;
   advisorWarning: string | null;
 }

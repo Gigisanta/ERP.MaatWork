@@ -1,7 +1,7 @@
 /**
  * Tipos comunes compartidos en toda la aplicación
  *
- * AI_DECISION: Re-exportar tipos base desde @cactus/types/common para eliminar duplicación
+ * AI_DECISION: Re-exportar tipos base desde @maatwork/types/common para eliminar duplicación
  * Justificación: Tipos base consolidados en un solo lugar, evita divergencia entre frontend y backend
  * Impacto: Un solo lugar para tipos base, cambios se propagan automáticamente
  *
@@ -10,16 +10,16 @@
  */
 
 // ==========================================================
-// Tipos Base - Re-exportados desde @cactus/types
+// Tipos Base - Re-exportados desde @maatwork/types
 // ==========================================================
 
 export type {
   BaseEntity,
   TimestampedEntity,
-  TimestampedEntityOptional,
+  
   CreateRequest,
   UpdateRequest,
-} from '@cactus/types/common';
+} from '@maatwork/types/common';
 
 /**
  * Tipo para respuestas de API con data genérica
@@ -47,7 +47,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
 /**
  * Paginación
  */
-export interface Pagination {
+interface Pagination {
   page: number;
   limit: number;
   total: number;
@@ -57,7 +57,7 @@ export interface Pagination {
 /**
  * Opciones de filtrado comunes
  */
-export interface FilterOptions {
+interface FilterOptions {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -88,12 +88,12 @@ export type TimePeriod = '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL';
 /**
  * Toast notification variant
  */
-export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 /**
  * Estado de carga
  */
-export interface LoadingState {
+interface LoadingState {
   isLoading: boolean;
   error?: string | null;
 }
@@ -113,6 +113,15 @@ export interface ApiError {
       error?: string;
     };
   };
+}
+
+/**
+ * Common API error with user-facing message
+ */
+export interface ApiErrorWithMessage {
+  message?: string;
+  userMessage?: string;
+  error?: string;
 }
 
 /**

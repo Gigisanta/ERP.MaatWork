@@ -17,7 +17,7 @@ import {
 } from './aum';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   aumImportRows: {},
   aumImportFiles: {},
@@ -70,11 +70,10 @@ vi.mock('../utils/logger', () => ({
   },
 }));
 
-import { db } from '@cactus/db';
-import { aumImportRows, advisorAccountMapping, aumMonthlySnapshots } from '@cactus/db';
+import { db, aumImportRows, advisorAccountMapping, aumMonthlySnapshots } from '@maatwork/db';
 import { eq, sql } from 'drizzle-orm';
 import { normalizeAccountNumber } from '../utils/aum/aum-normalization';
-import { isNameSimilarityHigh } from './aum-matcher';
+import { isNameSimilarityHigh } from './aum/matcher';
 import { logger } from '../utils/logger';
 
 const mockDb = vi.mocked(db);
@@ -398,32 +397,24 @@ describe('aumUpsert', () => {
       // Justificación: El código verifica hasOnlyHolderName después de updateExistingRow exitoso
       // Impacto: Los mocks deben simular que se encuentra fila existente por holderName
 
-      // Mock: estrategias 1-3 no encuentran nada, estrategia 4 (holderName) encuentra
-      let executeCallCount = 0;
-      const mockExecute = vi.fn().mockImplementation(() => {
-        executeCallCount++;
-        // Primeras 3 llamadas (estrategias 1-3) retornan vacío
-        if (executeCallCount <= 3) {
-          return Promise.resolve({ rows: [] });
-        }
-        // Estrategia 4 (holderName) encuentra fila existente
-        return Promise.resolve({
-          rows: [
-            {
-              id: 'row-123',
-              file_id: 'file-456',
-              account_number: null,
-              holder_name: 'Juan Perez',
-              id_cuenta: null,
-              matched_contact_id: null,
-              matched_user_id: null,
-              advisor_raw: null,
-              match_status: 'unmatched',
-              is_preferred: true,
-              is_normalized: false,
-            },
-          ],
-        });
+      // Mock: solo estrategia 4 (holderName) encuentra, pero como 1-3 retornan null antes de execute,
+      // la primera llamada a execute será de la estrategia 4.
+      const mockExecute = vi.fn().mockResolvedValue({
+        rows: [
+          {
+            id: 'row-123',
+            file_id: 'file-456',
+            account_number: null,
+            holder_name: 'Juan Perez',
+            id_cuenta: null,
+            matched_contact_id: null,
+            matched_user_id: null,
+            advisor_raw: null,
+            match_status: 'unmatched',
+            is_preferred: true,
+            is_normalized: false,
+          },
+        ],
       });
 
       const mockUpdate = vi.fn().mockReturnValue({

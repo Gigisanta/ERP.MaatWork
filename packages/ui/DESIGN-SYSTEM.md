@@ -1,6 +1,6 @@
 # Maat Design System v2.3.0
 
-The Maat Design System is a comprehensive collection of reusable components, tokens, and guidelines for building consistent and accessible interfaces across the Cactus Dashboard ecosystem.
+The Maat Design System is a comprehensive collection of reusable components, tokens, and guidelines for building consistent and accessible interfaces across the MaatWork ecosystem.
 
 ## Core Principles
 

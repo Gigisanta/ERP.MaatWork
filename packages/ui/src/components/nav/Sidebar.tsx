@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '../../utils/cn.js';
-import Button from './Button.js';
-import Icon, { type IconName } from '../Icon.js';
+import { Button } from './Button.js';
+import { Icon, type IconName } from '../Icon.js';
 import { Text } from '../../primitives/Text.js';
 import { VisuallyHidden } from '../../primitives/VisuallyHidden.js';
 import { Tooltip } from '../feedback/Tooltip.js';
@@ -104,7 +104,21 @@ export const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       if (controlledCollapsed === undefined && typeof window !== 'undefined') {
         const saved = localStorage.getItem('sidebar-collapsed');
         if (saved !== null) {
-          setInternalCollapsed(JSON.parse(saved));
+          if (saved === 'true') {
+            setInternalCollapsed(true);
+          } else if (saved === 'false') {
+            setInternalCollapsed(false);
+          } else if (saved !== 'undefined' && saved !== 'null') {
+            try {
+              const parsed = JSON.parse(saved);
+              if (typeof parsed === 'boolean') {
+                setInternalCollapsed(parsed);
+              }
+            } catch (e) {
+              console.warn('[Sidebar] Error parsing sidebar-collapsed state:', e);
+              localStorage.removeItem('sidebar-collapsed');
+            }
+          }
         }
       }
     }, [controlledCollapsed]);

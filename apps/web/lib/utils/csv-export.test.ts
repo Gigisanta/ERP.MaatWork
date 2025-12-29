@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act } from '@testing-library/react';
 import { exportContactsToCSV, downloadCSV } from './csv-export';
-import type { Contact } from '@/types/contact';
+import type { Contact } from '@maatwork/types';
 import type { PipelineStage } from '@/types/pipeline';
 
 describe('csv-export', () => {
@@ -109,6 +109,8 @@ describe('csv-export', () => {
       const completeContact: Contact = {
         ...mockContact,
         id: 'contact-complete',
+        firstName: 'Complete',
+        fullName: 'Complete Contact',
         email: 'complete@example.com',
         phone: '111111111',
       };
@@ -116,15 +118,21 @@ describe('csv-export', () => {
       const incompleteContact: Contact = {
         ...mockContact,
         id: 'contact-incomplete',
+        firstName: 'Incomplete',
+        fullName: 'Incomplete Contact',
         email: null,
         phone: null,
+        customFields: {},
+        tags: [],
       };
 
       const csv = exportContactsToCSV([incompleteContact, completeContact], mockStages);
       const lines = csv.split('\n');
       // El contacto completo debería aparecer primero
+      expect(lines[1]).toContain('Complete Contact');
       expect(lines[1]).toContain('complete@example.com');
-      expect(lines[2]).toContain('contact-incomplete');
+      // El contacto incompleto debería aparecer después
+      expect(lines[2]).toContain('Incomplete Contact');
     });
 
     it('debería manejar contactos sin pipelineStageId', () => {

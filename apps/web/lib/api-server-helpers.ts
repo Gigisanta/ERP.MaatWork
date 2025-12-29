@@ -9,7 +9,7 @@
 import { apiCall } from './api-server';
 import type { ApiResponse } from './api-client';
 import type { ContactsMetricsResponse, MonthlyGoal } from '@/types/metrics';
-import type { Team } from '@/types/team';
+import type { Team } from '@/types';
 import type { UserApiResponse } from '@/types';
 
 /**

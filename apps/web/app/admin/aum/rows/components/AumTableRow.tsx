@@ -9,7 +9,7 @@
 'use client';
 
 import { memo, useState } from 'react';
-import { Button, Badge } from '@cactus/ui';
+import { Button, Badge } from '@maatwork/ui';
 import type { AumRow, Advisor } from '@/types';
 import { formatNumber } from '../lib/aumRowsUtils';
 import { AUM_ROWS_CONFIG } from '../lib/aumRowsConstants';
@@ -20,7 +20,7 @@ import { useToast } from '@/lib/hooks/useToast';
 /**
  * Props del componente AumTableRow
  */
-export interface AumTableRowProps {
+interface AumTableRowProps {
   /** Fila AUM a mostrar */
   row: AumRow;
   /** Callback para abrir modal de perfil de asesor */

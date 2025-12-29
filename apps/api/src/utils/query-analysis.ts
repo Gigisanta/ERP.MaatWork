@@ -1,11 +1,11 @@
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 /**
  * Resultado de EXPLAIN ANALYZE
  */
-export interface ExplainAnalyzeResult {
+interface ExplainAnalyzeResult {
   queryPlan: string;
   executionTime: number;
   planningTime: number;
@@ -18,7 +18,7 @@ export interface ExplainAnalyzeResult {
 /**
  * Nodo del plan de ejecución
  */
-export interface ExplainPlanNode {
+interface ExplainPlanNode {
   nodeType: string;
   relationName?: string;
   alias?: string;
@@ -51,7 +51,7 @@ export interface ExplainPlanNode {
  * @param params - Parámetros para la query (opcional)
  * @returns Resultado del EXPLAIN ANALYZE parseado
  */
-export async function explainAnalyze(
+async function explainAnalyze(
   logger: Logger,
   query: string,
   params: unknown[] = []
@@ -196,7 +196,7 @@ function formatPlanAsText(node: ExplainPlanNode, indent: number = 0): string {
  * @param plan - Plan de ejecución analizado
  * @returns Array de sugerencias de índices
  */
-export function suggestIndexes(plan: ExplainPlanNode): string[] {
+function suggestIndexes(plan: ExplainPlanNode): string[] {
   const suggestions: string[] = [];
 
   function analyzeNode(node: ExplainPlanNode): void {

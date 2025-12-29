@@ -175,7 +175,7 @@ export class JobScheduler {
    * Crea particiones para los próximos 3 meses para tablas particionadas
    */
   private async createFuturePartitions(): Promise<void> {
-    const { db } = await import('@cactus/db');
+    const { db } = await import('@maatwork/db');
     const { sql } = await import('drizzle-orm');
 
     try {
@@ -242,7 +242,7 @@ export class JobScheduler {
    * para mantener el tamaño de la base de datos bajo control.
    */
   private async cleanupOldPartitions(): Promise<void> {
-    const { db } = await import('@cactus/db');
+    const { db } = await import('@maatwork/db');
     const { sql } = await import('drizzle-orm');
 
     try {

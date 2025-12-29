@@ -434,20 +434,6 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
       <div className="p-5 bg-surface border border-border rounded-xl">
         <h3 className="text-base font-semibold mb-4">Más Analytics</h3>
         <div className="flex gap-3 flex-wrap">
-          {/* TODO: Descomentar cuando se implementen estas páginas
-          <Link
-            href="/analytics/performance"
-            className="px-4 py-2 bg-info text-white rounded-md no-underline text-sm font-medium hover:bg-info/90 transition-colors"
-          >
-            📈 Performance & Riesgo
-          </Link>
-          <Link
-            href="/analytics/benchmark-comparison"
-            className="px-4 py-2 bg-purple-600 text-white rounded-md no-underline text-sm font-medium hover:bg-purple-700 transition-colors"
-          >
-            🎯 Comparación Benchmarks
-          </Link>
-          */}
           {(role === 'admin' || role === 'owner') && (
             <Link
               href="/benchmarks"

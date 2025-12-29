@@ -1,6 +1,6 @@
 'use client';
 
-import { Select } from '@cactus/ui';
+import { Select } from '@maatwork/ui';
 import type { Portfolio } from '@/types';
 
 interface PortfolioSelectorProps {

@@ -44,7 +44,11 @@ export const audioFiles = pgTable(
   },
   (table) => ({
     audioFilesUploadedByIdx: index('idx_audio_files_uploaded_by').on(table.uploadedByUserId),
-    audioFilesTranscribedIdx: index('idx_audio_files_transcribed').on(table.transcribedAt)
+    audioFilesTranscribedIdx: index('idx_audio_files_transcribed').on(table.transcribedAt),
+    // AI_DECISION: Add index for soft-delete filtering
+    // Justificación: Optimiza queries que filtran archivos de audio activos
+    // Impacto: Faster queries for audio files
+    audioFilesDeletedAtIdx: index('idx_audio_files_deleted_at').on(table.deletedAt)
   })
 );
 
@@ -70,6 +74,10 @@ export const notes = pgTable(
     // Justificación: Query de timeline ordena por createdAt DESC, este índice optimiza esa ordenación
     // Impacto: Faster timeline loading when sorting by createdAt DESC
     notesContactCreatedDescIdx: index('idx_notes_contact_created_desc').on(table.contactId, table.createdAt),
+    // AI_DECISION: Add index for soft-delete filtering
+    // Justificación: Optimiza queries que filtran notas activas
+    // Impacto: Faster queries for notes
+    notesDeletedAtIdx: index('idx_notes_deleted_at').on(table.deletedAt),
     // AI_DECISION: Add composite index for timeline queries with deletedAt filter
     // Justificación: Timeline queries filter by contactId + deletedAt and order by createdAt DESC
     // Impacto: Faster timeline loading when filtering by deletedAt and sorting by createdAt DESC
@@ -104,7 +112,11 @@ export const attachments = pgTable(
   },
   (table) => ({
     attachmentsContactIdx: index('idx_attachments_contact').on(table.contactId),
-    attachmentsNoteIdx: index('idx_attachments_note').on(table.noteId)
+    attachmentsNoteIdx: index('idx_attachments_note').on(table.noteId),
+    // AI_DECISION: Add index for soft-delete filtering
+    // Justificación: Optimiza queries que filtran adjuntos activos
+    // Impacto: Faster queries for attachments
+    attachmentsDeletedAtIdx: index('idx_attachments_deleted_at').on(table.deletedAt)
   })
 );
 

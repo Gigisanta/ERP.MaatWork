@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { Bell, Check, Clock, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { cn } from '@cactus/ui';
+import { cn } from '@maatwork/ui';
 import { notificationKeys, markAsRead, markAllAsRead } from '@/lib/api/notifications';
 import type {
   Notification,

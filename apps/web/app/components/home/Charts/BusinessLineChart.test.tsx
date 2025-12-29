@@ -11,9 +11,11 @@ import { render } from '@testing-library/react';
 import { BusinessLineChart } from './BusinessLineChart';
 import type { MonthlyMetrics } from '@/types/metrics';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('recharts', () => ({
-  BarChart: ({ children, data }: any) => (
+  BarChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
     <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
@@ -23,7 +25,7 @@ vi.mock('recharts', () => ({
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('BusinessLineChart', () => {

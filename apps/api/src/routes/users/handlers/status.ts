@@ -6,7 +6,7 @@
  * POST /users/:id/reject - Reject user
  */
 import type { Request } from 'express';
-import { db, users } from '@cactus/db';
+import { db, users } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { updateStatusSchema } from '../schemas';
@@ -79,3 +79,11 @@ export const handleRejectUser = createRouteHandler(async (req: Request) => {
     message: 'User rejected and removed from system',
   };
 });
+
+
+
+
+
+
+
+

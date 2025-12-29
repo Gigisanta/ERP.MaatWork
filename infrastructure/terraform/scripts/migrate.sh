@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 ENVIRONMENT="${1:-dev}"
-PROJECT="cactus"
+PROJECT="maatwork"
 
 echo -e "${BLUE}=== Cactus CDK to Terraform Migration ===${NC}"
 echo -e "${BLUE}Environment: ${ENVIRONMENT}${NC}"
@@ -132,43 +132,43 @@ EOF
 
 # Add import commands only for existing resources
 if [ "$S3_EXISTS" != "None" ]; then
-    echo "terraform import 'module.cactus.module.storage.aws_s3_bucket.logs' '$S3_BUCKET'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.storage.aws_s3_bucket.logs' '$S3_BUCKET'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$IAM_ROLE_EXISTS" != "None" ]; then
-    echo "terraform import 'module.cactus.module.compute.aws_iam_role.instance' '$IAM_ROLE_NAME'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.compute.aws_iam_role.instance' '$IAM_ROLE_NAME'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$IAM_PROFILE_EXISTS" != "None" ]; then
-    echo "terraform import 'module.cactus.module.compute.aws_iam_instance_profile.instance' '$IAM_PROFILE_NAME'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.compute.aws_iam_instance_profile.instance' '$IAM_PROFILE_NAME'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$EC2_SG_ID" != "None" ]; then
-    echo "terraform import 'module.cactus.module.compute.aws_security_group.instance' '$EC2_SG_ID'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.compute.aws_security_group.instance' '$EC2_SG_ID'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$RDS_SG_ID" != "None" ]; then
-    echo "terraform import 'module.cactus.module.database.aws_security_group.database' '$RDS_SG_ID'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.database.aws_security_group.database' '$RDS_SG_ID'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$SECRET_ARN" != "None" ]; then
-    echo "terraform import 'module.cactus.module.database.aws_secretsmanager_secret.db_credentials' '$SECRET_ARN'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.database.aws_secretsmanager_secret.db_credentials' '$SECRET_ARN'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$DB_SUBNET_EXISTS" != "None" ]; then
-    echo "terraform import 'module.cactus.module.database.aws_db_subnet_group.main' '$DB_SUBNET_GROUP'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.database.aws_db_subnet_group.main' '$DB_SUBNET_GROUP'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$RDS_EXISTS" != "None" ]; then
-    echo "terraform import 'module.cactus.module.database.aws_db_instance.main' '$RDS_IDENTIFIER'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.database.aws_db_instance.main' '$RDS_IDENTIFIER'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$EC2_INSTANCE_ID" != "None" ]; then
-    echo "terraform import 'module.cactus.module.compute.aws_instance.main' '$EC2_INSTANCE_ID'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.compute.aws_instance.main' '$EC2_INSTANCE_ID'" >> "$IMPORT_SCRIPT"
 fi
 
 if [ "$EIP_ALLOCATION_ID" != "None" ]; then
-    echo "terraform import 'module.cactus.module.compute.aws_eip.main' '$EIP_ALLOCATION_ID'" >> "$IMPORT_SCRIPT"
+    echo "terraform import 'module.maatwork.module.compute.aws_eip.main' '$EIP_ALLOCATION_ID'" >> "$IMPORT_SCRIPT"
 fi
 
 cat >> "$IMPORT_SCRIPT" << EOF

@@ -53,7 +53,7 @@ export interface ClusterReportRow {
 /**
  * Resultado de la validación
  */
-export interface ValidationResult {
+interface ValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];

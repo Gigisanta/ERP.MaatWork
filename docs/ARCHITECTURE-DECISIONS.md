@@ -1,6 +1,6 @@
 # Decisiones Arquitectonicas
 
-Registro de decisiones arquitectonicas importantes del proyecto CACTUS CRM.
+Registro de decisiones arquitectonicas importantes del proyecto MAATWORK.
 
 ---
 
@@ -13,7 +13,7 @@ Necesitamos gestionar multiples aplicaciones (API, Web, Analytics) y paquetes co
 Usar monorepo con pnpm workspaces y Turborepo.
 
 ### Justificacion
-- **Codigo compartido**: Paquetes `@cactus/db`, `@cactus/ui`, `@cactus/types` reutilizables
+- **Codigo compartido**: Paquetes `@maatwork/db`, `@maatwork/ui`, `@maatwork/types` reutilizables
 - **Builds incrementales**: Turborepo cachea builds, solo reconstruye lo modificado
 - **Dependencias sincronizadas**: Una sola version de React, TypeScript, etc.
 - **DX mejorada**: Un solo `pnpm install`, un solo `pnpm dev`

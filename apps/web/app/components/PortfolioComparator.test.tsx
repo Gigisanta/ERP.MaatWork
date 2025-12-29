@@ -12,6 +12,8 @@ import userEvent from '@testing-library/user-event';
 import PortfolioComparator from './PortfolioComparator';
 import { usePortfolioComparison } from '../../lib/api-hooks';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('../../lib/api-hooks', () => ({
   usePortfolioComparison: vi.fn(),
@@ -19,43 +21,43 @@ vi.mock('../../lib/api-hooks', () => ({
 
 vi.mock('./PerformanceChart', () => ({
   __esModule: true,
-  default: ({ portfolioIds, benchmarkIds }: any) => (
+  default: ({ portfolioIds, benchmarkIds }: { portfolioIds: string[]; benchmarkIds: string[] }) => (
     <div data-testid="performance-chart">
       Portfolios: {portfolioIds.join(',')}, Benchmarks: {benchmarkIds.join(',')}
     </div>
   ),
 }));
 
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
-  CardContent: ({ children }: any) => <div>{children}</div>,
-  Button: ({ children, onClick, disabled }: any) => (
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+  CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Button: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
     <button onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
-  Text: ({ children, size, weight, color, className }: any) => (
+  Text: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <span className={className}>{children}</span>
   ),
-  Stack: ({ children, direction, gap, align }: any) => <div>{children}</div>,
-  Grid: ({ children, cols, gap }: any) => <div>{children}</div>,
-  Badge: ({ children, variant }: any) => <span data-badge-variant={variant}>{children}</span>,
-  Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  DataTable: ({ data, columns, keyField }: any) => (
+  Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Grid: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => <span data-badge-variant={variant}>{children}</span>,
+  Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
+  DataTable: ({ data, columns, keyField }: { data: unknown[]; columns: unknown[]; keyField: string }) => (
     <table>
       <thead>
         <tr>
-          {columns.map((col: any) => (
+          {columns.map((col) => (
             <th key={col.key}>{col.header}</th>
           ))}
         </tr>
       </thead>
       <tbody>
-        {data.map((row: any) => (
+        {data.map((row) => (
           <tr key={row[keyField]}>
-            {columns.map((col: any) => (
+            {columns.map((col) => (
               <td key={col.key}>{col.render(row)}</td>
             ))}
           </tr>

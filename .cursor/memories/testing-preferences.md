@@ -1,7 +1,7 @@
 # Memoria: Preferencias de Testing
 
 ## Propósito
-Estándares y preferencias de testing específicas del proyecto CACTUS CRM para mantener calidad y consistencia en los tests.
+Estándares y preferencias de testing específicas del proyecto MAATWORK para mantener calidad y consistencia en los tests.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -26,8 +26,8 @@ Usar esta memoria cuando:
 - **E2E tests**: `tests/e2e/[feature].spec.ts` (raíz del monorepo)
 
 ### Packages
-- **@cactus/ui**: `src/**/*.test.tsx` (co-ubicados con componentes)
-- **@cactus/db**: Sin tests unit (validación vía migraciones y seeds)
+- **@maatwork/ui**: `src/**/*.test.tsx` (co-ubicados con componentes)
+- **@maatwork/db**: Sin tests unit (validación vía migraciones y seeds)
 
 **Ejemplo de estructura:**
 ```
@@ -130,7 +130,7 @@ vi.mock('@/lib/api', () => ({
 
 ```typescript
 // ✅ BIEN - Mockear dependencia externa
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: {
     insert: vi.fn(),
   },
@@ -329,9 +329,9 @@ pnpm test:e2e
 pnpm test:watch
 
 # Ejecutar tests de un workspace específico
-pnpm -F @cactus/api test
-pnpm -F @cactus/web test
-pnpm -F @cactus/ui test
+pnpm -F @maatwork/api test
+pnpm -F @maatwork/web test
+pnpm -F @maatwork/ui test
 ```
 
 ## Referencias

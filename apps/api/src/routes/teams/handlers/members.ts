@@ -7,7 +7,7 @@
  * DELETE /teams/:id/members/:userId - Remove member
  */
 import type { Request, Response } from 'express';
-import { db, teams, teamMembership, users } from '@cactus/db';
+import { db, teams, teamMembership, users } from '@maatwork/db';
 import { eq, and, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { getUserTeams } from '../../../auth/authorization';

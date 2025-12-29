@@ -5,9 +5,11 @@
  * Justificación: Validar fetching batch, manejo de errores y operaciones CRUD
  * Impacto: Prevenir errores en gestión de portfolios y benchmarks
  */
+import { useRequireAuth } from '@/auth/useRequireAuth';
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useEntityWithComponents } from './useEntityWithComponents';
 
 // Mock dependencies
@@ -43,7 +45,7 @@ describe('useEntityWithComponents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    const { useRequireAuth } = require('../../auth/useRequireAuth');
+    
     mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
       loading: false,
@@ -243,7 +245,9 @@ describe('useEntityWithComponents', () => {
     });
 
     const initialCount = result.current.entities.length;
-    await result.current.deleteEntity('entity-1');
+    await act(async () => {
+      await result.current.deleteEntity('entity-1');
+    });
 
     expect(mockDeleteEntity).toHaveBeenCalledWith('entity-1');
     expect(result.current.entities.length).toBe(initialCount - 1);

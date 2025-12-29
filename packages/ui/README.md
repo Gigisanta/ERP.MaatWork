@@ -1,4 +1,4 @@
-# @cactus/ui - Design System
+# @maatwork/ui - Design System
 
 A modern, accessible React component library built with Tailwind CSS, Radix Primitives, and design tokens.
 
@@ -15,7 +15,7 @@ A modern, accessible React component library built with Tailwind CSS, Radix Prim
 
 ```bash
 # In your monorepo workspace
-pnpm add @cactus/ui
+pnpm add @maatwork/ui
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ pnpm add @cactus/ui
 
 ```javascript
 // tailwind.config.js
-const { uiPreset } = require('@cactus/ui/tailwind-preset');
+const { uiPreset } = require('@maatwork/ui/tailwind-preset');
 
 module.exports = {
   presets: [uiPreset],
@@ -39,13 +39,13 @@ module.exports = {
 
 ```tsx
 // app/layout.tsx or _app.tsx
-import '@cactus/ui/styles';
+import '@maatwork/ui/styles';
 ```
 
 ### 3. Add Theme Provider
 
 ```tsx
-import { ThemeProvider } from '@cactus/ui';
+import { ThemeProvider } from '@maatwork/ui';
 
 function App() {
   return (
@@ -59,7 +59,7 @@ function App() {
 ### 4. Use Components
 
 ```tsx
-import { Button, Input, Card, Header } from '@cactus/ui';
+import { Button, Input, Card, Header } from '@maatwork/ui';
 
 function MyPage() {
   return (
@@ -130,7 +130,7 @@ function MyPage() {
 ### Theme Provider
 
 ```tsx
-import { ThemeProvider } from '@cactus/ui';
+import { ThemeProvider } from '@maatwork/ui';
 
 <ThemeProvider defaultTheme="light">
   <App />
@@ -172,7 +172,7 @@ You can create custom themes by overriding CSS variables:
 ### Colors (OKLCH)
 
 - **Neutral**: 50-900 scale for text and backgrounds
-- **Cactus**: Brand colors in 50-900 scale
+- **MaatWork**: Brand colors in 50-900 scale
 - **Semantic**: Success, warning, error colors
 - **Text**: Primary, secondary, muted, inverse
 - **Background**: Base, surface, elevated, inverse

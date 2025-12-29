@@ -78,7 +78,7 @@ async function resetMigrations() {
     console.log('\n✅ Migraciones regeneradas exitosamente!\n');
 
     console.log('📝 Próximos pasos:');
-    console.log('  1. Ejecutar: pnpm -F @cactus/db db:reset');
+    console.log('  1. Ejecutar: pnpm -F @maatwork/db db:reset');
     console.log('  2. Iniciar el servidor: pnpm dev');
     console.log('  3. El servidor aplicará automáticamente las migraciones limpias\n');
   } catch (error) {

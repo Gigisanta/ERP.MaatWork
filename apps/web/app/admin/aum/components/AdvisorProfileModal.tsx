@@ -14,7 +14,7 @@ import {
   ModalTitle,
   Spinner,
   Text,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface AdvisorProfileModalProps {
   row: AumRow;

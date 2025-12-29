@@ -68,8 +68,8 @@ export interface BenchmarkComponentForm { ... }  // ERROR
 
 ```bash
 # Si modificas tipos exportados:
-pnpm -F @cactus/ui build
-pnpm -F @cactus/db build
+pnpm -F @maatwork/ui build
+pnpm -F @maatwork/db build
 # Luego:
 pnpm typecheck
 ```
@@ -300,7 +300,7 @@ export interface CreateContactRequest extends Pick<Contact, 'firstName' | 'lastN
 ```typescript
 // ✅ BIEN - Inferir tipos desde schema
 import { type InferSelectModel } from 'drizzle-orm';
-import { contacts } from '@cactus/db/schema';
+import { contacts } from '@maatwork/db/schema';
 
 export type Contact = InferSelectModel<typeof contacts>;
 

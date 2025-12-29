@@ -7,7 +7,7 @@
  * DELETE /notes/:id - Delete note (soft delete)
  */
 import type { Request, Response } from 'express';
-import { db, notes } from '@cactus/db';
+import { db, notes } from '@maatwork/db';
 import { eq, and, isNull } from 'drizzle-orm';
 import { canAccessContact } from '../../../auth/authorization';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
@@ -143,3 +143,11 @@ export const handleDeleteNote = createRouteHandler(async (req: Request) => {
 
   return { id, deleted: true };
 });
+
+
+
+
+
+
+
+

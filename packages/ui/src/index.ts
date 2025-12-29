@@ -6,7 +6,7 @@
 export { cn } from './utils/cn.js';
 
 // Icons - specific export
-export { default as Icon, type IconName } from './components/Icon.js';
+export { Icon, type IconName, type IconProps } from './components/Icon.js';
 
 // Primitives - specific exports
 export { Stack, type StackProps } from './primitives/Stack.js';
@@ -18,9 +18,9 @@ export { VisuallyHidden, type VisuallyHiddenProps } from './primitives/VisuallyH
 export { FocusRing, type FocusRingProps } from './primitives/FocusRing.js';
 
 // Basic components - specific exports
-export { default as Input, type InputProps } from './components/forms/Input.js';
-export { default as Label } from './components/forms/Label.js';
-export { default as Button } from './components/nav/Button.js';
+export { Input, type InputProps } from './components/forms/Input.js';
+export { Label, type LabelProps } from './components/forms/Label.js';
+export { Button, type ButtonProps } from './components/nav/Button.js';
 export { Checkbox } from './components/forms/Checkbox.js';
 export { Select, type SelectProps, type SelectItem } from './components/forms/Select.js';
 export { Badge, type BadgeProps } from './components/feedback/Badge.js';
@@ -49,6 +49,14 @@ export {
   type TabsProps,
   type TabItem,
 } from './components/nav/Tabs.js';
+export {
+  PageContainer,
+  PageHeader,
+  PageContent,
+  PageSection,
+  type PageContainerProps,
+} from './components/nav/PageContainer.js';
+export { PageTransition, type PageTransitionProps } from './components/nav/PageTransition.js';
 
 // Feedback components - specific exports
 export {
@@ -85,7 +93,7 @@ export {
   DropdownMenuRadioItem,
   type DropdownMenuProps,
 } from './components/feedback/DropdownMenu.js';
-export { default as EmptyState, type EmptyStateProps } from './components/feedback/EmptyState.js';
+export { EmptyState, type EmptyStateProps } from './components/feedback/EmptyState.js';
 export {
   Modal,
   ModalHeader,
@@ -110,17 +118,24 @@ export {
 } from './components/feedback/Toast.js';
 export { Tooltip, type TooltipProps } from './components/feedback/Tooltip.js';
 export { Drawer, type DrawerProps } from './components/feedback/Drawer.js';
+export { ConfirmDialog, type ConfirmDialogProps } from './components/feedback/ConfirmDialog.js';
 export {
   Skeleton,
   SkeletonGroup,
   SkeletonCard,
   SkeletonTable,
+  SkeletonText,
+  SkeletonAvatar,
+  SkeletonGrid,
+  SkeletonPageHeader,
   type SkeletonProps,
   type SkeletonVariant,
   type SkeletonGroupProps,
   type SkeletonCardProps,
   type SkeletonTableProps,
+  type SkeletonTextProps,
 } from './components/feedback/Skeleton.js';
+export { Skeleton as SkeletonLoader } from './components/feedback/Skeleton.js';
 export {
   ProgressBar,
   ProgressBarWithStatus,
@@ -132,7 +147,7 @@ export {
   type CircularProgressProps,
 } from './components/feedback/ProgressBar.js';
 export {
-  default as ErrorState,
+  ErrorState,
   InlineErrorState,
   type ErrorStateProps,
   type ErrorStateVariant,

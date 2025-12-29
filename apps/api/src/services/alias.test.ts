@@ -13,7 +13,7 @@ const mockDb = {
   set: vi.fn().mockReturnThis(),
 };
 
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: () => mockDb,
   contacts: { id: 'contacts.id', normalizedFullName: 'contacts.normalized_full_name' },
   contactAliases: {
@@ -118,3 +118,11 @@ describe('AliasService', () => {
     });
   });
 });
+
+
+
+
+
+
+
+

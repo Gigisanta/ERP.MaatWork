@@ -8,13 +8,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
-import { db, portfolioTemplates, portfolioTemplateLines, instruments } from '@cactus/db';
+import { db, portfolioTemplates, portfolioTemplateLines, instruments } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { TIMEOUTS } from '../../config/timeouts';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   portfolioTemplates: {},
   portfolioTemplateLines: {},

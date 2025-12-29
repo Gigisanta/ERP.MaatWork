@@ -1,4 +1,4 @@
-import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
+import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@maatwork/db';
 import { eq, and, or, sql, inArray, isNull, type SQL } from 'drizzle-orm';
 import { UserRole } from './types';
 import { getCachedAccessScope, setCachedAccessScope } from './cache';
@@ -13,7 +13,7 @@ export interface AccessScope {
   canReassign: boolean;
 }
 
-export interface ContactAccessFilter {
+interface ContactAccessFilter {
   whereClause: SQL | ReturnType<typeof sql>;
   description: string;
 }
@@ -37,7 +37,11 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
   logger.debug({ userId, role }, 'Cache miss for getUserAccessScope');
 
   // Ensure user exists in database
-  const user = await db().select().from(users).where(eq(users.id, userId)).limit(1);
+  const user = await db()
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (user.length === 0) {
     throw new Error(`User ${userId} not found in database`);
   }

@@ -2,7 +2,7 @@
 
 ## ✅ Implementación Completada
 
-Se ha implementado una estrategia de deployment **progresivo** para Cactus CRM, optimizado para minimizar costos iniciales y permitir escalamiento gradual conforme crece la aplicación.
+Se ha implementado una estrategia de deployment **progresivo** para MaatWork, optimizado para minimizar costos iniciales y permitir escalamiento gradual conforme crece la aplicación.
 
 ## 📊 Arquitecturas Disponibles
 
@@ -68,7 +68,7 @@ QUICKSTART-MVP.md                      # Guía deployment rápido
 **Componentes**:
 ```
 infrastructure/cdk/                    # Infraestructura avanzada
-├── bin/cactus.ts                      # Multi-stack CDK
+├── bin/maatwork.ts                      # Multi-stack CDK
 ├── lib/stacks/
 │   ├── network-stack.ts               # VPC custom + endpoints
 │   ├── database-stack.ts              # RDS Multi-AZ
@@ -87,14 +87,14 @@ infrastructure/cdk/                    # Infraestructura avanzada
 
 ### Para MVP (Recomendado):
 
-1. Lee [`QUICKSTART-MVP.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/CACTUS/QUICKSTART-MVP.md)
+1. Lee [`QUICKSTART-MVP.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/MAATWORK/QUICKSTART-MVP.md)
 2. Sigue los 5 pasos de deployment
 3. En < 2 horas tendrás la app en producción
 
 ### Para Infraestructura Completa:
 
-1. Lee [`DEPLOYMENT.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/CACTUS/DEPLOYMENT.md)
-2. Lee [`infrastructure/cdk/README.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/CACTUS/infrastructure/README.md)
+1. Lee [`DEPLOYMENT.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/MAATWORK/DEPLOYMENT.md)
+2. Lee [`infrastructure/cdk/README.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/MAATWORK/infrastructure/README.md)
 3. Requiere 2 cuentas AWS y mayor setup
 
 ---
@@ -256,7 +256,7 @@ Si tienes problemas:
 1. **Revisa los logs**:
    ```bash
    docker-compose logs -f
-   aws logs tail /ec2/cactus/application --follow
+   aws logs tail /ec2/maatwork/application --follow
    ```
 
 2. **Consulta troubleshooting**:
@@ -276,4 +276,4 @@ Tienes **dos enfoques completos** implementados:
 
 Empieza con MVP y escala progresivamente. Todo el código está listo para cuando lo necesites.
 
-**Siguiente paso**: Seguir [`QUICKSTART-MVP.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/CACTUS/QUICKSTART-MVP.md) y deployar en < 2 horas. 🚀
+**Siguiente paso**: Seguir [`QUICKSTART-MVP.md`](file:///c:/Users/jonyp/Desktop/PERSONAL/MAATWORK/QUICKSTART-MVP.md) y deployar en < 2 horas. 🚀

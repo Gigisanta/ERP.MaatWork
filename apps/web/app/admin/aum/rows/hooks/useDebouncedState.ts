@@ -15,7 +15,7 @@ import { useState, useEffect, useRef } from 'react';
  * @param delay - Delay in milliseconds before updating debounced value
  * @returns [value, debouncedValue, setValue] - Current value, debounced value, and setter
  */
-export function useDebouncedState<T>(
+function useDebouncedState<T>(
   initialValue: T,
   delay: number = 300
 ): [T, T, (value: T) => void] {

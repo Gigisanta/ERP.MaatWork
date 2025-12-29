@@ -1,0 +1,1 @@
+CREATE INDEX "idx_aum_snapshots_date" ON "aum_snapshots" USING btree ("date");

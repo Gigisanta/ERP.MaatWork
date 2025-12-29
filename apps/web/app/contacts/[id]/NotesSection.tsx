@@ -18,8 +18,8 @@ import {
   Spinner,
   EmptyState,
   Alert,
-} from '@cactus/ui';
-import ConfirmDialog from '../../components/ConfirmDialog';
+} from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
 import { useNotes } from '@/lib/api-hooks';
 import { createNote, deleteNote } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';

@@ -9,9 +9,9 @@ import { uuidSchema } from '../../utils/validation/common-schemas';
 // Zod Validation Schemas
 // ==========================================================
 
-export const riskLevelSchema = z.enum(['conservative', 'moderate', 'aggressive']);
+const riskLevelSchema = z.enum(['conservative', 'moderate', 'aggressive']);
 
-export const portfolioAssignmentStatusSchema = z.enum(['active', 'paused', 'ended']);
+const portfolioAssignmentStatusSchema = z.enum(['active', 'paused', 'ended']);
 
 export const createPortfolioSchema = z.object({
   name: z.string().min(1, 'Nombre es requerido').max(255, 'Nombre demasiado largo'),
@@ -76,3 +76,11 @@ export const updateAssignmentStatusSchema = z.object({
 export const assignmentIdParamSchema = z.object({
   id: uuidSchema,
 });
+
+
+
+
+
+
+
+

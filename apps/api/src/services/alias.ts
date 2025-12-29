@@ -4,7 +4,7 @@
  * Manages contact aliases to learn and resolve name variations.
  */
 
-import { db, contactAliases, contacts } from '@cactus/db';
+import { db, contactAliases, contacts } from '@maatwork/db';
 import { eq, and, sql } from 'drizzle-orm';
 import { normalizeName } from './normalization';
 import { logger } from '../utils/logger';
@@ -114,7 +114,7 @@ export async function addContactAlias(
  * Ensures a contact has its own full name as a normalized alias/field.
  * Can be used as a background job or trigger.
  */
-export async function ensureContactNormalization(
+async function ensureContactNormalization(
   contactId: string,
   fullName: string
 ): Promise<void> {

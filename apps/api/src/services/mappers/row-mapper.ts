@@ -8,7 +8,7 @@
 
 import { mapAumColumns } from '@/utils/aum-columns';
 import { normalizeAccountNumber } from '@/utils/aum/aum-normalization';
-import type { ParsedAumRow, ParseResult, ParseStats } from '../aumParser';
+import type { ParsedAumRow, ParseResult, ParseStats } from '../aum-parser';
 
 /**
  * Map raw rows (from Excel or CSV) to AUM format

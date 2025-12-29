@@ -17,8 +17,9 @@
 
 import type { ErrorLog, FilterType, SortOrder } from './types';
 import { debounce, getDeduplicationKey, getFilteredAndSortedLogs } from './utils';
-import { loadLogs, saveLogs } from './storage';
+import { loadLogs, saveLogs, clearStoredLogs } from './storage';
 import { setupAllErrorHandlers } from './error-handlers';
+import { logger } from '../logger';
 import {
   createDebugPanel,
   renderEmptyState,
@@ -181,13 +182,10 @@ export class DebugConsole {
 
       // Mostrar errores críticos en desarrollo
       if (errorLog.type === 'error' && process.env.NODE_ENV === 'development') {
-        console.group('🔴 Error capturado por Debug Console');
-        console.log('Mensaje:', errorLog.message);
-        if (errorLog.stack) {
-          console.log('Stack:', errorLog.stack);
-        }
-        console.log('URL:', errorLog.url);
-        console.groupEnd();
+        logger.error(`[DebugConsole] ${errorLog.message}`, {
+          stack: errorLog.stack,
+          url: errorLog.url,
+        });
       }
     } finally {
       this.isLogging = false;
@@ -376,7 +374,7 @@ export class DebugConsole {
         }
       })
       .catch(() => {
-        console.log('Logs exportados:', json);
+        logger.info('Logs exportados', { json });
       });
   }
 
@@ -393,7 +391,7 @@ export class DebugConsole {
     this.logs = [];
     this.recentLogs.clear();
     this.collapsedStates.clear();
-    saveLogs(this.logs);
+    clearStoredLogs();
     this.updateBadge();
     if (this.isPanelVisible) {
       this.updatePanel();

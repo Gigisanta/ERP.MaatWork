@@ -11,7 +11,7 @@ import {
   Switch,
   DataTable,
   type Column,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { UserApiResponse as User, TeamMember } from '@/types';
 import type { AuthUser } from '@/app/auth/AuthContext';
 

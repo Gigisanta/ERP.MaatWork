@@ -111,7 +111,7 @@ export async function searchInstruments(req: Request, res: Response) {
                 query,
                 errorType,
                 pythonServiceUrl: PYTHON_SERVICE_URL,
-                hint: 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev',
+                hint: 'Analytics service may not be running. Start it with: pnpm -F @maatwork/analytics-service dev',
               },
               `Python analytics service unavailable (${errorType}), using database fallback`
             );

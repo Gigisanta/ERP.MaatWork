@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, Grid, Stack, Select, Text, Heading, Button } from '@cactus/ui';
+import { Card, CardContent, Grid, Stack, Select, Text, Heading, Button } from '@maatwork/ui';
 import { BarChart3, ArrowRightLeft } from 'lucide-react';
 import { AssetWatchlist } from './AssetWatchlist';
 import { PortfolioSelector } from './PortfolioSelector';

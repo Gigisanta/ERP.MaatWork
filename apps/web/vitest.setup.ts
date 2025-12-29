@@ -8,6 +8,7 @@ expect.extend(matchers);
 // Cleanup después de cada test
 afterEach(() => {
   cleanup();
+  localStorage.clear();
 });
 
 // Mock window.matchMedia
@@ -26,14 +27,25 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-};
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+  };
+})();
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -57,3 +69,9 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 } as unknown as typeof ResizeObserver;
+
+// Mock window.scrollTo and HTMLElement.prototype.scrollTo
+window.scrollTo = vi.fn();
+if (typeof HTMLElement !== 'undefined') {
+  HTMLElement.prototype.scrollTo = vi.fn();
+}

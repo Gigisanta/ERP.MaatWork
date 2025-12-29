@@ -1,6 +1,6 @@
 import { AuthProvider } from './auth/AuthContext';
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
 import AppLayout from './components/AppLayout';
 import { SidebarProvider } from './components/SidebarContext';
@@ -10,14 +10,15 @@ import ServiceWorkerRegistration from './components/ServiceWorkerRegistration';
 import { ToastProvider } from '../lib/hooks/useToast';
 import { Outfit, Plus_Jakarta_Sans } from 'next/font/google';
 import { getCurrentUser } from '@/lib/api-server';
+import { cookies } from 'next/headers';
 import {
   DynamicDebugConsole,
   DynamicGlobalKeyboardShortcuts,
 } from './components/LayoutDynamicWrappers';
 import type { Metadata } from 'next';
 
-// Styles from @cactus/ui
-import '@cactus/ui/styles.css';
+// Styles from @maatwork/ui
+import '@maatwork/ui/styles.css';
 import './globals.css';
 
 // AI_DECISION: Only load DebugConsole in development to reduce production bundle
@@ -60,7 +61,8 @@ export const metadata: Metadata = {
   },
   description: 'Gestión profesional de clientes e inversiones',
   icons: {
-    icon: '/favicon.ico', // Assuming this exists or will fallback
+    icon: '/icon',
+    apple: '/apple-icon',
   },
 };
 
@@ -82,6 +84,21 @@ async function getInitialUser() {
       };
     }
   } catch (error) {
+    // AI_DECISION: Handle 401 Unauthorized explicitly by clearing the cookie
+    // Justificación: When API returns 401 (e.g. user deleted), it sets Set-Cookie to clear token.
+    //                However, Next.js Server Components don't automatically forward that Set-Cookie to the browser
+    //                for internal fetch calls. We must manually delete the cookie in the Server Action/Component
+    //                to prevent infinite redirect loops (Middleware sees valid JWT -> Layout gets 401 -> Redirect -> Middleware sees valid JWT).
+    // Impacto: Breaks the infinite loop when user exists in JWT but not in DB
+    const isUnauthorized =
+      (error as any).status === 401 ||
+      (error instanceof Error && error.message.includes('Unauthorized'));
+
+    if (isUnauthorized) {
+      const cookieStore = await cookies();
+      cookieStore.delete('token');
+    }
+
     // AI_DECISION: Log errors but don't throw - allow app to render unauthenticated shell
     // Justificación: Errores de red o API no deben bloquear el renderizado inicial
     // Impacto: Mejor UX permitiendo que la app se cargue incluso si la API no está disponible

@@ -37,8 +37,7 @@ import {
   Badge,
   Spinner,
   DataTable,
-  type Column,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface Portfolio {
   id: string;
@@ -140,25 +139,6 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
       setSelectedBenchmarks(selectedBenchmarks.filter((b) => b !== id));
       onRemoveFromComparison?.(id, type);
     }
-  };
-
-  const getPerformanceColor = (performance: number) => {
-    if (performance > 10) return 'text-success bg-success-subtle';
-    if (performance > 0) return 'text-success bg-success-subtle';
-    if (performance > -5) return 'text-warning bg-warning-subtle';
-    return 'text-error bg-error-subtle';
-  };
-
-  const getRiskColor = (volatility: number) => {
-    if (volatility < 10) return 'text-success bg-success-subtle';
-    if (volatility < 15) return 'text-warning bg-warning-subtle';
-    return 'text-error bg-error-subtle';
-  };
-
-  const getSharpeColor = (sharpe: number) => {
-    if (sharpe > 1) return 'text-success bg-success-subtle';
-    if (sharpe > 0.5) return 'text-warning bg-warning-subtle';
-    return 'text-error bg-error-subtle';
   };
 
   return (

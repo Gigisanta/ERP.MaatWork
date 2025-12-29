@@ -31,7 +31,14 @@ function findPythonCommand() {
   
   for (const cmd of pythonCommands) {
     try {
-      const version = execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
+      // AI_DECISION: Timeout corto para detección de comandos
+      // Justificación: Algunos comandos pueden colgarse si el ejecutable está corrupto o es un placeholder de Windows Store
+      // Impacto: Detección más rápida de binarios válidos
+      const version = execSync(`${cmd} --version`, { 
+        encoding: 'utf8', 
+        stdio: 'pipe',
+        timeout: 2000 // 2 segundos max
+      });
       if (version.includes('Python 3')) {
         const match = version.match(/Python (\d+)\.(\d+)/);
         if (match) {
@@ -93,6 +100,22 @@ function checkRequirementsFile() {
  * Instalar dependencias usando pip
  */
 function installDependencies(pipCmd) {
+  // AI_DECISION: Verificar si ya están instaladas para evitar esperas innecesarias
+  // Justificación: pnpm i se queda trabado si pip intenta reinstalar todo cada vez
+  // Impacto: Instalación mucho más rápida si ya se hizo previamente
+  try {
+    const isFastapiInstalled = execSync(`${pipCmd} show fastapi`, { stdio: 'pipe' });
+    const isYfinanceInstalled = execSync(`${pipCmd} show yfinance`, { stdio: 'pipe' });
+    
+    if (isFastapiInstalled && isYfinanceInstalled) {
+      console.log(success('✨ Dependencias críticas ya detectadas. Saltando instalación completa.'));
+      console.log(dim('   (Usa SKIP_PYTHON_INSTALL=false si necesitas forzar actualización)'));
+      return true;
+    }
+  } catch {
+    // Si falla el check, procedemos con la instalación normal
+  }
+
   console.log(info('📦 Instalando dependencias desde requirements.txt...'));
   console.log('');
 
@@ -154,6 +177,14 @@ function main() {
   console.log(info('═'.repeat(55)));
   console.log('');
 
+  // AI_DECISION: Permitir saltar la instalación de Python
+  // Justificación: En entornos CI o si el usuario no usa el servicio de analytics
+  // Impacto: Evita fallos en la instalación general de pnpm
+  if (process.env.PYTHON_SKIP_INSTALL === 'true' || process.env.SKIP_PYTHON_INSTALL === 'true') {
+    console.log(warning('⏭️  Saltando instalación de dependencias Python (PYTHON_SKIP_INSTALL=true)'));
+    process.exit(0);
+  }
+
   // Verificar Python
   const python = findPythonCommand();
   if (!python) {
@@ -212,13 +243,18 @@ function main() {
   console.log(success('✅ Dependencias Python instaladas correctamente'));
   console.log('');
   console.log(info('Para iniciar el servicio:'));
-  console.log(info('  pnpm -F @cactus/analytics-service dev'));
+  console.log(info('  pnpm -F @maatwork/analytics-service dev'));
   console.log('');
   process.exit(0);
 }
 
 // Ejecutar
 main();
+
+
+
+
+
 
 
 

@@ -18,11 +18,12 @@ import {
   Stack,
   Alert,
   Select,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { useTeamCalendar } from '@/lib/api-hooks';
 import { assignEventToMember } from '@/lib/api/calendar';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
-import type { TeamMember } from '@/types';
+import { logger, toLogContextValue } from '@/lib/logger';
+import type { TeamMember, CalendarEvent, CalendarEventAttendee } from '@/types';
 
 interface TeamCalendarSectionProps {
   teamId: string;
@@ -58,7 +59,7 @@ export function TeamCalendarSection({
     isLoading,
   } = useTeamCalendar(teamId, currentCalendarId ? dateParams : undefined);
 
-  const handleAssignEvent = async (eventId: string, userId: string, event: any) => {
+  const handleAssignEvent = async (eventId: string, userId: string, event: CalendarEvent) => {
     if (!userId) return;
 
     setAssigningEventId(eventId);
@@ -66,9 +67,9 @@ export function TeamCalendarSection({
       const response = await assignEventToMember(teamId, {
         eventId,
         targetUserId: userId,
-        eventSummary: event.summary,
-        eventDescription: event.description,
-        attendees: event.attendees?.map((a: any) => a.email),
+        eventSummary: event.summary || '',
+        eventDescription: event.description || '',
+        attendees: event.attendees?.map((a: CalendarEventAttendee) => a.email),
       });
 
       if (response.success) {
@@ -77,7 +78,11 @@ export function TeamCalendarSection({
         alert('Error al asignar la reunión');
       }
     } catch (error) {
-      console.error(error);
+      logger.error('Failed to assign event to member', {
+        error: toLogContextValue(error),
+        teamId,
+        eventId,
+      });
       alert('Error al asignar la reunión');
     } finally {
       setAssigningEventId(null);
@@ -114,7 +119,7 @@ export function TeamCalendarSection({
             </Alert>
           ) : events && events.length > 0 ? (
             <Stack direction="column" gap="xs">
-              {events.map((event: any) => (
+              {events.map((event: CalendarEvent) => (
                 <div key={event.id}>
                   <Text weight="medium">{event.summary || 'Sin título'}</Text>
                   {event.start?.dateTime && (
@@ -173,7 +178,7 @@ export function TeamCalendarSection({
           </Alert>
         ) : events && events.length > 0 ? (
           <Stack direction="column" gap="md">
-            {events.map((event: any) => (
+            {events.map((event: CalendarEvent) => (
               <div key={event.id} className="p-3 border border-border rounded-md bg-surface/50">
                 <div className="mb-2">
                   <Text weight="medium">{event.summary || 'Sin título'}</Text>

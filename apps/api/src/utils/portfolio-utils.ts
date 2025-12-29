@@ -2,7 +2,7 @@
  * Utilidades para portfolios
  */
 
-export interface PortfolioLineWithWeight {
+interface PortfolioLineWithWeight {
   targetWeight: string | number;
 }
 

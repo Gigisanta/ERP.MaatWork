@@ -1,15 +1,16 @@
 /**
  * Redis client configuration for caching
  *
- * AI_DECISION: Centralize Redis configuration with TTL presets per endpoint
- * Justificación: Consistent caching strategy across all Bloomberg endpoints, easy to adjust TTLs
- * Impacto: Better performance, reduced load on data sources, configurable cache duration
+ * AI_DECISION: Centralize Redis configuration with ioredis for better reliability
+ * Justificación: ioredis is more robust, supports sentinel/cluster, and has better error handling than standard redis package.
+ *                Unifying on ioredis reduces memory usage and simplifies maintenance.
+ * Impacto: Better performance, reduced load on data sources, consistent caching across all domains.
  */
 
-import { createClient, type RedisClientType } from 'redis';
+import Redis from 'ioredis';
 import { logger } from '../utils/logger';
 
-let redisClient: RedisClientType | null = null;
+let redisClient: Redis | null = null;
 
 /**
  * Redis TTL presets (in seconds) for different endpoint types
@@ -46,7 +47,7 @@ export const REDIS_TTL = {
 /**
  * Initialize Redis client
  */
-export async function initializeRedis(): Promise<RedisClientType> {
+export async function initializeRedis(): Promise<Redis> {
   if (redisClient) {
     return redisClient;
   }
@@ -54,16 +55,15 @@ export async function initializeRedis(): Promise<RedisClientType> {
   const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
   try {
-    redisClient = createClient({
-      url: redisUrl,
-      socket: {
-        reconnectStrategy: (retries) => {
-          if (retries > 10) {
-            logger.error({ retries }, 'Redis reconnection failed after 10 retries');
-            return new Error('Redis reconnection failed');
-          }
-          return Math.min(retries * 100, 3000);
-        },
+    redisClient = new Redis(redisUrl, {
+      maxRetriesPerRequest: 3,
+      enableReadyCheck: true,
+      retryStrategy: (times) => {
+        if (times > 10) {
+          logger.error({ times }, 'Redis reconnection failed after 10 retries');
+          return null; // Stop retrying
+        }
+        return Math.min(times * 100, 3000);
       },
     });
 
@@ -79,8 +79,8 @@ export async function initializeRedis(): Promise<RedisClientType> {
       logger.warn('Redis client reconnecting');
     });
 
-    await redisClient.connect();
-
+    // We don't strictly need to wait for connect with ioredis as it queues commands,
+    // but we can check if it's ready.
     return redisClient;
   } catch (error) {
     logger.error({ error }, 'Failed to initialize Redis client');
@@ -91,7 +91,7 @@ export async function initializeRedis(): Promise<RedisClientType> {
 /**
  * Get Redis client instance
  */
-export function getRedisClient(): RedisClientType | null {
+export function getRedisClient(): Redis | null {
   return redisClient;
 }
 
@@ -113,11 +113,13 @@ export async function closeRedis(): Promise<void> {
  * Justificación: Bloomberg endpoints use "bloomberg:" prefix, but CRM endpoints need general prefix
  * Impacto: Flexible cache key generation for different domains
  */
-export function buildCacheKey(prefix: string, ...parts: (string | number)[]): string {
+export function buildCacheKey(prefix: string, ...parts: (string | number | null | undefined)[]): string {
+  const cleanParts = parts.filter((p) => p !== null && p !== undefined).map(String);
+
   // If prefix already includes a domain (e.g., "bloomberg:" or "crm:"), use as-is
   if (prefix.includes(':')) {
-    return `${prefix}:${parts.join(':')}`;
+    return `${prefix}:${cleanParts.join(':')}`;
   }
   // Default to general "crm:" prefix for CRM endpoints
-  return `crm:${prefix}:${parts.join(':')}`;
+  return `crm:${prefix}:${cleanParts.join(':')}`;
 }

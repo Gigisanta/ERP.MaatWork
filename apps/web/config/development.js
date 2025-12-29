@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Next.js Development and Linting Configuration
  */

@@ -46,7 +46,7 @@ export const AUM_ROWS_CONFIG = {
   },
 } as const;
 
-export type AumRowsConfig = typeof AUM_ROWS_CONFIG;
+type AumRowsConfig = typeof AUM_ROWS_CONFIG;
 
 /**
  * Total table width based on column widths

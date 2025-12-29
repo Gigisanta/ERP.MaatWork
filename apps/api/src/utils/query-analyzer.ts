@@ -20,7 +20,7 @@ export interface QueryAnalysisReport {
   recommendations: QueryRecommendation[];
 }
 
-export interface QueryRecommendation {
+interface QueryRecommendation {
   operation: string;
   severity: 'high' | 'medium' | 'low';
   issue: string;

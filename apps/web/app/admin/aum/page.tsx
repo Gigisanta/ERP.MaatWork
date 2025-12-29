@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@cactus/ui';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@maatwork/ui';
 
 export default function AumHubPage() {
   const sections = [

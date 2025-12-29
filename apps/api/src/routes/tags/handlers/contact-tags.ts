@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, tags, contactTags, contacts } from '@cactus/db';
+import { db, tags, contactTags, contacts } from '@maatwork/db';
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { requireAuth } from '../../../auth/middlewares';
 import {

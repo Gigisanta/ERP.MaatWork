@@ -1,5 +1,5 @@
 'use client';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -38,8 +38,8 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '@cactus/ui';
-import ConfirmDialog from '../../components/ConfirmDialog';
+} from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
 import TeamActivityTable from '../components/TeamActivityTable';
 import TeamPerformanceSnapshot from '../components/TeamPerformanceSnapshot';
 import { TeamCalendarSection } from '../components/TeamCalendarSection';

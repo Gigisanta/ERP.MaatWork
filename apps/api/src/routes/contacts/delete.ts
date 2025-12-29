@@ -4,7 +4,7 @@
  * DELETE /contacts/:id - Soft delete contact
  */
 import { Router, type Request } from 'express';
-import { db, contacts } from '@cactus/db';
+import { db, contacts } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { invalidateCache } from '../../middleware/cache';

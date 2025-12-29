@@ -5,14 +5,14 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   portfolioTemplates,
   portfolioTemplateLines,
   benchmarkDefinitions,
   benchmarkComponents,
   instruments,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, sql, inArray } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { getPortfolioCompareTimeout } from '../../config/timeouts';
@@ -335,7 +335,7 @@ router.post(
             errorType,
             pythonServiceUrl: PYTHON_SERVICE_URL,
             hint: isConnectionError
-              ? 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev'
+              ? 'Analytics service may not be running. Start it with: pnpm -F @maatwork/analytics-service dev'
               : 'Check analytics service logs for details',
           },
           `Python analytics service unavailable (${errorType}), returning empty comparison`

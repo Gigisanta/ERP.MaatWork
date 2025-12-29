@@ -144,7 +144,6 @@ async function ensureDockerServices() {
 
     // Check running containers
     let postgresRunning = false;
-    let n8nRunning = false;
 
     try {
       const { stdout } = await execAsync('docker compose ps --format json', { cwd: projectRoot });
@@ -155,7 +154,6 @@ async function ensureDockerServices() {
           .filter(c => c);
         
         postgresRunning = containers.some(c => c.Service === 'db' && c.State === 'running');
-        n8nRunning = containers.some(c => c.Service === 'n8n' && c.State === 'running');
       }
     } catch {
       // Fallback
@@ -163,11 +161,10 @@ async function ensureDockerServices() {
         const { stdout } = await execAsync('docker ps --format "{{.Names}}"', { cwd: projectRoot });
         const projectName = path.basename(projectRoot).toLowerCase().replace(/[^a-z0-9]/g, '');
         postgresRunning = stdout.includes('db') && stdout.includes(projectName);
-        n8nRunning = stdout.includes('n8n') && stdout.includes(projectName);
       } catch {}
     }
 
-    if (!postgresRunning || !n8nRunning) {
+    if (!postgresRunning) {
       console.log(warning('\n⚠️  Iniciando servicios...'));
       try {
         execSync('docker compose up -d', { stdio: 'inherit', cwd: projectRoot });
@@ -230,13 +227,48 @@ async function runValidations(skipCache = false) {
   } catch (err) {
     console.log(error(`❌ Error validación: ${err.message}`));
   }
+
+  // AI_DECISION: Asegurar existencia de .env básico
+  // Justificación: Evita que el servidor API falle al iniciar por falta de configuración
+  // Impacto: Onboarding más fluido para nuevos desarrolladores
+  const apiEnvPath = path.join(projectRoot, 'apps', 'api', '.env');
+  const apiEnvExamplePath = path.join(projectRoot, 'apps', 'api', 'config-example.env');
+  
+  if (!fs.existsSync(apiEnvPath) && fs.existsSync(apiEnvExamplePath)) {
+    console.log(info('📝 Creando apps/api/.env desde el ejemplo...'));
+    try {
+      fs.copyFileSync(apiEnvExamplePath, apiEnvPath);
+      console.log(success('✅ .env creado con éxito'));
+    } catch (err) {
+      console.log(warning('⚠️  No se pudo crear .env automáticamente.'));
+    }
+  }
 }
 
 async function main() {
-  console.log(bold.cyan('CACTUS CRM v0.1.0 (Dev Mode)'));
+  console.log(bold.cyan('MAATWORK v0.1.0 (Dev Mode)'));
 
   if (analyticsPort !== DEFAULT_ANALYTICS_PORT) {
     console.log(warning(`Analytics port: ${analyticsPort}`));
+  }
+
+  // AI_DECISION: Asegurar que los paquetes críticos estén construidos
+  // Justificación: Evita errores de "Module not found" al iniciar apps que dependen de @maatwork/ui o @maatwork/db
+  // Impacto: Inicio más robusto y consistente
+  try {
+    const uiDist = path.join(projectRoot, 'packages', 'ui', 'dist');
+    const dbDist = path.join(projectRoot, 'packages', 'db', 'dist');
+    const typesDist = path.join(projectRoot, 'packages', 'types', 'dist');
+
+    if (!fs.existsSync(uiDist) || !fs.existsSync(dbDist) || !fs.existsSync(typesDist)) {
+      console.log(info('🏗️  Detectando paquetes sin construir. Preparando entorno...'));
+      execSync('pnpm turbo run build --filter=@maatwork/ui --filter=@maatwork/db --filter=@maatwork/types', { 
+        stdio: 'inherit', 
+        cwd: projectRoot 
+      });
+    }
+  } catch (err) {
+    console.log(warning('⚠️  Error al pre-construir paquetes, intentando continuar...'));
   }
 
   // Cleanup & Restart Turbo (fast)

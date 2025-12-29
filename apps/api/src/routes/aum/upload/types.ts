@@ -7,7 +7,7 @@
  */
 
 import type { InferSelectModel } from 'drizzle-orm';
-import { aumImportRows } from '@cactus/db/schema';
+import { aumImportRows } from '@maatwork/db/schema';
 
 // Type for AUM import row from Drizzle schema
 export type AumImportRow = InferSelectModel<typeof aumImportRows>;
@@ -43,7 +43,7 @@ export interface ContactResult {
 }
 
 // Upload response data
-export interface UploadResponse {
+interface UploadResponse {
   ok: boolean;
   fileId: string;
   filename: string;

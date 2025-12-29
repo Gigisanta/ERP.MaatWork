@@ -7,14 +7,18 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { canAccessContact } from '../auth/authorization';
 import { getPortfolioTemplateLines, getAssignmentWithAccessCheck } from './portfolio-service';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
-  db: vi.fn(),
-}));
+vi.mock('@maatwork/db', async () => {
+  const actual = await vi.importActual('@maatwork/db');
+  return {
+    ...actual,
+    db: vi.fn(),
+  };
+});
 
 vi.mock('../auth/authorization', () => ({
   canAccessContact: vi.fn(),
@@ -22,6 +26,32 @@ vi.mock('../auth/authorization', () => ({
 
 const mockDb = vi.mocked(db);
 const mockCanAccessContact = vi.mocked(canAccessContact);
+
+// Helper to create a chainable mock
+const createChainableMock = (finalValue: unknown) => {
+  const mock = vi.fn().mockImplementation(() => mock) as any;
+  
+  mock.select = vi.fn().mockReturnValue(mock);
+  mock.from = vi.fn().mockReturnValue(mock);
+  mock.where = vi.fn().mockReturnValue(mock);
+  mock.orderBy = vi.fn().mockReturnValue(mock);
+  mock.limit = vi.fn().mockReturnValue(mock);
+  mock.offset = vi.fn().mockReturnValue(mock);
+  mock.innerJoin = vi.fn().mockReturnValue(mock);
+  mock.leftJoin = vi.fn().mockReturnValue(mock);
+  mock.groupBy = vi.fn().mockReturnValue(mock);
+  mock.insert = vi.fn().mockReturnValue(mock);
+  mock.values = vi.fn().mockReturnValue(mock);
+  mock.update = vi.fn().mockReturnValue(mock);
+  mock.set = vi.fn().mockReturnValue(mock);
+  mock.delete = vi.fn().mockReturnValue(mock);
+  mock.returning = vi.fn().mockReturnValue(mock);
+  
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+    Promise.resolve(finalValue).then(onRes, onRej);
+  
+  return mock as unknown as ReturnType<typeof db>;
+};
 
 describe('getPortfolioTemplateLines', () => {
   beforeEach(() => {
@@ -41,21 +71,7 @@ describe('getPortfolioTemplateLines', () => {
       },
     ];
 
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        leftJoin: vi.fn().mockReturnValue({
-          leftJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue(mockLines),
-            }),
-          }),
-        }),
-      }),
-    });
-
-    mockDb.mockReturnValue({
-      select: mockSelect,
-    } as any);
+    mockDb.mockReturnValue(createChainableMock(mockLines));
 
     const result = await getPortfolioTemplateLines('template-123', { includeMetadata: true });
 
@@ -71,15 +87,7 @@ describe('getPortfolioTemplateLines', () => {
       },
     ];
 
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(mockLines),
-      }),
-    });
-
-    mockDb.mockReturnValue({
-      select: mockSelect,
-    } as any);
+    mockDb.mockReturnValue(createChainableMock(mockLines));
 
     const result = await getPortfolioTemplateLines('template-123', { includeMetadata: false });
 
@@ -99,17 +107,7 @@ describe('getAssignmentWithAccessCheck', () => {
       templateId: 'template-123',
     };
 
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockAssignment]),
-        }),
-      }),
-    });
-
-    mockDb.mockReturnValue({
-      select: mockSelect,
-    } as any);
+    mockDb.mockReturnValue(createChainableMock([mockAssignment]));
 
     mockCanAccessContact.mockResolvedValue(true);
 
@@ -120,17 +118,7 @@ describe('getAssignmentWithAccessCheck', () => {
   });
 
   it('debería retornar null cuando asignación no existe', async () => {
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]),
-        }),
-      }),
-    });
-
-    mockDb.mockReturnValue({
-      select: mockSelect,
-    } as any);
+    mockDb.mockReturnValue(createChainableMock([]));
 
     const result = await getAssignmentWithAccessCheck('assignment-123', 'user-123', 'advisor');
 
@@ -145,17 +133,7 @@ describe('getAssignmentWithAccessCheck', () => {
       templateId: 'template-123',
     };
 
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([mockAssignment]),
-        }),
-      }),
-    });
-
-    mockDb.mockReturnValue({
-      select: mockSelect,
-    } as any);
+    mockDb.mockReturnValue(createChainableMock([mockAssignment]));
 
     mockCanAccessContact.mockResolvedValue(false);
 

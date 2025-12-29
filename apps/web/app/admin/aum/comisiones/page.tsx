@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Button, Text } from '@cactus/ui';
+import { Button, Text } from '@maatwork/ui';
 
 export default function AumComisionesPage() {
   return (

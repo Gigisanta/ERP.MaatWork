@@ -6,7 +6,7 @@
  * Impacto: Mejora la preservación de asesores cuando CSV2 tiene accountNumber pero CSV1 tenía formato diferente
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import { logger } from '../../../utils/logger';
 import { normalizeAccountNumber } from '../../../utils/aum/aum-normalization';

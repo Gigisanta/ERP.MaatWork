@@ -5,7 +5,7 @@
  * PATCH /users/me - Update current user profile
  */
 import type { Request } from 'express';
-import { db, users, googleOAuthTokens } from '@cactus/db';
+import { db, users, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
 import { updateProfileSchema } from '../schemas';

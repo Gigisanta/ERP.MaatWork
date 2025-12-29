@@ -62,3 +62,11 @@ export function usePortfolioData(templateId: string | null, enabled: boolean = t
     refetch: fetchPortfolio,
   };
 }
+
+
+
+
+
+
+
+

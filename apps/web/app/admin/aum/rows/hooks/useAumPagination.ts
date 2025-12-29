@@ -4,7 +4,7 @@
 
 import { useReducer, useCallback } from 'react';
 
-export interface AumPaginationState {
+interface AumPaginationState {
   limit: number;
   offset: number;
 }
@@ -52,3 +52,11 @@ export function useAumPagination() {
     resetPagination,
   };
 }
+
+
+
+
+
+
+
+

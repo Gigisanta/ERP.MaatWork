@@ -5,7 +5,7 @@ import core from './core.json';
 
 export type Theme = 'light' | 'dark' | 'high-contrast';
 
-export interface ThemeConfig {
+interface ThemeConfig {
   name: Theme;
   colors: {
     // Brand colors
@@ -135,10 +135,10 @@ export const themes: Record<Theme, ThemeConfig> = {
 };
 
 // Export raw tokens for advanced usage
-export const tokens = core;
+const tokens = core;
 
 // Export specialized color scales
-export const brandColors = {
+const brandColors = {
   primary: {
     base: core.colors.primary[500],
     hover: core.colors.primary[600],

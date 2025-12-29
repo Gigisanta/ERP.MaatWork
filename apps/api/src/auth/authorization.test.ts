@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@cactus/db';
+import { db, users, teamMembership, teams, contacts, aumImportFiles } from '@maatwork/db';
 import { eq, sql, inArray, isNull } from 'drizzle-orm';
 import {
   getUserAccessScope,
@@ -24,8 +24,8 @@ import { createMockDbWithResponses } from '../__tests__/helpers/mock-db';
 import { createMockDb } from '../__tests__/helpers/mock-db';
 
 // Mock DB
-vi.mock('@cactus/db', async () => {
-  const actual = await vi.importActual('@cactus/db');
+vi.mock('@maatwork/db', async () => {
+  const actual = await vi.importActual('@maatwork/db');
   return {
     ...actual,
     db: vi.fn(),

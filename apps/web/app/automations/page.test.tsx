@@ -5,6 +5,9 @@
  * Justificación: Validar renderizado y apertura de N8N
  * Impacto: Prevenir errores en acceso a automatizaciones
  */
+import { useRequireAuth } from '../auth/useRequireAuth';
+import { usePageTitle } from '../components/PageTitleContext';
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -23,38 +26,31 @@ vi.mock('../components/PageTitleContext', () => ({
 
 vi.mock('@/lib/config', () => ({
   config: {
-    n8nUrl: 'https://n8n.example.com',
+    // n8nUrl removed
   },
 }));
 
-vi.mock('./components/WelcomeEmailCard', () => ({
-  default: () => <div>WelcomeEmailCard Component</div>,
+vi.mock('./components/EmailAutomationCard', () => ({
+  default: () => <div>EmailAutomationCard Component</div>,
 }));
 
 describe('AutomationsPage', () => {
   const mockUseRequireAuth = vi.fn();
-  const originalOpen = window.open;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    window.open = vi.fn();
 
-    const { useRequireAuth } = require('../auth/useRequireAuth');
     mockUseRequireAuth.mockReturnValue({
       loading: false,
     });
     useRequireAuth.mockImplementation(mockUseRequireAuth);
   });
 
-  afterEach(() => {
-    window.open = originalOpen;
-  });
-
   it('debería renderizar página de automatizaciones', () => {
     render(<AutomationsPage />);
 
-    expect(screen.getByText(/Automatizaciones/i)).toBeInTheDocument();
-    expect(screen.getByText(/WelcomeEmailCard Component/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /^Automatizaciones$/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/EmailAutomationCard Component/i)).toHaveLength(2);
   });
 
   it('debería mostrar loading mientras carga auth', () => {
@@ -68,35 +64,15 @@ describe('AutomationsPage', () => {
   });
 
   it('debería llamar usePageTitle con título correcto', () => {
-    const { usePageTitle } = require('../components/PageTitleContext');
-
+    
     render(<AutomationsPage />);
 
     expect(usePageTitle).toHaveBeenCalledWith('Automatizaciones');
   });
 
-  it('debería abrir N8N en nueva ventana al hacer click', () => {
-    render(<AutomationsPage />);
-
-    const n8nButton = screen.getByText(/N8N/i);
-    n8nButton.click();
-
-    expect(window.open).toHaveBeenCalledWith(
-      'https://n8n.example.com',
-      '_blank',
-      'noopener,noreferrer'
-    );
-  });
-
-  it('debería mostrar botón N8N', () => {
-    render(<AutomationsPage />);
-
-    expect(screen.getByText(/N8N/i)).toBeInTheDocument();
-  });
-
   it('debería mostrar sección de automatizaciones base', () => {
     render(<AutomationsPage />);
 
-    expect(screen.getByText(/Automatizaciones base/i)).toBeInTheDocument();
+    expect(screen.getByText(/Emails Automáticos/i)).toBeInTheDocument();
   });
 });

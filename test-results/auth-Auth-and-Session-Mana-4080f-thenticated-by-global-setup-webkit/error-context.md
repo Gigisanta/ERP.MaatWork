@@ -1,0 +1,425 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - link "MaatWork" [ref=e8]:
+          - /url: /home
+          - img [ref=e10]
+          - generic [ref=e13]: MaatWork
+        - 'button "Plan de carrera: Nivel 1 Junior, 50% completado" [ref=e15] [cursor=pointer]':
+          - generic [ref=e16]: Nivel 1 Junior
+          - generic [ref=e20]: 37.5% • 50%
+      - generic [ref=e21]:
+        - button "Notificaciones" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e28] [cursor=pointer]':
+          - generic [ref=e29]: G
+  - complementary "Navegación principal" [ref=e30]:
+    - generic [ref=e31]:
+      - navigation "Navegación principal" [ref=e32]:
+        - generic [ref=e33]:
+          - paragraph [ref=e34]: Principal
+          - link "👤 Contactos" [ref=e36]:
+            - /url: /contacts
+            - generic [ref=e37]: 👤
+            - generic [ref=e38]: Contactos
+        - generic [ref=e39]:
+          - paragraph [ref=e40]: Inversiones
+          - generic [ref=e41]:
+            - link "📊 Carteras" [ref=e42]:
+              - /url: /portfolios
+              - generic [ref=e43]: 📊
+              - generic [ref=e44]: Carteras
+            - link "📊 Benchmarks" [ref=e45]:
+              - /url: /benchmarks
+              - generic [ref=e46]: 📊
+              - generic [ref=e47]: Benchmarks
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e51]:
+            - /url: /teams
+            - generic [ref=e52]: 👨‍👩‍👧‍👦
+            - generic [ref=e53]: Equipos
+        - generic [ref=e54]:
+          - paragraph [ref=e55]: Métricas
+          - generic [ref=e56]:
+            - link "📈 Métricas de Contactos" [ref=e57]:
+              - /url: /contacts/metrics
+              - generic [ref=e58]: 📈
+              - generic [ref=e59]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e60]:
+              - /url: /analytics
+              - generic [ref=e61]: 📈
+              - generic [ref=e62]: Analytics
+        - generic [ref=e63]:
+          - paragraph [ref=e64]: Automatización
+          - generic [ref=e65]:
+            - link "☰ Pipeline" [ref=e66]:
+              - /url: /pipeline
+              - generic [ref=e67]: ☰
+              - generic [ref=e68]: Pipeline
+            - link "⚙️ Automations" [ref=e69]:
+              - /url: /automations
+              - generic [ref=e70]: ⚙️
+              - generic [ref=e71]: Automations
+            - link "📚 Plan de Carrera" [ref=e72]:
+              - /url: /career-plan
+              - generic [ref=e73]: 📚
+              - generic [ref=e74]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e75]:
+              - /url: /notifications
+              - generic [ref=e76]: ℹ️
+              - generic [ref=e77]: Notificaciones
+        - generic [ref=e78]:
+          - paragraph [ref=e79]: Herramientas
+          - generic [ref=e80]:
+            - link "🎓 Capacitaciones" [ref=e81]:
+              - /url: /capacitaciones
+              - generic [ref=e82]: 🎓
+              - generic [ref=e83]: Capacitaciones
+            - link "📝 Recursos" [ref=e84]:
+              - /url: /resources
+              - generic [ref=e85]: 📝
+              - generic [ref=e86]: Recursos
+            - link "📈 Finviz" [ref=e87]:
+              - /url: https://finviz.com
+              - generic [ref=e88]: 📈
+              - generic [ref=e89]: Finviz
+            - link "💼 Productores Balanz" [ref=e90]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e91]: 💼
+              - generic [ref=e92]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e93]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e94]: 🛡️
+              - generic [ref=e95]: Zurich Point
+        - generic [ref=e96]:
+          - paragraph [ref=e97]: Administración
+          - generic [ref=e98]:
+            - link "⚙️ Panel Principal" [ref=e99]:
+              - /url: /admin
+              - generic [ref=e100]: ⚙️
+              - generic [ref=e101]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e102]:
+              - /url: /admin/users
+              - generic [ref=e103]: 👥
+              - generic [ref=e104]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e105]:
+              - /url: /admin/aum
+              - generic [ref=e106]: 📈
+              - generic [ref=e107]: AUM y Brokers
+            - link "📈 Performance" [ref=e108]:
+              - /url: /admin/performance
+              - generic [ref=e109]: 📈
+              - generic [ref=e110]: Performance
+            - link "⚙️ Configuración AUM" [ref=e111]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e112]: ⚙️
+              - generic [ref=e113]: Configuración AUM
+        - generic [ref=e114]:
+          - paragraph [ref=e115]: Perfil
+          - link "👤 Mi Perfil" [ref=e117]:
+            - /url: /profile
+            - generic [ref=e118]: 👤
+            - generic [ref=e119]: Mi Perfil
+      - button "Colapsar menú" [ref=e121] [cursor=pointer]:
+        - generic [ref=e122]: ◀
+        - generic [ref=e123]: Colapsar
+  - main [ref=e124]:
+    - main [ref=e128]:
+      - generic [ref=e129]:
+        - region "Mi calendario" [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - heading "Mi Agenda" [level=2] [ref=e135]
+                - paragraph [ref=e136]: Gestiona tus eventos personales y de equipo
+              - generic [ref=e137]:
+                - generic [ref=e138]: G
+                - generic [ref=e139] [cursor=pointer]: Eventos de Gigilacabra
+                - switch "Eventos de Gigilacabra" [checked] [ref=e142] [cursor=pointer]
+            - generic [ref=e147]:
+              - paragraph [ref=e149]: GMT-3
+              - generic [ref=e150]:
+                - paragraph [ref=e151]: dom
+                - paragraph [ref=e153]: "21"
+              - generic [ref=e154]:
+                - paragraph [ref=e155]: lun
+                - paragraph [ref=e157]: "22"
+              - generic [ref=e158]:
+                - paragraph [ref=e160]: mar
+                - paragraph [ref=e162]: "23"
+              - generic [ref=e163]:
+                - paragraph [ref=e164]: mié
+                - paragraph [ref=e166]: "24"
+              - generic [ref=e167]:
+                - paragraph [ref=e168]: jue
+                - paragraph [ref=e170]: "25"
+              - generic [ref=e171]:
+                - paragraph [ref=e172]: vie
+                - paragraph [ref=e174]: "26"
+              - generic [ref=e175]:
+                - paragraph [ref=e176]: sáb
+                - paragraph [ref=e178]: "27"
+              - paragraph [ref=e180]: 08:00
+              - img [ref=e183] [cursor=pointer]
+              - img [ref=e186] [cursor=pointer]
+              - img [ref=e189] [cursor=pointer]
+              - img [ref=e192] [cursor=pointer]
+              - img [ref=e195] [cursor=pointer]
+              - img [ref=e198] [cursor=pointer]
+              - img [ref=e201] [cursor=pointer]
+              - paragraph [ref=e203]: 09:00
+              - img [ref=e206] [cursor=pointer]
+              - img [ref=e209] [cursor=pointer]
+              - generic [ref=e210]:
+                - img [ref=e212] [cursor=pointer]
+                - button "Research crypto | Decrypto 09:30" [ref=e213] [cursor=pointer]:
+                  - generic [ref=e214]:
+                    - paragraph [ref=e215]: Research crypto | Decrypto
+                    - paragraph [ref=e216]:
+                      - img [ref=e217]
+                      - text: 09:30
+              - img [ref=e222] [cursor=pointer]
+              - img [ref=e225] [cursor=pointer]
+              - img [ref=e228] [cursor=pointer]
+              - img [ref=e231] [cursor=pointer]
+              - paragraph [ref=e233]: 10:00
+              - img [ref=e236] [cursor=pointer]
+              - generic [ref=e237]:
+                - img [ref=e239] [cursor=pointer]
+                - button "Work" [ref=e240] [cursor=pointer]:
+                  - paragraph [ref=e242]: Work
+              - generic [ref=e243]:
+                - img [ref=e245] [cursor=pointer]
+                - button "Work" [ref=e246] [cursor=pointer]:
+                  - paragraph [ref=e248]: Work
+              - generic [ref=e249]:
+                - img [ref=e251] [cursor=pointer]
+                - button "Work" [ref=e252] [cursor=pointer]:
+                  - paragraph [ref=e254]: Work
+              - generic [ref=e255]:
+                - img [ref=e257] [cursor=pointer]
+                - button "Work" [ref=e258] [cursor=pointer]:
+                  - paragraph [ref=e260]: Work
+              - generic [ref=e261]:
+                - img [ref=e263] [cursor=pointer]
+                - button "Work" [ref=e264] [cursor=pointer]:
+                  - paragraph [ref=e266]: Work
+              - img [ref=e269] [cursor=pointer]
+              - paragraph [ref=e271]: 11:00
+              - img [ref=e274] [cursor=pointer]
+              - img [ref=e277] [cursor=pointer]
+              - img [ref=e280] [cursor=pointer]
+              - img [ref=e283] [cursor=pointer]
+              - img [ref=e286] [cursor=pointer]
+              - img [ref=e289] [cursor=pointer]
+              - img [ref=e292] [cursor=pointer]
+              - paragraph [ref=e294]: 12:00
+              - img [ref=e297] [cursor=pointer]
+              - img [ref=e300] [cursor=pointer]
+              - img [ref=e303] [cursor=pointer]
+              - img [ref=e306] [cursor=pointer]
+              - img [ref=e309] [cursor=pointer]
+              - img [ref=e312] [cursor=pointer]
+              - generic [ref=e313]:
+                - img [ref=e315] [cursor=pointer]
+                - button "Inscripcion Dhamma 12:00" [ref=e316] [cursor=pointer]:
+                  - generic [ref=e317]:
+                    - paragraph [ref=e318]: Inscripcion Dhamma
+                    - paragraph [ref=e319]:
+                      - img [ref=e320]
+                      - text: 12:00
+              - paragraph [ref=e324]: 13:00
+              - img [ref=e327] [cursor=pointer]
+              - img [ref=e330] [cursor=pointer]
+              - img [ref=e333] [cursor=pointer]
+              - img [ref=e336] [cursor=pointer]
+              - img [ref=e339] [cursor=pointer]
+              - img [ref=e342] [cursor=pointer]
+              - img [ref=e345] [cursor=pointer]
+              - paragraph [ref=e347]: 14:00
+              - img [ref=e350] [cursor=pointer]
+              - img [ref=e353] [cursor=pointer]
+              - img [ref=e356] [cursor=pointer]
+              - img [ref=e359] [cursor=pointer]
+              - img [ref=e362] [cursor=pointer]
+              - img [ref=e365] [cursor=pointer]
+              - img [ref=e368] [cursor=pointer]
+              - paragraph [ref=e370]: 15:00
+              - img [ref=e373] [cursor=pointer]
+              - img [ref=e376] [cursor=pointer]
+              - img [ref=e379] [cursor=pointer]
+              - generic [ref=e380]:
+                - img [ref=e382] [cursor=pointer]
+                - button "Cactus Mesa de Marketing 15:00" [ref=e383] [cursor=pointer]:
+                  - generic [ref=e384]:
+                    - paragraph [ref=e385]: Cactus Mesa de Marketing
+                    - paragraph [ref=e386]:
+                      - img [ref=e387]
+                      - text: 15:00
+              - img [ref=e392] [cursor=pointer]
+              - img [ref=e395] [cursor=pointer]
+              - img [ref=e398] [cursor=pointer]
+              - paragraph [ref=e400]: 16:00
+              - img [ref=e403] [cursor=pointer]
+              - img [ref=e406] [cursor=pointer]
+              - img [ref=e409] [cursor=pointer]
+              - img [ref=e412] [cursor=pointer]
+              - generic [ref=e413]:
+                - img [ref=e415] [cursor=pointer]
+                - button "Gym 16:30" [ref=e416] [cursor=pointer]:
+                  - generic [ref=e417]:
+                    - paragraph [ref=e418]: Gym
+                    - paragraph [ref=e419]:
+                      - img [ref=e420]
+                      - text: 16:30
+              - img [ref=e425] [cursor=pointer]
+              - img [ref=e428] [cursor=pointer]
+              - paragraph [ref=e430]: 17:00
+              - img [ref=e433] [cursor=pointer]
+              - generic [ref=e434]:
+                - img [ref=e436] [cursor=pointer]
+                - button "Gym 17:30" [ref=e437] [cursor=pointer]:
+                  - generic [ref=e438]:
+                    - paragraph [ref=e439]: Gym
+                    - paragraph [ref=e440]:
+                      - img [ref=e441]
+                      - text: 17:30
+              - generic [ref=e444]:
+                - img [ref=e446] [cursor=pointer]
+                - button "Gym 17:30" [ref=e447] [cursor=pointer]:
+                  - generic [ref=e448]:
+                    - paragraph [ref=e449]: Gym
+                    - paragraph [ref=e450]:
+                      - img [ref=e451]
+                      - text: 17:30
+              - generic [ref=e454]:
+                - img [ref=e456] [cursor=pointer]
+                - button "Gym 17:30" [ref=e457] [cursor=pointer]:
+                  - generic [ref=e458]:
+                    - paragraph [ref=e459]: Gym
+                    - paragraph [ref=e460]:
+                      - img [ref=e461]
+                      - text: 17:30
+              - img [ref=e466] [cursor=pointer]
+              - generic [ref=e467]:
+                - img [ref=e469] [cursor=pointer]
+                - button "Gym 17:30" [ref=e470] [cursor=pointer]:
+                  - generic [ref=e471]:
+                    - paragraph [ref=e472]: Gym
+                    - paragraph [ref=e473]:
+                      - img [ref=e474]
+                      - text: 17:30
+              - img [ref=e479] [cursor=pointer]
+              - paragraph [ref=e481]: 18:00
+              - img [ref=e484] [cursor=pointer]
+              - img [ref=e487] [cursor=pointer]
+              - img [ref=e490] [cursor=pointer]
+              - img [ref=e493] [cursor=pointer]
+              - generic [ref=e494]:
+                - img [ref=e496] [cursor=pointer]
+                - button "PAS 18:00" [ref=e497] [cursor=pointer]:
+                  - generic [ref=e498]:
+                    - paragraph [ref=e499]: PAS
+                    - paragraph [ref=e500]:
+                      - img [ref=e501]
+                      - text: 18:00
+              - img [ref=e506] [cursor=pointer]
+              - img [ref=e509] [cursor=pointer]
+              - paragraph [ref=e511]: 19:00
+              - img [ref=e514] [cursor=pointer]
+              - img [ref=e517] [cursor=pointer]
+              - img [ref=e520] [cursor=pointer]
+              - img [ref=e523] [cursor=pointer]
+              - img [ref=e526] [cursor=pointer]
+              - img [ref=e529] [cursor=pointer]
+              - img [ref=e532] [cursor=pointer]
+              - paragraph [ref=e534]: 20:00
+              - img [ref=e537] [cursor=pointer]
+              - img [ref=e540] [cursor=pointer]
+              - img [ref=e543] [cursor=pointer]
+              - img [ref=e546] [cursor=pointer]
+              - img [ref=e549] [cursor=pointer]
+              - img [ref=e552] [cursor=pointer]
+              - img [ref=e555] [cursor=pointer]
+              - paragraph [ref=e557]: 21:00
+              - img [ref=e560] [cursor=pointer]
+              - img [ref=e563] [cursor=pointer]
+              - img [ref=e566] [cursor=pointer]
+              - img [ref=e569] [cursor=pointer]
+              - img [ref=e572] [cursor=pointer]
+              - img [ref=e575] [cursor=pointer]
+              - img [ref=e578] [cursor=pointer]
+              - paragraph [ref=e580]: 22:00
+              - img [ref=e583] [cursor=pointer]
+              - img [ref=e586] [cursor=pointer]
+              - img [ref=e589] [cursor=pointer]
+              - img [ref=e592] [cursor=pointer]
+              - img [ref=e595] [cursor=pointer]
+              - img [ref=e598] [cursor=pointer]
+              - img [ref=e601] [cursor=pointer]
+        - region "Métricas del mes" [ref=e602]:
+          - generic [ref=e603]:
+            - generic [ref=e605]:
+              - generic [ref=e606]:
+                - heading "Métricas del Mes" [level=3] [ref=e607]
+                - combobox [ref=e610] [cursor=pointer]:
+                  - generic: Objetivos vs Actuales
+                  - img [ref=e611]
+              - generic [ref=e616]:
+                - list [ref=e618]:
+                  - listitem [ref=e619]:
+                    - img "Actual legend icon" [ref=e620]
+                    - text: Actual
+                  - listitem [ref=e622]:
+                    - img "Objetivo legend icon" [ref=e623]
+                    - text: Objetivo
+                - application "Gráfico de comparación de objetivos vs actuales" [ref=e625]:
+                  - generic [ref=e642]:
+                    - generic [ref=e643]:
+                      - generic [ref=e645]: Nuevos Contactos
+                      - generic [ref=e647]: Primeras Reuniones
+                      - generic [ref=e649]: Segundas Reuniones
+                      - generic [ref=e651]: Nuevos Clientes
+                    - generic [ref=e652]:
+                      - generic [ref=e654]: "0"
+                      - generic [ref=e656]: "2000"
+                      - generic [ref=e658]: "4000"
+                      - generic [ref=e660]: "6000"
+                      - generic [ref=e662]: "8000"
+            - generic [ref=e663]:
+              - generic [ref=e667]:
+                - paragraph [ref=e668]: Nuevos Contactos
+                - generic [ref=e669]:
+                  - paragraph [ref=e670]: "0"
+                  - paragraph [ref=e671]: / 10
+                - generic [ref=e674]: 0%
+              - generic [ref=e678]:
+                - paragraph [ref=e679]: Primeras Reuniones
+                - generic [ref=e680]:
+                  - paragraph [ref=e681]: "0"
+                  - paragraph [ref=e682]: / 2
+                - generic [ref=e685]: 0%
+              - generic [ref=e689]:
+                - paragraph [ref=e690]: Segundas Reuniones
+                - generic [ref=e691]:
+                  - paragraph [ref=e692]: "0"
+                  - paragraph [ref=e693]: / 45
+                - generic [ref=e696]: 0%
+              - generic [ref=e700]:
+                - paragraph [ref=e701]: Nuevos Clientes
+                - generic [ref=e702]:
+                  - paragraph [ref=e703]: "0"
+                  - paragraph [ref=e704]: / 6090
+                - generic [ref=e707]: 0%
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e713] [cursor=pointer]:
+    - img [ref=e714]
+  - alert [ref=e719]
+  - generic [ref=e720]: "0"
+```

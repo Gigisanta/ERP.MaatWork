@@ -7,7 +7,7 @@ import type { TimestampedEntity, UpdateRequest, CreateRequest, ComponentBase } f
 /**
  * Tipo de benchmark
  */
-export type BenchmarkType = 'individual' | 'composite';
+type BenchmarkType = 'individual' | 'composite';
 
 /**
  * Benchmark base - extiende TimestampedEntity
@@ -37,7 +37,7 @@ export interface BenchmarkComponent extends ComponentBase {
 /**
  * Tipo para componentes temporales durante la creación
  */
-export interface BenchmarkComponentForm extends ComponentBase {
+interface BenchmarkComponentForm extends ComponentBase {
   id: string;
   instrumentId?: string | null; // Puede ser null si aún no está resuelto
   weight: number; // Percentage (25 = 25%)
@@ -78,7 +78,7 @@ export interface BenchmarkWithComponents extends Benchmark {
 /**
  * Datos de formulario de benchmark
  */
-export interface BenchmarkFormData {
+interface BenchmarkFormData {
   name: string;
   type: BenchmarkType;
   description: string;

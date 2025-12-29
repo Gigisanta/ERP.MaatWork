@@ -9,7 +9,7 @@
 /**
  * Actionable error message with suggested action
  */
-export interface ActionableMessage {
+interface ActionableMessage {
   /** User-friendly error message */
   message: string;
   /** Suggested action for the user */

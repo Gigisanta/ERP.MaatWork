@@ -3,8 +3,8 @@
  */
 
 import type { Request, Response } from 'express';
-import { db } from '@cactus/db';
-import { instruments } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { instruments } from '@maatwork/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type {
   SymbolValidationResponse,
@@ -76,7 +76,7 @@ export async function validateSymbol(req: Request, res: Response) {
             symbol,
             errorType,
             pythonServiceUrl: PYTHON_SERVICE_URL,
-            hint: 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev',
+            hint: 'Analytics service may not be running. Start it with: pnpm -F @maatwork/analytics-service dev',
           },
           `Python analytics service unavailable (${errorType}), using database fallback for validation`
         );
@@ -157,3 +157,11 @@ export async function validateSymbol(req: Request, res: Response) {
     });
   }
 }
+
+
+
+
+
+
+
+

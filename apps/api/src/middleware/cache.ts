@@ -82,7 +82,7 @@ export function cache(options: CacheOptions) {
       const originalJson = res.json.bind(res);
       res.json = function (body: unknown) {
         // Cache the response
-        redis.setEx(cacheKey, options.ttl, JSON.stringify(body)).catch((err) => {
+        redis.setex(cacheKey, options.ttl, JSON.stringify(body)).catch((err) => {
           logger.error({ error: err, cacheKey }, 'Failed to cache response');
         });
 

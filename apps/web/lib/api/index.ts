@@ -22,244 +22,88 @@
  */
 
 // ApiClient and related
-export { ApiClient } from './client';
-export type { RequestOptions, RequestConfig } from './types';
+export { ApiClient, apiClient } from './client';
 
 // Re-export commonly used items from api-error
 export { ApiError } from '../api-error';
 export type { ApiResponse } from '@/types';
 
-// Singleton instance
-export { apiClient } from './client';
+// ==========================================================
+// Domain-specific API Functions
+// ==========================================================
 
-// ==========================================================
-// Calendar API
-// ==========================================================
-export * from './calendar';
-
-// ==========================================================
-// Analytics API
-// ==========================================================
-export { getDashboardKPIs, getPortfolioPerformance, comparePortfolios } from './analytics';
-
-// ==========================================================
-// AUM API
-// ==========================================================
 export {
-  getAumRows,
+  getTeamEvents,
+  type CalendarListEntry,
+} from './calendar';
+
+export {
   uploadAumFile,
   getAumFilePreview,
   getAumFileExportUrl,
   matchAumRow,
   getAumDuplicates,
   commitAumFile,
-  cleanupAumDuplicates,
-  resetAumSystem,
-  updateAumRowAdvisor,
   uploadAdvisorMapping,
-  getAdvisorAumSummary,
-  getAvailableAumPeriods,
-  type AdvisorSummaryItem,
-  type AdvisorSummaryTotals,
-  type AdvisorSummaryResponse,
-  type AvailablePeriod,
-  type AvailablePeriodsResponse,
 } from './aum';
 
-// ==========================================================
-// AUM Validation Schemas
-// ==========================================================
-export {
-  aumMatchStatusSchema,
-  aumTotalsSchema,
-  aumFileSchema,
-  aumContactInfoSchema,
-  aumUserInfoSchema,
-  aumRowSchema,
-  aumUploadResponseSchema,
-  aumRowsResponseSchema,
-  aumHistoryResponseSchema,
-  aumMatchRowResponseSchema,
-  type AumUploadResponse,
-  type AumRowsResponse,
-  type AumHistoryResponse,
-  type AumMatchRowResponse,
-} from './aum-validation';
-
-// ==========================================================
-// Automations API
-// ==========================================================
-export {
-  getAutomationConfigs,
-  getAutomationConfigById,
-  getAutomationConfigByName,
-  createAutomationConfig,
-  updateAutomationConfig,
-  deleteAutomationConfig,
-} from './automations';
-
-// ==========================================================
-// Benchmarks API
-// ==========================================================
 export {
   getBenchmarks,
-  getBenchmarkById,
   getBenchmarkComponentsBatch,
   createBenchmark,
   updateBenchmark,
   deleteBenchmark,
-  addBenchmarkComponent,
-  updateBenchmarkComponent,
-  deleteBenchmarkComponent,
 } from './benchmarks';
 
-// ==========================================================
-// Bloomberg API
-// ==========================================================
-export {
-  getAssetSnapshot,
-  getOHLCV,
-  getMacroSeries,
-  getYieldCurve,
-  getYieldSpreads,
-  getMacroSeriesList,
-  type AssetSnapshot,
-  type OHLCVPoint,
-  type MacroSeriesPoint,
-  type YieldPoint,
-  type YieldCurve,
-  type MacroSeries,
-  type MacroSeriesListItem,
-} from './bloomberg';
+export { createBrokerAccount, deleteBrokerAccount } from './broker-accounts';
 
-// ==========================================================
-// Broker Accounts API
-// ==========================================================
-export { getBrokerAccounts, createBrokerAccount, deleteBrokerAccount } from './broker-accounts';
-
-// ==========================================================
-// Capacitaciones API
-// ==========================================================
 export {
-  getCapacitaciones,
-  getCapacitacionById,
   createCapacitacion,
   updateCapacitacion,
   deleteCapacitacion,
   importCapacitacionesCSV,
 } from './capacitaciones';
 
-// ==========================================================
-// Career Plan API
-// ==========================================================
 export {
-  getCareerPlanLevels,
-  getCareerPlanLevel,
-  createCareerPlanLevel,
-  updateCareerPlanLevel,
-  deleteCareerPlanLevel,
-  getUserCareerProgress,
-} from './career-plan';
-
-// ==========================================================
-// Contacts API
-// ==========================================================
-export {
-  getContacts,
-  getContactById,
   createContact,
-  updateContact,
   deleteContact,
   updateContactField,
   assignPortfolioToContact,
   removePortfolioAssignment,
   updatePortfolioAssignmentStatus,
-  sendContactsToWebhook,
-  type WebhookMetadata,
-  type WebhookResult,
+  importContactsCsv,
 } from './contacts';
 
-// ==========================================================
-// Instruments API
-// ==========================================================
 export {
   searchInstruments,
-  validateSymbol,
   getInstruments,
-  getInstrumentById,
   createInstrument,
-  updateInstrument,
-  deleteInstrument,
 } from './instruments';
 
-// ==========================================================
-// Metrics API
-// ==========================================================
-export { getContactsMetrics, getMonthlyGoals, saveMonthlyGoals } from './metrics';
+export { createNote, deleteNote } from './notes';
 
-// ==========================================================
-// Notes API
-// ==========================================================
-export { getNotes, createNote, updateNote, deleteNote } from './notes';
+export { moveContactToStage } from './pipeline';
 
-// ==========================================================
-// Pipeline API
-// ==========================================================
-export {
-  getPipelineStages,
-  moveContactToStage,
-  getPipelineBoard,
-  getNextPipelineStage,
-} from './pipeline';
-
-// ==========================================================
-// Portfolios API
-// ==========================================================
 export {
   getPortfolios,
   getPortfolioById,
-  getPortfolioLines,
   getPortfolioLinesBatch,
   createPortfolio,
   updatePortfolio,
   deletePortfolio,
   addPortfolioLine,
-  updatePortfolioLine,
   deletePortfolioLine,
 } from './portfolios';
 
-// ==========================================================
-// Settings API
-// ==========================================================
 export {
-  listAdvisorAliases,
-  createAdvisorAlias,
-  updateAdvisorAlias,
-  deleteAdvisorAlias,
-  type AdvisorAliasDto,
-} from './settings';
-
-// ==========================================================
-// Tags API
-// ==========================================================
-export {
-  getTags,
   createTag,
   updateTag,
   deleteTag,
   updateContactTags,
-  getContactTag,
-  updateContactTag,
 } from './tags';
 
-// ==========================================================
-// Tasks API
-// ==========================================================
-export { getTasks, createTask, updateTask, deleteTask } from './tasks';
+export { createTask, deleteTask } from './tasks';
 
-// ==========================================================
-// Teams API
-// ==========================================================
 export {
   getTeams,
   getTeamById,
@@ -268,33 +112,18 @@ export {
   createTeam,
   updateTeam,
   deleteTeam,
-  addTeamMember,
   removeTeamMember,
   getTeamAdvisors,
-  getTeamMembers,
   createTeamInvitation,
-  getMembershipRequests,
   respondToMembershipRequest,
   getPendingInvitations,
   respondToInvitation,
   inviteTeamMember,
   getAllTeamMembers,
-  getTeamMetrics,
   getTeamMemberMetrics,
-  getTeamMembersActivity,
-  type CreateTeamRequest,
-  type AddTeamMemberRequest,
-  type TeamDetailResponse,
-  type TeamMembersActivityResponse,
 } from './teams';
 
-// ==========================================================
-// Users API
-// ==========================================================
 export {
-  getAdvisors,
-  getUsers,
-  getUserById,
   getCurrentUser,
   updateUserProfile,
   changePassword,
@@ -302,7 +131,6 @@ export {
   updateUserRole,
   updateUserStatus,
   deleteUser,
-  getPendingUsers,
   approveUser,
   rejectUser,
 } from './users';

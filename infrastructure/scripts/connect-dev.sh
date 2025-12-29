@@ -6,12 +6,12 @@
 set -e
 
 EC2_IP="56.125.148.180"
-SSH_KEY="$HOME/.ssh/cactus-dev"
+SSH_KEY="$HOME/.ssh/maatwork-dev"
 SSH_USER="ec2-user"
 
 echo ""
 echo "============================================================"
-echo "           CACTUS - Conectando a EC2 Development            "
+echo "           MAATWORK - Conectando a EC2 Development            "
 echo "============================================================"
 echo "  IP:   $EC2_IP"
 echo "  User: $SSH_USER"

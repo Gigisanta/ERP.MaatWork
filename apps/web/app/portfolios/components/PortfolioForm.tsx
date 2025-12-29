@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Drawer, Stack, Heading, Input, Select, Button } from '@cactus/ui';
+import { Drawer, Stack, Heading, Input, Select, Button } from '@maatwork/ui';
 import { PortfolioComposition } from './PortfolioComposition';
 import type { Portfolio, PortfolioLine, RiskLevel, InstrumentSearchResult } from '@/types';
 

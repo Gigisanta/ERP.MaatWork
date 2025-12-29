@@ -2,12 +2,12 @@
  * Visual regression tests para página de admin AUM
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL || 'giolivosantarelli@gmail.com';
 const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'admin123';
 
-async function login(page: any) {
+async function login(page: Page) {
   await page.goto('/login');
   const emailInput = page.getByLabel(/email|usuario|correo/i).first();
   await emailInput.fill(adminEmail);

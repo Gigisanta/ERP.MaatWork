@@ -13,7 +13,7 @@ import {
   Badge,
   Grid,
   EmptyState,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Portfolio } from '@/types';
 
 interface PortfoliosGridProps {

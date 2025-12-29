@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Drawer, Sidebar } from '@cactus/ui';
+import { Drawer, Sidebar } from '@maatwork/ui';
 import NavigationNew from './NavigationNew';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

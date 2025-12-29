@@ -1,0 +1,377 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - link "MaatWork" [ref=e8] [cursor=pointer]:
+          - /url: /home
+          - img [ref=e10]
+          - generic [ref=e14]: MaatWork
+        - 'button "Plan de carrera: Nivel 1 Junior, 50% completado" [ref=e16] [cursor=pointer]':
+          - generic [ref=e17]: Nivel 1 Junior
+          - generic [ref=e21]: 37.5% • 50%
+          - generic [ref=e22]: / 30.000 USD
+      - generic [ref=e23]:
+        - button "Notificaciones" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e30] [cursor=pointer]':
+          - generic [ref=e31]: G
+  - complementary "Navegación principal" [ref=e32]:
+    - generic [ref=e33]:
+      - navigation "Navegación principal" [ref=e34]:
+        - generic [ref=e35]:
+          - paragraph [ref=e36]: Principal
+          - link "👤 Contactos" [ref=e38] [cursor=pointer]:
+            - /url: /contacts
+            - generic [ref=e39]: 👤
+            - generic [ref=e40]: Contactos
+        - generic [ref=e41]:
+          - paragraph [ref=e42]: Inversiones
+          - generic [ref=e43]:
+            - link "📊 Carteras" [ref=e44] [cursor=pointer]:
+              - /url: /portfolios
+              - generic [ref=e45]: 📊
+              - generic [ref=e46]: Carteras
+            - link "📊 Benchmarks" [ref=e47] [cursor=pointer]:
+              - /url: /benchmarks
+              - generic [ref=e48]: 📊
+              - generic [ref=e49]: Benchmarks
+        - generic [ref=e50]:
+          - paragraph [ref=e51]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e53] [cursor=pointer]:
+            - /url: /teams
+            - generic [ref=e54]: 👨‍👩‍👧‍👦
+            - generic [ref=e55]: Equipos
+        - generic [ref=e56]:
+          - paragraph [ref=e57]: Métricas
+          - generic [ref=e58]:
+            - link "📈 Métricas de Contactos" [ref=e59] [cursor=pointer]:
+              - /url: /contacts/metrics
+              - generic [ref=e60]: 📈
+              - generic [ref=e61]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e62] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e63]: 📈
+              - generic [ref=e64]: Analytics
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: Automatización
+          - generic [ref=e67]:
+            - link "☰ Pipeline" [ref=e68] [cursor=pointer]:
+              - /url: /pipeline
+              - generic [ref=e69]: ☰
+              - generic [ref=e70]: Pipeline
+            - link "⚙️ Automations" [ref=e71] [cursor=pointer]:
+              - /url: /automations
+              - generic [ref=e72]: ⚙️
+              - generic [ref=e73]: Automations
+            - link "📚 Plan de Carrera" [ref=e74] [cursor=pointer]:
+              - /url: /career-plan
+              - generic [ref=e75]: 📚
+              - generic [ref=e76]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e77] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=e78]: ℹ️
+              - generic [ref=e79]: Notificaciones
+        - generic [ref=e80]:
+          - paragraph [ref=e81]: Herramientas
+          - generic [ref=e82]:
+            - link "🎓 Capacitaciones" [ref=e83] [cursor=pointer]:
+              - /url: /capacitaciones
+              - generic [ref=e84]: 🎓
+              - generic [ref=e85]: Capacitaciones
+            - link "📝 Recursos" [ref=e86] [cursor=pointer]:
+              - /url: /resources
+              - generic [ref=e87]: 📝
+              - generic [ref=e88]: Recursos
+            - link "📈 Finviz" [ref=e89] [cursor=pointer]:
+              - /url: https://finviz.com
+              - generic [ref=e90]: 📈
+              - generic [ref=e91]: Finviz
+            - link "💼 Productores Balanz" [ref=e92] [cursor=pointer]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e93]: 💼
+              - generic [ref=e94]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e95] [cursor=pointer]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e96]: 🛡️
+              - generic [ref=e97]: Zurich Point
+        - generic [ref=e98]:
+          - paragraph [ref=e99]: Administración
+          - generic [ref=e100]:
+            - link "⚙️ Panel Principal" [ref=e101] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e102]: ⚙️
+              - generic [ref=e103]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e104] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e105]: 👥
+              - generic [ref=e106]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e107] [cursor=pointer]:
+              - /url: /admin/aum
+              - generic [ref=e108]: 📈
+              - generic [ref=e109]: AUM y Brokers
+            - link "📈 Performance" [ref=e110] [cursor=pointer]:
+              - /url: /admin/performance
+              - generic [ref=e111]: 📈
+              - generic [ref=e112]: Performance
+            - link "⚙️ Configuración AUM" [ref=e113] [cursor=pointer]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e114]: ⚙️
+              - generic [ref=e115]: Configuración AUM
+        - generic [ref=e116]:
+          - paragraph [ref=e117]: Perfil
+          - link "👤 Mi Perfil" [ref=e119] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e120]: 👤
+            - generic [ref=e121]: Mi Perfil
+      - button "Colapsar menú" [ref=e123] [cursor=pointer]:
+        - generic [ref=e124]: ◀
+        - generic [ref=e125]: Colapsar
+  - main [ref=e126]:
+    - generic [ref=e131]:
+      - generic [ref=e132]:
+        - generic [ref=e133]:
+          - heading "Plan de Carrera Comercial" [level=2] [ref=e134]
+          - paragraph [ref=e135]: Configura los niveles del plan de carrera por objetivos
+        - button "➕ Agregar Nivel" [ref=e136] [cursor=pointer]:
+          - generic [ref=e137]: ➕
+          - text: Agregar Nivel
+      - generic [ref=e138]:
+        - heading "Niveles del Plan" [level=3] [ref=e140]
+        - table [ref=e144]:
+          - rowgroup [ref=e145]:
+            - row "N° ▲ ▼ Categoría ▲ ▼ Nivel ▲ ▼ Índice ▲ ▼ Porcentaje ▲ ▼ Objetivo Anual (USD) ▲ ▼ Estado Acciones" [ref=e146]:
+              - columnheader "N° ▲ ▼" [ref=e147]:
+                - button "N° ▲ ▼" [ref=e148] [cursor=pointer]:
+                  - generic [ref=e149]: N°
+                  - generic [ref=e150]:
+                    - generic [ref=e151]: ▲
+                    - generic [ref=e152]: ▼
+              - columnheader "Categoría ▲ ▼" [ref=e153]:
+                - button "Categoría ▲ ▼" [ref=e154] [cursor=pointer]:
+                  - generic [ref=e155]: Categoría
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: ▲
+                    - generic [ref=e158]: ▼
+              - columnheader "Nivel ▲ ▼" [ref=e159]:
+                - button "Nivel ▲ ▼" [ref=e160] [cursor=pointer]:
+                  - generic [ref=e161]: Nivel
+                  - generic [ref=e162]:
+                    - generic [ref=e163]: ▲
+                    - generic [ref=e164]: ▼
+              - columnheader "Índice ▲ ▼" [ref=e165]:
+                - button "Índice ▲ ▼" [ref=e166] [cursor=pointer]:
+                  - generic [ref=e167]: Índice
+                  - generic [ref=e168]:
+                    - generic [ref=e169]: ▲
+                    - generic [ref=e170]: ▼
+              - columnheader "Porcentaje ▲ ▼" [ref=e171]:
+                - button "Porcentaje ▲ ▼" [ref=e172] [cursor=pointer]:
+                  - generic [ref=e173]: Porcentaje
+                  - generic [ref=e174]:
+                    - generic [ref=e175]: ▲
+                    - generic [ref=e176]: ▼
+              - columnheader "Objetivo Anual (USD) ▲ ▼" [ref=e177]:
+                - button "Objetivo Anual (USD) ▲ ▼" [ref=e178] [cursor=pointer]:
+                  - generic [ref=e179]: Objetivo Anual (USD)
+                  - generic [ref=e180]:
+                    - generic [ref=e181]: ▲
+                    - generic [ref=e182]: ▼
+              - columnheader "Estado" [ref=e183]:
+                - button "Estado" [disabled] [ref=e184]:
+                  - generic [ref=e185]: Estado
+              - columnheader "Acciones" [ref=e186]:
+                - button "Acciones" [disabled] [ref=e187]:
+                  - generic [ref=e188]: Acciones
+          - rowgroup [ref=e189]:
+            - row "1 AGENTE F. JUNIOR Nivel 1 Junior 1.5 37.5% 30.000 USD Activo ✏️ 🗑️" [ref=e190]:
+              - cell "1" [ref=e191]
+              - cell "AGENTE F. JUNIOR" [ref=e192]
+              - cell "Nivel 1 Junior" [ref=e193]
+              - cell "1.5" [ref=e194]:
+                - paragraph [ref=e195]: "1.5"
+              - cell "37.5%" [ref=e196]:
+                - paragraph [ref=e197]: 37.5%
+              - cell "30.000 USD" [ref=e198]:
+                - paragraph [ref=e199]: 30.000 USD
+              - cell "Activo" [ref=e200]:
+                - generic [ref=e201]: Activo
+              - cell "✏️ 🗑️" [ref=e202]:
+                - generic [ref=e203]:
+                  - button "✏️" [ref=e204] [cursor=pointer]:
+                    - generic [ref=e205]: ✏️
+                  - button "🗑️" [ref=e206] [cursor=pointer]:
+                    - generic [ref=e207]: 🗑️
+            - row "2 AGENTE F. JUNIOR Nivel 2 Junior 1.7 42.5% 37.000 USD Activo ✏️ 🗑️" [ref=e208]:
+              - cell "2" [ref=e209]
+              - cell "AGENTE F. JUNIOR" [ref=e210]
+              - cell "Nivel 2 Junior" [ref=e211]
+              - cell "1.7" [ref=e212]:
+                - paragraph [ref=e213]: "1.7"
+              - cell "42.5%" [ref=e214]:
+                - paragraph [ref=e215]: 42.5%
+              - cell "37.000 USD" [ref=e216]:
+                - paragraph [ref=e217]: 37.000 USD
+              - cell "Activo" [ref=e218]:
+                - generic [ref=e219]: Activo
+              - cell "✏️ 🗑️" [ref=e220]:
+                - generic [ref=e221]:
+                  - button "✏️" [ref=e222] [cursor=pointer]:
+                    - generic [ref=e223]: ✏️
+                  - button "🗑️" [ref=e224] [cursor=pointer]:
+                    - generic [ref=e225]: 🗑️
+            - row "3 AGENTE F. JUNIOR Nivel 3 Junior 1.85 46.25% 50.000 USD Activo ✏️ 🗑️" [ref=e226]:
+              - cell "3" [ref=e227]
+              - cell "AGENTE F. JUNIOR" [ref=e228]
+              - cell "Nivel 3 Junior" [ref=e229]
+              - cell "1.85" [ref=e230]:
+                - paragraph [ref=e231]: "1.85"
+              - cell "46.25%" [ref=e232]:
+                - paragraph [ref=e233]: 46.25%
+              - cell "50.000 USD" [ref=e234]:
+                - paragraph [ref=e235]: 50.000 USD
+              - cell "Activo" [ref=e236]:
+                - generic [ref=e237]: Activo
+              - cell "✏️ 🗑️" [ref=e238]:
+                - generic [ref=e239]:
+                  - button "✏️" [ref=e240] [cursor=pointer]:
+                    - generic [ref=e241]: ✏️
+                  - button "🗑️" [ref=e242] [cursor=pointer]:
+                    - generic [ref=e243]: 🗑️
+            - row "4 AGENTE F. JUNIOR Nivel 4 Junior 1.95 48.75% 70.000 USD Activo ✏️ 🗑️" [ref=e244]:
+              - cell "4" [ref=e245]
+              - cell "AGENTE F. JUNIOR" [ref=e246]
+              - cell "Nivel 4 Junior" [ref=e247]
+              - cell "1.95" [ref=e248]:
+                - paragraph [ref=e249]: "1.95"
+              - cell "48.75%" [ref=e250]:
+                - paragraph [ref=e251]: 48.75%
+              - cell "70.000 USD" [ref=e252]:
+                - paragraph [ref=e253]: 70.000 USD
+              - cell "Activo" [ref=e254]:
+                - generic [ref=e255]: Activo
+              - cell "✏️ 🗑️" [ref=e256]:
+                - generic [ref=e257]:
+                  - button "✏️" [ref=e258] [cursor=pointer]:
+                    - generic [ref=e259]: ✏️
+                  - button "🗑️" [ref=e260] [cursor=pointer]:
+                    - generic [ref=e261]: 🗑️
+            - row "5 AGENTE F. JUNIOR Nivel 5 Junior 2.0 50% 84.000 USD Activo ✏️ 🗑️" [ref=e262]:
+              - cell "5" [ref=e263]
+              - cell "AGENTE F. JUNIOR" [ref=e264]
+              - cell "Nivel 5 Junior" [ref=e265]
+              - cell "2.0" [ref=e266]:
+                - paragraph [ref=e267]: "2.0"
+              - cell "50%" [ref=e268]:
+                - paragraph [ref=e269]: 50%
+              - cell "84.000 USD" [ref=e270]:
+                - paragraph [ref=e271]: 84.000 USD
+              - cell "Activo" [ref=e272]:
+                - generic [ref=e273]: Activo
+              - cell "✏️ 🗑️" [ref=e274]:
+                - generic [ref=e275]:
+                  - button "✏️" [ref=e276] [cursor=pointer]:
+                    - generic [ref=e277]: ✏️
+                  - button "🗑️" [ref=e278] [cursor=pointer]:
+                    - generic [ref=e279]: 🗑️
+            - row "6 AGENTE F. SEMI-SENIOR Nivel 6 Semi-Senior 2.05 51.25% 95.000 USD Activo ✏️ 🗑️" [ref=e280]:
+              - cell "6" [ref=e281]
+              - cell "AGENTE F. SEMI-SENIOR" [ref=e282]
+              - cell "Nivel 6 Semi-Senior" [ref=e283]
+              - cell "2.05" [ref=e284]:
+                - paragraph [ref=e285]: "2.05"
+              - cell "51.25%" [ref=e286]:
+                - paragraph [ref=e287]: 51.25%
+              - cell "95.000 USD" [ref=e288]:
+                - paragraph [ref=e289]: 95.000 USD
+              - cell "Activo" [ref=e290]:
+                - generic [ref=e291]: Activo
+              - cell "✏️ 🗑️" [ref=e292]:
+                - generic [ref=e293]:
+                  - button "✏️" [ref=e294] [cursor=pointer]:
+                    - generic [ref=e295]: ✏️
+                  - button "🗑️" [ref=e296] [cursor=pointer]:
+                    - generic [ref=e297]: 🗑️
+            - row "7 AGENTE F. SEMI-SENIOR Nivel 7 Semi-Senior 2.09 52.25% 105.000 USD Activo ✏️ 🗑️" [ref=e298]:
+              - cell "7" [ref=e299]
+              - cell "AGENTE F. SEMI-SENIOR" [ref=e300]
+              - cell "Nivel 7 Semi-Senior" [ref=e301]
+              - cell "2.09" [ref=e302]:
+                - paragraph [ref=e303]: "2.09"
+              - cell "52.25%" [ref=e304]:
+                - paragraph [ref=e305]: 52.25%
+              - cell "105.000 USD" [ref=e306]:
+                - paragraph [ref=e307]: 105.000 USD
+              - cell "Activo" [ref=e308]:
+                - generic [ref=e309]: Activo
+              - cell "✏️ 🗑️" [ref=e310]:
+                - generic [ref=e311]:
+                  - button "✏️" [ref=e312] [cursor=pointer]:
+                    - generic [ref=e313]: ✏️
+                  - button "🗑️" [ref=e314] [cursor=pointer]:
+                    - generic [ref=e315]: 🗑️
+            - row "8 AGENTE F. SEMI-SENIOR Nivel 8 Semi-Senior 2.2 55% 115.000 USD Activo ✏️ 🗑️" [ref=e316]:
+              - cell "8" [ref=e317]
+              - cell "AGENTE F. SEMI-SENIOR" [ref=e318]
+              - cell "Nivel 8 Semi-Senior" [ref=e319]
+              - cell "2.2" [ref=e320]:
+                - paragraph [ref=e321]: "2.2"
+              - cell "55%" [ref=e322]:
+                - paragraph [ref=e323]: 55%
+              - cell "115.000 USD" [ref=e324]:
+                - paragraph [ref=e325]: 115.000 USD
+              - cell "Activo" [ref=e326]:
+                - generic [ref=e327]: Activo
+              - cell "✏️ 🗑️" [ref=e328]:
+                - generic [ref=e329]:
+                  - button "✏️" [ref=e330] [cursor=pointer]:
+                    - generic [ref=e331]: ✏️
+                  - button "🗑️" [ref=e332] [cursor=pointer]:
+                    - generic [ref=e333]: 🗑️
+            - row "9 AGENTE F. SENIOR Nivel 9 Senior 2.3 57.5% 125.000 USD Activo ✏️ 🗑️" [ref=e334]:
+              - cell "9" [ref=e335]
+              - cell "AGENTE F. SENIOR" [ref=e336]
+              - cell "Nivel 9 Senior" [ref=e337]
+              - cell "2.3" [ref=e338]:
+                - paragraph [ref=e339]: "2.3"
+              - cell "57.5%" [ref=e340]:
+                - paragraph [ref=e341]: 57.5%
+              - cell "125.000 USD" [ref=e342]:
+                - paragraph [ref=e343]: 125.000 USD
+              - cell "Activo" [ref=e344]:
+                - generic [ref=e345]: Activo
+              - cell "✏️ 🗑️" [ref=e346]:
+                - generic [ref=e347]:
+                  - button "✏️" [ref=e348] [cursor=pointer]:
+                    - generic [ref=e349]: ✏️
+                  - button "🗑️" [ref=e350] [cursor=pointer]:
+                    - generic [ref=e351]: 🗑️
+            - row "10 AGENTE F. SENIOR Nivel 10 Senior 2.4 60% 140.000 USD Activo ✏️ 🗑️" [ref=e352]:
+              - cell "10" [ref=e353]
+              - cell "AGENTE F. SENIOR" [ref=e354]
+              - cell "Nivel 10 Senior" [ref=e355]
+              - cell "2.4" [ref=e356]:
+                - paragraph [ref=e357]: "2.4"
+              - cell "60%" [ref=e358]:
+                - paragraph [ref=e359]: 60%
+              - cell "140.000 USD" [ref=e360]:
+                - paragraph [ref=e361]: 140.000 USD
+              - cell "Activo" [ref=e362]:
+                - generic [ref=e363]: Activo
+              - cell "✏️ 🗑️" [ref=e364]:
+                - generic [ref=e365]:
+                  - button "✏️" [ref=e366] [cursor=pointer]:
+                    - generic [ref=e367]: ✏️
+                  - button "🗑️" [ref=e368] [cursor=pointer]:
+                    - generic [ref=e369]: 🗑️
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e375] [cursor=pointer]:
+    - img [ref=e376]
+  - alert [ref=e380]
+  - button "🐛 1" [ref=e381] [cursor=pointer]:
+    - text: 🐛
+    - generic [ref=e382]: "1"
+```

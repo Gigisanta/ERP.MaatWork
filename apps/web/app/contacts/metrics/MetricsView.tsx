@@ -24,7 +24,7 @@ import {
   ModalContent,
   ModalFooter,
   ModalTitle,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 // AI_DECISION: Lazy load recharts components to reduce initial bundle size
 // Justificación: recharts is a heavy library (~50-80KB), loading it async reduces initial bundle significantly
 // Impacto: Faster initial page load, smaller initial JavaScript bundle for metrics page

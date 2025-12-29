@@ -11,11 +11,11 @@
 import { Registry, Counter, Histogram, Gauge } from 'prom-client';
 
 // Create a registry for metrics
-export const register = new Registry();
+const register = new Registry();
 
 // Default labels for all metrics
 register.setDefaultLabels({
-  app: 'cactus-api',
+  app: 'maatwork-api',
   environment: process.env.NODE_ENV || 'development',
 });
 
@@ -75,7 +75,7 @@ export const httpErrorsTotal = new Counter({
 });
 
 // System Metrics
-export const memoryUsage = new Gauge({
+const memoryUsage = new Gauge({
   name: 'memory_usage_bytes',
   help: 'Memory usage in bytes',
   labelNames: ['type'],
@@ -85,46 +85,46 @@ export const memoryUsage = new Gauge({
 // AI_DECISION: Add detailed memory metrics for better monitoring
 // Justificación: More granular memory metrics help identify memory issues and leaks
 // Impacto: Better visibility into memory usage patterns
-export const nodejsHeapUsedBytes = new Gauge({
+const nodejsHeapUsedBytes = new Gauge({
   name: 'nodejs_heap_used_bytes',
   help: 'Node.js heap used memory in bytes',
   registers: [register],
 });
 
-export const nodejsHeapTotalBytes = new Gauge({
+const nodejsHeapTotalBytes = new Gauge({
   name: 'nodejs_heap_total_bytes',
   help: 'Node.js heap total memory in bytes',
   registers: [register],
 });
 
-export const nodejsExternalMemoryBytes = new Gauge({
+const nodejsExternalMemoryBytes = new Gauge({
   name: 'nodejs_external_memory_bytes',
   help: 'Node.js external memory in bytes',
   registers: [register],
 });
 
-export const nodejsRssBytes = new Gauge({
+const nodejsRssBytes = new Gauge({
   name: 'nodejs_rss_bytes',
   help: 'Node.js resident set size (RSS) in bytes',
   registers: [register],
 });
 
 // Cache size metrics (estimated)
-export const cacheSizeBytes = new Gauge({
+const cacheSizeBytes = new Gauge({
   name: 'cache_size_bytes',
   help: 'Estimated cache size in bytes',
   labelNames: ['cache_type'],
   registers: [register],
 });
 
-export const cacheKeyCount = new Gauge({
+const cacheKeyCount = new Gauge({
   name: 'cache_key_count',
   help: 'Number of keys in cache',
   labelNames: ['cache_type'],
   registers: [register],
 });
 
-export const activeConnections = new Gauge({
+const activeConnections = new Gauge({
   name: 'active_connections',
   help: 'Number of active connections',
   registers: [register],
@@ -221,6 +221,6 @@ export function updateCacheMetrics(
 /**
  * Reset all metrics (useful for testing)
  */
-export function resetMetrics(): void {
+function resetMetrics(): void {
   register.resetMetrics();
 }

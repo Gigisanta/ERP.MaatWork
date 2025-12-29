@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { usePageTitle } from '../../components/PageTitleContext';
 import dynamic from 'next/dynamic';
 import { ArrowLeft } from 'lucide-react';
@@ -29,7 +29,7 @@ import {
   TabsContent,
   Spinner,
   Alert,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import AssetSnapshot from '../../components/bloomberg/AssetSnapshot';
 // AI_DECISION: Lazy load OHLCVChart to reduce initial bundle size
 // Justificación: OHLCVChart includes heavy chart rendering logic, loading it async reduces initial bundle by 40-60KB

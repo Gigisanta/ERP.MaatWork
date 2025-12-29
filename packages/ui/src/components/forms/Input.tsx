@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, forwardRef } from 'react';
-import Icon, { type IconName } from '../Icon.js';
+import React, { useState, forwardRef, useId } from 'react';
+import { Icon, type IconName } from '../Icon.js';
 import { cn } from '../../utils/cn.js';
 
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -28,7 +28,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
  * <Input error="This field is required" />
  * ```
  */
-const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   {
     label,
     error,
@@ -43,6 +43,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   }: InputProps,
   ref: React.ForwardedRef<HTMLInputElement>
 ) {
+  const generatedId = useId();
+  const id = props.id || generatedId;
   const [showPassword, setShowPassword] = useState(false);
 
   // Normalize error: convert undefined to null for exactOptionalPropertyTypes compatibility
@@ -68,7 +70,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <div className="w-full group">
       {label && (
         <label
-          htmlFor={props.id}
+          htmlFor={id}
           className="block text-sm font-medium text-text mb-1.5 font-body transition-colors group-focus-within:text-primary"
         >
           {label}
@@ -82,6 +84,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         )}
         <input
           ref={ref}
+          id={id}
           type={inputType}
           className={cn(
             // Base styles with enhanced transitions
@@ -137,5 +140,3 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     </div>
   );
 });
-
-export default Input;

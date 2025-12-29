@@ -1,7 +1,7 @@
 # Memoria: Errores Comunes y Soluciones
 
 ## Propósito
-Guía rápida de errores TypeScript y de build comunes en el proyecto CACTUS CRM con soluciones específicas y comandos para resolverlos.
+Guía rápida de errores TypeScript y de build comunes en el proyecto MAATWORK con soluciones específicas y comandos para resolverlos.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -44,21 +44,21 @@ const description = portfolio.description ?? null;
 
 ### Error: "Property 'X' does not exist on type 'Y'"
 
-**Causa común:** Tipos no actualizados después de cambios en paquetes compartidos (`@cactus/ui`, `@cactus/db`).
+**Causa común:** Tipos no actualizados después de cambios en paquetes compartidos (`@maatwork/ui`, `@maatwork/db`).
 
 **Solución paso a paso:**
 
 ```bash
 # 1. Build del paquete modificado
-pnpm -F @cactus/ui build
-pnpm -F @cactus/db build
+pnpm -F @maatwork/ui build
+pnpm -F @maatwork/db build
 
 # 2. Luego typecheck
 pnpm typecheck
 
 # 3. Si persiste, limpiar y rebuild
-pnpm -F @cactus/ui clean
-pnpm -F @cactus/ui build
+pnpm -F @maatwork/ui clean
+pnpm -F @maatwork/ui build
 ```
 
 **Prevención:** Siempre construir paquetes compartidos antes de typecheck cuando se modifican tipos exportados.
@@ -153,7 +153,7 @@ import type { BenchmarkComponentForm } from '@/types/benchmark';
 
 ## Errores de Build/Typecheck
 
-### Error: "Module not found" o "Cannot find module '@cactus/ui'"
+### Error: "Module not found" o "Cannot find module '@maatwork/ui'"
 
 **Causa:** Paquete no construido o dependencias no instaladas.
 
@@ -164,8 +164,8 @@ import type { BenchmarkComponentForm } from '@/types/benchmark';
 pnpm install --frozen-lockfile
 
 # 2. Build paquetes compartidos
-pnpm -F @cactus/ui build
-pnpm -F @cactus/db build
+pnpm -F @maatwork/ui build
+pnpm -F @maatwork/db build
 
 # 3. Verificar build
 pnpm build
@@ -183,10 +183,10 @@ pnpm build
 # Orden correcto:
 # 1. Modificar código en paquete
 # 2. Build del paquete
-pnpm -F @cactus/ui build
+pnpm -F @maatwork/ui build
 
 # 3. Luego typecheck en apps que lo usan
-pnpm -F @cactus/web typecheck
+pnpm -F @maatwork/web typecheck
 ```
 
 **Referencia:** `.cursor/rules/project.mdc` - Sección "Construir Paquetes Compartidos"
@@ -233,10 +233,10 @@ req.log.info({ userId: user.id }, 'User action');
 
 ```bash
 # Verificar versión de TypeScript
-pnpm -F @cactus/web exec tsc --version
+pnpm -F @maatwork/web exec tsc --version
 
 # Verificar tipos de un archivo específico
-pnpm -F @cactus/web exec tsc --noEmit apps/web/app/path/to/file.tsx
+pnpm -F @maatwork/web exec tsc --noEmit apps/web/app/path/to/file.tsx
 
 # Limpiar y rebuild completo
 pnpm clean

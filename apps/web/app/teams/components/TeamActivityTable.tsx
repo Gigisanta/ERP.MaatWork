@@ -25,8 +25,8 @@ import {
   Icon,
   DataTable,
   type Column,
-} from '@cactus/ui';
-import type { TeamMemberActivity } from '@/types/team';
+} from '@maatwork/ui';
+import type { TeamMemberActivity } from '@/types';
 
 interface TeamActivityTableProps {
   teamId: string;

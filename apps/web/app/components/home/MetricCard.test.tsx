@@ -9,20 +9,22 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-// Mock @cactus/ui antes de importar el componente
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className, style }: any) => (
+import React from 'react';
+
+// Mock @maatwork/ui antes de importar el componente
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
     <div data-testid="card" className={className} style={style}>
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
-  Text: ({ children, size, className, style }: any) => (
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  Text: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
     <span className={className} style={style}>
       {children}
     </span>
   ),
-  Stack: ({ children, direction, gap, align, justify }: any) => <div>{children}</div>,
+  Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 import { MetricCard } from './MetricCard';
@@ -33,7 +35,7 @@ describe('MetricCard', () => {
 
     expect(screen.getByText('Test Metric')).toBeInTheDocument();
     expect(screen.getByText('75')).toBeInTheDocument();
-    expect(screen.getByText('Objetivo: 100')).toBeInTheDocument();
+    expect(screen.getByText('/ 100')).toBeInTheDocument();
   });
 
   it('debería calcular porcentaje correctamente', () => {
@@ -51,7 +53,7 @@ describe('MetricCard', () => {
   it('debería manejar goal igual a 0', () => {
     render(<MetricCard title="Test" actual={50} goal={0} color="#3b82f6" />);
 
-    expect(screen.getByText('Objetivo: 0')).toBeInTheDocument();
+    expect(screen.queryByText('/ 0')).not.toBeInTheDocument();
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 

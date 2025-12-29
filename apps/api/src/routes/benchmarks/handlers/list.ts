@@ -7,8 +7,8 @@
  */
 
 import type { Request } from 'express';
-import { db } from '@cactus/db';
-import { benchmarkDefinitions, benchmarkComponents } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { benchmarkDefinitions, benchmarkComponents } from '@maatwork/db/schema';
 import { sql } from 'drizzle-orm';
 import { UserRole } from '@/auth/types';
 import { benchmarksCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';

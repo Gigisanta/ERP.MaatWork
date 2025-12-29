@@ -15,7 +15,7 @@ import {
 // ==========================================================
 
 export const createNoteSchema = z.object({
-  contactId: z.string().uuid(),
+  contactId: uuidSchema,
   content: z.string().min(1),
   noteType: z.enum(['general', 'summary', 'action_items']).default('general'),
   source: z.enum(['manual', 'ai', 'import']).default('manual'),
@@ -48,5 +48,9 @@ export { idParamSchema };
 // Type Exports
 // ==========================================================
 
-export type CreateNoteInput = z.infer<typeof createNoteSchema>;
-export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+type CreateNoteInput = z.infer<typeof createNoteSchema>;
+type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+
+
+
+

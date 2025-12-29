@@ -6,11 +6,11 @@
  * Impacto: Reemplaza 4 implementaciones repetitivas con una función optimizada
  */
 
-import { db, contacts, pipelineStages, pipelineStageHistory } from '@cactus/db';
+import { db, contacts, pipelineStages, pipelineStageHistory } from '@maatwork/db';
 import { eq, and, isNull, sql, gte, lte, inArray, type InferSelectModel } from 'drizzle-orm';
 import type { AccessFilter, MonthRange } from './types';
 
-export type PipelineStage = InferSelectModel<typeof pipelineStages>;
+type PipelineStage = InferSelectModel<typeof pipelineStages>;
 
 /**
  * Get pipeline stages by names in a single batch query
@@ -162,3 +162,11 @@ export function createMonthRange(month: number, year: number): MonthRange {
     monthEnd: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)),
   };
 }
+
+
+
+
+
+
+
+

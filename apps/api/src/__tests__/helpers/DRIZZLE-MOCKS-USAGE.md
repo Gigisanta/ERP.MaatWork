@@ -15,7 +15,7 @@ El helper `createDrizzleMock()` proporciona una forma robusta y reutilizable de 
 
 ```typescript
 import { createDrizzleMock } from '@/__tests__/helpers/drizzle-mocks';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 
 const mockDb = vi.mocked(db);
 

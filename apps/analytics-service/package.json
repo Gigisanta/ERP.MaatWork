@@ -1,5 +1,5 @@
 {
-  "name": "@cactus/analytics-service",
+  "name": "@maatwork/analytics-service",
   "version": "1.0.0",
   "private": true,
   "description": "Python FastAPI microservice for financial calculations and market data",
@@ -7,7 +7,10 @@
     "dev": "node ../../scripts/run-python-service.js",
     "install": "node ../../scripts/install-python-deps.js",
     "check": "node ../../scripts/check-python-deps.js",
-    "start": "python main.py"
+    "start": "python main.py",
+    "test": "python -m pytest tests/",
+    "test:unit": "python -m pytest tests/",
+    "test:coverage": "python -m pytest tests/ --cov=. --cov-report=xml"
   },
   "engines": {
     "python": ">=3.10.0"

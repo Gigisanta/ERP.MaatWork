@@ -2,6 +2,37 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import FiltersDropdown from './FiltersDropdown';
 
+interface MockComponentProps {
+  children?: React.ReactNode;
+  [key: string]: unknown;
+}
+
+// Mock Radix UI DropdownMenu to avoid Portal issues in tests
+vi.mock('@radix-ui/react-dropdown-menu', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@radix-ui/react-dropdown-menu')>();
+  return {
+    ...actual,
+    Root: ({ children, open }: { children: React.ReactNode; open?: boolean }) => <div data-testid="dropdown-root" data-state={open ? 'open' : 'closed'}>{children}</div>,
+    Trigger: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-trigger">{children}</div>,
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-content">{children}</div>,
+    RadioGroup: ({ children, onValueChange }: { children: React.ReactNode; onValueChange: (v: string) => void }) => (
+      <div data-testid="radio-group" onClick={(e: React.MouseEvent) => {
+        const target = (e.target as HTMLElement).closest('[data-value]');
+        if (target) onValueChange(target.getAttribute('data-value') || '');
+      }}>
+        {children}
+      </div>
+    ),
+    RadioItem: ({ children, value }: { children: React.ReactNode; value: string }) => <div data-value={value}>{children}</div>,
+    CheckboxItem: ({ children, checked, onCheckedChange }: { children: React.ReactNode; checked: boolean; onCheckedChange: (c: boolean) => void }) => (
+      <div onClick={() => onCheckedChange(!checked)}>{children}</div>
+    ),
+    ItemIndicator: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Item: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
+  };
+});
+
 describe('FiltersDropdown', () => {
   const mockPipelineStages = [
     { id: 'stage-1', name: 'Prospecto', color: '#FF0000' },
@@ -30,8 +61,8 @@ describe('FiltersDropdown', () => {
   it('debería renderizar trigger con texto correcto cuando no hay filtros', () => {
     render(<FiltersDropdown {...defaultProps} />);
 
-    expect(screen.getByText(/Todas las etapas/i)).toBeInTheDocument();
-    expect(screen.getByText(/Etiquetas/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Todas las etapas/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Etiquetas/i).length).toBeGreaterThan(0);
   });
 
   it('debería mostrar badge cuando hay filtros activos', () => {
@@ -45,16 +76,16 @@ describe('FiltersDropdown', () => {
   it('debería mostrar nombre de etapa cuando está seleccionada', () => {
     render(<FiltersDropdown {...defaultProps} selectedStage="stage-1" />);
 
-    expect(screen.getByText(/Prospecto/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Prospecto/i).length).toBeGreaterThan(0);
   });
 
   it('debería mostrar contador de etiquetas cuando hay seleccionadas', () => {
     render(<FiltersDropdown {...defaultProps} selectedTags={['tag-1', 'tag-2']} />);
 
-    expect(screen.getByText(/Etiquetas \(2\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Etiquetas \(2\)/i).length).toBeGreaterThan(0);
   });
 
-  it('debería llamar onStageChange cuando se selecciona una etapa', () => {
+  it('debería llamar onStageChange cuando se selecciona una etapa', async () => {
     const onStageChange = vi.fn();
     render(<FiltersDropdown {...defaultProps} onStageChange={onStageChange} />);
 
@@ -62,14 +93,14 @@ describe('FiltersDropdown', () => {
     const trigger = screen.getByRole('button');
     fireEvent.click(trigger);
 
-    // Buscar y hacer click en una etapa
-    const stageOption = screen.getByText('Prospecto');
-    fireEvent.click(stageOption);
+    // Buscar y hacer click en una etapa (usamos el del dropdown content)
+    const stageOptions = await screen.findAllByText('Prospecto');
+    fireEvent.click(stageOptions[0]);
 
     expect(onStageChange).toHaveBeenCalledWith('stage-1');
   });
 
-  it('debería llamar onTagToggle cuando se hace toggle de etiqueta', () => {
+  it('debería llamar onTagToggle cuando se hace toggle de etiqueta', async () => {
     const onTagToggle = vi.fn();
     render(<FiltersDropdown {...defaultProps} onTagToggle={onTagToggle} />);
 
@@ -78,13 +109,13 @@ describe('FiltersDropdown', () => {
     fireEvent.click(trigger);
 
     // Buscar y hacer click en una etiqueta
-    const tagOption = screen.getByText('VIP');
-    fireEvent.click(tagOption);
+    const tagOptions = await screen.findAllByText('VIP');
+    fireEvent.click(tagOptions[0]);
 
     expect(onTagToggle).toHaveBeenCalledWith('tag-1');
   });
 
-  it('debería llamar onManageTagsClick cuando se hace click en gestionar etiquetas', () => {
+  it('debería llamar onManageTagsClick cuando se hace click en gestionar etiquetas', async () => {
     const onManageTagsClick = vi.fn();
     render(<FiltersDropdown {...defaultProps} onManageTagsClick={onManageTagsClick} />);
 
@@ -93,29 +124,29 @@ describe('FiltersDropdown', () => {
     fireEvent.click(trigger);
 
     // Buscar y hacer click en gestionar etiquetas
-    const manageOption = screen.getByText(/Gestionar etiquetas/i);
+    const manageOption = await screen.findByText(/Gestionar etiquetas/i);
     fireEvent.click(manageOption);
 
     expect(onManageTagsClick).toHaveBeenCalled();
   });
 
-  it('debería mostrar mensaje cuando no hay etiquetas disponibles', () => {
+  it('debería mostrar mensaje cuando no hay etiquetas disponibles', async () => {
     render(<FiltersDropdown {...defaultProps} allTags={[]} />);
 
     const trigger = screen.getByRole('button');
     fireEvent.click(trigger);
 
-    expect(screen.getByText(/No hay etiquetas disponibles/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No hay etiquetas disponibles/i)).toBeInTheDocument();
   });
 
-  it('debería mostrar todas las etapas en el dropdown', () => {
+  it('debería mostrar todas las etapas en el dropdown', async () => {
     render(<FiltersDropdown {...defaultProps} />);
 
     const trigger = screen.getByRole('button');
     fireEvent.click(trigger);
 
-    expect(screen.getByText('Todas las etapas')).toBeInTheDocument();
-    expect(screen.getByText('Prospecto')).toBeInTheDocument();
-    expect(screen.getByText('Cliente')).toBeInTheDocument();
+    expect((await screen.findAllByText('Todas las etapas')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Prospecto')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Cliente')).length).toBeGreaterThan(0);
   });
 });

@@ -11,21 +11,23 @@ import { render } from '@testing-library/react';
 import { GoalsComparisonChart } from './GoalsComparisonChart';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('recharts', () => ({
-  BarChart: ({ children, data }: any) => (
+  BarChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
     <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
   ),
-  Bar: ({ children }: any) => <div>{children}</div>,
+  Bar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Cell: () => null,
   XAxis: () => null,
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
   Legend: () => null,
-  ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('GoalsComparisonChart', () => {
@@ -96,7 +98,7 @@ describe('GoalsComparisonChart', () => {
     const chart = container.querySelector('[data-testid="bar-chart"]');
     const chartData = JSON.parse(chart?.getAttribute('data-chart-data') || '[]');
 
-    const metricNames = chartData.map((item: any) => item.name);
+    const metricNames = chartData.map((item: { name: string }) => item.name);
     expect(metricNames).toContain('Nuevos Contactos');
     expect(metricNames).toContain('Primeras Reuniones');
     expect(metricNames).toContain('Segundas Reuniones');

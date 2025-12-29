@@ -12,16 +12,17 @@ import {
   moveContactToStage, // AI_DECISION: Use dedicated pipeline API for stage changes
 } from '@/lib/api';
 import { useToast } from '@/lib/hooks/useToast';
-import type { Contact, Tag, ApiResponse, ContactFieldValue } from '@/types';
+import type { Contact, Tag, ApiResponse, ContactFieldValue, ContactWithTags } from '@/types';
+import type { KeyedMutator } from 'swr';
 
-export interface ContactActionsState {
+interface ContactActionsState {
   showDeleteModal: boolean;
   contactToDelete: Contact | null;
   savingContactId: string | null;
   editingField: { contactId: string; field: string } | null;
 }
 
-export interface ContactActionsActions {
+interface ContactActionsActions {
   setShowDeleteModal: (show: boolean) => void;
   setContactToDelete: (contact: Contact | null) => void;
   handleDeleteContact: () => Promise<void>;
@@ -32,13 +33,8 @@ export interface ContactActionsActions {
   handleTextInputSave: (contactId: string, field: string, value: string) => void;
 }
 
-export interface UseContactActionsProps {
-  mutateContacts: (
-    data?:
-      | ApiResponse<unknown[]>
-      | ((current: ApiResponse<unknown[]> | undefined) => ApiResponse<unknown[]> | undefined),
-    shouldRevalidate?: boolean
-  ) => void;
+interface UseContactActionsProps {
+  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[]>>;
   allTags?: Tag[];
 }
 
@@ -82,14 +78,14 @@ export function useContactActions({
 
       // Optimistic update
       const optimisticUpdate = (
-        currentData: ApiResponse<unknown[]> | undefined
-      ): ApiResponse<unknown[]> | undefined => {
+        currentData: ApiResponse<ContactWithTags[]> | undefined
+      ): ApiResponse<ContactWithTags[]> | undefined => {
         if (!currentData || !Array.isArray(currentData.data)) return currentData;
-        const contacts = currentData.data as Contact[];
+        const contacts = currentData.data;
         return {
           ...currentData,
-          data: contacts.map((contact: Contact) =>
-            contact.id === contactId ? { ...contact, [field]: value } : contact
+          data: contacts.map((contact: ContactWithTags) =>
+            contact.id === contactId ? { ...contact, [field]: value } as ContactWithTags : contact
           ),
         };
       };
@@ -124,13 +120,13 @@ export function useContactActions({
 
       // Optimistic update - incluir todos los campos de la etiqueta
       const optimisticUpdate = (
-        currentData: ApiResponse<unknown[]> | undefined
-      ): ApiResponse<unknown[]> | undefined => {
+        currentData: ApiResponse<ContactWithTags[]> | undefined
+      ): ApiResponse<ContactWithTags[]> | undefined => {
         if (!currentData || !Array.isArray(currentData.data)) return currentData;
-        const contacts = currentData.data as Contact[];
+        const contacts = currentData.data;
         return {
           ...currentData,
-          data: contacts.map((contact: Contact) => {
+          data: contacts.map((contact: ContactWithTags) => {
             if (contact.id !== contactId) return contact;
             const currentTags = contact.tags || [];
             // Construir tags a agregar, filtrando nulls antes de spread
@@ -168,13 +164,13 @@ export function useContactActions({
         if (response.data) {
           const serverTags = response.data;
           const updateWithServerData = (
-            currentData: ApiResponse<unknown[]> | undefined
-          ): ApiResponse<unknown[]> | undefined => {
+            currentData: ApiResponse<ContactWithTags[]> | undefined
+          ): ApiResponse<ContactWithTags[]> | undefined => {
             if (!currentData || !Array.isArray(currentData.data)) return currentData;
-            const contacts = currentData.data as Contact[];
+            const contacts = currentData.data;
             return {
               ...currentData,
-              data: contacts.map((contact: Contact) => {
+              data: contacts.map((contact: ContactWithTags) => {
                 if (contact.id !== contactId) return contact;
                 return { ...contact, tags: serverTags };
               }),

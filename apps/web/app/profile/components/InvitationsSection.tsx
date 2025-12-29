@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Text, Stack, Button } from '@cactus/ui';
+import { Card, CardContent, CardHeader, CardTitle, Text, Stack, Button } from '@maatwork/ui';
 import type { TeamInvitation } from '@/types';
 
 interface InvitationsSectionProps {
@@ -63,3 +63,11 @@ export function InvitationsSection({
     </Card>
   );
 }
+
+
+
+
+
+
+
+

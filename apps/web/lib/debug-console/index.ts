@@ -19,8 +19,9 @@
  */
 
 import { DebugConsole } from './debug-console';
+import { logger } from '../logger';
 export { DebugConsole };
-export type { ErrorLog, FilterType, SortOrder } from './types';
+export type { ErrorLog } from './types';
 
 // Guard global para prevenir múltiples inicializaciones
 let isInitialized = false;
@@ -58,6 +59,8 @@ export function initDebugConsole(): DebugConsole | null {
     isInitialized = true;
 
     // Mensaje consolidado y compacto
+    // Usar console directamente para mensajes de bienvenida con estilo CSS
+    // ya que el logger estructurado no soporta estilos %c
     console.log(
       '%c🐛 Debug Console activado',
       'color: #ef4444; font-weight: bold; font-size: 14px;'
@@ -74,7 +77,9 @@ export function initDebugConsole(): DebugConsole | null {
 
     return debugConsole;
   } catch (error) {
-    console.error('Error al inicializar Debug Console:', error);
+    logger.error('Error al inicializar Debug Console', { 
+      error: error instanceof Error ? error.message : String(error) 
+    });
 
     // Crear un objeto mínimo incluso si hay error
     const fallback = {

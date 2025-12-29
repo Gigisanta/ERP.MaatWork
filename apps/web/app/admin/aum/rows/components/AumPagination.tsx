@@ -8,9 +8,9 @@
 
 'use client';
 
-import { Button, Text } from '@cactus/ui';
+import { Button, Text } from '@maatwork/ui';
 
-export interface AumPaginationProps {
+interface AumPaginationProps {
   // Pagination state
   limit: number;
   offset: number;

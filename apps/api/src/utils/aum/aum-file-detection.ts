@@ -15,8 +15,8 @@
 export function detectAumFileType(filename: string): 'master' | 'monthly' {
   const normalized = filename.toLowerCase();
 
-  // Archivo master contiene "Balanz Cactus 2025" o similar
-  if (normalized.includes('balanz cactus') && normalized.includes('2025')) {
+  // Archivo master contiene "Balanz MaatWork 2025" o similar
+  if (normalized.includes('balanz maatwork') && normalized.includes('2025')) {
     return 'master';
   }
 

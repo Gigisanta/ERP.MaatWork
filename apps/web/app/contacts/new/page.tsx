@@ -1,5 +1,5 @@
 'use client';
-import { useRequireAuth } from '../../auth/useRequireAuth';
+import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -7,9 +7,8 @@ import { z } from 'zod';
 import { logger, toLogContext } from '@/lib/logger';
 import { usePageTitle } from '../../components/PageTitleContext';
 import { createContact } from '@/lib/api';
-import { usePipelineStages, useAdvisors, useInvalidateContactsCache } from '@/lib/api-hooks';
+import { useInvalidateContactsCache } from '@/lib/api-hooks';
 import { useFormValidation } from '@/lib/hooks/useFormValidation';
-import type { PipelineStage, Advisor } from '@/types';
 import {
   Card,
   CardHeader,
@@ -21,13 +20,12 @@ import {
   Text,
   Stack,
   Input,
-  Select,
   Alert,
   Breadcrumbs,
   BreadcrumbItem,
   Spinner,
   Icon,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import MarketTypeSelector from '../components/MarketTypeSelector';
 
 // AI_DECISION: Zod schema for real-time form validation
@@ -38,20 +36,8 @@ const contactFormSchema = z.object({
   lastName: z.string().min(1, 'El apellido es requerido').max(100, 'Máximo 100 caracteres'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   phone: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
-  dni: z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
-  pipelineStageId: z.string().optional().or(z.literal('')),
   source: z.string().optional().or(z.literal('')),
-  riskProfile: z.enum(['low', 'mid', 'high', '']).optional(),
   notes: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  queSeDedica: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  familia: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  expectativas: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  objetivos: z.string().max(2000, 'Máximo 2000 caracteres').optional().or(z.literal('')),
-  requisitosPlanificacion: z
-    .string()
-    .max(2000, 'Máximo 2000 caracteres')
-    .optional()
-    .or(z.literal('')),
 });
 
 interface FormData {
@@ -59,16 +45,8 @@ interface FormData {
   lastName: string;
   email: string;
   phone: string;
-  dni: string;
-  pipelineStageId: string;
   source: string;
-  riskProfile: 'low' | 'mid' | 'high' | '';
   notes: string;
-  queSeDedica: string;
-  familia: string;
-  expectativas: string;
-  objetivos: string;
-  requisitosPlanificacion: string;
 }
 
 const initialFormData: FormData = {
@@ -76,16 +54,8 @@ const initialFormData: FormData = {
   lastName: '',
   email: '',
   phone: '',
-  dni: '',
-  pipelineStageId: '',
   source: '',
-  riskProfile: '',
   notes: '',
-  queSeDedica: '',
-  familia: '',
-  expectativas: '',
-  objetivos: '',
-  requisitosPlanificacion: '',
 };
 
 export default function NewContactPage() {
@@ -95,13 +65,6 @@ export default function NewContactPage() {
   // Set page title in header
   usePageTitle('Nuevo Contacto');
 
-  // Use SWR hooks for data fetching with automatic caching and deduplication
-  const {
-    stages: pipelineStages,
-    isLoading: stagesLoading,
-    error: stagesError,
-  } = usePipelineStages();
-  const { advisors, isLoading: advisorsLoading, error: advisorsError } = useAdvisors();
   const invalidateContactsCache = useInvalidateContactsCache();
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -126,15 +89,7 @@ export default function NewContactPage() {
   });
 
   // Derive loading state from SWR hooks
-  const dataLoading = stagesLoading || advisorsLoading;
-
-  // Set error if SWR hooks have errors
-  if (stagesError && !error) {
-    logger.error('Error fetching pipeline stages', toLogContext({ err: stagesError }));
-  }
-  if (advisorsError && !error) {
-    logger.error('Error fetching advisors', toLogContext({ err: advisorsError }));
-  }
+  const dataLoading = false;
 
   // Handler para cambios de campo con validación en tiempo real
   const handleInputChange = useCallback(
@@ -189,16 +144,8 @@ export default function NewContactPage() {
         lastName: formData.lastName.trim(),
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
-        dni: formData.dni.trim() || null,
-        pipelineStageId: formData.pipelineStageId || null,
         source: formData.source.trim() || null,
-        riskProfile: formData.riskProfile || null,
         notes: formData.notes.trim() || null,
-        queSeDedica: formData.queSeDedica.trim() || null,
-        familia: formData.familia.trim() || null,
-        expectativas: formData.expectativas.trim() || null,
-        objetivos: formData.objetivos.trim() || null,
-        requisitosPlanificacion: formData.requisitosPlanificacion.trim() || null,
       });
 
       logger.info('Contact creation API response received', {
@@ -263,7 +210,7 @@ export default function NewContactPage() {
   // Show loading state while auth or data is loading
   const isLoading = loading || dataLoading;
 
-  if (isLoading && !(pipelineStages as PipelineStage[]).length) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
         <Stack direction="column" gap="md" align="center">
@@ -329,8 +276,8 @@ export default function NewContactPage() {
                 )}
 
                 {/* Sección: Datos Personales */}
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="relative">
                       <Input
                         label="Nombre"
@@ -366,22 +313,22 @@ export default function NewContactPage() {
                     </div>
                   </div>
 
-                  <Input
-                    label="Correo Electrónico"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    onBlur={() => handleFieldBlur('email')}
-                    placeholder="juan.perez@email.com"
-                    disabled={loading}
-                    className="w-full"
-                    error={validationErrors.email?.message}
-                    {...(getFieldState('email').isValid && formData.email
-                      ? { rightIcon: 'check-circle' as const }
-                      : {})}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Correo Electrónico"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onBlur={() => handleFieldBlur('email')}
+                      placeholder="juan.perez@email.com"
+                      disabled={isLoading || submitLoading}
+                      className="w-full"
+                      error={validationErrors.email?.message}
+                      {...(getFieldState('email').isValid && formData.email
+                        ? { rightIcon: 'check-circle' as const }
+                        : {})}
+                    />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Input
                       label="Teléfono"
                       value={formData.phone}
@@ -392,59 +339,9 @@ export default function NewContactPage() {
                       className="w-full"
                       error={validationErrors.phone?.message}
                     />
-                    <Input
-                      label="DNI"
-                      value={formData.dni}
-                      onChange={(e) => handleInputChange('dni', e.target.value)}
-                      onBlur={() => handleFieldBlur('dni')}
-                      placeholder="12.345.678"
-                      disabled={isLoading || submitLoading}
-                      className="w-full"
-                      error={validationErrors.dni?.message}
-                    />
-                  </div>
-                </div>
-
-                {/* Separador Visual */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="mb-3">
-                    <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
-                      Información Comercial
-                    </Heading>
-                    <Text size="xs" color="secondary" className="text-gray-600">
-                      Datos para el seguimiento comercial
-                    </Text>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Select
-                      label="Etapa del Pipeline"
-                      value={formData.pipelineStageId}
-                      onValueChange={(value) => handleInputChange('pipelineStageId', value)}
-                      disabled={isLoading || submitLoading}
-                      items={(pipelineStages as PipelineStage[]).map((stage) => ({
-                        value: stage.id,
-                        label: stage.name,
-                      }))}
-                      placeholder="Selecciona una etapa"
-                      className="w-full bg-white border-gray-300 shadow-sm"
-                    />
-                    <Select
-                      label="Perfil de Riesgo"
-                      value={formData.riskProfile}
-                      onValueChange={(value) => handleInputChange('riskProfile', value)}
-                      disabled={isLoading || submitLoading}
-                      items={[
-                        { value: 'low', label: 'Bajo' },
-                        { value: 'mid', label: 'Medio' },
-                        { value: 'high', label: 'Alto' },
-                      ]}
-                      placeholder="Selecciona perfil"
-                      className="w-full bg-white border-gray-300 shadow-sm"
-                    />
-                  </div>
-
-                  <div className="mt-4">
+                  <div className="pt-2">
                     <MarketTypeSelector
                       value={formData.source}
                       onChange={(value) => handleInputChange('source', value)}
@@ -454,119 +351,25 @@ export default function NewContactPage() {
                 </div>
 
                 {/* Sección: Notas */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="mb-3">
-                    <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
-                      Notas Adicionales
+                <div className="border-t border-gray-100 pt-6">
+                  <div className="mb-4">
+                    <Heading level={4} className="text-base font-semibold text-gray-900 mb-1">
+                      Notas
                     </Heading>
-                    <Text size="xs" color="secondary" className="text-gray-600">
-                      Información adicional sobre el contacto
+                    <Text size="xs" color="secondary" className="text-gray-500">
+                      Información adicional relevante del contacto
                     </Text>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notas</label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => handleInputChange('notes', e.target.value)}
-                      placeholder="Información adicional sobre el contacto..."
-                      disabled={isLoading || submitLoading}
-                      rows={4}
-                      maxLength={2000}
-                      className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                    />
-                  </div>
-                </div>
-
-                {/* Sección: Información Personal Adicional */}
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="mb-3">
-                    <Heading level={4} className="text-base font-semibold text-gray-900 mb-1.5">
-                      Información Personal Adicional
-                    </Heading>
-                    <Text size="xs" color="secondary" className="text-gray-600">
-                      Información detallada sobre el contacto
-                    </Text>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        A qué se dedica
-                      </label>
-                      <textarea
-                        value={formData.queSeDedica}
-                        onChange={(e) => handleInputChange('queSeDedica', e.target.value)}
-                        placeholder="Describe a qué se dedica el contacto..."
-                        disabled={isLoading || submitLoading}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Familia
-                      </label>
-                      <textarea
-                        value={formData.familia}
-                        onChange={(e) => handleInputChange('familia', e.target.value)}
-                        placeholder="Información sobre la familia del contacto..."
-                        disabled={isLoading || submitLoading}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Expectativas
-                      </label>
-                      <textarea
-                        value={formData.expectativas}
-                        onChange={(e) => handleInputChange('expectativas', e.target.value)}
-                        placeholder="Expectativas del contacto..."
-                        disabled={isLoading || submitLoading}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Objetivos
-                      </label>
-                      <textarea
-                        value={formData.objetivos}
-                        onChange={(e) => handleInputChange('objetivos', e.target.value)}
-                        placeholder="Objetivos del contacto..."
-                        disabled={isLoading || submitLoading}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ¿Qué tendría que tener tu planificación para que avancemos?
-                      </label>
-                      <textarea
-                        value={formData.requisitosPlanificacion}
-                        onChange={(e) =>
-                          handleInputChange('requisitosPlanificacion', e.target.value)
-                        }
-                        placeholder="Requisitos o condiciones para avanzar con la planificación..."
-                        disabled={isLoading || submitLoading}
-                        rows={3}
-                        maxLength={2000}
-                        className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
-                      />
-                    </div>
-                  </div>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    placeholder="Escribe aquí cualquier observación importante..."
+                    disabled={isLoading || submitLoading}
+                    rows={4}
+                    maxLength={2000}
+                    className="w-full px-3 py-2 border border-border rounded-md shadow-sm bg-surface text-text placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-vertical"
+                  />
                 </div>
               </CardContent>
 
@@ -611,59 +414,34 @@ export default function NewContactPage() {
 
         {/* Columna Lateral - Información de Ayuda */}
         <div className="lg:col-span-1">
-          <div className="space-y-4">
+          <div className="space-y-4 sticky top-4">
             {/* Card de Ayuda */}
-            <Card className="bg-info-subtle border-info/30" padding="sm">
+            <Card className="bg-primary/5 border-primary/10 shadow-none" padding="sm">
               <CardContent className="p-3">
-                <div className="flex items-start space-x-2">
-                  <div className="flex-shrink-0">
-                    <div className="w-6 h-6 bg-info/20 rounded-full flex items-center justify-center">
-                      <span className="text-info text-xs">💡</span>
-                    </div>
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <Icon name="info" size={18} className="text-primary" />
                   </div>
                   <div>
-                    <Heading level={5} className="text-xs font-semibold text-text mb-0.5">
-                      Consejos
+                    <Heading level={5} className="text-sm font-semibold text-text mb-1">
+                      Creación Rápida
                     </Heading>
-                    <Text size="xs" className="text-text-secondary">
-                      Solo los campos Nombre y Apellido son obligatorios. Los demás campos son
-                      opcionales pero recomendados.
+                    <Text size="xs" className="text-text-secondary leading-relaxed">
+                      Completa los datos básicos para dar de alta al contacto. Por defecto, se asignará a la etapa de <strong>Prospecto</strong>.
+                    </Text>
+                    <Text size="xs" className="text-text-secondary mt-2 leading-relaxed">
+                      Podrás completar el perfil detallado, DNI y objetivos desde la ficha del contacto una vez creado.
                     </Text>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Card de Información del Pipeline */}
-            {(pipelineStages as PipelineStage[]).length > 0 && (
-              <Card padding="sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xs font-semibold text-text">
-                    Etapas del Pipeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-1.5">
-                    {(pipelineStages as PipelineStage[]).slice(0, 3).map((stage) => (
-                      <div key={stage.id} className="flex items-center space-x-1.5">
-                        <div
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: stage.color }}
-                        />
-                        <Text size="xs" className="text-text-secondary">
-                          {stage.name}
-                        </Text>
-                      </div>
-                    ))}
-                    {(pipelineStages as PipelineStage[]).length > 3 && (
-                      <Text size="xs" className="text-text-muted">
-                        +{(pipelineStages as PipelineStage[]).length - 3} más...
-                      </Text>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <div className="px-1">
+              <Text size="xs" color="secondary" className="text-gray-400 italic">
+                * Campos obligatorios: Nombre y Apellido.
+              </Text>
+            </div>
           </div>
         </div>
       </div>

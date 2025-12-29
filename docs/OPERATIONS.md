@@ -1,6 +1,6 @@
 # Guía de Operaciones
 
-Esta guía consolida toda la información sobre deploy, configuración, monitoreo y troubleshooting del proyecto CACTUS CRM.
+Esta guía consolida toda la información sobre deploy, configuración, monitoreo y troubleshooting del proyecto MAATWORK.
 
 ## Índice
 
@@ -39,7 +39,7 @@ cp apps/api/config-example.env apps/api/.env
 # Editar apps/api/.env con tus valores
 
 # 4. Instalar dependencias Python (opcional)
-pnpm -F @cactus/analytics-service install
+pnpm -F @maatwork/analytics-service install
 ```
 
 ---
@@ -51,7 +51,7 @@ pnpm -F @cactus/analytics-service install
 #### API (`apps/api/.env`)
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/cactus
+DATABASE_URL=postgresql://user:password@localhost:5432/maatwork
 PORT=3001
 LOG_LEVEL=info
 CORS_ORIGINS=http://localhost:3000
@@ -117,13 +117,13 @@ curl http://localhost:3001/health
 
 ```bash
 # Generar migraciones desde schema (si cambias schema)
-pnpm -F @cactus/db run generate
+pnpm -F @maatwork/db run generate
 
 # Aplicar migraciones (usa baseline en migrations_squashed)
-pnpm -F @cactus/db run migrate
+pnpm -F @maatwork/db run migrate
 
 # Seeds esenciales (opcional; la API también los ejecuta en startup)
-pnpm -F @cactus/db run db:init
+pnpm -F @maatwork/db run db:init
 ```
 
 **Notas Importantes:**
@@ -143,28 +143,35 @@ pnpm tsx scripts/verify-migrations.ts
 
 ---
 
-## Deploy en Producción
+### Deploy en Producción
 
-### Build y Deploy de API
+El deploy se gestiona mediante el script centralizado en `scripts/deploy.sh`.
+
+```bash
+# Ejecutar deploy completo (pull, install, build, restart)
+./scripts/deploy.sh
+```
+
+### Build y Deploy de API (Manual)
 
 ```bash
 # 1. Build de la API
-pnpm -F @cactus/api build
+pnpm -F @maatwork/api build
 
 # 2. Iniciar con PM2
-pm2 start apps/api/ecosystem.config.js --env production
+pm2 start infrastructure/pm2/ecosystem.config.js --env production
 
 # 3. Ver logs
-pm2 logs cactus-api
+pm2 logs maatwork-api
 
 # 4. Ver estado
 pm2 status
 
 # 5. Reiniciar
-pm2 restart cactus-api
+pm2 restart maatwork-api
 
 # 6. Detener
-pm2 stop cactus-api
+pm2 stop maatwork-api
 ```
 
 ### Configurar Logrotate PM2
@@ -183,13 +190,13 @@ pm2 set pm2-logrotate:rotateInterval 0 0 * * *
 
 ```bash
 # Build de producción
-pnpm -F @cactus/web build
+pnpm -F @maatwork/web build
 
 # Iniciar servidor de producción
-pnpm -F @cactus/web start
+pnpm -F @maatwork/web start
 
 # O usar PM2
-pm2 start "pnpm -F @cactus/web start" --name cactus-web
+pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 ```
 
 ### Variables de Entorno en Producción
@@ -447,11 +454,11 @@ pkill -f "uvicorn.*main:app"
    ```
 3. Instalar dependencias:
    ```bash
-   pnpm -F @cactus/analytics-service install
+   pnpm -F @maatwork/analytics-service install
    ```
 4. Iniciar servicio:
    ```bash
-   pnpm -F @cactus/analytics-service dev
+   pnpm -F @maatwork/analytics-service dev
    ```
 
 ---
@@ -480,8 +487,8 @@ pkill -f "uvicorn.*main:app"
 
 4. **Aplicar migraciones de base de datos:**
    ```bash
-   pnpm -F @cactus/db generate
-   pnpm -F @cactus/db migrate
+   pnpm -F @maatwork/db generate
+   pnpm -F @maatwork/db migrate
    ```
 
 ### Troubleshooting
@@ -543,7 +550,7 @@ pkill -f "uvicorn.*main:app"
 - **Pino**: Logs estructurados JSON
 - **Niveles**: `info`, `warn`, `error` según `LOG_LEVEL`
 - **Redacción**: Headers sensibles redactados en producción
-- **Ver logs**: `pnpm -F @cactus/api run dev:pretty`
+- **Ver logs**: `pnpm -F @maatwork/api run dev:pretty`
 
 #### Frontend (Web)
 

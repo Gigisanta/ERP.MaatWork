@@ -5,11 +5,12 @@
  */
 
 import type { TimestampedEntity, UserRole } from './common';
+import type { User } from './user';
 
 /**
  * Team member role
  */
-export type TeamMemberRole = 'member' | 'lead' | 'manager';
+export type TeamMemberRole = 'member' | 'lead';
 
 /**
  * Team base interface
@@ -19,7 +20,8 @@ export interface Team extends TimestampedEntity {
   description?: string | null;
   managerUserId: string;
   calendarUrl?: string | null;
-  calendarId?: string | null; // Added calendarId for compatibility with TeamCalendarSection
+  calendarId?: string | null;
+  meetingRoomCalendarId?: string | null;
   members?: TeamMember[];
   role?: string; // Current user's role in the team
 }
@@ -34,23 +36,19 @@ export interface TeamMember {
   role: TeamMemberRole;
   email?: string;
   fullName?: string;
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: UserRole;
-  };
+  user?: Pick<User, 'id' | 'email' | 'fullName' | 'role'>;
 }
 
 /**
- * Team advisor candidate
+ * Team advisor candidate (or any user that can join a team)
  */
 export interface TeamAdvisor {
   id: string;
   email: string;
-  fullName: string;
-  role: UserRole;
-  active: boolean;
+  fullName: string | null;
+  role: string;
+  isActive: boolean;
+  currentTeamId?: string | null;
 }
 
 /**
@@ -66,13 +64,8 @@ export interface MembershipRequest extends TimestampedEntity {
   userId: string;
   requestedBy: string;
   status: MembershipRequestStatus;
-  team?: { id: string; name: string };
-  user?: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: UserRole;
-  };
+  team?: Pick<Team, 'id' | 'name'>;
+  user?: User;
 }
 
 /**
@@ -90,7 +83,16 @@ export interface TeamInvitation extends TimestampedEntity {
   invitedEmail?: string;
   status: TeamInvitationStatus;
   expiresAt?: string;
-  team?: { id: string; name: string };
+  team?: Pick<Team, 'id' | 'name'>;
+  invitedUser?: User;
+}
+
+/**
+ * Team invitation response
+ */
+export interface TeamInvitationResponse {
+  invitation: TeamInvitation;
+  message?: string;
 }
 
 /**
@@ -130,16 +132,96 @@ export interface TeamMemberMetrics {
   portfolioCount: number;
   deviationAlerts: number;
   aumTrend: AumTrendItem[];
-  lastLogin?: string | null;
-  daysSinceLogin?: number | null;
-  contactsCreatedThisMonth?: number;
-  contactsCreatedLast30Days?: number;
-  firstMeetingsLast30Days?: number;
-  secondMeetingsLast30Days?: number;
-  notesCreatedLast30Days?: number;
-  tasksCompletedLast30Days?: number;
+  lastLogin: string | null;
+  daysSinceLogin: number | null;
+  contactsCreatedThisMonth: number;
+  contactsCreatedLast30Days: number;
+  firstMeetingsLast30Days: number;
+  secondMeetingsLast30Days: number;
+  tasksCompletedLast30Days: number;
+  notesCreatedLast30Days: number;
 }
 
+/**
+ * Team member activity summary for list view
+ */
+export interface TeamMemberActivity {
+  id: string;
+  email: string;
+  fullName: string;
+  role: TeamMemberRole;
+  lastLogin: string | null;
+  daysSinceLogin: number | null;
+  isActive: boolean;
+  contactsCreatedThisMonth: number;
+  contactsCreatedLast30Days: number;
+  firstMeetingsLast30Days: number;
+  secondMeetingsLast30Days: number;
+  tasksCompletedLast30Days: number;
+  openTasks: number;
+  clientCount: number;
+  totalAum: number;
+  activityStatus: 'active' | 'moderate' | 'inactive' | 'critical';
+}
 
+/**
+ * Team goal
+ */
+export interface TeamGoal {
+  type: string;
+  target: number;
+  actual: number;
+  month: number;
+  year: number;
+}
 
+/**
+ * Set team goal request
+ */
+export interface SetTeamGoalRequest {
+  type: string;
+  target: number;
+  month: number;
+  year: number;
+}
 
+/**
+ * Stalled lead
+ */
+export interface StalledLead {
+  id: string;
+  fullName: string;
+  assignedAdvisorId: string;
+  contactLastTouchAt: string;
+}
+
+/**
+ * Reassign leads request
+ */
+export interface ReassignLeadsRequest {
+  contactIds: string[];
+  newAdvisorId: string;
+}
+
+/**
+ * Team capacity member metrics
+ */
+export interface TeamCapacityMember {
+  id: string;
+  name: string;
+  metrics: {
+    activeClients: number;
+    openTasks: number;
+    newLeads: number;
+  };
+  score: number;
+  status: 'optimal' | 'low' | 'overloaded';
+}
+
+/**
+ * Pending invite internal type
+ */
+export interface PendingInvite {
+  id: string;
+  userId: string;
+}

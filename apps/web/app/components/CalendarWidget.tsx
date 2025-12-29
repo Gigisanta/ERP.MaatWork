@@ -13,13 +13,12 @@ import {
   Button,
   Icon,
   Select,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { getTeamEvents } from '@/lib/api';
-import type { CalendarEvent } from '@/types/calendar';
+import type { CalendarEvent, Team } from '@/types';
 import { WeeklyCalendarView } from './home/WeeklyCalendarView';
-import type { Team } from '@/types';
 
 interface CalendarWidgetProps {
   teams?: Team[];

@@ -1,5 +1,5 @@
 {
-  "name": "@cactus/db",
+  "name": "@maatwork/db",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -20,10 +20,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "generate": "drizzle-kit generate --config=drizzle.config.mjs",
-    "migrate": "drizzle-kit migrate --config=drizzle.config.mjs",
-    "studio": "drizzle-kit studio --config=drizzle.config.mjs",
+    "generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "studio": "drizzle-kit studio --config=drizzle.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "audit:code": "knip --workspace .",
     "seed": "tsx src/seed.ts",
     "seed:all": "tsx src/seed-all.ts",
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",

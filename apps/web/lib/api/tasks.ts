@@ -2,9 +2,9 @@
  * API methods para tasks
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from './client';
 import type { ApiResponse } from '../api-client';
-import type { Task, CreateTaskRequest, UpdateTaskRequest } from '@/types/task';
+import type { Task, CreateTaskRequest, UpdateTaskRequest } from '@/types';
 
 // ==========================================================
 // API Methods

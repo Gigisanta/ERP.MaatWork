@@ -14,11 +14,13 @@ export default defineConfig({
         resources: 'usable',
       },
     },
-    // Parallelization configuration
-    threads: true,
-    maxConcurrency: 5,
-    minThreads: 1,
-    maxThreads: 4,
+    // Parallelization configuration - Optimized to prevent system freezing
+    poolOptions: {
+      threads: {
+        maxThreads: 2,
+        minThreads: 1,
+      },
+    },
     testTimeout: 10000, // 10 seconds default timeout
     hookTimeout: 10000,
     coverage: {

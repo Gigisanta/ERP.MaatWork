@@ -32,17 +32,17 @@ export const aumAccountNumberParamsSchema = z.object({
 /**
  * Schema para validar mes del reporte (1-12)
  */
-export const reportMonthSchema = z.number().int().min(1).max(12);
+const reportMonthSchema = z.number().int().min(1).max(12);
 
 /**
  * Schema para validar año del reporte (año válido)
  */
-export const reportYearSchema = z.number().int().min(2000).max(2100);
+const reportYearSchema = z.number().int().min(2000).max(2100);
 
 /**
  * Schema para validar tipo de archivo AUM
  */
-export const aumFileTypeSchema = z.enum(['master', 'monthly']);
+const aumFileTypeSchema = z.enum(['master', 'monthly']);
 
 // ==========================================================
 // Query Parameter Schemas
@@ -252,7 +252,7 @@ export const aumConfirmChangesBodySchema = z.object({
 // Response Schemas (for validation)
 // ==========================================================
 
-export const aumRowSchema = z.object({
+const aumRowSchema = z.object({
   id: uuidSchema,
   fileId: uuidSchema,
   accountNumber: z.string().nullable(),
@@ -277,7 +277,7 @@ export const aumRowSchema = z.object({
   updatedAt: z.string(),
 });
 
-export const aumFileSchema = z.object({
+const aumFileSchema = z.object({
   id: uuidSchema,
   broker: brokerSchema,
   originalFilename: z.string(),
@@ -298,7 +298,7 @@ export const aumFileSchema = z.object({
 /**
  * Schema para snapshot mensual
  */
-export const aumMonthlySnapshotSchema = z.object({
+const aumMonthlySnapshotSchema = z.object({
   id: uuidSchema,
   accountNumber: z.string().nullable(),
   idCuenta: z.string().nullable(),
@@ -322,11 +322,11 @@ export const aumMonthlySnapshotSchema = z.object({
 // ==========================================================
 
 export type AumRowsAllQuery = z.infer<typeof aumRowsAllQuerySchema>;
-export type AumMatchRowBody = z.infer<typeof aumMatchRowBodySchema>;
-export type AumRowValidated = z.infer<typeof aumRowSchema>;
-export type AumFileValidated = z.infer<typeof aumFileSchema>;
+type AumMatchRowBody = z.infer<typeof aumMatchRowBodySchema>;
+type AumRowValidated = z.infer<typeof aumRowSchema>;
+type AumFileValidated = z.infer<typeof aumFileSchema>;
 export type AumMonthlyHistoryQuery = z.infer<typeof aumMonthlyHistoryQuerySchema>;
-export type AumMonthlySnapshotValidated = z.infer<typeof aumMonthlySnapshotSchema>;
+type AumMonthlySnapshotValidated = z.infer<typeof aumMonthlySnapshotSchema>;
 export type AumHistoryQuery = z.infer<typeof aumHistoryQuerySchema>;
 export type AumAdvisorSummaryQuery = z.infer<typeof aumAdvisorSummaryQuerySchema>;
 export type AumAvailablePeriodsQuery = z.infer<typeof aumAvailablePeriodsQuerySchema>;

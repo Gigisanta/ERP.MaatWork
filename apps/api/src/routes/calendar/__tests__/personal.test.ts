@@ -7,14 +7,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { db, googleOAuthTokens } from '@cactus/db';
+import { db, googleOAuthTokens } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import * as googleCalendarService from '../../../services/google-calendar';
 import * as tokenRefresh from '../../../jobs/google-token-refresh';
 import * as encryption from '../../../utils/encryption';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   googleOAuthTokens: {
     id: 'id',
@@ -200,3 +200,11 @@ describe('Personal Calendar Handlers', () => {
     });
   });
 });
+
+
+
+
+
+
+
+

@@ -19,7 +19,7 @@ import {
   Alert,
   Text,
   Stack,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { getOHLCV } from '@/lib/api/bloomberg';
 import type { OHLCVPoint } from '@/lib/api/bloomberg';
 import {

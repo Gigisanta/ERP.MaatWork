@@ -16,9 +16,9 @@ export interface FieldError {
   code?: string;
 }
 
-export type FormErrors<T> = Partial<Record<keyof T, FieldError>>;
+type FormErrors<T> = Partial<Record<keyof T, FieldError>>;
 
-export interface UseFormValidationOptions<T extends Record<string, unknown>> {
+interface UseFormValidationOptions<T extends Record<string, unknown>> {
   /** Zod schema for validation */
   schema: ZodSchema<T>;
   /** Debounce delay in milliseconds (default: 300) */
@@ -31,7 +31,7 @@ export interface UseFormValidationOptions<T extends Record<string, unknown>> {
   onValidationChange?: (isValid: boolean, errors: FormErrors<T>) => void;
 }
 
-export interface UseFormValidationReturn<T extends Record<string, unknown>> {
+interface UseFormValidationReturn<T extends Record<string, unknown>> {
   /** Current form errors */
   errors: FormErrors<T>;
   /** Whether the form is currently valid */

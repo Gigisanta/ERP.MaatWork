@@ -10,7 +10,7 @@
 
 import { Component, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Text } from '@cactus/ui';
+import { Button, Text } from '@maatwork/ui';
 import { parseErrorMessage } from '../lib/aumRowsUtils';
 import { logger } from '@/lib/logger';
 
@@ -148,7 +148,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
 /**
  * Hook-based error boundary fallback for SWR errors
  */
-export function AumErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+function AumErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   const errorMessage = parseErrorMessage(error);
 

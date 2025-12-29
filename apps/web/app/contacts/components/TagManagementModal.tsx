@@ -19,10 +19,10 @@ import {
   Text,
   Spinner,
   Icon,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import type { Tag } from '@/types';
 
-export interface TagManagementModalProps {
+interface TagManagementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   allTags: Tag[];

@@ -18,7 +18,7 @@ export default defineConfig({
     exclude: [
       'node_modules/**',
       'dist/**',
-      'src/**/*.test.ts', // Exclude unit tests
+      // 'src/**/*.test.ts', // Commented out because it conflicts with included integration tests
     ],
     testTimeout: 30000, // 30 seconds for integration tests
     hookTimeout: 60000, // 60 seconds for setup/teardown

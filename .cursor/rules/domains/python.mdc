@@ -9,7 +9,7 @@ alwaysApply: false
 
 ```text
 apps/analytics-service/
-├── cactus_ingestors/
+├── maatwork_ingestors/
 │   ├── core/           # Lógica core del servicio
 │   ├── jobs/           # Jobs programados
 │   ├── parsers/        # Parsers de datos

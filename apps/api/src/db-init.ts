@@ -19,7 +19,7 @@ import {
   teams,
   users,
   teamMembership,
-} from '@cactus/db';
+} from '@maatwork/db';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 import { resolve } from 'node:path';
@@ -391,11 +391,11 @@ export async function initializeDatabase(): Promise<void> {
     }
     await ensureCriticalColumns();
 
-    // Step 6: Seed idempotent team "cactus"
+    // Step 6: Seed idempotent team "maatwork"
     if (isDevelopment && logLevel === 'debug') {
-      logger.debug('Step 6/6: Seeding cactus team...');
+      logger.debug('Step 6/6: Seeding maatwork team...');
     }
-    await seedCactusTeam();
+    await seedMaatWorkTeam();
 
     if (isDevelopment && logLevel === 'debug') {
       logger.debug('✅ SYSTEM-ESSENTIAL database initialization completed successfully');
@@ -423,19 +423,19 @@ export async function initializeDatabase(): Promise<void> {
   }
 }
 
-/** Seed idempotent team "cactus" for Teams feature */
-async function seedCactusTeam(): Promise<void> {
+/** Seed idempotent team "maatwork" for Teams feature */
+async function seedMaatWorkTeam(): Promise<void> {
   const dbi = db();
   try {
     const existing = await dbi
       .select()
       .from(teams)
-      .where((teams.name as any).eq?.('cactus') ?? (eq as any)(teams.name as any, 'cactus'))
+      .where(eq(teams.name, 'maatwork'))
       .limit(1);
     if (existing.length > 0) {
       // AI_DECISION: Changed from info to debug to reduce console noise during startup
       // Justification: This is expected behavior in most dev/prod restarts
-      logger.debug({ teamId: existing[0].id }, '🌵 Team "cactus" already exists');
+      logger.debug({ teamId: existing[0].id }, '⚖️ Team "maatwork" already exists');
       return;
     }
 
@@ -443,7 +443,7 @@ async function seedCactusTeam(): Promise<void> {
     const manager = await dbi.select().from(users).where(eq(users.role, 'manager')).limit(1);
     const managerUserId = manager[0]?.id || null;
 
-    const [teamRow] = await dbi.insert(teams).values({ name: 'cactus', managerUserId }).returning();
+    const [teamRow] = await dbi.insert(teams).values({ name: 'maatwork', managerUserId }).returning();
 
     if (managerUserId) {
       await dbi
@@ -451,8 +451,8 @@ async function seedCactusTeam(): Promise<void> {
         .values({ teamId: teamRow.id, userId: managerUserId, role: 'lead' })
         .onConflictDoNothing();
     }
-    logger.info({ teamId: teamRow.id, managerUserId }, '🌵 Seeded team "cactus"');
+    logger.info({ teamId: teamRow.id, managerUserId }, '⚖️ Seeded team "maatwork"');
   } catch (err) {
-    logger.warn({ err }, 'Failed to seed team "cactus" (non-fatal)');
+    logger.warn({ err }, 'Failed to seed team "maatwork" (non-fatal)');
   }
 }

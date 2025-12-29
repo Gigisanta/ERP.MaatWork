@@ -6,8 +6,7 @@
  * Impacto: Better DRY, consistent skeleton-wave animation
  */
 
-import { Card, CardContent, Stack } from '@cactus/ui';
-import { Skeleton, SkeletonCard } from '../components/SkeletonLoader';
+import { Card, CardContent, Stack, Skeleton, SkeletonCard } from '@maatwork/ui';
 
 export default function TeamsLoading() {
   return (

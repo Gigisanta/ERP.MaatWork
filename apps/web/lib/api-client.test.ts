@@ -124,6 +124,7 @@ describe('ApiClient', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => mockResponse,
       } as Response);
 
@@ -142,6 +143,7 @@ describe('ApiClient', () => {
     it('debería incluir credentials include para cookies httpOnly', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -163,6 +165,7 @@ describe('ApiClient', () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => mockResponse,
       } as Response);
 
@@ -185,6 +188,7 @@ describe('ApiClient', () => {
       // Capture options passed to fetch
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -212,6 +216,7 @@ describe('ApiClient', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
+        headers: new Headers(),
         json: async () => ({ error: 'Resource not found' }),
       } as Response);
 
@@ -222,6 +227,7 @@ describe('ApiClient', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
+        headers: new Headers(),
         json: async () => ({ error: 'Resource not found' }),
       } as Response);
 
@@ -252,12 +258,14 @@ describe('ApiClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
+        headers: new Headers(),
         json: async () => ({ error: 'Server error' }),
       } as Response);
 
       // Segunda llamada exitosa
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -271,6 +279,7 @@ describe('ApiClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
+        headers: new Headers(),
         json: async () => ({ error: 'Bad request' }),
       } as Response);
 
@@ -289,6 +298,7 @@ describe('ApiClient', () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
+        headers: new Headers(),
         json: async () => ({ error: 'Server error' }),
       } as Response);
 
@@ -300,11 +310,13 @@ describe('ApiClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
+        headers: new Headers(),
         json: async () => ({ error: 'Server error' }),
       } as Response);
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -320,18 +332,21 @@ describe('ApiClient', () => {
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
+        headers: new Headers(),
         json: async () => ({ error: 'Unauthorized' }),
       } as Response);
 
       // Refresh token exitoso
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
       // Retry de request original exitoso
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true, data: { id: '123' } }),
       } as Response);
 
@@ -346,6 +361,7 @@ describe('ApiClient', () => {
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
+        headers: new Headers(),
         json: async () => ({ error: 'Unauthorized' }),
       } as Response);
 
@@ -353,6 +369,7 @@ describe('ApiClient', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
+        headers: new Headers(),
         json: async () => ({ error: 'Refresh failed' }),
       } as Response);
 
@@ -417,6 +434,7 @@ describe('ApiClient', () => {
     it('debería hacer PUT request', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -433,6 +451,7 @@ describe('ApiClient', () => {
     it('debería hacer PATCH request', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 
@@ -449,6 +468,7 @@ describe('ApiClient', () => {
     it('debería hacer DELETE request', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
+        headers: new Headers(),
         json: async () => ({ success: true }),
       } as Response);
 

@@ -4,7 +4,7 @@ import React, { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { getUserCareerProgress } from '@/lib/api/career-plan';
-import type { UserCareerProgress } from '@/types/career-plan';
+import type { UserCareerProgress } from '@/types';
 import {
   formatProgressPercentage,
   formatAnnualGoal,
@@ -40,22 +40,8 @@ export default function CareerProgressBar() {
     }
   );
 
-  // AI_DECISION: Logging temporal para diagnosticar problemas de renderizado
-  // Justificación: Necesario para identificar por qué el componente no se muestra
-  // Impacto: Ayuda a diagnosticar problemas de carga de datos
-  React.useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.log('[CareerProgressBar] Render state:', {
-        isLoading,
-        hasData: !!data,
-        hasError: !!error,
-        errorMessage: error?.message,
-      });
-    }
-  }, [isLoading, data, error]);
-
   const handleClick = useCallback(() => {
-    router.push('/plandecarrera');
+    router.push('/career-plan');
   }, [router]);
 
   // AI_DECISION: Mostrar skeleton mientras carga en lugar de retornar null inmediatamente
@@ -82,14 +68,13 @@ export default function CareerProgressBar() {
 
   const progress = data;
 
-  // No mostrar si no hay nivel actual y no hay producción
-  if (!progress.currentLevel && progress.annualProduction === 0) {
-    return null;
-  }
-
   // Determinar nivel a mostrar (actual o siguiente si no hay actual)
   const displayLevel = progress.currentLevel || progress.nextLevel;
-  const levelName = displayLevel?.level || 'Sin nivel';
+
+  // AI_DECISION: Mostrar "Nivel 1 Junior" si no hay nivel actual asignado
+  // Justificación: Requisito explícito de UX para mostrar el nombre del nivel inicial en lugar de "Nivel Inicial"
+  const levelName = progress.currentLevel?.level || 'Nivel 1 Junior';
+
   const goalUsd = displayLevel?.annualGoalUsd || 0;
   const commissionPercentage = displayLevel?.percentage || '0';
 

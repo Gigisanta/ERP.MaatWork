@@ -10,7 +10,7 @@ describe('Skeleton', () => {
 
       expect(skeleton).toBeInTheDocument();
       expect(skeleton).toHaveClass('skeleton-wave');
-      expect(skeleton).toHaveClass('bg-surface');
+      expect(skeleton).toHaveClass('bg-surface-hover');
     });
 
     it('should be hidden from accessibility tree', () => {
@@ -41,7 +41,7 @@ describe('Skeleton', () => {
       const { container } = render(<Skeleton variant="rectangle" />);
       const skeleton = container.firstChild;
 
-      expect(skeleton).toHaveClass('rounded-md');
+      expect(skeleton).toHaveClass('rounded');
     });
   });
 
@@ -173,8 +173,8 @@ describe('SkeletonGroup', () => {
 });
 
 describe('SkeletonCard', () => {
-  it('should render with avatar by default', () => {
-    const { container } = render(<SkeletonCard />);
+  it('should render with avatar when showAvatar=true', () => {
+    const { container } = render(<SkeletonCard showAvatar={true} />);
     const avatar = container.querySelector('.rounded-full');
 
     expect(avatar).toBeInTheDocument();

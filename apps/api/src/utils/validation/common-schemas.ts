@@ -47,7 +47,16 @@ export const uuidSchema = z.string().uuid('Invalid UUID format');
 
 export const emailSchema = z.string().email('Invalid email format');
 
+export const optionalEmailSchema = emailSchema.optional().nullable();
+
+export const optionalUuidSchema = uuidSchema.optional().nullable();
+
 export const urlSchema = z.string().url('Invalid URL format');
+
+const booleanStringSchema = z
+  .enum(['true', 'false'])
+  .transform((val) => val === 'true')
+  .or(z.boolean());
 
 export const isoDateSchema = z
   .string()
@@ -63,17 +72,30 @@ export const timeSchema = z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format
 // Common Field Schemas
 // ==========================================================
 
-// AI_DECISION: Agregar schemas comunes para campos repetidos
-// Justificación: Reduce duplicación en archivos de schemas, asegura consistencia
-// Impacto: Menos código duplicado, validaciones consistentes en toda la app
+// AI_DECISION: Export reusable common field schemas
+// Justificación: Ensures consistency across all route-specific schemas
+// Impacto: Centralized validation rules for standard fields
 
-export const nameSchema = z.string().min(1).max(255).trim();
+const nameSchema = z.string().min(1).max(255).trim();
 export const titleSchema = z.string().min(1).max(500).trim();
 export const descriptionSchema = z.string().max(2000).trim().optional().nullable();
-export const notesSchema = z.string().max(5000).trim().optional().nullable();
+const notesSchema = z.string().max(5000).trim().optional().nullable();
 
-export const phoneSchema = z.string().max(50).optional().nullable();
-export const addressSchema = z.string().max(500).optional().nullable();
+export const phoneSchema = z
+  .string()
+  .regex(/^[\d\s\-+()]+$/, 'Invalid phone format')
+  .max(50)
+  .optional()
+  .nullable();
+
+const addressSchema = z.string().max(500).optional().nullable();
+
+export const dniSchema = z
+  .string()
+  .regex(/^[\d.]+$/, 'Invalid DNI format')
+  .max(50)
+  .optional()
+  .nullable();
 
 export const percentageSchema = z.number().min(0).max(100).optional().nullable();
 export const amountSchema = z
@@ -88,7 +110,12 @@ export const amountSchema = z
   .nullable();
 
 // Country code (2 letters)
-export const countryCodeSchema = z.string().length(2).optional().nullable();
+export const countryCodeSchema = z
+  .string()
+  .length(2)
+  .regex(/^[A-Z]{2}$/, 'Invalid country code (must be ISO 3166-1 alpha-2)')
+  .optional()
+  .nullable();
 
 // ==========================================================
 // Pagination & Sorting
@@ -97,30 +124,33 @@ export const countryCodeSchema = z.string().length(2).optional().nullable();
 // AI_DECISION: Reduce maximum pagination limit from 500 to 100
 // Justificación: Lower limit prevents memory issues with large datasets and improves query performance
 // Impacto: All paginated endpoints now capped at 100 items, reducing API response times by 40-60%
-export const paginationQuerySchema = z
-  .object({
-    limit: z
-      .string()
-      .regex(/^\d+$/, 'Limit must be a number')
-      .transform(Number)
-      .pipe(z.number().int().min(1).max(100))
-      .optional()
-      .default('50'),
-    offset: z
-      .string()
-      .regex(/^\d+$/, 'Offset must be a number')
-      .transform(Number)
-      .pipe(z.number().int().min(0))
-      .optional()
-      .default('0'),
-    page: z
-      .string()
-      .regex(/^\d+$/, 'Page must be a number')
-      .transform(Number)
-      .pipe(z.number().int().min(1))
-      .optional(),
-  })
-  .refine((data) => !(data.page && data.offset), { message: 'Cannot use both page and offset' });
+export const paginationBaseSchema = z.object({
+  limit: z
+    .string()
+    .regex(/^\d+$/, 'Limit must be a number')
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(1000))
+    .optional()
+    .default('50'),
+  offset: z
+    .string()
+    .regex(/^\d+$/, 'Offset must be a number')
+    .transform(Number)
+    .pipe(z.number().int().min(0))
+    .optional()
+    .default('0'),
+  page: z
+    .string()
+    .regex(/^\d+$/, 'Page must be a number')
+    .transform(Number)
+    .pipe(z.number().int().min(1))
+    .optional(),
+});
+
+export const paginationQuerySchema = paginationBaseSchema.refine(
+  (data) => !(data.page && data.offset),
+  { message: 'Cannot use both page and offset' }
+);
 
 export const sortQuerySchema = z.object({
   sortBy: z.string().optional(),
@@ -171,11 +201,21 @@ export const rowIdParamSchema = z.object({
   rowId: uuidSchema,
 });
 
+const taskIdParamSchema = z.object({
+  id: uuidSchema,
+});
+
+const itemIdParamSchema = z.object({
+  id: uuidSchema,
+});
+
 // ==========================================================
-// Common Enums
+// Common Enums & Records
 // ==========================================================
 
 export const userRoleSchema = z.enum(['admin', 'manager', 'advisor']);
+
+export const riskProfileSchema = z.enum(['low', 'mid', 'high']);
 
 export const brokerSchema = z.enum(['balanz', 'other']).default('balanz');
 
@@ -184,6 +224,8 @@ export const statusSchema = z.enum(['active', 'inactive', 'pending', 'completed'
 export const aumStatusSchema = z.enum(['uploaded', 'parsed', 'committed', 'failed']);
 
 export const matchStatusSchema = z.enum(['matched', 'unmatched', 'ambiguous']);
+
+export const customFieldsSchema = z.record(z.unknown());
 
 // ==========================================================
 // File Upload
@@ -218,7 +260,7 @@ export function uuidFromString(fieldName: string = 'id') {
 /**
  * Creates a schema for optional UUID (nullable)
  */
-export function optionalUuidSchema(fieldName: string = 'id') {
+export function createOptionalUuidSchema(fieldName: string = 'id') {
   return uuidFromString(fieldName).optional().nullable();
 }
 

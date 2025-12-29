@@ -8,13 +8,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, careerPlanLevels } from '@cactus/db';
+import { db, careerPlanLevels } from '@maatwork/db';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../auth/middlewares';
 import { calculateUserCareerProgress } from '../utils/career-plan';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   careerPlanLevels: {},
   eq: vi.fn(),

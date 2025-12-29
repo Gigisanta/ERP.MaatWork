@@ -5,6 +5,9 @@
  * Justificación: Validar fetching, creación, actualización y eliminación de portfolios
  * Impacto: Prevenir errores en gestión de carteras
  */
+import { useEntityWithComponents } from './useEntityWithComponents';
+import { getPortfolios, getPortfolioLinesBatch, createPortfolio, updatePortfolio, deletePortfolio,  } from '@/lib/api';
+
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
@@ -21,8 +24,7 @@ describe('usePortfolios', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    const { useEntityWithComponents } = require('./useEntityWithComponents');
-    useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
+        useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
   });
 
   it('debería retornar portfolios y funciones de gestión', () => {
@@ -47,14 +49,7 @@ describe('usePortfolios', () => {
   });
 
   it('debería pasar configuración correcta a useEntityWithComponents', () => {
-    const {
-      getPortfolios,
-      getPortfolioLinesBatch,
-      createPortfolio,
-      updatePortfolio,
-      deletePortfolio,
-    } = require('@/lib/api');
-
+    
     mockUseEntityWithComponents.mockReturnValue({
       entities: [],
       isLoading: false,

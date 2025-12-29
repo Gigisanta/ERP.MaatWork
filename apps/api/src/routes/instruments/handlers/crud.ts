@@ -3,8 +3,8 @@
  */
 
 import type { Request, Response } from 'express';
-import { db } from '@cactus/db';
-import { instruments, priceSnapshots } from '@cactus/db/schema';
+import { db } from '@maatwork/db';
+import { instruments, priceSnapshots } from '@maatwork/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import type {
   SymbolInfoResponse,
@@ -102,7 +102,7 @@ export async function createInstrument(req: Request, res: Response) {
             symbol: symbolUpper,
             errorType,
             pythonServiceUrl: PYTHON_SERVICE_URL,
-            hint: 'Analytics service may not be running. Start it with: pnpm -F @cactus/analytics-service dev',
+            hint: 'Analytics service may not be running. Start it with: pnpm -F @maatwork/analytics-service dev',
           },
           `Python analytics service unavailable (${errorType}), creating instrument without symbol info`
         );

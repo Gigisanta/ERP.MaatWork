@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Text, Spinner, Alert, Stack, Heading, Badge } from '@cactus/ui';
+import { Card, CardContent, Text, Spinner, Alert, Stack, Heading, Badge } from '@maatwork/ui';
 
 interface TechnicalSignalsProps {
   symbol: string;
@@ -21,7 +21,7 @@ export default function TechnicalSignals({ symbol }: TechnicalSignalsProps) {
 
   useEffect(() => {
     // AI_DECISION: Placeholder para indicadores técnicos (SMA, EMA, RSI, MACD, Bollinger Bands)
-    // Justificación: UI lista, cálculos técnicos disponibles en analytics-service (cactus_ingestors/utils/technical.py)
+    // Justificación: UI lista, cálculos técnicos disponibles en analytics-service (maatwork_ingestors/utils/technical.py)
     // Dependencies: Price history en DB, endpoints API para exponer cálculos técnicos
     // Impacto: Mejora análisis técnico una vez conectado con backend
     setLoading(false);

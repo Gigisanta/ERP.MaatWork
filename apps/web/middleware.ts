@@ -41,9 +41,12 @@ const protectedRoutes = [
 ];
 
 // Rutas públicas que no requieren autenticación
-const publicRoutes = ['/', '/login', '/register'];
+const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
 
-// ts-prune-ignore-next: Next.js middleware entrypoint discovered by filename
+// Configuración de JWT (Sincronizado con apps/api/src/auth/jwt.ts)
+const JWT_ISSUER = 'maatwork-api';
+const JWT_AUDIENCE = 'maatwork-web';
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -56,7 +59,10 @@ export async function middleware(request: NextRequest) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
         const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const { payload } = await jwtVerify(token, secret, {
+          issuer: JWT_ISSUER,
+          audience: JWT_AUDIENCE,
+        });
 
         // Verificar que el token no haya expirado
         const now = Math.floor(Date.now() / 1000);
@@ -88,7 +94,10 @@ export async function middleware(request: NextRequest) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
         const secret = new TextEncoder().encode(JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
+        const { payload } = await jwtVerify(token, secret, {
+          issuer: JWT_ISSUER,
+          audience: JWT_AUDIENCE,
+        });
         // Verificar que el token no haya expirado
         const now = Math.floor(Date.now() / 1000);
         if (payload.exp && payload.exp >= now) {
@@ -122,7 +131,10 @@ export async function middleware(request: NextRequest) {
     const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
 
     const secret = new TextEncoder().encode(JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret, {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
 
     // Verificar que el token no haya expirado
     const now = Math.floor(Date.now() / 1000);
@@ -143,7 +155,7 @@ export async function middleware(request: NextRequest) {
       }
     }
   } catch {
-    // Limpiar cookie inválida
+    // Limpiar cookie inválida (esto capturará fallos de emisor/audiencia)
     const response = NextResponse.redirect(new URL('/login', baseUrl));
     response.cookies.delete('token');
     return response;
@@ -152,7 +164,6 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// ts-prune-ignore-next: Next.js middleware matcher consumed by framework
 export const config = {
   matcher: [
     /*
@@ -160,7 +171,7 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, sw.js, manifest.json (PWA/static files)
+     * - icon, apple-icon, favicon.ico, sw.js, manifest.json (PWA/static files)
      * - *.png, *.jpg, *.svg, *.ico (static images)
      *
      * AI_DECISION: Excluir archivos estáticos del middleware
@@ -168,6 +179,6 @@ export const config = {
      *                causando errores de Service Worker registration
      * Impacto: PWA funciona correctamente, archivos estáticos no pasan por auth
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.json|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
+    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
   ],
 };

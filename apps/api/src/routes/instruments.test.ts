@@ -8,11 +8,11 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
-import { db, instruments, priceSnapshots } from '@cactus/db';
+import { db, instruments, priceSnapshots } from '@maatwork/db';
 import { requireAuth, requireRole } from '../auth/middlewares';
 
 // Mock dependencies
-vi.mock('@cactus/db', () => ({
+vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
   instruments: {},
   priceSnapshots: {},

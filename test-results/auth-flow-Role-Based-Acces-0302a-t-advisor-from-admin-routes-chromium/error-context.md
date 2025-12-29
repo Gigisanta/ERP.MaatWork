@@ -1,0 +1,212 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e7]:
+        - link "MaatWork" [ref=e8] [cursor=pointer]:
+          - /url: /home
+          - img [ref=e10]
+          - generic [ref=e13]: MaatWork
+        - 'button "Plan de carrera: Nivel 1 Junior, 50% completado" [ref=e15] [cursor=pointer]':
+          - generic [ref=e16]: Nivel 1 Junior
+          - generic [ref=e20]: 37.5% • 50%
+          - generic [ref=e21]: / 30.000 USD
+      - generic [ref=e22]:
+        - button "Notificaciones" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - 'button "Menú de usuario: Gio Santarelli" [ref=e29] [cursor=pointer]':
+          - generic [ref=e30]: G
+  - complementary "Navegación principal" [ref=e31]:
+    - generic [ref=e32]:
+      - navigation "Navegación principal" [ref=e33]:
+        - generic [ref=e34]:
+          - paragraph [ref=e35]: Principal
+          - link "👤 Contactos" [ref=e37] [cursor=pointer]:
+            - /url: /contacts
+            - generic [ref=e38]: 👤
+            - generic [ref=e39]: Contactos
+        - generic [ref=e40]:
+          - paragraph [ref=e41]: Inversiones
+          - generic [ref=e42]:
+            - link "📊 Carteras" [ref=e43] [cursor=pointer]:
+              - /url: /portfolios
+              - generic [ref=e44]: 📊
+              - generic [ref=e45]: Carteras
+            - link "📊 Benchmarks" [ref=e46] [cursor=pointer]:
+              - /url: /benchmarks
+              - generic [ref=e47]: 📊
+              - generic [ref=e48]: Benchmarks
+        - generic [ref=e49]:
+          - paragraph [ref=e50]: Equipos
+          - link "👨‍👩‍👧‍👦 Equipos" [ref=e52] [cursor=pointer]:
+            - /url: /teams
+            - generic [ref=e53]: 👨‍👩‍👧‍👦
+            - generic [ref=e54]: Equipos
+        - generic [ref=e55]:
+          - paragraph [ref=e56]: Métricas
+          - generic [ref=e57]:
+            - link "📈 Métricas de Contactos" [ref=e58] [cursor=pointer]:
+              - /url: /contacts/metrics
+              - generic [ref=e59]: 📈
+              - generic [ref=e60]: Métricas de Contactos
+            - link "📈 Analytics" [ref=e61] [cursor=pointer]:
+              - /url: /analytics
+              - generic [ref=e62]: 📈
+              - generic [ref=e63]: Analytics
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Automatización
+          - generic [ref=e66]:
+            - link "☰ Pipeline" [ref=e67] [cursor=pointer]:
+              - /url: /pipeline
+              - generic [ref=e68]: ☰
+              - generic [ref=e69]: Pipeline
+            - link "⚙️ Automations" [ref=e70] [cursor=pointer]:
+              - /url: /automations
+              - generic [ref=e71]: ⚙️
+              - generic [ref=e72]: Automations
+            - link "📚 Plan de Carrera" [ref=e73] [cursor=pointer]:
+              - /url: /career-plan
+              - generic [ref=e74]: 📚
+              - generic [ref=e75]: Plan de Carrera
+            - link "ℹ️ Notificaciones" [ref=e76] [cursor=pointer]:
+              - /url: /notifications
+              - generic [ref=e77]: ℹ️
+              - generic [ref=e78]: Notificaciones
+        - generic [ref=e79]:
+          - paragraph [ref=e80]: Herramientas
+          - generic [ref=e81]:
+            - link "🎓 Capacitaciones" [ref=e82] [cursor=pointer]:
+              - /url: /capacitaciones
+              - generic [ref=e83]: 🎓
+              - generic [ref=e84]: Capacitaciones
+            - link "📝 Recursos" [ref=e85] [cursor=pointer]:
+              - /url: /resources
+              - generic [ref=e86]: 📝
+              - generic [ref=e87]: Recursos
+            - link "📈 Finviz" [ref=e88] [cursor=pointer]:
+              - /url: https://finviz.com
+              - generic [ref=e89]: 📈
+              - generic [ref=e90]: Finviz
+            - link "💼 Productores Balanz" [ref=e91] [cursor=pointer]:
+              - /url: https://productores.balanz.com?forward=/home
+              - generic [ref=e92]: 💼
+              - generic [ref=e93]: Productores Balanz
+            - link "🛡️ Zurich Point" [ref=e94] [cursor=pointer]:
+              - /url: https://agentes.zurich.com.ar/AgentLoginOkta?ec=302&startURL=%2Fs%2F
+              - generic [ref=e95]: 🛡️
+              - generic [ref=e96]: Zurich Point
+        - generic [ref=e97]:
+          - paragraph [ref=e98]: Administración
+          - generic [ref=e99]:
+            - link "⚙️ Panel Principal" [ref=e100] [cursor=pointer]:
+              - /url: /admin
+              - generic [ref=e101]: ⚙️
+              - generic [ref=e102]: Panel Principal
+            - link "👥 Usuarios y Cuentas" [ref=e103] [cursor=pointer]:
+              - /url: /admin/users
+              - generic [ref=e104]: 👥
+              - generic [ref=e105]: Usuarios y Cuentas
+            - link "📈 AUM y Brokers" [ref=e106] [cursor=pointer]:
+              - /url: /admin/aum
+              - generic [ref=e107]: 📈
+              - generic [ref=e108]: AUM y Brokers
+            - link "📈 Performance" [ref=e109] [cursor=pointer]:
+              - /url: /admin/performance
+              - generic [ref=e110]: 📈
+              - generic [ref=e111]: Performance
+            - link "⚙️ Configuración AUM" [ref=e112] [cursor=pointer]:
+              - /url: /admin/settings/aum-advisors
+              - generic [ref=e113]: ⚙️
+              - generic [ref=e114]: Configuración AUM
+        - generic [ref=e115]:
+          - paragraph [ref=e116]: Perfil
+          - link "👤 Mi Perfil" [ref=e118] [cursor=pointer]:
+            - /url: /profile
+            - generic [ref=e119]: 👤
+            - generic [ref=e120]: Mi Perfil
+      - button "Colapsar menú" [ref=e122] [cursor=pointer]:
+        - generic [ref=e123]: ◀
+        - generic [ref=e124]: Colapsar
+  - main [ref=e125]:
+    - main [ref=e129]:
+      - generic [ref=e130]:
+        - region "Mi calendario" [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - heading "Mi Agenda" [level=2] [ref=e136]
+                - paragraph [ref=e137]: Gestiona tus eventos personales y de equipo
+              - generic [ref=e138]:
+                - generic [ref=e139]: G
+                - generic [ref=e140] [cursor=pointer]: Eventos de Gigilacabra
+                - switch "Eventos de Gigilacabra" [checked] [ref=e143] [cursor=pointer]
+            - generic [ref=e145]:
+              - status "Loading" [ref=e146]:
+                - generic [ref=e147]: Loading...
+              - paragraph [ref=e148]: Sincronizando calendario...
+        - region "Métricas del mes" [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - heading "Métricas del Mes" [level=3] [ref=e154]
+                - combobox [ref=e157] [cursor=pointer]:
+                  - generic: Objetivos vs Actuales
+                  - img [ref=e158]
+              - generic [ref=e163]:
+                - list [ref=e165]:
+                  - listitem [ref=e166]:
+                    - img "Actual legend icon" [ref=e167]
+                    - text: Actual
+                  - listitem [ref=e169]:
+                    - img "Objetivo legend icon" [ref=e170]
+                    - text: Objetivo
+                - application "Gráfico de comparación de objetivos vs actuales" [ref=e172]:
+                  - generic [ref=e188]:
+                    - generic [ref=e189]:
+                      - generic [ref=e191]: Nuevos Contactos
+                      - generic [ref=e193]: Primeras Reuniones
+                      - generic [ref=e195]: Segundas Reuniones
+                      - generic [ref=e197]: Nuevos Clientes
+                    - generic [ref=e198]:
+                      - generic [ref=e200]: "0"
+                      - generic [ref=e202]: "2000"
+                      - generic [ref=e204]: "4000"
+                      - generic [ref=e206]: "6000"
+                      - generic [ref=e208]: "8000"
+            - generic [ref=e209]:
+              - generic [ref=e213]:
+                - paragraph [ref=e214]: Nuevos Contactos
+                - generic [ref=e215]:
+                  - paragraph [ref=e216]: "0"
+                  - paragraph [ref=e217]: / 10
+                - generic [ref=e220]: 0%
+              - generic [ref=e224]:
+                - paragraph [ref=e225]: Primeras Reuniones
+                - generic [ref=e226]:
+                  - paragraph [ref=e227]: "0"
+                  - paragraph [ref=e228]: / 2
+                - generic [ref=e231]: 0%
+              - generic [ref=e235]:
+                - paragraph [ref=e236]: Segundas Reuniones
+                - generic [ref=e237]:
+                  - paragraph [ref=e238]: "0"
+                  - paragraph [ref=e239]: / 45
+                - generic [ref=e242]: 0%
+              - generic [ref=e246]:
+                - paragraph [ref=e247]: Nuevos Clientes
+                - generic [ref=e248]:
+                  - paragraph [ref=e249]: "0"
+                  - paragraph [ref=e250]: / 6090
+                - generic [ref=e253]: 0%
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e259] [cursor=pointer]:
+    - img [ref=e260]
+  - alert [ref=e263]
+  - generic [ref=e264]: "0"
+  - button "🐛 1" [ref=e265] [cursor=pointer]:
+    - text: 🐛
+    - generic [ref=e266]: "1"
+```

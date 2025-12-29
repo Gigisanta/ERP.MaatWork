@@ -65,9 +65,9 @@ export { Button, type ButtonProps } from './Button';
 **Comandos:**
 
 ```bash
-pnpm -F @cactus/ui build        # Compilar TypeScript + copiar CSS
-pnpm -F @cactus/ui test         # Vitest (Testing Library)
-pnpm -F @cactus/ui typecheck    # Verificar tipos
+pnpm -F @maatwork/ui build        # Compilar TypeScript + copiar CSS
+pnpm -F @maatwork/ui test         # Vitest (Testing Library)
+pnpm -F @maatwork/ui typecheck    # Verificar tipos
 ```
 
 ## Testing
@@ -105,12 +105,12 @@ describe('Button', () => {
 **Flujo de trabajo:**
 
 ```bash
-# 1. Modificar tipos en @cactus/ui
+# 1. Modificar tipos en @maatwork/ui
 # 2. Build del paquete
-pnpm -F @cactus/ui build
+pnpm -F @maatwork/ui build
 
 # 3. Luego typecheck en apps que lo usan
-pnpm -F @cactus/web typecheck
+pnpm -F @maatwork/web typecheck
 ```
 
 ## Anti-Patterns a Evitar

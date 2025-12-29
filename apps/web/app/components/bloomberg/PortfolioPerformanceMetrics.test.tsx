@@ -12,21 +12,23 @@ import PortfolioPerformanceMetrics from './PortfolioPerformanceMetrics';
 import { getPortfolioPerformance } from '@/lib/api/analytics';
 import type { Portfolio } from '@/types';
 
+import React from 'react';
+
 // Mock dependencies
 vi.mock('@/lib/api/analytics', () => ({
   getPortfolioPerformance: vi.fn(),
 }));
 
-vi.mock('@cactus/ui', () => ({
-  Card: ({ children, className }: any) => (
+vi.mock('@maatwork/ui', () => ({
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div data-testid="card" className={className}>
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: any) => <div className={className}>{children}</div>,
-  CardHeader: ({ children }: any) => <div>{children}</div>,
-  CardTitle: ({ children }: any) => <h3>{children}</h3>,
-  DataTable: ({ data, columns, emptyMessage }: any) => (
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+  DataTable: ({ data, columns, emptyMessage }: { data: unknown[]; columns: unknown[]; emptyMessage?: string }) => (
     <div>
       {data.length === 0 ? (
         <div>{emptyMessage}</div>
@@ -34,15 +36,15 @@ vi.mock('@cactus/ui', () => ({
         <table>
           <thead>
             <tr>
-              {columns.map((col: any) => (
+              {columns.map((col) => (
                 <th key={col.key}>{col.header}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {data.map((row: any, idx: number) => (
+            {data.map((row, idx) => (
               <tr key={idx}>
-                {columns.map((col: any) => (
+                {columns.map((col) => (
                   <td key={col.key}>{col.render(row)}</td>
                 ))}
               </tr>
@@ -52,15 +54,15 @@ vi.mock('@cactus/ui', () => ({
       )}
     </div>
   ),
-  Text: ({ children, size, weight, color, className }: any) => (
+  Text: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <span className={className}>{children}</span>
   ),
-  Stack: ({ children, direction, gap, align, justify }: any) => <div>{children}</div>,
-  Spinner: ({ size }: any) => <div data-testid="spinner">Loading...</div>,
-  Alert: ({ children, variant }: any) => <div role="alert">{children}</div>,
-  Select: ({ value, onValueChange, items }: any) => (
+  Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
+  Alert: ({ children }: { children: React.ReactNode }) => <div role="alert">{children}</div>,
+  Select: ({ value, onValueChange, items }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
-      {items.map((item: any) => (
+      {items.map((item) => (
         <option key={item.value} value={item.value}>
           {item.label}
         </option>

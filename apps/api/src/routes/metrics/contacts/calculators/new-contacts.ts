@@ -4,7 +4,7 @@
  * Calculates contacts that were created AND entered "Contactado" stage in the month
  */
 
-import { db, contacts } from '@cactus/db';
+import { db, contacts } from '@maatwork/db';
 import { and, isNull, gte, lte, inArray } from 'drizzle-orm';
 import { isDateInMonthRange } from '../helpers';
 import type { CalculatorContext } from '../types';
@@ -52,3 +52,11 @@ export async function calculateNewContacts(
     contactIdsEnteredContactadoInMonth,
   };
 }
+
+
+
+
+
+
+
+

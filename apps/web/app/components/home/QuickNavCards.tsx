@@ -12,7 +12,7 @@ import {
   Grid,
   GridItem,
   type IconName,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 
 interface NavCard {
   href: string;

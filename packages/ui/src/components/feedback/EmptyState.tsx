@@ -22,7 +22,7 @@ export interface EmptyStateProps {
  * Justificación: Animated empty states feel more polished and engaging
  * Impacto: Better perceived quality of the app
  */
-export default function EmptyState({
+export function EmptyState({
   title,
   description,
   icon,

@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import {
   users,
   contacts,
@@ -17,7 +17,7 @@ import {
   priceSnapshots,
   teamMembership,
   teams,
-} from '@cactus/db/schema';
+} from '@maatwork/db/schema';
 import { eq, desc, and, gte, sql, count, sum } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { dashboardKpisCacheUtil, normalizeCacheKey } from '../../utils/performance/cache';

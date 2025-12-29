@@ -4,7 +4,7 @@
  * POST /auth/register - User registration
  */
 import type { Request, Response } from 'express';
-import { db, users, teamMembershipRequests } from '@cactus/db';
+import { db, users, teamMembershipRequests } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { createAsyncHandler, HttpError } from '../../../utils/route-handler';
@@ -91,3 +91,11 @@ export const handleRegister = createAsyncHandler(async (req: Request, res: Respo
     requestId: req.requestId,
   });
 });
+
+
+
+
+
+
+
+

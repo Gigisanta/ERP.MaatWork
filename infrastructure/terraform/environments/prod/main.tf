@@ -1,5 +1,5 @@
 # =============================================================================
-# Cactus CRM - Production Environment
+# MaatWork - Production Environment
 # =============================================================================
 
 terraform {
@@ -7,15 +7,15 @@ terraform {
 
   # Uncomment and configure after creating the S3 bucket:
   # backend "s3" {
-  #   bucket         = "cactus-terraform-state"
+  #   bucket         = "maatwork-terraform-state"
   #   key            = "prod/terraform.tfstate"
   #   region         = "us-east-1"
   #   encrypt        = true
-  #   dynamodb_table = "cactus-terraform-locks"
+  #   dynamodb_table = "maatwork-terraform-locks"
   # }
 }
 
-module "cactus" {
+module "maatwork" {
   source = "../../"
 
   # Environment

@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { uploadAumFile } from '@/lib/api';
-import type { ApiErrorWithMessage } from '@/types/aum';
-import { Button, Select, Spinner, Text, ProgressBar } from '@cactus/ui';
+import type { ApiErrorWithMessage } from '@/types';
+import { Button, Select, Spinner, Text, ProgressBar } from '@maatwork/ui';
 import { logger, toLogContext } from '@/lib/logger';
 
 // AI_DECISION: File upload limits aligned with backend

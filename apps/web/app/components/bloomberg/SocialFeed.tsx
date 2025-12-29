@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@cactus/ui';
+import { Card, CardContent, Text, Spinner, Alert, Stack, Heading } from '@maatwork/ui';
 
 interface SocialFeedProps {
   symbol: string;
@@ -17,14 +17,13 @@ interface SocialFeedProps {
 
 export default function SocialFeed({ symbol }: SocialFeedProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   useEffect(() => {
-    // AI_DECISION: Placeholder para feed de redes sociales (Twitter/X, Reddit, StockTwits)
-    // Justificación: Baja prioridad - placeholder para feature potencial de análisis de sentimiento social
-    // Dependencies: API keys para plataformas sociales, gestión de rate limits, backend endpoints
-    // Impacto: Mejora análisis de sentimiento una vez implementada integración con APIs sociales
-    setLoading(false);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [symbol]);
 
   if (loading) {

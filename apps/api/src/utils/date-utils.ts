@@ -69,7 +69,7 @@ export function parseFechaDDMMYYYY(fechaStr: string | null | undefined): Date | 
  * formatDateDDMMYYYY(null); // ''
  * ```
  */
-export function formatDateDDMMYYYY(date: Date | null | undefined): string {
+function formatDateDDMMYYYY(date: Date | null | undefined): string {
   if (!date || isNaN(date.getTime())) {
     return '';
   }
@@ -93,7 +93,7 @@ export function formatDateDDMMYYYY(date: Date | null | undefined): string {
  * parseISODate('invalid'); // Returns null
  * ```
  */
-export function parseISODate(dateStr: string | null | undefined): Date | null {
+function parseISODate(dateStr: string | null | undefined): Date | null {
   if (!dateStr || !dateStr.trim()) {
     return null;
   }
@@ -140,7 +140,7 @@ export function parseISODate(dateStr: string | null | undefined): Date | null {
  * formatISODate(null); // ''
  * ```
  */
-export function formatISODate(date: Date | null | undefined): string {
+function formatISODate(date: Date | null | undefined): string {
   if (!date || isNaN(date.getTime())) {
     return '';
   }
@@ -158,7 +158,7 @@ export function formatISODate(date: Date | null | undefined): string {
  * @param fechaStr - Date string to validate
  * @returns true if valid, false otherwise
  */
-export function isValidFechaDDMMYYYY(fechaStr: string | null | undefined): boolean {
+function isValidFechaDDMMYYYY(fechaStr: string | null | undefined): boolean {
   return parseFechaDDMMYYYY(fechaStr) !== null;
 }
 
@@ -168,6 +168,14 @@ export function isValidFechaDDMMYYYY(fechaStr: string | null | undefined): boole
  * @param dateStr - Date string to validate
  * @returns true if valid, false otherwise
  */
-export function isValidISODate(dateStr: string | null | undefined): boolean {
+function isValidISODate(dateStr: string | null | undefined): boolean {
   return parseISODate(dateStr) !== null;
 }
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
 # Guía Completa de Base de Datos
 
-Esta guía consolida toda la información sobre optimización, configuración y mejores prácticas de base de datos para el proyecto CACTUS CRM.
+Esta guía consolida toda la información sobre optimización, configuración y mejores prácticas de base de datos para el proyecto MAATWORK.
 
 ## Índice
 

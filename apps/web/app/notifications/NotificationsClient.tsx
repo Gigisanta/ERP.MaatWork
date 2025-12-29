@@ -26,7 +26,7 @@ import {
   TabsTrigger,
   TabsContent,
   cn,
-} from '@cactus/ui';
+} from '@maatwork/ui';
 import { notificationKeys, markAsRead, markAllAsRead } from '@/lib/api/notifications';
 import type {
   Notification,
@@ -245,3 +245,11 @@ export default function NotificationsClient() {
     </div>
   );
 }
+
+
+
+
+
+
+
+

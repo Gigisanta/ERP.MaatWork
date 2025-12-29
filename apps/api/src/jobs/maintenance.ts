@@ -10,7 +10,7 @@
  * Impacto: Maintains query performance, prevents index bloat, keeps statistics accurate
  */
 
-import { db } from '@cactus/db';
+import { db } from '@maatwork/db';
 import { sql } from 'drizzle-orm';
 import pino from 'pino';
 

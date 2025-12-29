@@ -5,7 +5,7 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { db, monthlyGoals } from '@cactus/db';
+import { db, monthlyGoals } from '@maatwork/db';
 import { eq, and } from 'drizzle-orm';
 import { requireAuth } from '../../auth/middlewares';
 import { z } from 'zod';

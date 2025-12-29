@@ -6,8 +6,7 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Stack } from '@cactus/ui';
-import { SkeletonPageHeader, SkeletonGrid } from '../components/SkeletonLoader';
+import { Stack, SkeletonPageHeader, SkeletonGrid } from '@maatwork/ui';
 
 export default function PortfoliosLoading() {
   return (

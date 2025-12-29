@@ -1,7 +1,7 @@
 # Memoria: Flujos de Trabajo Comunes
 
 ## Propósito
-Guía paso a paso para tareas comunes de desarrollo en el proyecto CACTUS CRM: crear endpoints, componentes, migraciones y hacer refactors.
+Guía paso a paso para tareas comunes de desarrollo en el proyecto MAATWORK: crear endpoints, componentes, migraciones y hacer refactors.
 
 ## Contexto
 Usar esta memoria cuando:
@@ -149,12 +149,12 @@ Usar esta memoria cuando:
 
 4. **Build del Paquete**
    ```bash
-   pnpm -F @cactus/ui build
+   pnpm -F @maatwork/ui build
    ```
 
 5. **Verificar Tipos Antes de Usar en Web**
    ```bash
-   pnpm -F @cactus/web typecheck
+   pnpm -F @maatwork/web typecheck
    ```
 
 ### Verificaciones
@@ -162,7 +162,7 @@ Usar esta memoria cuando:
 - [ ] Export específico en `index.ts` (NO `export *`)
 - [ ] Tipos exportados explícitamente (`type ComponentNameProps`)
 - [ ] Test co-ubicado creado
-- [ ] Build exitoso: `pnpm -F @cactus/ui build`
+- [ ] Build exitoso: `pnpm -F @maatwork/ui build`
 - [ ] Typecheck pasa en apps que lo usan
 
 ### Referencias
@@ -193,7 +193,7 @@ Usar esta memoria cuando:
 
 2. **Generar Migración**
    ```bash
-   pnpm -F @cactus/db generate
+   pnpm -F @maatwork/db generate
    # Esto crea archivo en packages/db/migrations/
    ```
 
@@ -205,7 +205,7 @@ Usar esta memoria cuando:
 
 4. **Aplicar Migración**
    ```bash
-   pnpm -F @cactus/db migrate
+   pnpm -F @maatwork/db migrate
    ```
 
 5. **Verificar en Base de Datos** (opcional)
@@ -217,9 +217,9 @@ Usar esta memoria cuando:
 
 ### Verificaciones
 - [ ] Schema modificado en `packages/db/src/schema.ts`
-- [ ] Migración generada: `pnpm -F @cactus/db generate`
+- [ ] Migración generada: `pnpm -F @maatwork/db generate`
 - [ ] SQL revisado y correcto
-- [ ] Migración aplicada: `pnpm -F @cactus/db migrate`
+- [ ] Migración aplicada: `pnpm -F @maatwork/db migrate`
 - [ ] Sin errores en aplicación
 
 ### Referencias
@@ -246,8 +246,8 @@ Usar esta memoria cuando:
 
 2. **Construir Paquetes Compartidos**
    ```bash
-   pnpm -F @cactus/ui build
-   pnpm -F @cactus/db build
+   pnpm -F @maatwork/ui build
+   pnpm -F @maatwork/db build
    ```
 
 3. **Hacer Cambios Incrementales**
@@ -298,7 +298,7 @@ Antes de hacer commit:
 pnpm typecheck && pnpm lint && pnpm test
 
 # Si hay cambios en paquetes compartidos
-pnpm -F @cactus/ui build && pnpm -F @cactus/db build
+pnpm -F @maatwork/ui build && pnpm -F @maatwork/db build
 pnpm typecheck
 ```
 

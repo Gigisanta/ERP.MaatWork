@@ -8,16 +8,17 @@
 
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { canImportFiles } from '@/lib/auth-helpers';
 import { useAumRows } from '@/lib/api-hooks';
 import { resetAumSystem } from '@/lib/api/aum';
+import type { AumRow } from '@/types';
 import { AumErrorBoundary } from './components/AumErrorBoundary';
-import { AumFiltersBar } from './components/AumFiltersBar';
 import { AumAdminActions } from './components/AumAdminActions';
 import { AumVirtualTable } from './components/AumVirtualTable';
 import { AumPagination } from './components/AumPagination';
+import { AumFiltersBar } from './components/AumFiltersBar';
 import { AdvisorAumSummary } from './components/AdvisorAumSummary';
 import FileUploader from '../components/FileUploader';
 import AdvisorProfileModal from '../components/AdvisorProfileModal';
@@ -26,10 +27,9 @@ import { useAumRowsState } from './hooks/useAumRowsState';
 import { useDebouncedValue } from './hooks/useDebouncedState';
 import { useUrlSync } from './hooks/useUrlSync';
 import { AUM_ROWS_CONFIG } from './lib/aumRowsConstants';
-import { useEffect } from 'react';
 import { logger } from '@/lib/logger';
-import { Breadcrumbs, type BreadcrumbItem } from '@cactus/ui';
-import ConfirmDialog from '@/app/components/ConfirmDialog';
+import { Breadcrumbs, type BreadcrumbItem } from '@maatwork/ui';
+import { ConfirmDialog } from '@maatwork/ui';
 
 // AI_DECISION: Agregar breadcrumbs para mejorar navegación
 // Justificación: Permite a los usuarios saber dónde están y volver fácilmente
@@ -175,14 +175,14 @@ export default function AumRowsPage() {
                     <span>
                       Sin asesor:{' '}
                       <strong className="text-yellow-600">
-                        {rows.filter((r) => !r.matchedUserId).length}
+                        {rows.filter((r: AumRow) => !r.matchedUserId).length}
                       </strong>
                     </span>
                     <span>•</span>
                     <span>
                       Normalizadas:{' '}
                       <strong className="text-green-600">
-                        {rows.filter((r) => r.isNormalized).length}
+                        {rows.filter((r: AumRow) => r.isNormalized).length}
                       </strong>
                     </span>
                   </div>
@@ -203,10 +203,10 @@ export default function AumRowsPage() {
                 status={state.filters.status}
                 searchTerm={state.search.term}
                 onlyUpdated={state.onlyUpdated}
-                onBrokerChange={(value) => actions.setFilters({ broker: value })}
-                onStatusChange={(value) => actions.setFilters({ status: value })}
-                onSearchChange={(term) => actions.setSearchTerm(term)}
-                onOnlyUpdatedChange={(checked) => actions.setOnlyUpdated(checked)}
+                onBrokerChange={(value: string) => actions.setFilters({ broker: value })}
+                onStatusChange={(value: string) => actions.setFilters({ status: value })}
+                onSearchChange={(term: string) => actions.setSearchTerm(term)}
+                onOnlyUpdatedChange={(checked: boolean) => actions.setOnlyUpdated(checked)}
               />
 
               {canImport && (
@@ -255,8 +255,8 @@ export default function AumRowsPage() {
                       <div className="flex gap-2 mt-0.5">
                         <span className="text-xs text-slate-300">
                           {totalRows.toLocaleString()} cuentas •{' '}
-                          {rows.filter((r) => !r.matchedUserId).length} sin asesor •{' '}
-                          {rows.filter((r) => r.isNormalized).length} normalizadas
+                          {rows.filter((r: AumRow) => !r.matchedUserId).length} sin asesor •{' '}
+                          {rows.filter((r: AumRow) => r.isNormalized).length} normalizadas
                         </span>
                       </div>
                     )}

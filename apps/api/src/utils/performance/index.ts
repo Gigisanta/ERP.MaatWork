@@ -3,5 +3,12 @@
  */
 
 // Re-export all performance utilities
-export * from './cache';
-export * from './rate-limiter';
+;
+
+export {
+  RateLimiter,
+  RATE_LIMIT_PRESETS,
+  
+  setupRateLimiterCleanup,
+  
+} from './rate-limiter';

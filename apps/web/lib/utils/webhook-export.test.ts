@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { sendContactsToWebhook } from './webhook-export';
-import type { Contact } from '@/types/contact';
+import type { Contact } from '@maatwork/types';
 import { ApiError } from '../api-client';
 import * as contactsApi from '../api/contacts';
 

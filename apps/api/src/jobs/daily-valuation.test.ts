@@ -6,55 +6,102 @@
  * Impacto: Prevenir errores en valuación de carteras
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { DailyValuationJob, runDailyValuationJob, runPriceBackfillJob } from './daily-valuation';
-import { db, instruments, priceSnapshots, brokerPositions, aumSnapshots } from '@cactus/db';
-import axios from 'axios';
+import { db, instruments, priceSnapshots, brokerPositions, aumSnapshots } from '@maatwork/db';
 
 // Mock dependencies
-vi.mock('@cactus/db', async () => {
-  const actual = await vi.importActual('@cactus/db');
+vi.mock('@maatwork/db', async () => {
+  const actual = await vi.importActual('@maatwork/db');
   return {
     ...actual,
     db: vi.fn(),
-    instruments: {},
-    priceSnapshots: {},
-    brokerPositions: {},
-    aumSnapshots: {},
-    eq: vi.fn(),
-    and: vi.fn(),
-    sql: vi.fn(),
-    desc: vi.fn(),
-    lte: vi.fn(),
+    instruments: { id: 'instruments_id', symbol: 'instruments_symbol', active: 'instruments_active', currency: 'instruments_currency', name: 'instruments_name' },
+    priceSnapshots: { instrumentId: 'priceSnapshots_instrumentId', closePrice: 'priceSnapshots_closePrice', currency: 'priceSnapshots_currency', asOfDate: 'priceSnapshots_asOfDate', source: 'priceSnapshots_source' },
+    brokerPositions: { marketValue: 'brokerPositions_marketValue', brokerAccountId: 'brokerPositions_brokerAccountId', instrumentId: 'brokerPositions_instrumentId', asOfDate: 'brokerPositions_asOfDate' },
+    aumSnapshots: { contactId: 'aumSnapshots_contactId', date: 'aumSnapshots_date', aumTotal: 'aumSnapshots_aumTotal' },
   };
 });
 
-vi.mock('@cactus/db/schema', async () => {
-  const actual = await vi.importActual('@cactus/db/schema');
+vi.mock('@maatwork/db/schema', async () => {
+  const actual = await vi.importActual('@maatwork/db/schema');
   return {
     ...actual,
-    instruments: {},
-    priceSnapshots: {},
-    brokerPositions: {},
-    brokerBalances: {},
-    brokerAccounts: {},
-    aumSnapshots: {},
-    clientPortfolioAssignments: {},
-    portfolioMonitoringSnapshot: {},
-    portfolioMonitoringDetails: {},
-    portfolioTemplateLines: {},
-    contacts: {},
+    instruments: { id: 'instruments_id', symbol: 'instruments_symbol', active: 'instruments_active', currency: 'instruments_currency', name: 'instruments_name' },
+    priceSnapshots: { instrumentId: 'priceSnapshots_instrumentId', closePrice: 'priceSnapshots_closePrice', currency: 'priceSnapshots_currency', asOfDate: 'priceSnapshots_asOfDate', source: 'priceSnapshots_source' },
+    brokerPositions: { marketValue: 'brokerPositions_marketValue', brokerAccountId: 'brokerPositions_brokerAccountId', instrumentId: 'brokerPositions_instrumentId', asOfDate: 'brokerPositions_asOfDate' },
+    brokerBalances: { contactId: 'brokerBalances_contactId' },
+    brokerAccounts: { id: 'brokerAccounts_id', contactId: 'brokerAccounts_contactId' },
+    aumSnapshots: { contactId: 'aumSnapshots_contactId', date: 'aumSnapshots_date', aumTotal: 'aumSnapshots_aumTotal' },
+    clientPortfolioAssignments: { contactId: 'clientPortfolioAssignments_contactId', templateId: 'clientPortfolioAssignments_templateId', id: 'clientPortfolioAssignments_id', status: 'clientPortfolioAssignments_status', startDate: 'clientPortfolioAssignments_startDate', endDate: 'clientPortfolioAssignments_endDate' },
+    portfolioMonitoringSnapshot: { id: 'portfolioMonitoringSnapshot_id', contactId: 'portfolioMonitoringSnapshot_contactId', asOfDate: 'portfolioMonitoringSnapshot_asOfDate', totalDeviationPct: 'portfolioMonitoringSnapshot_totalDeviationPct' },
+    portfolioMonitoringDetails: { snapshotId: 'portfolioMonitoringDetails_snapshotId' },
+    portfolioTemplateLines: { templateId: 'portfolioTemplateLines_templateId', targetType: 'portfolioTemplateLines_targetType', assetClass: 'portfolioTemplateLines_assetClass', instrumentId: 'portfolioTemplateLines_instrumentId', targetWeight: 'portfolioTemplateLines_targetWeight' },
+    contacts: { id: 'contacts_id' },
   };
 });
 
-vi.mock('axios', () => ({
-  default: {
-    post: vi.fn(),
-  },
-}));
+vi.mock('drizzle-orm', async () => {
+  const actual = await vi.importActual('drizzle-orm');
+  return {
+    ...actual,
+    eq: vi.fn(() => ({})),
+    and: vi.fn(() => ({})),
+    desc: vi.fn(() => ({})),
+    lte: vi.fn(() => ({})),
+    sql: Object.assign(
+      (strings: TemplateStringsArray, ...values: unknown[]) => ({
+        sql: strings.join('?'),
+        values,
+        as: vi.fn((alias: string) => ({ sql: strings.join('?'), values, alias })),
+      }),
+      {
+        raw: vi.fn((str: string) => ({
+          sql: str,
+          values: [],
+          as: vi.fn((alias: string) => ({ sql: str, values: [], alias })),
+        })),
+      }
+    ),
+    sum: vi.fn(() => ({})),
+  };
+});
+
+// Mock fetch globally
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 const mockDb = vi.mocked(db);
-const mockAxios = vi.mocked(axios);
+
+// Helper to create a chainable mock
+const createChainableMock = (finalValue: unknown) => {
+  const mock = vi.fn().mockImplementation(() => mock) as any;
+  
+  // Drizzle common methods
+  mock.select = vi.fn().mockReturnValue(mock);
+  mock.from = vi.fn().mockReturnValue(mock);
+  mock.where = vi.fn().mockReturnValue(mock);
+  mock.orderBy = vi.fn().mockReturnValue(mock);
+  mock.limit = vi.fn().mockReturnValue(mock);
+  mock.offset = vi.fn().mockReturnValue(mock);
+  mock.innerJoin = vi.fn().mockReturnValue(mock);
+  mock.leftJoin = vi.fn().mockReturnValue(mock);
+  mock.groupBy = vi.fn().mockReturnValue(mock);
+  mock.insert = vi.fn().mockReturnValue(mock);
+  mock.values = vi.fn().mockReturnValue(mock);
+  mock.onConflictDoUpdate = vi.fn().mockReturnValue(mock);
+  mock.onConflictDoNothing = vi.fn().mockReturnValue(mock);
+  mock.update = vi.fn().mockReturnValue(mock);
+  mock.set = vi.fn().mockReturnValue(mock);
+  mock.delete = vi.fn().mockReturnValue(mock);
+  mock.returning = vi.fn().mockReturnValue(mock);
+  
+  // The terminal method returns the promise
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+    Promise.resolve(finalValue).then(onRes, onRej);
+  
+  return mock as unknown as ReturnType<typeof db>;
+};
 
 describe('DailyValuationJob', () => {
   let job: DailyValuationJob;
@@ -67,54 +114,37 @@ describe('DailyValuationJob', () => {
   describe('run', () => {
     it('debería ejecutar job completo exitosamente', async () => {
       const mockInstruments = [{ id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' }];
+      const mockPrices = {
+        AAPL: {
+          price: 150.0,
+          currency: 'USD',
+          date: '2024-01-01',
+          source: 'yfinance',
+          success: true,
+        },
+      };
 
-      const mockSelect = vi.fn().mockReturnValueOnce({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(mockInstruments),
+      mockDb.mockImplementation(() =>
+        createChainableMock([
+          { id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' },
+          { contactId: 'c1', aumTotal: '1000', templateId: 't1', assignmentId: 'a1' },
+          { targetType: 'asset_class', assetClass: 'Equities', targetWeight: '0.5' },
+        ])
+      );
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: mockPrices,
         }),
       });
-
-      mockDb.mockReturnValue({
-        select: mockSelect,
-      } as any);
-
-      mockAxios.post.mockResolvedValue({
-        data: {
-          success: true,
-          data: {
-            AAPL: {
-              price: 150.0,
-              currency: 'USD',
-              date: '2024-01-01',
-              source: 'yfinance',
-              success: true,
-            },
-          },
-        },
-      });
-
-      const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockResolvedValue([]),
-      });
-
-      mockDb.mockReturnValue({
-        select: mockSelect,
-        insert: mockInsert,
-      } as any);
 
       await expect(job.run()).resolves.not.toThrow();
     });
 
     it('debería manejar cuando no hay instrumentos activos', async () => {
-      const mockSelect = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue([]),
-        }),
-      });
-
-      mockDb.mockReturnValue({
-        select: mockSelect,
-      } as any);
+      mockDb.mockImplementation(() => createChainableMock([]));
 
       await expect(job.run()).resolves.not.toThrow();
     });
@@ -123,16 +153,7 @@ describe('DailyValuationJob', () => {
   describe('getActiveInstruments', () => {
     it('debería obtener instrumentos activos', async () => {
       const mockInstruments = [{ id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' }];
-
-      const mockSelect = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(mockInstruments),
-        }),
-      });
-
-      mockDb.mockReturnValue({
-        select: mockSelect,
-      } as any);
+      mockDb.mockReturnValue(createChainableMock(mockInstruments));
 
       const result = await (job as any).getActiveInstruments();
       expect(result).toEqual(mockInstruments);
@@ -143,8 +164,9 @@ describe('DailyValuationJob', () => {
     it('debería obtener precios del servicio Python', async () => {
       const instrumentsList = [{ id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' }];
 
-      mockAxios.post.mockResolvedValue({
-        data: {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
           success: true,
           data: {
             AAPL: {
@@ -155,7 +177,7 @@ describe('DailyValuationJob', () => {
               success: true,
             },
           },
-        },
+        }),
       });
 
       const result = await (job as any).fetchCurrentPrices(instrumentsList);
@@ -167,29 +189,19 @@ describe('DailyValuationJob', () => {
     it('debería usar fallback cuando el servicio falla', async () => {
       const instrumentsList = [{ id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' }];
 
-      mockAxios.post.mockRejectedValue(new Error('Service error'));
+      mockFetch.mockRejectedValue(new Error('Service error'));
 
-      const mockSelect = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue([
-                {
-                  instrumentId: 'inst-1',
-                  symbol: 'AAPL',
-                  closePrice: '150.00',
-                  currency: 'USD',
-                  asOfDate: new Date(),
-                },
-              ]),
-            }),
-          }),
-        }),
-      });
+      const mockFallbackPrices = [
+        {
+          instrumentId: 'inst-1',
+          symbol: 'AAPL',
+          closePrice: '150.00',
+          currency: 'USD',
+          asOfDate: new Date(),
+        },
+      ];
 
-      mockDb.mockReturnValue({
-        select: mockSelect,
-      } as any);
+      mockDb.mockReturnValue(createChainableMock(mockFallbackPrices));
 
       const result = await (job as any).fetchCurrentPrices(instrumentsList);
 
@@ -203,31 +215,13 @@ describe('DailyValuationJob', () => {
       const mockPositions = [
         {
           contactId: 'contact-1',
-          instrumentId: 'inst-1',
-          quantity: '10',
-          marketValue: '1500.00',
-          symbol: 'AAPL',
+          aumTotal: '1500.00',
         },
       ];
 
-      const mockSelect = vi.fn().mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          innerJoin: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(mockPositions),
-          }),
-        }),
-      });
-
-      const mockInsert = vi.fn().mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          onConflictDoUpdate: vi.fn().mockResolvedValue([]),
-        }),
-      });
-
-      mockDb.mockReturnValue({
-        select: mockSelect,
-        insert: mockInsert,
-      } as any);
+      mockDb
+        .mockReturnValueOnce(createChainableMock(mockPositions)) // select
+        .mockReturnValueOnce(createChainableMock([]));           // insert
 
       await expect((job as any).calculateAUMByContact(date)).resolves.not.toThrow();
     });
@@ -249,33 +243,21 @@ describe('runPriceBackfillJob', () => {
   it('debería ejecutar backfill de precios', async () => {
     const mockInstruments = [{ id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' }];
 
-    const mockSelect = vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(mockInstruments),
-      }),
-    });
-
-    mockAxios.post.mockResolvedValue({
-      data: {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
         success: true,
         total_records: 100,
         symbols_count: 1,
         data: {
-          AAPL: [{ date: '2024-01-01', close_price: 150.0, currency: 'USD' }],
+          AAPL: [{ date: '2024-01-01', price: 150.0, currency: 'USD' }],
         },
-      },
-    });
-
-    const mockInsert = vi.fn().mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        onConflictDoNothing: vi.fn().mockResolvedValue([]),
       }),
     });
 
-    mockDb.mockReturnValue({
-      select: mockSelect,
-      insert: mockInsert,
-    } as any);
+    mockDb
+      .mockReturnValueOnce(createChainableMock(mockInstruments)) // getActiveInstruments
+      .mockReturnValueOnce(createChainableMock([])); // insert in loop
 
     await expect(runPriceBackfillJob(365)).resolves.not.toThrow();
   });

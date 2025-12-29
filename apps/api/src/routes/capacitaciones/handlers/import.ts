@@ -5,7 +5,7 @@
  */
 import type { Request, Response, NextFunction } from 'express';
 import { promises as fs } from 'node:fs';
-import { db, capacitaciones } from '@cactus/db';
+import { db, capacitaciones } from '@maatwork/db';
 import { createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { transactionWithLogging } from '../../../utils/database/db-transactions';
 import {
@@ -43,7 +43,7 @@ export const handleImportCapacitaciones = [
       throw new HttpError(401, 'Unauthorized');
     }
 
-    const file = (req as any).file as Express.Multer.File | undefined;
+    const file = req.file;
     if (!file) {
       req.log?.warn?.({ userId }, 'Upload request sin archivo');
       throw new HttpError(400, 'No file uploaded');

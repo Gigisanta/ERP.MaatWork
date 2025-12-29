@@ -6,7 +6,7 @@
  * Impacto: Prevenir errores por configuración incorrecta
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { config } from './config';
 
 describe('config', () => {
@@ -65,18 +65,6 @@ describe('config', () => {
     });
   });
 
-  describe('config.n8nUrl', () => {
-    it('debería tener valor por defecto', () => {
-      expect(config.n8nUrl).toBeDefined();
-      expect(config.n8nUrl).toBe('http://localhost:5678');
-    });
-
-    it('debería usar NEXT_PUBLIC_N8N_URL si está definida', () => {
-      // Config is evaluated at build time, just verify it has a valid URL
-      expect(config.n8nUrl).toMatch(/^https?:\/\//);
-    });
-  });
-
   describe('config.environment', () => {
     it('debería detectar NODE_ENV correctamente', () => {
       expect(config.environment).toBeDefined();
@@ -100,10 +88,10 @@ describe('config', () => {
   });
 
   describe('config.isProduction', () => {
-    it('debería ser true cuando NODE_ENV es production', () => {
+    it('debería ser true cuando NODE_ENV es production', async () => {
       process.env.NODE_ENV = 'production';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.isProduction).toBe(true);
       expect(testConfig.isDevelopment).toBe(false);
@@ -111,42 +99,42 @@ describe('config', () => {
   });
 
   describe('config.features', () => {
-    it('debería tener analytics deshabilitado por defecto', () => {
+    it('debería tener analytics deshabilitado por defecto', async () => {
       delete process.env.NEXT_PUBLIC_ENABLE_ANALYTICS;
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.analytics).toBe(false);
     });
 
-    it('debería habilitar analytics cuando NEXT_PUBLIC_ENABLE_ANALYTICS es true', () => {
+    it('debería habilitar analytics cuando NEXT_PUBLIC_ENABLE_ANALYTICS es true', async () => {
       process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = 'true';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.analytics).toBe(true);
     });
 
-    it('debería tener debug deshabilitado por defecto', () => {
+    it('debería tener debug deshabilitado por defecto', async () => {
       delete process.env.NEXT_PUBLIC_DEBUG;
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(false);
     });
 
-    it('debería habilitar debug cuando NEXT_PUBLIC_DEBUG es true', () => {
+    it('debería habilitar debug cuando NEXT_PUBLIC_DEBUG es true', async () => {
       process.env.NEXT_PUBLIC_DEBUG = 'true';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(true);
     });
 
-    it('debería mantener debug deshabilitado cuando NEXT_PUBLIC_DEBUG no es true', () => {
+    it('debería mantener debug deshabilitado cuando NEXT_PUBLIC_DEBUG no es true', async () => {
       process.env.NEXT_PUBLIC_DEBUG = 'false';
       vi.resetModules();
-      const { config: testConfig } = require('./config');
+      const { config: testConfig } = await import('./config');
 
       expect(testConfig.features.debug).toBe(false);
     });
@@ -158,7 +146,6 @@ describe('config', () => {
       expect(config).toBeDefined();
       expect(config).toHaveProperty('apiUrl');
       expect(config).toHaveProperty('apiTimeout');
-      expect(config).toHaveProperty('n8nUrl');
       expect(config).toHaveProperty('environment');
       expect(config).toHaveProperty('isDevelopment');
       expect(config).toHaveProperty('isProduction');

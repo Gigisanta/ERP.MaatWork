@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { Search, X } from 'lucide-react';
-import { Input, Text, Stack, Spinner } from '@cactus/ui';
+import { Input, Text, Stack, Spinner } from '@maatwork/ui';
 import { searchInstruments } from '@/lib/api';
 import type { InstrumentSearchResult } from '@/types';
 import { logger, toLogContext } from '@/lib/logger';

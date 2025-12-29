@@ -1,5 +1,5 @@
 {
-  "name": "@cactus/types",
+  "name": "@maatwork/types",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -28,12 +28,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "audit:code": "knip --workspace .",
     "clean": "rimraf dist"
   },
   "devDependencies": {
     "rimraf": "^5.0.10",
-    "typescript": "^5.9.3",
-    "@types/lodash": "^4.14.202"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22.0.0 <25.0.0"
