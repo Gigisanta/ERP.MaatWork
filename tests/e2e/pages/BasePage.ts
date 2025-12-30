@@ -40,7 +40,9 @@ export abstract class BasePage {
    * Handle standard confirmation dialogs
    */
   async confirmDialog() {
-    const confirmBtn = this.page.getByRole('button', { name: /confirmar|sí|yes|delete|eliminar/i }).last();
+    const confirmBtn = this.page
+      .getByRole('button', { name: /confirmar|sí|yes|delete|eliminar/i })
+      .last();
     await expect(confirmBtn).toBeVisible();
     await confirmBtn.click();
   }
@@ -59,4 +61,3 @@ export abstract class BasePage {
     await this.page.reload();
   }
 }
-

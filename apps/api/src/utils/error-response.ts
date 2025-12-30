@@ -294,17 +294,14 @@ function isErrorOfType(error: unknown, statusCode: number): boolean {
 /**
  * Helpers para verificar tipos comunes de errores
  */
-const isNotFoundError = (error: unknown): boolean =>
-  isErrorOfType(error, HTTP_STATUS.NOT_FOUND);
+const isNotFoundError = (error: unknown): boolean => isErrorOfType(error, HTTP_STATUS.NOT_FOUND);
 
 const isUnauthorizedError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.UNAUTHORIZED);
 
-const isForbiddenError = (error: unknown): boolean =>
-  isErrorOfType(error, HTTP_STATUS.FORBIDDEN);
+const isForbiddenError = (error: unknown): boolean => isErrorOfType(error, HTTP_STATUS.FORBIDDEN);
 
 const isValidationError = (error: unknown): boolean =>
   isErrorOfType(error, HTTP_STATUS.BAD_REQUEST);
 
-const isConflictError = (error: unknown): boolean =>
-  isErrorOfType(error, HTTP_STATUS.CONFLICT);
+const isConflictError = (error: unknown): boolean => isErrorOfType(error, HTTP_STATUS.CONFLICT);

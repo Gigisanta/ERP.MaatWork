@@ -33,4 +33,3 @@ export const updatePreferencesSchema = z.object({
 export const snoozeNotificationSchema = z.object({
   until: z.string(), // ISO datetime
 });
-

@@ -30,9 +30,3 @@ export interface PipelineStageWithContacts extends PipelineStage {
 export interface PipelineBoard {
   [stageId: string]: Contact[];
 }
-
-
-
-
-
-

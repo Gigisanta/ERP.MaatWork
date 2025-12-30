@@ -24,7 +24,11 @@ import { refreshGoogleToken } from '../../../jobs/google-token-refresh';
 import { z } from 'zod';
 import { getEventsQuerySchema, connectTeamCalendarSchema, assignEventSchema } from '../schemas';
 import { checkTeamAccess } from '../../teams/handlers/utils';
-import { contactsListCacheUtil, calendarEventsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
+import {
+  contactsListCacheUtil,
+  calendarEventsCacheUtil,
+  normalizeCacheKey,
+} from '../../../utils/performance/cache';
 import { invalidateCache } from '../../../middleware/cache';
 
 /**
@@ -41,7 +45,14 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
   >;
 
   // Try cache first
-  const cacheKey = normalizeCacheKey('team_calendar', teamId, calendarType, timeMin, timeMax, maxResults);
+  const cacheKey = normalizeCacheKey(
+    'team_calendar',
+    teamId,
+    calendarType,
+    timeMin,
+    timeMax,
+    maxResults
+  );
   const cachedEvents = calendarEventsCacheUtil.get(cacheKey);
   if (cachedEvents) {
     req.log.debug({ teamId, cacheKey }, 'Team calendar events cache hit');
@@ -55,7 +66,15 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
   }
 
   // Obtener equipo y verificar que tenga calendario conectado
-  const [team] = await db().select().from(teams).where(eq(teams.id, teamId)).limit(1);
+  const [team] = await db()
+    .select({
+      id: teams.id,
+      name: teams.name,
+      calendarId: teams.calendarId,
+    })
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1);
   if (!team) {
     throw new HttpError(404, 'Team not found');
   }
@@ -115,10 +134,10 @@ export const getTeamEvents = createRouteHandler(async (req: Request) => {
   };
 
   const events = await fetchEvents(managerToken);
-  
+
   // Set cache
   calendarEventsCacheUtil.set(cacheKey, events);
-  
+
   return events;
 });
 
@@ -152,7 +171,15 @@ export const connectTeamCalendar = createRouteHandler(async (req: Request) => {
   }
 
   // Verificar que el equipo existe
-  const [team] = await db().select().from(teams).where(eq(teams.id, teamId)).limit(1);
+  const [team] = await db()
+    .select({
+      id: teams.id,
+      name: teams.name,
+      calendarId: teams.calendarId,
+    })
+    .from(teams)
+    .where(eq(teams.id, teamId))
+    .limit(1);
   if (!team) {
     throw new HttpError(404, 'Team not found');
   }
@@ -240,7 +267,7 @@ export const assignEventToMember = createRouteHandler(async (req: Request) => {
   // 2. Identify Client Email
   // If clientEmail is not explicitly provided, try to find it in attendees
   let targetEmail = clientEmail;
-  let targetName = clientName;
+  const targetName = clientName;
 
   if (!targetEmail && attendees && attendees.length > 0) {
     // Filter out internal domains if possible, or just take the first one that is not the team manager?

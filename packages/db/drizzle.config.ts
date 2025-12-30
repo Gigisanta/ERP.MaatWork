@@ -14,7 +14,3 @@ export default defineConfig({
   verbose: true,
   strict: true,
 });
-
-
-
-

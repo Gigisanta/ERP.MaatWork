@@ -23,10 +23,10 @@ export interface Instrument extends TimestampedEntity {
 /**
  * Resultado de búsqueda de instrumento (simplificado)
  */
-export interface InstrumentSearchResult extends Pick<
+export type InstrumentSearchResult = Pick<
   Instrument,
   'id' | 'symbol' | 'name' | 'type' | 'currency'
-> {}
+>;
 
 /**
  * Validación de instrumento

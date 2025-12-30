@@ -47,11 +47,3 @@ export function parseNumeric(value: string | number | null | undefined): number 
  * Constantes de timeout para queries
  */
 export const QUERY_TIMEOUT_MS = 30000; // 30 seconds
-
-
-
-
-
-
-
-

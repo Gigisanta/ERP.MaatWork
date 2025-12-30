@@ -2,16 +2,16 @@
 
 import { useMemo, memo } from 'react';
 import {
-  BarChart,
+  LazyBarChart,
+  LazyResponsiveContainer,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
   Cell,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 
 interface GoalsComparisonChartProps {
@@ -29,12 +29,15 @@ const METRIC_COLORS = {
 
 /**
  * Gráfico de barras comparando valores actuales vs objetivos mensuales
- * 
+ *
  * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
  * Justificación: Recharts rendering is expensive, memoization prevents re-rendering on parent updates
  * Impacto: Better dashboard performance, reduced CPU cycles
  */
-export const GoalsComparisonChart = memo(function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonChartProps) {
+export const GoalsComparisonChart = memo(function GoalsComparisonChart({
+  currentMonth,
+  goals,
+}: GoalsComparisonChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -66,8 +69,8 @@ export const GoalsComparisonChart = memo(function GoalsComparisonChart({ current
   );
 
   return (
-    <ResponsiveContainer width="100%" height={250}>
-      <BarChart
+    <LazyResponsiveContainer width="100%" height={250}>
+      <LazyBarChart
         data={chartData}
         aria-label="Gráfico de comparación de objetivos vs actuales"
         barGap={0}
@@ -124,7 +127,7 @@ export const GoalsComparisonChart = memo(function GoalsComparisonChart({ current
           radius={[4, 4, 0, 0]}
           maxBarSize={50}
         />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
 });

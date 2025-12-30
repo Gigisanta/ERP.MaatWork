@@ -13,8 +13,6 @@
 // Tipos Base - Re-exportados desde @maatwork/types
 // ==========================================================
 
-;
-
 // ==========================================================
 // Tipos de Error y Configuración
 // ==========================================================
@@ -72,6 +70,7 @@ import type { AuthUser } from '../auth/types';
  * Impacto: Type safety mejorado, código más limpio, menos errores en runtime
  */
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       requestId?: string;

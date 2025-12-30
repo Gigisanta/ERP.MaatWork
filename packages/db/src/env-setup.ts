@@ -12,34 +12,34 @@ try {
   // Try apps/api/.env which is where drizzle.config.ts looks
   const apiEnvPath = path.resolve(__dirname, '../../../apps/api/.env');
   console.log(`Looking for .env at: ${apiEnvPath}`);
-  
+
   if (fs.existsSync(apiEnvPath)) {
     console.log('✅ Found .env file at apps/api');
     const result = dotenv.config({ path: apiEnvPath });
     if (result.error) {
-        console.error('❌ Error loading .env:', result.error);
+      console.error('❌ Error loading .env:', result.error);
     } else {
-        console.log('✅ Loaded .env');
+      console.log('✅ Loaded .env');
     }
   } else {
     // Fallback to root .env
     const rootEnvPath = path.resolve(__dirname, '../../../.env');
     console.log(`Looking for .env at: ${rootEnvPath}`);
     if (fs.existsSync(rootEnvPath)) {
-        console.log('✅ Found .env file at root');
-        const result = dotenv.config({ path: rootEnvPath });
-        if (result.error) {
-            console.error('❌ Error loading .env:', result.error);
-        } else {
-            console.log('✅ Loaded .env');
-        }
+      console.log('✅ Found .env file at root');
+      const result = dotenv.config({ path: rootEnvPath });
+      if (result.error) {
+        console.error('❌ Error loading .env:', result.error);
+      } else {
+        console.log('✅ Loaded .env');
+      }
     } else {
-        console.log('❌ .env file not found');
-        // Fallback to hardcoded dev string if nothing found (useful for local dev default)
-        if (!process.env.DATABASE_URL) {
-            console.log('⚠️ Using default local DATABASE_URL');
-            process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5433/CRM';
-        }
+      console.log('❌ .env file not found');
+      // Fallback to hardcoded dev string if nothing found (useful for local dev default)
+      if (!process.env.DATABASE_URL) {
+        console.log('⚠️ Using default local DATABASE_URL');
+        process.env.DATABASE_URL = 'postgresql://postgres:postgres@localhost:5433/CRM';
+      }
     }
   }
 } catch (e) {
@@ -47,7 +47,7 @@ try {
 }
 
 if (!process.env.DATABASE_URL) {
-    console.error('⚠️ DATABASE_URL is NOT set after setup');
+  console.error('⚠️ DATABASE_URL is NOT set after setup');
 } else {
-    console.log('✅ DATABASE_URL is set');
+  console.log('✅ DATABASE_URL is set');
 }

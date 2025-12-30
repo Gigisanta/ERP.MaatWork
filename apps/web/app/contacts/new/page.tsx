@@ -427,10 +427,12 @@ export default function NewContactPage() {
                       Creación Rápida
                     </Heading>
                     <Text size="xs" className="text-text-secondary leading-relaxed">
-                      Completa los datos básicos para dar de alta al contacto. Por defecto, se asignará a la etapa de <strong>Prospecto</strong>.
+                      Completa los datos básicos para dar de alta al contacto. Por defecto, se
+                      asignará a la etapa de <strong>Prospecto</strong>.
                     </Text>
                     <Text size="xs" className="text-text-secondary mt-2 leading-relaxed">
-                      Podrás completar el perfil detallado, DNI y objetivos desde la ficha del contacto una vez creado.
+                      Podrás completar el perfil detallado, DNI y objetivos desde la ficha del
+                      contacto una vez creado.
                     </Text>
                   </div>
                 </div>

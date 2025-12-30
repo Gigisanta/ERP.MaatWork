@@ -85,7 +85,7 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
 
   // 3. Filter events in memory using robust matching
   // AI_DECISION: In-memory filtering for complex attendee matching
-  // Justificación: Matching contacts with calendar events requires checking nested JSON arrays (attendees) 
+  // Justificación: Matching contacts with calendar events requires checking nested JSON arrays (attendees)
   //                and name normalization which is easier and faster in memory than complex SQL for small datasets.
   // Impacto: Improved matching accuracy without overly complex database queries.
   const events = allEvents.filter((event: typeof calendarEvents.$inferSelect) => {
@@ -150,7 +150,7 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
 
   // Update contact if status changed (using stringify to compare deep equality simply)
   // AI_DECISION: Simple deep equality check using JSON.stringify
-  // Justificación: MeetingStatus is a simple object, stringify is efficient enough for this comparison 
+  // Justificación: MeetingStatus is a simple object, stringify is efficient enough for this comparison
   //                and avoids manual property checking or extra dependencies.
   // Impacto: Clean code, avoids unnecessary DB updates if status hasn't changed.
 

@@ -91,7 +91,8 @@ describe('SyncManager', () => {
         select: vi.fn().mockReturnThis(),
         from: vi.fn().mockReturnThis(),
         where: vi.fn().mockReturnThis(),
-        then: (_resolve: (value: unknown) => void, reject: (reason: Error) => void) => reject(new Error('DB Error')),
+        then: (_resolve: (value: unknown) => void, reject: (reason: Error) => void) =>
+          reject(new Error('DB Error')),
       } as unknown as ReturnType<typeof db>);
 
       await expect(onContactAliasesChanged('contact-123')).resolves.not.toThrow();

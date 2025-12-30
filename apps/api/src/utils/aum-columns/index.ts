@@ -9,32 +9,12 @@
 export { normalizeColumnName } from './normalize-column-name';
 
 // Funciones de matching y patrones
-export {
-  findColumnByPatterns,
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-} from './column-pattern-matcher';
+export { findColumnByPatterns } from './column-pattern-matcher';
 
 // Funciones de validación y conversión
-export {
-  
-  
-  validateColumnMapping,
-  
-} from './column-validator';
+export { validateColumnMapping } from './column-validator';
 
 // Función principal de mapeo
-export { mapAumColumns,  } from './column-mapper';
+export { mapAumColumns } from './column-mapper';
 
 // Tipos
-;

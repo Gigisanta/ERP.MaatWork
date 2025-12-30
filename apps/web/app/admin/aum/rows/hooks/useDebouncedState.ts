@@ -15,10 +15,7 @@ import { useState, useEffect, useRef } from 'react';
  * @param delay - Delay in milliseconds before updating debounced value
  * @returns [value, debouncedValue, setValue] - Current value, debounced value, and setter
  */
-function useDebouncedState<T>(
-  initialValue: T,
-  delay: number = 300
-): [T, T, (value: T) => void] {
+function useDebouncedState<T>(initialValue: T, delay: number = 300): [T, T, (value: T) => void] {
   const [value, setValue] = useState<T>(initialValue);
   const [debouncedValue, setDebouncedValue] = useState<T>(initialValue);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);

@@ -59,4 +59,9 @@ export const env = {
     process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/v1/auth/google/callback',
   GOOGLE_ENCRYPTION_KEY: process.env.GOOGLE_ENCRYPTION_KEY || '', // 32 bytes para AES-256
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  // N8N Configuration
+  N8N_ENABLED: process.env.N8N_ENABLED !== 'false', // Default to true unless explicitly disabled
+  N8N_WEBHOOK_RATE_LIMIT: parseInt(process.env.N8N_WEBHOOK_RATE_LIMIT || '60', 10),
+  N8N_WEBHOOK_BATCH_SIZE: parseInt(process.env.N8N_WEBHOOK_BATCH_SIZE || '100', 10),
+  N8N_WEBHOOK_TIMEOUT: parseInt(process.env.N8N_WEBHOOK_TIMEOUT || '30000', 10),
 };

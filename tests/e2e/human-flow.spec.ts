@@ -1,13 +1,13 @@
 import { test, expect } from './fixtures';
 
 test.describe('Human-like User Journey', () => {
-  test('complete full business workflow', async ({ 
-    page, 
-    contactsPage, 
-    pipelinePage, 
-    aumPage, 
-    analyticsPage, 
-    authPage 
+  test('complete full business workflow', async ({
+    page,
+    contactsPage,
+    pipelinePage,
+    aumPage,
+    analyticsPage,
+    authPage,
   }) => {
     // 1. Dashboard
     console.log('Step 1: Dashboard');
@@ -17,9 +17,9 @@ test.describe('Human-like User Journey', () => {
     // 2. Create Contact
     console.log('Step 2: Contacts');
     const contactName = `Human Flow ${Date.now()}`;
-    await contactsPage.createContact({ 
-        firstName: contactName, 
-        email: `human-${Date.now()}@example.com` 
+    await contactsPage.createContact({
+      firstName: contactName,
+      email: `human-${Date.now()}@example.com`,
     });
     await contactsPage.expectContactInList(contactName);
 
@@ -29,7 +29,7 @@ test.describe('Human-like User Journey', () => {
     // Verify contact appears (implicitly searched or recent)
     // For specific selection we might need search in pipeline or rely on it being there
     await pipelinePage.expectPipelineVisible();
-    
+
     // 4. Admin Check
     console.log('Step 4: AUM');
     await aumPage.gotoAdmin();

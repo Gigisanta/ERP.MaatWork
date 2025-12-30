@@ -59,7 +59,3 @@ router.put(
 router.delete('/:id', requireAuth, validate({ params: idParamSchema }), handleDeleteNote);
 
 export default router;
-
-
-
-

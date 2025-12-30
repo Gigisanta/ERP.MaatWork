@@ -4,12 +4,12 @@ test.describe('Edge Cases', () => {
   test('handle very long text inputs', async ({ contactsPage, page }) => {
     const longName = 'A'.repeat(1000);
     await contactsPage.gotoList();
-    
+
     // We use lower level page interaction here as we are testing the form specifically with bad data
     // But we use POM for navigation
     await contactsPage.newContactButton.click();
     await page.getByLabel(/nombre|first name/i).fill(longName);
-    
+
     // Verify no crash
     await expect(page.getByLabel(/nombre|first name/i)).toHaveValue(longName);
   });
@@ -19,8 +19,8 @@ test.describe('Edge Cases', () => {
     await contactsPage.gotoList();
 
     for (const char of specialChars) {
-        await contactsPage.searchContact(char);
-        // Ensure no crash/error
+      await contactsPage.searchContact(char);
+      // Ensure no crash/error
     }
   });
 

@@ -13,7 +13,7 @@ import { SidebarProvider } from './SidebarContext';
 import { usePathname } from 'next/navigation';
 
 vi.mock('next/navigation', () => ({
-  usePathname: vi.fn(() => '/'),
+  usePathname: vi.fn(() => '/dashboard'),
 }));
 
 describe('AppLayout', () => {

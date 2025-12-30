@@ -43,4 +43,3 @@ export const handleUpdatePreferences = createRouteHandler(async (req: Request) =
   );
   return pref;
 });
-

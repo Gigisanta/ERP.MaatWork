@@ -79,11 +79,3 @@ export const handleRejectUser = createRouteHandler(async (req: Request) => {
     message: 'User rejected and removed from system',
   };
 });
-
-
-
-
-
-
-
-

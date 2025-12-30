@@ -7,6 +7,7 @@ import { PortfoliosPage } from './pages/PortfoliosPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { PipelinePage } from './pages/PipelinePage';
 import { AdminPage } from './pages/AdminPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
 import { BenchmarksPage } from './pages/BenchmarksPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 
@@ -19,6 +20,7 @@ type MyFixtures = {
   analyticsPage: AnalyticsPage;
   pipelinePage: PipelinePage;
   adminPage: AdminPage;
+  adminUsersPage: AdminUsersPage;
   benchmarksPage: BenchmarksPage;
   automationsPage: AutomationsPage;
 };
@@ -47,6 +49,9 @@ export const test = base.extend<MyFixtures>({
   },
   adminPage: async ({ page }, use) => {
     await use(new AdminPage(page));
+  },
+  adminUsersPage: async ({ page }, use) => {
+    await use(new AdminUsersPage(page));
   },
   benchmarksPage: async ({ page }, use) => {
     await use(new BenchmarksPage(page));

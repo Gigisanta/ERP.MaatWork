@@ -20,21 +20,6 @@ const uploadMiddleware = createUploadMiddleware(upload, 'file', {
  * POST /contacts/import
  * Importar contactos desde CSV
  */
-router.post(
-  '/import',
-  requireAuth,
-  requireRole(['admin']),
-  uploadMiddleware,
-  handleImport
-);
+router.post('/import', requireAuth, requireRole(['admin']), uploadMiddleware, handleImport);
 
 export default router;
-
-
-
-
-
-
-
-
-

@@ -143,11 +143,3 @@ export const handleDeleteNote = createRouteHandler(async (req: Request) => {
 
   return { id, deleted: true };
 });
-
-
-
-
-
-
-
-

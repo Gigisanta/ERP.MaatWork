@@ -22,6 +22,10 @@ test.describe('Analytics and Instruments', () => {
 
   test('sync instruments with python service', async ({ analyticsPage }) => {
     // This assumes the Python service is running and connected
+    // This test is flaky if python service is not up or mocked.
+    // In e2e flow, we might want to mock the success toast if we can't guarantee python service.
+    
+    // For now, we assume the button exists and triggers a toast.
     await analyticsPage.syncInstruments();
     
     // Verify a well-known ticker updated (mock check)

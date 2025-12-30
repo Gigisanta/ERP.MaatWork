@@ -128,13 +128,11 @@ export async function cleanupTestDatabase(): Promise<void> {
     'users',
   ];
 
-  for (const table of tables) {
-    try {
-      await testDb.execute(sql.raw(`TRUNCATE TABLE ${table} CASCADE`));
-    } catch (error) {
-      // Ignore errors if table doesn't exist
-      console.warn(`Could not truncate table ${table}:`, error);
-    }
+  try {
+    // Truncate all tables in one command to avoid deadlocks and improve performance
+    await testDb.execute(sql.raw(`TRUNCATE TABLE ${tables.join(', ')} CASCADE`));
+  } catch (error) {
+    console.warn(`Could not truncate tables:`, error);
   }
 
   // Re-enable foreign key checks

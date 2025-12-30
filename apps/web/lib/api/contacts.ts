@@ -12,11 +12,7 @@ import type {
   ContactFieldUpdate,
   ImportStats,
 } from '@maatwork/types';
-import type {
-  AssignPortfolioRequest,
-  AssignPortfolioResponse,
-  PortfolioAssignment,
-} from '@/types';
+import type { AssignPortfolioRequest, AssignPortfolioResponse, PortfolioAssignment } from '@/types';
 
 // ==========================================================
 // API Methods
@@ -170,7 +166,9 @@ export async function sendContactsToWebhook(
 /**
  * Importar contactos desde CSV
  */
-export async function importContactsCsv(file: File): Promise<ApiResponse<{ stats: ImportStats; message: string }>> {
+export async function importContactsCsv(
+  file: File
+): Promise<ApiResponse<{ stats: ImportStats; message: string }>> {
   const formData = new FormData();
   formData.append('file', file);
   return apiClient.post<{ stats: ImportStats; message: string }>('/v1/contacts/import', formData);

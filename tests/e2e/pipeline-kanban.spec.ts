@@ -11,9 +11,9 @@ test.describe('Pipeline Kanban E2E', () => {
     // Ideally we would seed a contact first
     const contactName = `Kanban Test ${Date.now()}`;
     await contactsPage.createContact({ firstName: contactName, email: 'kanban@test.com' });
-    
+
     await pipelinePage.gotoPipeline();
-    
+
     // Check contact exists in first stage (or whichever default)
     // For test robustness, just ensure we have draggable items
     await pipelinePage.expectContactCountInStage(0, 1);

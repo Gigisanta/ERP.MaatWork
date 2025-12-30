@@ -313,10 +313,12 @@ describe('AssetSearcher', () => {
         fireEvent.click(assetItem);
       });
 
-      expect(mockOnAssetSelect).toHaveBeenCalledWith(expect.objectContaining({
-        symbol: 'AAPL',
-        name: 'Apple Inc.',
-      }));
+      expect(mockOnAssetSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          symbol: 'AAPL',
+          name: 'Apple Inc.',
+        })
+      );
     });
 
     it('should clear query and results after selection', async () => {
@@ -374,9 +376,11 @@ describe('AssetSearcher', () => {
         fireEvent.click(directSymbolButton);
       });
 
-      expect(mockOnAssetSelect).toHaveBeenCalledWith(expect.objectContaining({
-        symbol: 'AAPL',
-      }));
+      expect(mockOnAssetSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          symbol: 'AAPL',
+        })
+      );
     });
 
     it('should add symbol even if validation fails', async () => {

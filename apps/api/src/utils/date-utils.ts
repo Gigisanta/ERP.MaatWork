@@ -171,11 +171,3 @@ function isValidFechaDDMMYYYY(fechaStr: string | null | undefined): boolean {
 function isValidISODate(dateStr: string | null | undefined): boolean {
   return parseISODate(dateStr) !== null;
 }
-
-
-
-
-
-
-
-

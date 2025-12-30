@@ -47,7 +47,7 @@ describe('ThemeProviderWrapper', () => {
     // AI_DECISION: Mock matchMedia and localStorage to ensure test consistency
     // Justificación: jsdom matchMedia and localStorage can be flaky in some environments
     // Impacto: Reliable tests for theme switching and persistence
-    
+
     // Reset document element
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.classList.remove('dark');
@@ -109,7 +109,7 @@ describe('ThemeProviderWrapper', () => {
           <TestComponent />
         </ThemeProviderWrapper>
       );
-      
+
       await waitFor(() => {
         expect(screen.getByText('dark')).toBeInTheDocument();
       });
@@ -212,7 +212,7 @@ describe('ThemeProviderWrapper', () => {
           <div>Test</div>
         </ThemeProviderWrapper>
       );
-      
+
       await waitFor(() => {
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
       });
@@ -299,7 +299,7 @@ describe('ThemeProviderWrapper', () => {
           <TestComponent />
         </ThemeProviderWrapper>
       );
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('theme-val')).toHaveTextContent('light');
       });
@@ -308,7 +308,7 @@ describe('ThemeProviderWrapper', () => {
       await act(async () => {
         button.click();
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('theme-val')).toHaveTextContent('dark');
       });
@@ -316,7 +316,7 @@ describe('ThemeProviderWrapper', () => {
       await act(async () => {
         button.click();
       });
-      
+
       await waitFor(() => {
         expect(screen.getByTestId('theme-val')).toHaveTextContent('light');
       });

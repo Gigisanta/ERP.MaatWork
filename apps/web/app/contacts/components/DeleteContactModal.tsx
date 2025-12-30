@@ -51,11 +51,3 @@ export default function DeleteContactModal({
     </Modal>
   );
 }
-
-
-
-
-
-
-
-

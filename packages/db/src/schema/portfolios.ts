@@ -12,7 +12,7 @@ import {
   numeric,
   index,
   uniqueIndex,
-  check
+  check,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { contacts } from './contacts';
@@ -28,8 +28,10 @@ export const portfolioTemplates = pgTable('portfolio_templates', {
   name: text('name').notNull(),
   description: text('description'),
   riskLevel: text('risk_level'), // low, mid, high
-  createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdByUserId: uuid('created_by_user_id')
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 /**
@@ -40,21 +42,26 @@ export const portfolioTemplateLines = pgTable(
   'portfolio_template_lines',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    templateId: uuid('template_id').notNull().references(() => portfolioTemplates.id, { onDelete: 'cascade' }),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => portfolioTemplates.id, { onDelete: 'cascade' }),
     targetType: text('target_type').notNull(), // asset_class, instrument
     assetClass: text('asset_class').references(() => lookupAssetClass.id),
     instrumentId: uuid('instrument_id').references(() => instruments.id),
-    targetWeight: numeric('target_weight', { precision: 7, scale: 4 }).notNull()
+    targetWeight: numeric('target_weight', { precision: 7, scale: 4 }).notNull(),
   },
   (table) => ({
-    targetWeightCheck: check('chk_ptl_weight', sql`${table.targetWeight} >= 0 and ${table.targetWeight} <= 1`),
+    targetWeightCheck: check(
+      'chk_ptl_weight',
+      sql`${table.targetWeight} >= 0 and ${table.targetWeight} <= 1`
+    ),
     // AI_DECISION: Add composite index for portfolio line queries
     // Justificación: Queries load all lines for a template and sort by weight. Composite index speeds up sorting.
     // Impacto: Faster portfolio composition loading
     portfolioLinesTemplateWeightIdx: index('idx_ptl_template_weight').on(
       table.templateId,
       table.targetWeight
-    )
+    ),
   })
 );
 
@@ -66,14 +73,20 @@ export const clientPortfolioAssignments = pgTable(
   'client_portfolio_assignments',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id),
-    templateId: uuid('template_id').notNull().references(() => portfolioTemplates.id),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => portfolioTemplates.id),
     status: text('status').notNull(), // active, paused, ended
     startDate: date('start_date').notNull(),
     endDate: date('end_date'),
     notes: text('notes'),
-    createdByUserId: uuid('created_by_user_id').notNull().references(() => users.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdByUserId: uuid('created_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     cpaUnique: uniqueIndex('client_portfolio_assignments_unique').on(
@@ -81,11 +94,16 @@ export const clientPortfolioAssignments = pgTable(
       table.templateId,
       table.startDate
     ),
-    cpaActiveIdx: index('idx_cpa_active').on(table.contactId).where(sql`${table.status} = 'active'`),
+    cpaActiveIdx: index('idx_cpa_active')
+      .on(table.contactId)
+      .where(sql`${table.status} = 'active'`),
     // AI_DECISION: Índice compuesto para conteos de portfolios por contacto y estado
     // Justificación: Dashboard queries filtran portfolios activos por contacto
     // Impacto: Faster dashboard portfolio counts
-    cpaContactStatusIdx: index('idx_client_portfolio_assignments_contact_status').on(table.contactId, table.status)
+    cpaContactStatusIdx: index('idx_client_portfolio_assignments_contact_status').on(
+      table.contactId,
+      table.status
+    ),
   })
 );
 
@@ -95,11 +113,13 @@ export const clientPortfolioAssignments = pgTable(
  */
 export const clientPortfolioOverrides = pgTable('client_portfolio_overrides', {
   id: uuid('id').defaultRandom().primaryKey(),
-  assignmentId: uuid('assignment_id').notNull().references(() => clientPortfolioAssignments.id, { onDelete: 'cascade' }),
+  assignmentId: uuid('assignment_id')
+    .notNull()
+    .references(() => clientPortfolioAssignments.id, { onDelete: 'cascade' }),
   targetType: text('target_type').notNull(),
   assetClass: text('asset_class').references(() => lookupAssetClass.id),
   instrumentId: uuid('instrument_id').references(() => instruments.id),
-  targetWeight: numeric('target_weight', { precision: 7, scale: 4 }).notNull()
+  targetWeight: numeric('target_weight', { precision: 7, scale: 4 }).notNull(),
 });
 
 /**
@@ -110,13 +130,15 @@ export const portfolioMonitoringSnapshot = pgTable(
   'portfolio_monitoring_snapshot',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    contactId: uuid('contact_id').notNull().references(() => contacts.id),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id),
     asOfDate: date('as_of_date').notNull(),
     totalDeviationPct: numeric('total_deviation_pct', { precision: 7, scale: 4 }).notNull(),
-    generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow()
+    generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    pmsContactDateIdx: index('idx_pms_contact_date').on(table.contactId, table.asOfDate)
+    pmsContactDateIdx: index('idx_pms_contact_date').on(table.contactId, table.asOfDate),
   })
 );
 
@@ -126,60 +148,13 @@ export const portfolioMonitoringSnapshot = pgTable(
  */
 export const portfolioMonitoringDetails = pgTable('portfolio_monitoring_details', {
   id: uuid('id').defaultRandom().primaryKey(),
-  snapshotId: uuid('snapshot_id').notNull().references(() => portfolioMonitoringSnapshot.id, { onDelete: 'cascade' }),
+  snapshotId: uuid('snapshot_id')
+    .notNull()
+    .references(() => portfolioMonitoringSnapshot.id, { onDelete: 'cascade' }),
   targetType: text('target_type').notNull(),
   assetClass: text('asset_class').references(() => lookupAssetClass.id),
   instrumentId: uuid('instrument_id').references(() => instruments.id),
   targetWeight: numeric('target_weight', { precision: 7, scale: 4 }).notNull(),
   actualWeight: numeric('actual_weight', { precision: 7, scale: 4 }).notNull(),
-  deviationPct: numeric('deviation_pct', { precision: 7, scale: 4 }).notNull()
+  deviationPct: numeric('deviation_pct', { precision: 7, scale: 4 }).notNull(),
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

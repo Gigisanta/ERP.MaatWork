@@ -37,18 +37,42 @@ vi.mock('@maatwork/ui', () => ({
     <span className={className}>{children}</span>
   ),
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Button: ({ children, onClick, title }: { children: React.ReactNode; onClick?: () => void; title?: string }) => (
-    <button onClick={onClick} title={title}>{children}</button>
+  Button: ({
+    children,
+    onClick,
+    title,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    title?: string;
+  }) => (
+    <button onClick={onClick} title={title}>
+      {children}
+    </button>
   ),
-  Select: ({ value, onValueChange, items, className, disabled }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }>; className?: string; disabled?: boolean }) => (
-    <select 
-      value={value} 
+  Select: ({
+    value,
+    onValueChange,
+    items,
+    className,
+    disabled,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: Array<{ value: string; label: string }>;
+    className?: string;
+    disabled?: boolean;
+  }) => (
+    <select
+      value={value}
       onChange={(e) => onValueChange(e.target.value)}
       className={className}
       disabled={disabled}
     >
       {items.map((item) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
+        <option key={item.value} value={item.value}>
+          {item.label}
+        </option>
       ))}
     </select>
   ),
@@ -56,7 +80,9 @@ vi.mock('@maatwork/ui', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock('swr');
@@ -105,7 +131,7 @@ describe('CalendarWidget', () => {
     });
 
     render(<CalendarWidget teams={mockTeams} selectedTeamId="team-1" />);
-    
+
     expect(screen.getByText('Team 1')).toBeInTheDocument();
     expect(screen.getByTestId('weekly-calendar')).toBeInTheDocument();
   });
@@ -119,14 +145,14 @@ describe('CalendarWidget', () => {
     });
 
     render(<CalendarWidget teams={mockTeams} selectedTeamId="team-1" />);
-    
+
     expect(screen.getByTestId('spinner')).toBeInTheDocument();
   });
 
   it('debería mostrar mensaje cuando no hay calendario configurado', () => {
     const teamNoCal = [{ id: 'team-2', name: 'No Cal Team' }];
     render(<CalendarWidget teams={teamNoCal} selectedTeamId="team-2" />);
-    
+
     expect(screen.getByText(/Este equipo no tiene un calendario conectado/i)).toBeInTheDocument();
   });
 
@@ -139,7 +165,7 @@ describe('CalendarWidget', () => {
     });
 
     render(<CalendarWidget teams={mockTeams} selectedTeamId="team-1" />);
-    
+
     expect(screen.getByText('Reserva Sala de reunion')).toBeInTheDocument();
   });
 

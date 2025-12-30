@@ -77,7 +77,9 @@ export const handleImportCapacitaciones = [
     if (!parsedData || parsedData.length === 0) {
       try {
         await fs.unlink(file.path);
-      } catch {}
+      } catch {
+        // Ignore cleanup error
+      }
       throw new HttpError(
         400,
         'Error al procesar el archivo: ' +
@@ -141,7 +143,9 @@ export const handleImportCapacitaciones = [
     // Limpiar archivo temporal
     try {
       await fs.unlink(file.path);
-    } catch {}
+    } catch {
+      // Ignore cleanup error
+    }
 
     const totalErrors = parseErrors.length + insertErrors;
     const totalProcessed = parsedData.length + parseErrors.length;

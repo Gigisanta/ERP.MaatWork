@@ -79,11 +79,11 @@ async function main() {
 // Run if executed directly
 import { fileURLToPath } from 'url';
 
-const isMain = process.argv[1] && (
-  fileURLToPath(import.meta.url) === process.argv[1] ||
-  process.argv[1].endsWith('seed-full.ts') ||
-  process.argv[1].endsWith('seed-full')
-);
+const isMain =
+  process.argv[1] &&
+  (fileURLToPath(import.meta.url) === process.argv[1] ||
+    process.argv[1].endsWith('seed-full.ts') ||
+    process.argv[1].endsWith('seed-full'));
 
 if (isMain) {
   main();

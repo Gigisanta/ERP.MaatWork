@@ -41,9 +41,3 @@ export interface UpdateTaskRequest extends UpdateRequest<Task> {
   priority?: string;
   assignedToUserId?: string | null;
 }
-
-
-
-
-
-

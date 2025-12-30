@@ -25,10 +25,20 @@ vi.mock('@maatwork/ui', () => ({
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
-  DataTable: ({ data, columns, emptyMessage }: { data: unknown[]; columns: unknown[]; emptyMessage?: string }) => (
+  DataTable: ({
+    data,
+    columns,
+    emptyMessage,
+  }: {
+    data: unknown[];
+    columns: unknown[];
+    emptyMessage?: string;
+  }) => (
     <div>
       {data.length === 0 ? (
         <div>{emptyMessage}</div>
@@ -60,7 +70,15 @@ vi.mock('@maatwork/ui', () => ({
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children }: { children: React.ReactNode }) => <div role="alert">{children}</div>,
-  Select: ({ value, onValueChange, items }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
+  Select: ({
+    value,
+    onValueChange,
+    items,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: Array<{ value: string; label: string }>;
+  }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item) => (
         <option key={item.value} value={item.value}>

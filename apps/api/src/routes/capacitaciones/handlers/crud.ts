@@ -136,11 +136,3 @@ export const handleDeleteCapacitacion = createRouteHandler(async (req: Request) 
 
   return { id, deleted: true };
 });
-
-
-
-
-
-
-
-

@@ -79,7 +79,7 @@ describe('AUM Admin Routes', () => {
       email: 'admin@example.com',
       role: 'admin',
     });
-    
+
     // Reset mock defaults
     mockDbInstance.execute.mockResolvedValue({ rowCount: 0, rows: [] });
     mockDbInstance.returning.mockResolvedValue([]);
@@ -88,11 +88,13 @@ describe('AUM Admin Routes', () => {
 
   describe('DELETE /admin/aum/uploads/:fileId', () => {
     it('debería eliminar archivo exitosamente', async () => {
-      mockDbInstance.limit.mockResolvedValue([{ 
-        id: 'file-123', 
-        status: 'parsed',
-        originalFilename: 'test.csv'
-      }]);
+      mockDbInstance.limit.mockResolvedValue([
+        {
+          id: 'file-123',
+          status: 'parsed',
+          originalFilename: 'test.csv',
+        },
+      ]);
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -134,13 +136,15 @@ describe('AUM Admin Routes', () => {
 
   describe('GET /admin/aum/verify/:fileId', () => {
     it('debería verificar archivo exitosamente', async () => {
-      mockDbInstance.limit.mockResolvedValue([{ 
-        id: 'file-123', 
-        totalParsed: 100,
-        totalMatched: 80,
-        totalUnmatched: 20
-      }]);
-      
+      mockDbInstance.limit.mockResolvedValue([
+        {
+          id: 'file-123',
+          totalParsed: 100,
+          totalMatched: 80,
+          totalUnmatched: 20,
+        },
+      ]);
+
       mockDbInstance.execute.mockResolvedValue({ rows: [{ count: 100 }] });
 
       const app = createTestAppWithRoutes();

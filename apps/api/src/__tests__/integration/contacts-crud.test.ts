@@ -8,12 +8,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '@maatwork/db';
 import { contacts } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
-import { createTestUser, deleteTestUser } from '../../helpers/test-auth';
-import { createTestContact, cleanupTestFixtures } from '../../helpers/test-fixtures';
+import { createTestUser, deleteTestUser } from '../helpers/test-auth';
+import { createTestContact, cleanupTestFixtures } from '../helpers/test-fixtures';
 
 describe('Contacts CRUD Integration Tests', () => {
   let testUserId: string | null = null;
-  let createdContactIds: string[] = [];
+  const createdContactIds: string[] = [];
 
   beforeAll(async () => {
     // Create test user

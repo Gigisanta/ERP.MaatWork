@@ -35,11 +35,3 @@ export function calculateNewClients(
     clientContactIds,
   };
 }
-
-
-
-
-
-
-
-

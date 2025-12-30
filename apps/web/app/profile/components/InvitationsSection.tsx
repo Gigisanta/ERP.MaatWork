@@ -63,11 +63,3 @@ export function InvitationsSection({
     </Card>
   );
 }
-
-
-
-
-
-
-
-

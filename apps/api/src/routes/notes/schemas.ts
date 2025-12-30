@@ -50,7 +50,3 @@ export { idParamSchema };
 
 type CreateNoteInput = z.infer<typeof createNoteSchema>;
 type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
-
-
-
-

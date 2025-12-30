@@ -71,11 +71,3 @@ export async function syncContactAdvisorsFromAumRows(
 
   return { syncedCount, skippedCount };
 }
-
-
-
-
-
-
-
-

@@ -68,12 +68,18 @@ export default function CareerProgressBar() {
 
   const progress = data;
 
+  // AI_DECISION: No mostrar si no hay niveles ni producción (usuario nuevo sin plan)
+  // Justificación: Evita mostrar una barra vacía sin sentido para usuarios que no participan en el plan de carrera
+  if (!progress.currentLevel && !progress.nextLevel && progress.annualProduction === 0) {
+    return null;
+  }
+
   // Determinar nivel a mostrar (actual o siguiente si no hay actual)
   const displayLevel = progress.currentLevel || progress.nextLevel;
 
-  // AI_DECISION: Mostrar "Nivel 1 Junior" si no hay nivel actual asignado
+  // AI_DECISION: Mostrar el nombre del nivel a mostrar, fallback a "Nivel 1 Junior"
   // Justificación: Requisito explícito de UX para mostrar el nombre del nivel inicial en lugar de "Nivel Inicial"
-  const levelName = progress.currentLevel?.level || 'Nivel 1 Junior';
+  const levelName = displayLevel?.level || 'Nivel 1 Junior';
 
   const goalUsd = displayLevel?.annualGoalUsd || 0;
   const commissionPercentage = displayLevel?.percentage || '0';

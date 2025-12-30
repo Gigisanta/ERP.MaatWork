@@ -18,7 +18,9 @@ export const googleOAuthTokens = pgTable(
   'google_oauth_tokens',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     googleId: text('google_id').notNull(), // Google user ID (sub claim)
     email: text('email').notNull(), // Email de Google (para matching)
     accessTokenEncrypted: text('access_token_encrypted').notNull(), // Token encriptado
@@ -37,15 +39,3 @@ export const googleOAuthTokens = pgTable(
     emailIdx: index('idx_google_oauth_tokens_email').on(table.email),
   })
 );
-
-
-
-
-
-
-
-
-
-
-
-

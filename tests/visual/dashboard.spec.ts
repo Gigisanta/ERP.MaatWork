@@ -8,11 +8,11 @@ test.describe('Visual Regression', () => {
   test('dashboard visual snapshot', async ({ page }) => {
     const authPage = new AuthPage(page);
     await authPage.login();
-    
+
     await page.goto('/');
     // Wait for data to load
-    await page.waitForTimeout(2000); 
-    
+    await page.waitForTimeout(2000);
+
     await expect(page).toHaveScreenshot('dashboard.png');
   });
 
@@ -21,4 +21,3 @@ test.describe('Visual Regression', () => {
     await expect(page).toHaveScreenshot('login.png');
   });
 });
-

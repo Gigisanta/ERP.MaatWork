@@ -20,7 +20,9 @@ vi.mock('@/lib/api/bloomberg', () => ({
 }));
 
 vi.mock('recharts', () => ({
-  LineChart: ({ children }: { children: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
+  LineChart: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="line-chart">{children}</div>
+  ),
   Line: () => null,
   XAxis: () => null,
   YAxis: () => null,
@@ -37,10 +39,20 @@ vi.mock('@maatwork/ui', () => ({
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
-  Select: ({ value, onValueChange, items }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
+  Select: ({
+    value,
+    onValueChange,
+    items,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: Array<{ value: string; label: string }>;
+  }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item) => (
         <option key={item.value} value={item.value}>
@@ -55,9 +67,13 @@ vi.mock('@maatwork/ui', () => ({
       {children}
     </div>
   ),
-  Text: ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => <span style={style}>{children}</span>,
+  Text: ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+    <span style={style}>{children}</span>
+  ),
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => <span data-badge-variant={variant}>{children}</span>,
+  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
+    <span data-badge-variant={variant}>{children}</span>
+  ),
 }));
 
 describe('YieldCurveChart', () => {

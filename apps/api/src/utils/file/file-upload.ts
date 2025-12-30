@@ -139,6 +139,7 @@ export function sanitizeFilename(filename: string): string {
   let sanitized = basename(filename);
 
   // Remove dangerous or problematic characters
+  // eslint-disable-next-line no-control-regex
   sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
 
   // Replace multiple spaces with underscore

@@ -7,7 +7,6 @@
  */
 import { useRequireAuth } from '@/auth/useRequireAuth';
 
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useEntityWithComponents } from './useEntityWithComponents';
@@ -45,7 +44,6 @@ describe('useEntityWithComponents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    
     mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
       loading: false,

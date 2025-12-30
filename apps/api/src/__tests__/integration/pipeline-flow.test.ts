@@ -8,17 +8,17 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '@maatwork/db';
 import { contacts, pipelineStages, pipelineStageHistory } from '@maatwork/db/schema';
 import { eq } from 'drizzle-orm';
-import { createTestUser, deleteTestUser } from '../../helpers/test-auth';
+import { createTestUser, deleteTestUser } from '../helpers/test-auth';
 import {
   createTestContact,
   createTestPipelineStage,
   cleanupTestFixtures,
-} from '../../helpers/test-fixtures';
+} from '../helpers/test-fixtures';
 
 describe('Pipeline Flow Integration Tests', () => {
   let testUserId: string | null = null;
   let stageIds: string[] = [];
-  let contactIds: string[] = [];
+  const contactIds: string[] = [];
 
   beforeAll(async () => {
     // Create test user

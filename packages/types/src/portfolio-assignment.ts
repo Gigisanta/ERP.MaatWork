@@ -39,9 +39,3 @@ export interface AssignPortfolioResponse {
   assignment: PortfolioAssignment;
   message?: string;
 }
-
-
-
-
-
-

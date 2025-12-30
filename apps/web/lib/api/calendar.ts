@@ -19,7 +19,7 @@ import type {
 } from '@/types';
 
 // Re-export types for backward compatibility
-export type {  CalendarListEntry,  };
+export type { CalendarListEntry };
 
 /**
  * Get personal calendars from Google
@@ -35,9 +35,7 @@ export async function getPersonalCalendars(): Promise<ApiResponse<CalendarListEn
  * Justificación: Consistencia con tipos definidos en @/types/calendar
  * Impacto: Type safety mejorado, autocompletado correcto
  */
-async function getCalendarEvents(
-  params?: GetEventsParams
-): Promise<ApiResponse<CalendarEvent[]>> {
+async function getCalendarEvents(params?: GetEventsParams): Promise<ApiResponse<CalendarEvent[]>> {
   const queryParams = new URLSearchParams();
   if (params?.calendarId) queryParams.set('calendarId', params.calendarId);
   if (params?.timeMin) queryParams.set('timeMin', params.timeMin);

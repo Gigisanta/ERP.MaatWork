@@ -12,10 +12,17 @@ import { requireAuth, requireRole } from './middlewares';
 import { verifyUserToken } from './jwt';
 import type { AuthUser } from './types';
 import { db } from '@maatwork/db';
+import { getCachedUser, setCachedUser } from './cache';
 
 // Mock JWT module
 vi.mock('./jwt', () => ({
   verifyUserToken: vi.fn(),
+}));
+
+// Mock cache module
+vi.mock('./cache', () => ({
+  getCachedUser: vi.fn(),
+  setCachedUser: vi.fn(),
 }));
 
 // Mock database
@@ -27,6 +34,7 @@ vi.mock('@maatwork/db', () => ({
 
 const mockVerifyUserToken = vi.mocked(verifyUserToken);
 const mockDb = vi.mocked(db);
+const mockGetCachedUser = vi.mocked(getCachedUser);
 
 describe('requireAuth', () => {
   let mockReq: Partial<Request>;
@@ -47,6 +55,9 @@ describe('requireAuth', () => {
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
+
+    // Setup default cache mock
+    mockGetCachedUser.mockReturnValue(null);
 
     // Setup default DB mock
     const mockDbLimit = vi

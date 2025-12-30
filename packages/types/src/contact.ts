@@ -1,6 +1,6 @@
 /**
  * Contact Types - Shared contact-related types
- * 
+ *
  * These types are used by both API and Web applications.
  */
 
@@ -205,6 +205,8 @@ export interface CreateContactRequest {
 /**
  * Update contact request
  */
-export interface UpdateContactRequest extends Partial<Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'version'>> {
+export interface UpdateContactRequest extends Partial<
+  Omit<Contact, 'id' | 'createdAt' | 'updatedAt' | 'version'>
+> {
   fields?: ContactFieldUpdate[];
 }

@@ -133,10 +133,10 @@ describe('paginationQuerySchema', () => {
     expect(result.offset).toBe(0);
   });
 
-  it('debería validar límite máximo de 100', () => {
-    expect(() => paginationQuerySchema.parse({ limit: '100', offset: '0' })).not.toThrow();
-    expect(() => paginationQuerySchema.parse({ limit: '101', offset: '0' })).toThrow();
-    expect(() => paginationQuerySchema.parse({ limit: '200', offset: '0' })).toThrow();
+  it('debería validar límite máximo de 1000', () => {
+    expect(() => paginationQuerySchema.parse({ limit: '1000', offset: '0' })).not.toThrow();
+    expect(() => paginationQuerySchema.parse({ limit: '1001', offset: '0' })).toThrow();
+    expect(() => paginationQuerySchema.parse({ limit: '2000', offset: '0' })).toThrow();
   });
 
   it('debería validar límite mínimo de 1', () => {
@@ -420,28 +420,28 @@ describe('createOptionalUuidSchema', () => {
 describe('paginationSchemaWithLimit', () => {
   it('debería crear schema con límite custom', () => {
     const schema = paginationSchemaWithLimit(200);
-    // El límite custom es 200, pero el schema base tiene max 100
-    // La intersección usa el menor de los dos límites, así que el límite efectivo es 100
-    const result1 = schema.safeParse({ limit: '100', offset: '0' });
+    // El límite custom es 200, y el schema base tiene max 1000
+    // La intersección usa el menor de los dos límites, así que el límite efectivo es 200
+    const result1 = schema.safeParse({ limit: '200', offset: '0' });
     expect(result1.success).toBe(true);
 
-    // El límite efectivo es 100 (menor entre 200 y 100), así que 101 debería fallar
-    const result2 = schema.safeParse({ limit: '101', offset: '0' });
+    // El límite efectivo es 200, así que 201 debería fallar
+    const result2 = schema.safeParse({ limit: '201', offset: '0' });
     expect(result2.success).toBe(false);
     if (!result2.success) {
-      expect(result2.error.issues[0].message).toContain('Number must be less than or equal to 100');
+      expect(result2.error.issues[0].message).toContain('Number must be less than or equal to 200');
     }
   });
 
   it('debería usar límite por defecto si no se especifica', () => {
     const schema = paginationSchemaWithLimit();
-    // El límite por defecto es 500, pero el schema base tiene max 100
-    // La intersección debería usar el menor de los dos límites (100)
-    const result1 = schema.safeParse({ limit: '100', offset: '0' });
+    // El límite por defecto es 1000 (en paginationSchemaWithLimit), y el schema base tiene max 1000
+    // La intersección debería usar el menor de los dos límites (1000)
+    const result1 = schema.safeParse({ limit: '1000', offset: '0' });
     expect(result1.success).toBe(true);
 
-    // El límite efectivo es 100, así que 101 debería fallar
-    const result2 = schema.safeParse({ limit: '101', offset: '0' });
+    // El límite efectivo es 1000, así que 1001 debería fallar
+    const result2 = schema.safeParse({ limit: '1001', offset: '0' });
     expect(result2.success).toBe(false);
   });
 });

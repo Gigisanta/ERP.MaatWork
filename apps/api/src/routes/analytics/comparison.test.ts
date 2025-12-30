@@ -12,17 +12,31 @@ import comparisonRouter from './comparison';
 import { signUserToken } from '../../auth/jwt';
 import { db } from '@maatwork/db';
 import { createTestApp } from '../../__tests__/helpers/test-server';
+import { getCachedUser } from '../../auth/cache';
 
 // Mock dependencies
+vi.mock('../../auth/cache', () => ({
+  getCachedUser: vi.fn(),
+  setCachedUser: vi.fn(),
+}));
+
 vi.mock('@maatwork/db', async () => {
   const actual = await vi.importActual('@maatwork/db');
   return {
     ...actual,
     db: vi.fn(),
     portfolioTemplates: { id: 'pt_id', name: 'pt_name' },
-    portfolioTemplateLines: { templateId: 'ptl_templateId', instrumentId: 'ptl_instrumentId', targetWeight: 'ptl_targetWeight' },
+    portfolioTemplateLines: {
+      templateId: 'ptl_templateId',
+      instrumentId: 'ptl_instrumentId',
+      targetWeight: 'ptl_targetWeight',
+    },
     benchmarkDefinitions: { id: 'bd_id', name: 'bd_name' },
-    benchmarkComponents: { benchmarkId: 'bc_benchmarkId', instrumentId: 'bc_instrumentId', weight: 'bc_weight' },
+    benchmarkComponents: {
+      benchmarkId: 'bc_benchmarkId',
+      instrumentId: 'bc_instrumentId',
+      weight: 'bc_weight',
+    },
     instruments: { id: 'i_id', symbol: 'i_symbol', name: 'i_name' },
     users: { id: 'u_id', role: 'u_role', isActive: 'u_isActive' },
   };
@@ -49,7 +63,7 @@ const createChainableMock = (finalValue: unknown) => {
   mock.where = vi.fn().mockReturnValue(mock);
   mock.innerJoin = vi.fn().mockReturnValue(mock);
   mock.limit = vi.fn().mockReturnValue(mock);
-  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) =>
     Promise.resolve(finalValue).then(onRes, onRej);
   return mock as unknown as ReturnType<typeof db>;
 };
@@ -59,13 +73,20 @@ describe('Analytics Comparison Routes', () => {
     createTestApp([{ path: '/analytics', router: comparisonRouter }]);
 
   const mockDb = vi.mocked(db);
+  const mockGetCachedUser = vi.mocked(getCachedUser);
   const originalFetch = global.fetch;
 
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
-    // Default mock for user lookup in requireAuth
-    mockDb.mockReturnValue(createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }]));
+
+    // Default mock for cache to avoid hitting DB in requireAuth
+    mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
+
+    // Default mock for user lookup in requireAuth (as fallback)
+    mockDb.mockReturnValue(
+      createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }])
+    );
   });
 
   afterEach(() => {
@@ -127,9 +148,8 @@ describe('Analytics Comparison Routes', () => {
         },
       ];
 
-      // Second call for portfolios, first was for requireAuth user lookup
-      mockDb.mockReturnValueOnce(createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }]))
-            .mockReturnValueOnce(createChainableMock(mockPortfolioData));
+      // Only one call to db() since requireAuth uses cache
+      mockDb.mockReturnValueOnce(createChainableMock(mockPortfolioData));
 
       (global.fetch as vi.Mock).mockResolvedValue({
         ok: true,
@@ -177,14 +197,8 @@ describe('Analytics Comparison Routes', () => {
         },
       ];
 
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) return createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }]); // requireAuth
-        // No portfolioIds in request, so next call is benchmarkIds
-        if (callCount === 2) return createChainableMock(mockBenchmarkData); // benchmarkIds
-        return createChainableMock([]);
-      });
+      // First call is benchmark query (since no portfolioIds)
+      mockDb.mockReturnValueOnce(createChainableMock(mockBenchmarkData));
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
@@ -222,21 +236,17 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería manejar error del servicio Python', async () => {
-      let callCount = 0;
-      mockDb.mockImplementation(() => {
-        callCount++;
-        if (callCount === 1) return createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }]); // requireAuth
-        if (callCount === 2) return createChainableMock([
+      mockDb.mockReturnValueOnce(
+        createChainableMock([
           {
             portfolioId: 'port-1',
             portfolioName: 'Portfolio 1',
             instrumentSymbol: 'AAPL',
             weight: 0.5,
             instrumentName: 'Apple Inc',
-          }
-        ]); // portfolioIds
-        return createChainableMock([]);
-      });
+          },
+        ])
+      );
 
       (global.fetch as any).mockRejectedValue(new Error('Python service error'));
 
@@ -265,8 +275,11 @@ describe('Analytics Comparison Routes', () => {
         role: 'staff', // staff is NOT in ['advisor', 'manager', 'admin']
       });
 
-      // Update mock to return staff role from DB
-      mockDb.mockReturnValue(createChainableMock([{ id: 'user-1', role: 'staff', isActive: true }]));
+      // Update mock to return staff role from DB and cache
+      mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'staff', isActive: true });
+      mockDb.mockReturnValue(
+        createChainableMock([{ id: 'user-1', role: 'staff', isActive: true }])
+      );
 
       await request(app)
         .post('/analytics/compare')
@@ -279,7 +292,9 @@ describe('Analytics Comparison Routes', () => {
       const validPeriods = ['1M', '3M', '6M', '1Y', 'YTD', 'ALL'];
 
       for (const period of validPeriods) {
-        mockDb.mockImplementation(() => createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }]));
+        mockDb.mockImplementation(() =>
+          createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }])
+        );
 
         (global.fetch as any).mockResolvedValue({
           ok: true,

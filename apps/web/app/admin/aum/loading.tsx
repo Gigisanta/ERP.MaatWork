@@ -6,7 +6,14 @@
  * Impacto: Better perceived performance, reduced layout shift
  */
 
-import { Card, CardContent, Stack, Skeleton, SkeletonPageHeader, SkeletonTable } from '@maatwork/ui';
+import {
+  Card,
+  CardContent,
+  Stack,
+  Skeleton,
+  SkeletonPageHeader,
+  SkeletonTable,
+} from '@maatwork/ui';
 
 export default function AdminAumLoading() {
   return (

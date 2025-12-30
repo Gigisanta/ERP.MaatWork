@@ -9,7 +9,7 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', '**/.turbo/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/.next/**', '**/.turbo/**', '**/next-env.d.ts'],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -24,6 +24,21 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/__tests__/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['**/*.config.js', '**/*.config.mjs', '**/scripts/**/*.js', '**/scripts/**/*.mjs', '**/config/**/*.js'],
+    rules: {
+      'no-undef': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-console': 'off',
     },
   },
 ];

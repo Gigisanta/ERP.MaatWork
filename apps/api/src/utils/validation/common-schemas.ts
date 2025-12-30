@@ -121,9 +121,9 @@ export const countryCodeSchema = z
 // Pagination & Sorting
 // ==========================================================
 
-// AI_DECISION: Reduce maximum pagination limit from 500 to 100
-// Justificación: Lower limit prevents memory issues with large datasets and improves query performance
-// Impacto: All paginated endpoints now capped at 100 items, reducing API response times by 40-60%
+// AI_DECISION: Reduce maximum pagination limit from 1000 to 1000 (reverted to 1000 for contacts list compatibility)
+// Justificación: Reverted to 1000 because the contacts list requires a large limit for virtualization and search
+// Impacto: Allows up to 1000 items per request, ensuring the contacts list works as expected.
 export const paginationBaseSchema = z.object({
   limit: z
     .string()
@@ -296,7 +296,10 @@ export function validateUuidParam(value: string | undefined, fieldName: string =
 /**
  * Creates pagination schema with custom limits
  */
-export function paginationSchemaWithLimit(maxLimit: number = 500) {
+export function paginationSchemaWithLimit(maxLimit: number = 1000) {
+  // Global max is 1000
+  const effectiveMax = Math.min(maxLimit, 1000);
+
   return z.intersection(
     paginationQuerySchema,
     z.object({
@@ -304,7 +307,7 @@ export function paginationSchemaWithLimit(maxLimit: number = 500) {
         .string()
         .regex(/^\d+$/, 'Limit must be a number')
         .transform(Number)
-        .pipe(z.number().int().min(1).max(maxLimit))
+        .pipe(z.number().int().min(1).max(effectiveMax))
         .optional()
         .default('50'),
     })

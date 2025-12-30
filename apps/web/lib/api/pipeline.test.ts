@@ -16,8 +16,6 @@ vi.mock('./client', () => {
 });
 
 describe('pipeline api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

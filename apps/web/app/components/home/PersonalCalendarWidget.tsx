@@ -25,6 +25,7 @@ import {
   Heading,
   cn,
 } from '@maatwork/ui';
+import { ChevronLeft, ChevronRight, RefreshCw, Plus, Clock, MapPin } from 'lucide-react';
 import { useCalendarEvents, useUserTeams, useTeamCalendar } from '@/lib/api-hooks';
 import { useAuth } from '../../auth/AuthContext';
 import { ApiError } from '@/lib/api-error';
@@ -92,12 +93,12 @@ export function PersonalCalendarWidget() {
   // Merge events and mark them
   const mergedEvents = useMemo(() => {
     const pEvents = (personalEvents || []).map((e) => ({ ...e, isPersonal: true }));
-    const tEvents = (teamEvents || []).map((e) => ({ 
-      ...e, 
+    const tEvents = (teamEvents || []).map((e) => ({
+      ...e,
       id: e.id ? `team_${e.id}` : `team_${Math.random()}`, // Safety check for ID
-      isPersonal: false 
+      isPersonal: false,
     }));
-    
+
     return showTeamEvents ? [...pEvents, ...tEvents] : pEvents;
   }, [personalEvents, teamEvents, showTeamEvents]);
 
@@ -120,18 +121,26 @@ export function PersonalCalendarWidget() {
           <Stack direction="column" gap="lg" align="center">
             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-2">
               <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
             </div>
             <div className="space-y-2 max-w-sm">
-              <Text weight="bold" size="xl">Conecta tu Calendario</Text>
+              <Text weight="bold" size="xl">
+                Conecta tu Google Calendar para ver tus eventos
+              </Text>
               <Text color="secondary">
-                Sincroniza tus eventos de Google Calendar para gestionar tus reuniones directamente desde aquí.
+                Sincroniza tus eventos de Google Calendar para gestionar tus reuniones directamente
+                desde aquí.
               </Text>
             </div>
             <Link href="/profile">
               <Button size="lg" className="shadow-primary-lg">
-                Conectar ahora
+                Conectar en Perfil
               </Button>
             </Link>
           </Stack>
@@ -144,6 +153,8 @@ export function PersonalCalendarWidget() {
   const error = personalError;
 
   if (error) {
+    const isAuthError = error instanceof ApiError && error.status === 401;
+
     return (
       <Card className="border-error/20 bg-error/[0.02]">
         <CardHeader>
@@ -152,13 +163,30 @@ export function PersonalCalendarWidget() {
         <CardContent>
           <Stack direction="column" gap="md">
             <Alert variant="error" className="rounded-xl">
-              <Text size="sm">Hubo un problema al conectar con Google Calendar.</Text>
+              <Text size="sm">
+                {isAuthError
+                  ? 'Tu conexión con Google Calendar expiró'
+                  : `Error al cargar eventos: ${error.message || 'Error desconocido'}`}
+              </Text>
             </Alert>
             <div className="flex gap-3">
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="rounded-full">Reconectar</Button>
-              </Link>
-              <Button variant="ghost" size="sm" onClick={() => window.location.reload()} className="rounded-full">
+              {isAuthError ? (
+                <Link href="/profile">
+                  <Button variant="outline" size="sm" className="rounded-full">
+                    Reconectar cuenta
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => window.location.reload()}
+                >
+                  Revisar conexión
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleRefresh} className="rounded-full">
                 Reintentar
               </Button>
             </div>
@@ -171,27 +199,39 @@ export function PersonalCalendarWidget() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-1">
-        <div>
-          <h2 className="text-2xl font-display font-bold text-text">Mi Agenda</h2>
-          <Text size="sm" color="secondary" className="opacity-70">Gestiona tus eventos personales y de equipo</Text>
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-display font-bold text-text">Mi Agenda</h2>
+            <Text size="sm" color="secondary" className="opacity-70">
+              Gestiona tus eventos personales y de equipo
+            </Text>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            aria-label="Actualizar"
+            className="rounded-full h-8 w-8 p-0"
+          >
+            <RefreshCw className={cn('w-4 h-4', isLoading && 'animate-spin')} />
+          </Button>
         </div>
-        
+
         {activeTeam && (
           <div className="flex items-center gap-3 bg-surface/50 p-2 pr-4 rounded-full border border-border shadow-sm">
-            <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all",
-              showTeamEvents ? "bg-joy text-white shadow-sm" : "bg-surface text-text-secondary"
-            )}>
+            <div
+              className={cn(
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                showTeamEvents ? 'bg-joy text-white shadow-sm' : 'bg-surface text-text-secondary'
+              )}
+            >
               {activeTeam.name[0]}
             </div>
             <Label htmlFor="team-toggle" className="text-sm font-medium cursor-pointer">
               Eventos de {activeTeam.name}
             </Label>
-            <Switch 
-              id="team-toggle" 
-              checked={showTeamEvents} 
-              onCheckedChange={setShowTeamEvents}
-            />
+            <Switch id="team-toggle" checked={showTeamEvents} onCheckedChange={setShowTeamEvents} />
           </div>
         )}
       </div>

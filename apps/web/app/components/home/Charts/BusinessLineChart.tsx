@@ -1,7 +1,15 @@
 'use client';
 
 import { useMemo, memo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LazyBarChart,
+  LazyResponsiveContainer,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from '@/components/charts/LazyChartWrapper';
 import type { MonthlyMetrics } from '@/types/metrics';
 
 interface BusinessLineChartProps {
@@ -10,12 +18,14 @@ interface BusinessLineChartProps {
 
 /**
  * Gráfico de barras mostrando cierres por línea de negocio
- * 
+ *
  * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
  * Justificación: Charts are heavy to render, memoization reduces CPU usage on dashboard updates
  * Impacto: Smoother dashboard interactions, reduced re-render frequency
  */
-export const BusinessLineChart = memo(function BusinessLineChart({ businessLineClosures }: BusinessLineChartProps) {
+export const BusinessLineChart = memo(function BusinessLineChart({
+  businessLineClosures,
+}: BusinessLineChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -35,8 +45,8 @@ export const BusinessLineChart = memo(function BusinessLineChart({ businessLineC
   );
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={chartData} aria-label="Gráfico de cierres por línea de negocio">
+    <LazyResponsiveContainer width="100%" height={220}>
+      <LazyBarChart data={chartData} aria-label="Gráfico de cierres por línea de negocio">
         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
         <XAxis dataKey="name" fontSize={11} tick={{ fill: 'var(--color-text-secondary)' }} />
         <YAxis fontSize={11} tick={{ fill: 'var(--color-text-secondary)' }} />
@@ -49,7 +59,7 @@ export const BusinessLineChart = memo(function BusinessLineChart({ businessLineC
           }}
         />
         <Bar dataKey="value" name="Cierres" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
 });

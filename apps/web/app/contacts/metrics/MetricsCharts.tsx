@@ -1,18 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import {
-  LineChart,
+  LazyLineChart,
+  LazyBarChart,
+  LazyResponsiveContainer,
   Line,
-  BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
 import { Card, CardHeader, CardTitle, CardContent, Text } from '@maatwork/ui';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 
@@ -39,7 +39,12 @@ interface MetricsTrendChartProps {
   history: MonthlyMetrics[];
 }
 
-export function MetricsTrendChart({ history }: MetricsTrendChartProps) {
+// AI_DECISION: Memoize chart component to prevent unnecessary re-renders
+// Justificación: Charts are expensive to render, memoization reduces CPU usage on dashboard updates
+// Impacto: Smoother dashboard interactions, reduced re-render frequency
+export const MetricsTrendChart = memo(function MetricsTrendChart({
+  history,
+}: MetricsTrendChartProps) {
   if (!history || history.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center">
@@ -48,20 +53,24 @@ export function MetricsTrendChart({ history }: MetricsTrendChartProps) {
     );
   }
 
-  const chartData = history
-    .slice()
-    .reverse()
-    .map((month) => ({
-      monthYear: `${MONTH_NAMES_SHORT[month.month - 1]} ${month.year}`,
-      newProspects: month.newProspects,
-      firstMeetings: month.firstMeetings,
-      secondMeetings: month.secondMeetings,
-      newClients: month.newClients,
-    }));
+  const chartData = useMemo(
+    () =>
+      history
+        .slice()
+        .reverse()
+        .map((month) => ({
+          monthYear: `${MONTH_NAMES_SHORT[month.month - 1]} ${month.year}`,
+          newProspects: month.newProspects,
+          firstMeetings: month.firstMeetings,
+          secondMeetings: month.secondMeetings,
+          newClients: month.newClients,
+        })),
+    [history]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData}>
+    <LazyResponsiveContainer width="100%" height={300}>
+      <LazyLineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="monthYear"
@@ -113,43 +122,49 @@ export function MetricsTrendChart({ history }: MetricsTrendChartProps) {
           dot={{ fill: 'var(--color-chart-4)', strokeWidth: 2, r: 4 }}
           activeDot={{ r: 6 }}
         />
-      </LineChart>
-    </ResponsiveContainer>
+      </LazyLineChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface GoalsComparisonChartProps {
   currentMonth: MonthlyMetrics;
   goals: MonthlyGoal | null;
 }
 
-export function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonChartProps) {
-  const chartData = [
-    {
-      name: 'Nuevos Contactos',
-      actual: currentMonth.newProspects,
-      goal: goals?.newProspectsGoal ?? 0,
-    },
-    {
-      name: 'Primeras Reuniones',
-      actual: currentMonth.firstMeetings,
-      goal: goals?.firstMeetingsGoal ?? 0,
-    },
-    {
-      name: 'Segundas Reuniones',
-      actual: currentMonth.secondMeetings,
-      goal: goals?.secondMeetingsGoal ?? 0,
-    },
-    {
-      name: 'Nuevos Clientes',
-      actual: currentMonth.newClients,
-      goal: goals?.newClientsGoal ?? 0,
-    },
-  ];
+export const GoalsComparisonChart = memo(function GoalsComparisonChart({
+  currentMonth,
+  goals,
+}: GoalsComparisonChartProps) {
+  const chartData = useMemo(
+    () => [
+      {
+        name: 'Nuevos Contactos',
+        actual: currentMonth.newProspects,
+        goal: goals?.newProspectsGoal ?? 0,
+      },
+      {
+        name: 'Primeras Reuniones',
+        actual: currentMonth.firstMeetings,
+        goal: goals?.firstMeetingsGoal ?? 0,
+      },
+      {
+        name: 'Segundas Reuniones',
+        actual: currentMonth.secondMeetings,
+        goal: goals?.secondMeetingsGoal ?? 0,
+      },
+      {
+        name: 'Nuevos Clientes',
+        actual: currentMonth.newClients,
+        goal: goals?.newClientsGoal ?? 0,
+      },
+    ],
+    [currentMonth, goals]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData}>
+    <LazyResponsiveContainer width="100%" height={300}>
+      <LazyBarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="name"
@@ -170,34 +185,39 @@ export function GoalsComparisonChart({ currentMonth, goals }: GoalsComparisonCha
         <Legend />
         <Bar dataKey="actual" name="Actual" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
         <Bar dataKey="goal" name="Objetivo" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface BusinessLineChartProps {
   businessLineClosures: MonthlyMetrics['businessLineClosures'];
 }
 
-export function BusinessLineChart({ businessLineClosures }: BusinessLineChartProps) {
-  const chartData = [
-    {
-      name: 'Inversiones',
-      value: businessLineClosures.inversiones,
-    },
-    {
-      name: 'Zurich',
-      value: businessLineClosures.zurich,
-    },
-    {
-      name: 'Patrimonial',
-      value: businessLineClosures.patrimonial,
-    },
-  ];
+export const BusinessLineChart = memo(function BusinessLineChart({
+  businessLineClosures,
+}: BusinessLineChartProps) {
+  const chartData = useMemo(
+    () => [
+      {
+        name: 'Inversiones',
+        value: businessLineClosures.inversiones,
+      },
+      {
+        name: 'Zurich',
+        value: businessLineClosures.zurich,
+      },
+      {
+        name: 'Patrimonial',
+        value: businessLineClosures.patrimonial,
+      },
+    ],
+    [businessLineClosures]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData}>
+    <LazyResponsiveContainer width="100%" height={300}>
+      <LazyBarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" fontSize={12} tick={{ fill: 'var(--color-foreground-secondary)' }} />
         <YAxis fontSize={12} tick={{ fill: 'var(--color-foreground-secondary)' }} />
@@ -209,39 +229,42 @@ export function BusinessLineChart({ businessLineClosures }: BusinessLineChartPro
           }}
         />
         <Bar dataKey="value" name="Cierres" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface MarketTypeConversionChartProps {
   marketTypeConversion: MonthlyMetrics['marketTypeConversion'];
 }
 
-export function MarketTypeConversionChart({
+export const MarketTypeConversionChart = memo(function MarketTypeConversionChart({
   marketTypeConversion,
 }: MarketTypeConversionChartProps) {
-  const chartData = [
-    {
-      name: 'Natural',
-      contactos: marketTypeConversion.natural.contacts,
-      clientes: marketTypeConversion.natural.clients,
-    },
-    {
-      name: 'Referido',
-      contactos: marketTypeConversion.referido.contacts,
-      clientes: marketTypeConversion.referido.clients,
-    },
-    {
-      name: 'Frío (Total)',
-      contactos: marketTypeConversion.frio.contacts,
-      clientes: marketTypeConversion.frio.clients,
-    },
-  ];
+  const chartData = useMemo(
+    () => [
+      {
+        name: 'Natural',
+        contactos: marketTypeConversion.natural.contacts,
+        clientes: marketTypeConversion.natural.clients,
+      },
+      {
+        name: 'Referido',
+        contactos: marketTypeConversion.referido.contacts,
+        clientes: marketTypeConversion.referido.clients,
+      },
+      {
+        name: 'Frío (Total)',
+        contactos: marketTypeConversion.frio.contacts,
+        clientes: marketTypeConversion.frio.clients,
+      },
+    ],
+    [marketTypeConversion]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData}>
+    <LazyResponsiveContainer width="100%" height={300}>
+      <LazyBarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" fontSize={12} tick={{ fill: 'var(--color-foreground-secondary)' }} />
         <YAxis fontSize={12} tick={{ fill: 'var(--color-foreground-secondary)' }} />
@@ -263,32 +286,37 @@ export function MarketTypeConversionChart({
           radius={[4, 4, 0, 0]}
         />
         <Bar dataKey="clientes" name="Clientes" fill="var(--color-chart-4)" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface ColdMarketBreakdownChartProps {
   breakdown: MonthlyMetrics['marketTypeConversion']['frio']['breakdown'];
 }
 
-export function ColdMarketBreakdownChart({ breakdown }: ColdMarketBreakdownChartProps) {
-  const chartData = [
-    {
-      name: 'Redes Sociales',
-      contactos: breakdown.redesSociales.contacts,
-      clientes: breakdown.redesSociales.clients,
-    },
-    {
-      name: 'Llamado en Frío',
-      contactos: breakdown.llamadoFrio.contacts,
-      clientes: breakdown.llamadoFrio.clients,
-    },
-  ];
+export const ColdMarketBreakdownChart = memo(function ColdMarketBreakdownChart({
+  breakdown,
+}: ColdMarketBreakdownChartProps) {
+  const chartData = useMemo(
+    () => [
+      {
+        name: 'Redes Sociales',
+        contactos: breakdown.redesSociales.contacts,
+        clientes: breakdown.redesSociales.clients,
+      },
+      {
+        name: 'Llamado en Frío',
+        contactos: breakdown.llamadoFrio.contacts,
+        clientes: breakdown.llamadoFrio.clients,
+      },
+    ],
+    [breakdown]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <BarChart data={chartData}>
+    <LazyResponsiveContainer width="100%" height={200}>
+      <LazyBarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" fontSize={11} tick={{ fill: 'var(--color-foreground-secondary)' }} />
         <YAxis fontSize={11} tick={{ fill: 'var(--color-foreground-secondary)' }} />
@@ -307,37 +335,42 @@ export function ColdMarketBreakdownChart({ breakdown }: ColdMarketBreakdownChart
           radius={[4, 4, 0, 0]}
         />
         <Bar dataKey="clientes" name="Clientes" fill="var(--color-chart-1)" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface TransitionTimesChartProps {
   transitionTimes: MonthlyMetrics['transitionTimes'];
 }
 
-export function TransitionTimesChart({ transitionTimes }: TransitionTimesChartProps) {
-  const chartData = [
-    {
-      name: 'Prospecto → Primera Reunión',
-      value: transitionTimes.prospectoToFirstMeeting ?? 0,
-      hasValue: transitionTimes.prospectoToFirstMeeting !== null,
-    },
-    {
-      name: 'Primera → Segunda Reunión',
-      value: transitionTimes.firstToSecondMeeting ?? 0,
-      hasValue: transitionTimes.firstToSecondMeeting !== null,
-    },
-    {
-      name: 'Segunda Reunión → Cliente',
-      value: transitionTimes.secondMeetingToClient ?? 0,
-      hasValue: transitionTimes.secondMeetingToClient !== null,
-    },
-  ];
+export const TransitionTimesChart = memo(function TransitionTimesChart({
+  transitionTimes,
+}: TransitionTimesChartProps) {
+  const chartData = useMemo(
+    () => [
+      {
+        name: 'Prospecto → Primera Reunión',
+        value: transitionTimes.prospectoToFirstMeeting ?? 0,
+        hasValue: transitionTimes.prospectoToFirstMeeting !== null,
+      },
+      {
+        name: 'Primera → Segunda Reunión',
+        value: transitionTimes.firstToSecondMeeting ?? 0,
+        hasValue: transitionTimes.firstToSecondMeeting !== null,
+      },
+      {
+        name: 'Segunda Reunión → Cliente',
+        value: transitionTimes.secondMeetingToClient ?? 0,
+        hasValue: transitionTimes.secondMeetingToClient !== null,
+      },
+    ],
+    [transitionTimes]
+  );
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData} layout="vertical">
+    <LazyResponsiveContainer width="100%" height={300}>
+      <LazyBarChart data={chartData} layout="vertical">
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           type="number"
@@ -368,10 +401,10 @@ export function TransitionTimesChart({ transitionTimes }: TransitionTimesChartPr
           }}
         />
         <Bar dataKey="value" name="Días" fill="var(--color-chart-4)" radius={[0, 4, 4, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
-}
+});
 
 interface MetricsChartsProps {
   history: MonthlyMetrics[];

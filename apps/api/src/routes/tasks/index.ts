@@ -92,11 +92,3 @@ router.put(
 router.delete('/:id', requireAuth, handleDeleteTask);
 
 export default router;
-
-
-
-
-
-
-
-

@@ -118,17 +118,28 @@ router.get(
         usagePercent: cacheMemoryPercent.toFixed(2),
         caches: Object.entries(cacheHealth)
           .filter(([key]) => key !== 'totalMemoryBytes' && key !== 'maxMemoryBytes')
-          .map(([key, stats]: [string, any]) => ({
-            name: key,
-            hits: stats.hits || 0,
-            misses: stats.misses || 0,
-            hitRate: stats.hitRate?.toFixed(2) || '0.00',
-            keys: stats.keyCount || stats.keys || 0,
-            sizeMB: stats.sizeBytes ? (stats.sizeBytes / 1024 / 1024).toFixed(2) : '0.00',
-            largestValueMB: stats.largestValueBytes
-              ? (stats.largestValueBytes / 1024 / 1024).toFixed(2)
-              : '0.00',
-          })),
+          .map(([key, stats]) => {
+            const s = stats as {
+              hits?: number;
+              misses?: number;
+              hitRate?: number;
+              keyCount?: number;
+              keys?: number;
+              sizeBytes?: number;
+              largestValueBytes?: number;
+            };
+            return {
+              name: key,
+              hits: s.hits || 0,
+              misses: s.misses || 0,
+              hitRate: s.hitRate?.toFixed(2) || '0.00',
+              keys: s.keyCount || s.keys || 0,
+              sizeMB: s.sizeBytes ? (s.sizeBytes / 1024 / 1024).toFixed(2) : '0.00',
+              largestValueMB: s.largestValueBytes
+                ? (s.largestValueBytes / 1024 / 1024).toFixed(2)
+                : '0.00',
+            };
+          }),
       },
       etagCache: {
         size: etagCacheStats.size,

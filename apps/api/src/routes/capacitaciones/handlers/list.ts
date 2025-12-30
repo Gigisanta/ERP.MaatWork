@@ -57,11 +57,3 @@ export const handleListCapacitaciones = createRouteHandler(async (req: Request) 
 
   return formatPaginatedResponse(data, total, pagination);
 });
-
-
-
-
-
-
-
-

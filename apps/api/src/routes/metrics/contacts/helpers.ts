@@ -162,11 +162,3 @@ export function createMonthRange(month: number, year: number): MonthRange {
     monthEnd: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)),
   };
 }
-
-
-
-
-
-
-
-

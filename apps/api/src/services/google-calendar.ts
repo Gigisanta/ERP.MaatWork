@@ -195,7 +195,10 @@ export async function listCalendars(
   const timeoutId = setTimeout(() => controller.abort(), GOOGLE_API_TIMEOUT_MS);
 
   try {
-    const response = await calendar.calendarList.list({}, { signal: controller.signal as AbortSignal });
+    const response = await calendar.calendarList.list(
+      {},
+      { signal: controller.signal as AbortSignal }
+    );
 
     return response.data.items || [];
   } catch (error) {

@@ -56,15 +56,12 @@ export interface CreateBenchmarkRequest extends CreateRequest<Benchmark> {
 /**
  * Request para actualizar benchmark - usando utility type UpdateRequest
  */
-export interface UpdateBenchmarkRequest extends UpdateRequest<Benchmark> {}
+export type UpdateBenchmarkRequest = UpdateRequest<Benchmark>;
 
 /**
  * Request para agregar componente de benchmark
  */
-export interface AddBenchmarkComponentRequest extends Pick<
-  BenchmarkComponent,
-  'instrumentId' | 'weight'
-> {}
+export type AddBenchmarkComponentRequest = Pick<BenchmarkComponent, 'instrumentId' | 'weight'>;
 
 /**
  * Benchmark con componentes completos

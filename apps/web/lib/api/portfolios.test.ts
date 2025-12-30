@@ -16,8 +16,6 @@ vi.mock('./client', () => ({
 }));
 
 describe('portfolios api client', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -18,8 +18,6 @@ vi.mock('./client', () => {
 });
 
 describe('capacitaciones api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -2,7 +2,7 @@
 
 /**
  * Script para actualizar dependencias de forma segura
- * 
+ *
  * Actualiza dependencias patch y minor automáticamente
  * Para major updates, muestra qué se actualizaría pero no lo hace automáticamente
  */
@@ -33,7 +33,7 @@ function getOutdatedPackages() {
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    
+
     if (!output || !output.trim()) return {};
 
     try {
@@ -41,7 +41,10 @@ function getOutdatedPackages() {
       return JSON.parse(output.trim());
     } catch (e) {
       // Si falla, intentar el método de línea por línea (por si acaso pnpm devuelve ndjson)
-      const lines = output.trim().split('\n').filter(line => line.trim());
+      const lines = output
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim());
       const packages = {};
       for (const line of lines) {
         try {
@@ -80,7 +83,7 @@ function categorizeUpdates(outdated) {
 
     const current = info.current.split('.');
     const latest = info.latest.split('.');
-    
+
     if (current[0] !== latest[0]) {
       major.push({ pkg, current: info.current, latest: info.latest, workspace: info.workspace });
     } else if (current[1] !== latest[1]) {
@@ -148,7 +151,9 @@ function main() {
   }
 
   if (toUpdate.length === 0) {
-    console.log('⚠️  No hay actualizaciones para aplicar (usa --major para incluir major updates)\n');
+    console.log(
+      '⚠️  No hay actualizaciones para aplicar (usa --major para incluir major updates)\n'
+    );
     return;
   }
 
@@ -180,4 +185,3 @@ function main() {
 }
 
 main();
-

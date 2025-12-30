@@ -12,24 +12,51 @@ vi.mock('@radix-ui/react-dropdown-menu', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@radix-ui/react-dropdown-menu')>();
   return {
     ...actual,
-    Root: ({ children, open }: { children: React.ReactNode; open?: boolean }) => <div data-testid="dropdown-root" data-state={open ? 'open' : 'closed'}>{children}</div>,
-    Trigger: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-trigger">{children}</div>,
-    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    Content: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-content">{children}</div>,
-    RadioGroup: ({ children, onValueChange }: { children: React.ReactNode; onValueChange: (v: string) => void }) => (
-      <div data-testid="radio-group" onClick={(e: React.MouseEvent) => {
-        const target = (e.target as HTMLElement).closest('[data-value]');
-        if (target) onValueChange(target.getAttribute('data-value') || '');
-      }}>
+    Root: ({ children, open }: { children: React.ReactNode; open?: boolean }) => (
+      <div data-testid="dropdown-root" data-state={open ? 'open' : 'closed'}>
         {children}
       </div>
     ),
-    RadioItem: ({ children, value }: { children: React.ReactNode; value: string }) => <div data-value={value}>{children}</div>,
-    CheckboxItem: ({ children, checked, onCheckedChange }: { children: React.ReactNode; checked: boolean; onCheckedChange: (c: boolean) => void }) => (
-      <div onClick={() => onCheckedChange(!checked)}>{children}</div>
+    Trigger: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="dropdown-trigger">{children}</div>
     ),
+    Portal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Content: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="dropdown-content">{children}</div>
+    ),
+    RadioGroup: ({
+      children,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      onValueChange: (v: string) => void;
+    }) => (
+      <div
+        data-testid="radio-group"
+        onClick={(e: React.MouseEvent) => {
+          const target = (e.target as HTMLElement).closest('[data-value]');
+          if (target) onValueChange(target.getAttribute('data-value') || '');
+        }}
+      >
+        {children}
+      </div>
+    ),
+    RadioItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
+      <div data-value={value}>{children}</div>
+    ),
+    CheckboxItem: ({
+      children,
+      checked,
+      onCheckedChange,
+    }: {
+      children: React.ReactNode;
+      checked: boolean;
+      onCheckedChange: (c: boolean) => void;
+    }) => <div onClick={() => onCheckedChange(!checked)}>{children}</div>,
     ItemIndicator: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    Item: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <div onClick={onClick}>{children}</div>,
+    Item: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
+      <div onClick={onClick}>{children}</div>
+    ),
   };
 });
 

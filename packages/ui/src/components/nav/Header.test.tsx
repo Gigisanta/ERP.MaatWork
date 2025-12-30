@@ -80,9 +80,12 @@ describe('Header Component', () => {
     it('should render user avatar when provided', () => {
       const userWithAvatar = { ...mockUser, avatar: 'https://example.com/avatar.jpg' };
       render(<Header user={userWithAvatar} />);
-      const avatar = screen.getByAltText('');
+      const avatar = screen.getByAltText(mockUser.name);
       expect(avatar).toBeInTheDocument();
-      expect(avatar).toHaveAttribute('src', 'https://example.com/avatar.jpg');
+      // Next.js Image component transforms the src, so we check if it contains our URL
+      expect(avatar.getAttribute('src')).toContain(
+        encodeURIComponent('https://example.com/avatar.jpg')
+      );
     });
 
     it('should render mobile menu button when onToggleSidebar provided', () => {

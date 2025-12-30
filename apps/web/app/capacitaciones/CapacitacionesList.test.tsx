@@ -42,11 +42,7 @@ describe('CapacitacionesList', () => {
   });
 
   const renderWithAuth = (ui: React.ReactElement) => {
-    return render(
-      <AuthProvider initialUser={mockUser}>
-        {ui}
-      </AuthProvider>
-    );
+    return render(<AuthProvider initialUser={mockUser}>{ui}</AuthProvider>);
   };
 
   it('debería renderizar título correctamente', () => {
@@ -65,7 +61,11 @@ describe('CapacitacionesList', () => {
 
     renderWithAuth(<CapacitacionesList />);
     // El componente muestra un Spinner o mensaje
-    expect(screen.queryByText(/cargando/i) || screen.queryByRole('status') || document.querySelector('.animate-spin')).toBeDefined();
+    expect(
+      screen.queryByText(/cargando/i) ||
+        screen.queryByRole('status') ||
+        document.querySelector('.animate-spin')
+    ).toBeDefined();
   });
 
   it('debería mostrar mensaje cuando no hay capacitaciones', () => {

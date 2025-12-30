@@ -230,15 +230,18 @@ describe('AUM Admin - Mapping Routes', () => {
       });
 
       // Configure mockDb to return an object with all necessary methods
-      mockDb.mockImplementation(() => ({
-        select: mockSelect,
-        insert: mockInsert,
-        update: vi.fn((_table: unknown) => ({
-          set: vi.fn((_data: unknown) => ({
-            where: vi.fn((_condition: unknown) => Promise.resolve(undefined)),
-          })),
-        })),
-      } as unknown as ReturnType<typeof db>));
+      mockDb.mockImplementation(
+        () =>
+          ({
+            select: mockSelect,
+            insert: mockInsert,
+            update: vi.fn((_table: unknown) => ({
+              set: vi.fn((_data: unknown) => ({
+                where: vi.fn((_condition: unknown) => Promise.resolve(undefined)),
+              })),
+            })),
+          }) as unknown as ReturnType<typeof db>
+      );
 
       // Reset selectCallCount before test
       selectCallCount = 0;

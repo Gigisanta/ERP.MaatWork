@@ -13,7 +13,7 @@ import FiltersDropdown from './FiltersDropdown';
 import type { PipelineStage, Tag, Advisor } from '@/types';
 
 // AI_DECISION: Lazy load FiltersDropdown to reduce initial bundle size
-// Justificación: Reduces initial JS load by ~15KB. Previous issues with Radix/Webpack 
+// Justificación: Reduces initial JS load by ~15KB. Previous issues with Radix/Webpack
 //                are usually resolved in newer Next.js versions.
 // Impacto: Better FCP/LCP for the contacts page.
 

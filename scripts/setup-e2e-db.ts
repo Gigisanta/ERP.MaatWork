@@ -38,12 +38,14 @@ async function setupE2EDatabase() {
     execSync('docker info', { stdio: 'ignore' });
   } catch (e) {
     console.error('\n❌ ERROR: Docker Desktop is not running.');
-    console.error('Please start Docker Desktop and try again. The E2E tests require a Postgres container.\n');
+    console.error(
+      'Please start Docker Desktop and try again. The E2E tests require a Postgres container.\n'
+    );
     process.exit(1);
   }
 
   const pool = new Pool({ connectionString: adminUrl });
-  
+
   try {
     console.log(`\n🔄 Setting up E2E database: ${testDbName}`);
 
@@ -63,17 +65,17 @@ async function setupE2EDatabase() {
     // 3. Run migrations and seeds on the new database
     const testDatabaseUrl = DATABASE_URL.replace(`/${originalDbName}`, `/${testDbName}`);
     process.env.DATABASE_URL = testDatabaseUrl;
-    
+
     console.log('🏗️  Running migrations...');
-    execSync('pnpm -F @maatwork/db migrate', { 
+    execSync('pnpm -F @maatwork/db migrate', {
       stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: testDatabaseUrl }
+      env: { ...process.env, DATABASE_URL: testDatabaseUrl },
     });
 
     console.log('🌱 Seeding test data...');
-    execSync('pnpm -F @maatwork/db seed:full', { 
+    execSync('pnpm -F @maatwork/db seed:full', {
       stdio: 'inherit',
-      env: { ...process.env, DATABASE_URL: testDatabaseUrl }
+      env: { ...process.env, DATABASE_URL: testDatabaseUrl },
     });
 
     console.log('✨ E2E Database setup complete!\n');
@@ -86,4 +88,3 @@ async function setupE2EDatabase() {
 }
 
 setupE2EDatabase();
-

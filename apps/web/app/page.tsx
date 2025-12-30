@@ -7,7 +7,8 @@
  */
 
 import { Suspense } from 'react';
-import { HomePageClient, HomePageUnauthenticatedClient } from './components/home/HomePageClient';
+import { HomePageClient } from './components/home/HomePageClient';
+import { LandingPage } from './components/landing/LandingPage';
 import {
   getCurrentUser,
   getContactsMetricsServer,
@@ -16,6 +17,64 @@ import {
 } from '@/lib/api-server-helpers';
 import type { MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
 import { Card, CardContent, Spinner, Stack, Text } from '@maatwork/ui';
+import type { Metadata } from 'next';
+
+// AI_DECISION: Metadata optimizada para SEO en la Landing Page
+// Justificación: La landing page (/) es la entrada principal pública y necesita máxima visibilidad.
+// Impacto: Mejora posicionamiento en Google y preview en redes sociales.
+export const metadata: Metadata = {
+  title: 'MaatWork | Gestión Patrimonial Profesional',
+  description:
+    'Potencia tu patrimonio con MaatWork. Asesoramiento financiero experto, Cash Management, Capitalización y Administración Patrimonial. Operá de forma ágil y segura.',
+  keywords: [
+    'Gestión Patrimonial',
+    'Inversiones',
+    'Asesoramiento Financiero',
+    'Cash Management',
+    'Capitalización',
+    'Wealth Management',
+    'Argentina',
+    'Finanzas Corporativas',
+  ],
+  openGraph: {
+    title: 'MaatWork | Gestión Patrimonial Profesional',
+    description:
+      'Expertos en gestión patrimonial y mercado de capitales. Soluciones financieras a medida para individuos y empresas.',
+    url: 'https://maat.work',
+    siteName: 'MaatWork',
+    images: [
+      {
+        url: 'https://maat.work/og-image.jpg', // Reemplazar con URL real cuando exista
+        width: 1200,
+        height: 630,
+        alt: 'MaatWork - Soluciones Financieras',
+      },
+    ],
+    locale: 'es_AR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MaatWork | Gestión Patrimonial Profesional',
+    description:
+      'Expertos en gestión patrimonial y mercado de capitales. Soluciones financieras a medida.',
+    // images: ['https://maat.work/twitter-image.jpg'], // Reemplazar con URL real
+  },
+  alternates: {
+    canonical: 'https://maat.work',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+};
 
 /**
  * Loading component for home page
@@ -109,9 +168,44 @@ export default async function HomePage() {
 
   // If no user, show unauthenticated state
   if (!user) {
+    // AI_DECISION: JSON-LD Structured Data para SEO
+    // Justificación: Ayuda a Google a entender que esto es una Organización Financiera.
+    // Impacto: Rich snippets en resultados de búsqueda.
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'FinancialService',
+      name: 'MaatWork',
+      image: 'https://maat.work/icon.png', // URL del icono o logo
+      description:
+        'Gestión profesional de clientes e inversiones. Soluciones financieras a medida.',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Av. del Libertador 6430, Piso 14',
+        addressLocality: 'Buenos Aires',
+        addressRegion: 'CABA',
+        postalCode: '1428',
+        addressCountry: 'AR',
+      },
+      telephone: '+5491134600296',
+      url: 'https://maat.work',
+      priceRange: '$$', // Opcional, indicativo
+      openingHoursSpecification: [
+        {
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+          opens: '09:00',
+          closes: '18:00',
+        },
+      ],
+    };
+
     return (
       <Suspense fallback={<HomePageLoading />}>
-        <HomePageUnauthenticatedClient />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <LandingPage />
       </Suspense>
     );
   }
@@ -119,11 +213,7 @@ export default async function HomePage() {
   // Show authenticated home page
   return (
     <Suspense fallback={<HomePageLoading />}>
-      <HomePageClient
-        metricsData={metricsData}
-        goalsData={goalsData}
-        metricsError={metricsError}
-      />
+      <HomePageClient metricsData={metricsData} goalsData={goalsData} metricsError={metricsError} />
     </Suspense>
   );
 }

@@ -20,11 +20,11 @@ function getColorizedScore(score: number) {
 function countOccurrences(patterns: RegExp[], extensions: string[]): number {
   let count = 0;
   const dirs = ['apps', 'packages'];
-  
+
   for (const dir of dirs) {
     const fullPath = path.join(rootDir, dir);
     if (!fs.existsSync(fullPath)) continue;
-    
+
     walkDir(fullPath, (filePath) => {
       const ext = path.extname(filePath);
       if (
@@ -46,7 +46,7 @@ function countOccurrences(patterns: RegExp[], extensions: string[]): number {
       }
     });
   }
-  
+
   return count;
 }
 
@@ -73,7 +73,9 @@ async function runAudit() {
     console.log('  --barrels  Audit only barrel exports');
     console.log('  --help     Show this help message\n');
     console.log('Description:');
-    console.log('  Runs Knip for dead code/deps, audits "any" types, and checks for barrel exports.');
+    console.log(
+      '  Runs Knip for dead code/deps, audits "any" types, and checks for barrel exports.'
+    );
     console.log('  Calculates an overall Cleanliness Score for the codebase.\n');
     process.exit(0);
   }
@@ -117,7 +119,9 @@ async function runAudit() {
 
   // 3. Audit barrel exports (export *)
   if (mode.full || mode.barrels) {
-    console.log(chalk.yellow(`${mode.full ? '\n3️⃣  ' : ''}Auditing barrel exports (export * from...)...`));
+    console.log(
+      chalk.yellow(`${mode.full ? '\n3️⃣  ' : ''}Auditing barrel exports (export * from...)...`)
+    );
     try {
       results.barrels.count = countOccurrences([/export\s+\*\s+from/g], ['.ts', '.tsx']);
       results.barrels.success = results.barrels.count === 0;
@@ -133,22 +137,32 @@ async function runAudit() {
 
   // 4. Calculate Cleanliness Score
   console.log(chalk.cyan('\n📊 Audit Summary & Cleanliness Score:'));
-  
+
   // Weights: Knip (50), Any types (25), Barrels (25)
   const knipScore = results.knip.success ? 50 : 10;
-  const anyScore = Math.max(0, 25 - (results.anyTypes.count * 0.1)); // 0.1 per 'any' (less strict than before)
-  const barrelScore = Math.max(0, 25 - (results.barrels.count * 1));
-  
+  const anyScore = Math.max(0, 25 - results.anyTypes.count * 0.1); // 0.1 per 'any' (less strict than before)
+  const barrelScore = Math.max(0, 25 - results.barrels.count * 1);
+
   const totalScore = Math.round(knipScore + anyScore + barrelScore);
-  
-  console.log(`   - Unused code/deps:  ${results.knip.success ? chalk.green('CLEAN') : chalk.red('ISSUES FOUND')}`);
-  console.log(`   - 'any' types:       ${results.anyTypes.count > 0 ? chalk.yellow(results.anyTypes.count) : chalk.green('0')}`);
-  console.log(`   - Barrel exports:    ${results.barrels.count > 0 ? chalk.yellow(results.barrels.count) : chalk.green('0')}`);
-  
+
+  console.log(
+    `   - Unused code/deps:  ${results.knip.success ? chalk.green('CLEAN') : chalk.red('ISSUES FOUND')}`
+  );
+  console.log(
+    `   - 'any' types:       ${results.anyTypes.count > 0 ? chalk.yellow(results.anyTypes.count) : chalk.green('0')}`
+  );
+  console.log(
+    `   - Barrel exports:    ${results.barrels.count > 0 ? chalk.yellow(results.barrels.count) : chalk.green('0')}`
+  );
+
   console.log(chalk.bold(`\n✨ Overall Cleanliness Score: ${getColorizedScore(totalScore)}/100\n`));
 
   if (!results.knip.success) {
-    console.log(chalk.blue('💡 Tip: Run "pnpm knip --fix" to automatically remove some unused exports and dependencies.'));
+    console.log(
+      chalk.blue(
+        '💡 Tip: Run "pnpm knip --fix" to automatically remove some unused exports and dependencies.'
+      )
+    );
     console.log(chalk.blue('   Check the Knip output above for specific files and issues.\n'));
     // We don't exit with 1 here to allow seeing the score, but we should exit with 1 if it's CI and failed
     if (process.argv.includes('--ci')) {
@@ -157,7 +171,7 @@ async function runAudit() {
   }
 }
 
-runAudit().catch(err => {
+runAudit().catch((err) => {
   console.error(chalk.red('\nFATAL: Audit script failed unexpectedly:'), err);
   process.exit(1);
 });

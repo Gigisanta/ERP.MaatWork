@@ -152,7 +152,3 @@ export const getMyTeams = createRouteHandler(async (req: Request) => {
 
   return teamsWithDetails;
 });
-
-
-
-

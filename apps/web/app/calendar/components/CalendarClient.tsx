@@ -96,6 +96,3 @@ export function CalendarClient({ userId }: CalendarClientProps) {
     </div>
   );
 }
-
-
-

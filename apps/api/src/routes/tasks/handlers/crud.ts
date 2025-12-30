@@ -53,9 +53,13 @@ export const handleUpdateTask = createRouteHandler(async (req: Request) => {
       throw new HttpError(404, 'Task not found');
     }
     if (error.message === 'Version conflict') {
-      throw new HttpError(409, 'El recurso fue modificado por otro usuario. Por favor recarga la página.', {
-        error: 'Version conflict',
-      });
+      throw new HttpError(
+        409,
+        'El recurso fue modificado por otro usuario. Por favor recarga la página.',
+        {
+          error: 'Version conflict',
+        }
+      );
     }
     throw err;
   }

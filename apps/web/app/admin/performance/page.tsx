@@ -33,6 +33,17 @@ interface CacheHealth {
   };
 }
 
+interface PoolStats {
+  available: boolean;
+  totalCount?: number;
+  idleCount?: number;
+  waitingCount?: number;
+  activeCount?: number;
+  utilization?: number;
+  health?: 'healthy' | 'warning';
+  message?: string;
+}
+
 interface PerformanceData {
   allMetrics: QueryMetrics[];
   slowQueries: QueryMetrics[];
@@ -48,6 +59,7 @@ interface PerformanceData {
 
 export default function PerformanceDashboard() {
   const [data, setData] = useState<PerformanceData | null>(null);
+  const [poolStats, setPoolStats] = useState<PoolStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(500);
@@ -57,6 +69,7 @@ export default function PerformanceDashboard() {
       setLoading(true);
       setError(null);
 
+      // Fetch query metrics
       const response = await apiClient.get<PerformanceData>(
         `/v1/admin/query-metrics?threshold=${threshold}`
       );
@@ -65,6 +78,12 @@ export default function PerformanceDashboard() {
         setData(response.data);
       } else {
         throw new Error('Failed to fetch metrics');
+      }
+
+      // Fetch pool stats
+      const poolResponse = await apiClient.get<PoolStats>('/v1/admin/performance/pool');
+      if (poolResponse.success && poolResponse.data) {
+        setPoolStats(poolResponse.data);
       }
     } catch (err) {
       logger.error('Error fetching performance metrics', {
@@ -150,7 +169,7 @@ export default function PerformanceDashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
         <Card className="p-4">
           <h3 className="text-sm font-medium text-gray-500 mb-1">Total Queries</h3>
           <p className="text-2xl font-bold">{data.summary.totalQueries}</p>
@@ -167,6 +186,21 @@ export default function PerformanceDashboard() {
           <h3 className="text-sm font-medium text-gray-500 mb-1">Cache Hit Rate</h3>
           <p className="text-2xl font-bold text-green-600">{overallCacheHitRate.toFixed(1)}%</p>
         </Card>
+        {poolStats?.available && (
+          <Card className="p-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Pool Utilization</h3>
+            <p
+              className={`text-2xl font-bold ${
+                poolStats.health === 'warning' ? 'text-orange-600' : 'text-green-600'
+              }`}
+            >
+              {poolStats.utilization}%
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              {poolStats.activeCount}/{poolStats.totalCount} active
+            </p>
+          </Card>
+        )}
       </div>
 
       {/* Top Slow Queries */}

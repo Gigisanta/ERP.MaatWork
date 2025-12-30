@@ -4,7 +4,13 @@
  * Provides utilities to create and manage Express server instances for testing
  */
 
-import express, { type Express, type Request, type Response, type NextFunction, type Router } from 'express';
+import express, {
+  type Express,
+  type Request,
+  type Response,
+  type NextFunction,
+  type Router,
+} from 'express';
 import cookieParser from 'cookie-parser';
 import type { Server } from 'http';
 import { vi } from 'vitest';
@@ -12,9 +18,6 @@ import { db } from '@maatwork/db';
 import { initializeDatabase } from '../../db-init';
 
 // Re-export common test utilities
-;
-;
-
 let testServer: Server | null = null;
 let testApp: Express | null = null;
 

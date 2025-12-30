@@ -1,6 +1,10 @@
 import { db, tasks, taskRecurrences, contacts, users } from '@maatwork/db';
 import { eq, and, isNull, desc, lte, gte, sql, or, inArray } from 'drizzle-orm';
-import { canAccessContact, getUserAccessScope, buildContactAccessFilter } from '../auth/authorization';
+import {
+  canAccessContact,
+  getUserAccessScope,
+  buildContactAccessFilter,
+} from '../auth/authorization';
 import { syncTaskToGoogle } from './task-sync';
 import type { Logger } from 'pino';
 import type { UserRole } from '@maatwork/types';
@@ -458,7 +462,7 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
   let affected = 0;
 
   switch (action) {
-    case 'complete':
+    case 'complete': {
       const completed = await db()
         .update(tasks)
         .set({
@@ -470,8 +474,9 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
         .returning();
       affected = completed.length;
       break;
+    }
 
-    case 'delete':
+    case 'delete': {
       const deleted = await db()
         .update(tasks)
         .set({ deletedAt: new Date() })
@@ -479,8 +484,9 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
         .returning();
       affected = deleted.length;
       break;
+    }
 
-    case 'reassign':
+    case 'reassign': {
       if (!params?.assignedToUserId) {
         throw new Error('assignedToUserId required for reassign');
       }
@@ -494,8 +500,9 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
         .returning();
       affected = reassigned.length;
       break;
+    }
 
-    case 'change_status':
+    case 'change_status': {
       if (!params?.status) {
         throw new Error('status required for change_status');
       }
@@ -509,6 +516,7 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
         .returning();
       affected = statusChanged.length;
       break;
+    }
 
     default:
       throw new Error('Invalid action');
@@ -517,4 +525,3 @@ export async function bulkAction({ taskIds, action, params, log }: BulkActionPar
   log.info({ action, affected, taskIds }, 'bulk action completed');
   return { affected, action };
 }
-

@@ -31,7 +31,13 @@ vi.mock('drizzle-orm', () => ({
       values,
       as: vi.fn((alias: string) => ({ sql: strings.join('?'), values, alias })),
     }),
-    { raw: vi.fn((str: string) => ({ sql: str, values: [], as: vi.fn((alias: string) => ({ sql: str, values: [], alias })) })) }
+    {
+      raw: vi.fn((str: string) => ({
+        sql: str,
+        values: [],
+        as: vi.fn((alias: string) => ({ sql: str, values: [], alias })),
+      })),
+    }
   ),
   eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
   and: vi.fn((...conditions: unknown[]) => ({ and: conditions })),
@@ -299,7 +305,7 @@ describe('Capacitaciones Routes', () => {
       // Second call (DELETE): the where() call is awaited and should resolve to something
       // Actually, db().delete().where() returns a Promise.
       // So the SECOND call to where() should return a Promise.
-      
+
       mockDbObj.where
         .mockReturnValueOnce(mockDbObj) // select chain: return this for .limit()
         .mockResolvedValueOnce(undefined); // delete chain: return promise for await

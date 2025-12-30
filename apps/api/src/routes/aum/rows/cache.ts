@@ -66,11 +66,3 @@ export function setCachedCount(cacheKey: string, total: number): void {
 function clearCache(): void {
   countCache.clear();
 }
-
-
-
-
-
-
-
-

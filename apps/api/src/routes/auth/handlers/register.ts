@@ -91,11 +91,3 @@ export const handleRegister = createAsyncHandler(async (req: Request, res: Respo
     requestId: req.requestId,
   });
 });
-
-
-
-
-
-
-
-

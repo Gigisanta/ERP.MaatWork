@@ -241,7 +241,7 @@ router.put(
       emailAutomationService
         .checkAndTriggerAutomations('pipeline_stage_change', {
           contactId: id,
-          userId: req.user?.id,
+          userId: req.user!.id,
           newPipelineStageId,
         })
         .catch((err) => {

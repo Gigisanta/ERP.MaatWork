@@ -1,6 +1,6 @@
 /**
  * Seed Teams
- * 
+ *
  * Seeds teams and team memberships
  */
 
@@ -26,13 +26,16 @@ export async function seedTeams(
 
     const teamName = teamNames[i]!;
     const existing = await db().select().from(teams).where(eq(teams.name, teamName)).limit(1);
-    
+
     let team: InferSelectModel<typeof teams>;
     if (existing.length === 0) {
-      const [created] = await db().insert(teams).values({
-        name: teamName,
-        managerUserId: manager.id
-      }).returning();
+      const [created] = await db()
+        .insert(teams)
+        .values({
+          name: teamName,
+          managerUserId: manager.id,
+        })
+        .returning();
       team = created;
       console.log(`  ✓ Created team: ${teamName} (manager: ${manager.fullName})`);
     } else {
@@ -59,11 +62,14 @@ export async function seedTeams(
         .limit(1);
 
       if (existingMembership.length === 0) {
-        await db().insert(teamMembership).values({
-          teamId: team.id,
-          userId: advisor.id,
-          role: 'member'
-        }).onConflictDoNothing();
+        await db()
+          .insert(teamMembership)
+          .values({
+            teamId: team.id,
+            userId: advisor.id,
+            role: 'member',
+          })
+          .onConflictDoNothing();
         console.log(`    ✓ Added ${advisor.fullName} to ${teamName}`);
       }
     }
@@ -77,18 +83,23 @@ export async function seedTeams(
       const existingRequest = await db()
         .select()
         .from(teamMembershipRequests)
-        .where(and(
-          eq(teamMembershipRequests.userId, advisor.id),
-          eq(teamMembershipRequests.managerId, manager.id)
-        ))
+        .where(
+          and(
+            eq(teamMembershipRequests.userId, advisor.id),
+            eq(teamMembershipRequests.managerId, manager.id)
+          )
+        )
         .limit(1);
 
       if (existingRequest.length === 0) {
-        await db().insert(teamMembershipRequests).values({
-          userId: advisor.id,
-          managerId: manager.id,
-          status: 'pending'
-        }).onConflictDoNothing();
+        await db()
+          .insert(teamMembershipRequests)
+          .values({
+            userId: advisor.id,
+            managerId: manager.id,
+            status: 'pending',
+          })
+          .onConflictDoNothing();
         console.log(`  ✓ Created team membership request`);
       }
     }
@@ -97,52 +108,3 @@ export async function seedTeams(
   console.log(`✅ Teams seeded: ${createdTeams.length} teams\n`);
   return createdTeams;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

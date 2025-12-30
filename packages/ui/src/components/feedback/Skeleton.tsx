@@ -86,10 +86,7 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
             <div
               key={index}
               className={cn(baseClasses, 'h-4')}
-              style={getStyle(
-                index === lines - 1 ? '75%' : width || '100%',
-                height || 16
-              )}
+              style={getStyle(index === lines - 1 ? '75%' : width || '100%', height || 16)}
             />
           ))}
         </div>
@@ -100,7 +97,10 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
       <div
         ref={ref}
         className={cn(baseClasses, variant === 'circle' ? '' : 'h-4')}
-        style={getStyle(width || (variant === 'circle' ? 40 : '100%'), height || (variant === 'circle' ? 40 : 16))}
+        style={getStyle(
+          width || (variant === 'circle' ? 40 : '100%'),
+          height || (variant === 'circle' ? 40 : 16)
+        )}
         aria-hidden="true"
         {...props}
       />
@@ -161,7 +161,9 @@ export function SkeletonAvatar({
     lg: 48,
   };
 
-  return <Skeleton variant="circle" width={sizeMap[size]} height={sizeMap[size]} animation={animation} />;
+  return (
+    <Skeleton variant="circle" width={sizeMap[size]} height={sizeMap[size]} animation={animation} />
+  );
 }
 
 export interface SkeletonCardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -174,9 +176,21 @@ export interface SkeletonCardProps extends React.HTMLAttributes<HTMLDivElement> 
 }
 
 export const SkeletonCard = React.forwardRef<HTMLDivElement, SkeletonCardProps>(
-  ({ showHeader = true, showFooter = false, showAvatar = false, contentLines = 3, lines, delay = 0, className, ...props }, ref) => {
+  (
+    {
+      showHeader = true,
+      showFooter = false,
+      showAvatar = false,
+      contentLines = 3,
+      lines,
+      delay = 0,
+      className,
+      ...props
+    },
+    ref
+  ) => {
     const actualContentLines = lines || contentLines;
-    
+
     return (
       <div
         ref={ref}

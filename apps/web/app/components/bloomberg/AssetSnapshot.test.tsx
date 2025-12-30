@@ -27,7 +27,9 @@ vi.mock('@maatwork/ui', () => ({
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: MockComponentProps) => <div className={className}>{children}</div>,
+  CardContent: ({ children, className }: MockComponentProps) => (
+    <div className={className}>{children}</div>
+  ),
   CardHeader: ({ children }: MockComponentProps) => <div>{children}</div>,
   CardTitle: ({ children }: MockComponentProps) => <h3>{children}</h3>,
   Text: ({ children, className, style }: MockComponentProps) => (
@@ -36,7 +38,9 @@ vi.mock('@maatwork/ui', () => ({
     </span>
   ),
   Heading: ({ children }: MockComponentProps) => <h2>{children}</h2>,
-  Stack: ({ children, style }: MockComponentProps) => <div style={style as React.CSSProperties}>{children}</div>,
+  Stack: ({ children, style }: MockComponentProps) => (
+    <div style={style as React.CSSProperties}>{children}</div>
+  ),
   Badge: ({ children }: MockComponentProps) => <span>{children}</span>,
   Spinner: () => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children }: MockComponentProps) => <div role="alert">{children}</div>,

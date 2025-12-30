@@ -52,11 +52,3 @@ export async function calculateNewContacts(
     contactIdsEnteredContactadoInMonth,
   };
 }
-
-
-
-
-
-
-
-

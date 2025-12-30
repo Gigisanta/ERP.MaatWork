@@ -75,17 +75,17 @@ describe('DebugConsole', () => {
       length: 0,
       key: vi.fn(),
     };
-    
+
     Object.defineProperty(global, 'localStorage', {
       value: mockStorage,
       writable: true,
-      configurable: true
+      configurable: true,
     });
-    
+
     Object.defineProperty(window, 'localStorage', {
       value: mockStorage,
       writable: true,
-      configurable: true
+      configurable: true,
     });
   });
 
@@ -344,7 +344,7 @@ describe('DebugConsole', () => {
       // For these tests, we'll ensure window.debugConsole is cleared.
       delete (window as any).debugConsole;
       delete (window as any).$debug;
-      
+
       // We can use vi.resetModules() but it might be overkill.
       // Instead, we'll just check if we can reset the internal flag if we mock the module.
     });

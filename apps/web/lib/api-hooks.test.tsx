@@ -119,7 +119,7 @@ describe('api-hooks', () => {
       renderHook(() => useContacts('advisor-123'));
 
       expect(useSWR).toHaveBeenCalledWith(
-        `${API_BASE_URL}/v1/contacts?assignedAdvisorId=advisor-123`,
+        `${API_BASE_URL}/v1/contacts?limit=1000&assignedAdvisorId=advisor-123`,
         expect.any(Function),
         expect.objectContaining({
           revalidateOnFocus: false,

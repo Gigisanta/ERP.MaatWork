@@ -2,10 +2,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { validate } from '../../utils/validation';
 import { idParamSchema } from '../../utils/validation/common-schemas';
-import {
-  createLevelSchema,
-  updateLevelSchema,
-} from './schemas';
+import { createLevelSchema, updateLevelSchema } from './schemas';
 import {
   handleListLevels,
   handleGetLevel,
@@ -23,12 +20,7 @@ const router = Router();
 
 router.get('/levels', requireAuth, handleListLevels);
 
-router.get(
-  '/levels/:id',
-  requireAuth,
-  validate({ params: idParamSchema }),
-  handleGetLevel
-);
+router.get('/levels/:id', requireAuth, validate({ params: idParamSchema }), handleGetLevel);
 
 router.post(
   '/levels',
@@ -61,4 +53,3 @@ router.delete(
 router.get('/user-progress', requireAuth, handleGetUserProgress);
 
 export default router;
-

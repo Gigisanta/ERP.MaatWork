@@ -7,7 +7,6 @@
  */
 import { usePageTitle } from '../components/PageTitleContext';
 
-
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ContactsPage from './page';
@@ -92,7 +91,6 @@ describe('ContactsPage', () => {
   });
 
   it('debería mostrar título de página', () => {
-    
     render(<ContactsPage />);
 
     expect(usePageTitle).toHaveBeenCalledWith('Contactos');

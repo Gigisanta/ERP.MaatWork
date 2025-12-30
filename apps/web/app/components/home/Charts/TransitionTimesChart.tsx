@@ -1,7 +1,15 @@
 'use client';
 
 import { useMemo, memo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LazyBarChart,
+  LazyResponsiveContainer,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from '@/components/charts/LazyChartWrapper';
 import type { MonthlyMetrics } from '@/types/metrics';
 
 interface TransitionTimesChartProps {
@@ -10,12 +18,14 @@ interface TransitionTimesChartProps {
 
 /**
  * Gráfico de barras horizontales mostrando tiempo promedio entre avances en el pipeline
- * 
+ *
  * AI_DECISION: Memoize chart component to prevent unnecessary re-renders
  * Justificación: Large SVG renderings like charts should be memoized to avoid frame drops on updates
  * Impacto: Smoother scrolling and dashboard interaction
  */
-export const TransitionTimesChart = memo(function TransitionTimesChart({ transitionTimes }: TransitionTimesChartProps) {
+export const TransitionTimesChart = memo(function TransitionTimesChart({
+  transitionTimes,
+}: TransitionTimesChartProps) {
   const chartData = useMemo(
     () => [
       {
@@ -38,8 +48,8 @@ export const TransitionTimesChart = memo(function TransitionTimesChart({ transit
   );
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart
+    <LazyResponsiveContainer width="100%" height={220}>
+      <LazyBarChart
         data={chartData}
         layout="vertical"
         aria-label="Gráfico de tiempo promedio entre avances"
@@ -75,7 +85,7 @@ export const TransitionTimesChart = memo(function TransitionTimesChart({ transit
           }}
         />
         <Bar dataKey="value" name="Días" fill="var(--color-chart-4)" radius={[0, 4, 4, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+      </LazyBarChart>
+    </LazyResponsiveContainer>
   );
 });

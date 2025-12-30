@@ -28,6 +28,22 @@ vi.mock('@/lib/logger', () => ({
 describe('PersonalCalendarWidget', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Default mock for useUserTeams to avoid crash
+    vi.mocked(apiHooks.useUserTeams).mockReturnValue({
+      teams: [],
+      error: null,
+      isLoading: false,
+      mutate: vi.fn(),
+    });
+
+    // Default mock for useTeamCalendar to avoid crash
+    vi.mocked(apiHooks.useTeamCalendar).mockReturnValue({
+      data: [],
+      error: null,
+      isLoading: false,
+      mutate: vi.fn(),
+    });
   });
 
   it('should show connection prompt when user is not connected', () => {
@@ -75,11 +91,8 @@ describe('PersonalCalendarWidget', () => {
 
     render(<PersonalCalendarWidget />);
 
-    // Should show skeleton loading
-    const skeletons = screen
-      .getAllByRole('generic')
-      .filter((el) => el.className.includes('animate-pulse'));
-    expect(skeletons.length).toBeGreaterThan(0);
+    // Should show loading state
+    expect(screen.getByText(/Sincronizando calendario/i)).toBeInTheDocument();
   });
 
   it('should show auth error with reconnect button', () => {

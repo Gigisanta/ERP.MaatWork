@@ -23,18 +23,17 @@ import {
 import { getOHLCV } from '@/lib/api/bloomberg';
 import type { OHLCVPoint } from '@/lib/api/bloomberg';
 import {
-  LineChart,
+  LazyAreaChart,
+  LazyResponsiveContainer,
   Line,
-  AreaChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
+import { ReferenceLine } from 'recharts';
 
 interface OHLCVChartProps {
   symbol: string;
@@ -189,8 +188,8 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
         </Stack>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
-          <AreaChart data={chartData}>
+        <LazyResponsiveContainer width="100%" height={height}>
+          <LazyAreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
@@ -226,8 +225,8 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
                 name={`MA(${maPeriod})`}
               />
             )}
-          </AreaChart>
-        </ResponsiveContainer>
+          </LazyAreaChart>
+        </LazyResponsiveContainer>
       </CardContent>
     </Card>
   );

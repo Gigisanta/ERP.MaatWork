@@ -17,8 +17,8 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "typecheck": "turbo run typecheck",
-    "test": "node scripts/generate-test-report.mjs",
-    "test:serial": "pnpm -F @maatwork/ui test:unit && pnpm -F @maatwork/api test:unit && pnpm -F @maatwork/web test:unit && pnpm -F @maatwork/analytics-service test:unit",
+    "test": "node scripts/parallel-test-runner.mjs",
+    "test:serial": "node scripts/generate-test-report.mjs",
     "test:full": "turbo run test",
     "test:report": "node scripts/generate-test-report.mjs",
     "test:watch": "turbo run test:watch",
@@ -30,7 +30,8 @@
     "test:integration": "pnpm -F @maatwork/api test:integration",
     "test:e2e": "playwright test",
     "test:all": "pnpm test && pnpm test:integration && pnpm test:e2e",
-    "test:e2e:full": "tsx scripts/setup-e2e-db.ts && playwright test",
+    "test:e2e:full": "tsx scripts/setup-e2e-db-optimized.ts && playwright test",
+    "test:e2e:setup": "tsx scripts/setup-e2e-db-optimized.ts",
     "test:visual": "playwright test --config playwright.visual.config.ts",
     "test:performance": "echo 'Run performance tests with: k6 run apps/api/src/__tests__/performance/load/*.js'",
     "clean": "turbo run clean",
@@ -83,7 +84,6 @@
     "knip": "^5.77.0",
     "lint-staged": "^15.5.2",
     "pg": "^8.12.0",
-    "playwright": "^1.48.0",
     "prettier": "^3.2.5",
     "rimraf": "^5.0.10",
     "turbo": "^2.7.2",
@@ -103,6 +103,13 @@
       "js-yaml": ">=4.1.1",
       "tmp": ">=0.2.4",
       "esbuild": ">=0.25.0"
+    },
+    "packageExtensions": {
+      "drizzle-zod": {
+        "peerDependencies": {
+          "zod": "3.24.1"
+        }
+      }
     }
   },
   "lint-staged": {

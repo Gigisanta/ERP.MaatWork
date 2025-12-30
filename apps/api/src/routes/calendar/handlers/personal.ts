@@ -133,17 +133,21 @@ export const getPersonalEvents = createRouteHandler(async (req: Request) => {
   const userId = req.user!.id;
 
   // Try cache first
-  const cacheKey = normalizeCacheKey('personal_calendar', userId, calendarId, timeMin, timeMax, maxResults);
+  const cacheKey = normalizeCacheKey(
+    'personal_calendar',
+    userId,
+    calendarId,
+    timeMin,
+    timeMax,
+    maxResults
+  );
   const cachedEvents = calendarEventsCacheUtil.get(cacheKey);
   if (cachedEvents) {
     req.log.debug({ userId, cacheKey }, 'Personal calendar events cache hit');
     return cachedEvents;
   }
 
-  const { accessToken, calendarId: userCalendarId } = await getPersonalOAuthTokens(
-    userId,
-    req
-  );
+  const { accessToken, calendarId: userCalendarId } = await getPersonalOAuthTokens(userId, req);
 
   const events = await getCalendarEvents(
     accessToken,

@@ -57,12 +57,12 @@ export async function syncUserCalendar(
 
       if (!startAt) continue; // Skip if no start time
 
-      const attendees = (event.attendees || []).map(a => ({
+      const attendees = (event.attendees || []).map((a) => ({
         email: a.email,
         displayName: a.displayName,
         responseStatus: a.responseStatus,
         organizer: a.organizer,
-        self: a.self
+        self: a.self,
       }));
 
       // Collect emails to find contacts later

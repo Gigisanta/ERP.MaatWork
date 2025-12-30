@@ -16,7 +16,13 @@ import React from 'react';
 
 // Mock dependencies
 vi.mock('./Charts/GoalsComparisonChart', () => ({
-  GoalsComparisonChart: ({ currentMonth, goals }: { currentMonth: MonthlyMetrics; goals: MonthlyGoal | null }) => (
+  GoalsComparisonChart: ({
+    currentMonth,
+    goals,
+  }: {
+    currentMonth: MonthlyMetrics;
+    goals: MonthlyGoal | null;
+  }) => (
     <div data-testid="goals-chart">
       Goals Chart - Prospects: {currentMonth.newProspects}, Goal: {goals?.newProspectsGoal ?? 0}
     </div>
@@ -24,7 +30,11 @@ vi.mock('./Charts/GoalsComparisonChart', () => ({
 }));
 
 vi.mock('./Charts/BusinessLineChart', () => ({
-  BusinessLineChart: ({ businessLineClosures }: { businessLineClosures: MonthlyMetrics['businessLineClosures'] }) => (
+  BusinessLineChart: ({
+    businessLineClosures,
+  }: {
+    businessLineClosures: MonthlyMetrics['businessLineClosures'];
+  }) => (
     <div data-testid="business-line-chart">
       Business Line Chart - Inversiones: {businessLineClosures.inversiones}
     </div>
@@ -32,7 +42,11 @@ vi.mock('./Charts/BusinessLineChart', () => ({
 }));
 
 vi.mock('./Charts/TransitionTimesChart', () => ({
-  TransitionTimesChart: ({ transitionTimes }: { transitionTimes: MonthlyMetrics['transitionTimes'] }) => (
+  TransitionTimesChart: ({
+    transitionTimes,
+  }: {
+    transitionTimes: MonthlyMetrics['transitionTimes'];
+  }) => (
     <div data-testid="transition-times-chart">
       Transition Times Chart - Prospecto to First: {transitionTimes.prospectoToFirstMeeting ?? 0}
     </div>
@@ -49,7 +63,9 @@ vi.mock('./MetricCard', () => ({
 
 vi.mock('@maatwork/ui', () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  CardHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
   CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
@@ -58,11 +74,21 @@ vi.mock('@maatwork/ui', () => ({
       {children}
     </div>
   ),
-  Text: ({ children, color }: { children: React.ReactNode; color?: string }) => <span>{children}</span>,
+  Text: ({ children, color }: { children: React.ReactNode; color?: string }) => (
+    <span>{children}</span>
+  ),
   Stack: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className}>{children}</div>
   ),
-  Select: ({ items, value, onValueChange }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
+  Select: ({
+    items,
+    value,
+    onValueChange,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: Array<{ value: string; label: string }>;
+  }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item) => (
         <option key={item.value} value={item.value}>
@@ -127,12 +153,10 @@ describe('MetricsSection', () => {
     expect(alert).toHaveTextContent('Error al cargar métricas: Failed to load metrics');
   });
 
-  it('debería retornar null cuando no hay datos', () => {
-    const { container } = render(
-      <MetricsSection metricsData={null} goalsData={null} loading={false} error={null} />
-    );
+  it('debería mostrar mensaje informativo cuando no hay datos', () => {
+    render(<MetricsSection metricsData={null} goalsData={null} loading={false} error={null} />);
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText(/No hay datos de métricas disponibles/i)).toBeInTheDocument();
   });
 
   it('debería mostrar gráfico de objetivos por defecto', () => {

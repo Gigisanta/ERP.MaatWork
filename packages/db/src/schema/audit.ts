@@ -11,7 +11,7 @@ import {
   timestamp,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
@@ -23,12 +23,16 @@ export const auditLogs = pgTable(
   'audit_logs',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    actorUserId: uuid('actor_user_id').notNull().references(() => users.id),
+    actorUserId: uuid('actor_user_id')
+      .notNull()
+      .references(() => users.id),
     action: text('action').notNull(),
     entityType: text('entity_type').notNull(),
     entityId: uuid('entity_id').notNull(),
-    context: jsonb('context').notNull().default(sql`'{}'::jsonb`),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    context: jsonb('context')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     // AI_DECISION: Add indexes for audit log queries
@@ -41,7 +45,7 @@ export const auditLogs = pgTable(
       table.entityType,
       table.entityId,
       table.createdAt
-    )
+    ),
   })
 );
 
@@ -56,8 +60,10 @@ export const alertPolicies = pgTable(
     scope: text('scope').notNull(), // user, team, global
     scopeId: uuid('scope_id'),
     type: text('type').notNull(), // saldo_liquido, desvio_cartera, inactividad
-    params: jsonb('params').notNull().default(sql`'{}'::jsonb`),
-    enabled: boolean('enabled').notNull().default(true)
+    params: jsonb('params')
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    enabled: boolean('enabled').notNull().default(true),
   },
   (table) => ({
     alertPoliciesUnique: uniqueIndex('alert_policies_unique').on(
@@ -65,55 +71,6 @@ export const alertPolicies = pgTable(
       // COALESCE(scope_id::text, 'global') equivalente como expresión
       sql`COALESCE(${table.scopeId}::text, 'global')`,
       table.type
-    )
+    ),
   })
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

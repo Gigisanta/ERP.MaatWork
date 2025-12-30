@@ -27,14 +27,26 @@ vi.mock('@maatwork/ui', () => ({
   CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
-  Grid: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
-  Text: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
+  Grid: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  Text: ({
+    children,
+    className,
+    style,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+  }) => (
     <span className={className} style={style}>
       {children}
     </span>
   ),
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => <span data-badge-variant={variant}>{children}</span>,
+  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
+    <span data-badge-variant={variant}>{children}</span>
+  ),
   Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
   Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
     <div role="alert" data-alert-variant={variant}>
@@ -196,9 +208,12 @@ describe('BloombergMacroWidget', () => {
 
     render(<BloombergMacroWidget />);
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(screen.queryByTestId('spinner')).not.toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
 
     // El código actual trata spreads: null como un error
     expect(screen.getByText('Failed to fetch yield spreads')).toBeInTheDocument();

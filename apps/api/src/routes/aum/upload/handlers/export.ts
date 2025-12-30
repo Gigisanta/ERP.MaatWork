@@ -79,7 +79,9 @@ export const handleExport = createAsyncHandler(async (req: Request, res: Respons
         if (rec && rec.id) {
           contactMap.set(rec.id, rec.full_name || '');
         }
-      } catch {}
+      } catch {
+        // Ignore errors for individual contacts
+      }
     }
   }
 

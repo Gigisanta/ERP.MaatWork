@@ -16,7 +16,6 @@
 export type {
   BaseEntity,
   TimestampedEntity,
-  
   CreateRequest,
   UpdateRequest,
 } from '@maatwork/types/common';
@@ -36,7 +35,8 @@ export interface ApiResponse<T = unknown> {
 /**
  * Respuesta con paginación
  */
-export interface PaginatedResponse<T> extends ApiResponse<T> {
+export interface PaginatedResponse<T> extends Omit<ApiResponse<T[]>, 'data'> {
+  data: T[];
   pagination: Pagination;
 }
 
