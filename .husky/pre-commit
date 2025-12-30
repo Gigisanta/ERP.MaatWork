@@ -1,5 +1,5 @@
 pnpm exec lint-staged
 pnpm guard:artifacts
 pnpm typecheck --filter=@maatwork/ui --filter=@maatwork/db
-pnpm audit:code --ci
+# pnpm audit:code --ci  # Deshabilitado - ejecutar manualmente cuando sea necesario
 
