@@ -82,7 +82,9 @@ router.post(
         // Cleanup temp file
         try {
           await fs.unlink(file.path);
-        } catch {}
+        } catch {
+          // Ignore cleanup error
+        }
 
         return res.status(400).json({
           error: 'Error al procesar el archivo',
@@ -127,7 +129,9 @@ router.post(
               if (advisorMatch.length > 0) {
                 matchedUserId = (advisorMatch[0] as { userId: string }).userId;
               }
-            } catch {}
+            } catch {
+              // Ignore match errors
+            }
           }
 
           if (existing.length > 0) {
@@ -168,7 +172,9 @@ router.post(
       // Cleanup temp file
       try {
         await fs.unlink(file.path);
-      } catch {}
+      } catch {
+        // Ignore cleanup error
+      }
 
       req.log?.info?.(
         {

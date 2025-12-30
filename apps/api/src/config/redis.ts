@@ -113,7 +113,10 @@ export async function closeRedis(): Promise<void> {
  * Justificación: Bloomberg endpoints use "bloomberg:" prefix, but CRM endpoints need general prefix
  * Impacto: Flexible cache key generation for different domains
  */
-export function buildCacheKey(prefix: string, ...parts: (string | number | null | undefined)[]): string {
+export function buildCacheKey(
+  prefix: string,
+  ...parts: (string | number | null | undefined)[]
+): string {
   const cleanParts = parts.filter((p) => p !== null && p !== undefined).map(String);
 
   // If prefix already includes a domain (e.g., "bloomberg:" or "crm:"), use as-is

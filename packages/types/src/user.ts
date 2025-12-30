@@ -63,9 +63,3 @@ export interface RegisterData extends LoginCredentials {
   fullName: string;
   role?: Extract<UserRole, 'advisor' | 'manager' | 'owner' | 'staff'>;
 }
-
-
-
-
-
-

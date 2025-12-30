@@ -32,10 +32,7 @@ export type { ApiResponse } from '@/types';
 // Domain-specific API Functions
 // ==========================================================
 
-export {
-  getTeamEvents,
-  type CalendarListEntry,
-} from './calendar';
+export { getTeamEvents, type CalendarListEntry } from './calendar';
 
 export {
   uploadAumFile,
@@ -74,11 +71,7 @@ export {
   importContactsCsv,
 } from './contacts';
 
-export {
-  searchInstruments,
-  getInstruments,
-  createInstrument,
-} from './instruments';
+export { searchInstruments, getInstruments, createInstrument } from './instruments';
 
 export { createNote, deleteNote } from './notes';
 
@@ -95,12 +88,7 @@ export {
   deletePortfolioLine,
 } from './portfolios';
 
-export {
-  createTag,
-  updateTag,
-  deleteTag,
-  updateContactTags,
-} from './tags';
+export { createTag, updateTag, deleteTag, updateContactTags } from './tags';
 
 export { createTask, deleteTask } from './tasks';
 

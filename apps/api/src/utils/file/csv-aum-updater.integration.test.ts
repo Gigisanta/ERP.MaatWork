@@ -23,8 +23,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..', '..', '..', '..');
 
-const sourceFilePath = join(projectRoot, 'Balanz Cactus 2025 - AUM Balanz.csv');
-const targetFilePath = join(projectRoot, 'reporteClusterCuentasV2.csv');
+// Encontrar un archivo real de AUM en uploads para el test
+const sourceFilePath = join(
+  projectRoot,
+  'apps',
+  'api',
+  'uploads',
+  'Balanz_Cactus_2025_-_AUM_Balanz-1764772993254-flkncp7wf7m.csv'
+);
+const targetFilePath = join(projectRoot, 'data', 'reporteClusterCuentasV2.csv');
 
 describe('csv-aum-updater integration tests', () => {
   let originalTargetContent: string | null = null;

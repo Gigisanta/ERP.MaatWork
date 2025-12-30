@@ -135,4 +135,3 @@ export const handleDeleteLevel = createRouteHandler(async (req: Request) => {
 
   return { success: true };
 });
-

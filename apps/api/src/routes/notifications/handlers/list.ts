@@ -54,4 +54,3 @@ export const handleGetUnreadCount = createRouteHandler(async (req: Request) => {
 
   return { count: Number(unreadCount) };
 });
-

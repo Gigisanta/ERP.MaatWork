@@ -52,7 +52,9 @@ export async function matchContactByAccountNumber(
     const result = await dbi
       .select({ contactId: brokerAccounts.contactId })
       .from(brokerAccounts)
-      .where(and(eq(brokerAccounts.broker, broker), eq(brokerAccounts.accountNumber, accountNumber)))
+      .where(
+        and(eq(brokerAccounts.broker, broker), eq(brokerAccounts.accountNumber, accountNumber))
+      )
       .limit(1);
 
     if (result.length > 0 && result[0].contactId) {
@@ -134,7 +136,12 @@ export async function batchMatchContactsByAccountNumber(
         contactId: brokerAccounts.contactId,
       })
       .from(brokerAccounts)
-      .where(and(eq(brokerAccounts.broker, broker), inArray(brokerAccounts.accountNumber, accountNumbers)));
+      .where(
+        and(
+          eq(brokerAccounts.broker, broker),
+          inArray(brokerAccounts.accountNumber, accountNumbers)
+        )
+      );
 
     results.forEach((r: { accountNumber: string | null; contactId: string | null }) => {
       if (r.contactId && r.accountNumber) {
@@ -146,7 +153,10 @@ export async function batchMatchContactsByAccountNumber(
       }
     });
   } catch (error) {
-    logger.warn({ err: error, count: accountNumbers.length }, 'Error in batch matching by account number');
+    logger.warn(
+      { err: error, count: accountNumbers.length },
+      'Error in batch matching by account number'
+    );
   }
 
   return matchMap;
@@ -230,7 +240,9 @@ export async function matchAdvisorByAlias(alias: string): Promise<AdvisorMatch |
 /**
  * Match advisor by name/alias (batch version)
  */
-export async function batchMatchAdvisorsByAlias(aliases: string[]): Promise<Map<string, AdvisorMatch>> {
+export async function batchMatchAdvisorsByAlias(
+  aliases: string[]
+): Promise<Map<string, AdvisorMatch>> {
   const matchMap = new Map<string, AdvisorMatch>();
   if (aliases.length === 0) return matchMap;
 
@@ -316,7 +328,9 @@ export async function matchRow(
 /**
  * Orchestrate advisor matching (try email if it looks like one, otherwise alias)
  */
-export async function matchAdvisor(advisorRaw: string | null | undefined): Promise<AdvisorMatch | null> {
+export async function matchAdvisor(
+  advisorRaw: string | null | undefined
+): Promise<AdvisorMatch | null> {
   if (!advisorRaw) return null;
   if (advisorRaw.includes('@')) {
     return await matchAdvisorByEmail(advisorRaw);
@@ -371,7 +385,10 @@ export async function isDuplicateRow(
 export async function reprocessUnmatchedRowsForContact(contactId: string, aliases?: string[]) {
   // Logic to find rows that should now match this contact
   // This is usually triggered when a manual match is confirmed
-  logger.info({ contactId, aliasesCount: aliases?.length }, 'Reprocessing unmatched rows for contact');
+  logger.info(
+    { contactId, aliasesCount: aliases?.length },
+    'Reprocessing unmatched rows for contact'
+  );
 }
 
 /**

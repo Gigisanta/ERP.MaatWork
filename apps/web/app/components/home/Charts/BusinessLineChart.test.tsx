@@ -13,19 +13,19 @@ import type { MonthlyMetrics } from '@/types/metrics';
 
 import React from 'react';
 
-// Mock dependencies
-vi.mock('recharts', () => ({
-  BarChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
+// Mock LazyChartWrapper to use synchronous components in tests
+vi.mock('@/components/charts/LazyChartWrapper', () => ({
+  LazyBarChart: ({ children, data }: { children: React.ReactNode; data: unknown[] }) => (
     <div data-testid="bar-chart" data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
   ),
+  LazyResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Bar: () => null,
   XAxis: () => null,
   YAxis: () => null,
   CartesianGrid: () => null,
   Tooltip: () => null,
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 describe('BusinessLineChart', () => {

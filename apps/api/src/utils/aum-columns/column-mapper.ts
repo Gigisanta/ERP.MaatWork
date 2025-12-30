@@ -323,7 +323,7 @@ export function mapAumColumns(record: Record<string, unknown>): MappedAumColumns
           // cuando debería ser solo "Mateo Vicente" (el número es un valor financiero que se corrió)
           // Impacto: Corrige automáticamente el nombre del asesor para evitar asesores ficticios
           if (advisorRawValue) {
-            const advisorWithNumberPattern = /^([A-Za-z\s]+?)(\d+[\.,]\d+)$/;
+            const advisorWithNumberPattern = /^([A-Za-z\s]+?)(\d+[.,]\d+)$/;
             const errorMatch = advisorRawValue.match(advisorWithNumberPattern);
 
             if (errorMatch) {

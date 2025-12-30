@@ -138,17 +138,10 @@ export type {
 } from './tag';
 
 // Domain types - Pipeline
-export type {
-  PipelineStage,
-  PipelineStageWithContacts,
-  PipelineBoard,
-} from './pipeline';
+export type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from './pipeline';
 
 // Domain types - Broker Account
-export type {
-  BrokerAccount,
-  CreateBrokerAccountRequest,
-} from './broker-account';
+export type { BrokerAccount, CreateBrokerAccountRequest } from './broker-account';
 
 // Domain types - Portfolio Assignment
 export type {
@@ -159,18 +152,10 @@ export type {
 } from './portfolio-assignment';
 
 // Domain types - Task
-export type {
-  Task,
-  CreateTaskRequest,
-  UpdateTaskRequest,
-} from './task';
+export type { Task, CreateTaskRequest, UpdateTaskRequest } from './task';
 
 // Domain types - Note
-export type {
-  Note,
-  CreateNoteRequest,
-  UpdateNoteRequest,
-} from './note';
+export type { Note, CreateNoteRequest, UpdateNoteRequest } from './note';
 
 // Domain types - Capacitacion
 export type {

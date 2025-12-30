@@ -62,10 +62,7 @@ function setupUnhandledRejectionHandler(logCallback: LogCallback): void {
 /**
  * Intercepta console.error para capturar errores
  */
-function setupConsoleErrorInterceptor(
-  logCallback: LogCallback,
-  isLogging: () => boolean
-): void {
+function setupConsoleErrorInterceptor(logCallback: LogCallback, isLogging: () => boolean): void {
   const originalError = console.error;
   console.error = (...args: unknown[]) => {
     originalError.apply(console, args);
@@ -117,10 +114,7 @@ function setupConsoleErrorInterceptor(
 /**
  * Intercepta console.warn para capturar warnings
  */
-function setupConsoleWarnInterceptor(
-  logCallback: LogCallback,
-  isLogging: () => boolean
-): void {
+function setupConsoleWarnInterceptor(logCallback: LogCallback, isLogging: () => boolean): void {
   const originalWarn = console.warn;
   console.warn = (...args: unknown[]) => {
     originalWarn.apply(console, args);
@@ -149,11 +143,3 @@ export function setupAllErrorHandlers(logCallback: LogCallback, isLogging: () =>
   setupConsoleErrorInterceptor(logCallback, isLogging);
   setupConsoleWarnInterceptor(logCallback, isLogging);
 }
-
-
-
-
-
-
-
-

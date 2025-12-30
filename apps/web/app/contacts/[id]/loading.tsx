@@ -6,7 +6,16 @@
  * Impacto: Unified loading experience matching app design
  */
 
-import { Stack, Card, CardHeader, CardTitle, CardContent, Skeleton, SkeletonText, SkeletonAvatar } from '@maatwork/ui';
+import {
+  Stack,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Skeleton,
+  SkeletonText,
+  SkeletonAvatar,
+} from '@maatwork/ui';
 
 export default function Loading() {
   return (

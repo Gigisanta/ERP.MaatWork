@@ -120,9 +120,7 @@ export async function apiCall<T>(
 /**
  * Helper para obtener contacto en Server Components
  */
-export async function getContactById(
-  id: string
-): Promise<ApiResponse<Contact>> {
+export async function getContactById(id: string): Promise<ApiResponse<Contact>> {
   return apiCall(`/v1/contacts/${id}`);
 }
 

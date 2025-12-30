@@ -427,11 +427,7 @@ export async function initializeDatabase(): Promise<void> {
 async function seedMaatWorkTeam(): Promise<void> {
   const dbi = db();
   try {
-    const existing = await dbi
-      .select()
-      .from(teams)
-      .where(eq(teams.name, 'maatwork'))
-      .limit(1);
+    const existing = await dbi.select().from(teams).where(eq(teams.name, 'maatwork')).limit(1);
     if (existing.length > 0) {
       // AI_DECISION: Changed from info to debug to reduce console noise during startup
       // Justification: This is expected behavior in most dev/prod restarts
@@ -443,7 +439,10 @@ async function seedMaatWorkTeam(): Promise<void> {
     const manager = await dbi.select().from(users).where(eq(users.role, 'manager')).limit(1);
     const managerUserId = manager[0]?.id || null;
 
-    const [teamRow] = await dbi.insert(teams).values({ name: 'maatwork', managerUserId }).returning();
+    const [teamRow] = await dbi
+      .insert(teams)
+      .values({ name: 'maatwork', managerUserId })
+      .returning();
 
     if (managerUserId) {
       await dbi

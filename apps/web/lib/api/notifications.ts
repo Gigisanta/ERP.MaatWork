@@ -22,11 +22,3 @@ export async function markAsRead(id: string) {
 export async function markAllAsRead() {
   return apiClient.post<{ success: true }>('/notifications/read-all', {});
 }
-
-
-
-
-
-
-
-

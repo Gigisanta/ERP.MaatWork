@@ -39,7 +39,8 @@ const { mockDbInstance } = vi.hoisted(() => {
     set: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
   };
-  mockDbInstance.then = (onFullfilled: (value: unknown) => unknown) => Promise.resolve([]).then(onFullfilled);
+  mockDbInstance.then = (onFullfilled: (value: unknown) => unknown) =>
+    Promise.resolve([]).then(onFullfilled);
   return { mockDbInstance };
 });
 
@@ -61,9 +62,9 @@ vi.mock('drizzle-orm', () => ({
       sql: strings.join('?'),
       values,
     }),
-    { 
+    {
       raw: vi.fn((str: string) => ({ sql: str, values: [] })),
-      join: vi.fn((arr: unknown[], sep: string) => ({ sql: 'joined', values: [] }))
+      join: vi.fn((arr: unknown[], sep: string) => ({ sql: 'joined', values: [] })),
     }
   ),
   eq: vi.fn((col: unknown, val: unknown) => ({ column: col, value: val })),
@@ -121,8 +122,7 @@ vi.mock('@/routes/aum/rows/cache', () => ({
 }));
 
 describe('AUM Rows Routes', () => {
-  const createTestAppWithRoutes = () =>
-    createTestApp([{ path: '/admin/aum', router: aumRouter }]);
+  const createTestAppWithRoutes = () => createTestApp([{ path: '/admin/aum', router: aumRouter }]);
 
   let adminToken: string;
 
@@ -133,7 +133,7 @@ describe('AUM Rows Routes', () => {
       email: 'admin@example.com',
       role: 'admin',
     });
-    
+
     mockDbInstance.execute.mockResolvedValue({ rowCount: 0, rows: [] });
     mockDbInstance.limit.mockImplementation(() => Promise.resolve([]));
   });
@@ -159,20 +159,20 @@ describe('AUM Rows Routes', () => {
     it('debería match row exitosamente', async () => {
       // 1. Select file
       mockDbInstance.where.mockReturnValueOnce({
-        limit: vi.fn().mockResolvedValue([{ id: 'file-1' }])
+        limit: vi.fn().mockResolvedValue([{ id: 'file-1' }]),
       });
-      
+
       // 2. Select row (if isPreferred is true, which is default in body)
       mockDbInstance.where.mockReturnValueOnce({
-        limit: vi.fn().mockResolvedValue([{ account_number: '123' }])
+        limit: vi.fn().mockResolvedValue([{ account_number: '123' }]),
       });
 
       // 3. Update row
       mockDbInstance.where.mockResolvedValueOnce(undefined);
-      
+
       // 4. Update file stats (execute)
-      mockDbInstance.execute.mockResolvedValueOnce({ 
-        rows: [{ total_parsed: 10, total_matched: 5, total_unmatched: 5 }] 
+      mockDbInstance.execute.mockResolvedValueOnce({
+        rows: [{ total_parsed: 10, total_matched: 5, total_unmatched: 5 }],
       });
 
       const app = createTestAppWithRoutes();

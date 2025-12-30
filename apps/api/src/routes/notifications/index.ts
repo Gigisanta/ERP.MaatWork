@@ -78,7 +78,11 @@ router.post(
 // Metrics
 // ==========================================================
 
-router.get('/metrics', requireAuth, requireRole(['manager', 'admin']), handleGetNotificationMetrics);
+router.get(
+  '/metrics',
+  requireAuth,
+  requireRole(['manager', 'admin']),
+  handleGetNotificationMetrics
+);
 
 export default router;
-

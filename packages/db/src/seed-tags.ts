@@ -59,22 +59,16 @@ export async function seedTags() {
 
   for (const tag of defaultTags) {
     // Check if tag exists by name and scope
-    const existing = await db()
-      .select()
-      .from(tags)
-      .where(eq(tags.name, tag.name))
-      .limit(1);
+    const existing = await db().select().from(tags).where(eq(tags.name, tag.name)).limit(1);
 
     if (existing.length === 0) {
       console.log(`Creating tag: ${tag.name}`);
       await db().insert(tags).values(tag);
     } else {
-        // Optional: Update existing tags if needed, but for seed we typically skip or update if system
-        console.log(`Tag already exists: ${tag.name}`);
+      // Optional: Update existing tags if needed, but for seed we typically skip or update if system
+      console.log(`Tag already exists: ${tag.name}`);
     }
   }
 
   console.log('✅ Tags seeded successfully');
 }
-
-

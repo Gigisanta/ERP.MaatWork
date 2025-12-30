@@ -53,7 +53,7 @@ export function validateParsedRows(parsedRows: ParsedRow[]): ValidationResult {
   // Justificación: Detecta errores de formato como "Mateo Vicente8019.23" donde el número
   // es un valor financiero que se corrió por error en el CSV
   // Impacto: Permite identificar y reportar estos errores para corrección manual del CSV
-  const advisorWithNumberPattern = /^[A-Za-z\s]+\d+[\.,]\d+$/;
+  const advisorWithNumberPattern = /^[A-Za-z\s]+\d+[.,]\d+$/;
 
   for (let i = 0; i < parsedRows.length; i++) {
     const row = parsedRows[i];

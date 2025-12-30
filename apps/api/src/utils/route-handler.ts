@@ -40,11 +40,7 @@ type RouteHandlerFn<T = unknown> = (req: Request, res: Response) => Promise<T>;
 /**
  * Tipo para handlers que manejan res directamente
  */
-type AsyncHandlerFn = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => Promise<void | Response>;
+type AsyncHandlerFn = (req: Request, res: Response, next: NextFunction) => Promise<void | Response>;
 
 /**
  * Respuesta estandar de exito

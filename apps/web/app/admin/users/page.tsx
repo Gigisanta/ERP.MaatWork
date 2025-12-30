@@ -341,16 +341,16 @@ export default function AdminUsersPage() {
               <div />
               <div className="flex items-center gap-2">
                 <Text size="sm">Solo pendientes</Text>
-                <Switch 
-                  checked={showPendingOnly} 
+                <Switch
+                  checked={showPendingOnly}
                   onCheckedChange={(checked) => {
                     setShowPendingOnly(checked);
                     setPage(1); // Reset to first page when filter changes
-                  }} 
+                  }}
                 />
               </div>
             </div>
-            
+
             <DataTable<UserApiResponse & Record<string, unknown>>
               data={users as (UserApiResponse & Record<string, unknown>)[]}
               columns={columns as Column<UserApiResponse & Record<string, unknown>>[]}

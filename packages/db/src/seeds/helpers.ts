@@ -1,6 +1,6 @@
 /**
  * Seed Helper Functions
- * 
+ *
  * Utility functions for generating random test data
  */
 
@@ -44,22 +44,92 @@ export function getRandomDateOnly(daysAgo: number, daysFuture: number = 0): stri
  * Argentine first names for random data generation
  */
 export const ARGENTINE_FIRST_NAMES = [
-  'Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Laura', 'Diego', 'Sofía',
-  'Pedro', 'Valentina', 'Miguel', 'Camila', 'José', 'Martina', 'Fernando', 'Isabella',
-  'Roberto', 'Lucía', 'Daniel', 'Emma', 'Andrés', 'Olivia', 'Javier', 'Sara',
-  'Ricardo', 'Emma', 'Gustavo', 'Mía', 'Martín', 'Julia', 'Alejandro', 'Victoria',
-  'Sergio', 'Andrea', 'Pablo', 'Gabriela', 'Francisco', 'Natalia', 'Rodrigo', 'Paula'
+  'Juan',
+  'María',
+  'Carlos',
+  'Ana',
+  'Luis',
+  'Laura',
+  'Diego',
+  'Sofía',
+  'Pedro',
+  'Valentina',
+  'Miguel',
+  'Camila',
+  'José',
+  'Martina',
+  'Fernando',
+  'Isabella',
+  'Roberto',
+  'Lucía',
+  'Daniel',
+  'Emma',
+  'Andrés',
+  'Olivia',
+  'Javier',
+  'Sara',
+  'Ricardo',
+  'Emma',
+  'Gustavo',
+  'Mía',
+  'Martín',
+  'Julia',
+  'Alejandro',
+  'Victoria',
+  'Sergio',
+  'Andrea',
+  'Pablo',
+  'Gabriela',
+  'Francisco',
+  'Natalia',
+  'Rodrigo',
+  'Paula',
 ];
 
 /**
  * Argentine last names for random data generation
  */
 export const ARGENTINE_LAST_NAMES = [
-  'García', 'Rodríguez', 'González', 'Fernández', 'López', 'Martínez', 'Sánchez', 'Pérez',
-  'Gómez', 'Martín', 'Jiménez', 'Ruiz', 'Hernández', 'Díaz', 'Moreno', 'Álvarez',
-  'Muñoz', 'Romero', 'Alonso', 'Gutiérrez', 'Navarro', 'Torres', 'Domínguez', 'Vázquez',
-  'Ramos', 'Gil', 'Ramírez', 'Serrano', 'Blanco', 'Molina', 'Morales', 'Suárez',
-  'Ortega', 'Delgado', 'Castro', 'Ortiz', 'Rubio', 'Marín', 'Sanz', 'Núñez'
+  'García',
+  'Rodríguez',
+  'González',
+  'Fernández',
+  'López',
+  'Martínez',
+  'Sánchez',
+  'Pérez',
+  'Gómez',
+  'Martín',
+  'Jiménez',
+  'Ruiz',
+  'Hernández',
+  'Díaz',
+  'Moreno',
+  'Álvarez',
+  'Muñoz',
+  'Romero',
+  'Alonso',
+  'Gutiérrez',
+  'Navarro',
+  'Torres',
+  'Domínguez',
+  'Vázquez',
+  'Ramos',
+  'Gil',
+  'Ramírez',
+  'Serrano',
+  'Blanco',
+  'Molina',
+  'Morales',
+  'Suárez',
+  'Ortega',
+  'Delgado',
+  'Castro',
+  'Ortiz',
+  'Rubio',
+  'Marín',
+  'Sanz',
+  'Núñez',
 ];
 
 /**
@@ -68,7 +138,7 @@ export const ARGENTINE_LAST_NAMES = [
 export function generateRandomName(): { firstName: string; lastName: string } {
   return {
     firstName: getRandomElement(ARGENTINE_FIRST_NAMES),
-    lastName: getRandomElement(ARGENTINE_LAST_NAMES)
+    lastName: getRandomElement(ARGENTINE_LAST_NAMES),
   };
 }
 
@@ -105,52 +175,3 @@ export function generateRandomDNI(): string {
 export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, 10);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

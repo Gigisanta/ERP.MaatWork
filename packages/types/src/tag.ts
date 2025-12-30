@@ -4,7 +4,12 @@
  * These types are used by both API and Web applications.
  */
 
-import type { TimestampedEntityOptional, CreateRequest, UpdateRequest, BusinessLine } from './common';
+import type {
+  TimestampedEntityOptional,
+  CreateRequest,
+  UpdateRequest,
+  BusinessLine,
+} from './common';
 
 /**
  * Tag base - extends TimestampedEntityOptional
@@ -63,9 +68,3 @@ export interface UpdateContactTagRequest {
   monthlyPremium?: number | null;
   policyNumber?: string | null;
 }
-
-
-
-
-
-

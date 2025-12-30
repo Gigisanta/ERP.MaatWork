@@ -46,4 +46,3 @@ export const updateLevelSchema = z.object({
   annualGoalUsd: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
 });
-

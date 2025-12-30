@@ -265,7 +265,10 @@ describe('CareerProgressBar', () => {
       render(<CareerProgressBar />);
 
       const button = screen.getByRole('button', { name: /Plan de carrera: Asesor Junior/i });
-      expect(button).toHaveAttribute('aria-label', 'Plan de carrera: Asesor Junior, 75% completado');
+      expect(button).toHaveAttribute(
+        'aria-label',
+        'Plan de carrera: Asesor Junior, 75% completado'
+      );
     });
   });
 

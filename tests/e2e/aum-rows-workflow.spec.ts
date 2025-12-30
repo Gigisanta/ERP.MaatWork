@@ -15,14 +15,15 @@ test.describe('AUM Rows Workflow', () => {
 
     // Filter by Status
     // await aumPage.filterByStatus('Coincidencia');
-    
+
     // Toggle check
     await aumPage.toggleUpdatedOnly();
   });
 
   test('navigate to history', async ({ aumPage, page }) => {
-      await aumPage.gotoRows();
-      await page.getByRole('button', { name: /historial|history/i }).click();
-      await aumPage.expectHistoryPage();
+    await aumPage.gotoRows();
+    // Use title selector which is more reliable for icon buttons
+    await page.getByTitle(/historial de importaciones/i).click();
+    await aumPage.expectHistoryPage();
   });
 });

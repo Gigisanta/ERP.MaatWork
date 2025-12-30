@@ -114,10 +114,7 @@ export async function addContactAlias(
  * Ensures a contact has its own full name as a normalized alias/field.
  * Can be used as a background job or trigger.
  */
-async function ensureContactNormalization(
-  contactId: string,
-  fullName: string
-): Promise<void> {
+async function ensureContactNormalization(contactId: string, fullName: string): Promise<void> {
   const normalized = normalizeName(fullName);
   if (!normalized) return;
 

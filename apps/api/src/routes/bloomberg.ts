@@ -123,7 +123,9 @@ router.post(
     }
 
     const instrumentIds = foundInstruments.map((i: { id: string }) => i.id);
-    const instrumentsMap = new Map(foundInstruments.map((i: { id: string; symbol: string }) => [i.id, i]));
+    const instrumentsMap = new Map(
+      foundInstruments.map((i: { id: string; symbol: string }) => [i.id, i])
+    );
 
     // 2. Get latest prices for all instruments (using DISTINCT ON or similar logic via window function or just latest by date)
     // Since we can't easily do "latest per group" efficiently in one simple query without window functions,
@@ -154,7 +156,9 @@ router.post(
     const instrumentsWithoutPrice = foundInstruments.filter(
       (inst: { id: string }) => !latestPricesMap.has(inst.id)
     );
-    instrumentsWithoutPrice.forEach((inst: { symbol: string }) => missingPriceSymbols.push(inst.symbol));
+    instrumentsWithoutPrice.forEach((inst: { symbol: string }) =>
+      missingPriceSymbols.push(inst.symbol)
+    );
 
     if (missingPriceSymbols.length > 0) {
       try {
@@ -239,10 +243,7 @@ router.post(
 
     const yearStatsMap = new Map<string, { high: number; low: number }>(
       (yearStatsQuery.rows as { asset_id: string; year_high: string; year_low: string }[]).map(
-        (row) => [
-          row.asset_id,
-          { high: parseFloat(row.year_high), low: parseFloat(row.year_low) },
-        ]
+        (row) => [row.asset_id, { high: parseFloat(row.year_high), low: parseFloat(row.year_low) }]
       )
     );
 

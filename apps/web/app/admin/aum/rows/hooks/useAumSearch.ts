@@ -52,11 +52,3 @@ export function useAumSearch() {
     setDebouncedSearch,
   };
 }
-
-
-
-
-
-
-
-

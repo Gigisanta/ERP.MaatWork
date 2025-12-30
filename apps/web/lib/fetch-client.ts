@@ -77,7 +77,8 @@ export async function fetchWithLogging(
 
     // Log de la respuesta
     if (!skipLogging) {
-      const responseHeaders = response && response.headers ? Object.fromEntries(response.headers.entries()) : {};
+      const responseHeaders =
+        response && response.headers ? Object.fromEntries(response.headers.entries()) : {};
       logger.logResponse(method, fullUrl, response?.status || 0, duration, requestId, {
         responseHeaders,
       });

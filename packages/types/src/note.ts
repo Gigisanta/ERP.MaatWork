@@ -30,9 +30,3 @@ export interface CreateNoteRequest extends Pick<Note, 'contactId' | 'content'> {
 export interface UpdateNoteRequest extends UpdateRequest<Note> {
   content: string;
 }
-
-
-
-
-
-

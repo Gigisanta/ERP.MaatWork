@@ -157,10 +157,10 @@ export async function calculateUserCareerProgress(
   const annualProduction = await calculateUserAnnualProduction(userId, userRole);
 
   // Determinar nivel actual inicial
-  let currentLevel = await determineUserLevel(annualProduction, allLevels);
+  const currentLevel = await determineUserLevel(annualProduction, allLevels);
 
   // Obtener siguiente nivel
-  let nextLevel = await getNextLevel(currentLevel, allLevels);
+  const nextLevel = await getNextLevel(currentLevel, allLevels);
 
   // Calcular porcentaje de progreso hacia el nivel actual
   let progressPercentage = 0;

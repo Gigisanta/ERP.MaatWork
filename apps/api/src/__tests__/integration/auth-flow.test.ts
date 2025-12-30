@@ -8,16 +8,16 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { db } from '@maatwork/db';
 import { users } from '@maatwork/db/schema';
-import { eq } from 'drizzle-orm';
-import { signUserToken, verifyUserToken } from '../../../auth/jwt';
-import { createTestUser, deleteTestUser, createTestToken } from '../../helpers/test-auth';
+import { eq, sql } from 'drizzle-orm';
+import { signUserToken, verifyUserToken } from '../../auth/jwt';
+import { createTestUser, deleteTestUser, createTestToken } from '../helpers/test-auth';
 
 describe('Auth Flow Integration Tests', () => {
   let testUserId: string | null = null;
 
   beforeAll(async () => {
     // Verify database connection
-    await db().execute({ sql: 'SELECT 1' });
+    await db().execute(sql`SELECT 1`);
   });
 
   afterAll(async () => {

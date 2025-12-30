@@ -11,29 +11,36 @@ export class AdminUsersPage extends BasePage {
   }
 
   async createUser(user: { email: string; name: string; password?: string; role?: string }) {
-    await this.page.getByRole('button', { name: /nuevo|crear|new|add/i }).first().click();
-    
+    await this.page
+      .getByRole('button', { name: /nuevo|crear|new|add/i })
+      .first()
+      .click();
+
     await this.page.getByLabel(/email/i).fill(user.email);
     await this.page.getByLabel(/nombre|name/i).fill(user.name);
-    
+
     if (user.password) {
       await this.page.getByLabel(/contraseña|password/i).fill(user.password);
     }
-    
+
     if (user.role) {
       const roleSelect = this.page.getByLabel(/rol|role/i);
       // Try to select by value or label, handling different select implementations
       // Fallback: click and select option
-      await roleSelect.selectOption({ label: user.role }).catch(() => 
-          roleSelect.selectOption({ value: user.role.toLowerCase() })
-      ).catch(async () => {
+      await roleSelect
+        .selectOption({ label: user.role })
+        .catch(() => roleSelect.selectOption({ value: user.role.toLowerCase() }))
+        .catch(async () => {
           // Custom select fallback
           await roleSelect.click();
           await this.page.getByRole('option', { name: new RegExp(user.role!, 'i') }).click();
-      });
+        });
     }
 
-    await this.page.getByRole('button', { name: /guardar|save/i }).first().click();
+    await this.page
+      .getByRole('button', { name: /guardar|save/i })
+      .first()
+      .click();
     await this.expectSuccessToast(/éxito|success|creado/i);
   }
 
@@ -41,9 +48,12 @@ export class AdminUsersPage extends BasePage {
     // Find row with user name
     const row = this.page.getByRole('row', { name: new RegExp(name, 'i') });
     await row.getByRole('button', { name: /editar|edit/i }).click();
-    
+
     await this.page.getByLabel(/nombre|name/i).fill(newName);
-    await this.page.getByRole('button', { name: /guardar|save/i }).first().click();
+    await this.page
+      .getByRole('button', { name: /guardar|save/i })
+      .first()
+      .click();
     await this.expectSuccessToast();
   }
 
@@ -54,4 +64,3 @@ export class AdminUsersPage extends BasePage {
     await this.page.waitForTimeout(500); // Wait for toggle animation/request
   }
 }
-

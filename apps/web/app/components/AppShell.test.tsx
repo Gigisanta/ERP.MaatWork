@@ -14,7 +14,15 @@ import React from 'react';
 
 // Mock UI components
 vi.mock('@maatwork/ui', () => ({
-  Drawer: ({ children, open, onOpenChange }: { children: React.ReactNode; open: boolean; onOpenChange: (open: boolean) => void }) => (
+  Drawer: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) => (
     <div data-testid="drawer" data-open={open}>
       {children}
       <button onClick={() => onOpenChange(false)}>Close</button>
@@ -31,7 +39,13 @@ vi.mock('@maatwork/ui', () => ({
 
 // Mock NavigationNew
 vi.mock('./NavigationNew', () => ({
-  default: ({ onToggleSidebar, sidebarOpen }: { onToggleSidebar: () => void; sidebarOpen: boolean }) => (
+  default: ({
+    onToggleSidebar,
+    sidebarOpen,
+  }: {
+    onToggleSidebar: () => void;
+    sidebarOpen: boolean;
+  }) => (
     <nav data-testid="navigation">
       <button onClick={onToggleSidebar} data-open={sidebarOpen}>
         Toggle Sidebar

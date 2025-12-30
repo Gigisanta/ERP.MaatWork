@@ -7,7 +7,24 @@ export class ContactDetailPage extends BasePage {
   }
 
   async expectLoaded() {
-    await expect(this.page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(this.page.getByText(/Ficha del Contacto/i)).toBeVisible();
+  }
+
+  async editField(label: string, newValue: string) {
+    const labelElement = this.page.getByText(label, { exact: true });
+    // Click the parent div which has the onClick handler.
+    // We use a more specific locator to find the clickable container.
+    const fieldContainer = labelElement.locator('..');
+    await fieldContainer.click();
+
+    // Find the input that appears after clicking
+    const input = this.page.locator('input, textarea').first();
+    await expect(input).toBeVisible();
+    await input.fill(newValue);
+    await input.press('Enter');
+
+    // Wait for the text to appear outside input
+    await expect(this.page.getByText(newValue)).toBeVisible();
   }
 
   get deleteButton(): Locator {
@@ -22,15 +39,19 @@ export class ContactDetailPage extends BasePage {
   }
 
   async addNote(content: string) {
-    // Switch to notes tab if necessary
-    const notesTab = this.page.getByRole('tab', { name: /notas|notes/i });
-    if (await notesTab.isVisible()) {
-      await notesTab.click();
-    }
-    
-    await this.page.getByPlaceholder(/escriba una nota|write a note/i).fill(content);
-    await this.page.getByRole('button', { name: /agregar|add|guardar/i }).click();
-    
+    // Click "Agregar Nota" button to open modal
+    const openModalBtn = this.page.getByRole('button', { name: /agregar nota/i }).first();
+    await openModalBtn.click();
+
+    // Wait for modal and fill content
+    const textarea = this.page.getByPlaceholder(/escribe tu nota aquí/i);
+    await expect(textarea).toBeVisible();
+    await textarea.fill(content);
+
+    // Click "Agregar Nota" in modal footer
+    const submitBtn = this.page.getByRole('button', { name: /agregar nota/i }).last();
+    await submitBtn.click();
+
     // Verify note added
     await expect(this.page.getByText(content)).toBeVisible();
   }
@@ -40,18 +61,18 @@ export class ContactDetailPage extends BasePage {
     // This is a placeholder implementation based on common patterns
     const statusSelect = this.page.getByRole('combobox', { name: /estado|status|etapa/i });
     if (await statusSelect.isVisible()) {
-        await statusSelect.click();
-        await this.page.getByRole('option', { name: new RegExp(status, 'i') }).click();
-        await this.expectSuccessToast();
+      await statusSelect.click();
+      await this.page.getByRole('option', { name: new RegExp(status, 'i') }).click();
+      await this.expectSuccessToast();
     }
   }
 
   async addTag(tagName: string) {
-      const addTagBtn = this.page.getByRole('button', { name: /etiqueta|tag/i });
-      if (await addTagBtn.isVisible()) {
-          await addTagBtn.click();
-          await this.page.getByRole('option', { name: tagName }).click();
-          await this.expectSuccessToast();
-      }
+    const addTagBtn = this.page.getByRole('button', { name: /etiqueta|tag/i });
+    if (await addTagBtn.isVisible()) {
+      await addTagBtn.click();
+      await this.page.getByRole('option', { name: tagName }).click();
+      await this.expectSuccessToast();
+    }
   }
 }

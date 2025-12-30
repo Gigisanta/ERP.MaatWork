@@ -49,7 +49,7 @@ export interface CreatePortfolioRequest extends CreateRequest<Portfolio> {
 /**
  * Request para actualizar portfolio - usando utility type UpdateRequest
  */
-export interface UpdatePortfolioRequest extends UpdateRequest<Portfolio> {}
+export type UpdatePortfolioRequest = UpdateRequest<Portfolio>;
 
 /**
  * Request para agregar línea de portfolio
@@ -74,10 +74,7 @@ export interface PortfolioWithLines extends Portfolio {
  * Tipos para composición de portfolio (UI)
  * Extiende ComponentBase para compartir estructura con BenchmarkComponent
  */
-interface PortfolioComponent extends ComponentBase {
-  // targetWeight ya está definido en ComponentBase
-  // Percentage (25 = 25%)
-}
+type PortfolioComponent = ComponentBase;
 
 /**
  * Datos de formulario de portfolio

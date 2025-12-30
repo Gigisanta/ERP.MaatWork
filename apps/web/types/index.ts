@@ -8,32 +8,18 @@
 // Common types
 export type {
   ApiResponse,
-  
   PaginatedResponse,
-  
   RiskLevel,
   AssetType,
   Currency,
   TimePeriod,
-  
-  
-  
   ApiError,
   ApiResponseWithHint,
   ApiErrorWithMessage,
 } from './common';
 
 // Auth types
-export type {
-  
-  UserRole,
-  UserApiResponse,
-  
-  AdvisorMinimal as Advisor,
-  
-  
-  
-} from '@maatwork/types';
+export type { UserRole, UserApiResponse, AdvisorMinimal as Advisor } from '@maatwork/types';
 
 // Instrument types
 export type {
@@ -42,7 +28,6 @@ export type {
   InstrumentValidation,
   CreateInstrumentRequest,
   CreateInstrumentResponse,
-  
 } from './instrument';
 
 // Portfolio types
@@ -53,26 +38,20 @@ export type {
   UpdatePortfolioRequest,
   AddPortfolioLineRequest,
   PortfolioWithLines,
-  
-  
 } from './portfolio';
 
 // Benchmark types
 export type {
   Benchmark,
-  
   BenchmarkComponent,
-  
   CreateBenchmarkRequest,
   UpdateBenchmarkRequest,
   AddBenchmarkComponentRequest,
   BenchmarkWithComponents,
-  
 } from './benchmark';
 
 // Analytics types
 export type {
-  
   PerformanceDataPoint,
   PortfolioPerformance,
   ComparisonResult,
@@ -102,17 +81,7 @@ export type {
 } from '@maatwork/types';
 
 // Contact types
-export type {
-  Contact,
-  ContactWithTags,
-  ContactFieldValue,
-  
-  
-  
-  
-  ImportStats,
-  
-} from '@maatwork/types';
+export type { Contact, ContactWithTags, ContactFieldValue, ImportStats } from '@maatwork/types';
 
 // Pipeline types
 export type { PipelineStage, PipelineStageWithContacts, PipelineBoard } from '@maatwork/types';
@@ -122,7 +91,6 @@ export type {
   Tag,
   CreateTagRequest,
   UpdateTagRequest,
-  
   ContactTagWithDetails,
   UpdateContactTagRequest,
 } from '@maatwork/types';
@@ -140,9 +108,7 @@ export type { Note, CreateNoteRequest, UpdateNoteRequest } from '@maatwork/types
 export type {
   AumFile,
   AumRow,
-  
   Row,
-  
   AumUploadResponse,
   AumMatchRequest,
   AumRowsResponse,
@@ -157,9 +123,6 @@ export type {
 } from '@maatwork/types';
 
 // Metrics types
-;
-;
-
 // Capacitaciones types
 export type {
   Capacitacion,
@@ -171,21 +134,16 @@ export type {
 } from '@maatwork/types';
 
 // Automation types
-;
-
 // Calendar types
 export type {
   CalendarEvent,
   CalendarEventAttendee,
-  
   CalendarListEntry,
   GetEventsParams,
   CreateEventRequest,
   UpdateEventRequest,
   ConnectTeamCalendarRequest,
   ConnectTeamCalendarResponse,
-  
-  
 } from '@maatwork/types';
 
 // Career Plan types

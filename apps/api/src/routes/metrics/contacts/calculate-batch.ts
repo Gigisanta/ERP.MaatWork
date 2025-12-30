@@ -1,6 +1,6 @@
 /**
  * Batch Monthly Metrics Calculator
- * 
+ *
  * Optimized calculator that fetches data in batches to reduce database roundtrips.
  */
 
@@ -12,12 +12,12 @@ import { calculateNewClients } from './calculators/new-clients';
 import { calculateBusinessLineClosures } from './calculators/business-line-closures';
 import { calculateTransitionTimesFromData } from './calculators/transition-times-batch';
 import { calculateMarketTypeConversionFromData } from './calculators/market-type-conversion-batch';
-import type { 
-  AccessFilter, 
-  PipelineStageIds, 
-  MonthlyMetrics, 
+import type {
+  AccessFilter,
+  PipelineStageIds,
+  MonthlyMetrics,
   MonthRange,
-  CalculatorContext
+  CalculatorContext,
 } from './types';
 
 interface BatchParams {
@@ -29,28 +29,32 @@ interface BatchParams {
 /**
  * Calculates metrics for multiple months in a single batch
  */
-export async function calculateBatchMonthlyMetrics(
-  params: BatchParams
-): Promise<MonthlyMetrics[]> {
+export async function calculateBatchMonthlyMetrics(params: BatchParams): Promise<MonthlyMetrics[]> {
   const { months, stageIds, accessFilter } = params;
-  const { contactadoStageId, firstMeetingStageId, secondMeetingStageId, clienteStageId, prospectoStageId } = stageIds;
+  const {
+    contactadoStageId,
+    firstMeetingStageId,
+    secondMeetingStageId,
+    clienteStageId,
+    prospectoStageId,
+  } = stageIds;
 
   // 1. Determine full range
-  const ranges = months.map(m => createMonthRange(m.month, m.year));
-  const fullStart = new Date(Math.min(...ranges.map(r => r.monthStart.getTime())));
-  const fullEnd = new Date(Math.max(...ranges.map(r => r.monthEnd.getTime())));
+  const ranges = months.map((m) => createMonthRange(m.month, m.year));
+  const fullStart = new Date(Math.min(...ranges.map((r) => r.monthStart.getTime())));
+  const fullEnd = new Date(Math.max(...ranges.map((r) => r.monthEnd.getTime())));
 
   // Also we need history from before the full range to determine "first time"
   // To be safe, we look at ALL history for the relevant contacts.
-  
+
   // 2. Get First Time Entry for each stage for ALL relevant contacts
   // This is the core optimization: find the EARLIEST entry for each contact/stage
-  
+
   const relevantStageIds = [
-    contactadoStageId, 
-    firstMeetingStageId, 
-    secondMeetingStageId, 
-    clienteStageId
+    contactadoStageId,
+    firstMeetingStageId,
+    secondMeetingStageId,
+    clienteStageId,
   ];
 
   // AI_DECISION: Fetch minimum entry dates for all stages in a single query
@@ -63,28 +67,32 @@ export async function calculateBatchMonthlyMetrics(
     })
     .from(pipelineStageHistory)
     .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-    .where(and(
-      inArray(pipelineStageHistory.toStage, relevantStageIds),
-      isNull(contacts.deletedAt),
-      accessFilter.whereClause
-    ))
+    .where(
+      and(
+        inArray(pipelineStageHistory.toStage, relevantStageIds),
+        isNull(contacts.deletedAt),
+        accessFilter.whereClause
+      )
+    )
     .groupBy(pipelineStageHistory.contactId, pipelineStageHistory.toStage);
 
   // Map to store (contactId, stageId) -> Date
   const firstEntryMap = new Map<string, Map<string, Date>>();
-  
-  firstHistoryEntries.forEach((entry: { contactId: string; toStage: string; firstEntry: string | null }) => {
-    if (!firstEntryMap.has(entry.contactId)) {
-      firstEntryMap.set(entry.contactId, new Map());
+
+  firstHistoryEntries.forEach(
+    (entry: { contactId: string; toStage: string; firstEntry: string | null }) => {
+      if (!firstEntryMap.has(entry.contactId)) {
+        firstEntryMap.set(entry.contactId, new Map());
+      }
+      if (entry.firstEntry) {
+        firstEntryMap.get(entry.contactId)!.set(entry.toStage, new Date(entry.firstEntry));
+      }
     }
-    if (entry.firstEntry) {
-      firstEntryMap.get(entry.contactId)!.set(entry.toStage, new Date(entry.firstEntry));
-    }
-  });
+  );
 
   // 3. Get contact creation dates and stages for contacts created in range or involved in history
   const contactIdsWithHistory = Array.from(firstEntryMap.keys());
-  
+
   // Also need contacts created in the full range regardless of history
   const contactsCreatedInRange = await db()
     .select({
@@ -94,25 +102,32 @@ export async function calculateBatchMonthlyMetrics(
       source: contacts.source,
     })
     .from(contacts)
-    .where(and(
-      gte(contacts.createdAt, fullStart),
-      lte(contacts.createdAt, fullEnd),
-      isNull(contacts.deletedAt),
-      accessFilter.whereClause
-    ));
+    .where(
+      and(
+        gte(contacts.createdAt, fullStart),
+        lte(contacts.createdAt, fullEnd),
+        isNull(contacts.deletedAt),
+        accessFilter.whereClause
+      )
+    );
 
-  const allRelevantContactsMap = new Map<string, { createdAt: Date; stageAtCreation: string | null; source: string | null }>();
-  
-  contactsCreatedInRange.forEach((c: { id: string; createdAt: Date; pipelineStageId: string | null; source: string | null }) => {
-    allRelevantContactsMap.set(c.id, {
-      createdAt: new Date(c.createdAt),
-      stageAtCreation: c.pipelineStageId,
-      source: c.source
-    });
-  });
+  const allRelevantContactsMap = new Map<
+    string,
+    { createdAt: Date; stageAtCreation: string | null; source: string | null }
+  >();
+
+  contactsCreatedInRange.forEach(
+    (c: { id: string; createdAt: Date; pipelineStageId: string | null; source: string | null }) => {
+      allRelevantContactsMap.set(c.id, {
+        createdAt: new Date(c.createdAt),
+        stageAtCreation: c.pipelineStageId,
+        source: c.source,
+      });
+    }
+  );
 
   // If some contacts with history were NOT in the creation range, fetch them too
-  const missingContactIds = contactIdsWithHistory.filter(id => !allRelevantContactsMap.has(id));
+  const missingContactIds = contactIdsWithHistory.filter((id) => !allRelevantContactsMap.has(id));
   if (missingContactIds.length > 0) {
     // Process in chunks of 500 to avoid SQL limit issues
     for (let i = 0; i < missingContactIds.length; i += 500) {
@@ -126,14 +141,21 @@ export async function calculateBatchMonthlyMetrics(
         })
         .from(contacts)
         .where(inArray(contacts.id, chunk));
-      
-      extraContacts.forEach((c: { id: string; createdAt: Date; pipelineStageId: string | null; source: string | null }) => {
-        allRelevantContactsMap.set(c.id, {
-          createdAt: new Date(c.createdAt),
-          stageAtCreation: c.pipelineStageId,
-          source: c.source
-        });
-      });
+
+      extraContacts.forEach(
+        (c: {
+          id: string;
+          createdAt: Date;
+          pipelineStageId: string | null;
+          source: string | null;
+        }) => {
+          allRelevantContactsMap.set(c.id, {
+            createdAt: new Date(c.createdAt),
+            stageAtCreation: c.pipelineStageId,
+            source: c.source,
+          });
+        }
+      );
     }
   }
 
@@ -160,29 +182,33 @@ export async function calculateBatchMonthlyMetrics(
     })
     .from(pipelineStageHistory)
     .innerJoin(contacts, eq(pipelineStageHistory.contactId, contacts.id))
-    .where(and(
-      inArray(pipelineStageHistory.contactId, Array.from(allRelevantContactsMap.keys())),
-      inArray(pipelineStageHistory.toStage, [
-        prospectoStageId, 
-        firstMeetingStageId, 
-        secondMeetingStageId, 
-        clienteStageId
-      ].filter((id): id is string => !!id)),
-      isNull(contacts.deletedAt),
-      accessFilter.whereClause
-    ))
+    .where(
+      and(
+        inArray(pipelineStageHistory.contactId, Array.from(allRelevantContactsMap.keys())),
+        inArray(
+          pipelineStageHistory.toStage,
+          [prospectoStageId, firstMeetingStageId, secondMeetingStageId, clienteStageId].filter(
+            (id): id is string => !!id
+          )
+        ),
+        isNull(contacts.deletedAt),
+        accessFilter.whereClause
+      )
+    )
     .orderBy(asc(pipelineStageHistory.changedAt));
 
   const historyByContact = new Map<string, { toStage: string; changedAt: Date }[]>();
-  allHistoryForTransition.forEach((h: { contactId: string; toStage: string; changedAt: string }) => {
-    if (!historyByContact.has(h.contactId)) {
-      historyByContact.set(h.contactId, []);
+  allHistoryForTransition.forEach(
+    (h: { contactId: string; toStage: string; changedAt: string }) => {
+      if (!historyByContact.has(h.contactId)) {
+        historyByContact.set(h.contactId, []);
+      }
+      historyByContact.get(h.contactId)!.push({
+        toStage: h.toStage,
+        changedAt: new Date(h.changedAt),
+      });
     }
-    historyByContact.get(h.contactId)!.push({
-      toStage: h.toStage,
-      changedAt: new Date(h.changedAt)
-    });
-  });
+  );
 
   // 6. Calculate for each month using the pre-fetched data
   const results: MonthlyMetrics[] = [];
@@ -216,10 +242,12 @@ export async function calculateBatchMonthlyMetrics(
     const contactIdsEnteredContactadoInMonth = Array.from(contactadoInMonth.entries())
       .filter(([_, date]) => date >= range.monthStart && date <= range.monthEnd)
       .map(([id]) => id);
-    
-    const newContactsCount = contactIdsEnteredContactadoInMonth.filter(id => {
+
+    const newContactsCount = contactIdsEnteredContactadoInMonth.filter((id) => {
       const contact = allRelevantContactsMap.get(id);
-      return contact && contact.createdAt >= range.monthStart && contact.createdAt <= range.monthEnd;
+      return (
+        contact && contact.createdAt >= range.monthStart && contact.createdAt <= range.monthEnd
+      );
     }).length;
 
     // 2. Meetings
@@ -230,10 +258,7 @@ export async function calculateBatchMonthlyMetrics(
     );
 
     // 3. New Clients
-    const { newClientsCount, clientContactIds } = calculateNewClients(
-      range,
-      clientInMonth
-    );
+    const { newClientsCount, clientContactIds } = calculateNewClients(range, clientInMonth);
 
     // 4. Business Line Closures (this one still needs a query, but it's only 1 per month and only for clients)
     // We can optimize this too if needed, but it's usually small.
@@ -270,4 +295,3 @@ export async function calculateBatchMonthlyMetrics(
 
   return results;
 }
-

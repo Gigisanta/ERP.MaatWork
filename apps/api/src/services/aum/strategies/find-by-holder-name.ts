@@ -26,10 +26,10 @@ export function hasOnlyHolderName(row: AumRowInsert): boolean {
 
   return Boolean(
     row.holderName &&
-      row.holderName.trim().length > 0 &&
-      !hasIdCuenta &&
-      !hasAccountNumber &&
-      (!row.advisorRaw || row.advisorRaw.trim().length === 0)
+    row.holderName.trim().length > 0 &&
+    !hasIdCuenta &&
+    !hasAccountNumber &&
+    (!row.advisorRaw || row.advisorRaw.trim().length === 0)
   );
 }
 

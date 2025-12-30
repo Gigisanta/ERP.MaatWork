@@ -1,6 +1,6 @@
 /**
  * AUM Parser Service
- * 
+ *
  * Orchestrates parsing of different file types (CSV, Excel) into AUM rows.
  */
 
@@ -63,9 +63,3 @@ export async function parseAumFile(filePath: string, originalName: string): Prom
     details: `File extension: ${extension}. Only .csv, .xlsx, and .xls are supported.`,
   };
 }
-
-
-
-
-
-

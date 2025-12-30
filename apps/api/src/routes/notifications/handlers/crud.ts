@@ -95,4 +95,3 @@ export const handleCreateManualNotification = createAsyncHandler(
     return res.status(201).json({ success: true, data: newNotification, requestId: req.requestId });
   }
 );
-

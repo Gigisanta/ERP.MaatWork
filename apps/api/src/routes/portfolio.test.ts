@@ -9,9 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import {
-  db,
-} from '@maatwork/db';
+import { db } from '@maatwork/db';
 import { getUserAccessScope } from '../auth/authorization';
 import { uuidSchema } from '../utils/validation/common-schemas';
 

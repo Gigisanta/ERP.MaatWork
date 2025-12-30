@@ -1,6 +1,6 @@
 /**
  * Seed Users
- * 
+ *
  * Seeds admin, manager, and advisor users
  */
 
@@ -22,17 +22,20 @@ export async function seedUsers() {
   const adminEmail = 'admin@grupoabax.com';
   const existingAdmin = await db().select().from(users).where(eq(users.email, adminEmail)).limit(1);
   let adminUser: InferSelectModel<typeof users>;
-  
+
   if (existingAdmin.length === 0) {
-    const [admin] = await db().insert(users).values({
-      email: adminEmail,
-      username: 'admin',
-      usernameNormalized: 'admin',
-      fullName: 'Admin User',
-      role: 'admin',
-      passwordHash: hashedPassword,
-      isActive: true
-    }).returning();
+    const [admin] = await db()
+      .insert(users)
+      .values({
+        email: adminEmail,
+        username: 'admin',
+        usernameNormalized: 'admin',
+        fullName: 'Admin User',
+        role: 'admin',
+        passwordHash: hashedPassword,
+        isActive: true,
+      })
+      .returning();
     adminUser = admin;
     console.log(`  ✓ Created admin: ${adminEmail}`);
   } else {
@@ -44,22 +47,25 @@ export async function seedUsers() {
   const managerData = [
     { email: 'manager1@grupoabax.com', username: 'manager1', fullName: 'María González' },
     { email: 'manager2@grupoabax.com', username: 'manager2', fullName: 'Carlos Rodríguez' },
-    { email: 'manager3@grupoabax.com', username: 'manager3', fullName: 'Ana Martínez' }
+    { email: 'manager3@grupoabax.com', username: 'manager3', fullName: 'Ana Martínez' },
   ];
 
   const managerUsers: InferSelectModel<typeof users>[] = [adminUser];
   for (const manager of managerData) {
     const existing = await db().select().from(users).where(eq(users.email, manager.email)).limit(1);
     if (existing.length === 0) {
-      const [created] = await db().insert(users).values({
-        email: manager.email,
-        username: manager.username,
-        usernameNormalized: manager.username.toLowerCase(),
-        fullName: manager.fullName,
-        role: 'manager',
-        passwordHash: hashedPassword,
-        isActive: true
-      }).returning();
+      const [created] = await db()
+        .insert(users)
+        .values({
+          email: manager.email,
+          username: manager.username,
+          usernameNormalized: manager.username.toLowerCase(),
+          fullName: manager.fullName,
+          role: 'manager',
+          passwordHash: hashedPassword,
+          isActive: true,
+        })
+        .returning();
       managerUsers.push(created);
       console.log(`  ✓ Created manager: ${manager.email}`);
     } else {
@@ -77,22 +83,25 @@ export async function seedUsers() {
     { email: 'advisor5@grupoabax.com', username: 'advisor5', fullName: 'Miguel Gómez' },
     { email: 'advisor6@grupoabax.com', username: 'advisor6', fullName: 'Camila Martínez' },
     { email: 'advisor7@grupoabax.com', username: 'advisor7', fullName: 'Pedro Ruiz' },
-    { email: 'advisor8@grupoabax.com', username: 'advisor8', fullName: 'Valentina Díaz' }
+    { email: 'advisor8@grupoabax.com', username: 'advisor8', fullName: 'Valentina Díaz' },
   ];
 
   const advisorUsers: InferSelectModel<typeof users>[] = [];
   for (const advisor of advisorData) {
     const existing = await db().select().from(users).where(eq(users.email, advisor.email)).limit(1);
     if (existing.length === 0) {
-      const [created] = await db().insert(users).values({
-        email: advisor.email,
-        username: advisor.username,
-        usernameNormalized: advisor.username.toLowerCase(),
-        fullName: advisor.fullName,
-        role: 'advisor',
-        passwordHash: hashedPassword,
-        isActive: true
-      }).returning();
+      const [created] = await db()
+        .insert(users)
+        .values({
+          email: advisor.email,
+          username: advisor.username,
+          usernameNormalized: advisor.username.toLowerCase(),
+          fullName: advisor.fullName,
+          role: 'advisor',
+          passwordHash: hashedPassword,
+          isActive: true,
+        })
+        .returning();
       advisorUsers.push(created);
       console.log(`  ✓ Created advisor: ${advisor.email}`);
     } else {
@@ -101,56 +110,9 @@ export async function seedUsers() {
     }
   }
 
-  console.log(`✅ Users seeded: 1 admin, ${managerUsers.length - 1} managers, ${advisorUsers.length} advisors\n`);
-  
+  console.log(
+    `✅ Users seeded: 1 admin, ${managerUsers.length - 1} managers, ${advisorUsers.length} advisors\n`
+  );
+
   return { adminUser, managerUsers, advisorUsers };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

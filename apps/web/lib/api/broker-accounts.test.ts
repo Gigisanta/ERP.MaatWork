@@ -17,8 +17,6 @@ vi.mock('./client', () => {
 });
 
 describe('broker-accounts api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -77,8 +77,8 @@ export function initDebugConsole(): DebugConsole | null {
 
     return debugConsole;
   } catch (error) {
-    logger.error('Error al inicializar Debug Console', { 
-      error: error instanceof Error ? error.message : String(error) 
+    logger.error('Error al inicializar Debug Console', {
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Crear un objeto mínimo incluso si hay error

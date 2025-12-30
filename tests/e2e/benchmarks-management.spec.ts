@@ -6,10 +6,10 @@ test.describe('Benchmarks Management', () => {
     const benchmarkName = `Benchmark ${timestamp}`;
 
     await benchmarksPage.gotoList();
-    
+
     // Create
     await benchmarksPage.createBenchmark(benchmarkName);
-    
+
     // View Details
     await benchmarksPage.openBenchmark(benchmarkName);
 

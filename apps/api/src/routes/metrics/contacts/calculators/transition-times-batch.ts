@@ -43,7 +43,8 @@ function calculateContactTransitionTimes(
     (h) => h.toStage === firstMeetingStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (firstMeetingEntry && createdAt) {
-    const days = (firstMeetingEntry.changedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (firstMeetingEntry.changedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (days > 0) {
       prospectoToFirst = days;
     }
@@ -52,10 +53,13 @@ function calculateContactTransitionTimes(
   // First meeting → Second meeting: calculate only if entered Second meeting in the month
   const firstMeetingEntryInHistory = sortedHistory.find((h) => h.toStage === firstMeetingStageId);
   const secondMeetingEntry = sortedHistory.find(
-    (h) => h.toStage === secondMeetingStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
+    (h) =>
+      h.toStage === secondMeetingStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (firstMeetingEntryInHistory && secondMeetingEntry) {
-    const days = (secondMeetingEntry.changedAt.getTime() - firstMeetingEntryInHistory.changedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (secondMeetingEntry.changedAt.getTime() - firstMeetingEntryInHistory.changedAt.getTime()) /
+      (1000 * 60 * 60 * 24);
     if (days > 0) {
       firstToSecond = days;
     }
@@ -67,7 +71,9 @@ function calculateContactTransitionTimes(
     (h) => h.toStage === clienteStageId && h.changedAt >= monthStart && h.changedAt <= monthEnd
   );
   if (secondMeetingEntryInHistory && clientEntry) {
-    const days = (clientEntry.changedAt.getTime() - secondMeetingEntryInHistory.changedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days =
+      (clientEntry.changedAt.getTime() - secondMeetingEntryInHistory.changedAt.getTime()) /
+      (1000 * 60 * 60 * 24);
     if (days > 0) {
       secondToClient = days;
     }
@@ -94,10 +100,14 @@ export function calculateTransitionTimesFromData(
 
   // Identify contacts that had changes in THIS month
   const contactsWithChangesInMonth = Array.from(historyByContact.entries())
-    .filter(([_, history]) => history.some(h => 
-      [firstMeetingStageId, secondMeetingStageId, clienteStageId].includes(h.toStage) &&
-      h.changedAt >= monthStart && h.changedAt <= monthEnd
-    ))
+    .filter(([_, history]) =>
+      history.some(
+        (h) =>
+          [firstMeetingStageId, secondMeetingStageId, clienteStageId].includes(h.toStage) &&
+          h.changedAt >= monthStart &&
+          h.changedAt <= monthEnd
+      )
+    )
     .map(([contactId]) => contactId);
 
   for (const contactId of contactsWithChangesInMonth) {
@@ -118,7 +128,3 @@ export function calculateTransitionTimesFromData(
     secondMeetingToClient: calculateAverage(secondToClientTimes),
   };
 }
-
-
-
-

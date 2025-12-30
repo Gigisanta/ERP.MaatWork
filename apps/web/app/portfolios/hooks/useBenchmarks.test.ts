@@ -7,8 +7,13 @@
  */
 import { useEntityWithComponents } from './useEntityWithComponents';
 import { useRequireAuth } from '@/auth/useRequireAuth';
-import { getBenchmarks, getBenchmarkComponentsBatch, createBenchmark, updateBenchmark, deleteBenchmark,  } from '@/lib/api';
-
+import {
+  getBenchmarks,
+  getBenchmarkComponentsBatch,
+  createBenchmark,
+  updateBenchmark,
+  deleteBenchmark,
+} from '@/lib/api';
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -41,9 +46,9 @@ describe('useBenchmarks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-        useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
+    useEntityWithComponents.mockImplementation(mockUseEntityWithComponents);
 
-        mockUseRequireAuth.mockReturnValue({
+    mockUseRequireAuth.mockReturnValue({
       user: { id: 'user-1', email: 'test@example.com', role: 'admin' },
       loading: false,
     });
@@ -136,7 +141,6 @@ describe('useBenchmarks', () => {
   });
 
   it('debería pasar configuración correcta a useEntityWithComponents', () => {
-    
     mockUseEntityWithComponents.mockReturnValue({
       entities: [],
       isLoading: false,

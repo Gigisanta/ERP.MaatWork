@@ -38,9 +38,9 @@ export default function CapacitacionForm({
   useEffect(() => {
     if (capacitacion) {
       const fechaStr = capacitacion.fecha
-        ? (typeof capacitacion.fecha === 'string'
+        ? typeof capacitacion.fecha === 'string'
           ? capacitacion.fecha.split('T')[0]
-          : capacitacion.fecha.toISOString().split('T')[0])
+          : capacitacion.fecha.toISOString().split('T')[0]
         : null;
 
       setFormData({

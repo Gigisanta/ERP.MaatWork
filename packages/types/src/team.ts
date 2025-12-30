@@ -1,6 +1,6 @@
 /**
  * Team Types - Shared team-related types
- * 
+ *
  * These types are used by both API and Web applications.
  */
 

@@ -133,10 +133,7 @@ router.post(
             lastInteractionAt: new Date(),
           })
           .onConflictDoUpdate({
-            target: [
-              contactStageInteractions.contactId,
-              contactStageInteractions.pipelineStageId,
-            ],
+            target: [contactStageInteractions.contactId, contactStageInteractions.pipelineStageId],
             set: {
               interactionCount: sql`${contactStageInteractions.interactionCount} + ${
                 action === 'increment' ? 1 : -1

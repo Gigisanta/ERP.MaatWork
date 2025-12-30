@@ -7,7 +7,7 @@ test.describe('Portfolio Management', () => {
 
     // 1. Create Template
     await portfoliosPage.createTemplate(templateName, 'Aggressive growth strategy');
-    
+
     // 2. Open and Add Component
     await portfoliosPage.openPortfolio(templateName);
     await portfoliosPage.addComponent('AAPL', '50');

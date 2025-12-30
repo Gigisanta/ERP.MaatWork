@@ -29,7 +29,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const previousPathname = useRef(pathname);
 
   // Check if current route should use full-screen layout (no wrapper)
-  const isFullScreenRoute = FULL_SCREEN_ROUTES.some((route) => pathname.startsWith(route));
+  const isFullScreenRoute =
+    pathname === '/' || FULL_SCREEN_ROUTES.some((route) => pathname.startsWith(route));
 
   // Handle page transitions
   useEffect(() => {

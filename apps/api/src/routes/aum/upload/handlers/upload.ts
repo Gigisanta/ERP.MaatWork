@@ -131,7 +131,9 @@ export const handleUpload = createAsyncHandler(async (req: Request, res: Respons
     // Cleanup temp file
     try {
       await fs.unlink(file.path);
-    } catch {}
+    } catch {
+      // Ignore cleanup error
+    }
 
     return res.status(400).json({
       error: 'Error al procesar el archivo',
@@ -283,7 +285,9 @@ export const handleUpload = createAsyncHandler(async (req: Request, res: Respons
         }
       }
     );
-  } catch {}
+  } catch {
+    // Ignore duplicate accounts in same file
+  }
 
   // Process rows: match contacts and advisors
   const rowsToInsert: AumRowInsert[] = [];
@@ -445,7 +449,9 @@ export const handleUpload = createAsyncHandler(async (req: Request, res: Respons
   if (!upsertResult.success) {
     try {
       await fs.unlink(file.path);
-    } catch {}
+    } catch {
+      // Ignore cleanup error
+    }
 
     return res.status(500).json({
       error: 'Error al guardar los datos del archivo',

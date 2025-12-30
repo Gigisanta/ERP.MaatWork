@@ -16,10 +16,31 @@ vi.mock('@maatwork/db', async () => {
   return {
     ...actual,
     db: vi.fn(),
-    instruments: { id: 'instruments_id', symbol: 'instruments_symbol', active: 'instruments_active', currency: 'instruments_currency', name: 'instruments_name' },
-    priceSnapshots: { instrumentId: 'priceSnapshots_instrumentId', closePrice: 'priceSnapshots_closePrice', currency: 'priceSnapshots_currency', asOfDate: 'priceSnapshots_asOfDate', source: 'priceSnapshots_source' },
-    brokerPositions: { marketValue: 'brokerPositions_marketValue', brokerAccountId: 'brokerPositions_brokerAccountId', instrumentId: 'brokerPositions_instrumentId', asOfDate: 'brokerPositions_asOfDate' },
-    aumSnapshots: { contactId: 'aumSnapshots_contactId', date: 'aumSnapshots_date', aumTotal: 'aumSnapshots_aumTotal' },
+    instruments: {
+      id: 'instruments_id',
+      symbol: 'instruments_symbol',
+      active: 'instruments_active',
+      currency: 'instruments_currency',
+      name: 'instruments_name',
+    },
+    priceSnapshots: {
+      instrumentId: 'priceSnapshots_instrumentId',
+      closePrice: 'priceSnapshots_closePrice',
+      currency: 'priceSnapshots_currency',
+      asOfDate: 'priceSnapshots_asOfDate',
+      source: 'priceSnapshots_source',
+    },
+    brokerPositions: {
+      marketValue: 'brokerPositions_marketValue',
+      brokerAccountId: 'brokerPositions_brokerAccountId',
+      instrumentId: 'brokerPositions_instrumentId',
+      asOfDate: 'brokerPositions_asOfDate',
+    },
+    aumSnapshots: {
+      contactId: 'aumSnapshots_contactId',
+      date: 'aumSnapshots_date',
+      aumTotal: 'aumSnapshots_aumTotal',
+    },
   };
 });
 
@@ -27,16 +48,55 @@ vi.mock('@maatwork/db/schema', async () => {
   const actual = await vi.importActual('@maatwork/db/schema');
   return {
     ...actual,
-    instruments: { id: 'instruments_id', symbol: 'instruments_symbol', active: 'instruments_active', currency: 'instruments_currency', name: 'instruments_name' },
-    priceSnapshots: { instrumentId: 'priceSnapshots_instrumentId', closePrice: 'priceSnapshots_closePrice', currency: 'priceSnapshots_currency', asOfDate: 'priceSnapshots_asOfDate', source: 'priceSnapshots_source' },
-    brokerPositions: { marketValue: 'brokerPositions_marketValue', brokerAccountId: 'brokerPositions_brokerAccountId', instrumentId: 'brokerPositions_instrumentId', asOfDate: 'brokerPositions_asOfDate' },
+    instruments: {
+      id: 'instruments_id',
+      symbol: 'instruments_symbol',
+      active: 'instruments_active',
+      currency: 'instruments_currency',
+      name: 'instruments_name',
+    },
+    priceSnapshots: {
+      instrumentId: 'priceSnapshots_instrumentId',
+      closePrice: 'priceSnapshots_closePrice',
+      currency: 'priceSnapshots_currency',
+      asOfDate: 'priceSnapshots_asOfDate',
+      source: 'priceSnapshots_source',
+    },
+    brokerPositions: {
+      marketValue: 'brokerPositions_marketValue',
+      brokerAccountId: 'brokerPositions_brokerAccountId',
+      instrumentId: 'brokerPositions_instrumentId',
+      asOfDate: 'brokerPositions_asOfDate',
+    },
     brokerBalances: { contactId: 'brokerBalances_contactId' },
     brokerAccounts: { id: 'brokerAccounts_id', contactId: 'brokerAccounts_contactId' },
-    aumSnapshots: { contactId: 'aumSnapshots_contactId', date: 'aumSnapshots_date', aumTotal: 'aumSnapshots_aumTotal' },
-    clientPortfolioAssignments: { contactId: 'clientPortfolioAssignments_contactId', templateId: 'clientPortfolioAssignments_templateId', id: 'clientPortfolioAssignments_id', status: 'clientPortfolioAssignments_status', startDate: 'clientPortfolioAssignments_startDate', endDate: 'clientPortfolioAssignments_endDate' },
-    portfolioMonitoringSnapshot: { id: 'portfolioMonitoringSnapshot_id', contactId: 'portfolioMonitoringSnapshot_contactId', asOfDate: 'portfolioMonitoringSnapshot_asOfDate', totalDeviationPct: 'portfolioMonitoringSnapshot_totalDeviationPct' },
+    aumSnapshots: {
+      contactId: 'aumSnapshots_contactId',
+      date: 'aumSnapshots_date',
+      aumTotal: 'aumSnapshots_aumTotal',
+    },
+    clientPortfolioAssignments: {
+      contactId: 'clientPortfolioAssignments_contactId',
+      templateId: 'clientPortfolioAssignments_templateId',
+      id: 'clientPortfolioAssignments_id',
+      status: 'clientPortfolioAssignments_status',
+      startDate: 'clientPortfolioAssignments_startDate',
+      endDate: 'clientPortfolioAssignments_endDate',
+    },
+    portfolioMonitoringSnapshot: {
+      id: 'portfolioMonitoringSnapshot_id',
+      contactId: 'portfolioMonitoringSnapshot_contactId',
+      asOfDate: 'portfolioMonitoringSnapshot_asOfDate',
+      totalDeviationPct: 'portfolioMonitoringSnapshot_totalDeviationPct',
+    },
     portfolioMonitoringDetails: { snapshotId: 'portfolioMonitoringDetails_snapshotId' },
-    portfolioTemplateLines: { templateId: 'portfolioTemplateLines_templateId', targetType: 'portfolioTemplateLines_targetType', assetClass: 'portfolioTemplateLines_assetClass', instrumentId: 'portfolioTemplateLines_instrumentId', targetWeight: 'portfolioTemplateLines_targetWeight' },
+    portfolioTemplateLines: {
+      templateId: 'portfolioTemplateLines_templateId',
+      targetType: 'portfolioTemplateLines_targetType',
+      assetClass: 'portfolioTemplateLines_assetClass',
+      instrumentId: 'portfolioTemplateLines_instrumentId',
+      targetWeight: 'portfolioTemplateLines_targetWeight',
+    },
     contacts: { id: 'contacts_id' },
   };
 });
@@ -76,7 +136,7 @@ const mockDb = vi.mocked(db);
 // Helper to create a chainable mock
 const createChainableMock = (finalValue: unknown) => {
   const mock = vi.fn().mockImplementation(() => mock) as any;
-  
+
   // Drizzle common methods
   mock.select = vi.fn().mockReturnValue(mock);
   mock.from = vi.fn().mockReturnValue(mock);
@@ -95,11 +155,11 @@ const createChainableMock = (finalValue: unknown) => {
   mock.set = vi.fn().mockReturnValue(mock);
   mock.delete = vi.fn().mockReturnValue(mock);
   mock.returning = vi.fn().mockReturnValue(mock);
-  
+
   // The terminal method returns the promise
-  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) =>
     Promise.resolve(finalValue).then(onRes, onRej);
-  
+
   return mock as unknown as ReturnType<typeof db>;
 };
 
@@ -221,7 +281,7 @@ describe('DailyValuationJob', () => {
 
       mockDb
         .mockReturnValueOnce(createChainableMock(mockPositions)) // select
-        .mockReturnValueOnce(createChainableMock([]));           // insert
+        .mockReturnValueOnce(createChainableMock([])); // insert
 
       await expect((job as any).calculateAUMByContact(date)).resolves.not.toThrow();
     });

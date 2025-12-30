@@ -181,7 +181,19 @@ export interface AumDuplicatesResponse {
 /**
  * Request to insert AUM row (Backend)
  */
-export interface AumRowInsert extends Omit<AumRow, 'id' | 'advisorNormalized' | 'rowCreatedAt' | 'rowUpdatedAt' | 'isUpdated' | 'updatedByFile' | 'file' | 'contact' | 'user' | 'suggestedUserId'> {}
+export interface AumRowInsert extends Omit<
+  AumRow,
+  | 'id'
+  | 'advisorNormalized'
+  | 'rowCreatedAt'
+  | 'rowUpdatedAt'
+  | 'isUpdated'
+  | 'updatedByFile'
+  | 'file'
+  | 'contact'
+  | 'user'
+  | 'suggestedUserId'
+> {}
 
 /**
  * Upsert Statistics

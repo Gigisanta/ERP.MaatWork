@@ -58,8 +58,18 @@ vi.mock('@/lib/config', () => ({
 vi.mock('@/lib/api-hooks', () => ({
   useNotes: vi.fn(() => ({ notes: [], isLoading: false, error: null, mutate: vi.fn() })),
   useTasks: vi.fn(() => ({ tasks: [], isLoading: false, error: null, mutate: vi.fn() })),
-  useBrokerAccounts: vi.fn(() => ({ brokerAccounts: [], isLoading: false, error: null, mutate: vi.fn() })),
-  usePortfolioAssignments: vi.fn(() => ({ portfolioAssignments: [], isLoading: false, error: null, mutate: vi.fn() })),
+  useBrokerAccounts: vi.fn(() => ({
+    brokerAccounts: [],
+    isLoading: false,
+    error: null,
+    mutate: vi.fn(),
+  })),
+  usePortfolioAssignments: vi.fn(() => ({
+    portfolioAssignments: [],
+    isLoading: false,
+    error: null,
+    mutate: vi.fn(),
+  })),
 }));
 
 describe('ContactDetailPage', () => {
@@ -99,7 +109,7 @@ describe('ContactDetailPage', () => {
 
   it('should render contact details when data is loaded', async () => {
     const { apiCall } = await import('@/lib/api-server');
-    
+
     // Mock consolidated detail endpoint
     vi.mocked(apiCall).mockResolvedValue({
       data: {
@@ -111,7 +121,7 @@ describe('ContactDetailPage', () => {
         portfolioAssignments: [],
         stages: [mockStage],
         advisors: [mockAdvisor],
-      }
+      },
     });
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
@@ -148,7 +158,7 @@ describe('ContactDetailPage', () => {
         portfolioAssignments: [],
         stages: [mockStage],
         advisors: [mockAdvisor],
-      }
+      },
     });
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });
@@ -184,7 +194,7 @@ describe('ContactDetailPage', () => {
         portfolioAssignments: [],
         stages: [mockStage],
         advisors: [mockAdvisor],
-      }
+      },
     });
 
     const page = await ContactDetailPage({ params: Promise.resolve({ id: 'test-contact-id' }) });

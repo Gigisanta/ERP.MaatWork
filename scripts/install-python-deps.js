@@ -25,19 +25,17 @@ const info = chalk.blue;
  * Encontrar comando Python disponible (3.10+)
  */
 function findPythonCommand() {
-  const pythonCommands = isWindows 
-    ? ['python', 'py', 'python3']
-    : ['python3', 'python'];
-  
+  const pythonCommands = isWindows ? ['python', 'py', 'python3'] : ['python3', 'python'];
+
   for (const cmd of pythonCommands) {
     try {
       // AI_DECISION: Timeout corto para detección de comandos
       // Justificación: Algunos comandos pueden colgarse si el ejecutable está corrupto o es un placeholder de Windows Store
       // Impacto: Detección más rápida de binarios válidos
-      const version = execSync(`${cmd} --version`, { 
-        encoding: 'utf8', 
+      const version = execSync(`${cmd} --version`, {
+        encoding: 'utf8',
         stdio: 'pipe',
-        timeout: 2000 // 2 segundos max
+        timeout: 2000, // 2 segundos max
       });
       if (version.includes('Python 3')) {
         const match = version.match(/Python (\d+)\.(\d+)/);
@@ -73,7 +71,7 @@ function findPipCommand(pythonCmd) {
   const pipCommands = isWindows
     ? ['pip', 'pip3', 'python -m pip', 'py -m pip']
     : ['pip3', 'pip', 'python3 -m pip', 'python -m pip'];
-  
+
   for (const cmd of pipCommands) {
     try {
       execSync(`${cmd} --version`, { encoding: 'utf8', stdio: 'pipe' });
@@ -106,9 +104,11 @@ function installDependencies(pipCmd) {
   try {
     const isFastapiInstalled = execSync(`${pipCmd} show fastapi`, { stdio: 'pipe' });
     const isYfinanceInstalled = execSync(`${pipCmd} show yfinance`, { stdio: 'pipe' });
-    
+
     if (isFastapiInstalled && isYfinanceInstalled) {
-      console.log(success('✨ Dependencias críticas ya detectadas. Saltando instalación completa.'));
+      console.log(
+        success('✨ Dependencias críticas ya detectadas. Saltando instalación completa.')
+      );
       console.log(dim('   (Usa SKIP_PYTHON_INSTALL=false si necesitas forzar actualización)'));
       return true;
     }
@@ -122,19 +122,19 @@ function installDependencies(pipCmd) {
   try {
     // Actualizar pip primero
     console.log(info('  ⬆️  Actualizando pip...'));
-    execSync(`${pipCmd} install --upgrade pip`, { 
-      encoding: 'utf8', 
+    execSync(`${pipCmd} install --upgrade pip`, {
+      encoding: 'utf8',
       stdio: 'inherit',
-      cwd: analyticsServicePath 
+      cwd: analyticsServicePath,
     });
     console.log('');
 
     // Instalar dependencias
     console.log(info('  📥 Instalando paquetes...'));
-    execSync(`${pipCmd} install -r "${requirementsPath}"`, { 
-      encoding: 'utf8', 
+    execSync(`${pipCmd} install -r "${requirementsPath}"`, {
+      encoding: 'utf8',
       stdio: 'inherit',
-      cwd: analyticsServicePath 
+      cwd: analyticsServicePath,
     });
 
     return true;
@@ -181,7 +181,9 @@ function main() {
   // Justificación: En entornos CI o si el usuario no usa el servicio de analytics
   // Impacto: Evita fallos en la instalación general de pnpm
   if (process.env.PYTHON_SKIP_INSTALL === 'true' || process.env.SKIP_PYTHON_INSTALL === 'true') {
-    console.log(warning('⏭️  Saltando instalación de dependencias Python (PYTHON_SKIP_INSTALL=true)'));
+    console.log(
+      warning('⏭️  Saltando instalación de dependencias Python (PYTHON_SKIP_INSTALL=true)')
+    );
     process.exit(0);
   }
 
@@ -190,7 +192,9 @@ function main() {
   if (!python) {
     console.log(warning('⚠️  Python 3.10+ no está instalado o no está en PATH'));
     console.log(warning('   El servicio de analytics no estará disponible'));
-    console.log(warning('   Para habilitarlo, instala Python desde https://www.python.org/downloads/'));
+    console.log(
+      warning('   Para habilitarlo, instala Python desde https://www.python.org/downloads/')
+    );
     console.log('');
     console.log(warning('   Continuando sin dependencias Python...'));
     process.exit(0); // No bloquear pnpm install
@@ -250,45 +254,3 @@ function main() {
 
 // Ejecutar
 main();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

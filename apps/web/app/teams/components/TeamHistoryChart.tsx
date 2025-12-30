@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Spinner, Text, Alert } from '@maatwork/ui';
 import {
-  ComposedChart,
+  LazyComposedChart,
+  LazyResponsiveContainer,
   Line,
   Bar,
   XAxis,
@@ -11,9 +12,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
   Area,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
 import { getTeamHistory, type TeamHistoryMetric } from '@/lib/api/teams';
 
 interface TeamHistoryChartProps {
@@ -94,8 +94,8 @@ export default function TeamHistoryChart({ teamId }: TeamHistoryChartProps) {
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart
+          <LazyResponsiveContainer width="100%" height="100%">
+            <LazyComposedChart
               data={history}
               margin={{
                 top: 20,
@@ -161,8 +161,8 @@ export default function TeamHistoryChart({ teamId }: TeamHistoryChartProps) {
                 dot={{ r: 4 }}
                 name="Nuevos Clientes"
               />
-            </ComposedChart>
-          </ResponsiveContainer>
+            </LazyComposedChart>
+          </LazyResponsiveContainer>
         </div>
       </CardContent>
     </Card>

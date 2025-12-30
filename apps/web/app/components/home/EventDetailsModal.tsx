@@ -153,7 +153,7 @@ export function EventDetailsModal({
                   Google Meet
                 </Text>
                 <Button
-                  variant="link"
+                  variant="ghost"
                   className="h-auto p-0 text-blue-600 hover:text-blue-700 text-sm mt-0.5"
                   onClick={() => window.open(event.hangoutLink!, '_blank')}
                 >

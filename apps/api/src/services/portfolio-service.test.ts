@@ -30,7 +30,7 @@ const mockCanAccessContact = vi.mocked(canAccessContact);
 // Helper to create a chainable mock
 const createChainableMock = (finalValue: unknown) => {
   const mock = vi.fn().mockImplementation(() => mock) as any;
-  
+
   mock.select = vi.fn().mockReturnValue(mock);
   mock.from = vi.fn().mockReturnValue(mock);
   mock.where = vi.fn().mockReturnValue(mock);
@@ -46,10 +46,10 @@ const createChainableMock = (finalValue: unknown) => {
   mock.set = vi.fn().mockReturnValue(mock);
   mock.delete = vi.fn().mockReturnValue(mock);
   mock.returning = vi.fn().mockReturnValue(mock);
-  
-  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) =>
     Promise.resolve(finalValue).then(onRes, onRej);
-  
+
   return mock as unknown as ReturnType<typeof db>;
 };
 

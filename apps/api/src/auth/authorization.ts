@@ -37,11 +37,7 @@ export async function getUserAccessScope(userId: string, role: UserRole): Promis
   logger.debug({ userId, role }, 'Cache miss for getUserAccessScope');
 
   // Ensure user exists in database
-  const user = await db()
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  const user = await db().select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
   if (user.length === 0) {
     throw new Error(`User ${userId} not found in database`);
   }

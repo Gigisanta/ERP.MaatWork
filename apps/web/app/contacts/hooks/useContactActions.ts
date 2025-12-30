@@ -12,7 +12,14 @@ import {
   moveContactToStage, // AI_DECISION: Use dedicated pipeline API for stage changes
 } from '@/lib/api';
 import { useToast } from '@/lib/hooks/useToast';
-import type { Contact, Tag, ApiResponse, ContactFieldValue, ContactWithTags } from '@/types';
+import type {
+  Contact,
+  Tag,
+  ApiResponse,
+  ContactFieldValue,
+  ContactWithTags,
+  PaginatedResponse,
+} from '@/types';
 import type { KeyedMutator } from 'swr';
 
 interface ContactActionsState {
@@ -34,7 +41,7 @@ interface ContactActionsActions {
 }
 
 interface UseContactActionsProps {
-  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[]>>;
+  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>>>;
   allTags?: Tag[];
 }
 
@@ -78,16 +85,31 @@ export function useContactActions({
 
       // Optimistic update
       const optimisticUpdate = (
-        currentData: ApiResponse<ContactWithTags[]> | undefined
-      ): ApiResponse<ContactWithTags[]> | undefined => {
-        if (!currentData || !Array.isArray(currentData.data)) return currentData;
-        const contacts = currentData.data;
-        return {
-          ...currentData,
-          data: contacts.map((contact: ContactWithTags) =>
-            contact.id === contactId ? { ...contact, [field]: value } as ContactWithTags : contact
-          ),
-        };
+        currentData: ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>> | undefined
+      ): ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>> | undefined => {
+        if (!currentData || !currentData.data) return currentData;
+
+        // Helper to update contacts array
+        const updateContactsArray = (contacts: ContactWithTags[]) =>
+          contacts.map((contact: ContactWithTags) =>
+            contact.id === contactId ? ({ ...contact, [field]: value } as ContactWithTags) : contact
+          );
+
+        if (Array.isArray(currentData.data)) {
+          return {
+            ...currentData,
+            data: updateContactsArray(currentData.data),
+          };
+        } else {
+          const paginated = currentData.data as PaginatedResponse<ContactWithTags>;
+          return {
+            ...currentData,
+            data: {
+              ...paginated,
+              data: updateContactsArray(paginated.data),
+            },
+          };
+        }
       };
 
       mutateContacts(optimisticUpdate, false);
@@ -120,21 +142,19 @@ export function useContactActions({
 
       // Optimistic update - incluir todos los campos de la etiqueta
       const optimisticUpdate = (
-        currentData: ApiResponse<ContactWithTags[]> | undefined
-      ): ApiResponse<ContactWithTags[]> | undefined => {
-        if (!currentData || !Array.isArray(currentData.data)) return currentData;
-        const contacts = currentData.data;
-        return {
-          ...currentData,
-          data: contacts.map((contact: ContactWithTags) => {
+        currentData: ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>> | undefined
+      ): ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>> | undefined => {
+        if (!currentData || !currentData.data) return currentData;
+
+        // Helper to update contacts array with new tags
+        const updateContactsArray = (contacts: ContactWithTags[]) =>
+          contacts.map((contact: ContactWithTags) => {
             if (contact.id !== contactId) return contact;
             const currentTags = contact.tags || [];
-            // Construir tags a agregar, filtrando nulls antes de spread
             const tagsToAdd = add
               .map((tagId) => {
                 const tag = Array.isArray(allTags) ? allTags.find((t) => t.id === tagId) : null;
                 if (!tag) return null;
-                // Incluir todos los campos necesarios para evitar inconsistencias
                 return {
                   id: tag.id,
                   name: tag.name,
@@ -150,8 +170,23 @@ export function useContactActions({
               ...tagsToAdd,
             ];
             return { ...contact, tags: newTags };
-          }),
-        };
+          });
+
+        if (Array.isArray(currentData.data)) {
+          return {
+            ...currentData,
+            data: updateContactsArray(currentData.data),
+          };
+        } else {
+          const paginated = currentData.data as PaginatedResponse<ContactWithTags>;
+          return {
+            ...currentData,
+            data: {
+              ...paginated,
+              data: updateContactsArray(paginated.data),
+            },
+          };
+        }
       };
 
       mutateContacts(optimisticUpdate, false);
@@ -164,17 +199,33 @@ export function useContactActions({
         if (response.data) {
           const serverTags = response.data;
           const updateWithServerData = (
-            currentData: ApiResponse<ContactWithTags[]> | undefined
-          ): ApiResponse<ContactWithTags[]> | undefined => {
-            if (!currentData || !Array.isArray(currentData.data)) return currentData;
-            const contacts = currentData.data;
-            return {
-              ...currentData,
-              data: contacts.map((contact: ContactWithTags) => {
+            currentData:
+              | ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>>
+              | undefined
+          ): ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>> | undefined => {
+            if (!currentData || !currentData.data) return currentData;
+
+            // Helper to update contacts array with server tags
+            const updateContactsArray = (contacts: ContactWithTags[]) =>
+              contacts.map((contact: ContactWithTags) => {
                 if (contact.id !== contactId) return contact;
                 return { ...contact, tags: serverTags };
-              }),
-            };
+              });
+
+            if (Array.isArray(currentData.data)) {
+              return {
+                ...currentData,
+                data: updateContactsArray(currentData.data),
+              };
+            } else {
+              return {
+                ...currentData,
+                data: {
+                  ...currentData.data,
+                  data: updateContactsArray(currentData.data.data),
+                },
+              };
+            }
           };
           mutateContacts(updateWithServerData, false);
         }

@@ -78,21 +78,12 @@
 
   /* Shadows - Layered & Diffused (Cool Gray Base) */
   --shadow-sm: 0 1px 2px 0 rgb(20 20 30 / 0.05);
-  --shadow-base: 
-    0 1px 3px 0 rgb(20 20 30 / 0.1), 
-    0 1px 2px -1px rgb(20 20 30 / 0.1);
-  --shadow-md: 
-    0 4px 6px -1px rgb(20 20 30 / 0.07), 
-    0 2px 4px -2px rgb(20 20 30 / 0.07);
-  --shadow-lg: 
-    0 10px 15px -3px rgb(20 20 30 / 0.08), 
-    0 4px 6px -4px rgb(20 20 30 / 0.08);
-  --shadow-xl: 
-    0 20px 25px -5px rgb(20 20 30 / 0.08), 
-    0 8px 10px -6px rgb(20 20 30 / 0.08);
+  --shadow-base: 0 1px 3px 0 rgb(20 20 30 / 0.1), 0 1px 2px -1px rgb(20 20 30 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(20 20 30 / 0.07), 0 2px 4px -2px rgb(20 20 30 / 0.07);
+  --shadow-lg: 0 10px 15px -3px rgb(20 20 30 / 0.08), 0 4px 6px -4px rgb(20 20 30 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(20 20 30 / 0.08), 0 8px 10px -6px rgb(20 20 30 / 0.08);
   --shadow-primary:
-    0 10px 30px -4px rgba(139, 92, 246, 0.2), 
-    0 6px 14px -4px rgba(139, 92, 246, 0.15);
+    0 10px 30px -4px rgba(139, 92, 246, 0.2), 0 6px 14px -4px rgba(139, 92, 246, 0.15);
 
   /* Border Radius - Modern & Round */
   --radius-sm: 0.25rem;
@@ -171,8 +162,7 @@
   --shadow-md: 0 8px 16px -2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
   --shadow-primary:
-    0 10px 30px -4px rgba(167, 139, 250, 0.25), 
-    0 6px 14px -4px rgba(167, 139, 250, 0.15);
+    0 10px 30px -4px rgba(167, 139, 250, 0.25), 0 6px 14px -4px rgba(167, 139, 250, 0.15);
 }
 
 /* -----------------------------------------------------------------------------

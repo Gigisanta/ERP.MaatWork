@@ -110,11 +110,3 @@ export async function updateAdvisor(req: Request, res: Response) {
     });
   }
 }
-
-
-
-
-
-
-
-

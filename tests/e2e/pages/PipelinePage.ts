@@ -16,7 +16,9 @@ export class PipelinePage extends BasePage {
   }
 
   get contactCards(): Locator {
-    return this.page.locator('[draggable="true"], [data-testid*="contact"], [class*="contact-card"]');
+    return this.page.locator(
+      '[draggable="true"], [data-testid*="contact"], [class*="contact-card"]'
+    );
   }
 
   async expectPipelineVisible() {
@@ -27,12 +29,12 @@ export class PipelinePage extends BasePage {
   async dragContactToStage(cardIndex: number, stageIndex: number) {
     const card = this.contactCards.nth(cardIndex);
     const targetStage = this.stageColumns.nth(stageIndex);
-    
+
     await expect(card).toBeVisible();
     await expect(targetStage).toBeVisible();
 
     await card.dragTo(targetStage);
-    
+
     // Wait for any animation or network request to complete
     await this.page.waitForTimeout(500);
   }
@@ -47,12 +49,13 @@ export class PipelinePage extends BasePage {
 
   async expectContactCountInStage(stageIndex: number, min: number = 1) {
     const stage = this.stageColumns.nth(stageIndex);
-    const cardsInStage = stage.locator('[draggable="true"], [data-testid*="contact"], [class*="contact-card"]');
-    
+    const cardsInStage = stage.locator(
+      '[draggable="true"], [data-testid*="contact"], [class*="contact-card"]'
+    );
+
     await expect(async () => {
-        const count = await cardsInStage.count();
-        expect(count).toBeGreaterThanOrEqual(min);
+      const count = await cardsInStage.count();
+      expect(count).toBeGreaterThanOrEqual(min);
     }).toPass();
   }
 }
-

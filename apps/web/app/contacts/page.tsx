@@ -26,6 +26,7 @@ import type {
   Tag,
   Advisor,
   ApiResponse,
+  PaginatedResponse,
 } from '@/types';
 import type { KeyedMutator } from 'swr';
 import { usePageTitle } from '../components/PageTitleContext';
@@ -681,7 +682,7 @@ function MobileContactList({
   onTagsChange: (contactId: string, add: string[], remove: string[]) => void;
   onTextInputSave: (contactId: string, field: string, value: string) => void;
   onManageTagsClick: () => void;
-  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[]>>;
+  mutateContacts: KeyedMutator<ApiResponse<ContactWithTags[] | PaginatedResponse<ContactWithTags>>>;
   showToast: (
     title: string,
     description: string | undefined,

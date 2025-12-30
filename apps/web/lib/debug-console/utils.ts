@@ -97,11 +97,3 @@ export function highlightText(text: string, query: string): string {
 export function isNextRedirectError(message: string): boolean {
   return message === 'NEXT_REDIRECT' || message.includes('NEXT_REDIRECT');
 }
-
-
-
-
-
-
-
-

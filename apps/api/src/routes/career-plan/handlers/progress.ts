@@ -9,4 +9,3 @@ export const handleGetUserProgress = createRouteHandler(async (req: Request) => 
 
   return progress;
 });
-

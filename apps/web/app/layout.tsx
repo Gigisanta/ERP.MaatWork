@@ -91,18 +91,19 @@ async function getInitialUser() {
     //                to prevent infinite redirect loops (Middleware sees valid JWT -> Layout gets 401 -> Redirect -> Middleware sees valid JWT).
     // Impacto: Breaks the infinite loop when user exists in JWT but not in DB
     const isUnauthorized =
-      (error as any).status === 401 ||
+      (error as { status?: number }).status === 401 ||
       (error instanceof Error && error.message.includes('Unauthorized'));
 
     if (isUnauthorized) {
-      const cookieStore = await cookies();
-      cookieStore.delete('token');
+      // AI_DECISION: Cookies cannot be deleted in Server Components.
+      // We rely on Middleware or Client-side logout to handle token clearance.
+      // This prevents the "Cookies can only be modified in a Server Action or Route Handler" error.
     }
 
     // AI_DECISION: Log errors but don't throw - allow app to render unauthenticated shell
     // Justificación: Errores de red o API no deben bloquear el renderizado inicial
     // Impacto: Mejor UX permitiendo que la app se cargue incluso si la API no está disponible
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && !isUnauthorized) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn('[Layout] Error getting initial user:', errorMessage);
     }

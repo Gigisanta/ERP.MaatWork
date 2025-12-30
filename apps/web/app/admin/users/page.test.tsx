@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { AuthProvider } from '../../auth/AuthContext';
 import { useUsers } from '@/lib/api-hooks';
 
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import AdminUsersPage from './page';
@@ -85,7 +84,10 @@ describe('AdminUsersPage', () => {
     } as unknown as ReturnType<typeof useRouter>);
   });
 
-  const renderWithAuth = (ui: React.ReactElement, user = { id: 'user-1', role: 'admin', email: 'admin@example.com' }) => {
+  const renderWithAuth = (
+    ui: React.ReactElement,
+    user = { id: 'user-1', role: 'admin', email: 'admin@example.com' }
+  ) => {
     return render(
       <AuthProvider initialUser={user as unknown as import('../../auth/AuthContext').AuthUser}>
         {ui}
@@ -137,7 +139,9 @@ describe('AdminUsersPage', () => {
     renderWithAuth(<AdminUsersPage />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Administración de Usuarios/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: /Administración de Usuarios/i })
+      ).toBeInTheDocument();
     });
   });
 

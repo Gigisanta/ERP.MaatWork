@@ -189,11 +189,7 @@ export default async function HomePage() {
   // User exists - show authenticated home page with calendar and metrics
   return (
     <Suspense fallback={<HomePageLoading />}>
-      <HomePageClient
-        metricsData={metricsData}
-        goalsData={goalsData}
-        metricsError={metricsError}
-      />
+      <HomePageClient metricsData={metricsData} goalsData={goalsData} metricsError={metricsError} />
     </Suspense>
   );
 }

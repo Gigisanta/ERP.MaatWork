@@ -45,4 +45,3 @@ export const handleGetNotificationMetrics = createRouteHandler(async (req: Reque
     periodTo: toDate || null,
   };
 });
-

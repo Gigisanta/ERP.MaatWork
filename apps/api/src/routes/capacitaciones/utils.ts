@@ -112,11 +112,3 @@ export async function parseCapacitacionesCSV(filePath: string): Promise<{
     errors,
   };
 }
-
-
-
-
-
-
-
-

@@ -82,11 +82,12 @@ export const getTeamCapacity = createRouteHandler(async (req: Request) => {
   // Map results to members
   const capacityData = members.map((member: { id: string; fullName: string | null }) => {
     const activeClients = Number(
-      (activeClientsRes.rows as unknown as CapacityRow[]).find((r) => r.userId === member.id)?.count ||
-        0
+      (activeClientsRes.rows as unknown as CapacityRow[]).find((r) => r.userId === member.id)
+        ?.count || 0
     );
     const openTasks = Number(
-      (openTasksRes.rows as unknown as CapacityRow[]).find((r) => r.userId === member.id)?.count || 0
+      (openTasksRes.rows as unknown as CapacityRow[]).find((r) => r.userId === member.id)?.count ||
+        0
     );
     const newLeads = Number(
       (newLeadsRes.rows as unknown as CapacityRow[]).find((r) => r.userId === member.id)?.count || 0

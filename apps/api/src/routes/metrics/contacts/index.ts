@@ -165,14 +165,14 @@ router.get(
       for (const entry of contactCreationMonths) {
         allMonthsSet.add(`${entry.year}-${entry.month}`);
       }
-      
+
       // Ensure target month is included
       allMonthsSet.add(`${targetYear}-${targetMonth}`);
 
       // AI_DECISION: Batch calculation of all monthly metrics
       // Justificación: Replaces N * 12 queries with ~3 queries total for all history
       // Impacto: Reducción drástica de latencia en dashboard de métricas (especialmente con mucho historial)
-      const monthsToCalculate = Array.from(allMonthsSet).map(m => {
+      const monthsToCalculate = Array.from(allMonthsSet).map((m) => {
         const [y, mon] = m.split('-');
         return { year: Number(y), month: Number(mon) };
       });
@@ -184,9 +184,11 @@ router.get(
       });
 
       // Split into current month and history
-      const currentMonthMetrics = allMetrics.find(m => m.month === targetMonth && m.year === targetYear)!;
+      const currentMonthMetrics = allMetrics.find(
+        (m) => m.month === targetMonth && m.year === targetYear
+      )!;
       const historyMetrics = allMetrics
-        .filter(m => !(m.month === targetMonth && m.year === targetYear))
+        .filter((m) => !(m.month === targetMonth && m.year === targetYear))
         .sort((a, b) => {
           if (a.year !== b.year) return b.year - a.year;
           return b.month - a.month;

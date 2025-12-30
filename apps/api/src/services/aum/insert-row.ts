@@ -44,11 +44,3 @@ export async function insertNewRow(row: AumRowInsert): Promise<boolean> {
     return false;
   }
 }
-
-
-
-
-
-
-
-

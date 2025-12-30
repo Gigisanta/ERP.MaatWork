@@ -81,7 +81,7 @@ const createChainableMock = (finalValue: unknown) => {
   mock.values = vi.fn().mockReturnValue(mock);
   mock.execute = vi.fn().mockResolvedValue(finalValue);
   mock.onConflictDoNothing = vi.fn().mockReturnValue(mock);
-  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) => 
+  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) =>
     Promise.resolve(finalValue).then(onRes, onRej);
   return mock as unknown as ReturnType<typeof db>;
 };
@@ -106,11 +106,13 @@ describe('Bloomberg Routes', () => {
       email: 'advisor@example.com',
       role: 'advisor',
     });
-    
+
     // AI_DECISION: Robust permanent mock for db()
     // Justificación: requireAuth and other middlewares might call db() at unexpected times.
     // Ensure it always returns something chainable by default.
-    mockDb.mockImplementation(() => createChainableMock([{ id: 'advisor-123', role: 'advisor', isActive: true }]));
+    mockDb.mockImplementation(() =>
+      createChainableMock([{ id: 'advisor-123', role: 'advisor', isActive: true }])
+    );
   });
 
   describe('GET /bloomberg/assets/:symbol/snapshot', () => {
@@ -173,7 +175,7 @@ describe('Bloomberg Routes', () => {
         .get('/bloomberg/assets/AAPL/snapshot')
         .set('Authorization', `Bearer ${advisorToken}`)
         .expect(200);
-      
+
       expect(res.body.data.price).toBeNull();
       expect(res.body.data.symbol).toBe('AAPL');
     });
@@ -183,7 +185,14 @@ describe('Bloomberg Routes', () => {
     it('debería retornar OHLCV data exitosamente', async () => {
       const mockInstrument = { id: 'inst-123', symbol: 'AAPL' };
       const mockOHLCV = [
-        { date: '2024-01-01', open: '150.00', high: '155.00', low: '149.00', close: '152.00', volume: 1000000 },
+        {
+          date: '2024-01-01',
+          open: '150.00',
+          high: '155.00',
+          low: '149.00',
+          close: '152.00',
+          volume: 1000000,
+        },
       ];
 
       mockDb

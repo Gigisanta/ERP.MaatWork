@@ -18,8 +18,6 @@ vi.mock('./client', () => {
 });
 
 describe('career-plan api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -1,7 +1,15 @@
 /**
  * Contact Service - Business logic for contacts domain
  */
-import { db, contacts, contactTags, tags, contactStageInteractions, users, teams } from '@maatwork/db';
+import {
+  db,
+  contacts,
+  contactTags,
+  tags,
+  contactStageInteractions,
+  users,
+  teams,
+} from '@maatwork/db';
 import { eq, desc, and, isNull, sql, inArray } from 'drizzle-orm';
 import type { Logger } from 'pino';
 import {
@@ -43,14 +51,14 @@ export async function listContacts({
   // 1. Get user access scope
   const accessScope = await getUserAccessScope(userId, userRole);
   const accessFilter = buildContactAccessFilter(accessScope);
-  
+
   // 2. Build additional filters
   const conditions = [isNull(contacts.deletedAt), accessFilter.whereClause];
-  
+
   if (assignedAdvisorId) {
     conditions.push(eq(contacts.assignedAdvisorId, assignedAdvisorId));
   }
-  
+
   if (pipelineStageId) {
     if (pipelineStageId === 'null' || pipelineStageId === '') {
       conditions.push(isNull(contacts.pipelineStageId));
@@ -157,6 +165,3 @@ export async function listContacts({
 
   return formatPaginatedResponse(itemsWithTags, total, { limit, offset });
 }
-
-
-

@@ -48,11 +48,3 @@ export const addComponentSchema = z.object({
 export const updateComponentSchema = z.object({
   weight: z.number().min(0).max(1),
 });
-
-
-
-
-
-
-
-

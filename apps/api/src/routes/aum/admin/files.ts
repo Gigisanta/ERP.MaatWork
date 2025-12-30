@@ -70,7 +70,9 @@ router.delete(
         await fs.unlink(filePath).catch(() => {
           // Ignore if file doesn't exist
         });
-      } catch {}
+      } catch (e) {
+        req.log?.warn?.({ err: e, fileId }, 'Could not delete physical file');
+      }
 
       req.log?.info?.({ fileId, userId }, 'AUM file deleted');
       return res.json({ ok: true, message: 'Archivo eliminado exitosamente' });

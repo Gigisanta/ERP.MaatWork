@@ -50,7 +50,9 @@ export default function PipelineBoardClient({
     isLoading: dataLoading,
     mutate: mutateBoard,
   } = usePipelineBoard(
-    initialStages ? ({ data: initialStages, success: true } as ApiResponse<PipelineStageWithContacts[]>) : undefined
+    initialStages
+      ? ({ data: initialStages, success: true } as ApiResponse<PipelineStageWithContacts[]>)
+      : undefined
   );
 
   // Animation state for page transitions

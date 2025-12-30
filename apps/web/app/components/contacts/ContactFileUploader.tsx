@@ -20,7 +20,9 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successData, setSuccessData] = useState<{ stats: ImportStats; message: string } | null>(null);
+  const [successData, setSuccessData] = useState<{ stats: ImportStats; message: string } | null>(
+    null
+  );
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,7 +165,10 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
             <span className="text-sm font-medium text-gray-700 truncate max-w-xs">{file.name}</span>
             <button
               type="button"
-              onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+              onClick={() => {
+                setFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
               disabled={uploading}
               className="text-red-600 hover:text-red-800"
             >
@@ -179,7 +184,9 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
           className={successData ? 'bg-green-600' : ''}
         >
           {uploading ? (
-            <><Spinner size="sm" className="mr-2" /> Importando...</>
+            <>
+              <Spinner size="sm" className="mr-2" /> Importando...
+            </>
           ) : successData ? (
             '✓ Importado'
           ) : (
@@ -210,23 +217,39 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
       {successData && (
         <div className="bg-green-50 border border-green-200 rounded-md p-4 space-y-3">
           <Text className="text-green-800 font-bold text-lg">✓ {successData.message}</Text>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
             <div className="bg-white p-3 rounded border border-green-100 shadow-sm">
-              <Text size="xs" className="text-gray-500 uppercase font-semibold">Total</Text>
-              <Text size="xl" className="font-bold text-gray-900">{successData.stats.total}</Text>
+              <Text size="xs" className="text-gray-500 uppercase font-semibold">
+                Total
+              </Text>
+              <Text size="xl" className="font-bold text-gray-900">
+                {successData.stats.total}
+              </Text>
             </div>
             <div className="bg-white p-3 rounded border border-green-100 shadow-sm">
-              <Text size="xs" className="text-green-600 uppercase font-semibold">Creados</Text>
-              <Text size="xl" className="font-bold text-green-700">{successData.stats.created}</Text>
+              <Text size="xs" className="text-green-600 uppercase font-semibold">
+                Creados
+              </Text>
+              <Text size="xl" className="font-bold text-green-700">
+                {successData.stats.created}
+              </Text>
             </div>
             <div className="bg-white p-3 rounded border border-green-100 shadow-sm">
-              <Text size="xs" className="text-blue-600 uppercase font-semibold">Actualizados</Text>
-              <Text size="xl" className="font-bold text-blue-700">{successData.stats.updated}</Text>
+              <Text size="xs" className="text-blue-600 uppercase font-semibold">
+                Actualizados
+              </Text>
+              <Text size="xl" className="font-bold text-blue-700">
+                {successData.stats.updated}
+              </Text>
             </div>
             <div className="bg-white p-3 rounded border border-green-100 shadow-sm">
-              <Text size="xs" className="text-gray-400 uppercase font-semibold">Omitidos</Text>
-              <Text size="xl" className="font-bold text-gray-500">{successData.stats.skipped}</Text>
+              <Text size="xs" className="text-gray-400 uppercase font-semibold">
+                Omitidos
+              </Text>
+              <Text size="xl" className="font-bold text-gray-500">
+                {successData.stats.skipped}
+              </Text>
             </div>
           </div>
 
@@ -243,7 +266,8 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
                 ))}
               </div>
               <Text size="xs" className="text-gray-500 mt-2 italic">
-                Tip: Agregue estos nombres como alias en Configuración de Asesores para futuros procesos.
+                Tip: Agregue estos nombres como alias en Configuración de Asesores para futuros
+                procesos.
               </Text>
             </div>
           )}
@@ -252,4 +276,3 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
     </div>
   );
 }
-

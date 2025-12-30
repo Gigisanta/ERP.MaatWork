@@ -18,8 +18,6 @@ vi.mock('./client', () => {
 });
 
 describe('benchmarks api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });

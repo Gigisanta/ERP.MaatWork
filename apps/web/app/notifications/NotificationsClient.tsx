@@ -245,11 +245,3 @@ export default function NotificationsClient() {
     </div>
   );
 }
-
-
-
-
-
-
-
-

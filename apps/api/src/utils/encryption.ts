@@ -85,11 +85,3 @@ export function decryptToken(encryptedToken: string, masterKey: string): string 
 
   return decrypted;
 }
-
-
-
-
-
-
-
-

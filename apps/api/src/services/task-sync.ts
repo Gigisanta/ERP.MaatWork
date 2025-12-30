@@ -114,7 +114,10 @@ export async function syncTaskToGoogle(taskId: string, action: SyncAction) {
         await updateCalendarEvent(accessToken, targetCalendarId, task.googleEventId, eventData);
         logger.info({ googleEventId: task.googleEventId, taskId }, '[TaskSync] Updated event');
       } catch (error) {
-        logger.error({ err: error, taskId, googleEventId: task.googleEventId }, '[TaskSync] Failed to update event');
+        logger.error(
+          { err: error, taskId, googleEventId: task.googleEventId },
+          '[TaskSync] Failed to update event'
+        );
         // If 404, maybe recreate?
       }
     } else {
@@ -263,6 +266,3 @@ function mapTaskToEvent(task: TaskForSync) {
     end,
   };
 }
-
-
-

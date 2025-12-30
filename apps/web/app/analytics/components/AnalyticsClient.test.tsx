@@ -43,7 +43,7 @@ const mockDashboardData: DashboardData = {
     { date: '2024-01-02', value: 1050000 },
   ],
   riskDistribution: [],
-  topClients: []
+  topClients: [],
 };
 
 describe('AnalyticsClient', () => {
@@ -57,7 +57,7 @@ describe('AnalyticsClient', () => {
     expect(screen.getByText(/AUM Total Clientes/i)).toBeInTheDocument();
     expect(screen.getByText(/Clientes con Cartera/i)).toBeInTheDocument();
     expect(screen.getByText(/Alertas de Desvío/i)).toBeInTheDocument();
-    
+
     // Verificar valores (formateados)
     expect(screen.getByText(/1.000.000/)).toBeInTheDocument();
     expect(screen.getByText('25')).toBeInTheDocument();
@@ -75,9 +75,7 @@ describe('AnalyticsClient', () => {
         { riskLevel: 'low', count: 10 },
         { riskLevel: 'mid', count: 15 },
       ],
-      topClients: [
-        { contactId: '1', contactName: 'Cliente 1', aum: 1000000 },
-      ]
+      topClients: [{ contactId: '1', contactName: 'Cliente 1', aum: 1000000 }],
     };
 
     render(<AnalyticsClient dashboardData={managerData} />);
@@ -86,7 +84,7 @@ describe('AnalyticsClient', () => {
     expect(screen.getByText(/Distribución de Riesgo/i)).toBeInTheDocument();
     expect(screen.getByText(/Conservador/i)).toBeInTheDocument();
     expect(screen.getByText(/Balanceado/i)).toBeInTheDocument();
-    
+
     expect(screen.getByText(/Top 5 Clientes por AUM/i)).toBeInTheDocument();
     expect(screen.getByText(/Cliente 1/i)).toBeInTheDocument();
   });

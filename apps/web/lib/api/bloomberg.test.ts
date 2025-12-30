@@ -15,8 +15,6 @@ vi.mock('./client', () => {
 });
 
 describe('bloomberg api client endpoints', () => {
-  
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -45,7 +43,9 @@ describe('bloomberg api client endpoints', () => {
 
   it('calls get macro series endpoint with date range', async () => {
     await apiIndex.getMacroSeries('USGDP', '2024-01-01', '2024-01-31');
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/bloomberg/macro/USGDP?from=2024-01-01&to=2024-01-31');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/v1/bloomberg/macro/USGDP?from=2024-01-01&to=2024-01-31'
+    );
   });
 
   it('calls get yield curve endpoint', async () => {

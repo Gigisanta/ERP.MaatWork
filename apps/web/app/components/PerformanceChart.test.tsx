@@ -33,7 +33,15 @@ vi.mock('@maatwork/ui', () => ({
   CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
   CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Select: ({ value, onValueChange, items }: { value: string; onValueChange: (val: string) => void; items: Array<{ value: string; label: string }> }) => (
+  Select: ({
+    value,
+    onValueChange,
+    items,
+  }: {
+    value: string;
+    onValueChange: (val: string) => void;
+    items: Array<{ value: string; label: string }>;
+  }) => (
     <select value={value} onChange={(e) => onValueChange(e.target.value)}>
       {items.map((item) => (
         <option key={item.value} value={item.value}>

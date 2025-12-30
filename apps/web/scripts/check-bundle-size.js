@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 /**
  * Bundle Size Checker Script

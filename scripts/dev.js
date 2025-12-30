@@ -148,18 +148,29 @@ async function ensureDockerServices() {
     try {
       const { stdout } = await execAsync('docker compose ps --format json', { cwd: projectRoot });
       if (stdout.trim()) {
-        const containers = stdout.trim().split('\n')
-          .filter(l => l.trim())
-          .map(l => { try { return JSON.parse(l); } catch { return null; } })
-          .filter(c => c);
-        
-        postgresRunning = containers.some(c => c.Service === 'db' && c.State === 'running');
+        const containers = stdout
+          .trim()
+          .split('\n')
+          .filter((l) => l.trim())
+          .map((l) => {
+            try {
+              return JSON.parse(l);
+            } catch {
+              return null;
+            }
+          })
+          .filter((c) => c);
+
+        postgresRunning = containers.some((c) => c.Service === 'db' && c.State === 'running');
       }
     } catch {
       // Fallback
       try {
         const { stdout } = await execAsync('docker ps --format "{{.Names}}"', { cwd: projectRoot });
-        const projectName = path.basename(projectRoot).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const projectName = path
+          .basename(projectRoot)
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
         postgresRunning = stdout.includes('db') && stdout.includes(projectName);
       } catch {}
     }
@@ -194,12 +205,12 @@ async function runValidations(skipCache = false) {
   }
 
   console.log(dim('🔍 Validando entorno...'));
-  
+
   // Run validations in parallel
   try {
     const [depsResult, envResult] = await Promise.allSettled([
       execAsync('node scripts/dev-validate-deps.js --fast', { cwd: projectRoot }),
-      execAsync('node scripts/dev-validate-env.js', { cwd: projectRoot })
+      execAsync('node scripts/dev-validate-env.js', { cwd: projectRoot }),
     ]);
 
     let failed = false;
@@ -233,7 +244,7 @@ async function runValidations(skipCache = false) {
   // Impacto: Onboarding más fluido para nuevos desarrolladores
   const apiEnvPath = path.join(projectRoot, 'apps', 'api', '.env');
   const apiEnvExamplePath = path.join(projectRoot, 'apps', 'api', 'config-example.env');
-  
+
   if (!fs.existsSync(apiEnvPath) && fs.existsSync(apiEnvExamplePath)) {
     console.log(info('📝 Creando apps/api/.env desde el ejemplo...'));
     try {
@@ -262,10 +273,13 @@ async function main() {
 
     if (!fs.existsSync(uiDist) || !fs.existsSync(dbDist) || !fs.existsSync(typesDist)) {
       console.log(info('🏗️  Detectando paquetes sin construir. Preparando entorno...'));
-      execSync('pnpm turbo run build --filter=@maatwork/ui --filter=@maatwork/db --filter=@maatwork/types', { 
-        stdio: 'inherit', 
-        cwd: projectRoot 
-      });
+      execSync(
+        'pnpm turbo run build --filter=@maatwork/ui --filter=@maatwork/db --filter=@maatwork/types',
+        {
+          stdio: 'inherit',
+          cwd: projectRoot,
+        }
+      );
     }
   } catch (err) {
     console.log(warning('⚠️  Error al pre-construir paquetes, intentando continuar...'));
@@ -280,10 +294,7 @@ async function main() {
   const skipCache = process.argv.includes('--no-cache');
 
   if (!skipValidation) {
-    await Promise.all([
-      ensureDockerServices(),
-      runValidations(skipCache)
-    ]);
+    await Promise.all([ensureDockerServices(), runValidations(skipCache)]);
   }
 
   console.log(bold('🚀 Iniciando...'));
@@ -301,7 +312,7 @@ async function main() {
     // Unix/Linux/macOS
     const unifiedScript = path.join(projectRoot, 'scripts', 'dev-unified.js');
     const cmd = fs.existsSync(unifiedScript) ? `node "${unifiedScript}"` : turboCmd;
-    
+
     try {
       execSync(cmd, { stdio: 'inherit', cwd: projectRoot });
     } catch (err) {
@@ -310,7 +321,7 @@ async function main() {
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(error('❌ Fatal:'), err);
   process.exit(1);
 });

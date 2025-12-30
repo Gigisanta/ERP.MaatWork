@@ -179,7 +179,9 @@ describe('AUM Upload Routes', () => {
   const createTestAppWithRoutes = () => {
     console.log('DEBUG uploadRouter:', uploadRouter);
     console.log('DEBUG uploadRouter keys:', Object.keys(uploadRouter || {}));
-    return createTestApp([{ path: '/admin/aum', router: (uploadRouter as any).default || uploadRouter }]);
+    return createTestApp([
+      { path: '/admin/aum', router: (uploadRouter as any).default || uploadRouter },
+    ]);
   };
 
   let adminToken: string;

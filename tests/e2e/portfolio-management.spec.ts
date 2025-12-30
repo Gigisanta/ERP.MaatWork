@@ -11,18 +11,18 @@ test.describe('Portfolio Management', () => {
 
     // 1. Create Template
     await portfoliosPage.createTemplate(templateName, 'Aggressive growth strategy');
-    
+
     // 2. Assign to Client
     await portfoliosPage.assignTemplateToClient(`${clientName} Test`, templateName);
   });
 
   test('rebalance portfolio', async ({ portfoliosPage, contactsPage }) => {
-     // Prerequisite: Client with assigned portfolio and assets
-     const clientName = 'Wealthy Client'; // Assumed seeded
-     
-     // Note: In a real test, we would seed the DB with this client and assets
-     
-     // Skipping execution if environment not set up for this specific complex flow
-     // await portfoliosPage.rebalancePortfolio(clientName);
+    // Prerequisite: Client with assigned portfolio and assets
+    const clientName = 'Wealthy Client'; // Assumed seeded
+
+    // Note: In a real test, we would seed the DB with this client and assets
+
+    // Skipping execution if environment not set up for this specific complex flow
+    // await portfoliosPage.rebalancePortfolio(clientName);
   });
 });

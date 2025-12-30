@@ -27,15 +27,15 @@ import {
 import { getMacroSeries, getMacroSeriesList } from '@/lib/api/bloomberg';
 import type { MacroSeriesPoint, MacroSeriesListItem } from '@/lib/api/bloomberg';
 import {
-  LineChart,
+  LazyLineChart,
+  LazyResponsiveContainer,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
 
 interface MacroPanelProps {
   className?: string;
@@ -166,8 +166,8 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
             {loadingData ? (
               <Spinner size="md" />
             ) : data.length > 0 ? (
-              <ResponsiveContainer width="100%" height={height}>
-                <LineChart data={chartData}>
+              <LazyResponsiveContainer width="100%" height={height}>
+                <LazyLineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="date"
@@ -200,8 +200,8 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
                     dot={false}
                     name={selectedSeriesInfo?.name || 'Value'}
                   />
-                </LineChart>
-              </ResponsiveContainer>
+                </LazyLineChart>
+              </LazyResponsiveContainer>
             ) : (
               <Text color="secondary">No data available</Text>
             )}

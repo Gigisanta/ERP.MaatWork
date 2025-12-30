@@ -29,11 +29,21 @@ vi.mock('./PerformanceChart', () => ({
 }));
 
 vi.mock('@maatwork/ui', () => ({
-  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
   CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Button: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
+  Button: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+  }) => (
     <button onClick={onClick} disabled={disabled}>
       {children}
     </button>
@@ -43,9 +53,19 @@ vi.mock('@maatwork/ui', () => ({
   ),
   Stack: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Grid: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => <span data-badge-variant={variant}>{children}</span>,
+  Badge: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
+    <span data-badge-variant={variant}>{children}</span>
+  ),
   Spinner: ({ size }: { size?: string }) => <div data-testid="spinner">Loading...</div>,
-  DataTable: ({ data, columns, keyField }: { data: unknown[]; columns: unknown[]; keyField: string }) => (
+  DataTable: ({
+    data,
+    columns,
+    keyField,
+  }: {
+    data: unknown[];
+    columns: unknown[];
+    keyField: string;
+  }) => (
     <table>
       <thead>
         <tr>

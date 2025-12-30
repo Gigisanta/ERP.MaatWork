@@ -55,9 +55,15 @@ describe('LoginPage', () => {
   it('debería renderizar formulario de login', () => {
     render(<LoginPage />);
 
-    expect(screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña|password/i, { selector: 'input' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/email|usuario|correo/i, { selector: 'input' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/contraseña|password/i, { selector: 'input' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /ingresar|login|entrar|sesión/i })
+    ).toBeInTheDocument();
   });
 
   it('debería mostrar errores de validación cuando campos están vacíos', async () => {

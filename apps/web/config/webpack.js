@@ -101,6 +101,38 @@ module.exports = {
       };
     }
 
+    // AI_DECISION: Split recharts and lucide-react into dedicated chunks
+    // Justificación: Recharts (~80KB) y lucide-react son pesados y solo se usan en páginas específicas
+    // Impacto: Reduce First Load JS, mejora caching (estas libs cambian menos que app code)
+    // Referencias: Performance optimization plan - Fase 1
+    if (!isServer) {
+      config.optimization = config.optimization || {};
+      config.optimization.splitChunks = config.optimization.splitChunks || {
+        chunks: 'all',
+        cacheGroups: {},
+      };
+
+      // Ensure cacheGroups exists
+      config.optimization.splitChunks.cacheGroups =
+        config.optimization.splitChunks.cacheGroups || {};
+
+      // Split recharts into dedicated chunk
+      config.optimization.splitChunks.cacheGroups.recharts = {
+        test: /[\\/]node_modules[\\/]recharts[\\/]/,
+        name: 'recharts',
+        priority: 30,
+        reuseExistingChunk: true,
+      };
+
+      // Split lucide-react icons
+      config.optimization.splitChunks.cacheGroups.icons = {
+        test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+        name: 'icons',
+        priority: 25,
+        reuseExistingChunk: true,
+      };
+    }
+
     return config;
   },
 };

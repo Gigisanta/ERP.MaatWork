@@ -25,7 +25,7 @@ const { mockDbInstance, mockTransactionWithLogging } = vi.hoisted(() => {
     delete: vi.fn().mockReturnThis(),
     then: (onFullfilled: (value: unknown) => unknown) => Promise.resolve([]).then(onFullfilled),
   };
-  
+
   const mockTransactionWithLogging = vi.fn();
   return { mockDbInstance, mockTransactionWithLogging };
 });
@@ -33,7 +33,12 @@ const { mockDbInstance, mockTransactionWithLogging } = vi.hoisted(() => {
 vi.mock('@maatwork/db', () => ({
   db: vi.fn(() => mockDbInstance),
   aumImportFiles: { id: 'id', status: 'status' },
-  aumImportRows: { id: 'id', fileId: 'file_id', matchStatus: 'match_status', isPreferred: 'is_preferred' },
+  aumImportRows: {
+    id: 'id',
+    fileId: 'file_id',
+    matchStatus: 'match_status',
+    isPreferred: 'is_preferred',
+  },
   brokerAccounts: {},
   contacts: {},
   eq: vi.fn((col, val) => ({ col, val })),
@@ -88,12 +93,12 @@ describe('AUM Commit Routes', () => {
       email: 'admin@example.com',
       role: 'admin',
     });
-    
+
     // Reset defaults
     mockDbInstance.execute.mockResolvedValue({ rowCount: 0, rows: [] });
     mockDbInstance.returning.mockImplementation(() => Promise.resolve([]));
     mockDbInstance.limit.mockImplementation(() => Promise.resolve([]));
-    
+
     // Default transaction mock
     mockTransactionWithLogging.mockImplementation(async (_log, _name, callback) => {
       return await callback(mockDbInstance as unknown as ReturnType<typeof db>);
@@ -102,19 +107,27 @@ describe('AUM Commit Routes', () => {
 
   describe('POST /admin/aum/uploads/:fileId/commit', () => {
     it('debería commitear archivo exitosamente', async () => {
-      mockDbInstance.limit.mockResolvedValueOnce([{ id: 'file-123', status: 'parsed', broker: 'balanz' }]); // file
-      
+      mockDbInstance.limit.mockResolvedValueOnce([
+        { id: 'file-123', status: 'parsed', broker: 'balanz' },
+      ]); // file
+
       // For ambiguousRows, it doesn't call limit(), it just awaits the query
       // So we need to mock the where() to return a promise or handle it
       mockDbInstance.where.mockReturnValueOnce({
-        then: (onFullfilled: (value: unknown) => unknown) => Promise.resolve([{ id: 'file-123', status: 'parsed', broker: 'balanz' }]).then(onFullfilled),
-        limit: vi.fn().mockResolvedValue([{ id: 'file-123', status: 'parsed', broker: 'balanz' }])
+        then: (onFullfilled: (value: unknown) => unknown) =>
+          Promise.resolve([{ id: 'file-123', status: 'parsed', broker: 'balanz' }]).then(
+            onFullfilled
+          ),
+        limit: vi.fn().mockResolvedValue([{ id: 'file-123', status: 'parsed', broker: 'balanz' }]),
       }); // for file query
-      
+
       mockDbInstance.where.mockReturnValueOnce(Promise.resolve([])); // for ambiguousRows
-      mockDbInstance.where.mockReturnValueOnce(Promise.resolve([ // for rows to commit
-        { id: 'row-1', accountNumber: '123', matchStatus: 'matched', isPreferred: true }
-      ]));
+      mockDbInstance.where.mockReturnValueOnce(
+        Promise.resolve([
+          // for rows to commit
+          { id: 'row-1', accountNumber: '123', matchStatus: 'matched', isPreferred: true },
+        ])
+      );
 
       const app = createTestAppWithRoutes();
       const res = await request(app)
@@ -127,7 +140,7 @@ describe('AUM Commit Routes', () => {
 
     it('debería retornar 404 cuando archivo no existe', async () => {
       mockDbInstance.where.mockReturnValueOnce({
-        limit: vi.fn().mockResolvedValue([])
+        limit: vi.fn().mockResolvedValue([]),
       });
 
       const app = createTestAppWithRoutes();
@@ -141,9 +154,11 @@ describe('AUM Commit Routes', () => {
 
     it('debería retornar 400 cuando hay filas ambiguous', async () => {
       mockDbInstance.where.mockReturnValueOnce({
-        limit: vi.fn().mockResolvedValue([{ id: 'file-123', status: 'parsed' }])
+        limit: vi.fn().mockResolvedValue([{ id: 'file-123', status: 'parsed' }]),
       });
-      mockDbInstance.where.mockReturnValueOnce(Promise.resolve([{ id: 'row-ambiguous', matchStatus: 'ambiguous' }]));
+      mockDbInstance.where.mockReturnValueOnce(
+        Promise.resolve([{ id: 'row-ambiguous', matchStatus: 'ambiguous' }])
+      );
 
       const app = createTestAppWithRoutes();
       const res = await request(app)

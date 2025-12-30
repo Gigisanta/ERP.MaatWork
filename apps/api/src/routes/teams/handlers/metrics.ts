@@ -155,10 +155,7 @@ export const getTeamMetrics = createRouteHandler(async (req: Request) => {
         count: count(),
       })
       .from(contacts)
-      .innerJoin(
-        clientPortfolioAssignments,
-        eq(clientPortfolioAssignments.contactId, contacts.id)
-      )
+      .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
       .innerJoin(
         portfolioTemplates,
         eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)

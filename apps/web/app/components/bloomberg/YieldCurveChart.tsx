@@ -24,16 +24,16 @@ import {
 import { getYieldCurve, getYieldSpreads } from '@/lib/api/bloomberg';
 import type { YieldCurve } from '@/lib/api/bloomberg';
 import {
-  LineChart,
+  LazyLineChart,
+  LazyResponsiveContainer,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
+} from '@/components/charts/LazyChartWrapper';
+import { ReferenceLine } from 'recharts';
 
 interface YieldCurveChartProps {
   country?: string;
@@ -147,8 +147,8 @@ export default function YieldCurveChart({
         </Stack>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={chartData}>
+        <LazyResponsiveContainer width="100%" height={height}>
+          <LazyLineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="tenor" tick={{ fontSize: 12 }} />
             <YAxis
@@ -173,8 +173,8 @@ export default function YieldCurveChart({
               name="Yield"
             />
             {isInverted && <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="5 5" />}
-          </LineChart>
-        </ResponsiveContainer>
+          </LazyLineChart>
+        </LazyResponsiveContainer>
 
         {spreads && (
           <Stack direction="row" gap="lg" className="mt-4">

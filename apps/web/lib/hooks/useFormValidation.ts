@@ -140,7 +140,6 @@ export function useFormValidation<T extends Record<string, unknown>>({
     if (validateOnMount && initialValues) {
       validateAllImmediate(initialValues);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [validateOnMount]);
 
   /**

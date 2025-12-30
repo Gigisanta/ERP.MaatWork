@@ -97,7 +97,7 @@ describe('redis config', () => {
       const mockQuit = vi.fn();
       // This is tricky because we need to clear the singleton
       // But we already did with closeRedis()
-      
+
       await closeRedis();
       // If we got here without error and it didn't crash, it's fine.
     });

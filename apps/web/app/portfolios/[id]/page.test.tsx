@@ -45,7 +45,7 @@ vi.mock('@maatwork/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@maatwork/ui')>();
   return {
     ...actual,
-    Toast: ({ title, open }: { title: string; open: boolean }) => 
+    Toast: ({ title, open }: { title: string; open: boolean }) =>
       open ? <div data-testid="mock-toast">{title}</div> : null,
   };
 });
@@ -118,9 +118,14 @@ describe('PortfolioDetailPage', () => {
 
     render(<PortfolioDetailPage />);
 
-    await waitFor(async () => {
-      const addButton = screen.getByText(/Agregar Primer Componente/i);
-      await user.click(addButton);
+    // Wait for the add button to appear
+    const addButton = await screen.findByRole('button', { name: /Agregar Primer Componente/i });
+
+    // Click the button
+    await user.click(addButton);
+
+    // Wait for modal to appear
+    await waitFor(() => {
       expect(screen.getByText(/Agregar Componente a la Cartera/i)).toBeInTheDocument();
     });
   });
@@ -135,7 +140,7 @@ describe('PortfolioDetailPage', () => {
 
     render(<PortfolioDetailPage />);
 
-    const addButton = await screen.findByText(/Agregar Primer Componente/i);
+    const addButton = await screen.findByRole('button', { name: /Agregar Primer Componente/i });
     await user.click(addButton);
 
     // Fill in a valid weight but leave asset class empty
@@ -149,8 +154,11 @@ describe('PortfolioDetailPage', () => {
     await user.click(submitButton);
 
     // Should show validation errors
-    await waitFor(() => {
-      expect(screen.getByText(/requerido/i)).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText(/requerido/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 });

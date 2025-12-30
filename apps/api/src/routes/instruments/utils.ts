@@ -93,11 +93,3 @@ export type DBInstrumentSearchResult = {
   sector: string | null;
   industry: string | null;
 };
-
-
-
-
-
-
-
-

@@ -43,4 +43,3 @@ export const handleCreateTemplate = createAsyncHandler(async (req: Request, res:
   );
   return res.status(201).json({ success: true, data: newTemplate, requestId: req.requestId });
 });
-

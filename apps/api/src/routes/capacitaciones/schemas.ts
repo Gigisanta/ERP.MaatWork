@@ -59,11 +59,3 @@ export { idParamSchema };
 
 type CreateCapacitacionInput = z.infer<typeof createCapacitacionSchema>;
 type UpdateCapacitacionInput = z.infer<typeof updateCapacitacionSchema>;
-
-
-
-
-
-
-
-

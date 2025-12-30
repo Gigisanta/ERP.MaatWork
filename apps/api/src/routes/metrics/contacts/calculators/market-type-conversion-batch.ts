@@ -68,11 +68,17 @@ export function calculateMarketTypeConversionFromData(
 
   // 2. Count contacts that became clients in the month (first time)
   historyByContact.forEach((history, contactId) => {
-    const sortedHistory = [...history].sort((a, b) => a.changedAt.getTime() - b.changedAt.getTime());
-    const firstClientEntry = sortedHistory.find(h => h.toStage === clienteStageId);
-    
+    const sortedHistory = [...history].sort(
+      (a, b) => a.changedAt.getTime() - b.changedAt.getTime()
+    );
+    const firstClientEntry = sortedHistory.find((h) => h.toStage === clienteStageId);
+
     // Check if the FIRST entry to Cliente happened in this month
-    if (firstClientEntry && firstClientEntry.changedAt >= monthStart && firstClientEntry.changedAt <= monthEnd) {
+    if (
+      firstClientEntry &&
+      firstClientEntry.changedAt >= monthStart &&
+      firstClientEntry.changedAt <= monthEnd
+    ) {
       const contactData = contactsMap.get(contactId);
       if (contactData && contactData.source) {
         const mainType = getMainMarketType(contactData.source);
@@ -112,7 +118,3 @@ export function calculateMarketTypeConversionFromData(
 
   return result;
 }
-
-
-
-

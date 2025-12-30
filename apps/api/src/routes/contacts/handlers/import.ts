@@ -29,7 +29,7 @@ interface ImportStats {
  */
 function parseFullName(fullNameRaw: string): { firstName: string; lastName: string } {
   const cleanName = fullNameRaw.trim();
-  
+
   // Caso "APELLIDO, NOMBRE"
   if (cleanName.includes(',')) {
     const [last, ...rest] = cleanName.split(',');
@@ -72,7 +72,10 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
     throw new HttpError(400, 'No se ha subido ningún archivo');
   }
 
-  req.log.info({ filename: file.originalname, size: file.size }, 'Iniciando importación de contactos');
+  req.log.info(
+    { filename: file.originalname, size: file.size },
+    'Iniciando importación de contactos'
+  );
 
   let content: string;
   try {
@@ -117,17 +120,19 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
 
   // Pre-cargar mapeo de asesores para evitar N+1
   const advisorMap = new Map<string, string>(); // alias_normalized -> userId
-  
+
   // 1. Cargar alias existentes
   const aliases = await db().select().from(advisorAliases);
-  aliases.forEach((a: typeof advisorAliases.$inferSelect) => advisorMap.set(a.aliasNormalized, a.userId));
+  aliases.forEach((a: typeof advisorAliases.$inferSelect) =>
+    advisorMap.set(a.aliasNormalized, a.userId)
+  );
 
   // 2. Cargar asesores por nombre completo (como fallback)
   const allAdvisors = await db()
     .select({ id: users.id, fullName: users.fullName })
     .from(users)
     .where(and(eq(users.role, 'advisor'), eq(users.isActive, true)));
-  
+
   const advisorNameMap = new Map<string, string>();
   allAdvisors.forEach((a: { id: string; fullName: string | null }) => {
     if (a.fullName) {
@@ -153,8 +158,9 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
       let assignedAdvisorId: string | null = null;
       if (asesorRaw) {
         const normalizedAsesor = normalizeAdvisorAlias(asesorRaw);
-        assignedAdvisorId = advisorMap.get(normalizedAsesor) || advisorNameMap.get(normalizedAsesor) || null;
-        
+        assignedAdvisorId =
+          advisorMap.get(normalizedAsesor) || advisorNameMap.get(normalizedAsesor) || null;
+
         if (!assignedAdvisorId && !stats.unknownAdvisors.includes(asesorRaw)) {
           stats.unknownAdvisors.push(asesorRaw);
         }
@@ -164,10 +170,9 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
       const [existingContact] = await dbi
         .select()
         .from(contacts)
-        .where(and(
-          sql`${contacts.customFields}->>'idCuenta' = ${idCuenta}`,
-          isNull(contacts.deletedAt)
-        ))
+        .where(
+          and(sql`${contacts.customFields}->>'idCuenta' = ${idCuenta}`, isNull(contacts.deletedAt))
+        )
         .limit(1);
 
       if (existingContact) {
@@ -175,9 +180,9 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
         if (!existingContact.assignedAdvisorId && assignedAdvisorId) {
           await dbi
             .update(contacts)
-            .set({ 
+            .set({
               assignedAdvisorId,
-              updatedAt: new Date()
+              updatedAt: new Date(),
             })
             .where(eq(contacts.id, existingContact.id));
           stats.updated++;
@@ -201,8 +206,8 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
           idCuenta,
           comitente: record.comitente || null,
           originalDescription: descripcion,
-          originalAdvisor: asesorRaw
-        }
+          originalAdvisor: asesorRaw,
+        },
       });
 
       stats.created++;
@@ -223,8 +228,7 @@ export const handleImport = createAsyncHandler(async (req: Request, res) => {
     success: true,
     data: {
       stats,
-      message: `Importación completada: ${stats.created} creados, ${stats.updated} actualizados, ${stats.skipped} omitidos, ${stats.errors} errores.`
-    }
+      message: `Importación completada: ${stats.created} creados, ${stats.updated} actualizados, ${stats.skipped} omitidos, ${stats.errors} errores.`,
+    },
   });
 });
-

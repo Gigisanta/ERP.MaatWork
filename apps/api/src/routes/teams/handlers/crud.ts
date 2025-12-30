@@ -14,7 +14,11 @@ import { createRouteHandler, createAsyncHandler, HttpError } from '../../../util
 import { invalidateAccessScope } from '../../../auth/cache';
 import { teamMetricsCacheUtil } from '../../../utils/performance/cache';
 import { createTeamSchema, updateTeamSchema } from '../schemas';
-import { checkTeamAccess, requireTeamManageAccessOrThrow, getTeamMembers as getMembers } from './utils';
+import {
+  checkTeamAccess,
+  requireTeamManageAccessOrThrow,
+  getTeamMembers as getMembers,
+} from './utils';
 
 /**
  * GET /teams/:id - Obtener equipo individual con sus miembros

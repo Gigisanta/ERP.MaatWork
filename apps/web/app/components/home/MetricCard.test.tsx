@@ -13,13 +13,31 @@ import React from 'react';
 
 // Mock @maatwork/ui antes de importar el componente
 vi.mock('@maatwork/ui', () => ({
-  Card: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
+  Card: ({
+    children,
+    className,
+    style,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+  }) => (
     <div data-testid="card" className={className} style={style}>
       {children}
     </div>
   ),
-  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
-  Text: ({ children, className, style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) => (
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  Text: ({
+    children,
+    className,
+    style,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+  }) => (
     <span className={className} style={style}>
       {children}
     </span>

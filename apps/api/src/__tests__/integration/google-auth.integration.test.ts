@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { db } from '@maatwork/db';
 import { users } from '@maatwork/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { handleGoogleAuthCallback } from '../../routes/auth/google/handlers';
 import { deleteTestUser } from '../helpers/test-auth';
 import type { Request, Response } from 'express';
@@ -21,9 +21,11 @@ vi.mock('googleapis', () => {
   return {
     google: {
       auth: {
-        OAuth2: vi.fn().mockImplementation(() => ({
-          setCredentials: vi.fn(),
-        })),
+        OAuth2: vi.fn().mockImplementation(function () {
+          return {
+            setCredentials: vi.fn(),
+          };
+        }),
       },
       oauth2: vi.fn().mockReturnValue({
         userinfo: {
@@ -48,7 +50,7 @@ describe('Google Auth Integration', () => {
 
   beforeAll(async () => {
     // Ensure DB connection
-    await db().execute({ sql: 'SELECT 1' });
+    await db().execute(sql`SELECT 1`);
   });
 
   afterAll(async () => {
@@ -68,7 +70,7 @@ describe('Google Auth Integration', () => {
     const req = {
       query: {
         code: 'mock-auth-code',
-        state: JSON.stringify({ context: 'login', redirect: '/dashboard' }),
+        state: JSON.stringify({ context: 'register', redirect: '/dashboard' }),
       },
       log: {
         info: vi.fn(),
@@ -80,6 +82,8 @@ describe('Google Auth Integration', () => {
     const res = {
       redirect: vi.fn(),
       cookie: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
     } as unknown as Response;
 
     // Call the handler

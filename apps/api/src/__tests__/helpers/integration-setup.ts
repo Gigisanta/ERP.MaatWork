@@ -10,6 +10,8 @@
 import { beforeAll, afterAll, beforeEach } from 'vitest';
 import { setupTestDatabase, cleanupTestServer } from './test-server';
 import { cleanupTestDatabase } from './test-db';
+import dotenv from 'dotenv';
+import path from 'path';
 
 /**
  * Setup before all integration tests
@@ -17,6 +19,9 @@ import { cleanupTestDatabase } from './test-db';
 beforeAll(async () => {
   // Set test environment
   process.env.NODE_ENV = 'test';
+
+  // Load environment variables from .env if available
+  dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
   // Verify TEST_DATABASE_URL is set
   if (!process.env.TEST_DATABASE_URL && !process.env.DATABASE_URL) {

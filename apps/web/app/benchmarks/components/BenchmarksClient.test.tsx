@@ -33,7 +33,7 @@ const mockBenchmarks: Benchmark[] = [
     isSystem: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  }
+  },
 ];
 
 describe('BenchmarksClient', () => {
@@ -48,7 +48,7 @@ describe('BenchmarksClient', () => {
     // Buscar en la tabla específicamente o usar getAllByText
     const mervalElements = screen.getAllByText(/MERVAL/i);
     expect(mervalElements.length).toBeGreaterThan(0);
-    
+
     expect(screen.getByText(/Índice Merval/i)).toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe('BenchmarksClient', () => {
   it('debería mostrar información de benchmarks del sistema', () => {
     render(<BenchmarksClient initialBenchmarks={mockBenchmarks} />);
     expect(screen.getByRole('heading', { name: /Benchmarks del Sistema/i })).toBeInTheDocument();
-    
+
     const mervalElements = screen.getAllByText(/MERVAL/i);
     expect(mervalElements.length).toBeGreaterThan(0);
   });

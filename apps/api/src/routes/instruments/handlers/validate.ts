@@ -157,11 +157,3 @@ export async function validateSymbol(req: Request, res: Response) {
     });
   }
 }
-
-
-
-
-
-
-
-

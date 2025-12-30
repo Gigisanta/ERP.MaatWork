@@ -13,7 +13,7 @@ import {
   numeric,
   index,
   uniqueIndex,
-  check
+  check,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 import { instruments } from './instruments';
@@ -31,10 +31,10 @@ export const benchmarkDefinitions = pgTable(
     description: text('description'),
     isSystem: boolean('is_system').notNull().default(false), // benchmarks del sistema vs custom
     createdByUserId: uuid('created_by_user_id').references(() => users.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    benchmarkCodeIdx: index('idx_benchmark_code').on(table.code)
+    benchmarkCodeIdx: index('idx_benchmark_code').on(table.code),
   })
 );
 
@@ -46,22 +46,31 @@ export const benchmarkComponents = pgTable(
   'benchmark_components',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    benchmarkId: uuid('benchmark_id').notNull().references(() => benchmarkDefinitions.id, { onDelete: 'cascade' }),
+    benchmarkId: uuid('benchmark_id')
+      .notNull()
+      .references(() => benchmarkDefinitions.id, { onDelete: 'cascade' }),
     instrumentId: uuid('instrument_id').references(() => instruments.id),
     weight: numeric('weight', { precision: 7, scale: 4 }).notNull(), // para benchmarks compuestos
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    benchmarkComponentsBenchmarkIdx: index('idx_benchmark_components_benchmark').on(table.benchmarkId),
-    benchmarkComponentsInstrumentIdx: index('idx_benchmark_components_instrument').on(table.instrumentId),
-    benchmarkWeightCheck: check('chk_benchmark_weight', sql`${table.weight} >= 0 and ${table.weight} <= 1`),
+    benchmarkComponentsBenchmarkIdx: index('idx_benchmark_components_benchmark').on(
+      table.benchmarkId
+    ),
+    benchmarkComponentsInstrumentIdx: index('idx_benchmark_components_instrument').on(
+      table.instrumentId
+    ),
+    benchmarkWeightCheck: check(
+      'chk_benchmark_weight',
+      sql`${table.weight} >= 0 and ${table.weight} <= 1`
+    ),
     // AI_DECISION: Add composite index for benchmark component queries
     // Justificación: Queries load all components for a benchmark and sort by weight. Composite index speeds up sorting.
     // Impacto: Faster benchmark composition loading
     benchmarkComponentsWeightIdx: index('idx_benchmark_components_weight').on(
       table.benchmarkId,
       table.weight
-    )
+    ),
   })
 );
 
@@ -73,17 +82,22 @@ export const priceSnapshots = pgTable(
   'price_snapshots',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    instrumentId: uuid('instrument_id').notNull().references(() => instruments.id),
+    instrumentId: uuid('instrument_id')
+      .notNull()
+      .references(() => instruments.id),
     asOfDate: date('as_of_date').notNull(),
     closePrice: numeric('close_price', { precision: 18, scale: 6 }).notNull(),
     currency: text('currency').notNull(),
     source: text('source').notNull(), // yfinance, manual
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    priceSnapshotsUnique: uniqueIndex('price_snapshots_unique').on(table.instrumentId, table.asOfDate),
+    priceSnapshotsUnique: uniqueIndex('price_snapshots_unique').on(
+      table.instrumentId,
+      table.asOfDate
+    ),
     priceSnapshotsDateIdx: index('idx_price_snapshots_date').on(table.asOfDate),
-    priceSnapshotsInstrumentIdx: index('idx_price_snapshots_instrument').on(table.instrumentId)
+    priceSnapshotsInstrumentIdx: index('idx_price_snapshots_instrument').on(table.instrumentId),
   })
 );
 
@@ -96,7 +110,9 @@ export const pricesDaily = pgTable(
   'prices_daily',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    assetId: uuid('asset_id').notNull().references(() => instruments.id),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => instruments.id),
     date: date('date').notNull(),
     open: numeric('open', { precision: 18, scale: 6 }).notNull(),
     high: numeric('high', { precision: 18, scale: 6 }).notNull(),
@@ -107,13 +123,13 @@ export const pricesDaily = pgTable(
     currency: text('currency').notNull(),
     source: text('source').notNull(), // yfinance, bloomberg, manual
     asof: timestamp('asof', { withTimezone: true }).notNull().defaultNow(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     pricesDailyUnique: uniqueIndex('prices_daily_unique').on(table.assetId, table.date),
     pricesDailyDateIdx: index('idx_prices_daily_date').on(table.date),
     pricesDailyAssetIdx: index('idx_prices_daily_asset').on(table.assetId),
-    pricesDailyAssetDateIdx: index('idx_prices_daily_asset_date').on(table.assetId, table.date)
+    pricesDailyAssetDateIdx: index('idx_prices_daily_asset_date').on(table.assetId, table.date),
   })
 );
 
@@ -126,7 +142,9 @@ export const pricesIntraday = pgTable(
   'prices_intraday',
   {
     id: uuid('id').defaultRandom().primaryKey(),
-    assetId: uuid('asset_id').notNull().references(() => instruments.id),
+    assetId: uuid('asset_id')
+      .notNull()
+      .references(() => instruments.id),
     timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
     open: numeric('open', { precision: 18, scale: 6 }).notNull(),
     high: numeric('high', { precision: 18, scale: 6 }).notNull(),
@@ -136,13 +154,16 @@ export const pricesIntraday = pgTable(
     volume: numeric('volume', { precision: 28, scale: 8 }),
     currency: text('currency').notNull(),
     source: text('source').notNull(), // yfinance, bloomberg, manual
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
     pricesIntradayUnique: uniqueIndex('prices_intraday_unique').on(table.assetId, table.timestamp),
     pricesIntradayTimestampIdx: index('idx_prices_intraday_timestamp').on(table.timestamp),
     pricesIntradayAssetIdx: index('idx_prices_intraday_asset').on(table.assetId),
-    pricesIntradayAssetTimestampIdx: index('idx_prices_intraday_asset_timestamp').on(table.assetId, table.timestamp)
+    pricesIntradayAssetTimestampIdx: index('idx_prices_intraday_asset_timestamp').on(
+      table.assetId,
+      table.timestamp
+    ),
   })
 );
 
@@ -159,59 +180,10 @@ export const metricDefinitions = pgTable(
     description: text('description'),
     calculationFormula: text('calculation_formula'), // descripción textual o fórmula
     unit: text('unit').notNull(), // %, ratio, currency
-    category: text('category').notNull() // performance, risk, benchmark
+    category: text('category').notNull(), // performance, risk, benchmark
   },
   (table) => ({
     metricCodeIdx: index('idx_metric_code').on(table.code),
-    metricCategoryIdx: index('idx_metric_category').on(table.category)
+    metricCategoryIdx: index('idx_metric_category').on(table.category),
   })
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "project": ["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}", "scripts/**/*.{ts,js}", "tests/**/*.{ts,tsx}"],
+  "project": [
+    "apps/**/*.{ts,tsx}",
+    "packages/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,js}",
+    "tests/**/*.{ts,tsx}"
+  ],
   "ignore": [
     "**/*.test.ts",
     "**/*.test.tsx",

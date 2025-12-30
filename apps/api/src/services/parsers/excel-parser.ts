@@ -53,7 +53,6 @@ function worksheetToJson(worksheet: ExcelJS.Worksheet): Array<Record<string, unk
             // Handle dates
             else if (value instanceof Date) {
               // Keep as Date object for now, let mapper handle formatting
-              value = value;
             }
           }
 

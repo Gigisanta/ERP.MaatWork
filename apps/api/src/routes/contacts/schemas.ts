@@ -45,54 +45,51 @@ export const batchContactsQuerySchema = z.object({
 // Body Schemas
 // ==========================================================
 
-// Extend the base schema generated from DB definition
-// We explicitly override fields that need specific validation not present in DB schema (like email format)
-export const createContactSchema: any = insertContactSchema
-  .extend({
-    email: optionalEmailSchema,
-    phone: z.string().max(50).optional().nullable(),
-    phoneSecondary: z.string().max(50).optional().nullable(),
-    whatsapp: z.string().max(50).optional().nullable(),
-    address: z.string().optional().nullable(),
-    city: z.string().optional().nullable(),
-    country: countryCodeSchema,
-    dateOfBirth: z.string().optional().nullable(), // ISO date
-    dni: z.string().max(50).optional().nullable(),
-    source: z.string().max(100).optional().nullable(),
-    riskProfile: riskProfileSchema.optional().nullable(),
-    nextStep: z.string().max(500).optional().nullable(),
-    queSeDedica: descriptionSchema,
-    familia: descriptionSchema,
-    expectativas: descriptionSchema,
-    objetivos: descriptionSchema,
-    requisitosPlanificacion: descriptionSchema,
-    prioridades: z.array(z.string().max(500)).optional().default([]),
-    preocupaciones: z.array(z.string().max(500)).optional().default([]),
-    ingresos: amountSchema,
-    gastos: amountSchema,
-    excedente: z
-      .union([
-        z.number(),
-        z
-          .string()
-          .regex(/^-?\d+(\.\d{1,2})?$/)
-          .transform((val) => parseFloat(val)),
-      ])
-      .optional()
-      .nullable(),
-    customFields: customFieldsSchema.optional(),
-  })
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    deletedAt: true,
-    version: true,
-    contactLastTouchAt: true,
-    pipelineStageUpdatedAt: true,
-  });
+// AI_DECISION: Definir schema manualmente en lugar de extender insertContactSchema
+// Justificación: Error de compatibilidad entre versiones de Zod detectado ("Invalid element at key 'email'")
+//                Definir el schema manualmente garantiza consistencia total con la versión de Zod de la API.
+// Impacto: Elimina error 500 en creación de contactos, mantiene validación estricta.
+export const createContactSchema = z.object({
+  firstName: z.string().min(1, 'El nombre es requerido').max(255),
+  lastName: z.string().min(1, 'El apellido es requerido').max(255),
+  email: z.string().email('Invalid email format').optional().nullable(),
+  phone: z.string().max(50).optional().nullable(),
+  phoneSecondary: z.string().max(50).optional().nullable(),
+  whatsapp: z.string().max(50).optional().nullable(),
+  address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  country: countryCodeSchema.default('AR'),
+  dateOfBirth: z.string().optional().nullable(), // ISO date
+  dni: z.string().max(50).optional().nullable(),
+  source: z.string().max(100).optional().nullable(),
+  riskProfile: riskProfileSchema.optional().nullable(),
+  nextStep: z.string().max(500).optional().nullable(),
+  pipelineStageId: uuidSchema.optional().nullable(),
+  assignedAdvisorId: uuidSchema.optional().nullable(),
+  queSeDedica: descriptionSchema,
+  familia: descriptionSchema,
+  expectativas: descriptionSchema,
+  objetivos: descriptionSchema,
+  requisitosPlanificacion: descriptionSchema,
+  prioridades: z.array(z.string().max(500)).optional().default([]),
+  preocupaciones: z.array(z.string().max(500)).optional().default([]),
+  ingresos: amountSchema,
+  gastos: amountSchema,
+  excedente: z
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^-?\d+(\.\d{1,2})?$/)
+        .transform((val) => parseFloat(val)),
+    ])
+    .optional()
+    .nullable(),
+  customFields: customFieldsSchema.optional().default({}),
+  notes: z.string().max(2000).optional().nullable(),
+});
 
-export const updateContactSchema: any = createContactSchema.partial();
+export const updateContactSchema = createContactSchema.partial();
 
 export const patchContactSchema = z.object({
   fields: z.array(
@@ -104,6 +101,6 @@ export const patchContactSchema = z.object({
 });
 
 // Type exports for use in route handlers
-export type CreateContactInput = z.infer<any>;
-export type UpdateContactInput = z.infer<any>;
-export type PatchContactInput = z.infer<any>;
+export type CreateContactInput = z.infer<typeof createContactSchema>;
+export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+export type PatchContactInput = z.infer<typeof patchContactSchema>;

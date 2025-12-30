@@ -18,7 +18,10 @@ export interface Capacitacion extends TimestampedEntity {
 /**
  * Request to create a capacitacion
  */
-export interface CreateCapacitacionRequest extends Omit<CreateRequest<Capacitacion>, 'createdByUserId' | 'fecha'> {
+export interface CreateCapacitacionRequest extends Omit<
+  CreateRequest<Capacitacion>,
+  'createdByUserId' | 'fecha'
+> {
   titulo: string;
   tema: string;
   link: string;
@@ -65,5 +68,3 @@ export interface CapacitacionesListResponse {
     totalPages: number;
   };
 }
-
-

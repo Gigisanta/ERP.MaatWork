@@ -2,10 +2,10 @@
   "cookies": [
     {
       "name": "token",
-      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6Imdpb2xpdm9zYW50YXJlbGxpQGdtYWlsLmNvbSIsImZ1bGxOYW1lIjoiR2lvIFNhbnRhcmVsbGkiLCJzdWIiOiJlZjhkY2FlYS1jMzBiLTRiNjUtODVhNS1jZjdmYmYxOWYyY2UiLCJpYXQiOjE3NjY1Mjk4NTksImlzcyI6Im1hYXR3b3JrLWFwaSIsImF1ZCI6Im1hYXR3b3JrLXdlYiIsImV4cCI6MTc2NjYxNjI1OX0.RkGvf4mZBmBJnBHHkFyORO-UrAbUH3A_27d126K8zj4",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQGdydXBvYWJheC5jb20iLCJmdWxsTmFtZSI6IkFkbWluIFVzZXIiLCJzdWIiOiJiZTM0N2UxNC02YjYxLTRlMDEtODZiZS0zMzA1ZDYxMGRlMjciLCJpYXQiOjE3NjcxMDgzMDksImlzcyI6Im1hYXR3b3JrLWFwaSIsImF1ZCI6Im1hYXR3b3JrLXdlYiIsImV4cCI6MTc2NzE5NDcwOX0.gob67KqlewxrwaEd8NxkBiCGa7t0iccillx1NmxqneY",
       "domain": "localhost",
       "path": "/",
-      "expires": 1766616259.171177,
+      "expires": 1767194709.450729,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
@@ -17,7 +17,7 @@
       "localStorage": [
         {
           "name": "debug-console-logs",
-          "value": "[{\"timestamp\":\"2025-12-23T22:44:17.924Z\",\"type\":\"error\",\"message\":\"19:44:17.911 [ERROR] HTTP GET http://localhost:3001/v1/auth/me - 401 [object Object]\",\"count\":1,\"url\":\"http://localhost:3000/login\",\"details\":{\"args\":[\"19:44:17.911 [ERROR] HTTP GET http://localhost:3001/v1/auth/me - 401\",\"[object Object]\"]}}]"
+          "value": "[{\"timestamp\":\"2025-12-30T15:25:11.895Z\",\"type\":\"warn\",\"message\":\"Detected `scroll-behavior: smooth` on the `<html>` element. In a future version, Next.js will no longer automatically disable smooth scrolling during route transitions. To prepare for this change, add `data-scroll-behavior=\\\"smooth\\\"` to your <html> element. Learn more: https://nextjs.org/docs/messages/missing-data-scroll-behavior\",\"count\":1,\"url\":\"http://localhost:3000/home\"}]"
         },
         {
           "name": "sidebar-collapsed",

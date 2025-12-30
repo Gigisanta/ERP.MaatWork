@@ -58,7 +58,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": [],
+      "cache": true,
+      "outputs": ["coverage/**"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
@@ -75,7 +76,8 @@
     },
     "test:unit": {
       "dependsOn": [],
-      "outputs": [],
+      "cache": true,
+      "outputs": ["coverage/**"],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",

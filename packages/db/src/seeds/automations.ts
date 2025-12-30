@@ -51,7 +51,7 @@ export async function seedAutomations() {
           config: automation.config as any,
         })
         .returning();
-      
+
       createdConfigs.push(created);
     } else {
       // Optional: Update existing if needed, but for now we just skip to avoid overwriting user changes
@@ -63,4 +63,3 @@ export async function seedAutomations() {
   console.log(`  ✅ Seeded ${createdConfigs.length} new automation configs`);
   return createdConfigs;
 }
-

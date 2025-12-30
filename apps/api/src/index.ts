@@ -31,6 +31,7 @@ import adminMaintenanceRouter from './routes/admin-maintenance';
 import adminMemoryRouter from './routes/admin-memory';
 import adminMetricsRouter from './routes/admin-metrics';
 import adminQueryMetricsRouter from './routes/admin-query-metrics';
+import adminPerformanceRouter from './routes/admin/performance';
 import analyticsRouter from './routes/analytics';
 import attachmentsRouter from './routes/attachments';
 import authRouter from './routes/auth';
@@ -493,6 +494,7 @@ app.use('/v1/admin/metrics', adminMetricsRouter);
 app.use('/v1/admin/maintenance', adminMaintenanceRouter);
 app.use('/v1/admin', adminQueryMetricsRouter);
 app.use('/v1/admin', adminMemoryRouter);
+app.use('/v1/admin/performance', adminPerformanceRouter);
 app.use('/v1/career-plan', careerPlanRouter);
 app.use('/v1/metrics', metricsRouter);
 app.use('/v1/capacitaciones', capacitacionesRouter);
@@ -561,6 +563,7 @@ async function startServer() {
     // Impacto: Better monitoring of memory usage over time
     const { updateMemoryMetrics, updateCacheMetrics } = await import('./utils/metrics');
     const { getCacheHealth } = await import('./utils/performance/cache');
+    const { startPoolMonitoring } = await import('./monitoring/connection-pool');
 
     // Update memory metrics every 30 seconds
     setInterval(() => {
@@ -568,6 +571,12 @@ async function startServer() {
       const cacheHealth = getCacheHealth();
       updateCacheMetrics(cacheHealth);
     }, 30000);
+
+    // AI_DECISION: Start connection pool monitoring
+    // Justificación: Detectar pool exhaustion antes de que cause timeouts
+    // Impacto: Mejor visibilidad en health del sistema, alertas tempranas
+    // Referencias: Performance optimization plan - Fase 3
+    const poolMonitoringInterval = startPoolMonitoring(60000); // Every minute
 
     // Security: bind to HOST (default 127.0.0.1 in production, 0.0.0.0 in dev)
     const host = process.env.HOST || (isProduction ? '127.0.0.1' : '0.0.0.0');
@@ -580,6 +589,11 @@ async function startServer() {
 
       // Detener scheduler antes de cerrar el servidor
       scheduler.stop();
+
+      // Stop pool monitoring
+      if (poolMonitoringInterval) {
+        clearInterval(poolMonitoringInterval);
+      }
 
       server.close(() => {
         logger.info('HTTP server closed');

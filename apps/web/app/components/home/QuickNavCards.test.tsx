@@ -32,14 +32,20 @@ vi.mock('next/link', () => ({
 
 // Mock @maatwork/ui antes de importar el componente
 vi.mock('@maatwork/ui', () => ({
-  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
-  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>,
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
+  CardContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
   Icon: ({ name, className }: { name: string; className?: string }) => (
     <span className={className} data-icon={name}>
       {name}
     </span>
   ),
-  Heading: ({ children, className }: { children: React.ReactNode; className?: string }) => <h3 className={className}>{children}</h3>,
+  Heading: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <h3 className={className}>{children}</h3>
+  ),
   Text: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <span className={className}>{children}</span>
   ),
