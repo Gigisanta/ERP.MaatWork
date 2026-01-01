@@ -35,11 +35,11 @@ function isDbFresh(): boolean {
 
     // Consider DB fresh if seeded within last 24 hours
     const isFresh = hoursSinceSeeded < 24;
-    
+
     if (isFresh) {
       console.log(`✅ E2E DB already seeded ${hoursSinceSeeded.toFixed(1)} hours ago - skipping`);
     }
-    
+
     return isFresh;
   } catch (error) {
     console.warn('⚠️  Could not read seed marker, will re-seed');
@@ -56,7 +56,7 @@ function markDbSeeded(): void {
     dbUrl: process.env.DATABASE_URL || 'unknown',
     version: '1.0.0',
   };
-  
+
   fs.writeFileSync(SEED_MARKER_FILE, JSON.stringify(marker, null, 2));
   console.log(`✅ DB seed marker written to ${SEED_MARKER_FILE}`);
 }
@@ -83,7 +83,7 @@ async function setupE2eDb(): Promise<void> {
       stdio: 'inherit',
       env: { ...process.env },
     });
-    
+
     // 2. Seed database
     console.log('\n2️⃣ Seeding database...');
     execSync('pnpm -F @maatwork/db run db:init', {
@@ -111,4 +111,3 @@ if (require.main === module) {
 }
 
 export { setupE2eDb, isDbFresh };
-

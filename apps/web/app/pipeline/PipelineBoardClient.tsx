@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { moveContactToStage } from '@/lib/api';
@@ -272,6 +272,49 @@ export default function PipelineBoardClient({
           </Alert>
         )}
 
+        {/* Help text for drag & drop */}
+        {Array.isArray(stages) && stages.length > 0 && (
+          <div className="bg-info-subtle border border-info/20 rounded-lg p-3 animate-enter">
+            <Stack direction="row" gap="sm" align="center">
+              <Icon name="Info" size={16} className="text-info shrink-0" />
+              <Text size="sm" color="secondary">
+                <strong>Tip:</strong> Arrastra contactos entre columnas para cambiar su etapa en el
+                pipeline
+              </Text>
+            </Stack>
+          </div>
+        )}
+
+        {/* Funnel de conversión */}
+        {Array.isArray(stages) && stages.length > 0 && (
+          <Card className="animate-enter" style={{ transitionDelay: '50ms' }}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <Text size="sm" weight="medium" color="secondary" className="shrink-0">
+                  Funnel:
+                </Text>
+                {(stages as PipelineStage[])
+                  .sort((a: PipelineStage, b: PipelineStage) => a.order - b.order)
+                  .map((stage: PipelineStage, index: number) => (
+                    <React.Fragment key={stage.id}>
+                      <div className="text-center">
+                        <Text size="lg" weight="bold" style={{ color: stage.color }}>
+                          {stage.currentCount}
+                        </Text>
+                        <Text size="xs" color="secondary" className="block">
+                          {stage.name}
+                        </Text>
+                      </div>
+                      {index < (stages as PipelineStage[]).length - 1 && (
+                        <Icon name="ChevronRight" size={16} className="text-text-muted shrink-0" />
+                      )}
+                    </React.Fragment>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pipeline Board */}
         {!Array.isArray(stages) || stages.length === 0 ? (
           <Card>
@@ -303,9 +346,9 @@ export default function PipelineBoardClient({
                     style={{ transitionDelay: `${150 + stageIndex * 75}ms` }}
                   >
                     <Card
-                      className={`min-w-[280px] flex-shrink-0 hover-lift-glow ${
+                      className={`min-w-[280px] flex-shrink-0 hover-lift-glow transition-all duration-200 ${
                         draggingOverStageId === stage.id
-                          ? 'ring-2 ring-accent-base bg-accent-subtle'
+                          ? 'ring-4 ring-primary/50 ring-dashed bg-primary/10 border-2 border-primary border-dashed scale-[1.02]'
                           : ''
                       }`}
                       onDragOver={(e) => handleDragOver(e, stage.id)}

@@ -32,14 +32,16 @@ export class AnalyticsPage extends BasePage {
   async syncInstruments() {
     // Navigate to Instruments admin page
     await this.goto('/admin/instruments');
-    
+
     // Click sync button
     await this.page.getByRole('button', { name: /sincronizar|sync|actualizar/i }).click();
-    
+
     // Wait for success toast OR error toast (if python service is down, it might error but test should handle it)
     // We expect success in a happy path, but "sincronizado" or "error" might appear.
     // To make it robust:
-    await expect(this.page.getByText(/sincronizado|synced|error|conectado/i)).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByText(/sincronizado|synced|error|conectado/i)).toBeVisible({
+      timeout: 10000,
+    });
   }
 
   async checkInstrumentPrice(ticker: string, price: RegExp | string) {

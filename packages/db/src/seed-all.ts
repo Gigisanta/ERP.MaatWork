@@ -23,6 +23,8 @@ import {
   lookupPriority,
   lookupNotificationType,
   lookupAssetClass,
+  careerPlanLevels,
+  automationConfigs,
 } from './index';
 import { eq } from 'drizzle-orm';
 import { seedTags } from './seed-tags';
@@ -234,6 +236,136 @@ async function seedLookupTables() {
 }
 
 /**
+ * Seed career plan levels
+ */
+async function seedCareerPlanLevels() {
+  console.log('🌱 Seeding career plan levels...');
+
+  const defaultLevels = [
+    {
+      category: 'AGENTE F. JUNIOR',
+      level: 'Nivel 1 Junior',
+      levelNumber: 1,
+      index: '1.0',
+      percentage: '10',
+      annualGoalUsd: 50000,
+      isActive: true,
+    },
+    {
+      category: 'AGENTE F. JUNIOR',
+      level: 'Nivel 2 Junior',
+      levelNumber: 2,
+      index: '1.5',
+      percentage: '15',
+      annualGoalUsd: 100000,
+      isActive: true,
+    },
+    {
+      category: 'AGENTE F. SEMI-SENIOR',
+      level: 'Nivel 3 Semi-Senior',
+      levelNumber: 3,
+      index: '2.0',
+      percentage: '20',
+      annualGoalUsd: 200000,
+      isActive: true,
+    },
+    {
+      category: 'AGENTE F. SEMI-SENIOR',
+      level: 'Nivel 4 Semi-Senior',
+      levelNumber: 4,
+      index: '2.5',
+      percentage: '25',
+      annualGoalUsd: 350000,
+      isActive: true,
+    },
+    {
+      category: 'AGENTE F. SENIOR',
+      level: 'Nivel 5 Senior',
+      levelNumber: 5,
+      index: '3.0',
+      percentage: '30',
+      annualGoalUsd: 500000,
+      isActive: true,
+    },
+    {
+      category: 'AGENTE F. SENIOR',
+      level: 'Nivel 6 Senior',
+      levelNumber: 6,
+      index: '3.5',
+      percentage: '35',
+      annualGoalUsd: 750000,
+      isActive: true,
+    },
+    {
+      category: 'MASTER',
+      level: 'Nivel 7 Master',
+      levelNumber: 7,
+      index: '4.0',
+      percentage: '40',
+      annualGoalUsd: 1000000,
+      isActive: true,
+    },
+  ];
+
+  try {
+    const existing = await db().select().from(careerPlanLevels);
+    if (existing.length > 0) {
+      console.log(`  ℹ️  Ya existen ${existing.length} niveles de carrera. Saltando.`);
+      return;
+    }
+
+    await db().insert(careerPlanLevels).values(defaultLevels);
+    console.log(`  ✅ Insertados ${defaultLevels.length} niveles de carrera`);
+  } catch (error) {
+    console.error('  ❌ Error seeding career plan levels:', error);
+  }
+
+  console.log('✅ Career plan levels seeded successfully!');
+}
+
+/**
+ * Seed automation configs
+ */
+async function seedAutomationConfigs() {
+  console.log('🌱 Seeding automation configs...');
+
+  const defaultAutomations = [
+    {
+      name: 'segunda_reunion_webhook',
+      displayName: 'Email Segunda Reunión',
+      triggerType: 'pipeline_stage_change',
+      triggerConfig: { stageName: 'Segunda reunion' },
+      enabled: false,
+      config: { subject: 'Confirmación Segunda Reunión', body: '<p>Hola {contact.firstName},</p><p>Te confirmamos la segunda reunión...</p>', senderEmail: '' },
+    },
+    {
+      name: 'mail_bienvenida',
+      displayName: 'Email de Bienvenida (Cliente)',
+      triggerType: 'pipeline_stage_change',
+      triggerConfig: { stageName: 'Cliente' },
+      enabled: false,
+      config: { subject: 'Bienvenido a Cactus', body: '<p>Hola {contact.firstName},</p><p>Bienvenido a bordo...</p>', senderEmail: '' },
+    },
+  ];
+
+  for (const automation of defaultAutomations) {
+    try {
+      const [existing] = await db().select().from(automationConfigs).where(eq(automationConfigs.name, automation.name)).limit(1);
+      if (existing) {
+        console.log(`  ℹ️  Automation '${automation.name}' already exists. Skipping.`);
+        continue;
+      }
+      await db().insert(automationConfigs).values(automation);
+      console.log(`  ✅ Created automation: ${automation.displayName}`);
+    } catch (error) {
+      console.error(`  ❌ Error creating automation '${automation.name}':`, error);
+    }
+  }
+
+  console.log('✅ Automation configs seeded successfully!');
+}
+
+/**
  * Main seeding function
  * Runs SYSTEM-ESSENTIAL seed operations only
  */
@@ -251,6 +383,14 @@ async function seedAll() {
 
     // Seed lookup tables (SYSTEM-REQUIRED)
     await seedLookupTables();
+    console.log('');
+
+    // Seed career plan levels (SYSTEM-REQUIRED)
+    await seedCareerPlanLevels();
+    console.log('');
+
+    // Seed automation configs (SYSTEM-REQUIRED)
+    await seedAutomationConfigs();
     console.log('');
 
     console.log('✅ SYSTEM-ESSENTIAL seeding completed successfully!');
@@ -281,4 +421,4 @@ if (isMainModule) {
     });
 }
 
-export { seedAll, seedPipelineStages, seedLookupTables };
+export { seedAll, seedPipelineStages, seedLookupTables, seedCareerPlanLevels, seedAutomationConfigs };

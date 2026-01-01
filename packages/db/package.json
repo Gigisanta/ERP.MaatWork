@@ -30,6 +30,8 @@
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",
     "seed:benchmarks": "tsx src/seed-benchmarks.ts",
     "seed:full": "tsx src/seed-full.ts",
+    "seed:career-plan": "tsx src/seed-career-plan.ts",
+    "seed:automations": "tsx src/seed-automations.ts",
     "partition:broker-transactions": "tsx scripts/partition-broker-transactions.ts",
     "db:init": "tsx src/seed-all.ts",
     "db:reset": "node reset-db.js",

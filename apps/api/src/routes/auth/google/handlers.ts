@@ -12,6 +12,7 @@ import { createAsyncHandler, createRouteHandler, HttpError } from '../../../util
 import { getGoogleAuthUrl, exchangeCodeForTokens } from '../../../auth/google-oauth';
 import { encryptToken } from '../../../utils/encryption';
 import { signUserToken } from '../../../auth/jwt';
+import { getAuthCookieOptions } from '../../../auth/cookie-config';
 import { env } from '../../../config/env';
 import { google } from 'googleapis';
 import { ROLES, type UserRole } from '../../../auth/types';
@@ -247,13 +248,12 @@ export const handleGoogleAuthCallback = createAsyncHandler(async (req: Request, 
     fullName: existingUser?.fullName || userInfo.name || googleEmail.split('@')[0],
   });
 
-  // Establecer cookie
-  res.cookie('token', jwtToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
-  });
+  // Establecer cookie usando configuración centralizada
+  // AI_DECISION: Usar getAuthCookieOptions() para consistencia con login normal y logout
+  // Justificación: Configuración centralizada asegura que cookies se creen y limpien correctamente en producción
+  // Impacto: Cookies con domain correcto (.maat.work) cuando COOKIE_DOMAIN está configurado
+  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 días
+  res.cookie('token', jwtToken, getAuthCookieOptions(maxAge));
 
   // AI_DECISION: Usar redirectPath del state parseado, agregar success param según contexto
   // Justificación: Diferentes contextos necesitan diferentes mensajes de éxito

@@ -6,6 +6,8 @@ node_modules/
 # Testing
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
 
 # Production
 build/
@@ -81,9 +83,13 @@ __pycache__/
 *-AUDIT_REPORT.md
 *-AUDIT_REPORT.json
 dev-logs.txt
+lint_results.txt
 *.csv
 *.xlsx
 !apps/api/test-fixtures/**/*.csv
+
+# AWS/Infrastructure logs
+aws_*.log
 
 # Sensitive data files - DO NOT COMMIT
 data/*.csv

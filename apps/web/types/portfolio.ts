@@ -74,12 +74,12 @@ export interface PortfolioWithLines extends Portfolio {
  * Tipos para composición de portfolio (UI)
  * Extiende ComponentBase para compartir estructura con BenchmarkComponent
  */
-type PortfolioComponent = ComponentBase;
+export type PortfolioComponent = ComponentBase;
 
 /**
  * Datos de formulario de portfolio
  */
-interface PortfolioFormData {
+export interface PortfolioFormData {
   name: string;
   description: string;
   riskLevel: RiskLevel;

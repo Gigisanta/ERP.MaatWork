@@ -20,6 +20,18 @@ vi.mock('../auth/useRequireAuth', () => ({
   })),
 }));
 
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: vi.fn(() => ({
+    mutateUser: vi.fn(),
+  })),
+}));
+
+vi.mock('@/lib/hooks/useToast', () => ({
+  useToast: vi.fn(() => ({
+    showToast: vi.fn(),
+  })),
+}));
+
 vi.mock('../components/PageTitleContext', () => ({
   usePageTitle: vi.fn(),
 }));

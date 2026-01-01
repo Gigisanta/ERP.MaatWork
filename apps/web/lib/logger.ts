@@ -96,7 +96,7 @@ class ClientLogger {
           this.userId = payload.id;
           this.userRole = payload.role;
         }
-      } catch (error) {
+      } catch {
         // Ignorar errores de decodificación de token
       }
     }

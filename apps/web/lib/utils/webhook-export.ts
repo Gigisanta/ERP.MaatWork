@@ -18,7 +18,8 @@ import { ApiError } from '@/lib/api-client';
 type WebhookMetadata = ApiWebhookMetadata;
 type WebhookResult = ApiWebhookResult;
 
-interface WebhookPayload {
+/** Estructura del payload enviado al webhook (para documentación) */
+interface _WebhookPayload {
   contacts: Contact[];
   metadata: WebhookMetadata;
 }

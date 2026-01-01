@@ -36,10 +36,12 @@ export default defineConfig({
   // Chromium-only by default, multi-browser via MULTI_BROWSER=true
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    ...(MULTI_BROWSER ? [
-      { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-      { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    ] : []),
+    ...(MULTI_BROWSER
+      ? [
+          { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+          { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+        ]
+      : []),
   ],
   reporter: [['list'], ['html', { open: 'never' }]],
   webServer: {

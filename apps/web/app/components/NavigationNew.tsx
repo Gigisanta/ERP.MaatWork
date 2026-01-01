@@ -103,30 +103,27 @@ CustomLink.displayName = 'CustomLink';
 
 /**
  * Construye secciones de sidebar para Advisor (Asesor)
- * Flujo: Trabajo diario → Inversiones → Equipos → Herramientas
+ * Flujo simplificado: Principal → Más opciones
  */
 function getAdvisorSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
+      items: [
+        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
+        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
+        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
+        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
+        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
+        { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
+      ],
     },
     {
-      title: 'Inversiones',
-      items: [{ label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const }],
-    },
-    {
-      title: 'Equipos',
-      items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
-    },
-    {
-      title: 'Herramientas',
+      title: 'Más opciones',
       items: [
         { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
         { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
-        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
-        { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
   ];
@@ -134,110 +131,71 @@ function getAdvisorSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Manager (Gerente)
- * Flujo: Trabajo diario → Inversiones → Equipos → Métricas → Herramientas → Admin básico
+ * Flujo simplificado: Principal → Más opciones
  */
 function getManagerSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
-    },
-    {
-      title: 'Inversiones',
-      items: [{ label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const }],
-    },
-    {
-      title: 'Equipos',
-      items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
-    },
-    {
-      title: 'Métricas',
       items: [
-        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
-        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
-      ],
-    },
-    {
-      title: 'Herramientas',
-      items: [
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
+        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
+        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
+        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
+        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Administración',
-      items: [{ label: 'Panel Principal', href: '/admin', icon: 'Settings' as const }],
+      title: 'Más opciones',
+      items: [
+        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
+        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
+        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
+        { label: 'Panel Admin', href: '/admin', icon: 'Settings' as const },
+      ],
     },
   ];
 }
 
 /**
  * Construye secciones de sidebar para Admin (Administrador)
- * Flujo: Trabajo diario → Inversiones → Equipos → Métricas → Automatización → Herramientas → Admin completo → Perfil
+ * Flujo simplificado: Principal → Más opciones
  */
 function getAdminSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
-    },
-    {
-      title: 'Inversiones',
       items: [
+        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
+        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
         { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Benchmarks', href: '/benchmarks', icon: 'BarChart3' as const },
-      ],
-    },
-    {
-      title: 'Equipos',
-      items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
-    },
-    {
-      title: 'Métricas',
-      items: [
-        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
-        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
-      ],
-    },
-    {
-      title: 'Automatización',
-      items: [
-        { label: 'Pipeline', href: '/pipeline', icon: 'list' as const },
-        { label: 'Automations', href: '/automations', icon: 'Settings' as const },
-        { label: 'Plan de Carrera', href: '/career-plan', icon: 'Book' as const },
-        { label: 'Notificaciones', href: '/notifications', icon: 'Info' as const },
-      ],
-    },
-    {
-      title: 'Herramientas',
-      items: [
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
+        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Administración',
+      title: 'Más opciones',
       items: [
-        { label: 'Panel Principal', href: '/admin', icon: 'Settings' as const },
-        { label: 'Usuarios y Cuentas', href: '/admin/users', icon: 'Users' as const },
+        { label: 'Benchmarks', href: '/benchmarks', icon: 'BarChart3' as const },
+        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
+        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
+        { label: 'Automations', href: '/automations', icon: 'Settings' as const },
+        { label: 'Plan de Carrera', href: '/career-plan', icon: 'Book' as const },
+        { label: 'Notificaciones', href: '/notifications', icon: 'Info' as const },
+        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
+        { label: 'Panel Admin', href: '/admin', icon: 'Settings' as const },
+        { label: 'Usuarios', href: '/admin/users', icon: 'Users' as const },
         { label: 'AUM y Brokers', href: '/admin/aum', icon: 'BarChart2' as const },
         { label: 'Performance', href: '/admin/performance', icon: 'TrendingUp' as const },
-        {
-          label: 'Configuración AUM',
-          href: '/admin/settings/aum-advisors',
-          icon: 'Settings' as const,
-        },
+        { label: 'Config AUM', href: '/admin/settings/aum-advisors', icon: 'Settings' as const },
+        { label: 'Mi Perfil', href: '/profile', icon: 'User' as const },
       ],
-    },
-    {
-      title: 'Perfil',
-      items: [{ label: 'Mi Perfil', href: '/profile', icon: 'User' as const }],
     },
   ];
 }
@@ -264,35 +222,29 @@ function getOwnerSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Staff (Administrativo)
- * Flujo: Trabajo diario → Inversiones → Equipos → Herramientas → Gestión AUM
+ * Flujo simplificado: Principal → Más opciones
  */
 function getStaffSections(): SidebarSection[] {
   return [
     {
       title: 'Principal',
-      items: [{ label: 'Contactos', href: '/contacts', icon: 'Contact' as const }],
-    },
-    {
-      title: 'Inversiones',
-      items: [{ label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const }],
-    },
-    {
-      title: 'Equipos',
-      items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
-    },
-    {
-      title: 'Herramientas',
       items: [
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
-        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'TrendingUp' as const },
+        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
+        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
+        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
+        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
         { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Gestión',
-      items: [{ label: 'AUM', href: '/admin/aum', icon: 'BarChart2' as const }],
+      title: 'Más opciones',
+      items: [
+        { label: 'AUM', href: '/admin/aum', icon: 'BarChart2' as const },
+        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
+      ],
     },
   ];
 }

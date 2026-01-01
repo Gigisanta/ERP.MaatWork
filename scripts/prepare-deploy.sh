@@ -41,3 +41,5 @@ echo "✅ Preparation complete!"
 echo "👉 You can now run: pm2 start ecosystem.config.js"
 
 
+
+
