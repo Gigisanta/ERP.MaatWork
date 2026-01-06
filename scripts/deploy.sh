@@ -330,6 +330,9 @@ fi  # End SKIP_TESTS check
 # =============================================================================
 log "🏗️  Construyendo paquetes compartidos..."
 
+log "   Building @maatwork/types..."
+pnpm -F @maatwork/types build
+
 log "   Building @maatwork/db..."
 pnpm -F @maatwork/db build
 
