@@ -5,15 +5,21 @@ set -e
 # MAATWORK - Deploy Script
 # =============================================================================
 # Este script despliega la última versión de master en el servidor
-# Uso: ./deploy.sh [--skip-tests]
+# Uso: ./deploy.sh [--skip-tests] [--no-cache]
+# 
+# Opciones:
+#   --skip-tests    Salta la ejecución de tests
+#   --no-cache      Ejecuta tests sin usar cache (útil para ejecuciones remotas)
 # =============================================================================
 
 # Opciones
 SKIP_TESTS=false
+NO_CACHE=false
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --skip-tests) SKIP_TESTS=true ;;
+        --no-cache) NO_CACHE=true ;;
         *) echo "Opción desconocida: $1"; exit 1 ;;
     esac
     shift
@@ -186,8 +192,21 @@ run_tests_with_progress() {
     local i=0
     local start_time=$(date +%s)
     
+    # Configurar comando de tests según si se desea cache o no
+    local test_cmd=""
+    if [ "$NO_CACHE" = true ]; then
+        log "   ⚠️  Cache DESHABILITADO - ejecutando tests sin cache"
+        # Usar turbo con --force y --no-cache para deshabilitar cache de Turbo
+        # Pasar --no-cache a Vitest usando -- para pasar argumentos a los scripts subyacentes
+        # --concurrency=4 es opción de turbo, debe ir antes del --
+        test_cmd="pnpm turbo run test:unit --force --no-cache --concurrency=4 -- --no-cache"
+    else
+        # Usar el script normal que aprovecha cache
+        test_cmd="pnpm test"
+    fi
+    
     # Ejecutar tests en background, capturando output
-    pnpm test > "$TEST_LOG" 2>&1 &
+    eval "$test_cmd" > "$TEST_LOG" 2>&1 &
     pid=$!
     
     # Mostrar spinner mientras los tests corren
