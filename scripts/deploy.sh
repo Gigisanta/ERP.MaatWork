@@ -356,8 +356,8 @@ show_test_summary "$TEST_LOG" $TEST_EXIT_CODE
 # Final verification: check log for passed tests count
 if [ $TEST_EXIT_CODE -ne 0 ] && [ -f "$TEST_LOG" ]; then
     # Extract passed and failed counts from log
-    local log_passed=$(grep -oE "Passed:[[:space:]]*[0-9]+" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
-    local log_failed=$(grep -oE "[0-9]+[[:space:]]+failed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    log_passed=$(grep -oE "Passed:[[:space:]]*[0-9]+" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    log_failed=$(grep -oE "[0-9]+[[:space:]]+failed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
     # If we have passed tests and no failures, override exit code
     if [ -n "$log_passed" ] && [ "$log_passed" -gt 0 ] && [ -z "$log_failed" ]; then
         TEST_EXIT_CODE=0
