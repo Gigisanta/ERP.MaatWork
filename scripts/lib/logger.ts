@@ -200,4 +200,3 @@ export const colors = {
   bold: chalk.bold,
   underline: chalk.underline,
 };
-

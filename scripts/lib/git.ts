@@ -235,4 +235,3 @@ export function getRepoInfo(): RepoInfo {
     hasUnpushed: hasUnpushedCommits(),
   };
 }
-

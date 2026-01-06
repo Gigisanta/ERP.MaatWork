@@ -173,7 +173,10 @@ export function moveFile(src: string, dest: string): boolean {
 /**
  * Lista archivos en un directorio
  */
-export function listDir(path: string, options: { recursive?: boolean; filesOnly?: boolean } = {}): string[] {
+export function listDir(
+  path: string,
+  options: { recursive?: boolean; filesOnly?: boolean } = {}
+): string[] {
   const { recursive = false, filesOnly = false } = options;
   const absolutePath = resolve(paths.root, path);
 
@@ -215,7 +218,8 @@ export function findFiles(
   pattern: string | RegExp,
   options: { recursive?: boolean; ignore?: string[] } = {}
 ): string[] {
-  const { recursive = true, ignore = ['node_modules', 'dist', '.next', '.turbo', 'coverage'] } = options;
+  const { recursive = true, ignore = ['node_modules', 'dist', '.next', '.turbo', 'coverage'] } =
+    options;
 
   const files = listDir(dir, { recursive, filesOnly: true });
   const regex = typeof pattern === 'string' ? new RegExp(pattern.replace(/\*/g, '.*')) : pattern;
@@ -325,4 +329,3 @@ export function createFromTemplate(
 
   return writeText(destPath, content);
 }
-

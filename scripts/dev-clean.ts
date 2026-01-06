@@ -203,4 +203,3 @@ async function cleanEnvironment(): Promise<void> {
 
 // Ejecutar
 cleanEnvironment();
-

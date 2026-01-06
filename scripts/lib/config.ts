@@ -191,4 +191,3 @@ export function getWorkspaceFromPath(filePath: string): (typeof workspaces)[numb
   const absolutePath = resolve(filePath);
   return workspaces.find((ws) => absolutePath.startsWith(ws.path)) ?? null;
 }
-

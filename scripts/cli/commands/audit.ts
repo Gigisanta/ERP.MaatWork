@@ -65,11 +65,18 @@ function codeCommand(): Command {
       logger.newline();
       logger.subheader('Resumen de Auditoría');
 
-      console.log(`  Código muerto: ${results.knip.success ? colors.success('LIMPIO') : colors.error('PROBLEMAS')}`);
-      console.log(`  Tipos 'any': ${results.anyTypes.count > 0 ? colors.warning(String(results.anyTypes.count)) : colors.success('0')}`);
-      console.log(`  Barrel exports: ${results.barrels.count > 0 ? colors.warning(String(results.barrels.count)) : colors.success('0')}`);
+      console.log(
+        `  Código muerto: ${results.knip.success ? colors.success('LIMPIO') : colors.error('PROBLEMAS')}`
+      );
+      console.log(
+        `  Tipos 'any': ${results.anyTypes.count > 0 ? colors.warning(String(results.anyTypes.count)) : colors.success('0')}`
+      );
+      console.log(
+        `  Barrel exports: ${results.barrels.count > 0 ? colors.warning(String(results.barrels.count)) : colors.success('0')}`
+      );
 
-      const scoreColor = totalScore >= 80 ? colors.success : totalScore >= 60 ? colors.warning : colors.error;
+      const scoreColor =
+        totalScore >= 80 ? colors.success : totalScore >= 60 ? colors.warning : colors.error;
       console.log(`\n  ${colors.bold('Cleanliness Score:')} ${scoreColor(`${totalScore}/100`)}`);
 
       if (!results.knip.success && options.fix) {
@@ -84,28 +91,26 @@ function codeCommand(): Command {
 }
 
 function depsCommand(): Command {
-  return new Command('deps')
-    .description('Auditoría de dependencias')
-    .action(async () => {
-      logger.header('Auditoría de Dependencias');
+  return new Command('deps').description('Auditoría de dependencias').action(async () => {
+    logger.header('Auditoría de Dependencias');
 
-      // Outdated
-      logger.info('Verificando dependencias desactualizadas...');
-      exec('pnpm outdated', { cwd: paths.root, stdio: 'inherit' });
+    // Outdated
+    logger.info('Verificando dependencias desactualizadas...');
+    exec('pnpm outdated', { cwd: paths.root, stdio: 'inherit' });
 
-      logger.newline();
+    logger.newline();
 
-      // Audit de seguridad
-      logger.info('Verificando vulnerabilidades...');
-      const auditResult = exec('pnpm audit', { cwd: paths.root, silent: true });
+    // Audit de seguridad
+    logger.info('Verificando vulnerabilidades...');
+    const auditResult = exec('pnpm audit', { cwd: paths.root, silent: true });
 
-      if (auditResult.success) {
-        logger.success('No se encontraron vulnerabilidades');
-      } else {
-        logger.warn('Se encontraron algunas vulnerabilidades');
-        console.log(auditResult.stdout);
-      }
-    });
+    if (auditResult.success) {
+      logger.success('No se encontraron vulnerabilidades');
+    } else {
+      logger.warn('Se encontraron algunas vulnerabilidades');
+      console.log(auditResult.stdout);
+    }
+  });
 }
 
 function bundleCommand(): Command {
@@ -261,4 +266,3 @@ function walkDir(dir: string, callback: (filePath: string) => void): void {
     // Ignorar errores de lectura de directorio
   }
 }
-

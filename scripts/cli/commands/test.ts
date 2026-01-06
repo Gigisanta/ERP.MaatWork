@@ -123,11 +123,7 @@ function coverageCommand(): Command {
 
       logger.success('Cobertura generada');
       logger.info('Reportes disponibles en:');
-      logger.list([
-        'apps/api/coverage/',
-        'apps/web/coverage/',
-        'packages/ui/coverage/',
-      ]);
+      logger.list(['apps/api/coverage/', 'apps/web/coverage/', 'packages/ui/coverage/']);
     });
 }
 
@@ -171,4 +167,3 @@ function affectedCommand(): Command {
       logger.success('Tests afectados completados');
     });
 }
-

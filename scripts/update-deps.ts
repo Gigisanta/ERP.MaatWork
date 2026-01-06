@@ -29,7 +29,9 @@ interface CategorizedUpdates {
 /**
  * Obtener paquetes desactualizados
  */
-async function getOutdatedPackages(): Promise<Record<string, { current: string; latest: string; workspace?: string }>> {
+async function getOutdatedPackages(): Promise<
+  Record<string, { current: string; latest: string; workspace?: string }>
+> {
   try {
     const result = await execAsync('pnpm outdated --json', { cwd: paths.root, silent: true });
 
@@ -41,7 +43,10 @@ async function getOutdatedPackages(): Promise<Record<string, { current: string; 
       return JSON.parse(result.stdout.trim());
     } catch {
       // Intentar parsear línea por línea (ndjson)
-      const lines = result.stdout.trim().split('\n').filter((line) => line.trim());
+      const lines = result.stdout
+        .trim()
+        .split('\n')
+        .filter((line) => line.trim());
       const packages: Record<string, { current: string; latest: string; workspace?: string }> = {};
 
       for (const line of lines) {
@@ -216,4 +221,3 @@ main().catch((error) => {
   logger.error('Error fatal', error);
   process.exit(1);
 });
-

@@ -190,9 +190,12 @@ function backupCommand(): Command {
         }
 
         const dbUrl = dbUrlMatch[1];
-        const result = await execAsync(`docker exec -i $(docker ps -qf "name=postgres") pg_dump "${dbUrl}" > "${backupFile}"`, {
-          cwd: paths.root,
-        });
+        const result = await execAsync(
+          `docker exec -i $(docker ps -qf "name=postgres") pg_dump "${dbUrl}" > "${backupFile}"`,
+          {
+            cwd: paths.root,
+          }
+        );
 
         if (!result.success) {
           throw new Error(result.stderr || 'Error creando backup');
@@ -237,9 +240,12 @@ function restoreCommand(): Command {
         }
 
         const dbUrl = dbUrlMatch[1];
-        const result = await execAsync(`docker exec -i $(docker ps -qf "name=postgres") psql "${dbUrl}" < "${backupPath}"`, {
-          cwd: paths.root,
-        });
+        const result = await execAsync(
+          `docker exec -i $(docker ps -qf "name=postgres") psql "${dbUrl}" < "${backupPath}"`,
+          {
+            cwd: paths.root,
+          }
+        );
 
         if (!result.success) {
           throw new Error(result.stderr || 'Error restaurando backup');
@@ -249,4 +255,3 @@ function restoreCommand(): Command {
       logger.success('Base de datos restaurada correctamente');
     });
 }
-

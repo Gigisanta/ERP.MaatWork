@@ -4,9 +4,9 @@
   "private": true,
   "description": "Python FastAPI microservice for financial calculations and market data",
   "scripts": {
-    "dev": "node ../../scripts/run-python-service.js",
+    "dev": "python main.py",
     "install": "node ../../scripts/install-python-deps.js",
-    "check": "node ../../scripts/check-python-deps.js",
+    "check": "python --version",
     "start": "python main.py",
     "test": "python -m pytest tests/",
     "test:unit": "python -m pytest tests/",

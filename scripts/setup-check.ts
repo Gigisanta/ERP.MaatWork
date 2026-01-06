@@ -113,7 +113,9 @@ function checkDocker(): boolean {
       message: 'Docker no está instalado',
       critical: true,
     });
-    logger.error('Docker no está instalado. Descarga desde: https://www.docker.com/products/docker-desktop');
+    logger.error(
+      'Docker no está instalado. Descarga desde: https://www.docker.com/products/docker-desktop'
+    );
     hasErrors = true;
     return false;
   }
@@ -278,17 +280,10 @@ export function main(): { hasErrors: boolean; hasWarnings: boolean; results: Che
 }
 
 // Exportar funciones individuales para uso desde otros scripts
-export {
-  checkNodeVersion,
-  checkPnpm,
-  checkDocker,
-  checkPostgreSQL,
-  checkEnvFile,
-};
+export { checkNodeVersion, checkPnpm, checkDocker, checkPostgreSQL, checkEnvFile };
 
 // Ejecutar si es llamado directamente
 if (import.meta.url === `file://${process.argv[1]}`) {
   const { hasErrors: errors } = main();
   process.exit(errors ? 1 : 0);
 }
-

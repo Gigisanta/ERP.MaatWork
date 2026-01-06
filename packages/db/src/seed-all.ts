@@ -336,7 +336,11 @@ async function seedAutomationConfigs() {
       triggerType: 'pipeline_stage_change',
       triggerConfig: { stageName: 'Segunda reunion' },
       enabled: false,
-      config: { subject: 'Confirmación Segunda Reunión', body: '<p>Hola {contact.firstName},</p><p>Te confirmamos la segunda reunión...</p>', senderEmail: '' },
+      config: {
+        subject: 'Confirmación Segunda Reunión',
+        body: '<p>Hola {contact.firstName},</p><p>Te confirmamos la segunda reunión...</p>',
+        senderEmail: '',
+      },
     },
     {
       name: 'mail_bienvenida',
@@ -344,13 +348,21 @@ async function seedAutomationConfigs() {
       triggerType: 'pipeline_stage_change',
       triggerConfig: { stageName: 'Cliente' },
       enabled: false,
-      config: { subject: 'Bienvenido a Cactus', body: '<p>Hola {contact.firstName},</p><p>Bienvenido a bordo...</p>', senderEmail: '' },
+      config: {
+        subject: 'Bienvenido a Cactus',
+        body: '<p>Hola {contact.firstName},</p><p>Bienvenido a bordo...</p>',
+        senderEmail: '',
+      },
     },
   ];
 
   for (const automation of defaultAutomations) {
     try {
-      const [existing] = await db().select().from(automationConfigs).where(eq(automationConfigs.name, automation.name)).limit(1);
+      const [existing] = await db()
+        .select()
+        .from(automationConfigs)
+        .where(eq(automationConfigs.name, automation.name))
+        .limit(1);
       if (existing) {
         console.log(`  ℹ️  Automation '${automation.name}' already exists. Skipping.`);
         continue;
@@ -421,4 +433,10 @@ if (isMainModule) {
     });
 }
 
-export { seedAll, seedPipelineStages, seedLookupTables, seedCareerPlanLevels, seedAutomationConfigs };
+export {
+  seedAll,
+  seedPipelineStages,
+  seedLookupTables,
+  seedCareerPlanLevels,
+  seedAutomationConfigs,
+};

@@ -59,11 +59,7 @@ function componentCommand(): Command {
       logger.success(`Componente creado: ${name}`);
       logger.newline();
       logger.info('Archivos generados:');
-      logger.list([
-        `${name}.tsx`,
-        'index.ts',
-        ...(options.test ? [`${name}.test.tsx`] : []),
-      ]);
+      logger.list([`${name}.tsx`, 'index.ts', ...(options.test ? [`${name}.test.tsx`] : [])]);
 
       logger.newline();
       logger.info(`Ubicación: ${componentDir}`);
@@ -170,10 +166,7 @@ function apiClientCommand(): Command {
       logger.success(`API Client creado: ${domain}`);
       logger.newline();
       logger.info('Archivos generados:');
-      logger.list([
-        `lib/api/${domain}.ts`,
-        `types/${domain}.ts`,
-      ]);
+      logger.list([`lib/api/${domain}.ts`, `types/${domain}.ts`]);
     });
 }
 
@@ -181,7 +174,10 @@ function apiClientCommand(): Command {
 // Template Functions
 // ============================================
 
-function generateComponentFiles(name: string, isUiPackage: boolean): { component: string; index: string; test: string } {
+function generateComponentFiles(
+  name: string,
+  isUiPackage: boolean
+): { component: string; index: string; test: string } {
   const component = `import { type FC } from 'react';
 
 export interface ${name}Props {
@@ -236,9 +232,10 @@ function generateRouteFiles(routePath: string, methods: string[]): { route: stri
   const routeName = routePath.split('/').pop() ?? routePath;
   const pascalName = routeName.charAt(0).toUpperCase() + routeName.slice(1);
 
-  const methodHandlers = methods.map((method) => {
-    const upperMethod = method.toUpperCase();
-    return `
+  const methodHandlers = methods
+    .map((method) => {
+      const upperMethod = method.toUpperCase();
+      return `
 // ${upperMethod} /${routePath}
 router.${method}('/',
   requireAuth,
@@ -247,7 +244,8 @@ router.${method}('/',
     return { message: '${upperMethod} ${routePath} not implemented' };
   })
 );`;
-  }).join('\n');
+    })
+    .join('\n');
 
   const route = `/**
  * Ruta: /${routePath}
@@ -290,7 +288,9 @@ import { app } from '@/index';
 describe('${routePath} routes', () => {
   // TODO: Setup y teardown
 
-  ${methods.map((method) => `
+  ${methods
+    .map(
+      (method) => `
   describe('${method.toUpperCase()} /${routePath}', () => {
     it('should require authentication', async () => {
       const response = await request(app).${method}('/v1/${routePath}');
@@ -298,7 +298,9 @@ describe('${routePath} routes', () => {
     });
 
     // TODO: Agregar más tests
-  });`).join('\n')}
+  });`
+    )
+    .join('\n')}
 });
 `;
 
@@ -458,4 +460,3 @@ export interface List${pascalDomain}Response {
 
   return { api, types };
 }
-

@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent, Text, Stack } from '@maatwork
 import { useCalendarEvents } from '@/lib/api-hooks';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import Link from 'next/link';
-import type { CalendarEvent } from '@maatwork/types';
+import { type CalendarEvent } from '@maatwork/types';
 
 interface CalendarClientProps {
   userId: string;
