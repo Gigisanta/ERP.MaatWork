@@ -73,4 +73,3 @@ seedAutomations()
     console.error('❌ Automation seed failed:', error);
     process.exit(1);
   });
-

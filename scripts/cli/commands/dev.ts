@@ -5,7 +5,16 @@
  */
 
 import { Command } from 'commander';
-import { logger, exec, execAsync, paths, config, pathExists, sleep, withSpinner } from '../../lib/index';
+import {
+  logger,
+  exec,
+  execAsync,
+  paths,
+  config,
+  pathExists,
+  sleep,
+  withSpinner,
+} from '../../lib/index';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -150,4 +159,3 @@ function buildTurboCommand(only: string): string {
 
   return cmd;
 }
-

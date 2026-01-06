@@ -388,7 +388,12 @@ function displayResults(checks: HealthCheck[]): void {
 
   for (const check of checks) {
     const icon = check.status === 'pass' ? '✅' : check.status === 'warn' ? '⚠️' : '❌';
-    const color = check.status === 'pass' ? colors.success : check.status === 'warn' ? colors.warning : colors.error;
+    const color =
+      check.status === 'pass'
+        ? colors.success
+        : check.status === 'warn'
+          ? colors.warning
+          : colors.error;
     console.log(`${icon} ${colors.bold(check.name)}: ${color(check.message)}`);
     if (check.fix && check.status !== 'pass') {
       console.log(`   ${colors.muted('Fix:')} ${check.fix}`);
@@ -402,7 +407,9 @@ function displayResults(checks: HealthCheck[]): void {
   const score = Math.round((passed / total) * 100);
   const scoreColor = score >= 80 ? colors.success : score >= 60 ? colors.warning : colors.error;
 
-  console.log(`\n${colors.bold('Resumen:')} ${passed} passed, ${warned} warnings, ${failed} failed`);
+  console.log(
+    `\n${colors.bold('Resumen:')} ${passed} passed, ${warned} warnings, ${failed} failed`
+  );
   console.log(`${colors.bold('Health Score:')} ${scoreColor(`${score}%`)}\n`);
 }
 
@@ -440,4 +447,3 @@ async function attemptFixes(checks: HealthCheck[]): Promise<void> {
     }
   }
 }
-

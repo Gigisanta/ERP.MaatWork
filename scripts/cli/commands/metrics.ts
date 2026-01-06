@@ -297,9 +297,10 @@ function displayMetrics(metrics: {
     Total: String(metrics.dependencies.total),
     Producción: String(metrics.dependencies.production),
     Desarrollo: String(metrics.dependencies.development),
-    Desactualizadas: metrics.dependencies.outdated > 0
-      ? colors.warning(String(metrics.dependencies.outdated))
-      : colors.success('0'),
+    Desactualizadas:
+      metrics.dependencies.outdated > 0
+        ? colors.warning(String(metrics.dependencies.outdated))
+        : colors.success('0'),
   });
 
   // Technical Debt
@@ -318,16 +319,21 @@ function displayMetrics(metrics: {
   });
 
   // Score
-  const debtScore = Math.max(0, 100 - 
-    metrics.technicalDebt.anyTypes * 0.5 -
-    metrics.technicalDebt.todos * 0.1 -
-    metrics.technicalDebt.fixmes * 0.5 -
-    metrics.technicalDebt.barrelExports * 2
+  const debtScore = Math.max(
+    0,
+    100 -
+      metrics.technicalDebt.anyTypes * 0.5 -
+      metrics.technicalDebt.todos * 0.1 -
+      metrics.technicalDebt.fixmes * 0.5 -
+      metrics.technicalDebt.barrelExports * 2
   );
 
-  const scoreColor = debtScore >= 80 ? colors.success : debtScore >= 60 ? colors.warning : colors.error;
+  const scoreColor =
+    debtScore >= 80 ? colors.success : debtScore >= 60 ? colors.warning : colors.error;
 
-  console.log(`\n  ${colors.bold('Technical Debt Score:')} ${scoreColor(`${Math.round(debtScore)}/100`)}`);
+  console.log(
+    `\n  ${colors.bold('Technical Debt Score:')} ${scoreColor(`${Math.round(debtScore)}/100`)}`
+  );
 }
 
 function walkDir(dir: string, callback: (filePath: string) => void): void {
@@ -353,4 +359,3 @@ function walkDir(dir: string, callback: (filePath: string) => void): void {
 
 // Agregar comando al CLI
 export { metricsCommand as default };
-

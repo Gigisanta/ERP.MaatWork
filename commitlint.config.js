@@ -74,4 +74,3 @@ module.exports = {
   ],
   helpUrl: 'https://www.conventionalcommits.org/',
 };
-

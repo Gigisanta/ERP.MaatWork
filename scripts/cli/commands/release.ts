@@ -57,7 +57,7 @@ function prepareCommand(): Command {
       if (!options.skipVerify) {
         logger.newline();
         logger.info('Ejecutando verificación completa...');
-        
+
         const verifyResult = exec('pnpm verify:all:no-e2e', {
           cwd: paths.root,
           stdio: 'inherit',
@@ -206,59 +206,56 @@ function publishCommand(): Command {
 }
 
 function statusCommand(): Command {
-  return new Command('status')
-    .description('Ver estado del release')
-    .action(async () => {
-      logger.header('Estado de Release');
+  return new Command('status').description('Ver estado del release').action(async () => {
+    logger.header('Estado de Release');
 
-      const branch = getCurrentBranch();
-      const lastTag = getLatestTag();
-      const isDirty = hasUncommittedChanges();
+    const branch = getCurrentBranch();
+    const lastTag = getLatestTag();
+    const isDirty = hasUncommittedChanges();
 
-      // Obtener versión actual
-      const pkgResult = exec('node -p "require(\'./package.json\').version"', {
-        cwd: paths.root,
-        silent: true,
-      });
-      const currentVersion = pkgResult.stdout.trim();
-
-      // Contar changesets pendientes
-      const changesetResult = exec('ls .changeset/*.md 2>/dev/null | grep -v README | wc -l', {
-        cwd: paths.root,
-        silent: true,
-      });
-      const pendingChangesets = parseInt(changesetResult.stdout.trim(), 10) || 0;
-
-      // Contar commits desde último tag
-      let commitsSinceTag = 0;
-      if (lastTag) {
-        const commitsResult = exec(`git rev-list ${lastTag}..HEAD --count`, {
-          cwd: paths.root,
-          silent: true,
-        });
-        commitsSinceTag = parseInt(commitsResult.stdout.trim(), 10) || 0;
-      }
-
-      logger.keyValue({
-        'Rama actual': branch || 'N/A',
-        'Versión actual': currentVersion,
-        'Último tag': lastTag || 'Ninguno',
-        'Commits desde tag': String(commitsSinceTag),
-        'Changesets pendientes': String(pendingChangesets),
-        'Working dir': isDirty ? colors.warning('Sucio') : colors.success('Limpio'),
-      });
-
-      logger.newline();
-
-      if (pendingChangesets > 0) {
-        logger.info('Hay changesets pendientes. Ejecuta:');
-        logger.list(['pnpm mw release prepare']);
-      } else if (commitsSinceTag > 0) {
-        logger.info('Hay commits sin release. Considera crear un changeset:');
-        logger.list(['pnpm mw release changelog --add']);
-      } else {
-        logger.success('Todo está actualizado');
-      }
+    // Obtener versión actual
+    const pkgResult = exec('node -p "require(\'./package.json\').version"', {
+      cwd: paths.root,
+      silent: true,
     });
-}
+    const currentVersion = pkgResult.stdout.trim();
 
+    // Contar changesets pendientes
+    const changesetResult = exec('ls .changeset/*.md 2>/dev/null | grep -v README | wc -l', {
+      cwd: paths.root,
+      silent: true,
+    });
+    const pendingChangesets = parseInt(changesetResult.stdout.trim(), 10) || 0;
+
+    // Contar commits desde último tag
+    let commitsSinceTag = 0;
+    if (lastTag) {
+      const commitsResult = exec(`git rev-list ${lastTag}..HEAD --count`, {
+        cwd: paths.root,
+        silent: true,
+      });
+      commitsSinceTag = parseInt(commitsResult.stdout.trim(), 10) || 0;
+    }
+
+    logger.keyValue({
+      'Rama actual': branch || 'N/A',
+      'Versión actual': currentVersion,
+      'Último tag': lastTag || 'Ninguno',
+      'Commits desde tag': String(commitsSinceTag),
+      'Changesets pendientes': String(pendingChangesets),
+      'Working dir': isDirty ? colors.warning('Sucio') : colors.success('Limpio'),
+    });
+
+    logger.newline();
+
+    if (pendingChangesets > 0) {
+      logger.info('Hay changesets pendientes. Ejecuta:');
+      logger.list(['pnpm mw release prepare']);
+    } else if (commitsSinceTag > 0) {
+      logger.info('Hay commits sin release. Considera crear un changeset:');
+      logger.list(['pnpm mw release changelog --add']);
+    } else {
+      logger.success('Todo está actualizado');
+    }
+  });
+}
