@@ -206,7 +206,7 @@ run_tests_with_progress() {
         test_cmd="pnpm turbo run test:unit --force --no-cache --concurrency=4 -- --no-cache"
     else
         # Usar el script normal que aprovecha cache
-        test_cmd="pnpm test"
+        test_cmd="pnpm turbo run test:unit --concurrency=4"
     fi
     
     # Ejecutar tests en background, capturando output
@@ -234,7 +234,23 @@ show_test_summary() {
     local exit_code=$2
     
     # Extraer números
-    local passed=$(grep -oE "Passed:[^0-9]*[0-9]+" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | tail -1 || grep -oE "[0-9]+.*(passed|Passed)" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | tail -1 || grep -oE "[0-9]+.*test" "$log_file" 2>/dev/null | head -1 | grep -oE "[0-9]+" | tail -1 || echo "0")
+    # Extract passed tests count - try multiple formats
+    local passed=$(grep -oE "Passed:[[:space:]]*[0-9]+" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    if [ -z "$passed" ]; then
+        passed=$(grep -oE "[0-9]+[[:space:]]+passed" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    if [ -z "$passed" ]; then
+        passed=$(grep -oE "Test Files:[^0-9]*[0-9]+[^0-9]*passed" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    if [ -z "$passed" ]; then
+        passed=$(grep -oE "Tests:[^0-9]*[0-9]+[^0-9]*passed" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    # If still no match and exit code is 0, assume tests passed (count may not be in log)
+    if [ -z "$passed" ] && [ $exit_code -eq 0 ]; then
+        # Try to find any number followed by "test" or "tests"
+        passed=$(grep -oE "[0-9]+[[:space:]]+test" "$log_file" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    passed=${passed:-0}
     local failed=$(grep -oP '\d+(?= failed)' "$log_file" 2>/dev/null | tail -1)
     local skipped=$(grep -oP '\d+(?= skipped)' "$log_file" 2>/dev/null | tail -1)
     
