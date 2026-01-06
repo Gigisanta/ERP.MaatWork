@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Badge, Icon } from '@maatwork/ui';
+import { Button, Badge, Icon, DropdownMenu, DropdownMenuItem } from '@maatwork/ui';
 import SearchAutocomplete from './SearchAutocomplete';
 import FiltersDropdown from './FiltersDropdown';
 
@@ -58,10 +58,10 @@ export default function ContactsToolbar({
     <div className="sticky top-0 z-10 bg-surface border border-border rounded-md shadow-sm">
       <div className="p-2 md:p-3">
         <div className="flex flex-col gap-2">
-          {/* First row: Controls */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Search input with autocomplete */}
-            <div className="relative w-[220px] shrink-0">
+          {/* First row: Main controls - Simplified */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Search input - Prominent */}
+            <div className="relative flex-1 min-w-[200px] max-w-[400px]">
               <SearchAutocomplete
                 inputRef={searchInputRef}
                 placeholder="Buscar contactos... (Ctrl+K)"
@@ -72,7 +72,18 @@ export default function ContactsToolbar({
               />
             </div>
 
-            {/* Filters dropdown */}
+            {/* Nuevo Contacto - Primary action, highlighted */}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => router.push('/contacts/new')}
+              className="shrink-0"
+            >
+              <Icon name="plus" size={16} className="mr-1.5" />
+              Nuevo Contacto
+            </Button>
+
+            {/* Filters dropdown - Collapsed */}
             <FiltersDropdown
               selectedStage={selectedStage}
               selectedTags={selectedTags}
@@ -83,43 +94,38 @@ export default function ContactsToolbar({
               onManageTagsClick={onManageTagsClick}
             />
 
-            {/* Pipeline button (Kanban view) */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/pipeline')}
-              title="Ver en formato Pipeline (Kanban)"
+            {/* More actions menu - Secondary actions grouped */}
+            <DropdownMenu
+              trigger={
+                <Button variant="outline" size="sm" className="shrink-0">
+                  <Icon name="more-vertical" size={16} />
+                  <span className="hidden sm:inline ml-1.5">Más</span>
+                </Button>
+              }
             >
-              <Icon name="grid" size={16} className="mr-1.5" />
-              Pipeline
-            </Button>
-
-            {/* Action buttons */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push('/automations')}
-              title="Abrir Automatizaciones"
-            >
-              <Icon name="Settings" size={16} className="mr-1.5" />
-              Automatizaciones
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={() => router.push('/contacts/metrics')}>
-              Métricas
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={() => router.push('/contacts/new')}>
-              <Icon name="plus" size={16} className="mr-1.5" />
-              Nuevo Contacto
-            </Button>
+              <DropdownMenuItem onClick={() => router.push('/pipeline')}>
+                <Icon name="grid" size={16} className="mr-2" />
+                Ver Pipeline
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/contacts/metrics')}>
+                <Icon name="BarChart2" size={16} className="mr-2" />
+                Métricas
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/automations')}>
+                <Icon name="Settings" size={16} className="mr-2" />
+                Automatizaciones
+              </DropdownMenuItem>
+            </DropdownMenu>
           </div>
 
           {/* Second row: Active filter chips */}
           {hasActiveFilters && (
             <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-border">
               {advisorIdFilter && filteredAdvisor && (
-                <Badge className="flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs">
+                <Badge
+                  variant="default"
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 text-xs"
+                >
                   Asesor: {filteredAdvisor?.fullName || filteredAdvisor?.email || 'Desconocido'}
                   <button
                     onClick={onClearAdvisorFilter}

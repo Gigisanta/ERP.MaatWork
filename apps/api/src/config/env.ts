@@ -21,7 +21,15 @@ if (result.error && existsSync(envPath)) {
 
 // Validar variables requeridas
 const required = ['DATABASE_URL', 'PORT'];
-const requiredInProduction = ['JWT_SECRET'];
+// AI_DECISION: Agregar CORS_ORIGINS, FRONTEND_URL, COOKIE_DOMAIN como requeridas en producción
+// Justificación: Estas variables son críticas para que la app funcione correctamente con Cloudflare
+// Impacto: Deploy falla temprano si faltan variables, evitando errores difíciles de diagnosticar
+const requiredInProduction = [
+  'JWT_SECRET',
+  'CORS_ORIGINS', // Necesario para permitir requests del frontend
+  'FRONTEND_URL', // Necesario para redirects de OAuth
+  'COOKIE_DOMAIN', // Necesario para que cookies funcionen con Cloudflare
+];
 const missing = required.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
@@ -41,6 +49,20 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
   if (missingProd.length > 0) {
     throw new Error(`Missing required production env vars: ${missingProd.join(', ')}`);
   }
+
+  // Validar formato de CORS_ORIGINS (debe ser URLs separadas por coma)
+  const corsOrigins = process.env.CORS_ORIGINS;
+  if (corsOrigins && !corsOrigins.startsWith('http')) {
+    console.warn(
+      'Warning: CORS_ORIGINS should be comma-separated URLs (e.g., https://maat.work,https://www.maat.work)'
+    );
+  }
+
+  // Validar que FRONTEND_URL sea HTTPS en producción
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (frontendUrl && !frontendUrl.startsWith('https://')) {
+    console.warn('Warning: FRONTEND_URL should use HTTPS in production');
+  }
 }
 
 export const env = {
@@ -52,6 +74,11 @@ export const env = {
   CSP_ENABLED: process.env.CSP_ENABLED === 'true',
   JWT_SECRET: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  // Cookie Configuration
+  // AI_DECISION: Exponer COOKIE_DOMAIN para uso en cookie-config.ts
+  // Justificación: Necesario para que cookies funcionen correctamente con Cloudflare/subdominios
+  // Impacto: Cookies se establecen con domain correcto (.maat.work) en producción
+  COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || '', // e.g., '.maat.work' para producción
   // Google OAuth2 Configuration
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
   GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',

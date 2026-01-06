@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Pre-push hook
+# Ejecuta verificaciones antes de hacer push
+
+echo "🔍 Verificando antes de push..."
+
+# Verificar tipos (rápido)
+pnpm typecheck --filter=@maatwork/ui --filter=@maatwork/db --filter=@maatwork/types
+
+# Ejecutar tests afectados (opcional, comentar si es muy lento)
+# pnpm test:affected
+
+echo "✅ Verificación pre-push completada"
+

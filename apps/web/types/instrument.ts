@@ -62,7 +62,7 @@ export interface CreateInstrumentResponse {
 /**
  * Snapshot de precio
  */
-interface PriceSnapshot extends BaseEntity {
+export interface PriceSnapshot extends BaseEntity {
   id: string; // Explicitly include id from BaseEntity for TypeScript resolution
   instrumentId: string;
   symbol: string;

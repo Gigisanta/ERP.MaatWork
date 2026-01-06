@@ -35,6 +35,7 @@ import InlineTagsEditor from './components/InlineTagsEditor';
 import InlineTextInput from './components/InlineTextInput';
 import ContactsToolbar from './components/ContactsToolbar';
 import InteractionCounter from './components/InteractionCounter';
+import { ColorLegend } from './components/ColorLegend';
 import dynamic from 'next/dynamic';
 
 // Lazy load Modals
@@ -61,6 +62,7 @@ import {
   ProgressBar,
   Modal,
   ModalContent,
+  Badge,
   DataTable,
   ConfirmDialog,
   type Column,
@@ -519,6 +521,18 @@ export default function ContactsPage() {
           />
         </div>
 
+        {/* Color Legend */}
+        {filteredContacts.length > 0 && (
+          <div
+            className={`transition-all duration-500 ease-out ${
+              mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+            }`}
+            style={{ transitionDelay: '75ms' }}
+          >
+            <ColorLegend />
+          </div>
+        )}
+
         {/* Table view */}
         <div
           className={`transition-all duration-500 ease-out ${
@@ -554,6 +568,7 @@ export default function ContactsPage() {
                     Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
                   }
                   allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+                  getRowStyle={getRowStyle}
                   savingContactId={contactActions.savingContactId}
                   onStageChange={contactActions.handleStageChange}
                   onTagsChange={contactActions.handleTagsChange}
@@ -664,6 +679,7 @@ function MobileContactList({
   contacts,
   pipelineStages,
   allTags,
+  getRowStyle,
   savingContactId,
   onStageChange,
   onTagsChange,
@@ -677,6 +693,7 @@ function MobileContactList({
   contacts: Contact[];
   pipelineStages: PipelineStage[];
   allTags: Tag[];
+  getRowStyle: (contact: Contact) => React.CSSProperties;
   savingContactId: string | null;
   onStageChange: (contactId: string, stageId: string | null) => void;
   onTagsChange: (contactId: string, add: string[], remove: string[]) => void;
@@ -758,84 +775,65 @@ function MobileContactList({
                 paddingBottom: '12px', // Gap between items
               }}
             >
-              <div className="p-3 rounded-lg border border-border bg-surface shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden">
-                {/* Header: Name and Action */}
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    onClick={() => router.push(`/contacts/${contact.id}`)}
-                    className="cursor-pointer flex-1"
-                  >
-                    <Text weight="semibold" className="text-base text-primary">
+              <div
+                className="p-3 rounded-lg border-l-4 bg-surface shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden cursor-pointer"
+                style={getRowStyle(contact)}
+                onClick={() => router.push(`/contacts/${contact.id}`)}
+              >
+                {/* Simplified: Name, Stage, Urgency Indicator */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <Text weight="semibold" className="text-base text-primary truncate">
                       {contact.fullName}
                     </Text>
-                    {contact.email && (
-                      <Text size="xs" color="secondary" className="mt-0.5 block truncate">
-                        {contact.email}
-                      </Text>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => router.push(`/contacts/${contact.id}`)}
-                    className="h-8 w-8 p-0 text-secondary shrink-0"
-                  >
-                    <Icon name="ChevronRight" size={18} />
-                  </Button>
-                </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <InlineStageSelect
+                        contact={contact}
+                        pipelineStages={pipelineStages}
+                        isSaving={savingContactId === contact.id}
+                        onStageChange={onStageChange}
+                        onMutate={mutateContacts}
+                        onError={(error: Error) =>
+                          showToast('Error al avanzar etapa', error.message, 'error')
+                        }
+                      />
+                      {/* Urgency indicator */}
+                      {(() => {
+                        const stage = pipelineStages.find((s) => s.id === contact.pipelineStageId);
+                        if (stage?.name.toLowerCase() === 'cliente') return null;
 
-                {/* Middle: Stage and Interaction */}
-                <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <InlineStageSelect
-                      contact={contact}
-                      pipelineStages={pipelineStages}
-                      isSaving={savingContactId === contact.id}
-                      onStageChange={onStageChange}
-                      onMutate={mutateContacts}
-                      onError={(error: Error) =>
-                        showToast('Error al avanzar etapa', error.message, 'error')
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col items-end shrink-0 pl-2 border-l border-border/50">
-                    <InteractionCounter
-                      contact={contact}
-                      onUpdate={mutateContacts}
-                      onError={(error) =>
-                        showToast('Error al actualizar interacción', error.message, 'error')
-                      }
-                    />
-                    <Text
-                      size="xs"
-                      color="muted"
-                      className="mt-1 text-[10px] uppercase tracking-wider"
-                    >
-                      {formatTimeAgo(contact.contactLastTouchAt)}
-                    </Text>
-                  </div>
-                </div>
+                        if (!contact.contactLastTouchAt) {
+                          return (
+                            <Badge variant="error" className="text-xs">
+                              Sin contacto
+                            </Badge>
+                          );
+                        }
 
-                {/* Bottom: Tags and Next Step */}
-                <div className="space-y-3 pt-2 border-t border-border/50">
-                  <div className="w-full">
-                    <InlineTagsEditor
-                      contact={contact}
-                      allTags={allTags}
-                      isSaving={savingContactId === contact.id}
-                      onTagsChange={onTagsChange}
-                      onManageTagsClick={onManageTagsClick}
-                    />
+                        const daysSinceTouch = Math.floor(
+                          (new Date().getTime() - new Date(contact.contactLastTouchAt).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+
+                        if (daysSinceTouch >= 14) {
+                          return (
+                            <Badge variant="error" className="text-xs">
+                              Urgente
+                            </Badge>
+                          );
+                        }
+                        if (daysSinceTouch >= 7) {
+                          return (
+                            <Badge variant="warning" className="text-xs">
+                              Atención
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
-                  <div className="w-full">
-                    <InlineTextInput
-                      contact={contact}
-                      field="nextStep"
-                      placeholder="Agregar próximo paso..."
-                      isSaving={savingContactId === contact.id}
-                      onSave={onTextInputSave}
-                    />
-                  </div>
+                  <Icon name="ChevronRight" size={18} className="text-text-muted shrink-0" />
                 </div>
               </div>
             </div>

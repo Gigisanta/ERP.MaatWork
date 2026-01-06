@@ -1,7 +1,9 @@
-PARALLEL TEST RUN - 2025-12-30T16:52:54.124Z
+PARALLEL TEST RUN - 2025-12-31T23:22:19.822Z
 ================================================================
-Status: SUCCESS ✅
-Duration: 54.53s
+Status: FAILED ❌
+Duration: 37.08s
 Concurrency: 4
 Packages: @maatwork/ui, @maatwork/api, @maatwork/web, @maatwork/analytics-service
 ================================================================
+
+See individual package logs for details.

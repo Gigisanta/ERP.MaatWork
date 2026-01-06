@@ -12,7 +12,7 @@ test.describe('AUM Complete Workflow', () => {
 
     // Upload (handles upload button click and wait)
     await aumPage.uploadFile(sampleFile);
-    
+
     // Verify rows are loaded (Parsed/Matched happens automatically now)
     await aumPage.verifyParsed();
 
@@ -31,7 +31,7 @@ test.describe('AUM Complete Workflow', () => {
     // However, the current FileUploader might just accept it or the backend handles it.
     // If the test expects UI feedback for duplicates:
     await aumPage.uploadFile(sampleFile);
-    
+
     // Check for duplicate warnings or just success if backend merges
     // await expect(page.getByText(/duplicado|duplicate|conflicto/i)).toBeVisible();
     // await aumPage.resolveConflicts();

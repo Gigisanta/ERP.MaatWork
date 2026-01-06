@@ -31,25 +31,29 @@ export class AumPage extends BasePage {
   }
 
   get purgeButton(): Locator {
-    return this.page.getByRole('button', { name: /eliminar todos|delete all/i }).or(this.page.getByTitle(/eliminar todos/i));
+    return this.page
+      .getByRole('button', { name: /eliminar todos|delete all/i })
+      .or(this.page.getByTitle(/eliminar todos/i));
   }
 
   async uploadFile(filePath: string) {
     // Ensure we are on the rows page where the uploader is
     if (!this.page.url().includes('/admin/aum/rows')) {
-        await this.gotoRows();
+      await this.gotoRows();
     }
 
     const absPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
     await this.fileInput.setInputFiles(absPath);
-    
+
     // FileUploader requires clicking "Subir"
     const uploadBtn = this.page.getByRole('button', { name: 'Subir', exact: true });
     await uploadBtn.click();
 
     // Wait for processing
-    await expect(this.page.getByText(/Subiendo|Procesando|Normalizando|Finalizando|Subido/i)).toBeVisible();
-    
+    await expect(
+      this.page.getByText(/Subiendo|Procesando|Normalizando|Finalizando|Subido/i)
+    ).toBeVisible();
+
     // Wait for success message or table update
     await expect(this.page.getByText(/Subido|Completado/i)).toBeVisible({ timeout: 60000 });
   }
@@ -75,7 +79,9 @@ export class AumPage extends BasePage {
 
   async purgeImport() {
     // Click the reset button (Trash icon) in AumAdminActions
-    const trashBtn = this.page.getByRole('button', { name: /eliminar todos|delete all/i }).or(this.page.getByTitle(/eliminar todos/i));
+    const trashBtn = this.page
+      .getByRole('button', { name: /eliminar todos|delete all/i })
+      .or(this.page.getByTitle(/eliminar todos/i));
     await trashBtn.click();
     await this.confirmDialog();
     // Wait for reset to complete

@@ -43,21 +43,72 @@ pnpm dev
 
 Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started) o [Guía de Onboarding](./docs/ONBOARDING.md).
 
-## Comandos Esenciales
+## CLI Unificado
+
+MAATWORK incluye un CLI unificado para todas las operaciones de desarrollo:
 
 ```bash
-pnpm dev              # Desarrollo (todos los servicios)
+pnpm mw <comando> [opciones]
+```
+
+### Comandos Principales
+
+```bash
+# Desarrollo
+pnpm mw dev                    # Iniciar desarrollo
+pnpm mw dev --fast             # Sin validaciones (más rápido)
+pnpm mw dev --only=api,web     # Solo servicios específicos
+
+# Base de Datos
+pnpm mw db migrate             # Ejecutar migraciones
+pnpm mw db seed                # Ejecutar seeds
+pnpm mw db studio              # Abrir Drizzle Studio
+
+# Testing
+pnpm mw test unit              # Tests unitarios
+pnpm mw test e2e               # Tests E2E
+pnpm mw test coverage          # Con cobertura
+
+# Verificación
+pnpm mw health                 # Health check rápido
+pnpm mw health --full          # Verificación completa
+
+# Generadores
+pnpm mw gen component Button   # Nuevo componente
+pnpm mw gen route users/me     # Nueva ruta API
+pnpm mw gen api-client users   # Nuevo cliente API
+
+# Auditoría
+pnpm mw audit code             # Auditoría de código
+pnpm mw metrics                # Métricas del proyecto
+
+# Limpieza
+pnpm mw clean cache            # Limpiar caches
+pnpm mw clean all              # Limpieza completa
+```
+
+Ver [CLI Reference](./docs/CLI.md) para documentación completa.
+
+### Comandos Legacy (aliases)
+
+```bash
+pnpm dev              # = pnpm mw dev
 pnpm typecheck        # Verificar tipos
 pnpm build            # Build completo
 pnpm test             # Tests unitarios
-pnpm test:e2e         # Tests E2E
-pnpm audit:code       # Auditoría completa (código muerto, tipos, barrels)
 ```
-
-Ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#comandos-útiles) para comandos completos.
 
 
 ## Documentación
+
+| Documento | Descripción |
+|-----------|-------------|
+| [CLI Reference](./docs/CLI.md) | Referencia completa del CLI |
+| [Quick Reference](./docs/QUICK-REFERENCE.md) | Cheatsheet de comandos |
+| [Contributing](./docs/CONTRIBUTING.md) | Guía de contribución |
+| [Development](./docs/DEVELOPMENT.md) | Guía de desarrollo |
+| [Architecture](./docs/ARCHITECTURE.md) | Arquitectura del sistema |
+| [Testing](./docs/TESTING.md) | Estrategias de testing |
 
 Ver [documentación completa](./docs/README.md) para todas las guías técnicas.
 

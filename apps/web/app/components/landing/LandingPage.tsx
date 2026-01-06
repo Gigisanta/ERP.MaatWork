@@ -601,17 +601,28 @@ export function LandingPage() {
               <h4 className="text-white font-semibold mb-6">Legal</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a href="#" className="hover:text-violet-500 transition-colors">
+                  <a
+                    href="/legal/terms-of-service.html"
+                    className="hover:text-violet-500 transition-colors"
+                  >
                     Términos y Condiciones
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-violet-500 transition-colors">
+                  <a
+                    href="/legal/privacy-policy.html"
+                    className="hover:text-violet-500 transition-colors"
+                  >
                     Política de Privacidad
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-violet-500 transition-colors">
+                  <a
+                    href="https://www.argentina.gob.ar/servicio/iniciar-un-reclamo-ante-coprec"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-violet-500 transition-colors"
+                  >
                     Defensa del Consumidor
                   </a>
                 </li>

@@ -39,15 +39,22 @@ export const handleGetCurrentUser = createRouteHandler(async (req: Request) => {
   // Justificación: Consistencia con el endpoint /auth/me y soporte para actualizaciones de perfil
   // Impacto: UI de conexión/desconexión funciona correctamente en la página de perfil
   let isGoogleConnected = false;
+  let googleEmail: string | null = null;
   try {
     const [token] = await db()
-      .select({ id: googleOAuthTokens.id })
+      .select({ id: googleOAuthTokens.id, email: googleOAuthTokens.email })
       .from(googleOAuthTokens)
       .where(eq(googleOAuthTokens.userId, user.id))
       .limit(1);
 
-    isGoogleConnected = !!token;
-    req.log.info({ userId, isGoogleConnected }, 'Checked Google connection status in profile');
+    if (token) {
+      isGoogleConnected = true;
+      googleEmail = token.email;
+    }
+    req.log.info(
+      { userId, isGoogleConnected, googleEmail },
+      'Checked Google connection status in profile'
+    );
   } catch (error) {
     // If table doesn't exist yet or DB error, assume not connected but don't fail request
     req.log.warn({ err: error }, 'Failed to check Google connection status');
@@ -56,6 +63,7 @@ export const handleGetCurrentUser = createRouteHandler(async (req: Request) => {
   return {
     ...user,
     isGoogleConnected,
+    googleEmail,
   };
 });
 
@@ -98,15 +106,22 @@ export const handleUpdateCurrentUserProfile = createRouteHandler(async (req: Req
 
   // Also include Google connection status for consistency
   let isGoogleConnected = false;
+  let googleEmail: string | null = null;
   try {
     const [token] = await db()
-      .select({ id: googleOAuthTokens.id })
+      .select({ id: googleOAuthTokens.id, email: googleOAuthTokens.email })
       .from(googleOAuthTokens)
       .where(eq(googleOAuthTokens.userId, userId))
       .limit(1);
 
-    isGoogleConnected = !!token;
-    req.log.info({ userId, isGoogleConnected }, 'Checked Google connection status in profile');
+    if (token) {
+      isGoogleConnected = true;
+      googleEmail = token.email;
+    }
+    req.log.info(
+      { userId, isGoogleConnected, googleEmail },
+      'Checked Google connection status in profile'
+    );
   } catch (error) {
     req.log.warn({ err: error }, 'Failed to check Google connection status');
   }
@@ -114,5 +129,6 @@ export const handleUpdateCurrentUserProfile = createRouteHandler(async (req: Req
   return {
     ...updatedUser,
     isGoogleConnected,
+    googleEmail,
   };
 });

@@ -1,13 +1,35 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { usePageTitle } from '../components/PageTitleContext';
+import { useAuth } from '../auth/AuthContext';
+import { useToast } from '@/lib/hooks/useToast';
 import { Heading, Stack, Spinner, Text } from '@maatwork/ui';
 import EmailAutomationCard from './components/EmailAutomationCard';
 
 export default function AutomationsPage() {
   const { loading } = useRequireAuth();
+  const { mutateUser } = useAuth();
+  const { showToast } = useToast();
   usePageTitle('Automatizaciones');
+
+  // AI_DECISION: Detectar callback de OAuth y actualizar usuario
+  // Justificación: Después del OAuth, el backend redirige con ?google_connect=success
+  //                Necesitamos actualizar el estado del usuario para mostrar "Conectado"
+  // Impacto: UI se actualiza automáticamente después de conectar Google
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('google_connect') === 'success') {
+        mutateUser();
+        // Clean up URL
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+        showToast('Cuenta de Google conectada correctamente', 'success');
+      }
+    }
+  }, [mutateUser, showToast]);
 
   if (loading) {
     return (

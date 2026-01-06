@@ -74,6 +74,9 @@ async function getInitialUser() {
     const response = await getCurrentUser();
     if (response.success && response.data) {
       // Convert UserApiResponse to AuthUser format
+      // AI_DECISION: Incluir isGoogleConnected y googleEmail en el usuario inicial
+      // Justificación: Sin estos campos, el cliente no sabe si Google está conectado
+      // Impacto: EmailAutomationCard muestra correctamente el estado de conexión
       const userData = response.data;
       return {
         id: userData.id,
@@ -81,6 +84,10 @@ async function getInitialUser() {
         role: userData.role,
         fullName: userData.fullName,
         isActive: userData.isActive,
+        // AI_DECISION: Usar ?? false para garantizar que isGoogleConnected sea boolean
+        // Justificación: exactOptionalPropertyTypes requiere valores explícitos
+        isGoogleConnected: userData.isGoogleConnected ?? false,
+        googleEmail: userData.googleEmail ?? null,
       };
     }
   } catch (error) {

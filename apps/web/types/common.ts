@@ -47,7 +47,7 @@ export interface PaginatedResponse<T> extends Omit<ApiResponse<T[]>, 'data'> {
 /**
  * Paginación
  */
-interface Pagination {
+export interface Pagination {
   page: number;
   limit: number;
   total: number;
@@ -57,7 +57,7 @@ interface Pagination {
 /**
  * Opciones de filtrado comunes
  */
-interface FilterOptions {
+export interface FilterOptions {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -88,12 +88,12 @@ export type TimePeriod = '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL';
 /**
  * Toast notification variant
  */
-type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 /**
  * Estado de carga
  */
-interface LoadingState {
+export interface LoadingState {
   isLoading: boolean;
   error?: string | null;
 }

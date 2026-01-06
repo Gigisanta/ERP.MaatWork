@@ -26,21 +26,8 @@ function getBaseUrl(request: NextRequest): string {
   return request.nextUrl.origin;
 }
 
-// Rutas que requieren autenticación
-const protectedRoutes = [
-  '/home',
-  '/contacts',
-  '/portfolios',
-  '/pipeline',
-  '/teams',
-  '/profile',
-  '/admin',
-  '/analytics',
-  '/benchmarks',
-  '/capacitaciones',
-];
-
 // Rutas públicas que no requieren autenticación
+// Nota: Todas las demás rutas están protegidas por defecto
 const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
 
 // Configuración de JWT (Sincronizado con apps/api/src/auth/jwt.ts)

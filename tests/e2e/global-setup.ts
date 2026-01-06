@@ -23,13 +23,15 @@ async function globalSetup(config: FullConfig) {
 
   const adminEmail = process.env.E2E_ADMIN_EMAIL || 'admin@grupoabax.com';
   const adminPassword = process.env.E2E_ADMIN_PASSWORD || 'password123';
-  
+
   const MAX_RETRIES = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`🔐 Global Setup: Authenticating admin user (${adminEmail})... (Attempt ${attempt}/${MAX_RETRIES})`);
+      console.log(
+        `🔐 Global Setup: Authenticating admin user (${adminEmail})... (Attempt ${attempt}/${MAX_RETRIES})`
+      );
 
       // Increased delay for server readiness (3s → 5s)
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -44,7 +46,9 @@ async function globalSetup(config: FullConfig) {
       const passwordInput = page.getByLabel(/contraseña|password/i).first();
       await passwordInput.fill(adminPassword, { timeout: 10000 });
 
-      await page.getByRole('button', { name: /ingresar|login|entrar|iniciar sesión/i }).click({ timeout: 10000 });
+      await page
+        .getByRole('button', { name: /ingresar|login|entrar|iniciar sesión/i })
+        .click({ timeout: 10000 });
 
       // Wait for the dashboard to load (sidebar is a good indicator of successful login)
       console.log('⏳ Waiting for dashboard to load...');
@@ -62,27 +66,31 @@ async function globalSetup(config: FullConfig) {
       // Save state
       await page.context().storageState({ path: authFile });
       console.log(`✅ Global Setup: Auth state saved to ${authFile}`);
-      
+
       // Success - break out of retry loop
       break;
-      
     } catch (error) {
       lastError = error as Error;
-      console.error(`❌ Attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error));
-      
+      console.error(
+        `❌ Attempt ${attempt} failed:`,
+        error instanceof Error ? error.message : String(error)
+      );
+
       if (attempt < MAX_RETRIES) {
         console.log(`⏳ Retrying in 3 seconds...`);
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     }
   }
-  
+
   await browser.close();
-  
+
   // If all retries failed, throw the last error
   if (lastError) {
     console.error('\n❌ Global Setup Failed after all retries: Could not authenticate user.');
-    console.error('Common causes: DB not seeded, wrong credentials, or server not starting correctly.');
+    console.error(
+      'Common causes: DB not seeded, wrong credentials, or server not starting correctly.'
+    );
     throw lastError;
   }
 }

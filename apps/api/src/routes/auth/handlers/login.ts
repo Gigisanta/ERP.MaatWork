@@ -228,14 +228,12 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
   // Actualizar último login
   await db().update(users).set({ lastLogin: new Date() }).where(eq(users.id, user.id));
 
-  // Establecer cookie del servidor
+  // Establecer cookie del servidor usando configuración centralizada
+  // AI_DECISION: Usar getAuthCookieOptions() para consistencia con admin login y logout
+  // Justificación: Configuración centralizada asegura que cookies se creen y limpien correctamente en producción
+  // Impacto: Cookies con domain correcto (.maat.work) cuando COOKIE_DOMAIN está configurado
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 días o 1 día
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge,
-  });
+  res.cookie('token', token, getAuthCookieOptions(maxAge));
 
   const duration = Date.now() - startTime;
   req.log.info(
