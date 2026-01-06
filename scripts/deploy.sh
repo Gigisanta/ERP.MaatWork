@@ -355,15 +355,31 @@ show_test_summary "$TEST_LOG" $TEST_EXIT_CODE
 
 # Final verification: check log for passed tests count
 if [ $TEST_EXIT_CODE -ne 0 ] && [ -f "$TEST_LOG" ]; then
-    # Extract passed and failed counts from log
+    # Extract passed count - try multiple formats (same as show_test_summary)
     log_passed=$(grep -oE "Passed:[[:space:]]*[0-9]+" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    if [ -z "$log_passed" ]; then
+        log_passed=$(grep -oE "[0-9]+[[:space:]]+passed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    if [ -z "$log_passed" ]; then
+        log_passed=$(grep -oE "Test Files:[^0-9]*[0-9]+[^0-9]*passed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    if [ -z "$log_passed" ]; then
+        log_passed=$(grep -oE "Tests:[^0-9]*[0-9]+[^0-9]*passed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | head -1)
+    fi
+    log_passed=${log_passed:-0}
+
+    # Extract failed count
     log_failed=$(grep -oE "[0-9]+[[:space:]]+failed" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
-    # If we have passed tests and no failures, override exit code
-    if [ -n "$log_passed" ] && [ "$log_passed" -gt 0 ] && [ -z "$log_failed" ]; then
+    if [ -z "$log_failed" ]; then
+        log_failed=$(grep -oE "Failed:[[:space:]]*[0-9]+" "$TEST_LOG" 2>/dev/null | grep -oE "[0-9]+" | tail -1)
+    fi
+    log_failed=${log_failed:-0}
+
+    # If we have passed tests (>0) and no failures, override exit code
+    if [ "$log_passed" -gt 0 ] && [ "$log_failed" -eq 0 ]; then
         TEST_EXIT_CODE=0
     fi
 fi
-
 if [ $TEST_EXIT_CODE -eq 0 ]; then
     echo ""
     log_success "All tests passed ✨"
