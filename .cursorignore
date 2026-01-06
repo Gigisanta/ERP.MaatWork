@@ -6,3 +6,46 @@
 !*.env.development
 !*.env.test
 !*.env.production
+
+# =============================================================================
+# ARCHIVOS CRÍTICOS DE INFRAESTRUCTURA Y REDES
+# =============================================================================
+# Estos archivos, si se modifican incorrectamente, pueden romper producción
+# a nivel de redes, seguridad y conectividad.
+# 
+# La IA debe tener EXTREMO cuidado al sugerir cambios en estos archivos.
+# =============================================================================
+
+# Configuración de Nginx (reverse proxy, SSL, puertos, upstreams)
+infrastructure/mvp/nginx.conf
+
+# Configuración de Terraform (Security Groups, VPC, EC2, RDS, Cloudflare)
+infrastructure/terraform/**/*.tf
+infrastructure/terraform/**/*.tfvars
+infrastructure/terraform/**/*.tfstate
+infrastructure/terraform/**/*.tfstate.backup
+
+# Configuración de PM2 (puertos de servicios: 3000, 3001, 3002)
+ecosystem.config.js
+
+# Scripts de deploy que modifican configuración de red
+scripts/deploy.sh
+infrastructure/scripts/deploy.sh
+infrastructure/scripts/deploy.ps1
+
+# Configuración de Cloudflare (SSL mode, DNS, WAF)
+# Nota: Estos están en Terraform, pero se mencionan explícitamente
+
+# =============================================================================
+# NOTA IMPORTANTE
+# =============================================================================
+# Estos archivos NO están en .gitignore porque son parte del código fuente
+# y necesitan versionarse. Sin embargo, están en .cursorignore para que
+# la IA tenga EXTREMO cuidado al sugerir cambios automáticos.
+# 
+# ANTES de modificar estos archivos:
+# 1. Verificar el impacto en producción
+# 2. Probar en ambiente de desarrollo primero
+# 3. Revisar cambios línea por línea
+# 4. Verificar que no se rompan puertos, SSL, o Security Groups
+# =============================================================================

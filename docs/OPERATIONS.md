@@ -13,6 +13,7 @@ Esta guía consolida toda la información sobre deploy, configuración, monitore
 7. [Monitoreo y Métricas](#monitoreo-y-métricas)
 8. [Troubleshooting](#troubleshooting)
 9. [Seguridad y Performance](#seguridad-y-performance)
+10. [Archivos Críticos de Infraestructura](#archivos-críticos-de-infraestructura)
 
 ---
 
@@ -599,9 +600,48 @@ sudo ls -la /etc/ssl/cloudflare/
 
 ---
 
+## Archivos Críticos de Infraestructura
+
+⚠️ **ADVERTENCIA:** Los siguientes archivos son críticos para producción. Si se modifican incorrectamente, pueden romper conectividad, exponer el servidor, o causar downtime.
+
+### Archivos Críticos
+
+1. **`infrastructure/mvp/nginx.conf`**
+   - Configuración de Nginx (puertos 80, 443, SSL, upstreams)
+   - Modificaciones incorrectas rompen HTTPS y routing
+
+2. **`infrastructure/terraform/**/*.tf`**
+   - Configuración de Security Groups, VPC, EC2, RDS, Cloudflare
+   - Modificaciones incorrectas pueden exponer/bloquear el servidor
+
+3. **`ecosystem.config.js`**
+   - Configuración de PM2 (puertos 3000, 3001, 3002)
+   - Modificaciones incorrectas rompen el routing de Nginx
+
+4. **`scripts/deploy.sh`** y `infrastructure/scripts/deploy.sh`
+   - Scripts de deploy que aplican configuración
+   - Cambios incorrectos se aplican directamente a producción
+
+### Protección
+
+- ✅ **Están en `.cursorignore`** - La IA tendrá más cuidado al sugerir cambios
+- ❌ **NO están en `.gitignore`** - Deben versionarse para control de cambios
+
+**Antes de modificar:**
+- [ ] Entender el impacto en producción
+- [ ] Probar en desarrollo primero
+- [ ] Revisar cambios línea por línea
+- [ ] Verificar puertos, SSL, Security Groups
+- [ ] Tener plan de rollback listo
+
+**Documentación completa:** Ver [CRITICAL-INFRASTRUCTURE-FILES.md](./CRITICAL-INFRASTRUCTURE-FILES.md)
+
+---
+
 ## Documentación Relacionada
 
 - [Guía de Base de Datos](./DATABASE.md) - Optimización y configuración de BD
 - [Guía de Desarrollo](./DEVELOPMENT.md) - Guía para desarrolladores
 - [Guía de Arquitectura](./ARCHITECTURE.md) - Arquitectura del sistema
+- [Archivos Críticos de Infraestructura](./CRITICAL-INFRASTRUCTURE-FILES.md) - Archivos críticos que pueden romper producción
 
