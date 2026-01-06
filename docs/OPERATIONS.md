@@ -9,9 +9,10 @@ Esta guía consolida toda la información sobre deploy, configuración, monitore
 3. [Desarrollo Local](#desarrollo-local)
 4. [Base de Datos](#base-de-datos)
 5. [Deploy en Producción](#deploy-en-producción)
-6. [Monitoreo y Métricas](#monitoreo-y-métricas)
-7. [Troubleshooting](#troubleshooting)
-8. [Seguridad y Performance](#seguridad-y-performance)
+6. [Nginx y SSL/TLS](#nginx-y-ssltls)
+7. [Monitoreo y Métricas](#monitoreo-y-métricas)
+8. [Troubleshooting](#troubleshooting)
+9. [Seguridad y Performance](#seguridad-y-performance)
 
 ---
 
@@ -526,6 +527,45 @@ pkill -f "uvicorn.*main:app"
 - **CSP**: Estricta en producción, ajustada por entorno
 - **Cookies httpOnly**: Autenticación usa cookies httpOnly exclusivamente (inmune a XSS)
 - **Secure cookies**: Automático cuando hay HTTPS
+
+### Nginx y SSL/TLS
+
+El servidor de producción usa **Nginx como reverse proxy** con **SSL/TLS** configurado para Cloudflare:
+
+**Configuración:**
+- Archivo: `infrastructure/mvp/nginx.conf`
+- Puerto HTTP (80): Redirige a HTTPS
+- Puerto HTTPS (443): SSL con Cloudflare Origin CA Certificate
+- Certificados: `/etc/ssl/cloudflare/origin.crt` y `origin.key`
+- Protocolos: TLSv1.2, TLSv1.3
+- HTTP/2: Habilitado (directiva `http2 on;` separada)
+
+**Aplicar cambios de nginx:**
+```bash
+# 1. Subir configuración actualizada
+scp infrastructure/mvp/nginx.conf ec2-user@SERVER_IP:/home/ec2-user/
+
+# 2. En el servidor
+sudo cp /home/ec2-user/nginx.conf /etc/nginx/nginx.conf
+sudo nginx -t  # Verificar sintaxis
+sudo systemctl reload nginx  # Aplicar cambios
+```
+
+**Verificar SSL:**
+```bash
+# Verificar que escucha en puerto 443
+sudo ss -tulpn | grep :443
+
+# Verificar certificados
+sudo ls -la /etc/ssl/cloudflare/
+```
+
+**Cloudflare SSL Mode:**
+- Configurado en Terraform: `Full (Strict)`
+- Requiere certificado válido en el servidor
+- Cloudflare valida el certificado antes de conectar
+
+**Documentación completa:** Ver [NGINX-SSL-CONFIGURATION.md](./NGINX-SSL-CONFIGURATION.md)
 
 ### Performance
 

@@ -47,7 +47,7 @@ infrastructure/
 │   ├── README.md                 # Documentación detallada Terraform
 │   └── MIGRATION.md              # Guía de migración desde CDK
 ├── mvp/
-│   └── nginx.conf                # Configuración Nginx
+│   └── nginx.conf                # Configuración Nginx (SSL/HTTPS con Cloudflare)
 ├── scripts/
 │   ├── deploy.sh                 # Script deployment Unix
 │   └── deploy.ps1                # Script deployment Windows
@@ -181,13 +181,38 @@ Verificar que el usuario IAM tenga permisos para:
 
 ## Seguridad
 
+### SSL/TLS con Cloudflare
+
+El proyecto está configurado para usar **Cloudflare Origin CA Certificate** con modo **Full (Strict)**:
+
+- ✅ Certificados SSL instalados en `/etc/ssl/cloudflare/`
+- ✅ Nginx configurado para escuchar en puerto 443 (HTTPS)
+- ✅ HTTP (80) redirige automáticamente a HTTPS (443)
+- ✅ Security Group restringido solo a rangos IP de Cloudflare
+
+**Configuración de Nginx:**
+- Archivo: `infrastructure/mvp/nginx.conf`
+- Certificado: `/etc/ssl/cloudflare/origin.crt`
+- Clave privada: `/etc/ssl/cloudflare/origin.key`
+- Protocolos: TLSv1.2, TLSv1.3
+- HTTP/2 habilitado
+
+**Verificar configuración SSL:**
+```bash
+# Verificar que nginx escucha en puerto 443
+sudo ss -tulpn | grep :443
+
+# Verificar certificados
+sudo ls -la /etc/ssl/cloudflare/
+```
+
 ### Recomendaciones para Producción
 
+- [x] SSL/TLS habilitado con Cloudflare (Full Strict)
+- [x] Security Group restringido a rangos Cloudflare
 - [ ] Limitar acceso SSH por IP específicas
-- [ ] Habilitar SSL/TLS con Cloudflare
 - [ ] Configurar WAF en Cloudflare
 - [ ] Rotar credenciales periódicamente
-- [ ] Usar dominio propio en lugar de IP
 
 ## Soporte
 
