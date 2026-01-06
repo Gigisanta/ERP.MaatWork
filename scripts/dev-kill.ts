@@ -46,4 +46,3 @@ if (config.isWindows) {
 }
 
 process.exit(0);
-

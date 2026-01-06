@@ -56,7 +56,7 @@ module.exports = {
     {
       name: 'web',
       cwd: './apps/web',
-      script: 'npm',
+      script: 'pnpm',
       args: 'start',
       instances: 1,
       autorestart: true,
@@ -74,9 +74,9 @@ module.exports = {
     {
       name: 'analytics',
       cwd: './apps/analytics-service',
-      script: 'python3',
-      args: '-m uvicorn main:app --host 0.0.0.0 --port 3002 --workers 1 --log-level warning',
-      interpreter: 'none', // Ejecutar python3 directamente
+      script: './venv/bin/uvicorn',
+      args: 'main:app --host 0.0.0.0 --port 3002 --workers 1 --log-level warning',
+      interpreter: 'none', // Ejecutar uvicorn directamente desde el venv
       instances: 1,
       autorestart: true,
       watch: false,

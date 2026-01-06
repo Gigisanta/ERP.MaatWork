@@ -366,7 +366,7 @@ export API_URL_INTERNAL="http://127.0.0.1:3001"
 pm2 stop all 2>/dev/null || true
 
 # Iniciar/reiniciar con ecosystem.config.js y actualizar env vars
-pm2 start infrastructure/pm2/ecosystem.config.js --update-env
+pm2 start ecosystem.config.js --update-env
 
 # Guardar configuración de PM2
 pm2 save

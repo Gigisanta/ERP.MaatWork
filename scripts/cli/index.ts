@@ -35,7 +35,9 @@ program
   .description(colors.primary('MAATWORK CLI - Herramientas de desarrollo'))
   .version(packageInfo.version, '-v, --version', 'Mostrar versión')
   .helpOption('-h, --help', 'Mostrar ayuda')
-  .addHelpText('after', `
+  .addHelpText(
+    'after',
+    `
 ${colors.muted('Ejemplos:')}
   ${colors.primary('$')} pnpm mw dev              Iniciar entorno de desarrollo
   ${colors.primary('$')} pnpm mw gen component    Generar un nuevo componente
@@ -45,7 +47,8 @@ ${colors.muted('Ejemplos:')}
 
 ${colors.muted('Más información:')}
   Documentación: ${colors.underline('docs/CLI.md')}
-`);
+`
+  );
 
 // Registrar comandos
 program.addCommand(devCommand);
@@ -72,4 +75,3 @@ program.parse(process.argv);
 if (!process.argv.slice(2).length) {
   program.outputHelp();
 }
-

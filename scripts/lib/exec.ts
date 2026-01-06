@@ -141,7 +141,10 @@ export async function execAsync(command: string, options: ExecOptions = {}): Pro
 /**
  * Ejecuta un comando con reintentos automáticos
  */
-export async function execWithRetry(command: string, options: RetryOptions = {}): Promise<ExecResult> {
+export async function execWithRetry(
+  command: string,
+  options: RetryOptions = {}
+): Promise<ExecResult> {
   const { retries = 3, retryDelay = 1000, backoffFactor = 2, ...execOptions } = options;
 
   let lastResult: ExecResult | null = null;
@@ -258,4 +261,3 @@ function sleep(ms: number): Promise<void> {
 }
 
 export { sleep };
-

@@ -5,7 +5,16 @@
  */
 
 import { Command } from 'commander';
-import { logger, exec, paths, withSpinner, confirm, remove, getDirSize, formatSize } from '../../lib/index';
+import {
+  logger,
+  exec,
+  paths,
+  withSpinner,
+  confirm,
+  remove,
+  getDirSize,
+  formatSize,
+} from '../../lib/index';
 import { existsSync, readdirSync, rmSync } from 'fs';
 import { join } from 'path';
 
@@ -186,4 +195,3 @@ function allCommand(): Command {
       logger.list(['pnpm install', 'pnpm build']);
     });
 }
-
