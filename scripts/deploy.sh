@@ -381,7 +381,52 @@ pm2 save
 log_success "Servicios reiniciados"
 
 # =============================================================================
-# 12. VERIFICACIÓN FINAL
+# 12. CONFIGURAR Y REINICIAR NGINX
+# =============================================================================
+log "🌐 Configurando Nginx..."
+
+NGINX_CONF="/etc/nginx/nginx.conf"
+NGINX_CONF_SOURCE="$PROJECT_DIR/infrastructure/mvp/nginx.conf"
+
+# Verificar si Nginx está instalado
+if ! command -v nginx &> /dev/null; then
+    log_warning "Nginx no está instalado. Instalando..."
+    sudo dnf install -y nginx || {
+        log_error "No se pudo instalar Nginx. Instala manualmente: sudo dnf install -y nginx"
+    }
+fi
+
+# Copiar configuración de Nginx si existe
+if [ -f "$NGINX_CONF_SOURCE" ]; then
+    log "   Copiando configuración de Nginx..."
+    sudo cp "$NGINX_CONF_SOURCE" "$NGINX_CONF" || {
+        log_warning "No se pudo copiar configuración de Nginx (requiere sudo)"
+    }
+    
+    # Verificar configuración de Nginx
+    if sudo nginx -t 2>/dev/null; then
+        log_success "Configuración de Nginx válida"
+        
+        # Reiniciar Nginx
+        if sudo systemctl is-active --quiet nginx; then
+            log "   Reiniciando Nginx..."
+            sudo systemctl reload nginx || sudo systemctl restart nginx
+        else
+            log "   Iniciando Nginx..."
+            sudo systemctl enable nginx
+            sudo systemctl start nginx
+        fi
+        
+        log_success "Nginx configurado y corriendo"
+    else
+        log_warning "Configuración de Nginx inválida. Revisa: sudo nginx -t"
+    fi
+else
+    log_warning "Archivo de configuración de Nginx no encontrado en $NGINX_CONF_SOURCE"
+fi
+
+# =============================================================================
+# 13. VERIFICACIÓN FINAL
 # =============================================================================
 log "🔍 Verificando estado de servicios..."
 
@@ -394,6 +439,13 @@ if pm2 jlist | grep -q '"status":"online"'; then
     log_success "Servicios corriendo correctamente"
 else
     log_warning "Algunos servicios podrían no estar corriendo. Revisa 'pm2 logs'"
+fi
+
+# Verificar Nginx
+if command -v nginx &> /dev/null && sudo systemctl is-active --quiet nginx; then
+    log_success "Nginx corriendo correctamente"
+else
+    log_warning "Nginx no está corriendo. Ejecuta: sudo systemctl start nginx"
 fi
 
 # =============================================================================
