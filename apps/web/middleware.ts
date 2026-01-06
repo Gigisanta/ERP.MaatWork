@@ -22,7 +22,14 @@ function getBaseUrl(request: NextRequest): string {
     return `${forwardedProto}://${forwardedHost}`;
   }
 
-  // Fallback a request.url
+  // Fallback: usar Host header si está disponible (Cloudflare lo envía)
+  const host = request.headers.get('host');
+  if (host) {
+    const proto = forwardedProto || (request.headers.get('x-forwarded-proto') || 'https');
+    return `${proto}://${host}`;
+  }
+
+  // Último fallback a request.url
   return request.nextUrl.origin;
 }
 
