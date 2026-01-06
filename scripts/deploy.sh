@@ -52,6 +52,10 @@ log_error() {
 # =============================================================================
 log "🚀 Iniciando deploy de MAATWORK..."
 
+if [ "$SKIP_TESTS" = true ]; then
+    log_warning "🧪 Modo: SKIP TESTS activado"
+fi
+
 cd "$PROJECT_DIR" || {
     log_error "No se pudo acceder al directorio $PROJECT_DIR"
     exit 1
