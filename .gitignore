@@ -32,6 +32,17 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# App-specific env files (explicit paths for clarity)
+apps/api/.env
+apps/api/.env.local
+apps/api/.env.production
+apps/web/.env
+apps/web/.env.local
+apps/web/.env.production
+apps/analytics-service/.env
+apps/analytics-service/.env.local
+apps/analytics-service/.env.production
+
 # Vercel
 .vercel
 
