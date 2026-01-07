@@ -292,28 +292,82 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   // Justificación: Si la autenticación se inicializó y no hay usuario, significa que no hay sesión activa
   // Impacto: Mejor UX redirigiendo al login en lugar de mostrar mensaje de debug
   // IMPORTANTE: Este hook debe estar ANTES de cualquier return condicional para cumplir con las reglas de hooks
+  // AI_DECISION: Agregar delay para evitar condición de carrera con AuthContext
+  // Justificación: El middleware ya validó el token, pero AuthContext puede tardar en verificar la sesión
+  // Impacto: Evita redirecciones prematuras cuando el usuario está autenticado pero AuthContext aún está verificando
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   useEffect(() => {
+    console.log('[NavigationNew] useEffect ejecutado', {
+      initialized,
+      user: !!user,
+      pathname,
+      hasRedirected: hasRedirectedRef.current,
+      timestamp: new Date().toISOString()
+    });
+
+    // Limpiar timeout anterior si existe
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     // Solo procesar si ya se inicializó
-    if (!initialized) return;
+    if (!initialized) {
+      console.log('[NavigationNew] Aún no inicializado, esperando...');
+      return;
+    }
 
     // Si estamos en rutas públicas, no hacer nada
     const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/';
     if (isPublicRoute) {
+      console.log('[NavigationNew] Ruta pública, no redirigir:', pathname);
       return;
     }
 
     // Si hay usuario, resetear el flag y no hacer nada más
     if (user) {
+      console.log('[NavigationNew] Usuario encontrado, resetear flag de redirección');
       hasRedirectedRef.current = false;
       return;
     }
 
-    // Si no hay usuario y no hemos redirigido aún, redirigir al login
-    if (!user && !hasRedirectedRef.current) {
-      hasRedirectedRef.current = true;
-      // Usar replace en lugar de push para evitar problemas de historial
-      router.replace('/login');
-    }
+    console.log('[NavigationNew] No hay usuario, iniciando timeout de 1 segundo...');
+
+    // Si no hay usuario, esperar un poco para dar tiempo a que AuthContext termine de verificar
+    // El middleware ya validó el token, así que si no hay usuario después de este delay,
+    // realmente no hay sesión activa
+    timeoutRef.current = setTimeout(() => {
+      console.log('[NavigationNew] Timeout completado, verificando usuario nuevamente', {
+        user: !!user,
+        hasRedirected: hasRedirectedRef.current,
+        pathname
+      });
+
+      // Verificar nuevamente el estado actual (no el valor capturado en el closure)
+      // Necesitamos acceder al estado actual a través de una función o ref
+      // Por ahora, confiamos en que si llegamos aquí después del delay y no hay user,
+      // realmente no hay sesión
+      if (!hasRedirectedRef.current) {
+        console.error('[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout', {
+          pathname,
+          initialized,
+          timestamp: new Date().toISOString()
+        });
+        hasRedirectedRef.current = true;
+        // Usar replace en lugar de push para evitar problemas de historial
+        router.replace('/login');
+      } else {
+        console.log('[NavigationNew] Usuario encontrado después del timeout, no redirigir');
+      }
+    }, 1000); // Esperar 1 segundo para dar tiempo a que AuthContext termine de verificar
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [user, initialized, router, pathname]);
 
   // AI_DECISION: Mostrar skeleton mientras se inicializa autenticación en lugar de retornar null

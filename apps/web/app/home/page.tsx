@@ -46,21 +46,41 @@ function HomePageLoading() {
  */
 async function getHomePageData() {
   try {
+    console.log('[HOME PAGE] Iniciando fetch de usuario...', {
+      timestamp: new Date().toISOString()
+    });
+
     // Fetch user first - if auth fails, redirect immediately
     let userResponse;
     try {
       userResponse = await getCurrentUser();
+      console.log('[HOME PAGE] getCurrentUser exitoso', {
+        success: userResponse?.success,
+        hasData: !!userResponse?.data,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       // Check if it's an auth error (401/403) vs network/server error
       const status = (error as Error & { status?: number; isNetworkError?: boolean })?.status;
       const isNetworkError = (error as Error & { isNetworkError?: boolean })?.isNetworkError;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const errorMessage = error instanceof Error ? error.message : String(error);
+
+      console.error('[HOME PAGE] Error en getCurrentUser', {
+        error: errorMessage,
+        status,
+        isNetworkError,
+        timestamp: new Date().toISOString()
+      });
 
       // Only redirect on actual auth errors (401/403), not network/server errors
       // Network errors (ECONNREFUSED, fetch failed) should not trigger redirect
       // as they might be temporary and the middleware already validated the token
       if (status === 401 || status === 403) {
+        console.error('[HOME PAGE] REDIRIGIENDO A /LOGIN - Error de autenticación detectado', {
+          status,
+          errorMessage,
+          timestamp: new Date().toISOString()
+        });
         // Clear auth error - redirect to login
         redirect('/login');
       }
@@ -69,9 +89,18 @@ async function getHomePageData() {
       // The middleware already validated the token, so trust it
       // Show error state instead of redirecting (which would cause loop)
       if (isNetworkError || !status || status >= 500) {
+        console.log('[HOME PAGE] Error de red/servidor, mostrando estado de error en lugar de redirigir', {
+          status,
+          isNetworkError,
+          timestamp: new Date().toISOString()
+        });
         // Network/server error - don't redirect, show error state
         userResponse = { success: false, data: null };
       } else {
+        console.log('[HOME PAGE] Otro error 4xx, mostrando estado de error', {
+          status,
+          timestamp: new Date().toISOString()
+        });
         // Other 4xx errors (not 401/403) - also don't redirect
         userResponse = { success: false, data: null };
       }

@@ -83,19 +83,36 @@ export class ApiClient {
 
           // Handle 401/403 authentication errors
           if (response.status === 401 || response.status === 403) {
+            console.log('[ApiClient] Recibido error de autenticación', {
+              status: response.status,
+              url,
+              attempt,
+              isRefreshInProgress: this.authManager.isRefreshInProgress,
+              timestamp: new Date().toISOString()
+            });
+
             // Try to refresh token on 401 (only on first attempt)
             if (response.status === 401 && !this.authManager.isRefreshInProgress && attempt === 0) {
+              console.log('[ApiClient] Intentando refrescar token...');
               try {
                 const refreshed = await this.authManager.handle401();
                 if (refreshed) {
+                  console.log('[ApiClient] Token refrescado exitosamente, reintentando request');
                   // Emit event to notify AuthContext of successful refresh
                   if (typeof window !== 'undefined') {
                     window.dispatchEvent(new CustomEvent('auth:token-refreshed'));
                   }
                   // Retry original request after successful refresh
                   return this.requestWithRetry<T>(url, { ...options, retries: 0 });
+                } else {
+                  console.log('[ApiClient] Refresh falló, emitiendo evento de sesión expirada');
                 }
               } catch (refreshError) {
+                console.error('[ApiClient] Error durante refresh, emitiendo evento de sesión expirada', {
+                  error: refreshError instanceof Error ? refreshError.message : String(refreshError),
+                  url,
+                  timestamp: new Date().toISOString()
+                });
                 // Refresh failed, emit auth error event
                 if (typeof window !== 'undefined') {
                   window.dispatchEvent(
@@ -114,6 +131,12 @@ export class ApiClient {
             }
 
             // 403 or 401 after refresh failed - emit session expired event
+            console.error('[ApiClient] Emitiendo evento auth:session-expired', {
+              status: response.status,
+              url,
+              message: response.status === 403 ? 'Forbidden' : 'Unauthorized',
+              timestamp: new Date().toISOString()
+            });
             if (typeof window !== 'undefined') {
               window.dispatchEvent(
                 new CustomEvent('auth:session-expired', {
