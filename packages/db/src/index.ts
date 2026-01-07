@@ -161,6 +161,12 @@ function createDb() {
     // Justificación: Prevents queries from holding connections indefinitely, freeing memory faster
     // Impacto: Prevents memory leaks from hung queries
     statement_timeout: 30000, // 30 seconds max query execution time
+    // AI_DECISION: Configure SSL for AWS RDS compatibility
+    // Justificación: AWS RDS requires SSL connections but uses self-signed certificates
+    // Impacto: Allows secure connections to RDS without certificate validation issues
+    ssl: {
+      rejectUnauthorized: false, // Accept self-signed certificates (for RDS)
+    },
   });
   return drizzle(pool, { schema });
 }
