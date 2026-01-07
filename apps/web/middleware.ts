@@ -46,6 +46,17 @@ export async function middleware(request: NextRequest) {
 
   const baseUrl = getBaseUrl(request);
 
+  // DEBUG: Log cookies para diagnóstico (remover en producción)
+  const allCookies = request.cookies.getAll();
+  const tokenCookie = request.cookies.get('token');
+  if (pathname.startsWith('/pipeline') || pathname.startsWith('/home')) {
+    console.log('[MIDDLEWARE DEBUG] Pathname:', pathname);
+    console.log('[MIDDLEWARE DEBUG] Cookies encontradas:', allCookies.length);
+    console.log('[MIDDLEWARE DEBUG] Token cookie existe:', !!tokenCookie);
+    console.log('[MIDDLEWARE DEBUG] Token cookie value:', tokenCookie ? tokenCookie.value.substring(0, 20) + '...' : 'null');
+    console.log('[MIDDLEWARE DEBUG] JWT_SECRET configurado:', !!process.env.JWT_SECRET);
+  }
+
   // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
   if (pathname === '/login') {
     const token = request.cookies.get('token')?.value;
@@ -124,6 +135,11 @@ export async function middleware(request: NextRequest) {
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
 
+    // DEBUG: Log para diagnóstico (remover en producción)
+    if (!JWT_SECRET || JWT_SECRET === 'dev-insecure-secret-change-me') {
+      console.error('[MIDDLEWARE] JWT_SECRET no configurado o usando valor por defecto');
+    }
+
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret, {
       issuer: JWT_ISSUER,
@@ -148,7 +164,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/home', baseUrl));
       }
     }
-  } catch {
+  } catch (error) {
+    // DEBUG: Log del error para diagnóstico (remover en producción)
+    console.error('[MIDDLEWARE] Error validando JWT:', error instanceof Error ? error.message : String(error));
+    console.error('[MIDDLEWARE] Token presente:', !!token);
+    console.error('[MIDDLEWARE] JWT_SECRET configurado:', !!process.env.JWT_SECRET);
+    console.error('[MIDDLEWARE] Pathname:', pathname);
+    
     // Limpiar cookie inválida (esto capturará fallos de emisor/audiencia)
     const response = NextResponse.redirect(new URL('/login', baseUrl));
     response.cookies.delete('token');
