@@ -49,12 +49,21 @@ export async function middleware(request: NextRequest) {
   // DEBUG: Log cookies para diagnóstico (remover en producción)
   const allCookies = request.cookies.getAll();
   const tokenCookie = request.cookies.get('token');
-  if (pathname.startsWith('/pipeline') || pathname.startsWith('/home')) {
+  
+  // Log para TODAS las rutas protegidas (no públicas)
+  if (!publicRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
     console.log('[MIDDLEWARE DEBUG] Pathname:', pathname);
     console.log('[MIDDLEWARE DEBUG] Cookies encontradas:', allCookies.length);
     console.log('[MIDDLEWARE DEBUG] Token cookie existe:', !!tokenCookie);
-    console.log('[MIDDLEWARE DEBUG] Token cookie value:', tokenCookie ? tokenCookie.value.substring(0, 20) + '...' : 'null');
+    if (tokenCookie) {
+      console.log('[MIDDLEWARE DEBUG] Token cookie value (first 20 chars):', tokenCookie.value.substring(0, 20) + '...');
+    } else {
+      console.log('[MIDDLEWARE DEBUG] Token cookie value: null');
+    }
     console.log('[MIDDLEWARE DEBUG] JWT_SECRET configurado:', !!process.env.JWT_SECRET);
+    if (process.env.JWT_SECRET) {
+      console.log('[MIDDLEWARE DEBUG] JWT_SECRET value (first 20 chars):', process.env.JWT_SECRET.substring(0, 20) + '...');
+    }
   }
 
   // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
@@ -124,6 +133,11 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
 
   if (!token) {
+    // DEBUG: Log cuando no hay token
+    console.log('[MIDDLEWARE] No token found, redirecting to /login');
+    console.log('[MIDDLEWARE] Pathname:', pathname);
+    console.log('[MIDDLEWARE] All cookies:', allCookies.map(c => c.name).join(', '));
+    
     // Redirigir al login con la URL de destino completa (incluyendo query params)
     const loginUrl = new URL('/login', baseUrl);
     const fullPath = pathname + (request.nextUrl.search || '');
@@ -149,11 +163,22 @@ export async function middleware(request: NextRequest) {
     // Verificar que el token no haya expirado
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp && payload.exp < now) {
+      // DEBUG: Log cuando el token expiró
+      console.error('[MIDDLEWARE] Token expired');
+      console.error('[MIDDLEWARE] Token exp:', payload.exp);
+      console.error('[MIDDLEWARE] Current time:', now);
+      console.error('[MIDDLEWARE] Pathname:', pathname);
+      
       // Limpiar cookie expirada
       const response = NextResponse.redirect(new URL('/login', baseUrl));
       response.cookies.delete('token');
       return response;
     }
+    
+    // DEBUG: Log cuando el token es válido
+    console.log('[MIDDLEWARE] Token válido, permitiendo acceso a:', pathname);
+    console.log('[MIDDLEWARE] User ID:', payload.sub);
+    console.log('[MIDDLEWARE] User role:', payload.role);
 
     // AI_DECISION: Verificar rol admin para rutas /admin/*
     // Justificación: Protección proactiva en middleware evita que usuarios no-admin vean contenido admin temporalmente
@@ -166,10 +191,20 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     // DEBUG: Log del error para diagnóstico (remover en producción)
-    console.error('[MIDDLEWARE] Error validando JWT:', error instanceof Error ? error.message : String(error));
-    console.error('[MIDDLEWARE] Token presente:', !!token);
-    console.error('[MIDDLEWARE] JWT_SECRET configurado:', !!process.env.JWT_SECRET);
-    console.error('[MIDDLEWARE] Pathname:', pathname);
+    console.error('[MIDDLEWARE ERROR] Error validando JWT:', error instanceof Error ? error.message : String(error));
+    console.error('[MIDDLEWARE ERROR] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('[MIDDLEWARE ERROR] Token presente:', !!token);
+    if (token) {
+      console.error('[MIDDLEWARE ERROR] Token (first 50 chars):', token.substring(0, 50) + '...');
+    }
+    console.error('[MIDDLEWARE ERROR] JWT_SECRET configurado:', !!process.env.JWT_SECRET);
+    if (process.env.JWT_SECRET) {
+      console.error('[MIDDLEWARE ERROR] JWT_SECRET (first 20 chars):', process.env.JWT_SECRET.substring(0, 20) + '...');
+    }
+    console.error('[MIDDLEWARE ERROR] Pathname:', pathname);
+    console.error('[MIDDLEWARE ERROR] Base URL:', baseUrl);
+    console.error('[MIDDLEWARE ERROR] Issuer esperado:', JWT_ISSUER);
+    console.error('[MIDDLEWARE ERROR] Audience esperado:', JWT_AUDIENCE);
     
     // Limpiar cookie inválida (esto capturará fallos de emisor/audiencia)
     const response = NextResponse.redirect(new URL('/login', baseUrl));
