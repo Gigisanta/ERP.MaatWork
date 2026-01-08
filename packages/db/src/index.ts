@@ -165,8 +165,8 @@ function createDb() {
 
   const sslConfig = shouldUseSSL
     ? {
-        rejectUnauthorized: false, // Accept self-signed certificates (for RDS)
-      }
+      rejectUnauthorized: false, // Accept self-signed certificates (for RDS)
+    }
     : undefined;
 
   const pool = new Pool({

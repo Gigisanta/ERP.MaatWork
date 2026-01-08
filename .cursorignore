@@ -1,3 +1,33 @@
+# =============================================================================
+# Archivos Críticos de Infraestructura
+# =============================================================================
+# Estos archivos son CRÍTICOS para producción. La IA debe tener EXTREMO cuidado
+# al sugerir cambios automáticos. Ver docs/CRITICAL-INFRASTRUCTURE-FILES.md
+# =============================================================================
+
+# Configuración de Nginx (puertos, SSL, routing)
+infrastructure/mvp/nginx.conf
+
+# Configuración de Terraform (Security Groups, VPC, EC2, RDS, Cloudflare)
+infrastructure/terraform/**/*.tf
+infrastructure/terraform/**/*.tfvars
+infrastructure/terraform/**/*.tfstate
+infrastructure/terraform/**/*.tfstate.backup
+
+
+
+# Scripts de Deploy (aplican cambios directamente a producción)
+scripts/deploy.sh
+infrastructure/scripts/deploy.sh
+infrastructure/scripts/deploy.ps1
+
+# =============================================================================
+# Archivos de Entorno (NO ignorar - permitir acceso para configuración)
+# =============================================================================
+# Nota: Estos archivos están en .gitignore pero NO en .cursorignore
+# para que la IA pueda ayudar con configuración cuando sea necesario
+# =============================================================================
+
 !*.env
 !*.env.local
 !*.env.development.local

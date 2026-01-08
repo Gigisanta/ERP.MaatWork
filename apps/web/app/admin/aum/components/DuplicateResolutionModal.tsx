@@ -31,7 +31,7 @@ export default function DuplicateResolutionModal({
       const res = await getAumDuplicates(accountNumber);
       if (res.success && res.data) {
         setRows(res.data.rows || []);
-        const currentPreferred = res.data.rows?.find((r) => r.isPreferred)?.id ?? null;
+        const currentPreferred = res.data.rows?.find((r: AumRow) => r.isPreferred)?.id ?? null;
         setSelectedRowId(currentPreferred);
       }
     } catch (e: unknown) {

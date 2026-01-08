@@ -22,7 +22,14 @@ function getBaseUrl(request: NextRequest): string {
     return `${forwardedProto}://${forwardedHost}`;
   }
 
-  // Fallback a request.url
+  // Fallback: usar Host header si está disponible (Cloudflare lo envía)
+  const host = request.headers.get('host');
+  if (host) {
+    const proto = forwardedProto || request.headers.get('x-forwarded-proto') || 'https';
+    return `${proto}://${host}`;
+  }
+
+  // Último fallback a request.url
   return request.nextUrl.origin;
 }
 
@@ -116,7 +123,6 @@ export async function middleware(request: NextRequest) {
   // Validar el JWT
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
-
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret, {
       issuer: JWT_ISSUER,
@@ -142,7 +148,7 @@ export async function middleware(request: NextRequest) {
       }
     }
   } catch {
-    // Limpiar cookie inválida (esto capturará fallos de emisor/audiencia)
+    // Token inválido - limpiar cookie y redirigir a login
     const response = NextResponse.redirect(new URL('/login', baseUrl));
     response.cookies.delete('token');
     return response;

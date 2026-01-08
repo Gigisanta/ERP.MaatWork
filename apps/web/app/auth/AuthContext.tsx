@@ -237,6 +237,11 @@ export function AuthProvider({
   // Listen for auth events from API client
   React.useEffect(() => {
     const handleSessionExpired = (e: CustomEvent) => {
+      console.error('[AuthContext] EVENTO auth:session-expired RECIBIDO - LIMPIANDO USUARIO', {
+        detail: e.detail,
+        previousUser: !!user,
+        timestamp: new Date().toISOString(),
+      });
       logger.warn('Sesión expirada detectada por API client', {
         detail: e.detail,
       });
@@ -244,9 +249,13 @@ export function AuthProvider({
       setUser(null);
       logger.updateUser(null, null);
       lastVerifiedRef.current = null;
+      console.error('[AuthContext] Usuario limpiado debido a sesión expirada');
     };
 
     const handleTokenRefreshed = () => {
+      console.log('[AuthContext] EVENTO auth:token-refreshed RECIBIDO - Re-verificando sesión', {
+        timestamp: new Date().toISOString(),
+      });
       logger.debug('Token refrescado por API client, re-verificando sesión');
       // Re-verify session after token refresh
       checkSession().catch((err) => {
@@ -256,18 +265,24 @@ export function AuthProvider({
       });
     };
 
+    console.log('[AuthContext] Configurando listeners de eventos auth', {
+      hasWindow: typeof window !== 'undefined',
+      timestamp: new Date().toISOString(),
+    });
+
     if (typeof window !== 'undefined') {
       window.addEventListener('auth:session-expired', handleSessionExpired as EventListener);
       window.addEventListener('auth:token-refreshed', handleTokenRefreshed);
     }
 
     return () => {
+      console.log('[AuthContext] Removiendo listeners de eventos auth');
       if (typeof window !== 'undefined') {
         window.removeEventListener('auth:session-expired', handleSessionExpired as EventListener);
         window.removeEventListener('auth:token-refreshed', handleTokenRefreshed);
       }
     };
-  }, [checkSession]);
+  }, [checkSession, user]);
 
   const refreshSession = React.useCallback(async (): Promise<boolean> => {
     logger.debug('Refrescando sesión manualmente');

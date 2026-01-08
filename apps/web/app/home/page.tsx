@@ -54,14 +54,11 @@ async function getHomePageData() {
       // Check if it's an auth error (401/403) vs network/server error
       const status = (error as Error & { status?: number; isNetworkError?: boolean })?.status;
       const isNetworkError = (error as Error & { isNetworkError?: boolean })?.isNetworkError;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const errorMessage = error instanceof Error ? error.message : String(error);
 
       // Only redirect on actual auth errors (401/403), not network/server errors
       // Network errors (ECONNREFUSED, fetch failed) should not trigger redirect
       // as they might be temporary and the middleware already validated the token
       if (status === 401 || status === 403) {
-        // Clear auth error - redirect to login
         redirect('/login');
       }
 
@@ -69,7 +66,6 @@ async function getHomePageData() {
       // The middleware already validated the token, so trust it
       // Show error state instead of redirecting (which would cause loop)
       if (isNetworkError || !status || status >= 500) {
-        // Network/server error - don't redirect, show error state
         userResponse = { success: false, data: null };
       } else {
         // Other 4xx errors (not 401/403) - also don't redirect
