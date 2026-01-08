@@ -1,22 +1,11 @@
-!*.env
-!*.env.local
-!*.env.development.local
-!*.env.test.local
-!*.env.production.local
-!*.env.development
-!*.env.test
-!*.env.production
-
 # =============================================================================
-# ARCHIVOS CRÍTICOS DE INFRAESTRUCTURA Y REDES
+# Archivos Críticos de Infraestructura
 # =============================================================================
-# Estos archivos, si se modifican incorrectamente, pueden romper producción
-# a nivel de redes, seguridad y conectividad.
-# 
-# La IA debe tener EXTREMO cuidado al sugerir cambios en estos archivos.
+# Estos archivos son CRÍTICOS para producción. La IA debe tener EXTREMO cuidado
+# al sugerir cambios automáticos. Ver docs/CRITICAL-INFRASTRUCTURE-FILES.md
 # =============================================================================
 
-# Configuración de Nginx (reverse proxy, SSL, puertos, upstreams)
+# Configuración de Nginx (puertos, SSL, routing)
 infrastructure/mvp/nginx.conf
 
 # Configuración de Terraform (Security Groups, VPC, EC2, RDS, Cloudflare)
@@ -25,27 +14,26 @@ infrastructure/terraform/**/*.tfvars
 infrastructure/terraform/**/*.tfstate
 infrastructure/terraform/**/*.tfstate.backup
 
-# Configuración de PM2 (puertos de servicios: 3000, 3001, 3002)
+# Configuración de PM2 (puertos de servicios)
 ecosystem.config.js
 
-# Scripts de deploy que modifican configuración de red
+# Scripts de Deploy (aplican cambios directamente a producción)
 scripts/deploy.sh
 infrastructure/scripts/deploy.sh
 infrastructure/scripts/deploy.ps1
 
-# Configuración de Cloudflare (SSL mode, DNS, WAF)
-# Nota: Estos están en Terraform, pero se mencionan explícitamente
+# =============================================================================
+# Archivos de Entorno (NO ignorar - permitir acceso para configuración)
+# =============================================================================
+# Nota: Estos archivos están en .gitignore pero NO en .cursorignore
+# para que la IA pueda ayudar con configuración cuando sea necesario
+# =============================================================================
 
-# =============================================================================
-# NOTA IMPORTANTE
-# =============================================================================
-# Estos archivos NO están en .gitignore porque son parte del código fuente
-# y necesitan versionarse. Sin embargo, están en .cursorignore para que
-# la IA tenga EXTREMO cuidado al sugerir cambios automáticos.
-# 
-# ANTES de modificar estos archivos:
-# 1. Verificar el impacto en producción
-# 2. Probar en ambiente de desarrollo primero
-# 3. Revisar cambios línea por línea
-# 4. Verificar que no se rompan puertos, SSL, o Security Groups
-# =============================================================================
+!*.env
+!*.env.local
+!*.env.development.local
+!*.env.test.local
+!*.env.production.local
+!*.env.development
+!*.env.test
+!*.env.production
