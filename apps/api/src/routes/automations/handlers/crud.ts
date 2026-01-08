@@ -151,11 +151,3 @@ export const handleDeleteAutomation = createRouteHandler(async (req: Request) =>
 
   return { success: true };
 });
-
-
-
-
-
-
-
-

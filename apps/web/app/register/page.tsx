@@ -100,8 +100,8 @@ function RegisterContent() {
       return;
     }
 
-    if (username && !/^[a-z0-9._-]{3,20}$/.test(username)) {
-      setError('El nombre de usuario no es válido (a-z0-9._-, 3-20)');
+    if (username && !/^[a-zA-Z0-9._-]{3,20}$/.test(username)) {
+      setError('El nombre de usuario no es válido (a-zA-Z0-9._-, 3-20)');
       return;
     }
 

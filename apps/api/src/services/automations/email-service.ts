@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { google } from 'googleapis';
-import { db, automationConfigs, googleOAuthTokens, contacts, users, pipelineStages, contactTags, tags } from '@maatwork/db';
+import {
+  db,
+  automationConfigs,
+  googleOAuthTokens,
+  contacts,
+  users,
+  pipelineStages,
+  contactTags,
+  tags,
+} from '@maatwork/db';
 import { eq, and } from 'drizzle-orm';
 import { decryptToken } from '../../utils/encryption';
 import { env } from '../../config/env';
@@ -34,10 +43,7 @@ export class EmailAutomationService {
         .select()
         .from(automationConfigs)
         .where(
-          and(
-            eq(automationConfigs.triggerType, triggerType),
-            eq(automationConfigs.enabled, true)
-          )
+          and(eq(automationConfigs.triggerType, triggerType), eq(automationConfigs.enabled, true))
         );
 
       if (automations.length === 0) {
@@ -51,20 +57,28 @@ export class EmailAutomationService {
       for (const automation of automations) {
         try {
           // Check trigger specific conditions
-          if (!this.matchesTriggerConfig(automation.triggerConfig as Record<string, unknown>, contextData)) {
+          if (
+            !this.matchesTriggerConfig(
+              automation.triggerConfig as Record<string, unknown>,
+              contextData
+            )
+          ) {
             continue;
           }
 
           const config = automation.config as unknown as EmailConfig;
-          
+
           if (!config.subject || !config.body || !config.senderEmail) {
             logger.warn({ automationId: automation.id }, 'Invalid email automation config');
             continue;
           }
 
           if (!contextData.contact?.email) {
-             logger.warn({ automationId: automation.id, contactId: context.contactId }, 'Contact has no email, skipping');
-             continue;
+            logger.warn(
+              { automationId: automation.id, contactId: context.contactId },
+              'Contact has no email, skipping'
+            );
+            continue;
           }
 
           // Resolve variables
@@ -79,10 +93,7 @@ export class EmailAutomationService {
             'Automation executed successfully'
           );
         } catch (err) {
-          logger.error(
-            { automationId: automation.id, error: err },
-            'Failed to execute automation'
-          );
+          logger.error({ automationId: automation.id, error: err }, 'Failed to execute automation');
           // Don't throw, continue with other automations
         }
       }
@@ -101,10 +112,10 @@ export class EmailAutomationService {
         .from(contacts)
         .where(eq(contacts.id, context.contactId))
         .limit(1);
-      
+
       if (contact) {
         data.contact = contact;
-        
+
         if (contact.assignedAdvisorId) {
           const [advisor] = await db()
             .select()
@@ -113,17 +124,17 @@ export class EmailAutomationService {
             .limit(1);
           data.advisor = advisor;
         }
-        
+
         // Fetch current stage info (if not overridden by newPipelineStageId)
         const stageId = context.newPipelineStageId || contact.pipelineStageId;
         if (stageId) {
-             const [stage] = await db()
-                .select()
-                .from(pipelineStages)
-                .where(eq(pipelineStages.id, stageId))
-                .limit(1);
-             data.stage = stage;
-             data.toStageName = stage?.name;
+          const [stage] = await db()
+            .select()
+            .from(pipelineStages)
+            .where(eq(pipelineStages.id, stageId))
+            .limit(1);
+          data.stage = stage;
+          data.toStageName = stage?.name;
         }
 
         // Fetch contact tags
@@ -132,7 +143,7 @@ export class EmailAutomationService {
           .from(contactTags)
           .innerJoin(tags, eq(contactTags.tagId, tags.id))
           .where(eq(contactTags.contactId, contact.id));
-        
+
         const tagNames = tagsData.map((t: { name: string }) => t.name);
         data.contact.tags = tagNames;
         data.contact.tagNames = tagNames.join(', ');
@@ -145,7 +156,10 @@ export class EmailAutomationService {
   /**
    * Check if the event matches the trigger configuration
    */
-  private matchesTriggerConfig(triggerConfig: Record<string, unknown>, contextData: Record<string, unknown>): boolean {
+  private matchesTriggerConfig(
+    triggerConfig: Record<string, unknown>,
+    contextData: Record<string, unknown>
+  ): boolean {
     // Pipeline Stage Change
     if (triggerConfig.stageName) {
       // Check if we moved TO this stage
@@ -163,7 +177,9 @@ export class EmailAutomationService {
    */
   private resolveVariables(template: string, data: Record<string, unknown>): string {
     return template.replace(/\{([^}]+)\}/g, (match, path) => {
-      const value = path.split('.').reduce((obj: unknown, key: string) => (obj as Record<string, unknown>)?.[key], data);
+      const value = path
+        .split('.')
+        .reduce((obj: unknown, key: string) => (obj as Record<string, unknown>)?.[key], data);
       return value !== undefined ? String(value) : match;
     });
   }

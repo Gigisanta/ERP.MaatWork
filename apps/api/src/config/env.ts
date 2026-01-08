@@ -63,6 +63,90 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
   if (frontendUrl && !frontendUrl.startsWith('https://')) {
     console.warn('Warning: FRONTEND_URL should use HTTPS in production');
   }
+
+  // Validar formato de GOOGLE_REDIRECT_URI
+  const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI;
+  if (googleRedirectUri) {
+    try {
+      const url = new URL(googleRedirectUri);
+
+      // Validar que use HTTPS en producción
+      if (!url.protocol.startsWith('https')) {
+        console.warn('Warning: GOOGLE_REDIRECT_URI should use HTTPS in production');
+      }
+
+      // Validar que el path sea correcto
+      const expectedPath = '/v1/auth/google/callback';
+      if (url.pathname !== expectedPath) {
+        console.warn(
+          `Warning: GOOGLE_REDIRECT_URI path should be "${expectedPath}" but got "${url.pathname}". ` +
+            'This must match exactly with Google Cloud Console configuration.'
+        );
+      }
+
+      // Validar que no tenga trailing slash
+      // AI_DECISION: Verificar trailing slash en el pathname
+      // Justificación: El path esperado es /v1/auth/google/callback (sin trailing slash)
+      // Cualquier trailing slash causará redirect_uri_mismatch porque Google requiere coincidencia exacta
+      // Impacto: Detecta correctamente URIs con trailing slash que causarían redirect_uri_mismatch
+      if (url.pathname.endsWith('/')) {
+        console.warn(
+          `Warning: GOOGLE_REDIRECT_URI path should not have trailing slash. ` +
+            `Expected: "${expectedPath}", got: "${url.pathname}". ` +
+            'This will cause OAuth redirect_uri_mismatch errors.'
+        );
+      }
+    } catch (error) {
+      console.warn(
+        `Warning: GOOGLE_REDIRECT_URI "${googleRedirectUri}" is not a valid URL. ` +
+          'This will cause OAuth redirect_uri_mismatch errors.'
+      );
+    }
+  }
+}
+
+// Validar GOOGLE_REDIRECT_URI en todos los entornos si está configurada
+const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI;
+if (googleRedirectUri && googleRedirectUri !== 'http://localhost:3001/v1/auth/google/callback') {
+  try {
+    const url = new URL(googleRedirectUri);
+    const expectedPath = '/v1/auth/google/callback';
+
+    // Validar formato básico
+    if (!url.pathname.endsWith(expectedPath)) {
+      console.warn(
+        `Warning: GOOGLE_REDIRECT_URI should end with "${expectedPath}". ` +
+          'Current value must match exactly with Google Cloud Console "Authorized redirect URIs".'
+      );
+    }
+  } catch (error) {
+    // Error ya manejado arriba en producción
+  }
+}
+
+// Validar GOOGLE_ENCRYPTION_KEY si está configurada
+const googleEncryptionKey = process.env.GOOGLE_ENCRYPTION_KEY;
+if (googleEncryptionKey) {
+  if (googleEncryptionKey.length < 32) {
+    console.warn(
+      'Warning: GOOGLE_ENCRYPTION_KEY must be at least 32 characters. ' +
+        'Tokens encrypted with a shorter key may fail to decrypt.'
+    );
+  }
+  if (googleEncryptionKey === 'change-me-to-a-random-32-char-string-or-longer') {
+    console.warn(
+      'Warning: GOOGLE_ENCRYPTION_KEY is using the default value. ' +
+        'This is insecure and may cause decryption errors if tokens were encrypted with a different key.'
+    );
+  }
+} else {
+  // Solo warning en desarrollo, error en producción
+  if ((process.env.NODE_ENV || 'development') === 'production') {
+    console.warn(
+      'Warning: GOOGLE_ENCRYPTION_KEY is not set. ' +
+        'Google OAuth tokens cannot be encrypted/decrypted without this key.'
+    );
+  }
 }
 
 export const env = {

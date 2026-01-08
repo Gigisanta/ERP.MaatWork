@@ -8,7 +8,6 @@
 import { useRequireAuth } from '../auth/useRequireAuth';
 import { usePageTitle } from '../components/PageTitleContext';
 
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import AutomationsPage from './page';
@@ -61,7 +60,9 @@ describe('AutomationsPage', () => {
   it('debería renderizar página de automatizaciones', () => {
     render(<AutomationsPage />);
 
-    expect(screen.getByRole('heading', { level: 1, name: /^Automatizaciones$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^Automatizaciones$/i })
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/EmailAutomationCard Component/i)).toHaveLength(2);
   });
 
@@ -76,7 +77,6 @@ describe('AutomationsPage', () => {
   });
 
   it('debería llamar usePageTitle con título correcto', () => {
-    
     render(<AutomationsPage />);
 
     expect(usePageTitle).toHaveBeenCalledWith('Automatizaciones');

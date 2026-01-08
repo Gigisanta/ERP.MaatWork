@@ -20,7 +20,7 @@ jobs:
   deploy:
     name: Deploy to PROD
     runs-on: ubuntu-latest
-    environment: production  # Requires manual approval in GitHub
+    environment: production # Requires manual approval in GitHub
 
     steps:
       - name: Checkout code
@@ -147,7 +147,7 @@ jobs:
           else
             services="${{ inputs.service }}"
           fi
-          
+
           for service in $services; do
             echo "⏳ Waiting for $service to stabilize..."
             aws ecs wait services-stable \
@@ -169,7 +169,7 @@ jobs:
       - name: Run smoke tests
         run: |
           echo "🧪 Running smoke tests..."
-          
+
           # Test API health
           if curl -f -s -o /dev/null -w "%{http_code}" ${{ steps.urls.outputs.api_url }}/health | grep -q "200"; then
             echo "✅ API health check passed"
@@ -177,7 +177,7 @@ jobs:
             echo "❌ API health check failed"
             exit 1
           fi
-          
+
           # Test Web app
           if curl -f -s -o /dev/null -w "%{http_code}" ${{ steps.urls.outputs.web_url }} | grep -q "200"; then
             echo "✅ Web app check passed"

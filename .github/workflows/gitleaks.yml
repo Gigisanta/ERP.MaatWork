@@ -2,9 +2,9 @@ name: Gitleaks
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   gitleaks:
@@ -17,8 +17,3 @@ jobs:
         uses: zricethezav/gitleaks-action@v2
         with:
           args: --no-git --redact
-
-
-
-
-

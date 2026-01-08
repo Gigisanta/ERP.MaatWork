@@ -2,7 +2,7 @@
 # GitHub Actions Workflow - Deploy to MVP (EC2)
 #
 # Deployment manual a instancia EC2 con Docker Compose.
-# 
+#
 # Flujo:
 # 1. Run tests (safety check)
 # 2. Build Docker images
@@ -41,12 +41,12 @@ jobs:
 
     steps:
       # ==================== Checkout Code ====================
-      
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       # ==================== Setup Node.js ====================
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -58,7 +58,7 @@ jobs:
           version: 9.10.0
 
       # ==================== Run Tests (Safety Check) ====================
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -68,7 +68,7 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       # ==================== Configure SSH ====================
-      
+
       - name: Configure SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -80,7 +80,7 @@ jobs:
           ssh-keyscan -H $EC2_IP >> ~/.ssh/known_hosts
 
       # ==================== Build Docker Images ====================
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -103,7 +103,7 @@ jobs:
           docker save maatwork-analytics:latest | gzip > analytics-image.tar.gz
 
       # ==================== Transfer to EC2 ====================
-      
+
       - name: Transfer images to EC2
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
@@ -112,17 +112,17 @@ jobs:
           if [ -f api-image.tar.gz ]; then
             scp -o StrictHostKeyChecking=no api-image.tar.gz ec2-user@$EC2_IP:/tmp/
           fi
-          
+
           if [ -f web-image.tar.gz ]; then
             scp -o StrictHostKeyChecking=no web-image.tar.gz ec2-user@$EC2_IP:/tmp/
           fi
-          
+
           if [ -f analytics-image.tar.gz ]; then
             scp -o StrictHostKeyChecking=no analytics-image.tar.gz ec2-user@$EC2_IP:/tmp/
           fi
 
       # ==================== Deploy on EC2 ====================
-      
+
       - name: Deploy to EC2
         env:
           EC2_IP: ${{ secrets.EC2_IP }}
@@ -177,7 +177,7 @@ jobs:
           ENDSSH
 
       # ==================== Health Check ====================
-      
+
       - name: Wait for services to stabilize
         run: sleep 30
 
@@ -186,7 +186,7 @@ jobs:
           EC2_IP: ${{ secrets.EC2_IP }}
         run: |
           echo "🧪 Running health checks..."
-          
+
           # API health
           if curl -f -s -o /dev/null -w "%{http_code}" http://$EC2_IP/health | grep -q "200"; then
             echo "✅ API health check passed"
@@ -194,7 +194,7 @@ jobs:
             echo "❌ API health check failed"
             exit 1
           fi
-          
+
           # Web app
           if curl -f -s -o /dev/null -w "%{http_code}" http://$EC2_IP | grep -q "200"; then
             echo "✅ Web app check passed"
@@ -204,7 +204,7 @@ jobs:
           fi
 
       # ==================== Summary ====================
-      
+
       - name: Deployment summary
         if: success()
         env:

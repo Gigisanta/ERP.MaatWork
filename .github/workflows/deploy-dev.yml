@@ -144,7 +144,7 @@ jobs:
           else
             services="${{ inputs.service }}"
           fi
-          
+
           for service in $services; do
             echo "⏳ Waiting for $service to stabilize..."
             aws ecs wait services-stable \

@@ -150,8 +150,27 @@ function createDb() {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is required');
   }
+
+  // AI_DECISION: SSL condicional basado en ambiente
+  // Justificación: PostgreSQL local (Docker) no soporta SSL, pero AWS RDS lo requiere
+  // Impacto: Permite desarrollo local sin SSL y producción con SSL automáticamente
+  const databaseUrl = process.env.DATABASE_URL;
+  const isLocalDatabase =
+    databaseUrl.includes('localhost') ||
+    databaseUrl.includes('127.0.0.1') ||
+    databaseUrl.includes('::1');
+
+  // Solo usar SSL en producción o para bases de datos remotas
+  const shouldUseSSL = process.env.NODE_ENV === 'production' || !isLocalDatabase;
+
+  const sslConfig = shouldUseSSL
+    ? {
+        rejectUnauthorized: false, // Accept self-signed certificates (for RDS)
+      }
+    : undefined;
+
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: databaseUrl,
     max: 15, // Reduced from 20 to 15 connections (less memory per connection)
     idleTimeoutMillis: 20000, // Close idle connections after 20s (reduced from 30s)
     connectionTimeoutMillis: 5000, // Timeout after 5s when acquiring connection
@@ -161,6 +180,7 @@ function createDb() {
     // Justificación: Prevents queries from holding connections indefinitely, freeing memory faster
     // Impacto: Prevents memory leaks from hung queries
     statement_timeout: 30000, // 30 seconds max query execution time
+    ...(sslConfig && { ssl: sslConfig }), // Only include SSL config if needed
   });
   return drizzle(pool, { schema });
 }

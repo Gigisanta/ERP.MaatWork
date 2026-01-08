@@ -91,4 +91,3 @@ describe('EmailAutomationService', () => {
   // Note: Writing a full mocked test for the complex chain of DB calls is verbose.
   // Ideally we test this with a real DB in integration tests, but here we can verify basic flow.
 });
-

@@ -59,6 +59,44 @@ async function verifyDatabaseConnection(): Promise<void> {
       port?: number;
     };
     const code = err?.code || 'UNKNOWN';
+    const message = err?.message || '';
+
+    // AI_DECISION: Detectar errores SSL específicos
+    // Justificación: PostgreSQL local no soporta SSL, pero el código puede intentar usarlo
+    // Impacto: Mensajes de error más claros que guían al usuario a la solución correcta
+    const isSSLError =
+      message.includes('does not support SSL connections') ||
+      message.includes('SSL connection') ||
+      code === '28000' ||
+      message.includes('SSL');
+
+    if (isSSLError) {
+      const urlMatch = databaseUrl.match(/postgresql:\/\/(?:([^:]+):([^@]+)@)?([^:]+):(\d+)\/(.+)/);
+      const host = urlMatch?.[3] || 'localhost';
+      const port = urlMatch?.[4] || '5432';
+
+      logger.error(
+        {
+          host,
+          port,
+          code,
+          message,
+          hint: 'SSL connection error detected. This usually means:',
+          checks: [
+            '1. Local PostgreSQL (Docker) does not support SSL',
+            '2. The database connection should automatically disable SSL for localhost',
+            '3. If this error persists, check packages/db/src/index.ts SSL configuration',
+            '4. For local development, ensure DATABASE_URL points to localhost',
+            '5. For production, ensure SSL is properly configured for remote databases',
+          ],
+        },
+        '❌ SSL connection error'
+      );
+
+      throw new Error(
+        `Database SSL connection error at ${host}:${port}. Local PostgreSQL does not support SSL. The connection should automatically disable SSL for localhost connections. If this error persists, check the database configuration.`
+      );
+    }
 
     if (code === 'ECONNREFUSED' || err?.errno === -61) {
       const urlMatch = databaseUrl.match(/postgresql:\/\/(?:([^:]+):([^@]+)@)?([^:]+):(\d+)\/(.+)/);

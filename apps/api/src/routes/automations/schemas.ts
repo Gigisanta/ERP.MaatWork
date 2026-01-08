@@ -46,11 +46,3 @@ export const automationNameParamSchema = z.object({
 
 type CreateAutomationConfigInput = z.infer<typeof createAutomationConfigSchema>;
 type UpdateAutomationConfigInput = z.infer<typeof updateAutomationConfigSchema>;
-
-
-
-
-
-
-
-

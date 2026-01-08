@@ -539,7 +539,7 @@ describe('POST /auth/register', () => {
 
     it('debería validar username format si se proporciona', () => {
       const validUsername = 'testuser123';
-      const usernameRegex = /^[a-z0-9._-]{3,20}$/;
+      const usernameRegex = /^[a-zA-Z0-9._-]{3,20}$/;
       expect(usernameRegex.test(validUsername.toLowerCase())).toBe(true);
     });
   });

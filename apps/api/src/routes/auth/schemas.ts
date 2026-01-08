@@ -7,8 +7,8 @@ import { z } from 'zod';
 
 import { emailSchema, uuidSchema } from '../../utils/validation/common-schemas';
 
-// Username case-insensitive [a-z0-9._-], 3-20 chars
-const usernameRegex = /^[a-z0-9._-]{3,20}$/;
+// Username [a-zA-Z0-9._-], 3-20 chars (normalized to lowercase for searches)
+const usernameRegex = /^[a-zA-Z0-9._-]{3,20}$/;
 
 // AI_DECISION: Login via identifier (email or username)
 // Justificación: Permite autenticación flexible y más rápida por username

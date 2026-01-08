@@ -73,7 +73,3 @@ router.patch(
 router.delete('/:id', requireAuth, validate({ params: idParamSchema }), handleDeleteAutomation);
 
 export default router;
-
-
-
-
