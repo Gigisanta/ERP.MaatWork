@@ -189,8 +189,9 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl font-light">
-              Sabemos lo valioso que es tu tiempo. Operá de forma ágil con un equipo de expertos
-              dedicados a potenciar tu patrimonio.
+              MaatWork es una plataforma CRM profesional para gestión patrimonial y asesoramiento
+              financiero. Sabemos lo valioso que es tu tiempo. Operá de forma ágil con un equipo de
+              expertos dedicados a potenciar tu patrimonio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
@@ -495,7 +496,13 @@ export function LandingPage() {
                     Solicitar Contacto <ArrowRight size={18} />
                   </Button>
                   <p className="text-center text-xs text-slate-400 mt-4">
-                    Tus datos están protegidos. No compartimos tu información.
+                    Tus datos están protegidos. No compartimos tu información.{' '}
+                    <Link
+                      href="/legal/privacy-policy.html"
+                      className="text-violet-400 hover:text-violet-300 underline"
+                    >
+                      Ver Política de Privacidad
+                    </Link>
                   </p>
                 </div>
               </form>

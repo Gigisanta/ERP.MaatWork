@@ -80,8 +80,18 @@ export function decryptToken(encryptedToken: string, masterKey: string): string 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(tag);
 
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-
-  return decrypted;
+  try {
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Unsupported state')) {
+      throw new Error(
+        'Failed to decrypt token: encryption key mismatch. ' +
+          'The token was encrypted with a different GOOGLE_ENCRYPTION_KEY. ' +
+          'Please reconnect your Google account or verify GOOGLE_ENCRYPTION_KEY matches the key used when tokens were saved.'
+      );
+    }
+    throw error;
+  }
 }

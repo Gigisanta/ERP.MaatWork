@@ -57,10 +57,31 @@ export async function refreshGoogleToken(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const refreshToken = decryptToken(
-        tokenRecord.refreshTokenEncrypted,
-        env.GOOGLE_ENCRYPTION_KEY
-      );
+      let refreshToken: string;
+      try {
+        refreshToken = decryptToken(tokenRecord.refreshTokenEncrypted, env.GOOGLE_ENCRYPTION_KEY);
+      } catch (decryptError) {
+        // AI_DECISION: Detectar específicamente errores de desencriptación
+        // Justificación: Errores de clave de encriptación requieren reconexión, no retry
+        // Impacto: Falla rápido y claramente cuando la clave no coincide
+        if (
+          decryptError instanceof Error &&
+          decryptError.message.includes('encryption key mismatch')
+        ) {
+          logger.error(
+            {
+              userId: tokenRecord.userId,
+              tokenId: tokenRecordId,
+              error: decryptError.message,
+            },
+            'Token decryption failed: encryption key mismatch. User must reconnect Google account.'
+          );
+          throw new Error(
+            'Token decryption failed: encryption key mismatch. Please reconnect your Google account.'
+          );
+        }
+        throw decryptError;
+      }
 
       oauth2Client.setCredentials({ refresh_token: refreshToken });
       const { credentials } = await oauth2Client.refreshAccessToken();
