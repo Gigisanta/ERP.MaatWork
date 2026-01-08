@@ -166,8 +166,6 @@ function createDb() {
     // Impacto: Allows secure connections to RDS without certificate validation issues
     ssl: {
       rejectUnauthorized: false, // Accept self-signed certificates (for RDS)
-      // Force SSL connections for RDS (prevents "no encryption" errors)
-      require: true,
     },
   });
   return drizzle(pool, { schema });
