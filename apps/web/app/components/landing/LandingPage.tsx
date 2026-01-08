@@ -1,38 +1,40 @@
-'use client';
+/**
+ * LandingPage - Server Component
+ *
+ * AI_DECISION: Convert to Server Component for SEO/OAuth verification
+ * Justificación: Google's OAuth consent screen crawler doesn't execute JavaScript.
+ * The privacy policy link and app purpose must be in the server-rendered HTML.
+ * Impacto: Critical content (privacy policy, app purpose) now visible to crawlers.
+ */
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { Button } from '@maatwork/ui';
 import {
   Feather,
   TrendingUp,
   Shield,
   DollarSign,
   ArrowRight,
-  Menu,
-  X,
   Mail,
   Phone,
   MapPin,
   Instagram,
   Linkedin,
 } from 'lucide-react';
+import {
+  LandingPageHeader,
+  ScrollButton,
+  LogoScrollTop,
+  FooterNav,
+  ContactForm,
+} from './LandingPageClient';
 
 /**
  * LandingPage Component
  * Public presentation page for maat.work
+ * Server-rendered for SEO and OAuth verification compliance
  */
 export function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setMobileMenuOpen(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-slate-800">
       {/* Header */}
@@ -40,126 +42,18 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo */}
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
+            <LogoScrollTop>
               <Feather className="w-8 h-8 text-violet-600" strokeWidth={2} />
               <span className="text-xl sm:text-2xl font-bold tracking-tight">
                 <span className="text-violet-700">Maat</span>
                 <span className="text-slate-700">Work</span>
               </span>
-            </div>
+            </LogoScrollTop>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <button
-                onClick={() => scrollToSection('inicio')}
-                className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors"
-              >
-                Inicio
-              </button>
-              <button
-                onClick={() => scrollToSection('servicios')}
-                className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors"
-              >
-                Servicios
-              </button>
-              <button
-                onClick={() => scrollToSection('nosotros')}
-                className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors"
-              >
-                Nosotros
-              </button>
-              <button
-                onClick={() => scrollToSection('contacto')}
-                className="text-sm font-medium text-slate-600 hover:text-violet-600 transition-colors"
-              >
-                Contacto
-              </button>
-            </nav>
-
-            {/* CTA Button */}
-            <div className="hidden md:flex items-center gap-4">
-              <Link href="/login">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-violet-200 text-violet-700 hover:bg-violet-50 hover:border-violet-300"
-                >
-                  Login
-                </Button>
-              </Link>
-              <Button
-                variant="primary"
-                size="sm"
-                className="bg-violet-600 hover:bg-violet-700 text-white border-transparent shadow-md hover:shadow-lg transition-all"
-                onClick={() => scrollToSection('contacto')}
-              >
-                EMPEZÁ HOY
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-slate-600 hover:text-violet-600 p-2"
-              >
-                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
+            {/* Client-side interactive header (nav, mobile menu) */}
+            <LandingPageHeader />
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-md border-t border-slate-100 py-4 px-4 shadow-lg absolute w-full z-50">
-            <div className="flex flex-col gap-4">
-              <button
-                onClick={() => scrollToSection('inicio')}
-                className="text-left font-medium text-slate-600 hover:text-violet-600 py-2"
-              >
-                Inicio
-              </button>
-              <button
-                onClick={() => scrollToSection('servicios')}
-                className="text-left font-medium text-slate-600 hover:text-violet-600 py-2"
-              >
-                Servicios
-              </button>
-              <button
-                onClick={() => scrollToSection('nosotros')}
-                className="text-left font-medium text-slate-600 hover:text-violet-600 py-2"
-              >
-                Nosotros
-              </button>
-              <button
-                onClick={() => scrollToSection('contacto')}
-                className="text-left font-medium text-slate-600 hover:text-violet-600 py-2"
-              >
-                Contacto
-              </button>
-              <div className="flex flex-col gap-3 pt-2">
-                <Link href="/login" className="w-full">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-center border-violet-200 text-violet-700 hover:bg-violet-50"
-                  >
-                    Login
-                  </Button>
-                </Link>
-                <Button
-                  variant="primary"
-                  className="w-full justify-center bg-violet-600 hover:bg-violet-700 text-white border-transparent shadow-md"
-                  onClick={() => scrollToSection('contacto')}
-                >
-                  EMPEZÁ HOY
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Hero Section */}
@@ -170,8 +64,8 @@ export function LandingPage() {
         {/* Abstract Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-[100px] mix-blend-screen animate-pulse-slow"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[120px] mix-blend-screen"></div>
-          <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[80px] mix-blend-screen"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[100px] mix-blend-screen"></div>
+          <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[100px] mix-blend-screen"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -188,27 +82,29 @@ export function LandingPage() {
                 siempre
               </span>
             </h1>
+            {/* App purpose description - critical for OAuth verification */}
             <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl font-light">
               MaatWork es una plataforma CRM profesional para gestión patrimonial y asesoramiento
               financiero. Sabemos lo valioso que es tu tiempo. Operá de forma ágil con un equipo de
               expertos dedicados a potenciar tu patrimonio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
+              <ScrollButton
+                targetId="contacto"
+                variant="primary"
                 size="lg"
                 className="bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-full px-8 py-6 text-lg border-transparent shadow-lg shadow-violet-900/20 transition-transform hover:scale-105"
-                onClick={() => scrollToSection('contacto')}
               >
                 Hablar con un asesor
-              </Button>
-              <Button
-                size="lg"
+              </ScrollButton>
+              <ScrollButton
+                targetId="servicios"
                 variant="outline"
+                size="lg"
                 className="border-slate-700 hover:bg-slate-800 text-white font-semibold rounded-full px-8 py-6 text-lg transition-all"
-                onClick={() => scrollToSection('servicios')}
               >
                 Conocer servicios
-              </Button>
+              </ScrollButton>
             </div>
           </div>
         </div>
@@ -240,12 +136,14 @@ export function LandingPage() {
                 Gestión de liquidez, inversiones en ARS y USD, coberturas, dolarizaciones y
                 transferencias al exterior. Optimizamos tu flujo de caja con instrumentos seguros.
               </p>
-              <button
-                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm"
-                onClick={() => scrollToSection('contacto')}
+              <ScrollButton
+                targetId="contacto"
+                variant="outline"
+                size="sm"
+                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm border-none bg-transparent hover:bg-transparent p-0"
               >
                 Empezar hoy <ArrowRight size={16} />
-              </button>
+              </ScrollButton>
             </div>
 
             {/* Service 2 */}
@@ -259,12 +157,14 @@ export function LandingPage() {
                 Planificación de largo plazo para alcanzar grandes objetivos. Estrategias de interés
                 compuesto adaptadas a tu perfil de riesgo para maximizar rendimientos.
               </p>
-              <button
-                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm"
-                onClick={() => scrollToSection('contacto')}
+              <ScrollButton
+                targetId="contacto"
+                variant="outline"
+                size="sm"
+                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm border-none bg-transparent hover:bg-transparent p-0"
               >
                 Empezar hoy <ArrowRight size={16} />
-              </button>
+              </ScrollButton>
             </div>
 
             {/* Service 3 */}
@@ -277,12 +177,14 @@ export function LandingPage() {
                 Protección y gestión del patrimonio personal y corporativo. Asesoramiento integral
                 para preservar y hacer crecer tu capital a través de generaciones.
               </p>
-              <button
-                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm"
-                onClick={() => scrollToSection('contacto')}
+              <ScrollButton
+                targetId="contacto"
+                variant="outline"
+                size="sm"
+                className="text-violet-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all text-sm border-none bg-transparent hover:bg-transparent p-0"
               >
                 Empezar hoy <ArrowRight size={16} />
-              </button>
+              </ScrollButton>
             </div>
           </div>
         </div>
@@ -425,93 +327,25 @@ export function LandingPage() {
                 Dejanos tus datos y te contactaremos a la brevedad.
               </p>
 
-              <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1.5">
-                    Nombre y Apellido <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
-                    placeholder="Tu nombre completo"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-slate-700 mb-1.5"
-                  >
-                    Celular <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
-                    placeholder="+54 9 ..."
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-slate-700 mb-1.5"
-                  >
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    required
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all placeholder:text-slate-400"
-                    placeholder="tu@email.com"
-                  />
-                </div>
+              {/* Client-side form component */}
+              <ContactForm />
 
-                {/* Interest Select */}
-                <div>
-                  <label
-                    htmlFor="interest"
-                    className="block text-sm font-medium text-slate-700 mb-1.5"
-                  >
-                    Me interesa principalmente
-                  </label>
-                  <select
-                    id="interest"
-                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all text-slate-600"
-                  >
-                    <option value="inversiones">Inversiones Generales</option>
-                    <option value="cash-management">Cash Management (Empresas)</option>
-                    <option value="retiro">Planificación de Retiro</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-
-                <div className="pt-4">
-                  <Button
-                    type="submit"
-                    className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-violet-200 transition-transform active:scale-[0.98]"
-                  >
-                    Solicitar Contacto <ArrowRight size={18} />
-                  </Button>
-                  <p className="text-center text-xs text-slate-400 mt-4">
-                    Tus datos están protegidos. No compartimos tu información.{' '}
-                    <Link
-                      href="/legal/privacy-policy.html"
-                      className="text-violet-400 hover:text-violet-300 underline"
-                    >
-                      Ver Política de Privacidad
-                    </Link>
-                  </p>
-                </div>
-              </form>
+              {/* Privacy policy notice - critical for OAuth verification (server-rendered) */}
+              <p className="text-center text-xs text-slate-400 mt-4">
+                Tus datos están protegidos. No compartimos tu información.{' '}
+                <Link
+                  href="/legal/privacy-policy.html"
+                  className="text-violet-600 hover:text-violet-500 underline"
+                >
+                  Ver Política de Privacidad
+                </Link>
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer - critical for OAuth verification (server-rendered with privacy policy link) */}
       <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
@@ -542,40 +376,8 @@ export function LandingPage() {
 
             <div>
               <h4 className="text-white font-semibold mb-6">Menú</h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <button
-                    onClick={() => scrollToSection('inicio')}
-                    className="hover:text-violet-500 transition-colors"
-                  >
-                    Inicio
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection('servicios')}
-                    className="hover:text-violet-500 transition-colors"
-                  >
-                    Servicios
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection('nosotros')}
-                    className="hover:text-violet-500 transition-colors"
-                  >
-                    Nosotros
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection('contacto')}
-                    className="hover:text-violet-500 transition-colors"
-                  >
-                    Contacto
-                  </button>
-                </li>
-              </ul>
+              {/* Client-side footer nav for scroll functionality */}
+              <FooterNav />
             </div>
 
             <div>
@@ -604,6 +406,7 @@ export function LandingPage() {
               </ul>
             </div>
 
+            {/* Legal section - server-rendered with direct links for crawler visibility */}
             <div>
               <h4 className="text-white font-semibold mb-6">Legal</h4>
               <ul className="space-y-3 text-sm">

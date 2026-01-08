@@ -1,5 +1,9 @@
 # MAATWORK Monorepo
 
+## autopush
+
+ssh abax "cd abax/scripts && bash deploy.sh --skip-tests"
+
 Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@maatwork/db` (Drizzle + PostgreSQL) y `@maatwork/ui` (Design System + React Components).
 
 ## Primera Instalación

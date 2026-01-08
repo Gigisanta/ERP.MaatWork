@@ -75,11 +75,12 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
         console.warn('Warning: GOOGLE_REDIRECT_URI should use HTTPS in production');
       }
 
-      // Validar que el path sea correcto
+      // Validar que el path sea correcto (puede estar prefijado por /api si hay un proxy)
       const expectedPath = '/v1/auth/google/callback';
-      if (url.pathname !== expectedPath) {
+      const expectedProxyPath = '/api/v1/auth/google/callback';
+      if (url.pathname !== expectedPath && url.pathname !== expectedProxyPath) {
         console.warn(
-          `Warning: GOOGLE_REDIRECT_URI path should be "${expectedPath}" but got "${url.pathname}". ` +
+          `Warning: GOOGLE_REDIRECT_URI path should be "${expectedPath}" or "${expectedProxyPath}" but got "${url.pathname}". ` +
             'This must match exactly with Google Cloud Console configuration.'
         );
       }
