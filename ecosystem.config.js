@@ -91,7 +91,10 @@ module.exports = {
     {
       name: 'web',
       cwd: './apps/web',
-      script: 'pnpm',
+      // AI_DECISION: Usar next directamente en lugar de pnpm start
+      // Justificación: PM2 no captura correctamente stdout cuando ejecuta pnpm como wrapper
+      // Impacto: Los logs de Next.js van a web-out.log en lugar de pm2.log
+      script: './node_modules/.bin/next',
       args: 'start',
       instances: 1,
       autorestart: true,
