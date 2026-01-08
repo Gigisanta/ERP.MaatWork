@@ -35,6 +35,13 @@ export const metadata: Metadata = {
     'Wealth Management',
     'Argentina',
     'Finanzas Corporativas',
+    'Asesor financiero Buenos Aires',
+    'Inversiones en Argentina',
+    'Planificación financiera personal',
+    'Administración de patrimonio familiar',
+    'Inversiones en dólares Argentina',
+    'CRM para asesores financieros',
+    'Gestión de portafolios de inversión',
   ],
   openGraph: {
     title: 'MaatWork | Gestión Patrimonial Profesional',
@@ -171,11 +178,12 @@ export default async function HomePage() {
     // AI_DECISION: JSON-LD Structured Data para SEO
     // Justificación: Ayuda a Google a entender que esto es una Organización Financiera.
     // Impacto: Rich snippets en resultados de búsqueda.
+    // FinancialService Schema
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'FinancialService',
       name: 'MaatWork',
-      image: 'https://maat.work/icon.png', // URL del icono o logo
+      image: 'https://maat.work/icon.png',
       description:
         'Gestión profesional de clientes e inversiones. Soluciones financieras a medida.',
       address: {
@@ -188,7 +196,7 @@ export default async function HomePage() {
       },
       telephone: '+5491134600296',
       url: 'https://maat.work',
-      priceRange: '$$', // Opcional, indicativo
+      priceRange: '$$',
       openingHoursSpecification: [
         {
           '@type': 'OpeningHoursSpecification',
@@ -199,11 +207,55 @@ export default async function HomePage() {
       ],
     };
 
+    // FAQ Schema for rich snippets in Google
+    const faqJsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
+        {
+          '@type': 'Question',
+          name: '¿Qué servicios ofrece MaatWork?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Ofrecemos Cash Management para gestión de liquidez, Capitalización para crecimiento a largo plazo, y Administración Patrimonial para protección y gestión integral del patrimonio.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '¿Cómo puedo agendar una asesoría financiera gratuita?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Podés completar el formulario de contacto en nuestra web o escribirnos por WhatsApp al +54 9 11 3460-0296. Un asesor se pondrá en contacto a la brevedad.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '¿MaatWork opera en toda Argentina?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Sí, brindamos servicios en todo el país. Nuestras oficinas están en Buenos Aires pero atendemos clientes de todas las provincias de forma virtual.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: '¿Cuál es el monto mínimo para invertir?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'No hay monto mínimo fijo. Analizamos cada caso de forma personalizada para ofrecerte las mejores opciones según tu situación financiera.',
+          },
+        },
+      ],
+    };
+
     return (
       <Suspense fallback={<HomePageLoading />}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
         <LandingPage />
       </Suspense>

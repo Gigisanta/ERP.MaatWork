@@ -20,6 +20,7 @@ import {
   MapPin,
   Instagram,
   Linkedin,
+  MessageCircle,
 } from 'lucide-react';
 import {
   LandingPageHeader,
@@ -61,34 +62,34 @@ export function LandingPage() {
         id="inicio"
         className="relative bg-slate-900 py-20 sm:py-32 text-white overflow-hidden"
       >
-        {/* Abstract Background */}
+        {/* Abstract Background with enhanced animations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-[100px] mix-blend-screen animate-pulse-slow"></div>
-          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[100px] mix-blend-screen"></div>
-          <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[100px] mix-blend-screen"></div>
+          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-violet-600/30 rounded-full blur-[100px] mix-blend-screen animate-blob"></div>
+          <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[100px] mix-blend-screen animate-blob animate-delay-200"></div>
+          <div className="absolute top-[20%] left-[10%] w-[300px] h-[300px] bg-blue-500/20 rounded-full blur-[100px] mix-blend-screen animate-blob animate-delay-400"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 mb-6 backdrop-blur-sm">
-              <span className="flex h-2 w-2 rounded-full bg-violet-400"></span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 mb-6 backdrop-blur-sm animate-fade-in-up">
+              <span className="flex h-2 w-2 rounded-full bg-violet-400 animate-pulse"></span>
               <span className="text-sm font-medium text-violet-200">
                 Gestión Patrimonial Profesional
               </span>
             </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight animate-fade-in-up animate-delay-100">
               Te acompañamos <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-emerald-400">
                 siempre
               </span>
             </h1>
             {/* App purpose description - critical for OAuth verification */}
-            <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl font-light">
+            <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl font-light animate-fade-in-up animate-delay-200">
               MaatWork es una plataforma CRM profesional para gestión patrimonial y asesoramiento
               financiero. Sabemos lo valioso que es tu tiempo. Operá de forma ágil con un equipo de
               expertos dedicados a potenciar tu patrimonio.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animate-delay-300">
               <ScrollButton
                 targetId="contacto"
                 variant="primary"
@@ -127,7 +128,7 @@ export function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Service 1 */}
-            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-violet-900/5 hover:-translate-y-1 transition-all duration-300 border border-slate-100 group">
+            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 service-card border border-slate-100 group">
               <div className="w-14 h-14 bg-violet-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-violet-100 transition-colors">
                 <DollarSign className="w-7 h-7 text-violet-600" />
               </div>
@@ -147,7 +148,7 @@ export function LandingPage() {
             </div>
 
             {/* Service 2 */}
-            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-violet-900/5 hover:-translate-y-1 transition-all duration-300 border border-slate-100 group relative overflow-hidden">
+            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 service-card border border-slate-100 group relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-emerald-500"></div>
               <div className="w-14 h-14 bg-violet-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-violet-100 transition-colors">
                 <TrendingUp className="w-7 h-7 text-violet-600" />
@@ -168,7 +169,7 @@ export function LandingPage() {
             </div>
 
             {/* Service 3 */}
-            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-violet-900/5 hover:-translate-y-1 transition-all duration-300 border border-slate-100 group">
+            <div className="bg-white rounded-2xl p-8 shadow-xl shadow-slate-200/50 service-card border border-slate-100 group">
               <div className="w-14 h-14 bg-violet-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-violet-100 transition-colors">
                 <Shield className="w-7 h-7 text-violet-600" />
               </div>
@@ -216,7 +217,7 @@ export function LandingPage() {
                     <TrendingUp className="w-8 h-8 text-violet-600" />
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900 text-2xl">+10 Años</p>
+                    <p className="font-bold text-slate-900 text-2xl animate-count-up">+10 Años</p>
                     <p className="text-slate-500 text-sm font-medium">de trayectoria</p>
                   </div>
                 </div>
@@ -224,24 +225,24 @@ export function LandingPage() {
             </div>
 
             <div className="order-1 lg:order-2">
-              <span className="text-violet-600 font-semibold tracking-wider uppercase text-sm mb-2 block">
+              <span className="text-violet-600 font-semibold tracking-wider uppercase text-sm mb-2 block animate-fade-in-up">
                 Sobre Nosotros
               </span>
-              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+              <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6 leading-tight animate-fade-in-up animate-delay-100">
                 Planifica tus finanzas con <span className="text-violet-600">MaatWork</span>
               </h2>
 
-              <p className="text-lg text-slate-600 mb-6 leading-relaxed">
+              <p className="text-lg text-slate-600 mb-6 leading-relaxed animate-fade-in-up animate-delay-200">
                 Utiliza eficientemente tus recursos financieros en función de tus objetivos. Nuestro
                 enfoque combina tecnología de punta con asesoramiento personalizado.
               </p>
 
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
+              <p className="text-lg text-slate-600 mb-8 leading-relaxed animate-fade-in-up animate-delay-300">
                 Creemos en la transparencia y en construir relaciones a largo plazo basadas en la
                 confianza y resultados medibles.
               </p>
 
-              <ul className="space-y-4 mb-8">
+              <ul className="space-y-4 mb-8 animate-fade-in-up animate-delay-400">
                 {[
                   'Asesoramiento 100% personalizado',
                   'Tecnología de vanguardia para monitoreo',
@@ -261,6 +262,66 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-24 bg-slate-50 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-100 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-100 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <span className="text-violet-600 font-semibold tracking-wider uppercase text-sm mb-2 block">
+              Testimonios
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
+              La confianza de nuestros clientes
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                text: 'MaatWork transformó la manera en que gestionamos la liquidez de nuestra empresa. La plataforma es intuitiva y el asesoramiento impecable.',
+                author: 'Carlos Rodriguez',
+                role: 'Director Financiero',
+                company: 'TechSolutions SA',
+              },
+              {
+                text: 'Excelente servicio de capitalización. Me ayudaron a estructurar un plan de retiro sólido y adaptado a mis necesidades.',
+                author: 'Ana Martínez',
+                role: 'Emprendedora',
+                company: 'Independiente',
+              },
+              {
+                text: 'La transparencia y profesionalismo del equipo es destacable. Me siento tranquila sabiendo que mi patrimonio está en buenas manos.',
+                author: 'Roberto Gomez',
+                role: 'Inversor Privado',
+                company: '',
+              },
+            ].map((testimonial, i) => (
+              <div
+                key={i}
+                className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100"
+              >
+                <div className="flex text-violet-400 mb-4">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <svg key={s} className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-slate-600 mb-6 italic leading-relaxed">"{testimonial.text}"</p>
+                <div>
+                  <p className="font-bold text-slate-900">{testimonial.author}</p>
+                  <p className="text-sm text-slate-500">
+                    {testimonial.role} {testimonial.company && `- ${testimonial.company}`}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA / Contact Form Section */}
       <section id="contacto" className="py-24 bg-slate-900 text-white relative overflow-hidden">
         {/* Background elements */}
@@ -275,8 +336,10 @@ export function LandingPage() {
               </span>
               <h2 className="text-4xl sm:text-5xl font-bold mb-6">Asesorate con expertos</h2>
               <p className="text-slate-300 text-lg mb-10 leading-relaxed max-w-lg">
-                Si buscas proteger tu patrimonio y maximizar tus inversiones, solicitá una reunión
-                con nuestro equipo. Analizaremos tu perfil para ofrecerte las mejores soluciones.
+                Agenda una reunión gratuita con un asesor especializado.{' '}
+                <span className="text-emerald-400 font-medium">
+                  Cupos limitados para nuevos clientes este mes.
+                </span>
               </p>
 
               <div className="space-y-8">
@@ -448,6 +511,17 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      {/* WhatsApp Floating Button */}
+      <a
+        href="https://wa.me/5491134600296?text=Hola%20MaatWork,%20quiero%20conocer%20m%C3%A1s%20sobre%20sus%20servicios"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="whatsapp-float hover:scale-110 active:scale-95 transition-transform duration-300"
+        aria-label="Contactar por WhatsApp"
+      >
+        <div className="absolute inset-0 rounded-full animate-whatsapp-pulse z-[-1]"></div>
+        <MessageCircle className="w-8 h-8 text-white" />
+      </a>
     </div>
   );
 }

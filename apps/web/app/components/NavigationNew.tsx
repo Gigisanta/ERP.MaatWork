@@ -318,17 +318,25 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
       return;
     }
 
-    // Si estamos en rutas públicas, no hacer nada
-    const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname === '/';
-    if (isPublicRoute) {
-      console.log('[NavigationNew] Ruta pública, no redirigir:', pathname);
+    // Si estamos en rutas públicas de autenticación (login/register), no redirigir
+    const isAuthRoute = pathname === '/login' || pathname === '/register';
+
+    // Si hay usuario autenticado
+    if (user) {
+      console.log('[NavigationNew] Usuario encontrado, verificando ruta');
+      hasRedirectedRef.current = false;
+
+      // Si el usuario está en la landing page o rutas de auth, redirigir a /home
+      if (pathname === '/' || isAuthRoute) {
+        console.log('[NavigationNew] Usuario autenticado en ruta pública, redirigiendo a /home');
+        router.replace('/home');
+      }
       return;
     }
 
-    // Si hay usuario, resetear el flag y no hacer nada más
-    if (user) {
-      console.log('[NavigationNew] Usuario encontrado, resetear flag de redirección');
-      hasRedirectedRef.current = false;
+    // Si no hay usuario y estamos en rutas públicas, no hacer nada
+    if (isAuthRoute || pathname === '/') {
+      console.log('[NavigationNew] Ruta pública sin usuario, no redirigir:', pathname);
       return;
     }
 
