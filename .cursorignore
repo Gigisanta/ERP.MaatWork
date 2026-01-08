@@ -14,8 +14,7 @@ infrastructure/terraform/**/*.tfvars
 infrastructure/terraform/**/*.tfstate
 infrastructure/terraform/**/*.tfstate.backup
 
-# Configuración de PM2 (puertos de servicios)
-ecosystem.config.js
+
 
 # Scripts de Deploy (aplican cambios directamente a producción)
 scripts/deploy.sh

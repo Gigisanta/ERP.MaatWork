@@ -16,7 +16,8 @@
  *   - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
  *   - GOOGLE_ENCRYPTION_KEY: Clave de 32 caracteres para encriptar tokens
  *
- * WEB (.env en apps/web/ ANTES del build):
+ * WEB (.env.local en apps/web/):
+ *   - JWT_SECRET: DEBE ser el mismo que en API (para validar tokens en middleware)
  *   - NEXT_PUBLIC_API_URL: https://maat.work/api
  *   - NEXT_PUBLIC_GOOGLE_CLIENT_ID: Client ID de Google
  *   - API_URL_INTERNAL: http://localhost:3001 (para Server Components)
@@ -31,6 +32,22 @@
  *   pm2 restart api                       # Reiniciar API
  *   pm2 save                              # Guardar config para reboot
  */
+
+// Cargar JWT_SECRET desde el .env.local del web si existe
+const fs = require('fs');
+const path = require('path');
+let webJwtSecret = '';
+try {
+  const envLocalPath = path.join(__dirname, 'apps/web/.env.local');
+  if (fs.existsSync(envLocalPath)) {
+    const envContent = fs.readFileSync(envLocalPath, 'utf8');
+    const match = envContent.match(/JWT_SECRET=(.+)/);
+    if (match) webJwtSecret = match[1].trim();
+  }
+} catch (e) {
+  console.warn('Could not read apps/web/.env.local:', e.message);
+}
+
 module.exports = {
   apps: [
     {
@@ -65,6 +82,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        // JWT_SECRET se pasa explícitamente para que el middleware pueda validar tokens
+        JWT_SECRET: webJwtSecret || process.env.JWT_SECRET || '',
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: './logs/web-error.log',
