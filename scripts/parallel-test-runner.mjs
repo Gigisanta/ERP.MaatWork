@@ -27,12 +27,7 @@ try {
   console.warn('⚠️  Could not load adaptive config, using default concurrency: 4');
 }
 
-const PACKAGES = [
-  '@maatwork/ui',
-  '@maatwork/api',
-  '@maatwork/web',
-  '@maatwork/analytics-service',
-];
+const PACKAGES = ['@maatwork/ui', '@maatwork/api', '@maatwork/web', '@maatwork/analytics-service'];
 
 console.log(`\n🚀 Running tests in parallel (concurrency: ${concurrency})\n`);
 console.log(`Packages: ${PACKAGES.join(', ')}\n`);
@@ -46,45 +41,48 @@ try {
     stdio: 'inherit',
     env: { ...process.env, FORCE_COLOR: '1' },
   });
-  
+
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   console.log(`\n✅ All tests passed in ${duration}s\n`);
-  
+
   // Generate success summary
   const summaryPath = path.join(rootDir, 'test-results', 'parallel-test-summary.txt');
   fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
-  fs.writeFileSync(summaryPath, [
-    `PARALLEL TEST RUN - ${new Date().toISOString()}`,
-    `================================================================`,
-    `Status: SUCCESS ✅`,
-    `Duration: ${duration}s`,
-    `Concurrency: ${concurrency}`,
-    `Packages: ${PACKAGES.join(', ')}`,
-    `================================================================`,
-  ].join('\n'));
-  
+  fs.writeFileSync(
+    summaryPath,
+    [
+      `PARALLEL TEST RUN - ${new Date().toISOString()}`,
+      `================================================================`,
+      `Status: SUCCESS ✅`,
+      `Duration: ${duration}s`,
+      `Concurrency: ${concurrency}`,
+      `Packages: ${PACKAGES.join(', ')}`,
+      `================================================================`,
+    ].join('\n')
+  );
+
   process.exit(0);
 } catch (error) {
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
   console.error(`\n❌ Tests failed after ${duration}s\n`);
-  
+
   // Generate failure summary
   const summaryPath = path.join(rootDir, 'test-results', 'parallel-test-summary.txt');
   fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
-  fs.writeFileSync(summaryPath, [
-    `PARALLEL TEST RUN - ${new Date().toISOString()}`,
-    `================================================================`,
-    `Status: FAILED ❌`,
-    `Duration: ${duration}s`,
-    `Concurrency: ${concurrency}`,
-    `Packages: ${PACKAGES.join(', ')}`,
-    `================================================================`,
-    ``,
-    `See individual package logs for details.`,
-  ].join('\n'));
-  
+  fs.writeFileSync(
+    summaryPath,
+    [
+      `PARALLEL TEST RUN - ${new Date().toISOString()}`,
+      `================================================================`,
+      `Status: FAILED ❌`,
+      `Duration: ${duration}s`,
+      `Concurrency: ${concurrency}`,
+      `Packages: ${PACKAGES.join(', ')}`,
+      `================================================================`,
+      ``,
+      `See individual package logs for details.`,
+    ].join('\n')
+  );
+
   process.exit(1);
 }
-
-
-

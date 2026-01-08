@@ -1,0 +1,61 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'packages/ui/**'
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm -F @maatwork/web build
+
+      # AI_DECISION: Add bundle size check before Lighthouse CI
+      # Justificación: Verificar bundle size antes de ejecutar Lighthouse para detectar problemas temprano
+      # Impacto: Detecta regresiones de bundle size junto con métricas de performance
+      - name: Check Bundle Size
+        run: pnpm -F @maatwork/web check:bundle
+        continue-on-error: true
+        env:
+          BUNDLE_REPORT_PATH: bundle-report.json
+
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      # AI_DECISION: Upload bundle report and Lighthouse artifacts
+      # Justificación: Hacer disponibles reportes de performance y bundle size para análisis
+      # Impacto: Reportes accesibles en GitHub Actions para debugging y análisis
+      - name: Upload Bundle Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report-lighthouse
+          path: apps/web/.next/bundle-report.json
+          if-no-files-found: ignore
+
+      - name: Upload Lighthouse Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/**
+          if-no-files-found: ignore

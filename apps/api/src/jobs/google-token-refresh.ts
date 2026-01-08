@@ -109,12 +109,13 @@ export async function refreshGoogleToken(
       const errorMessage = lastError.message;
 
       // AI_DECISION: No reintentar errores permanentes
-      // Justificación: Errores como invalid_grant requieren reconexión del usuario
+      // Justificación: Errores como invalid_grant o encryption key mismatch requieren reconexión del usuario
       // Impacto: Ahorra recursos, falla rápido en errores irrecuperables
       const isPermanentError =
         errorMessage.includes('invalid_grant') ||
         errorMessage.includes('Token has been expired or revoked') ||
-        errorMessage.includes('unauthorized_client');
+        errorMessage.includes('unauthorized_client') ||
+        errorMessage.includes('encryption key mismatch');
 
       if (isPermanentError) {
         logger.error(

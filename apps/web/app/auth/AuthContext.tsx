@@ -240,7 +240,7 @@ export function AuthProvider({
       console.error('[AuthContext] EVENTO auth:session-expired RECIBIDO - LIMPIANDO USUARIO', {
         detail: e.detail,
         previousUser: !!user,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       logger.warn('Sesión expirada detectada por API client', {
         detail: e.detail,
@@ -254,7 +254,7 @@ export function AuthProvider({
 
     const handleTokenRefreshed = () => {
       console.log('[AuthContext] EVENTO auth:token-refreshed RECIBIDO - Re-verificando sesión', {
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
       logger.debug('Token refrescado por API client, re-verificando sesión');
       // Re-verify session after token refresh
@@ -267,7 +267,7 @@ export function AuthProvider({
 
     console.log('[AuthContext] Configurando listeners de eventos auth', {
       hasWindow: typeof window !== 'undefined',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     if (typeof window !== 'undefined') {

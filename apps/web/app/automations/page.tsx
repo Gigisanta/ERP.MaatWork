@@ -63,7 +63,7 @@ export default function AutomationsPage() {
               defaultSubject="Confirmación Segunda Reunión"
               defaultBody="<p>Hola {contact.firstName},</p><p>Te confirmamos la segunda reunión...</p>"
             />
-            
+
             <EmailAutomationCard
               automationName="mail_bienvenida"
               displayName="Email de Bienvenida (Cliente)"

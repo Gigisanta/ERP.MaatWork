@@ -1,0 +1,76 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      E2E_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      JWT_SECRET: test-secret
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/CRM
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: CRM
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Migrate DB + seed
+        run: |
+          pnpm db:migrate || true
+          pnpm -F @maatwork/db run db:init || true
+      - name: Build API
+        run: pnpm -F @maatwork/api build
+      - name: Start API
+        run: node apps/api/dist/index.js &
+      - name: Wait for API
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3001/health >/dev/null; then echo API up; exit 0; fi
+            sleep 2
+          done
+          echo API failed to start; exit 1
+      - name: Build Web
+        run: pnpm -F @maatwork/web build
+      - name: Start Web
+        run: pnpm -F @maatwork/web start &
+      - name: Wait for Web
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3000 >/dev/null; then echo Web up; exit 0; fi
+            sleep 2
+          done
+          echo Web failed to start; exit 1
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run E2E tests
+        run: npx playwright test
+      - name: Run Visual Regression tests
+        run: npx playwright test --config playwright.visual.config.ts || true
+        continue-on-error: true
+      - name: Upload Visual Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-results
+          path: test-results/
+          retention-days: 7

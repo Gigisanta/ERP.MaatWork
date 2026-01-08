@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Build script for API using esbuild
- * 
+ *
  * Creates a single bundled file for production deployment.
  * Native modules (bcrypt, pg, ioredis) are externalized.
  */
@@ -44,10 +44,10 @@ try {
     target: 'node22',
     format: 'esm',
     outfile: resolve(rootDir, 'dist/index.js'),
-    
+
     // Externalize native modules
     external: externalPackages,
-    
+
     // Handle __dirname and __filename for ESM
     // Use unique names to avoid conflicts with bundled code
     banner: {
@@ -60,38 +60,36 @@ const __filename = __fileURLToPath(import.meta.url);
 const __dirname = __dirname_fn(__filename);
 `.trim(),
     },
-    
+
     // Source maps for debugging (optional in prod)
     sourcemap: process.env.NODE_ENV !== 'production',
-    
+
     // Minify for smaller bundle (optional)
     minify: false, // Keep readable for debugging
-    
+
     // Keep names for better stack traces
     keepNames: true,
-    
+
     // Tree shaking
     treeShaking: true,
-    
+
     // Metafile for bundle analysis
     metafile: true,
-    
+
     // Log level
     logLevel: 'info',
   });
 
   const duration = Date.now() - startTime;
-  
+
   // Analyze bundle
   const text = await esbuild.analyzeMetafile(result.metafile, { verbose: false });
-  
+
   console.log('\n📦 Build completed successfully!');
   console.log(`⏱️  Duration: ${duration}ms`);
   console.log('\n📊 Bundle analysis:');
   console.log(text);
-  
 } catch (error) {
   console.error('❌ Build failed:', error);
   process.exit(1);
 }
-

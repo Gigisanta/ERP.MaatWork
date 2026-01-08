@@ -85,8 +85,16 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
       }
 
       // Validar que no tenga trailing slash
-      if (googleRedirectUri.endsWith('/') && !googleRedirectUri.endsWith(expectedPath + '/')) {
-        console.warn('Warning: GOOGLE_REDIRECT_URI should not have trailing slash');
+      // AI_DECISION: Verificar trailing slash en el pathname
+      // Justificación: El path esperado es /v1/auth/google/callback (sin trailing slash)
+      // Cualquier trailing slash causará redirect_uri_mismatch porque Google requiere coincidencia exacta
+      // Impacto: Detecta correctamente URIs con trailing slash que causarían redirect_uri_mismatch
+      if (url.pathname.endsWith('/')) {
+        console.warn(
+          `Warning: GOOGLE_REDIRECT_URI path should not have trailing slash. ` +
+            `Expected: "${expectedPath}", got: "${url.pathname}". ` +
+            'This will cause OAuth redirect_uri_mismatch errors.'
+        );
       }
     } catch (error) {
       console.warn(

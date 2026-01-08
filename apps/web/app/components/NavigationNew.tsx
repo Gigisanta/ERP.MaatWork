@@ -296,14 +296,14 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   // Justificación: El middleware ya validó el token, pero AuthContext puede tardar en verificar la sesión
   // Impacto: Evita redirecciones prematuras cuando el usuario está autenticado pero AuthContext aún está verificando
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   useEffect(() => {
     console.log('[NavigationNew] useEffect ejecutado', {
       initialized,
       user: !!user,
       pathname,
       hasRedirected: hasRedirectedRef.current,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Limpiar timeout anterior si existe
@@ -341,7 +341,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
       console.log('[NavigationNew] Timeout completado, verificando usuario nuevamente', {
         user: !!user,
         hasRedirected: hasRedirectedRef.current,
-        pathname
+        pathname,
       });
 
       // Verificar nuevamente el estado actual (no el valor capturado en el closure)
@@ -349,11 +349,14 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
       // Por ahora, confiamos en que si llegamos aquí después del delay y no hay user,
       // realmente no hay sesión
       if (!hasRedirectedRef.current) {
-        console.error('[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout', {
-          pathname,
-          initialized,
-          timestamp: new Date().toISOString()
-        });
+        console.error(
+          '[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout',
+          {
+            pathname,
+            initialized,
+            timestamp: new Date().toISOString(),
+          }
+        );
         hasRedirectedRef.current = true;
         // Usar replace en lugar de push para evitar problemas de historial
         router.replace('/login');

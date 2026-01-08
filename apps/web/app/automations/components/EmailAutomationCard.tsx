@@ -63,7 +63,7 @@ export default function EmailAutomationCard({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<AutomationConfig | null>(null);
-  
+
   // Form State
   const [enabled, setEnabled] = useState(true);
   const [subject, setSubject] = useState(defaultSubject);
@@ -86,7 +86,7 @@ export default function EmailAutomationCard({
           // Configuración existente - usar EXACTAMENTE lo guardado
           setConfig(response.data);
           setEnabled(response.data.enabled);
-          
+
           const emailConfig = response.data.config as unknown as EmailConfig;
           if (emailConfig) {
             setSubject(emailConfig.subject || defaultSubject);
@@ -97,7 +97,9 @@ export default function EmailAutomationCard({
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 404) {
           // Nueva configuración (404) - establecer email del usuario como default
-          logger.debug('Automation config not found (404), using defaults', { name: automationName });
+          logger.debug('Automation config not found (404), using defaults', {
+            name: automationName,
+          });
           if (user?.isGoogleConnected && user.googleEmail) {
             setSenderEmail(user.googleEmail);
           }
@@ -169,7 +171,18 @@ export default function EmailAutomationCard({
     } finally {
       setSaving(false);
     }
-  }, [config, enabled, subject, body, senderEmail, automationName, displayName, triggerStageName, user, showToast]);
+  }, [
+    config,
+    enabled,
+    subject,
+    body,
+    senderEmail,
+    automationName,
+    displayName,
+    triggerStageName,
+    user,
+    showToast,
+  ]);
 
   const handleGoogleSuccess = () => {
     mutateUser();
@@ -214,18 +227,15 @@ export default function EmailAutomationCard({
     e.preventDefault();
     const value = e.dataTransfer.getData('text/plain');
     const target = e.target as HTMLInputElement;
-    
+
     // Insert at cursor position
     const startPos = target.selectionStart || 0;
     const endPos = target.selectionEnd || 0;
-    
-    const newValue = 
-      currentValue.substring(0, startPos) + 
-      value + 
-      currentValue.substring(endPos);
-      
+
+    const newValue = currentValue.substring(0, startPos) + value + currentValue.substring(endPos);
+
     setter(newValue);
-    
+
     // Restore focus and cursor position (delayed to allow render)
     setTimeout(() => {
       target.focus();
@@ -257,9 +267,7 @@ export default function EmailAutomationCard({
               {description}
             </Text>
           </div>
-          <Badge variant={enabled ? 'success' : 'default'}>
-            {enabled ? 'Activo' : 'Inactivo'}
-          </Badge>
+          <Badge variant={enabled ? 'success' : 'default'}>{enabled ? 'Activo' : 'Inactivo'}</Badge>
         </div>
       </CardHeader>
       <CardContent>
@@ -279,33 +287,39 @@ export default function EmailAutomationCard({
               onChange={(e) => setEnabled(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
-            <label htmlFor={`enabled-${automationName}`} className="text-sm font-medium text-text-primary">
+            <label
+              htmlFor={`enabled-${automationName}`}
+              className="text-sm font-medium text-text-primary"
+            >
               Habilitar automatización
             </label>
           </div>
 
           {/* Google Account Status */}
           <div className="p-4 bg-background-subtle rounded-md border border-border">
-            <Text weight="medium" className="mb-2">Cuenta de envío (Gmail)</Text>
-            
+            <Text weight="medium" className="mb-2">
+              Cuenta de envío (Gmail)
+            </Text>
+
             {user?.isGoogleConnected ? (
-               <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                   <Text>{user.googleEmail || 'Cuenta conectada'}</Text>
-                 </div>
-               </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <Text>{user.googleEmail || 'Cuenta conectada'}</Text>
+                </div>
+              </div>
             ) : (
               <div className="flex flex-col gap-2">
                 <Text size="sm" color="warning">
-                  No tienes una cuenta de Google conectada. Necesitas conectar una cuenta para enviar emails.
+                  No tienes una cuenta de Google conectada. Necesitas conectar una cuenta para
+                  enviar emails.
                 </Text>
                 <div className="w-fit">
-                   <GoogleOAuthButton 
-                      mode="connect" 
-                      onSuccess={handleGoogleSuccess}
-                      label="Conectar cuenta de Google"
-                   />
+                  <GoogleOAuthButton
+                    mode="connect"
+                    onSuccess={handleGoogleSuccess}
+                    label="Conectar cuenta de Google"
+                  />
                 </div>
               </div>
             )}
@@ -352,14 +366,15 @@ export default function EmailAutomationCard({
               onImageUpload={handleImageUpload}
             />
             <Text size="xs" color="secondary">
-              Usa la barra de herramientas para formatear el texto. Arrastra las variables para personalizarlas.
+              Usa la barra de herramientas para formatear el texto. Arrastra las variables para
+              personalizarlas.
             </Text>
           </div>
 
           <div className="pt-4 flex justify-end">
-            <Button 
-              onClick={handleSave} 
-              disabled={saving || !user?.isGoogleConnected} 
+            <Button
+              onClick={handleSave}
+              disabled={saving || !user?.isGoogleConnected}
               loading={saving}
             >
               Guardar Configuración
@@ -370,4 +385,3 @@ export default function EmailAutomationCard({
     </Card>
   );
 }
-

@@ -88,7 +88,7 @@ export class ApiClient {
               url,
               attempt,
               isRefreshInProgress: this.authManager.isRefreshInProgress,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
 
             // Try to refresh token on 401 (only on first attempt)
@@ -108,11 +108,15 @@ export class ApiClient {
                   console.log('[ApiClient] Refresh falló, emitiendo evento de sesión expirada');
                 }
               } catch (refreshError) {
-                console.error('[ApiClient] Error durante refresh, emitiendo evento de sesión expirada', {
-                  error: refreshError instanceof Error ? refreshError.message : String(refreshError),
-                  url,
-                  timestamp: new Date().toISOString()
-                });
+                console.error(
+                  '[ApiClient] Error durante refresh, emitiendo evento de sesión expirada',
+                  {
+                    error:
+                      refreshError instanceof Error ? refreshError.message : String(refreshError),
+                    url,
+                    timestamp: new Date().toISOString(),
+                  }
+                );
                 // Refresh failed, emit auth error event
                 if (typeof window !== 'undefined') {
                   window.dispatchEvent(
@@ -135,7 +139,7 @@ export class ApiClient {
               status: response.status,
               url,
               message: response.status === 403 ? 'Forbidden' : 'Unauthorized',
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
             if (typeof window !== 'undefined') {
               window.dispatchEvent(

@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  typecheck:
+    name: TypeCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage
+      - name: Check Coverage Thresholds
+        run: pnpm test:coverage:check
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            apps/api/coverage/
+            apps/web/coverage/
+            packages/ui/coverage/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  audit:
+    name: Code Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Code Audit
+        run: pnpm audit:code --ci
+      - name: Check Console Logs
+        run: |
+          if grep -rn "console\.\(log\|info\|warn\|debug\)(" apps/ packages/ --include="*.ts" --include="*.tsx" \
+            --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.next \
+            --exclude="*.test.*" --exclude="*.spec.*" | grep -v "scripts/" | head -20; then
+            echo "::warning::Found console.log statements in production code"
+          fi
+
+  bundle-size:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Build Web App
+        run: pnpm -F @maatwork/web build
+      - name: Check Bundle Size
+        run: |
+          # Get bundle sizes
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "apps/web/.next" ]; then
+            echo "### Next.js Build Output" >> $GITHUB_STEP_SUMMARY
+            du -sh apps/web/.next/ | awk '{print "- Total: " $1}' >> $GITHUB_STEP_SUMMARY
+            if [ -d "apps/web/.next/static" ]; then
+              du -sh apps/web/.next/static/chunks/*.js 2>/dev/null | sort -hr | head -10 | while read size file; do
+                echo "- $(basename $file): $size" >> $GITHUB_STEP_SUMMARY
+              done
+            fi
+          fi

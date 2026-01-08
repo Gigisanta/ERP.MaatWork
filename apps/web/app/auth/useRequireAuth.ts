@@ -23,7 +23,7 @@ export function useRequireAuth() {
       user: !!user,
       pathname,
       hasRedirected: hasRedirectedRef.current,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Limpiar timeout anterior si existe
@@ -61,18 +61,21 @@ export function useRequireAuth() {
       console.log('[useRequireAuth] Timeout completado, verificando usuario nuevamente', {
         user: !!user,
         hasRedirected: hasRedirectedRef.current,
-        pathname
+        pathname,
       });
 
       // Verificar nuevamente si hay usuario antes de redirigir
       // Si aún no hay usuario después del timeout, entonces realmente no hay sesión
       if (!user && !hasRedirectedRef.current) {
-        console.error('[useRequireAuth] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout', {
-          pathname,
-          initialized,
-          redirectUrl: `/login?redirect=${encodeURIComponent(pathname)}`,
-          timestamp: new Date().toISOString()
-        });
+        console.error(
+          '[useRequireAuth] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout',
+          {
+            pathname,
+            initialized,
+            redirectUrl: `/login?redirect=${encodeURIComponent(pathname)}`,
+            timestamp: new Date().toISOString(),
+          }
+        );
         hasRedirectedRef.current = true;
         const redirectUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
         router.push(redirectUrl);
