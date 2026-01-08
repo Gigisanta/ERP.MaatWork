@@ -36,9 +36,27 @@
 // Cargar JWT_SECRET desde el .env.local del web si existe
 const fs = require('fs');
 const path = require('path');
+
+// AI_DECISION: Calcular rutas absolutas para logs
+// Justificación: Las rutas relativas en PM2 se resuelven desde donde se ejecuta PM2, no desde cwd
+// Impacto: Los logs se escriben correctamente en cada app/logs/ en lugar de ~/.pm2/logs/
+const ROOT_DIR = __dirname;
+const LOGS_DIR = {
+  api: path.join(ROOT_DIR, 'apps/api/logs'),
+  web: path.join(ROOT_DIR, 'apps/web/logs'),
+  analytics: path.join(ROOT_DIR, 'apps/analytics-service/logs'),
+};
+
+// Asegurar que los directorios de logs existan
+Object.values(LOGS_DIR).forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
 let webJwtSecret = '';
 try {
-  const envLocalPath = path.join(__dirname, 'apps/web/.env.local');
+  const envLocalPath = path.join(ROOT_DIR, 'apps/web/.env.local');
   if (fs.existsSync(envLocalPath)) {
     const envContent = fs.readFileSync(envLocalPath, 'utf8');
     const match = envContent.match(/JWT_SECRET=(.+)/);
@@ -64,10 +82,10 @@ module.exports = {
         PORT: 3001,
         HOST: '127.0.0.1', // Siempre 127.0.0.1, Nginx hace el proxy
       },
-      // Configurar log rotation
+      // Configurar log rotation - rutas absolutas para que logs vayan al directorio correcto
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: './logs/api-error.log',
-      out_file: './logs/api-out.log',
+      error_file: path.join(LOGS_DIR.api, 'api-error.log'),
+      out_file: path.join(LOGS_DIR.api, 'api-out.log'),
       merge_logs: true,
     },
     {
@@ -86,8 +104,8 @@ module.exports = {
         JWT_SECRET: webJwtSecret || process.env.JWT_SECRET || '',
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: './logs/web-error.log',
-      out_file: './logs/web-out.log',
+      error_file: path.join(LOGS_DIR.web, 'web-error.log'),
+      out_file: path.join(LOGS_DIR.web, 'web-out.log'),
       merge_logs: true,
     },
     {
@@ -105,8 +123,8 @@ module.exports = {
         PYTHONUNBUFFERED: '1',
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      error_file: './logs/analytics-error.log',
-      out_file: './logs/analytics-out.log',
+      error_file: path.join(LOGS_DIR.analytics, 'analytics-error.log'),
+      out_file: path.join(LOGS_DIR.analytics, 'analytics-out.log'),
       merge_logs: true,
     },
   ],
