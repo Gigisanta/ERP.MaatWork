@@ -91,11 +91,14 @@ module.exports = {
     {
       name: 'web',
       cwd: './apps/web',
-      // AI_DECISION: Usar next directamente en lugar de pnpm start
-      // Justificación: PM2 no captura correctamente stdout cuando ejecuta pnpm como wrapper
-      // Impacto: Los logs de Next.js van a web-out.log en lugar de pm2.log
-      script: './node_modules/.bin/next',
+      // AI_DECISION: Usar next directamente en fork mode
+      // Justificación: 
+      //   1. PM2 no captura stdout correctamente cuando ejecuta pnpm como wrapper
+      //   2. Next.js no es compatible con cluster mode de PM2 (maneja concurrencia internamente)
+      // Impacto: Los logs de Next.js van a web-out.log correctamente
+      script: 'node_modules/next/dist/bin/next',
       args: 'start',
+      exec_mode: 'fork', // Next.js no soporta cluster mode
       instances: 1,
       autorestart: true,
       watch: false,
