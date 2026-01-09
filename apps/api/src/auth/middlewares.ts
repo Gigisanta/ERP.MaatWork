@@ -31,8 +31,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
           hasCookies: !!req.cookies,
           hasCookieHeader: !!req.headers.cookie,
           cookieKeys: req.cookies ? Object.keys(req.cookies) : [],
+          cookieHeaderLength: req.headers.cookie?.length || 0,
           origin: req.headers.origin,
           referer: req.headers.referer,
+          userAgent: req.headers['user-agent'],
+          url: req.url,
         },
         'No token found in request'
       );

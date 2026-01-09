@@ -70,6 +70,16 @@ export const metadata: Metadata = {
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 async function getInitialUser() {
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+
+  if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+    console.log('[Layout] Starting getInitialUser', {
+      cookieCount: allCookies.length,
+      cookieNames: allCookies.map((c) => c.name),
+      timestamp: new Date().toISOString(),
+    });
+  }
   try {
     const response = await getCurrentUser();
     if (response.success && response.data) {
@@ -113,6 +123,8 @@ async function getInitialUser() {
     if (process.env.NODE_ENV === 'development' && !isUnauthorized) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn('[Layout] Error getting initial user:', errorMessage);
+    } else if (isUnauthorized) {
+      console.log('[Layout] User is unauthorized (401)');
     }
     // Return null to render unauthenticated shell
   }

@@ -49,20 +49,28 @@ export async function apiCall<T>(
 
   // Obtener cookie de token automáticamente
   const cookieStore = await cookies();
-  const tokenCookie = cookieStore.get('token');
+  const allCookies = cookieStore.getAll();
+  const cookieHeader = allCookies.map((c) => `${c.name}=${c.value}`).join('; ');
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  // Si hay cookie, incluirla en el header Cookie
-  // El backend prioriza cookies sobre Bearer token
-  // AI_DECISION: Validate cookie value is not empty before sending
-  // Justificación: Empty cookie values cause JWSInvalid errors on API
-  // Impacto: Prevents cryptic errors, fails cleanly with 401 if no valid token
-  if (tokenCookie && tokenCookie.value && tokenCookie.value.trim()) {
-    headers['Cookie'] = `token=${tokenCookie.value}`;
+  if (cookieHeader) {
+    headers['Cookie'] = cookieHeader;
+  }
+
+  // AI_DECISION: Diagnostic logging for Server Component API calls
+  // Justificación: Helps identify missing cookies or URL mismatches in production
+  // Impacto: Better observability for authentication issues
+  if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+    console.log(`[api-server] Calling ${endpoint}`, {
+      hasCookieHeader: !!cookieHeader,
+      cookieKeys: allCookies.map((c) => c.name),
+      internalApiUrl,
+      requestId: headers['X-Request-ID'],
+    });
   }
 
   const controller = new AbortController();
