@@ -14,6 +14,12 @@ export default function AdminHubPage() {
       href: '/admin/aum',
       icon: '📊',
     },
+    {
+      title: 'Feedback de Usuarios',
+      description: 'Consulta y gestiona las solicitudes y sugerencias de los usuarios.',
+      href: '/admin/feedback',
+      icon: '💬',
+    },
   ];
 
   return (

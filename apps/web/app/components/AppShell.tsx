@@ -36,7 +36,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Sidebar sections={sections} isOpen={sidebarOpen} onOpenChange={setSidebarOpen} />
         </Drawer>
 
-        <main className="flex-1 bg-background">{children}</main>
+        <main className="flex-1 bg-background pb-[80px] lg:pb-0">{children}</main>
       </div>
     </div>
   );

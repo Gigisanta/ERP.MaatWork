@@ -59,6 +59,17 @@ export function getGoogleAuthUrl(state?: string): string {
  * ```
  */
 export async function exchangeCodeForTokens(code: string) {
+  // AI_DECISION: Validar que las credenciales no sean placeholders antes de intentar el intercambio
+  // Justificación: Proporcionar un error más descriptivo que el genérico "invalid_client" de Google
+  if (
+    env.GOOGLE_CLIENT_ID === 'INGRESAR_TU_CLIENT_ID_AQUI' ||
+    env.GOOGLE_CLIENT_SECRET === 'INGRESAR_TU_CLIENT_SECRET_AQUI'
+  ) {
+    throw new Error(
+      'Google OAuth credentials are not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your .env file.'
+    );
+  }
+
   const { tokens } = await googleOAuthClient.getToken(code);
   return tokens;
 }

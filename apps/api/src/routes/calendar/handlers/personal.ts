@@ -89,7 +89,7 @@ async function getPersonalOAuthTokens(userId: string, req?: Request) {
       );
 
       // AI_DECISION: Detectar errores permanentes que requieren reconexión
-      // Justificación: Usuario revocó permisos o refresh token inválido
+      // Justificación: Usuario revocó permisos, refresh token inválido o clave de encriptación incorrecta
       // Impacto: Frontend muestra mensaje específico "Reconectar cuenta"
       const errorMessage =
         refreshError instanceof Error ? refreshError.message : String(refreshError);
@@ -98,15 +98,25 @@ async function getPersonalOAuthTokens(userId: string, req?: Request) {
         errorMessage.includes('Token has been expired or revoked') ||
         errorMessage.includes('unauthorized_client');
 
-      if (isPermissionError) {
+      // AI_DECISION: Detectar errores de clave de encriptación
+      // Justificación: Si la clave de encriptación cambió, los tokens guardados son indescifrables
+      // Impacto: Usuario recibe mensaje claro que debe reconectar en lugar de error 500
+      const isEncryptionError = errorMessage.includes('encryption key mismatch');
+
+      if (isPermissionError || isEncryptionError) {
         // Marcar token como inválido eliminándolo (usuario debe reconectar)
         await db().delete(googleOAuthTokens).where(eq(googleOAuthTokens.id, tokenRecord.id));
 
-        req?.log?.warn({ userId }, 'Token marked as invalid, user must reconnect');
+        req?.log?.warn(
+          { userId, isEncryptionError },
+          'Token marked as invalid, user must reconnect'
+        );
 
         throw new HttpError(
           401,
-          'Your Google Calendar connection has expired. Please reconnect your account.',
+          isEncryptionError
+            ? 'Your Google connection is invalid due to a security key change. Please reconnect.'
+            : 'Your Google Calendar connection has expired. Please reconnect your account.',
           { code: 'GOOGLE_RECONNECT_REQUIRED' }
         );
       }

@@ -17,32 +17,16 @@ module.exports = {
 
     // PATH CONSTANTS
     const UI_PKG_PATH = path.resolve(__dirname, '../../../packages/ui');
+    const UI_SRC_ENTRY = path.resolve(__dirname, '../../../packages/ui/src/index.ts');
     const NODE_MODULES_UI = path.resolve(__dirname, '../node_modules/@maatwork/ui');
 
-    // Determine which path to use for @maatwork/ui alias
-    // We prefer the local workspace path in development for easier debugging
-    // But fallback to node_modules if needed
-    const uiPath = dev ? UI_PKG_PATH : NODE_MODULES_UI;
-
-    // Determine path for styles.css
-    // Check local workspace dist first (most up to date in dev)
-    const localStylesPath = path.join(UI_PKG_PATH, 'dist/styles.css');
-    const nodeModulesStylesPath = path.join(NODE_MODULES_UI, 'dist/styles.css');
-
-    // Explicitly find the CSS file
-    let stylesPath = nodeModulesStylesPath;
-    if (fs.existsSync(localStylesPath)) {
-      stylesPath = localStylesPath;
-    } else if (fs.existsSync(nodeModulesStylesPath)) {
-      stylesPath = nodeModulesStylesPath;
-    }
-
-    // console.log('Webpack Config - UI Styles Path:', stylesPath);
+    // AI_DECISION: Removed custom aliases for @maatwork/ui
+    // Justificación: Aliasing to src/index.ts in dev causes module resolution issues in Next.js 15
+    //                transpilePackages is sufficient for handling workspace packages
+    // Impacto: More stable builds, relies on Next.js's optimized package resolution
 
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@maatwork/ui/styles.css': stylesPath,
-      '@maatwork/ui': uiPath,
     };
 
     // Ensure we can resolve modules from node_modules
@@ -71,67 +55,11 @@ module.exports = {
       ...(config.resolve.extensions || []),
     ];
 
-    // Development optimizations
-    if (dev) {
-      config.cache = {
-        type: 'filesystem',
-        buildDependencies: {
-          config: [__filename],
-          tsconfig: [path.resolve(__dirname, '../tsconfig.json')],
-        },
-        cacheDirectory: path.resolve(__dirname, '../.next/cache/webpack'),
-      };
-
-      const usePolling = process.platform === 'win32';
-      config.watchOptions = {
-        ...(usePolling && { poll: 1000 }),
-        aggregateTimeout: 300,
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/.next/**',
-          '!../../packages/ui/src/**',
-          '!../../packages/ui/dist/**',
-        ],
-        followSymlinks: true,
-      };
-
-      config.infrastructureLogging = {
-        level: 'error',
-      };
-    }
-
-    // AI_DECISION: Split recharts and lucide-react into dedicated chunks
-    // Justificación: Recharts (~80KB) y lucide-react son pesados y solo se usan en páginas específicas
-    // Impacto: Reduce First Load JS, mejora caching (estas libs cambian menos que app code)
-    // Referencias: Performance optimization plan - Fase 1
-    if (!isServer) {
-      config.optimization = config.optimization || {};
-      config.optimization.splitChunks = config.optimization.splitChunks || {
-        chunks: 'all',
-        cacheGroups: {},
-      };
-
-      // Ensure cacheGroups exists
-      config.optimization.splitChunks.cacheGroups =
-        config.optimization.splitChunks.cacheGroups || {};
-
-      // Split recharts into dedicated chunk
-      config.optimization.splitChunks.cacheGroups.recharts = {
-        test: /[\\/]node_modules[\\/]recharts[\\/]/,
-        name: 'recharts',
-        priority: 30,
-        reuseExistingChunk: true,
-      };
-
-      // Split lucide-react icons
-      config.optimization.splitChunks.cacheGroups.icons = {
-        test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-        name: 'icons',
-        priority: 25,
-        reuseExistingChunk: true,
-      };
-    }
+    // AI_DECISION: Removed manual cache, watchOptions, infrastructureLogging, and splitChunks
+    // Justificación: Next.js 15 has optimized defaults that work better than manual configuration
+    //                Custom splitChunks can interfere with Next.js server/client chunking strategy
+    //                causing "originalFactory.call" errors
+    // Impacto: More stable builds, better compatibility with Next.js 15 optimizations
 
     return config;
   },

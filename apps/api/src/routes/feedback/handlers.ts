@@ -21,6 +21,38 @@ export const handleCreateFeedback = createRouteHandler(async (req: Request) => {
     })
     .returning();
 
+  // AI_DECISION: Notify admins and staff about new feedback
+  // Justificación: Requerimiento del usuario para alertas proactivas
+  // Impacto: Admins y Administrativos reciben notificaciones inmediatas al llegar feedback
+  try {
+    const recipients = await db()
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.isActive, true), sql`${users.role} IN ('admin', 'staff')`));
+
+    if (recipients.length > 0) {
+      const { notifications } = await import('@maatwork/db');
+      const notificationData = recipients.map((r) => ({
+        userId: r.id,
+        type: 'feedback_received',
+        severity: 'info',
+        renderedBody: `Se ha recibido un nuevo feedback de tipo "${type}": "${
+          content.substring(0, 50) + (content.length > 50 ? '...' : '')
+        }"`,
+        payload: {
+          feedbackId: newFeedback.id,
+          type,
+          contentPreview: content.substring(0, 100),
+        },
+      }));
+
+      await db().insert(notifications).values(notificationData);
+    }
+  } catch (error) {
+    // Log error but don't fail the feedback creation
+    req.log.error({ err: error }, 'Error creating feedback notifications');
+  }
+
   return newFeedback;
 });
 

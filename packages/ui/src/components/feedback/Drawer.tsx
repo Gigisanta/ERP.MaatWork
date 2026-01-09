@@ -5,7 +5,7 @@ import { cn } from '../../utils/cn.js';
 export interface DrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  side?: 'left' | 'right';
+  side?: 'left' | 'right' | 'bottom';
   titleId?: string;
   className?: string;
   children?: React.ReactNode;
@@ -84,24 +84,42 @@ export function Drawer({
       currentX = e.touches[0].clientX;
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e: TouchEvent) => {
       const deltaX = currentX - startX;
       // Close if swiped left (for left drawer) or right (for right drawer)
       if (side === 'left' && deltaX < -threshold) {
         handleClose();
       } else if (side === 'right' && deltaX > threshold) {
         handleClose();
+      } else if (side === 'bottom') {
+        const deltaY = e.changedTouches[0].clientY - startY; // Use clientY for bottom
+        if (deltaY > threshold) handleClose();
       }
       startX = 0;
       currentX = 0;
     };
 
-    panel.addEventListener('touchstart', handleTouchStart, { passive: true });
+    // Track Y for bottom sheet
+    let startY = 0;
+    const handleTouchStartY = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      handleTouchStart(e);
+    };
+
+    if (side === 'bottom') {
+      panel.addEventListener('touchstart', handleTouchStartY, { passive: true });
+    } else {
+      panel.addEventListener('touchstart', handleTouchStart, { passive: true });
+    }
     panel.addEventListener('touchmove', handleTouchMove, { passive: true });
     panel.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
-      panel.removeEventListener('touchstart', handleTouchStart);
+      if (side === 'bottom') {
+        panel.removeEventListener('touchstart', handleTouchStartY);
+      } else {
+        panel.removeEventListener('touchstart', handleTouchStart);
+      }
       panel.removeEventListener('touchmove', handleTouchMove);
       panel.removeEventListener('touchend', handleTouchEnd);
     };
@@ -138,11 +156,23 @@ export function Drawer({
           // Smooth spring-like animation
           'transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]',
           // Position
-          side === 'left' ? 'left-0 rounded-r-2xl' : 'right-0 rounded-l-2xl',
+          side === 'left'
+            ? 'left-0 rounded-r-2xl'
+            : side === 'right'
+              ? 'right-0 rounded-l-2xl'
+              : 'bottom-0 left-0 right-0 rounded-t-2xl w-full h-[90vh] lg:h-auto',
           // Transform
-          open ? 'translate-x-0' : side === 'left' ? '-translate-x-full' : 'translate-x-full',
-          // Responsive width - adapts to screen size
-          'w-[min(85vw,320px)]',
+          open
+            ? side === 'bottom'
+              ? 'translate-y-0'
+              : 'translate-x-0'
+            : side === 'left'
+              ? '-translate-x-full'
+              : side === 'right'
+                ? 'translate-x-full'
+                : 'translate-y-full',
+          // Responsive width - adapts to screen size (only for side drawer)
+          side !== 'bottom' && 'w-[min(85vw,320px)]',
           // Safe area insets for notched devices
           side === 'left'
             ? 'pl-[env(safe-area-inset-left,0px)]'
@@ -156,7 +186,11 @@ export function Drawer({
         <div
           className={cn(
             'absolute top-1/2 -translate-y-1/2 w-1 h-12 rounded-full bg-border opacity-50',
-            side === 'left' ? 'right-1.5' : 'left-1.5'
+            side === 'left'
+              ? 'right-1.5 top-1/2 -translate-y-1/2 w-1 h-12'
+              : side === 'right'
+                ? 'left-1.5 top-1/2 -translate-y-1/2 w-1 h-12'
+                : 'top-3 left-1/2 -translate-x-1/2 w-12 h-1' // Indicator on top for bottom sheet
           )}
         />
 

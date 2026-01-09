@@ -13,25 +13,9 @@ import {
   isTokenExpiringSoon,
 } from '../../lib/auth/session-manager';
 import type { UserRole } from '@/types';
+import type { AuthUser, RegisterData } from '@/types/auth';
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: UserRole;
-  fullName?: string;
-  isActive?: boolean;
-  isGoogleConnected?: boolean;
-  googleEmail?: string | null;
-}
-
-interface RegisterData {
-  email: string;
-  fullName: string;
-  username?: string;
-  password: string;
-  role: 'advisor' | 'manager' | 'owner' | 'staff';
-  requestedManagerId?: string;
-}
+export type { AuthUser, RegisterData };
 
 interface AuthContextValue {
   user: AuthUser | null;

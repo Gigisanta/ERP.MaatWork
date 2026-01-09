@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn.js';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Visual style variant */
-  variant?: 'outlined' | 'elevated' | 'interactive' | 'highlight' | 'animated' | 'glass';
+  variant?: 'outlined' | 'elevated' | 'interactive' | 'highlight' | 'animated' | 'glass' | 'cyber';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   /** Enable hover animations (lift + glow effect) */
   animated?: boolean;
@@ -40,6 +40,8 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         'border border-border bg-background hover:shadow-lg hover:border-primary/30 hover-lift transition-all-smooth cursor-pointer',
       glass:
         'border border-white/20 bg-white/70 backdrop-blur-md shadow-sm dark:bg-black/40 dark:border-white/10',
+      cyber:
+        'border border-primary/20 bg-surface/60 backdrop-blur-xl shadow-lg relative overflow-hidden group hover:border-primary/50 transition-colors duration-300',
     };
 
     const paddingClasses = {
@@ -67,6 +69,13 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         {...props}
       >
         {children}
+        {/* Cyber variant decorative elements - Subtle glint instead of corners */}
+        {variant === 'cyber' && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            <div className="absolute inset-0 animate-scan opacity-[0.03] pointer-events-none mix-blend-overlay" />
+          </>
+        )}
       </div>
     );
   }

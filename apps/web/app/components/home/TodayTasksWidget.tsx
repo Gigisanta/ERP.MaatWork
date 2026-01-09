@@ -80,9 +80,11 @@ export function TodayTasksWidget({ maxItems = 5 }: TodayTasksWidgetProps) {
   const hasItems = contactsNeedingAttention.length > 0;
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+    <Card variant="cyber" animated className="h-full">
       <CardHeader>
-        <CardTitle className="text-base">Qué hacer hoy</CardTitle>
+        <CardTitle className="text-base font-display font-semibold tracking-tight">
+          Qué hacer hoy
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4 md:p-6">
         {hasItems ? (
@@ -99,13 +101,15 @@ export function TodayTasksWidget({ maxItems = 5 }: TodayTasksWidgetProps) {
                 <Link
                   key={contact.id}
                   href={`/contacts/${contact.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-surface-hover transition-colors group"
+                  className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-surface-hover hover:border-primary/30 transition-all group relative overflow-hidden"
                 >
+                  {/* Hover glow effect */}
+                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="flex-1 min-w-0">
                     <Text weight="medium" size="sm" className="truncate">
                       {contact.fullName}
                     </Text>
-                    <Text size="xs" color="secondary">
+                    <Text size="xs" className="text-muted-foreground">
                       {daysSinceTouch === null
                         ? 'Sin interacción registrada'
                         : `Hace ${daysSinceTouch} ${daysSinceTouch === 1 ? 'día' : 'días'}`}
@@ -114,7 +118,7 @@ export function TodayTasksWidget({ maxItems = 5 }: TodayTasksWidgetProps) {
                   <Icon
                     name="ChevronRight"
                     size={16}
-                    className="text-text-muted group-hover:text-primary transition-colors ml-2 shrink-0"
+                    className="text-muted-foreground group-hover:text-primary transition-colors ml-2 shrink-0"
                   />
                 </Link>
               );
@@ -123,7 +127,7 @@ export function TodayTasksWidget({ maxItems = 5 }: TodayTasksWidgetProps) {
               variant="ghost"
               size="sm"
               onClick={() => router.push('/contacts')}
-              className="mt-2 w-full"
+              className="mt-2 w-full text-muted-foreground hover:text-primary"
             >
               Ver todos los contactos
             </Button>
@@ -131,7 +135,7 @@ export function TodayTasksWidget({ maxItems = 5 }: TodayTasksWidgetProps) {
         ) : (
           <Stack direction="column" gap="sm" align="center" className="py-4">
             <Icon name="check-circle" size={32} className="text-success opacity-50" />
-            <Text color="secondary" size="sm" className="text-center">
+            <Text className="text-center text-muted-foreground" size="sm">
               ¡Excelente! No hay contactos que requieran atención inmediata.
             </Text>
           </Stack>

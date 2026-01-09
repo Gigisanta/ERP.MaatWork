@@ -75,7 +75,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         // Top padding - more on desktop for visual balance
         'pt-3 sm:pt-4 lg:pt-6',
         // Bottom padding with safe area for mobile
-        'pb-6 sm:pb-8',
+        // Mobile: extra padding for fixed bottom navigation bar (~80px)
+        // Tablet/Desktop: normal padding
+        'pb-24 sm:pb-28 lg:pb-8',
         'safe-area-bottom',
       ].join(' ')}
     >

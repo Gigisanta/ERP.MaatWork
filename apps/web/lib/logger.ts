@@ -198,9 +198,9 @@ class ClientLogger {
     const entry = this.createLogEntry(level, message, context);
     const isProduction = process.env.NODE_ENV === 'production';
 
-    // AI_DECISION: Formato compacto de logs - solo información esencial
-    // Justificación: Timestamp ISO completo, sessionId, userAgent, url generan demasiado ruido
-    // Impacto: Logs 60-70% más compactos, más legibles
+    // AI_DECISION: Formato mejorado de logs para mejor debugging
+    // Justificación: Console groups permiten ver contexto sin saturar la consola
+    // Impacto: Logs más organizados, fáciles de leer y debuggear
 
     // En producción: solo errores y warnings, formato mínimo
     if (isProduction) {
@@ -230,54 +230,73 @@ class ClientLogger {
       return;
     }
 
-    // En desarrollo: reducir verbosidad - solo mostrar logs críticos por defecto
-    // AI_DECISION: Reducir verbosidad en desarrollo para limpiar consola
-    // Justificación: Logs de info y debug generan demasiado ruido en consola durante desarrollo
-    // Impacto: Consola más limpia, solo información crítica visible
+    // En desarrollo: logs mejorados con console groups y colores
     const time = this.formatTime(entry.timestamp);
-    const prefix = `${time} [${level.toUpperCase()}]`;
 
-    // Construir contexto mínimo (sin metadata redundante)
-    const logContext: Record<string, LogContextValue> = {};
-    if (context) {
-      Object.assign(logContext, context);
-    }
-    // Solo incluir userId si es relevante (no en cada log)
-    if (entry.userId && (level === 'error' || level === 'warn')) {
-      logContext.userId = entry.userId;
-    }
-
-    // Solo mostrar logs críticos (error, warn) en consola por defecto
-    // Los logs de info y debug se pueden habilitar con flag de entorno si es necesario
+    // AI_DECISION: Mostrar info logs por defecto en desarrollo
+    // Justificación: Los logs de requests HTTP son críticos para detectar errores
+    // Impacto: Mayor visibilidad de problemas sin necesidad de flags
+    const showInfoLogs = true; // Siempre mostrar en desarrollo
     const verboseLogs = process.env.NEXT_PUBLIC_VERBOSE_LOGS === 'true';
 
-    if (level === 'error') {
-      console.error(
-        `${prefix} ${message}`,
-        Object.keys(logContext).length > 0 ? logContext : undefined
-      );
-      if (context?.error || context?.err) {
-        console.error('→', context.error || context.err);
-      }
-    } else if (level === 'warn') {
-      console.warn(
-        `${prefix} ${message}`,
-        Object.keys(logContext).length > 0 ? logContext : undefined
-      );
-    } else if (level === 'debug' && verboseLogs) {
-      // Solo mostrar debug si está habilitado explícitamente
-      console.debug(
-        `${prefix} ${message}`,
-        Object.keys(logContext).length > 0 ? logContext : undefined
-      );
-    } else if (level === 'info' && verboseLogs) {
-      // Solo mostrar info si está habilitado explícitamente
-      console.log(
-        `${prefix} ${message}`,
-        Object.keys(logContext).length > 0 ? logContext : undefined
-      );
+    // Definir estilos para diferentes niveles
+    const styles = {
+      error: 'color: #ff4444; font-weight: bold',
+      warn: 'color: #ffaa00; font-weight: bold',
+      info: 'color: #4444ff; font-weight: normal',
+      debug: 'color: #888888; font-weight: normal',
+    };
+
+    // Construir contexto para mostrar
+    const displayContext: Record<string, LogContextValue> = {};
+    if (context) {
+      Object.assign(displayContext, context);
     }
-    // Si no es verbose, los logs de info y debug se omiten en consola (pero se pueden enviar al backend si es necesario)
+    if (entry.userId && (level === 'error' || level === 'warn')) {
+      displayContext.userId = entry.userId;
+    }
+    if (entry.userRole && (level === 'error' || level === 'warn')) {
+      displayContext.userRole = entry.userRole;
+    }
+
+    const hasContext = Object.keys(displayContext).length > 0;
+
+    if (level === 'error') {
+      // Errores: grupo expandido con información completa
+      console.group(`%c[ERROR] ${time} ${message}`, styles.error);
+      if (hasContext) {
+        console.error('Context:', displayContext);
+      }
+      if (context?.error || context?.err) {
+        console.error('Error details:', context.error || context.err);
+      }
+      console.groupEnd();
+    } else if (level === 'warn') {
+      // Warnings: grupo colapsado con contexto
+      console.groupCollapsed(`%c[WARN] ${time} ${message}`, styles.warn);
+      if (hasContext) {
+        console.warn('Context:', displayContext);
+      }
+      console.groupEnd();
+    } else if (level === 'info' && showInfoLogs) {
+      // Info: logs compactos de una línea, grupos solo si hay contexto
+      if (hasContext) {
+        console.groupCollapsed(`%c[INFO] ${time} ${message}`, styles.info);
+        console.log('Details:', displayContext);
+        console.groupEnd();
+      } else {
+        console.log(`%c[INFO] ${time} ${message}`, styles.info);
+      }
+    } else if (level === 'debug' && verboseLogs) {
+      // Debug: solo con flag verbose
+      if (hasContext) {
+        console.groupCollapsed(`%c[DEBUG] ${time} ${message}`, styles.debug);
+        console.debug('Details:', displayContext);
+        console.groupEnd();
+      } else {
+        console.debug(`%c[DEBUG] ${time} ${message}`, styles.debug);
+      }
+    }
   }
 
   /**

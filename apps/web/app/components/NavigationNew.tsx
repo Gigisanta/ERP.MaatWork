@@ -16,6 +16,7 @@ import CareerProgressBar from './CareerProgressBar';
 import { Feather } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { FeedbackButton } from './FeedbackButton';
+import { MobileBottomBar } from './MobileBottomBar';
 
 interface NavigationNewProps {
   onToggleSidebar?: () => void;
@@ -102,28 +103,59 @@ CustomLink.displayName = 'CustomLink';
 // Justificación: Organiza código por rol, facilita mantenimiento y mejora legibilidad
 // Impacto: Código más modular, fácil de modificar y testear por separado
 
+// Helper functions for localized roles
+const LABELS = {
+  // Section Titles
+  MAIN: 'Principal',
+  PLATFORMS: 'Plataformas',
+  RESOURCES: 'Recursos',
+  MANAGEMENT: 'Gestión',
+  ANALYTICS: 'Analíticas',
+  DASHBOARD: 'Dashboard',
+  // Items
+  CONTACTS: 'Contactos',
+  PORTFOLIOS: 'Carteras',
+  TEAMS: 'Equipos',
+  TRAINING: 'Capacitaciones',
+  METRICS_CONTACTS: 'Métricas de Contactos',
+  ANALYTICS_APP: 'Analytics',
+  USERS: 'Usuarios',
+  GLOBAL_CONFIG: 'Configuración Global',
+  AUTOMATIONS: 'Automatizaciones',
+  CAREER_PLAN: 'Plan de Carrera',
+  NOTIFICATIONS: 'Notificaciones',
+  BENCHMARKS: 'Benchmarks',
+  AUM: 'AUM',
+  PERFORMANCE: 'Performance',
+  PROFILE: 'Mi Perfil',
+};
+
 /**
  * Construye secciones de sidebar para Advisor (Asesor)
- * Flujo simplificado: Principal → Más opciones
+ * Estructura: Principal, Plataformas, Recursos
  */
 function getAdvisorSections(): SidebarSection[] {
   return [
     {
-      title: 'Principal',
+      title: LABELS.MAIN,
       items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
-        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: LABELS.CONTACTS, href: '/contacts', icon: 'Contact' as const },
+        { label: LABELS.PORTFOLIOS, href: '/portfolios', icon: 'Briefcase' as const },
+        { label: LABELS.TEAMS, href: '/teams', icon: 'Team' as const },
+      ],
+    },
+    {
+      title: LABELS.PLATFORMS,
+      items: [
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
-        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
+        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Layout' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Más opciones',
+      title: LABELS.RESOURCES,
       items: [
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: LABELS.TRAINING, href: '/capacitaciones', icon: 'GraduationCap' as const },
         { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
       ],
     },
@@ -132,30 +164,42 @@ function getAdvisorSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Manager (Gerente)
- * Flujo simplificado: Principal → Más opciones
+ * Estructura: Principal, Plataformas, Recursos, Gestión, Analíticas
  */
 function getManagerSections(): SidebarSection[] {
   return [
     {
-      title: 'Principal',
+      title: LABELS.MAIN,
       items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
-        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: LABELS.CONTACTS, href: '/contacts', icon: 'Contact' as const },
+        { label: LABELS.PORTFOLIOS, href: '/portfolios', icon: 'Briefcase' as const },
+        { label: LABELS.TEAMS, href: '/teams', icon: 'Team' as const },
+      ],
+    },
+    {
+      title: LABELS.PLATFORMS,
+      items: [
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
-        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
+        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Layout' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Más opciones',
+      title: LABELS.RESOURCES,
       items: [
-        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
-        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: LABELS.TRAINING, href: '/capacitaciones', icon: 'GraduationCap' as const },
         { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Panel Admin', href: '/admin', icon: 'Settings' as const },
+      ],
+    },
+    {
+      title: LABELS.MANAGEMENT,
+      items: [{ label: LABELS.GLOBAL_CONFIG, href: '/admin', icon: 'Settings' as const }],
+    },
+    {
+      title: LABELS.ANALYTICS,
+      items: [
+        { label: LABELS.ANALYTICS_APP, href: '/analytics', icon: 'TrendingUp' as const },
+        { label: LABELS.METRICS_CONTACTS, href: '/contacts/metrics', icon: 'BarChart2' as const },
       ],
     },
   ];
@@ -163,39 +207,52 @@ function getManagerSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Admin (Administrador)
- * Flujo simplificado: Principal → Más opciones
+ * Estructura: Principal, Plataformas, Recursos, Gestión, Analíticas
  */
 function getAdminSections(): SidebarSection[] {
   return [
     {
-      title: 'Principal',
+      title: LABELS.MAIN,
       items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
-        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: LABELS.CONTACTS, href: '/contacts', icon: 'Contact' as const },
+        { label: LABELS.PORTFOLIOS, href: '/portfolios', icon: 'Briefcase' as const },
+        { label: LABELS.TEAMS, href: '/teams', icon: 'Team' as const },
+      ],
+    },
+    {
+      title: LABELS.PLATFORMS,
+      items: [
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
-        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
+        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Layout' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Más opciones',
+      title: LABELS.RESOURCES,
       items: [
-        { label: 'Benchmarks', href: '/benchmarks', icon: 'BarChart3' as const },
-        { label: 'Métricas de Contactos', href: '/contacts/metrics', icon: 'BarChart2' as const },
-        { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
-        { label: 'Automations', href: '/automations', icon: 'Settings' as const },
-        { label: 'Plan de Carrera', href: '/career-plan', icon: 'Book' as const },
-        { label: 'Notificaciones', href: '/notifications', icon: 'Info' as const },
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: LABELS.TRAINING, href: '/capacitaciones', icon: 'GraduationCap' as const },
         { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
-        { label: 'Panel Admin', href: '/admin', icon: 'Settings' as const },
-        { label: 'Usuarios', href: '/admin/users', icon: 'Users' as const },
-        { label: 'AUM y Brokers', href: '/admin/aum', icon: 'BarChart2' as const },
-        { label: 'Performance', href: '/admin/performance', icon: 'TrendingUp' as const },
-        { label: 'Config AUM', href: '/admin/settings/aum-advisors', icon: 'Settings' as const },
-        { label: 'Mi Perfil', href: '/profile', icon: 'User' as const },
+        { label: LABELS.CAREER_PLAN, href: '/career-plan', icon: 'Book' as const },
+        { label: LABELS.NOTIFICATIONS, href: '/notifications', icon: 'Bell' as const },
+      ],
+    },
+    {
+      title: LABELS.MANAGEMENT,
+      items: [
+        { label: LABELS.USERS, href: '/admin/users', icon: 'Users' as const },
+        { label: LABELS.GLOBAL_CONFIG, href: '/admin', icon: 'Settings' as const },
+        { label: LABELS.AUTOMATIONS, href: '/automations', icon: 'Cpu' as const },
+        { label: 'Config AUM', href: '/admin/settings/aum-advisors', icon: 'DollarSign' as const },
+      ],
+    },
+    {
+      title: LABELS.ANALYTICS,
+      items: [
+        { label: LABELS.ANALYTICS_APP, href: '/analytics', icon: 'TrendingUp' as const },
+        { label: LABELS.PERFORMANCE, href: '/admin/performance', icon: 'Activity' as const },
+        { label: LABELS.AUM, href: '/admin/aum', icon: 'PieChart' as const },
+        { label: LABELS.BENCHMARKS, href: '/benchmarks', icon: 'Target' as const },
+        { label: LABELS.METRICS_CONTACTS, href: '/contacts/metrics', icon: 'BarChart2' as const },
       ],
     },
   ];
@@ -203,16 +260,16 @@ function getAdminSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Owner (Dirección)
- * Flujo: Dashboard → Métricas (solo lectura)
+ * Estructura: Principal, Analíticas
  */
 function getOwnerSections(): SidebarSection[] {
   return [
     {
-      title: 'Dashboard',
+      title: LABELS.MAIN,
       items: [{ label: 'Equipos', href: '/teams', icon: 'Team' as const }],
     },
     {
-      title: 'Métricas',
+      title: LABELS.ANALYTICS,
       items: [
         { label: 'Analytics', href: '/analytics', icon: 'TrendingUp' as const },
         { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
@@ -223,27 +280,31 @@ function getOwnerSections(): SidebarSection[] {
 
 /**
  * Construye secciones de sidebar para Staff (Administrativo)
- * Flujo simplificado: Principal → Más opciones
+ * Estructura: Principal, Plataformas, Recursos
  */
 function getStaffSections(): SidebarSection[] {
   return [
     {
-      title: 'Principal',
+      title: LABELS.MAIN,
       items: [
-        { label: 'Contactos', href: '/contacts', icon: 'Contact' as const },
-        { label: 'Pipeline', href: '/pipeline', icon: 'grid' as const },
-        { label: 'Carteras', href: '/portfolios', icon: 'BarChart3' as const },
-        { label: 'Equipos', href: '/teams', icon: 'Team' as const },
+        { label: LABELS.CONTACTS, href: '/contacts', icon: 'Contact' as const },
+        { label: LABELS.PORTFOLIOS, href: '/portfolios', icon: 'Briefcase' as const },
+        { label: LABELS.TEAMS, href: '/teams', icon: 'Team' as const },
+      ],
+    },
+    {
+      title: LABELS.PLATFORMS,
+      items: [
         { label: 'Finviz', href: EXTERNAL_LINKS.FINVIZ, icon: 'BarChart3' as const },
-        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Briefcase' as const },
+        { label: 'Productores Balanz', href: EXTERNAL_LINKS.BALANZ, icon: 'Layout' as const },
         { label: 'Zurich Point', href: EXTERNAL_LINKS.ZURICH, icon: 'Shield' as const },
       ],
     },
     {
-      title: 'Más opciones',
+      title: LABELS.RESOURCES,
       items: [
-        { label: 'AUM', href: '/admin/aum', icon: 'BarChart2' as const },
-        { label: 'Capacitaciones', href: '/capacitaciones', icon: 'GraduationCap' as const },
+        { label: LABELS.AUM, href: '/admin/aum', icon: 'PieChart' as const },
+        { label: LABELS.TRAINING, href: '/capacitaciones', icon: 'GraduationCap' as const },
         { label: 'Recursos', href: '/resources', icon: 'FileText' as const },
       ],
     },
@@ -418,21 +479,21 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     return null;
   }
 
-  // AI_DECISION: Logo optimizado para responsive
-  // Justificación: El logo debe adaptarse a diferentes tamaños de pantalla sin romper el layout
-  // Impacto: Mejor experiencia en dispositivos móviles y tablets
+  // AI_DECISION: Logo optimizado para responsive - mejor estrategia de breakpoints
+  // Justificación: En pantallas muy pequeñas (<475px), solo mostrar el icono evita truncamiento
+  // Impacto: Logo siempre se ve bien, adaptándose al espacio disponible
   const logo = (
-    <div className="flex items-center gap-2 min-w-0 w-full">
+    <div className="flex items-center gap-2 min-w-0">
       <Link
         href="/home"
         className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0"
       >
         {/* Logo icon - always visible */}
         <span className="text-primary shrink-0" aria-hidden="true">
-          <Feather className="w-8 h-8 sm:w-10 sm:h-10" strokeWidth={1.5} />
+          <Feather className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={1.5} />
         </span>
-        {/* Logo text - hidden on very small screens */}
-        <span className="text-lg sm:text-xl font-bold whitespace-nowrap shrink-0 hidden xs:inline">
+        {/* Logo text - only visible on xs (475px) and up */}
+        <span className="text-base sm:text-lg font-bold whitespace-nowrap shrink-0 hidden xs:inline">
           <span className="text-primary">Maat</span>
           <span className="text-secondary">Work</span>
         </span>
@@ -461,26 +522,44 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   // AI_DECISION: Sidebar sections diferenciadas por rol usando funciones helper
   // Justificación: Código más limpio y mantenible, cada rol tiene su función dedicada
   // Impacto: Facilita modificar navegación por rol sin afectar otros roles
+  // AI_DECISION: Agregar logs de debugging para identificar problemas de renderizado
   const sidebarSections: SidebarSection[] = (() => {
+    let sections: SidebarSection[];
     switch (user.role) {
       case 'admin':
-        return getAdminSections();
+        sections = getAdminSections();
+        break;
       case 'manager':
-        return getManagerSections();
+        sections = getManagerSections();
+        break;
       case 'owner':
-        return getOwnerSections();
+        sections = getOwnerSections();
+        break;
       case 'staff':
-        return getStaffSections();
+        sections = getStaffSections();
+        break;
       case 'advisor':
       default:
-        return getAdvisorSections();
+        sections = getAdvisorSections();
+        break;
     }
+
+    // Runtime debugging to identify if the correct sections are being rendered
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[NavigationNew] Sidebar sections generated', {
+        role: user.role,
+        sectionCount: sections.length,
+        titles: sections.map((s) => s.title),
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return sections;
   })();
 
   return (
     <>
       {/* Header fijo con soporte para safe areas */}
-      <div className="sticky top-0 z-40 bg-surface border-b border-border safe-area-top">
+      <div className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-border/50 safe-area-top transition-colors duration-300">
         <Header
           logo={logo}
           navItems={navItems}
@@ -539,6 +618,9 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           className="h-full"
         />
       </Drawer>
+
+      {/* Mobile Bottom Bar - Only visible on mobile screens */}
+      <MobileBottomBar onMenuClick={handleToggle} />
     </>
   );
 }

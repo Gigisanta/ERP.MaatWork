@@ -140,7 +140,17 @@ export async function syncUserCalendar(
       }
     }
   } catch (error) {
-    logger.error({ userId, error }, 'Failed to sync calendar');
+    logger.error(
+      {
+        err: error,
+        userId,
+        calendarId,
+        timeMin: timeMin.toISOString(),
+        timeMax: timeMax.toISOString(),
+        operation: 'syncUserCalendar',
+      },
+      'Failed to sync calendar - OAuth token may be invalid or expired'
+    );
     throw error;
   }
 }

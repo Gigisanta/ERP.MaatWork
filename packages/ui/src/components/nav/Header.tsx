@@ -75,23 +75,8 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
         <div className="flex h-12 sm:h-14 items-center justify-between flex-nowrap gap-2 sm:gap-3">
           {/* Left section: Mobile menu button + Logo + Left Content */}
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-            {onToggleSidebar && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleSidebar}
-                className={cn(
-                  'lg:hidden shrink-0',
-                  'hover:bg-primary-subtle active:scale-95',
-                  // Minimum touch target size for accessibility
-                  'min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px]',
-                  'flex items-center justify-center'
-                )}
-                aria-label={sidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-              >
-                <Icon name={sidebarOpen ? 'X' : 'Menu'} size={20} className="sm:w-4 sm:h-4" />
-              </Button>
-            )}
+            {/* Drawer toggle removed as requested for mobile bottom bar */}
+            {/* {onToggleSidebar && ( ... )} */}
 
             {logo && <div className="flex items-center min-w-0 shrink-0">{logo}</div>}
 
@@ -101,7 +86,15 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
           </div>
 
           {/* Center section: Navigation or Children (desktop) */}
-          <div className="flex-1 flex justify-center min-w-0 px-2 sm:px-4">
+          {/* AI_DECISION: Only take flex-1 space when there's actual content to prevent squishing the logo on mobile */}
+          {/* Justificación: When center is empty, logo should get more horizontal space */}
+          {/* Impacto: Better mobile UX, logo doesn't truncate */}
+          <div
+            className={cn(
+              'flex justify-center min-w-0 px-2 sm:px-4',
+              children || navItems.length > 0 ? 'flex-1' : 'hidden lg:flex lg:flex-1'
+            )}
+          >
             {children ? (
               children
             ) : navItems.length > 0 ? (

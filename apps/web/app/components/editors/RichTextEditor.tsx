@@ -21,7 +21,7 @@ import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Spinner } from '@maatwork/ui';
 import './RichTextEditor.css';
 
@@ -43,12 +43,11 @@ export default function RichTextEditor({
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // AI_DECISION: Configurar TipTap con extensiones esenciales
-  // Justificación: Balance entre funcionalidad y complejidad
-  // Impacto: Editor completo pero no abrumador
-  const editor = useEditor({
-    immediatelyRender: false, // AI_DECISION: Evitar hydration mismatches en Next.js SSR
-    extensions: [
+  // AI_DECISION: Memoizar extensiones para evitar re-inicializaciones y warnings de duplicados
+  // Justificación: TipTap lanza warnings si las extensiones se recrean en cada render
+  // Impacto: Elimina warnings de consola y mejora performance
+  const extensions = React.useMemo(
+    () => [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
@@ -75,6 +74,12 @@ export default function RichTextEditor({
       Color,
       TextStyle,
     ],
+    [placeholder]
+  );
+
+  const editor = useEditor({
+    immediatelyRender: false, // AI_DECISION: Evitar hydration mismatches en Next.js SSR
+    extensions,
     content: value,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());

@@ -3,7 +3,10 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { logger } from '../../lib/logger';
-import { Toast, Button } from '@maatwork/ui';
+// AI_DECISION: No importar componentes de @maatwork/ui aquí
+// Justificación: Evita dependencia circular en el RootLayout (layout.tsx)
+// Impacto: Previene errores de 'undefined.call' durante la hidratación inicial
+// import { Toast, Button } from '@maatwork/ui';
 
 interface Props {
   children: ReactNode;
@@ -18,7 +21,7 @@ interface State {
 }
 
 /**
- * Componente funcional interno para mostrar errores con hooks
+ * Componente funcional interno para mostrar errores con CSS plano
  */
 function ErrorDisplay({
   error,
@@ -32,12 +35,12 @@ function ErrorDisplay({
   onReportError: () => void;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [showToast, setShowToast] = React.useState(false);
 
   const handleReportError = () => {
     onReportError();
     setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   const handleGoHome = () => {
@@ -46,12 +49,12 @@ function ErrorDisplay({
 
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
-          <div className="flex items-center mb-4">
-            <div className="flex-shrink-0">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-xl p-8 border border-gray-200">
+          <div className="flex flex-col items-center text-center mb-6">
+            <div className="bg-red-100 p-3 rounded-full mb-4">
               <svg
-                className="h-8 w-8 text-red-500"
+                className="h-8 w-8 text-red-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -64,52 +67,58 @@ function ErrorDisplay({
                 />
               </svg>
             </div>
-            <div className="ml-3">
-              <h3 className="text-lg font-medium text-gray-900">Algo salió mal</h3>
-              <p className="text-sm text-gray-500">
-                Ha ocurrido un error inesperado en la aplicación.
-              </p>
-            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Algo salió mal</h3>
+            <p className="text-gray-600">
+              Ha ocurrido un error inesperado. Hemos sido notificados y estamos trabajando en ello.
+            </p>
           </div>
 
           {process.env.NODE_ENV === 'development' && error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <h4 className="text-sm font-medium text-red-800 mb-2">
-                Detalles del error (solo en desarrollo):
+            <div className="mb-6 p-4 bg-gray-900 rounded-lg overflow-hidden">
+              <h4 className="text-xs font-mono text-gray-400 uppercase tracking-wider mb-2">
+                Debug Info:
               </h4>
-              <pre className="text-xs text-red-700 whitespace-pre-wrap">
-                {error.message}
-                {error.stack && `\n\n${error.stack}`}
-              </pre>
+              <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                <pre className="text-xs font-mono text-red-400 whitespace-pre-wrap">
+                  {error.message}
+                  {error.stack && `\n\n${error.stack}`}
+                </pre>
+              </div>
             </div>
           )}
 
-          <div className="flex space-x-3">
-            <Button variant="primary" onClick={onRetry} className="flex-1">
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              onClick={onRetry}
+              className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors shadow-md active:scale-95"
+            >
               Intentar de nuevo
-            </Button>
+            </button>
 
-            <Button variant="secondary" onClick={handleReportError} className="flex-1">
-              Reportar error
-            </Button>
-          </div>
+            <button
+              onClick={handleReportError}
+              className="w-full py-3 px-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors active:scale-95"
+            >
+              Reportar incidente
+            </button>
 
-          <div className="mt-4 text-center">
-            <Button variant="ghost" onClick={handleGoHome} size="sm">
+            <button
+              onClick={handleGoHome}
+              className="w-full py-2 px-4 bg-transparent text-gray-500 hover:text-gray-900 text-sm font-medium transition-colors"
+            >
               Volver al inicio
-            </Button>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Toast notification */}
-      <Toast
-        title="Error reportado"
-        description="Gracias por tu feedback."
-        variant="success"
-        open={showToast}
-        onOpenChange={setShowToast}
-      />
+      {/* Basic Toast replacement */}
+      {showToast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl animate-in slide-in-from-bottom-4 flex items-center gap-3 border border-white/10">
+          <span className="text-green-400">✓</span>
+          <span className="text-sm font-medium">Error reportado con éxito</span>
+        </div>
+      )}
     </>
   );
 }

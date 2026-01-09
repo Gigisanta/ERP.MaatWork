@@ -163,6 +163,51 @@
   --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
   --shadow-primary:
     0 10px 30px -4px rgba(167, 139, 250, 0.25), 0 6px 14px -4px rgba(167, 139, 250, 0.15);
+
+  /* Cyberpunk / Sci-Fi Enhancements */
+  --color-neon-blue: #00f3ff;
+  --color-neon-purple: #bc13fe;
+  --color-neon-green: #0aff0a;
+  --shadow-neon-blue: 0 0 10px rgba(0, 243, 255, 0.5), 0 0 20px rgba(0, 243, 255, 0.3);
+  --shadow-neon-purple: 0 0 10px rgba(188, 19, 254, 0.5), 0 0 20px rgba(188, 19, 254, 0.3);
+}
+
+/* Safe Area Variables */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-panel,
+[data-theme='dark'] .glass-panel {
+  background: rgba(12, 10, 9, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-cyber {
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 243, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.safe-area-top {
+  padding-top: var(--sat);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--sab);
 }
 
 /* -----------------------------------------------------------------------------

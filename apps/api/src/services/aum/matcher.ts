@@ -65,7 +65,15 @@ export async function matchContactByAccountNumber(
       };
     }
   } catch (error) {
-    logger.warn({ err: error, accountNumber }, 'Error matching AUM row by account number');
+    logger.error(
+      {
+        err: error,
+        broker,
+        accountNumber,
+        operation: 'matchContactByAccountNumber',
+      },
+      'Failed to match contact by account number'
+    );
   }
 
   return null;
@@ -112,7 +120,14 @@ export async function matchContactByHolderName(holderName: string): Promise<Cont
   } catch (error: unknown) {
     const err = error as Error;
     // Use debug instead of warn for common "similarity function does not exist" errors in tests
-    logger.debug({ err: err.message, holderName }, 'Similarity search skipped or failed');
+    logger.debug(
+      {
+        err: err.message,
+        holderName,
+        operation: 'matchContactByHolderName',
+      },
+      'Similarity search skipped or failed'
+    );
   }
 
   return null;
@@ -153,9 +168,14 @@ export async function batchMatchContactsByAccountNumber(
       }
     });
   } catch (error) {
-    logger.warn(
-      { err: error, count: accountNumbers.length },
-      'Error in batch matching by account number'
+    logger.error(
+      {
+        err: error,
+        broker,
+        accountNumbersCount: accountNumbers.length,
+        operation: 'batchMatchContactsByAccountNumber',
+      },
+      'Failed batch matching by account number'
     );
   }
 
@@ -187,7 +207,14 @@ export async function matchAdvisorByEmail(email: string): Promise<AdvisorMatch |
       };
     }
   } catch (error) {
-    logger.warn({ err: error, email }, 'Error matching advisor by email');
+    logger.error(
+      {
+        err: error,
+        email,
+        operation: 'matchAdvisorByEmail',
+      },
+      'Failed to match advisor by email'
+    );
   }
 
   return null;
@@ -231,7 +258,15 @@ export async function matchAdvisorByAlias(alias: string): Promise<AdvisorMatch |
       };
     }
   } catch (error) {
-    logger.warn({ err: error, alias }, 'Error matching advisor by alias');
+    logger.error(
+      {
+        err: error,
+        alias,
+        normalized: normalizeAdvisorAlias(alias),
+        operation: 'matchAdvisorByAlias',
+      },
+      'Failed to match advisor by alias'
+    );
   }
 
   return null;
@@ -286,7 +321,15 @@ export async function batchMatchAdvisorsByAlias(
       });
     }
   } catch (error) {
-    logger.warn({ err: error, count: aliases.length }, 'Error in batch matching advisors');
+    logger.error(
+      {
+        err: error,
+        aliasesCount: aliases.length,
+        uniqueAliasesCount: uniqueAliases.length,
+        operation: 'batchMatchAdvisorsByAlias',
+      },
+      'Failed batch matching advisors by alias'
+    );
   }
 
   return matchMap;
@@ -374,7 +417,16 @@ export async function isDuplicateRow(
 
     return result.length > 0;
   } catch (error) {
-    logger.warn({ err: error }, 'Error detecting duplicates');
+    logger.error(
+      {
+        err: error,
+        broker,
+        accountNumber,
+        holderName,
+        operation: 'isDuplicateRow',
+      },
+      'Failed to detect duplicate rows'
+    );
     return false;
   }
 }

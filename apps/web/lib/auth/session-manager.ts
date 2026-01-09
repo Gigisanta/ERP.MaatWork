@@ -11,7 +11,7 @@
 import { logger } from '../logger';
 import { config } from '../config';
 import { fetchWithLogging, postJson } from '../fetch-client';
-import type { AuthUser } from '../../app/auth/AuthContext';
+import type { AuthUser } from '../../types/auth';
 
 interface SessionCheckResult {
   success: boolean;

@@ -94,13 +94,14 @@ function LoginPageContent() {
       //                The previous waitForSession had a closure bug where 'user' was stale
       // Impacto: Faster login, no 5 second timeout, reliable redirect
 
-      // Small delay to let cookie propagate to subsequent requests
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Redirect to target page
+      // AI_DECISION: Use window.location.href instead of router.push for reliable redirect
+      // Justificación: router.push uses client-side navigation which may not send the new cookie
+      //                in the initial request to middleware. A full page navigation ensures
+      //                the browser includes the freshly-set cookie in the document request.
+      // Impacto: More reliable auth flow, avoids race condition with cookie propagation.
       hasRedirectedRef.current = true;
       const redirectTo = searchParams.get('redirect') || '/home';
-      router.push(redirectTo);
+      window.location.href = redirectTo;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
       hasRedirectedRef.current = false;

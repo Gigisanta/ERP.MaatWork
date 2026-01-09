@@ -52,16 +52,23 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
 
   // Validar formato de CORS_ORIGINS (debe ser URLs separadas por coma)
   const corsOrigins = process.env.CORS_ORIGINS;
-  if (corsOrigins && !corsOrigins.startsWith('http')) {
-    console.warn(
-      'Warning: CORS_ORIGINS should be comma-separated URLs (e.g., https://maat.work,https://www.maat.work)'
-    );
+  if (corsOrigins && !corsOrigins.split(',').every((url) => url.trim().startsWith('http'))) {
+    const msg =
+      'Error: CORS_ORIGINS must be comma-separated absolute URLs starting with http/https';
+    if ((process.env.NODE_ENV || 'development') === 'production') {
+      throw new Error(msg);
+    }
+    console.warn(msg);
   }
 
   // Validar que FRONTEND_URL sea HTTPS en producción
   const frontendUrl = process.env.FRONTEND_URL;
-  if (frontendUrl && !frontendUrl.startsWith('https://')) {
-    console.warn('Warning: FRONTEND_URL should use HTTPS in production');
+  if (
+    frontendUrl &&
+    !frontendUrl.startsWith('https://') &&
+    (process.env.NODE_ENV || 'development') === 'production'
+  ) {
+    throw new Error('Error: FRONTEND_URL MUST use HTTPS in production for security');
   }
 
   // Validar formato de GOOGLE_REDIRECT_URI
@@ -72,36 +79,43 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
 
       // Validar que use HTTPS en producción
       if (!url.protocol.startsWith('https')) {
-        console.warn('Warning: GOOGLE_REDIRECT_URI should use HTTPS in production');
+        const msg = 'Error: GOOGLE_REDIRECT_URI MUST use HTTPS in production for OAuth2 security';
+        if ((process.env.NODE_ENV || 'development') === 'production') {
+          throw new Error(msg);
+        }
+        console.warn(msg);
       }
 
       // Validar que el path sea correcto (puede estar prefijado por /api si hay un proxy)
       const expectedPath = '/v1/auth/google/callback';
       const expectedProxyPath = '/api/v1/auth/google/callback';
       if (url.pathname !== expectedPath && url.pathname !== expectedProxyPath) {
-        console.warn(
-          `Warning: GOOGLE_REDIRECT_URI path should be "${expectedPath}" or "${expectedProxyPath}" but got "${url.pathname}". ` +
-            'This must match exactly with Google Cloud Console configuration.'
-        );
+        const msg =
+          `Error: GOOGLE_REDIRECT_URI path should be "${expectedPath}" or "${expectedProxyPath}" but got "${url.pathname}". ` +
+          'This must match exactly with Google Cloud Console configuration.';
+        if ((process.env.NODE_ENV || 'development') === 'production') {
+          throw new Error(msg);
+        }
+        console.warn(msg);
       }
 
       // Validar que no tenga trailing slash
-      // AI_DECISION: Verificar trailing slash en el pathname
-      // Justificación: El path esperado es /v1/auth/google/callback (sin trailing slash)
-      // Cualquier trailing slash causará redirect_uri_mismatch porque Google requiere coincidencia exacta
-      // Impacto: Detecta correctamente URIs con trailing slash que causarían redirect_uri_mismatch
       if (url.pathname.endsWith('/')) {
-        console.warn(
-          `Warning: GOOGLE_REDIRECT_URI path should not have trailing slash. ` +
-            `Expected: "${expectedPath}", got: "${url.pathname}". ` +
-            'This will cause OAuth redirect_uri_mismatch errors.'
-        );
+        const msg =
+          `Error: GOOGLE_REDIRECT_URI path should not have trailing slash. ` +
+          `Expected: "${expectedPath}", got: "${url.pathname}". ` +
+          'This will cause OAuth redirect_uri_mismatch errors.';
+        if ((process.env.NODE_ENV || 'development') === 'production') {
+          throw new Error(msg);
+        }
+        console.warn(msg);
       }
     } catch (error) {
-      console.warn(
-        `Warning: GOOGLE_REDIRECT_URI "${googleRedirectUri}" is not a valid URL. ` +
-          'This will cause OAuth redirect_uri_mismatch errors.'
-      );
+      const msg = `Error: GOOGLE_REDIRECT_URI "${googleRedirectUri}" is not a valid URL.`;
+      if ((process.env.NODE_ENV || 'development') === 'production') {
+        throw new Error(msg);
+      }
+      console.warn(msg);
     }
   }
 }
@@ -125,29 +139,47 @@ if (googleRedirectUri && googleRedirectUri !== 'http://localhost:3001/v1/auth/go
   }
 }
 
+// Validar que no sean placeholders
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+if (
+  clientId === 'INGRESAR_TU_CLIENT_ID_AQUI' ||
+  clientSecret === 'INGRESAR_TU_CLIENT_SECRET_AQUI'
+) {
+  console.warn(
+    'Warning: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET are still using placeholder values. ' +
+      'Google OAuth will fail with "invalid_client" error.'
+  );
+}
+
 // Validar GOOGLE_ENCRYPTION_KEY si está configurada
 const googleEncryptionKey = process.env.GOOGLE_ENCRYPTION_KEY;
 if (googleEncryptionKey) {
   if (googleEncryptionKey.length < 32) {
-    console.warn(
-      'Warning: GOOGLE_ENCRYPTION_KEY must be at least 32 characters. ' +
-        'Tokens encrypted with a shorter key may fail to decrypt.'
-    );
+    const msg = 'Error: GOOGLE_ENCRYPTION_KEY must be at least 32 characters for AES-256 security.';
+    if ((process.env.NODE_ENV || 'development') === 'production') {
+      throw new Error(msg);
+    }
+    console.warn(msg);
   }
   if (googleEncryptionKey === 'change-me-to-a-random-32-char-string-or-longer') {
-    console.warn(
-      'Warning: GOOGLE_ENCRYPTION_KEY is using the default value. ' +
-        'This is insecure and may cause decryption errors if tokens were encrypted with a different key.'
-    );
+    const msg = 'Error: GOOGLE_ENCRYPTION_KEY is using the default insecure value.';
+    if ((process.env.NODE_ENV || 'development') === 'production') {
+      throw new Error(msg);
+    }
+    console.warn(msg);
   }
 } else {
   // Solo warning en desarrollo, error en producción
   if ((process.env.NODE_ENV || 'development') === 'production') {
-    console.warn(
-      'Warning: GOOGLE_ENCRYPTION_KEY is not set. ' +
-        'Google OAuth tokens cannot be encrypted/decrypted without this key.'
+    throw new Error(
+      'Error: GOOGLE_ENCRYPTION_KEY is not set. ' +
+        'Google OAuth tokens cannot be safely stored without this key.'
     );
   }
+  console.warn(
+    'Warning: GOOGLE_ENCRYPTION_KEY is not set. Tokens will be stored insecurely or encryption will fail.'
+  );
 }
 
 export const env = {

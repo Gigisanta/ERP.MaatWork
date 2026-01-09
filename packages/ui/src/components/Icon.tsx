@@ -1,4 +1,66 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import {
+  Home,
+  Users,
+  BarChart3,
+  BarChart2,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Info,
+  CheckCircle,
+  AlertCircle,
+  AlertTriangle,
+  XCircle,
+  WifiOff,
+  Loader,
+  RefreshCw,
+  Edit,
+  MoreVertical,
+  Trash2,
+  Plus,
+  Check,
+  Search,
+  List,
+  Grid,
+  Download,
+  Book,
+  ExternalLink,
+  Contact,
+  Users as Team, // Map Team to Users or similar
+  GraduationCap,
+  TrendingUp,
+  Briefcase,
+  Shield,
+  UserPlus,
+  FileText,
+  Activity,
+  Clock,
+  Eye,
+  EyeOff,
+  Compass, // Navigation
+  Zap,
+  Command,
+  Calendar,
+  PauseCircle,
+  UserX,
+  Layout,
+  DollarSign,
+  PieChart,
+  Target,
+  Bell,
+  Cpu,
+  LucideIcon,
+} from 'lucide-react';
+import { cn } from '../utils/cn.js';
 
 export type IconName =
   | 'Home'
@@ -64,7 +126,13 @@ export type IconName =
   | 'Command'
   | 'calendar'
   | 'pause-circle'
-  | 'user-x';
+  | 'user-x'
+  | 'Layout'
+  | 'DollarSign'
+  | 'PieChart'
+  | 'Target'
+  | 'Bell'
+  | 'Cpu';
 
 export interface IconProps {
   name: IconName;
@@ -73,89 +141,96 @@ export interface IconProps {
 }
 
 export function Icon({ name, size = 16, className = '' }: IconProps) {
-  // Mapeo básico de iconos a caracteres Unicode o símbolos
-  const iconMap: Record<string, string> = {
-    Home: '🏠',
-    Users: '👥',
-    BarChart3: '📊',
-    BarChart2: '📈',
-    Settings: '⚙️',
-    LogOut: '🚪',
-    Menu: '☰',
-    X: '✕',
-    ChevronUp: '▲',
-    ChevronDown: '▼',
-    ChevronLeft: '◀',
-    ChevronRight: '▶',
-    User: '👤',
-    Info: 'ℹ️',
-    CheckCircle: '✅',
-    AlertCircle: '⚠️',
-    AlertTriangle: '⚠️',
-    XCircle: '❌',
-    WifiOff: '📶',
-    Loader: '⏳',
-    'chevron-up': '▲',
-    'chevron-down': '▼',
-    x: '✕',
-    info: 'ℹ️',
-    'check-circle': '✅',
-    'alert-circle': '⚠️',
-    'alert-triangle': '⚠️',
-    'x-circle': '❌',
-    'wifi-off': '📶',
-    loader: '⏳',
-    'refresh-cw': '🔄',
-    edit: '✏️',
-    'more-vertical': '⋮',
-    'trash-2': '🗑️',
-    plus: '➕',
-    check: '✓',
-    search: '🔍',
-    list: '☰',
-    grid: '▦',
-    download: '📥',
-    Book: '📚',
-    ExternalLink: '🔗',
-    Contact: '👤',
-    Team: '👨‍👩‍👧‍👦',
-    GraduationCap: '🎓',
-    TrendingUp: '📈',
-    Briefcase: '💼',
-    Shield: '🛡️',
-    UserPlus: '👤+',
-    FileText: '📝',
-    Activity: '📊',
-    RefreshCw: '🔄',
-    Clock: '🕐',
-    eye: '👁',
-    'eye-off': '🙈',
-    Eye: '👁',
-    EyeOff: '🙈',
-    Navigation: '🧭',
-    Zap: '⚡',
-    command: '⌘',
-    Command: '⌘',
-    calendar: '📅',
-    'pause-circle': '⏸️',
-    'user-x': '👤✕',
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const iconMap: Record<string, LucideIcon> = {
+    Home,
+    Users,
+    BarChart3,
+    BarChart2,
+    Settings,
+    LogOut,
+    Menu,
+    X,
+    ChevronUp,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    User,
+    Info,
+    CheckCircle,
+    AlertCircle,
+    AlertTriangle,
+    XCircle,
+    WifiOff,
+    Loader,
+    'chevron-up': ChevronUp,
+    'chevron-down': ChevronDown,
+    x: X,
+    info: Info,
+    'check-circle': CheckCircle,
+    'alert-circle': AlertCircle,
+    'alert-triangle': AlertTriangle,
+    'x-circle': XCircle,
+    'wifi-off': WifiOff,
+    loader: Loader,
+    'refresh-cw': RefreshCw,
+    edit: Edit,
+    'more-vertical': MoreVertical,
+    'trash-2': Trash2,
+    plus: Plus,
+    check: Check,
+    search: Search,
+    list: List,
+    grid: Grid,
+    download: Download,
+    Book,
+    ExternalLink,
+    Contact,
+    Team,
+    GraduationCap,
+    TrendingUp,
+    Briefcase,
+    Shield,
+    UserPlus,
+    FileText,
+    Activity,
+    RefreshCw,
+    Clock,
+    eye: Eye,
+    'eye-off': EyeOff,
+    Eye,
+    EyeOff,
+    Navigation: Compass,
+    Zap,
+    command: Command,
+    Command,
+    calendar: Calendar,
+    'pause-circle': PauseCircle,
+    'user-x': UserX,
+    Layout,
+    DollarSign,
+    PieChart,
+    Target,
+    Bell,
+    Cpu,
   };
 
-  const iconChar = iconMap[name] || '?';
+  const IconComponent = iconMap[name] || AlertCircle; // Fallback to AlertCircle if not found
+
+  // AI_DECISION: Use defensive rendering for icons to prevent hydration mismatches
+  // Justificación: External shims or browser extensions can interfere with SVG rendering.
+  // By only rendering after mount, we ensure the client-side SVG matches what React expects.
+  if (!mounted) {
+    // Return a placeholder with the same dimensions to avoid layout shift
+    return <span className={cn('shrink-0', className)} style={{ width: size, height: size }} />;
+  }
 
   return (
-    <span
-      className={className}
-      style={{
-        fontSize: size,
-        display: 'inline-block',
-        width: size,
-        height: size,
-        textAlign: 'center',
-        lineHeight: 1,
-      }}
-    >
-      {iconChar}
-    </span>
+    <IconComponent size={size} className={cn('shrink-0', className)} suppressHydrationWarning />
   );
 }

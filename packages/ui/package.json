@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Modern, accessible React component library built with Tailwind CSS",
+  "source": "src/index.ts",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

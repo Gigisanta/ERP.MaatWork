@@ -84,11 +84,21 @@ export function LandingPage() {
               </span>
             </h1>
             {/* App purpose description - critical for OAuth verification */}
-            <p className="text-xl sm:text-2xl text-slate-300 mb-10 leading-relaxed max-w-2xl font-light animate-fade-in-up animate-delay-200">
-              MaatWork es una plataforma CRM profesional para gestión patrimonial y asesoramiento
-              financiero. Sabemos lo valioso que es tu tiempo. Operá de forma ágil con un equipo de
-              expertos dedicados a potenciar tu patrimonio.
+            {/* App purpose description - critical for OAuth verification */}
+            <p className="text-xl sm:text-2xl text-slate-300 mb-6 leading-relaxed max-w-2xl font-light animate-fade-in-up animate-delay-200">
+              <strong>MaatWork es una aplicación</strong> de gestión patrimonial y asesoramiento
+              financiero diseñada para individuos y empresas. Nuestra app te permite monitorear
+              inversiones, optimizar tu liquidez y acceder a consultoría experta en tiempo real.
             </p>
+            <div className="mb-10 animate-fade-in-up animate-delay-200">
+              <a
+                href="/legal/privacy-policy.html"
+                className="text-slate-400 hover:text-white text-sm underline underline-offset-4 transition-colors"
+                title="Política de Privacidad de la aplicación"
+              >
+                Política de Privacidad
+              </a>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up animate-delay-300">
               <ScrollButton
                 targetId="contacto"
@@ -396,12 +406,12 @@ export function LandingPage() {
               {/* Privacy policy notice - critical for OAuth verification (server-rendered) */}
               <p className="text-center text-xs text-slate-400 mt-4">
                 Tus datos están protegidos. No compartimos tu información.{' '}
-                <Link
+                <a
                   href="/legal/privacy-policy.html"
                   className="text-violet-600 hover:text-violet-500 underline"
                 >
                   Ver Política de Privacidad
-                </Link>
+                </a>
               </p>
             </div>
           </div>

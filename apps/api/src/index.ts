@@ -87,10 +87,14 @@ if (!isProduction) {
     options: {
       colorize: true,
       translateTime: 'HH:MM:ss.l',
-      singleLine: true,
+      singleLine: false, // Allow multi-line for better readability
       ignore: 'pid,hostname',
       errorLikeObjectKeys: ['err', 'error'],
-      messageFormat: '{levelLabel} {msg}',
+      // AI_DECISION: Include requestId and userId in message format for better tracking
+      // Justificación: Facilita correlación de errores con requests específicos y usuarios
+      // Impacto: Logs más informativos sin necesidad de expandir objetos
+      messageFormat:
+        '{levelLabel} {if requestId}[{requestId}]{end} {if userId}[user:{userId}]{end} {msg}',
       errorProps: 'message,stack',
     },
   };
@@ -283,10 +287,20 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(
   pinoHttp({
     logger,
-    // AI_DECISION: autoLogging deshabilitado para reducir ruido - solo loguear errores manualmente
-    // Justificación: Logs automáticos de todas las requests generan demasiado ruido
-    // Impacto: Logs 60-70% más compactos, solo información relevante
-    autoLogging: false,
+    // AI_DECISION: Auto-logging habilitado en desarrollo con filtro inteligente
+    // Justificación: Ver todas las requests ayuda a detectar errores rápidamente
+    // Impacto: Más logs en desarrollo pero con mejor visibilidad de problemas
+    autoLogging: isProduction
+      ? false
+      : {
+          // Ignorar endpoints de health/metrics que generan ruido
+          ignore: (req) => {
+            const path = req.url || '';
+            return (
+              path.startsWith('/health') || path.startsWith('/metrics') || path === '/favicon.ico'
+            );
+          },
+        },
     customLogLevel: (req, res, err) => {
       if (res.statusCode >= 400 && res.statusCode < 500) return 'warn';
       if (res.statusCode >= 500 || err) return 'error';
@@ -301,20 +315,27 @@ app.use(
     customProps: (req: Request) => ({
       requestId: req.requestId,
       userId: req.user?.id,
+      userRole: req.user?.role,
     }),
     customSuccessMessage: (req: Request, res: Response) => {
-      return `${req.method} ${req.url} ${res.statusCode}`;
+      return `${req.method} ${req.url} → ${res.statusCode}`;
     },
     customErrorMessage: (req: Request, res: Response, err: Error) => {
-      return `${req.method} ${req.url} ${res.statusCode} ${err.message}`;
+      return `${req.method} ${req.url} → ${res.statusCode} ${err.message}`;
     },
-    // AI_DECISION: Serializers reducidos - solo información esencial
-    // Justificación: Headers, query params completos, remotePort generan demasiado ruido
-    // Impacto: Logs más compactos manteniendo información útil para debugging
+    // AI_DECISION: Serializers mejorados para desarrollo
+    // Justificación: Incluir más contexto en desarrollo para debugging
+    // Impacto: Mejor visibilidad de problemas con query params y cuerpo de request
     serializers: {
       req: (req) => ({
         method: req.method,
         url: req.url,
+        ...(isProduction
+          ? {}
+          : {
+              query: req.query,
+              params: req.params,
+            }),
       }),
       res: (res) => ({
         statusCode: res.statusCode,
