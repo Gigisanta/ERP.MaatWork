@@ -259,7 +259,7 @@ export default function AdminFeedbackPage() {
               loading={isLoading}
             />
 
-            {meta.totalPages > 1 && (
+            {meta && meta.totalPages > 1 && (
               <div className="mt-4 flex justify-center">
                 <Pagination
                   currentPage={page}
