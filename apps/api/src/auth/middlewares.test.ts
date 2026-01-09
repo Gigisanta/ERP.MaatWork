@@ -52,6 +52,7 @@ describe('requireAuth', () => {
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
+      clearCookie: vi.fn(),
     };
     mockNext = vi.fn();
     vi.clearAllMocks();
@@ -80,7 +81,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token-123',
+        authorization: 'Bearer header.payload.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -97,7 +98,7 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('valid-token-123');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.payload.signature');
       expect(mockReq.user).toEqual(mockUser);
       expect(mockNext).toHaveBeenCalled();
       expect(mockRes.status).not.toHaveBeenCalled();
@@ -111,7 +112,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer token-with-spaces-and-special-chars-123',
+        authorization: 'Bearer header.payload.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -128,7 +129,7 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('token-with-spaces-and-special-chars-123');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.payload.signature');
       expect(mockNext).toHaveBeenCalled();
     });
   });
@@ -142,7 +143,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.cookies = {
-        token: 'cookie-token-123',
+        token: 'header.payload.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -159,7 +160,7 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('cookie-token-123');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.payload.signature');
       expect(mockReq.user).toEqual(mockUser);
       expect(mockNext).toHaveBeenCalled();
     });
@@ -172,10 +173,10 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer bearer-token',
+        authorization: 'Bearer header.bearer.signature',
       };
       mockReq.cookies = {
-        token: 'cookie-token',
+        token: 'header.cookie.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -193,7 +194,7 @@ describe('requireAuth', () => {
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
       // Debería usar Bearer token (se procesa primero)
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('bearer-token');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.bearer.signature');
     });
   });
 
@@ -206,7 +207,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        cookie: 'token=fallback-token-123; other=value',
+        cookie: 'token=header.fallback.signature; other=value',
       };
       mockReq.cookies = {}; // Simular que cookie-parser no funcionó
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
@@ -224,7 +225,7 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('fallback-token-123');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.fallback.signature');
       expect(mockNext).toHaveBeenCalled();
     });
 
@@ -235,7 +236,7 @@ describe('requireAuth', () => {
         role: 'advisor',
       };
 
-      const encodedToken = encodeURIComponent('token-with-special-chars');
+      const encodedToken = encodeURIComponent('header.special.signature');
       mockReq.headers = {
         cookie: `token=${encodedToken}`,
       };
@@ -244,7 +245,7 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockVerifyUserToken).toHaveBeenCalledWith('token-with-special-chars');
+      expect(mockVerifyUserToken).toHaveBeenCalledWith('header.special.signature');
     });
   });
 
@@ -263,7 +264,7 @@ describe('requireAuth', () => {
 
     it('debería retornar 401 cuando token es inválido', async () => {
       mockReq.headers = {
-        authorization: 'Bearer invalid-token',
+        authorization: 'Bearer header.invalid.signature',
       };
       mockVerifyUserToken.mockRejectedValueOnce(new Error('Invalid token'));
 
@@ -277,7 +278,7 @@ describe('requireAuth', () => {
 
     it('debería retornar 401 cuando token está expirado', async () => {
       mockReq.headers = {
-        authorization: 'Bearer expired-token',
+        authorization: 'Bearer header.expired.signature',
       };
       mockVerifyUserToken.mockRejectedValueOnce(new Error('Token expired'));
 
@@ -290,7 +291,7 @@ describe('requireAuth', () => {
     it('debería loguear error cuando falla verificación', async () => {
       const error = new Error('JWT verification failed');
       mockReq.headers = {
-        authorization: 'Bearer bad-token',
+        authorization: 'Bearer header.bad.signature',
       };
       mockVerifyUserToken.mockRejectedValueOnce(error);
 
@@ -334,7 +335,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token',
+        authorization: 'Bearer header.valid.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -372,7 +373,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token',
+        authorization: 'Bearer header.valid.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -393,8 +394,8 @@ describe('requireAuth', () => {
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(401);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: 'Unauthorized - User not found' });
       expect(mockNext).not.toHaveBeenCalled();
-      expect(mockReq.log?.warn).toHaveBeenCalled();
     });
 
     it('debería retornar 403 cuando usuario está inactivo', async () => {
@@ -405,7 +406,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token',
+        authorization: 'Bearer header.valid.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 
@@ -444,7 +445,7 @@ describe('requireAuth', () => {
       };
 
       mockReq.headers = {
-        authorization: 'Bearer valid-token',
+        authorization: 'Bearer header.valid.signature',
       };
       mockVerifyUserToken.mockResolvedValueOnce(mockUser);
 

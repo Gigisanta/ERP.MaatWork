@@ -166,3 +166,13 @@ export type {
   ListCapacitacionesParams,
   CapacitacionesListResponse,
 } from './capacitacion';
+
+// Domain types - Feedback
+export type {
+  FeedbackType,
+  FeedbackStatus,
+  Feedback,
+  FeedbackListResponse,
+  CreateFeedbackRequest,
+  UpdateFeedbackStatusRequest,
+} from './feedback';

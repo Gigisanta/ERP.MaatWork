@@ -122,3 +122,5 @@ export {
   approveUser,
   rejectUser,
 } from './users';
+
+export { createFeedback, updateFeedbackStatus } from './feedback';

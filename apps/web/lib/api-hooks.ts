@@ -25,6 +25,7 @@ import type {
   Capacitacion,
   PaginatedResponse,
   Team,
+  FeedbackListResponse,
 } from '@/types';
 import { logger } from './logger';
 
@@ -163,6 +164,12 @@ export function useUserTeams() {
   };
 }
 
+const swrConfigAdmin: SWRConfiguration = {
+  ...swrConfig,
+  revalidateIfStale: true, // Always check for fresh data on mount
+  dedupingInterval: 2000, // Short interval for interactive admin tables
+};
+
 // Hook for users list with pagination
 export function useUsers(params?: { limit?: number; offset?: number; isActive?: boolean }) {
   const { user } = useAuth();
@@ -177,7 +184,7 @@ export function useUsers(params?: { limit?: number; offset?: number; isActive?: 
 
   const { data, error, isLoading, mutate } = useSWR<
     ApiResponse<PaginatedResponse<UserApiResponse>>
-  >(swrKey, fetcher, swrConfigLonger);
+  >(swrKey, fetcher, swrConfigAdmin);
 
   const paginatedData = data?.data;
   const users = Array.isArray(paginatedData?.data) ? paginatedData.data : [];
@@ -534,5 +541,37 @@ export function useInvalidateContactsCache() {
     };
 
     await mutate(matcher, undefined, { revalidate: true });
+  };
+}
+
+// Hook for feedback list (admin)
+export function useFeedback(params?: {
+  status?: string;
+  type?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const { user } = useAuth();
+  const queryParams = new URLSearchParams();
+  if (params?.status) queryParams.append('status', params.status);
+  if (params?.type) queryParams.append('type', params.type);
+  if (params?.page) queryParams.append('page', String(params.page));
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+
+  const url = `${API_BASE_URL}/v1/feedback${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  const swrKey = user?.role === 'admin' ? url : null;
+
+  const { data, error, isLoading, mutate } = useSWR<ApiResponse<FeedbackListResponse>>(
+    swrKey,
+    fetcher,
+    swrConfig
+  );
+
+  return {
+    feedback: data?.data?.items || [],
+    meta: data?.data?.meta,
+    error,
+    isLoading,
+    mutate,
   };
 }

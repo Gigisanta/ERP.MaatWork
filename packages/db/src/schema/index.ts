@@ -117,3 +117,6 @@ export { contactAliases } from './contact-aliases';
 
 // Calendar
 export { calendarEvents } from './calendar';
+
+// User Feedback
+export { feedback, feedbackTypeEnum, feedbackStatusEnum } from './feedback';

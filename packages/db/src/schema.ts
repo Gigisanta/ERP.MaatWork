@@ -149,3 +149,6 @@ export { contactAliases } from './schema/contact-aliases';
 
 // Calendar
 export { calendarEvents } from './schema/calendar';
+
+// User Feedback
+export { feedback, feedbackTypeEnum, feedbackStatusEnum } from './schema/feedback';

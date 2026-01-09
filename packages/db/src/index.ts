@@ -128,6 +128,10 @@ export {
   automationConfigs,
   // Calendar
   calendarEvents,
+  // User Feedback
+  feedback,
+  feedbackTypeEnum,
+  feedbackStatusEnum,
 } from './schema';
 
 /**

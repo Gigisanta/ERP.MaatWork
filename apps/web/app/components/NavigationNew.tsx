@@ -15,6 +15,7 @@ import { useSidebar } from './SidebarContext';
 import CareerProgressBar from './CareerProgressBar';
 import { Feather } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
+import { FeedbackButton } from './FeedbackButton';
 
 interface NavigationNewProps {
   onToggleSidebar?: () => void;
@@ -484,7 +485,12 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
           logo={logo}
           navItems={navItems}
           user={headerUser}
-          notificationComponent={<NotificationBell />}
+          notificationComponent={
+            <div className="flex items-center gap-2">
+              <FeedbackButton />
+              <NotificationBell />
+            </div>
+          }
           onLogout={handleLogout}
           onToggleSidebar={handleToggle}
           sidebarOpen={open}

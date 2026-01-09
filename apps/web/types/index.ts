@@ -153,3 +153,13 @@ export type {
   CareerPlanLevelUpdateRequest,
   UserCareerProgress,
 } from '@maatwork/types';
+
+// Feedback types
+export type {
+  FeedbackType,
+  FeedbackStatus,
+  Feedback,
+  FeedbackListResponse,
+  CreateFeedbackRequest,
+  UpdateFeedbackStatusRequest,
+} from '@maatwork/types';

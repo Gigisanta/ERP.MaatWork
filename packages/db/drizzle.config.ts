@@ -11,6 +11,7 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/CRM',
   },
+  tablesFilter: ['!pg_*', '!mv_*'],
   verbose: true,
   strict: true,
 });

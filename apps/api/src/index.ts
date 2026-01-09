@@ -59,6 +59,7 @@ import usersRouter from './routes/users';
 import uploadsRouter from './routes/uploads';
 import aumRouter from './routes/aum';
 import leadsRouter from './routes/public/leads';
+import feedbackRouter from './routes/feedback';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -505,6 +506,7 @@ app.use('/v1/bloomberg', bloombergRouter);
 app.use('/v1/calendar', calendarRouter);
 app.use('/v1/uploads', uploadsRouter);
 app.use('/v1/public/leads', leadsRouter);
+app.use('/v1/feedback', feedbackRouter);
 
 // Error handler global - DEBE estar al final de todos los middlewares
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

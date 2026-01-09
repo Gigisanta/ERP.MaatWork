@@ -255,7 +255,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await waitFor(() => {
-      expect(mockRouter.replace).toHaveBeenCalledWith('/');
+      expect(mockRouter.replace).toHaveBeenCalledWith('/home');
     });
   });
 
