@@ -38,7 +38,31 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       );
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const user = await verifyUserToken(token);
+
+    // AI_DECISION: Validate token format before attempting JWT verification
+    // Justificación: JWSInvalid errors occur when token is empty, malformed, or not a valid JWT
+    // Impacto: Provides clearer error messages and prevents cryptic jose library errors
+    const tokenStr = token.trim();
+    if (!tokenStr) {
+      req.log?.warn({ tokenLength: token.length }, 'Token is empty or whitespace only');
+      return res.status(401).json({ message: 'Unauthorized - Invalid token format' });
+    }
+
+    // JWT tokens must have 3 parts separated by dots (header.payload.signature)
+    const parts = tokenStr.split('.');
+    if (parts.length !== 3) {
+      req.log?.warn(
+        {
+          tokenLength: tokenStr.length,
+          parts: parts.length,
+          tokenPreview: tokenStr.substring(0, 20) + '...',
+        },
+        'Token does not have valid JWT format (expected 3 parts)'
+      );
+      return res.status(401).json({ message: 'Unauthorized - Invalid token format' });
+    }
+
+    const user = await verifyUserToken(tokenStr);
 
     // AI_DECISION: Optimizar validación de usuario con cache
     // Justificación: Evita queries redundantes a DB en cada request para datos que cambian poco

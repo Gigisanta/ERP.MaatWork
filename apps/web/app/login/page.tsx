@@ -86,52 +86,18 @@ function LoginPageContent() {
       setLoading(true);
       setError(null);
 
-      // Perform login (this now includes session verification)
+      // Perform login (this includes session verification internally)
       await login(identifier, password, rememberMe);
 
-      // Wait for session to be established and user state to update (max 5 seconds)
-      const maxWaitTime = 5000;
-      const startTime = Date.now();
-      const checkInterval = 100; // Check every 100ms
+      // AI_DECISION: Redirect immediately after successful login
+      // Justificación: login() already verifies session internally and sets user state
+      //                The previous waitForSession had a closure bug where 'user' was stale
+      // Impacto: Faster login, no 5 second timeout, reliable redirect
 
-      const waitForSession = (): Promise<void> => {
-        return new Promise((resolve, reject) => {
-          const checkSession = () => {
-            // Check if user is available and context is initialized
-            if (user && initialized) {
-              resolve();
-              return;
-            }
+      // Small delay to let cookie propagate to subsequent requests
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
-            const elapsed = Date.now() - startTime;
-            if (elapsed >= maxWaitTime) {
-              // If initialized but no user, session verification might have failed
-              if (initialized && !user) {
-                reject(
-                  new Error(
-                    'La sesión no se pudo verificar después del login. Por favor, intenta nuevamente.'
-                  )
-                );
-              } else {
-                reject(
-                  new Error('La sesión no se estableció a tiempo. Por favor, intenta nuevamente.')
-                );
-              }
-              return;
-            }
-
-            setTimeout(checkSession, checkInterval);
-          };
-
-          // Start checking immediately
-          checkSession();
-        });
-      };
-
-      // Wait for session confirmation
-      await waitForSession();
-
-      // Session confirmed, redirect
+      // Redirect to target page
       hasRedirectedRef.current = true;
       const redirectTo = searchParams.get('redirect') || '/home';
       router.push(redirectTo);

@@ -58,7 +58,10 @@ export async function apiCall<T>(
 
   // Si hay cookie, incluirla en el header Cookie
   // El backend prioriza cookies sobre Bearer token
-  if (tokenCookie) {
+  // AI_DECISION: Validate cookie value is not empty before sending
+  // Justificación: Empty cookie values cause JWSInvalid errors on API
+  // Impacto: Prevents cryptic errors, fails cleanly with 401 if no valid token
+  if (tokenCookie && tokenCookie.value && tokenCookie.value.trim()) {
     headers['Cookie'] = `token=${tokenCookie.value}`;
   }
 
