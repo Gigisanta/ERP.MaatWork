@@ -55,7 +55,7 @@ function LoginPageContent() {
 
     if (user) {
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/';
+      const redirectTo = searchParams.get('redirect') || '/home';
       router.replace(redirectTo);
     }
   }, [user, initialized, router, searchParams]);
@@ -133,7 +133,7 @@ function LoginPageContent() {
 
       // Session confirmed, redirect
       hasRedirectedRef.current = true;
-      const redirectTo = searchParams.get('redirect') || '/';
+      const redirectTo = searchParams.get('redirect') || '/home';
       router.push(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
