@@ -38,13 +38,16 @@ export async function apiCall<T>(
     revalidate?: number | false;
   } = {}
 ): Promise<ApiResponse<T>> {
-  // AI_DECISION: Usar URL interna para Server Components
-  // Justificación: Cuando Next.js (servidor) llama a https://maat.work/api,
-  //                Cloudflare intercepta con su challenge "Just a moment..."
-  //                que el servidor no puede resolver (requiere JavaScript).
-  //                Usando localhost:3001 evitamos Cloudflare para llamadas internas.
-  // Impacto: Server Components pueden autenticar usuarios sin bloqueos de Cloudflare
-  const internalApiUrl = process.env.API_URL_INTERNAL || config.apiUrl;
+  // AI_DECISION: Usar URL interna o pública según el entorno
+  // Justificación: En producción, las cookies están asociadas a .maat.work.
+  //                Llamadas internas a localhost o IP privada NO envían estas cookies.
+  //                Usamos la URL pública https://maat.work/api en producción para asegurar
+  //                que las cookies se incluyan y Nginx maneje el ruteo. En desarrollo,
+  //                mantenemos localhost para evitar bloqueos de Cloudflare si existen.
+  // Impacto: Fixes authentication in production Server Components
+  const isProduction = process.env.NODE_ENV === 'production';
+  const internalApiUrl =
+    (isProduction ? config.apiUrl : process.env.API_URL_INTERNAL) || config.apiUrl;
   const url = `${internalApiUrl}${endpoint}`;
 
   // Obtener cookie de token automáticamente
@@ -65,10 +68,11 @@ export async function apiCall<T>(
   // Justificación: Helps identify missing cookies or URL mismatches in production
   // Impacto: Better observability for authentication issues
   if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-    console.log(`[api-server] Calling ${endpoint}`, {
+    console.log(`[api-server] Calling endpoint`, {
+      endpoint,
+      url, // Log the full URL being called
       hasCookieHeader: !!cookieHeader,
       cookieKeys: allCookies.map((c) => c.name),
-      internalApiUrl,
       requestId: headers['X-Request-ID'],
     });
   }
