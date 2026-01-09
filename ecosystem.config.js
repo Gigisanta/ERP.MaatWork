@@ -54,17 +54,42 @@ Object.values(LOGS_DIR).forEach(dir => {
   }
 });
 
-let webJwtSecret = '';
+let jwtSecret = '';
+
+// Intentar cargar JWT_SECRET desde apps/api/.env (Fuente de verdad)
 try {
-  const envLocalPath = path.join(ROOT_DIR, 'apps/web/.env.local');
-  if (fs.existsSync(envLocalPath)) {
-    const envContent = fs.readFileSync(envLocalPath, 'utf8');
+  const apiEnvPath = path.join(ROOT_DIR, 'apps/api/.env');
+  if (fs.existsSync(apiEnvPath)) {
+    const envContent = fs.readFileSync(apiEnvPath, 'utf8');
     const match = envContent.match(/JWT_SECRET=(.+)/);
-    if (match) webJwtSecret = match[1].trim();
+    if (match) {
+        jwtSecret = match[1].trim();
+        // Eliminar comillas si existen
+        jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
+        console.log('Loaded JWT_SECRET from apps/api/.env');
+    }
   }
 } catch (e) {
-  console.warn('Could not read apps/web/.env.local:', e.message);
+  console.warn('Could not read apps/api/.env:', e.message);
 }
+
+// Si no se encontró en API, intentar desde web/.env.local
+if (!jwtSecret) {
+    try {
+      const envLocalPath = path.join(ROOT_DIR, 'apps/web/.env.local');
+      if (fs.existsSync(envLocalPath)) {
+        const envContent = fs.readFileSync(envLocalPath, 'utf8');
+        const match = envContent.match(/JWT_SECRET=(.+)/);
+        if (match) {
+            jwtSecret = match[1].trim();
+            jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read apps/web/.env.local:', e.message);
+    }
+}
+
 
 module.exports = {
   apps: [
@@ -107,7 +132,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
         // JWT_SECRET se pasa explícitamente para que el middleware pueda validar tokens
-        JWT_SECRET: webJwtSecret || process.env.JWT_SECRET || '',
+        JWT_SECRET: jwtSecret || process.env.JWT_SECRET || '',
       },
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: path.join(LOGS_DIR.web, 'web-error.log'),
