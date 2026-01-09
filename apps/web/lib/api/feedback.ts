@@ -6,6 +6,8 @@ import type {
   UpdateFeedbackStatusRequest,
 } from '@maatwork/types';
 
+export type { Feedback, FeedbackListResponse, CreateFeedbackRequest, UpdateFeedbackStatusRequest };
+
 export async function createFeedback(data: CreateFeedbackRequest) {
   return apiClient.post<Feedback>('/v1/feedback', data);
 }

@@ -123,4 +123,9 @@ export {
   rejectUser,
 } from './users';
 
-export { createFeedback, updateFeedbackStatus } from './feedback';
+export {
+  createFeedback,
+  updateFeedbackStatus,
+  type Feedback,
+  type FeedbackListResponse,
+} from './feedback';
