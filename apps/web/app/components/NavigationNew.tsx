@@ -320,29 +320,28 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
 
     // Si estamos en rutas públicas de autenticación (login/register), no redirigir
     const isAuthRoute = pathname === '/login' || pathname === '/register';
+    const isPublicRoute = isAuthRoute || pathname === '/';
 
-    // Si hay usuario autenticado
+    // AI_DECISION: Eliminar redirect redundante de rutas públicas
+    // Justificación: El middleware ya maneja la redirección de usuarios autenticados desde rutas públicas
+    // Impacto: Evita race conditions y loops de redirección en producción
     if (user) {
-      console.log('[NavigationNew] Usuario encontrado, verificando ruta');
+      console.log('[NavigationNew] Usuario autenticado, middleware maneja redirects');
       hasRedirectedRef.current = false;
-
-      // Si el usuario está en la landing page o rutas de auth, redirigir a /home
-      if (pathname === '/' || isAuthRoute) {
-        console.log('[NavigationNew] Usuario autenticado en ruta pública, redirigiendo a /home');
-        router.replace('/home');
-      }
       return;
     }
 
     // Si no hay usuario y estamos en rutas públicas, no hacer nada
-    if (isAuthRoute || pathname === '/') {
+    if (isPublicRoute) {
       console.log('[NavigationNew] Ruta pública sin usuario, no redirigir:', pathname);
       return;
     }
 
-    console.log('[NavigationNew] No hay usuario, iniciando timeout de 1 segundo...');
+    console.log(
+      '[NavigationNew] No hay usuario en ruta protegida, iniciando timeout de 1 segundo...'
+    );
 
-    // Si no hay usuario, esperar un poco para dar tiempo a que AuthContext termine de verificar
+    // Si no hay usuario en ruta protegida, esperar un poco para dar tiempo a que AuthContext termine de verificar
     // El middleware ya validó el token, así que si no hay usuario después de este delay,
     // realmente no hay sesión activa
     timeoutRef.current = setTimeout(() => {
@@ -352,10 +351,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
         pathname,
       });
 
-      // Verificar nuevamente el estado actual (no el valor capturado en el closure)
-      // Necesitamos acceder al estado actual a través de una función o ref
-      // Por ahora, confiamos en que si llegamos aquí después del delay y no hay user,
-      // realmente no hay sesión
+      // Verificar nuevamente el estado actual
       if (!hasRedirectedRef.current) {
         console.error(
           '[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout',
