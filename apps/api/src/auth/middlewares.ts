@@ -20,7 +20,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     }
     // Fallback: parsear cookie manualmente si cookie-parser no funciona
     if (!token && req.headers.cookie) {
-      const m = /(?:^|; )token=([^;]+)/.exec(req.headers.cookie);
+      // Regex mejorada para manejar múltiples cookies con espacios opcionales
+      const m = /(?:^|;\s*)token=([^;]+)/.exec(req.headers.cookie);
       if (m && m[1]) token = decodeURIComponent(m[1]);
     }
     if (!token) {
@@ -35,6 +36,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
           origin: req.headers.origin,
           referer: req.headers.referer,
           userAgent: req.headers['user-agent'],
+          host: req.headers.host, // Log host header
           url: req.url,
         },
         'No token found in request'

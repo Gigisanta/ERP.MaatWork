@@ -38,17 +38,14 @@ export async function apiCall<T>(
     revalidate?: number | false;
   } = {}
 ): Promise<ApiResponse<T>> {
-  // AI_DECISION: Usar URL interna o pública según el entorno
-  // Justificación: En producción, las cookies están asociadas a .maat.work.
-  //                Llamadas internas a localhost o IP privada NO envían estas cookies.
-  //                Usamos la URL pública https://maat.work/api en producción para asegurar
-  //                que las cookies se incluyan y Nginx maneje el ruteo. En desarrollo,
-  //                mantenemos localhost para evitar bloqueos de Cloudflare si existen.
-  // Impacto: Fixes authentication in production Server Components
-  const isProduction = process.env.NODE_ENV === 'production';
-  const internalApiUrl =
-    (isProduction ? config.apiUrl : process.env.API_URL_INTERNAL) || config.apiUrl;
-  const url = `${internalApiUrl}${endpoint}`;
+  // AI_DECISION: Usar URL interna con Host header explícito
+  // Justificación: Para evitar Cloudflare "Just a moment..." en llamadas servidor-a-servidor,
+  //                el servidor de Next.js llama directamente a localhost:3001 (o IP interna).
+  //                Sin embargo, para que las cookies de .maat.work sean válidas y para que
+  //                el backend sepa a qué host se refiere, forzamos el header Host: maat.work.
+  // Impacto: Bypass de Cloudflare, compatibilidad con cookies de dominio y ruteo correcto
+  const internalBaseUrl = process.env.API_URL_INTERNAL || 'http://localhost:3001';
+  const url = `${internalBaseUrl}${endpoint}`;
 
   // Obtener cookie de token automáticamente
   const cookieStore = await cookies();
@@ -57,6 +54,7 @@ export async function apiCall<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    Host: 'maat.work', // Mantener el host original para validación de cookies y ruteo
     ...options.headers,
   };
 
