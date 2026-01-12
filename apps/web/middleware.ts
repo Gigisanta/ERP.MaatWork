@@ -49,6 +49,12 @@ export async function middleware(request: NextRequest) {
   // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
   if (pathname === '/login') {
     const token = request.cookies.get('token')?.value;
+    // LOGGING: Inspeccionar cookies entrantes en middleware
+    console.log('[Middleware] Checking login page access', {
+      hasToken: !!token,
+      cookieNames: request.cookies.getAll().map((c) => c.name),
+      url: request.url,
+    });
     if (token) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
@@ -84,6 +90,10 @@ export async function middleware(request: NextRequest) {
   // Impacto: Redirección automática en middleware (antes de renderizar) es más eficiente que en cliente
   if (pathname === '/') {
     const token = request.cookies.get('token')?.value;
+    console.log('[Middleware] Checking root access', {
+      hasToken: !!token,
+      cookieNames: request.cookies.getAll().map((c) => c.name),
+    });
     if (token) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
@@ -111,6 +121,12 @@ export async function middleware(request: NextRequest) {
 
   // Si es una ruta protegida, verificar si hay token en las cookies
   const token = request.cookies.get('token')?.value;
+
+  console.log('[Middleware] Protected route check', {
+    pathname,
+    hasToken: !!token,
+    cookieNames: request.cookies.getAll().map((c) => c.name),
+  });
 
   if (!token) {
     // Redirigir al login con la URL de destino completa (incluyendo query params)

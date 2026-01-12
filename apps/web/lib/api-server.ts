@@ -73,15 +73,16 @@ export async function apiCall<T>(
   // AI_DECISION: Diagnostic logging for Server Component API calls
   // Justificación: Helps identify missing cookies or URL mismatches in production
   // Impacto: Better observability for authentication issues
-  if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-    console.log(`[api-server] Calling endpoint`, {
-      endpoint,
-      url, // Log the full URL being called
-      hasCookieHeader: !!cookieHeader,
-      cookieKeys: allCookies.map((c) => c.name),
-      requestId: headers['X-Request-ID'],
-    });
-  }
+  // AI_DECISION: Diagnostic logging for Server Component API calls
+  // Justificación: Unconditional logging to trace production issue
+  console.log(`[api-server] Calling endpoint`, {
+    endpoint,
+    url,
+    hasCookieHeader: !!cookieHeader,
+    cookieKeys: allCookies.map((c) => c.name),
+    requestId: headers['X-Request-ID'],
+    nodeEnv: process.env.NODE_ENV,
+  });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
