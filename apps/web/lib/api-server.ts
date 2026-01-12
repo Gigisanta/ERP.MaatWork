@@ -15,7 +15,7 @@
 import type { Contact } from '@maatwork/types';
 import type { ApiResponse } from './api-client';
 import { config } from './config';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { logger } from './logger-server';
 
 /**
@@ -61,14 +61,20 @@ export async function apiCall<T>(
     .map((c) => `${c.name}=${c.value}`)
     .join('; ');
 
-  const headers: Record<string, string> = {
+  // AI_DECISION: Extraer requestId para trazabilidad
+  // Justificación: RecuPera el ID generado en el middleware para mantener la traza hacia el backend
+  const headerStore = await headers();
+  const requestId = headerStore.get('x-request-id') || `sc_${Date.now()}`;
+
+  const headersMap: Record<string, string> = {
     'Content-Type': 'application/json',
     Host: 'maat.work', // Mantener el host original para validación de cookies y ruteo
+    'X-Request-ID': requestId, // Propagar a través de la cadena de llamadas
     ...options.headers,
   };
 
   if (cookieHeader) {
-    headers['Cookie'] = cookieHeader;
+    headersMap['Cookie'] = cookieHeader;
   }
 
   // AI_DECISION: Diagnostic logging for Server Component API calls
@@ -81,7 +87,7 @@ export async function apiCall<T>(
     url,
     hasCookieHeader: !!cookieHeader,
     cookieKeys: allCookies.map((c) => c.name),
-    requestId: headers['X-Request-ID'],
+    requestId,
     nodeEnv: process.env.NODE_ENV,
   });
 
@@ -96,7 +102,7 @@ export async function apiCall<T>(
 
   const fetchOptions: RequestInit & { next?: { revalidate: number | false } } = {
     method: options.method || 'GET',
-    headers,
+    headers: headersMap,
     signal: controller.signal,
   };
 
@@ -113,6 +119,7 @@ export async function apiCall<T>(
   if (options.body !== undefined) {
     fetchOptions.body = JSON.stringify(options.body);
   }
+
   let response: Response;
   try {
     response = await fetch(url, fetchOptions);
@@ -122,23 +129,39 @@ export async function apiCall<T>(
     const error = new Error(fetchError instanceof Error ? fetchError.message : 'Network error');
     // Mark as network error (no status code)
     (error as Error & { status?: number; isNetworkError?: boolean }).isNetworkError = true;
+
+    logger.error(`[api-server] Network error calling ${endpoint}`, {
+      error: error.message,
+      requestId,
+    });
+
     throw error;
   } finally {
     clearTimeout(timeout);
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}`;
+    let errorData: unknown;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = await response.text();
+    }
+
+    const errorMessage =
+      (errorData as { message?: string })?.message ||
+      `API Error: ${response.status} ${response.statusText}`;
+
     const error = new Error(errorMessage);
     // Attach status code to error for better error handling
     (error as Error & { status?: number }).status = response.status;
 
-    if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+    if (process.env.NEXT_PUBLIC_DEBUG === 'true' || response.status >= 500) {
       logger.error(`[api-server] Error in ${endpoint}`, {
         status: response.status,
         statusText: response.statusText,
         error: errorData,
+        requestId,
       });
     }
     throw error;
