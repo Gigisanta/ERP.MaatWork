@@ -21,29 +21,23 @@ import type { CookieOptions } from 'express';
 export function getAuthCookieOptions(maxAge?: number): CookieOptions {
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // AI_DECISION: Use sameSite='none' in production for Cloudflare compatibility
-  // Justificación: Cuando el frontend (Next.js) y el API están detrás de Cloudflare,
-  //                el browser puede considerar las requests como cross-site incluso si
-  //                el dominio es el mismo (.maat.work). SameSite='lax' previene que
-  //                cookies se envíen en requests POST cross-site, lo que rompe la auth.
-  //                SameSite='none' requiere secure=true (HTTPS only).
-  // Impacto: Cookies funcionan correctamente a través de Cloudflare proxy
-  // Referencias: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+  // AI_DECISION: Switch to standard 'lax' and host-only cookies
+  // Justificación: 'SameSite=None' was causing issues with Cloudflare/Browser delivery.
+  //                'Lax' is the standard for top-level navigation in single-domain apps.
+  //                Removing explicit 'domain' makes it a "Host-Only" cookie, which is safer
+  //                and less prone to rejection.
   const options: CookieOptions = {
     httpOnly: true,
-    secure: isProduction, // MUST be true in production for sameSite='none'
-    sameSite: isProduction ? 'none' : 'lax', // 'none' for production (Cloudflare), 'lax' for dev
+    secure: isProduction, // MUST be true in production
+    sameSite: 'lax', // Standardize on Lax for stability
     path: '/',
   };
 
-  // AI_DECISION: Establecer domain explícitamente en producción
-  // Justificación: Permite que la cookie funcione en maat.work y www.maat.work
-  //                El punto inicial (.maat.work) es crítico para incluir subdominios
-  // Impacto: Cookie se establece para todo el dominio maat.work
-  // IMPORTANTE: Si el browser rechaza esta cookie, intentar SIN el punto inicial
-  if (isProduction && process.env.COOKIE_DOMAIN) {
-    options.domain = process.env.COOKIE_DOMAIN;
-  }
+  // AI_DECISION: Comment out explicit domain to enforce Host-Only cookie
+  // This avoids mismatch issues between .maat.work and maat.work
+  // if (isProduction && process.env.COOKIE_DOMAIN) {
+  //   options.domain = process.env.COOKIE_DOMAIN;
+  // }
 
   if (maxAge !== undefined) {
     options.maxAge = maxAge;
