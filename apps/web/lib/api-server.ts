@@ -50,7 +50,15 @@ export async function apiCall<T>(
   // Obtener cookie de token automáticamente
   const cookieStore = await cookies();
   const allCookies = cookieStore.getAll();
-  const cookieHeader = allCookies.map((c) => `${c.name}=${c.value}`).join('; ');
+  // AI_DECISION: Filter out cookies with "undefined" or "null" string values
+  // Justificación: Prevents sending "token=undefined" which causes API to reject requests with 401
+  // Impacto: Fixes login loop where Middleware passes but API rejects Server Component calls
+  const cookieHeader = allCookies
+    .filter(
+      (c) => c.value && c.value !== 'undefined' && c.value !== 'null' && c.value.trim() !== ''
+    )
+    .map((c) => `${c.name}=${c.value}`)
+    .join('; ');
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

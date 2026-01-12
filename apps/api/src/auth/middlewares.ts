@@ -10,7 +10,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     let token: string | undefined;
     const auth = req.headers.authorization;
     if (auth && auth.startsWith('Bearer ')) {
-      token = auth.slice('Bearer '.length);
+      const extracted = auth.slice('Bearer '.length);
+      if (extracted !== 'undefined' && extracted !== 'null') {
+        token = extracted;
+      }
     }
     // AI_DECISION: Priorizar cookie httpOnly sobre Bearer token
     // Justificación: Cookie es más seguro (inmune a XSS), Bearer es fallback para compatibilidad
@@ -22,7 +25,14 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     if (!token && req.headers.cookie) {
       // Regex mejorada para manejar múltiples cookies con espacios opcionales
       const m = /(?:^|;\s*)token=([^;]+)/.exec(req.headers.cookie);
-      if (m && m[1]) token = decodeURIComponent(m[1]);
+      if (m && m[1]) {
+        const decoded = decodeURIComponent(m[1]);
+        // AI_DECISION: Explicit check for "undefined" string in cookie
+        // Justificación: Client can sometimes send "token=undefined" which bypasses null checks
+        if (decoded !== 'undefined' && decoded !== 'null') {
+          token = decoded;
+        }
+      }
     }
     if (!token) {
       // AI_DECISION: Log detallado para debugging de auth issues
