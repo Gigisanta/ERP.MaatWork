@@ -45,16 +45,24 @@ const JWT_AUDIENCE = 'maatwork-web';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // AI_DECISION: Generar o propagar X-Request-ID para trazabilidad
+  // Justificación: Permite correlacionar logs entre Middleware, Server Components y API
+  let requestId = request.headers.get('x-request-id');
+  if (!requestId) {
+    requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
   const baseUrl = getBaseUrl(request);
+  const loggerContext = { requestId, pathname };
 
   // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
   if (pathname === '/login') {
     const token = request.cookies.get('token')?.value;
     // LOGGING: Inspeccionar cookies entrantes en middleware
     logger.info('[Middleware] Checking login page access', {
+      ...loggerContext,
       hasToken: !!token,
       cookieNames: request.cookies.getAll().map((c) => c.name),
-      url: request.url,
     });
     if (token) {
       try {
@@ -92,6 +100,7 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/') {
     const token = request.cookies.get('token')?.value;
     logger.info('[Middleware] Checking root access', {
+      ...loggerContext,
       hasToken: !!token,
       cookieNames: request.cookies.getAll().map((c) => c.name),
     });
@@ -124,7 +133,7 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
 
   logger.info('[Middleware] Protected route check', {
-    pathname,
+    ...loggerContext,
     hasToken: !!token,
     cookieNames: request.cookies.getAll().map((c) => c.name),
   });
@@ -171,7 +180,21 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  // Clonar headers para propagar x-request-id
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-request-id', requestId);
+
+  // Continuar al siguiente paso con los headers actualizados
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // También añadirlo a la respuesta para debugging en el navegador
+  response.headers.set('x-request-id', requestId);
+
+  return response;
 }
 
 export const config = {
