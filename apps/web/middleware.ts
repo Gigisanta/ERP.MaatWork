@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { logger } from './lib/logger-server';
 
 // AI_DECISION: Usar Node.js runtime en lugar de Edge
 // Justificación: Edge Runtime inline variables de entorno en build-time
@@ -50,7 +51,7 @@ export async function middleware(request: NextRequest) {
   if (pathname === '/login') {
     const token = request.cookies.get('token')?.value;
     // LOGGING: Inspeccionar cookies entrantes en middleware
-    console.log('[Middleware] Checking login page access', {
+    logger.info('[Middleware] Checking login page access', {
       hasToken: !!token,
       cookieNames: request.cookies.getAll().map((c) => c.name),
       url: request.url,
@@ -90,7 +91,7 @@ export async function middleware(request: NextRequest) {
   // Impacto: Redirección automática en middleware (antes de renderizar) es más eficiente que en cliente
   if (pathname === '/') {
     const token = request.cookies.get('token')?.value;
-    console.log('[Middleware] Checking root access', {
+    logger.info('[Middleware] Checking root access', {
       hasToken: !!token,
       cookieNames: request.cookies.getAll().map((c) => c.name),
     });
@@ -122,7 +123,7 @@ export async function middleware(request: NextRequest) {
   // Si es una ruta protegida, verificar si hay token en las cookies
   const token = request.cookies.get('token')?.value;
 
-  console.log('[Middleware] Protected route check', {
+  logger.info('[Middleware] Protected route check', {
     pathname,
     hasToken: !!token,
     cookieNames: request.cookies.getAll().map((c) => c.name),

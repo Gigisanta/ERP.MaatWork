@@ -16,6 +16,7 @@ import type { Contact } from '@maatwork/types';
 import type { ApiResponse } from './api-client';
 import { config } from './config';
 import { cookies } from 'next/headers';
+import { logger } from './logger-server';
 
 /**
  * Cliente API para Server Components que usa cookies automáticamente
@@ -75,7 +76,7 @@ export async function apiCall<T>(
   // Impacto: Better observability for authentication issues
   // AI_DECISION: Diagnostic logging for Server Component API calls
   // Justificación: Unconditional logging to trace production issue
-  console.log(`[api-server] Calling endpoint`, {
+  logger.info(`[api-server] Calling endpoint`, {
     endpoint,
     url,
     hasCookieHeader: !!cookieHeader,
@@ -132,6 +133,14 @@ export async function apiCall<T>(
     const error = new Error(errorMessage);
     // Attach status code to error for better error handling
     (error as Error & { status?: number }).status = response.status;
+
+    if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+      logger.error(`[api-server] Error in ${endpoint}`, {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+      });
+    }
     throw error;
   }
 
