@@ -85,8 +85,13 @@ export async function middleware(request: NextRequest) {
           response.cookies.delete('token');
           return response;
         }
-      } catch {
+      } catch (err: any) {
         // Token inválido/expirado, limpiar cookie y continuar al login
+        logger.warn('[Middleware] JWT verification failed for login page', {
+          ...loggerContext,
+          error: err.message,
+          code: err.code,
+        });
         const response = NextResponse.next();
         response.cookies.delete('token');
         return response;
@@ -118,8 +123,12 @@ export async function middleware(request: NextRequest) {
           // Token válido y no expirado, redirigir a /home
           return NextResponse.redirect(new URL('/home', baseUrl));
         }
-      } catch {
+      } catch (err: any) {
         // si el token es inválido/expirado, continuar al flujo normal (mostrar página pública)
+        logger.debug('[Middleware] JWT verification failed for root access', {
+          ...loggerContext,
+          error: err.message,
+        });
       }
     }
   }
@@ -173,8 +182,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/home', baseUrl));
       }
     }
-  } catch {
+  } catch (err: any) {
     // Token inválido - limpiar cookie y redirigir a login
+    logger.warn('[Middleware] Protected route access failed - JWT invalid', {
+      ...loggerContext,
+      error: err.message,
+      code: err.code,
+    });
     const response = NextResponse.redirect(new URL('/login', baseUrl));
     response.cookies.delete('token');
     return response;

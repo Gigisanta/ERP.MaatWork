@@ -33,11 +33,11 @@ export function getAuthCookieOptions(maxAge?: number): CookieOptions {
     path: '/',
   };
 
-  // AI_DECISION: Comment out explicit domain to enforce Host-Only cookie
-  // This avoids mismatch issues between .maat.work and maat.work
-  // if (isProduction && process.env.COOKIE_DOMAIN) {
-  //   options.domain = process.env.COOKIE_DOMAIN;
-  // }
+  // AI_DECISION: Set explicit domain if provided to support subdomains (e.g., .maat.work)
+  // Justificación: Required for sharing cookies between api.maat.work and maat.work
+  if (isProduction && process.env.COOKIE_DOMAIN) {
+    options.domain = process.env.COOKIE_DOMAIN;
+  }
 
   if (maxAge !== undefined) {
     options.maxAge = maxAge;

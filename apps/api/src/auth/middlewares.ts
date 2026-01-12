@@ -129,8 +129,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     req.user = user;
     next();
-  } catch (err) {
-    req.log?.warn({ err }, 'auth verify failed');
+  } catch (err: any) {
+    req.log?.warn({ err: err.message, code: err.code }, 'auth verify failed');
     return res.status(401).json({ message: 'Unauthorized' });
   }
 }
