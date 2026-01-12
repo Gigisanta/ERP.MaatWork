@@ -67,6 +67,12 @@ export async function middleware(request: NextRequest) {
     if (token) {
       try {
         const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
+        // DEBUG: Verificar secreto en runtime
+        logger.debug('[Middleware] JWT Config', {
+          secretLength: JWT_SECRET.length,
+          secretStart: JWT_SECRET.substring(0, 3),
+          isDefault: JWT_SECRET === 'dev-insecure-secret-change-me',
+        });
         const secret = new TextEncoder().encode(JWT_SECRET);
         const { payload } = await jwtVerify(token, secret, {
           issuer: JWT_ISSUER,
