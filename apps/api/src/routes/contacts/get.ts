@@ -253,7 +253,11 @@ router.get(
                       'id', t.id,
                       'name', t.name,
                       'color', t.color,
-                      'icon', t.icon
+                      'icon', t.icon,
+                      'businessLine', t.business_line,
+                      'monthlyPremium', ct.monthly_premium,
+                      'policyNumber', ct.policy_number
+
                     )
                   )
                   FROM ${contactTags} ct

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -36,6 +36,14 @@ export default function PrioritiesConcernsSection({
   const [isPending, startTransition] = useTransition();
   const [localPrioridades, setLocalPrioridades] = useState<string[]>(prioridades || []);
   const [localPreocupaciones, setLocalPreocupaciones] = useState<string[]>(preocupaciones || []);
+
+  useEffect(() => {
+    setLocalPrioridades(prioridades || []);
+  }, [prioridades]);
+
+  useEffect(() => {
+    setLocalPreocupaciones(preocupaciones || []);
+  }, [preocupaciones]);
 
   const [showAddPriorityModal, setShowAddPriorityModal] = useState(false);
   const [showAddConcernModal, setShowAddConcernModal] = useState(false);

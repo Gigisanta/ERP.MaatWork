@@ -85,8 +85,15 @@ export class EmailAutomationService {
           const subject = this.resolveVariables(config.subject, contextData);
           const body = this.resolveVariables(config.body, contextData);
 
-          // Send email
-          await this.sendEmail(config.senderEmail, contextData.contact.email, subject, body);
+          // Resolve Sender and Send Email
+          await this.sendEmail(
+            contextData,
+            config.senderEmail,
+            contextData.contact.email,
+            subject,
+            body,
+            context.userId
+          );
 
           logger.info(
             { automationId: automation.id, contactId: context.contactId },
@@ -102,6 +109,8 @@ export class EmailAutomationService {
       // Don't throw to avoid blocking the main flow
     }
   }
+
+  // ... (enrichContext, matchesTriggerConfig, resolveVariables implementation remains same)
 
   private async enrichContext(context: AutomationContext) {
     const data: Record<string, any> = { ...context }; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -185,18 +194,75 @@ export class EmailAutomationService {
   }
 
   /**
-   * Send email using Google OAuth
+   * Send email using Google OAuth with dynamic sender resolution
+   * Priority: verifyUserId -> assignedAdvisorId -> configuredSenderEmail
    */
-  private async sendEmail(senderEmail: string, to: string, subject: string, body: string) {
-    // 1. Get encrypted token
-    const [tokenData] = await db()
-      .select()
-      .from(googleOAuthTokens)
-      .where(eq(googleOAuthTokens.email, senderEmail))
-      .limit(1);
+  private async sendEmail(
+    contextData: Record<string, any>,
+    fallbackSenderEmail: string,
+    to: string,
+    subject: string,
+    body: string,
+    triggeringUserId?: string
+  ) {
+    let tokenData = null;
+    let senderEmailUsed = fallbackSenderEmail;
+
+    // 1. Try Triggering User
+    if (triggeringUserId) {
+      const [userToken] = await db()
+        .select()
+        .from(googleOAuthTokens)
+        .where(eq(googleOAuthTokens.userId, triggeringUserId))
+        .limit(1);
+
+      if (userToken) {
+        tokenData = userToken;
+        senderEmailUsed = userToken.email;
+        logger.info(
+          { userId: triggeringUserId, email: senderEmailUsed },
+          'Using triggering user context for automation email'
+        );
+      }
+    }
+
+    // 2. Try Assigned Advisor (if triggering user failed or yielded no tokens)
+    if (!tokenData && contextData.contact?.assignedAdvisorId) {
+      const [advisorToken] = await db()
+        .select()
+        .from(googleOAuthTokens)
+        .where(eq(googleOAuthTokens.userId, contextData.contact.assignedAdvisorId))
+        .limit(1);
+
+      if (advisorToken) {
+        tokenData = advisorToken;
+        senderEmailUsed = advisorToken.email;
+        logger.info(
+          { userId: contextData.contact.assignedAdvisorId, email: senderEmailUsed },
+          'Using assigned advisor context for automation email'
+        );
+      }
+    }
+
+    // 3. Fallback to Configured Email (Legacy/System Account)
+    if (!tokenData && fallbackSenderEmail) {
+      const [configToken] = await db()
+        .select()
+        .from(googleOAuthTokens)
+        .where(eq(googleOAuthTokens.email, fallbackSenderEmail))
+        .limit(1);
+
+      if (configToken) {
+        tokenData = configToken;
+        senderEmailUsed = fallbackSenderEmail;
+        logger.info({ email: senderEmailUsed }, 'Using configured fallback email');
+      }
+    }
 
     if (!tokenData) {
-      throw new Error(`No connected Google account found for ${senderEmail}`);
+      throw new Error(
+        `No connected Google account found for automation. Tried: TriggerUser, Advisor, Fallback(${fallbackSenderEmail})`
+      );
     }
 
     // 2. Decrypt tokens
@@ -221,8 +287,10 @@ export class EmailAutomationService {
 
     // 5. Construct raw email
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+    // const senderName = contextData.advisor?.fullName || 'Cactus Dashboard'; // Optional: Use advisor name if available
+
     const messageParts = [
-      `From: ${senderEmail}`,
+      `From: ${senderEmailUsed}`,
       `To: ${to}`,
       `Subject: ${utf8Subject}`,
       'Content-Type: text/html; charset=utf-8',

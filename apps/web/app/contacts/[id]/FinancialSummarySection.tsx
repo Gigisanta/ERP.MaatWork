@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useTransition } from 'react';
+import React, { useState, useTransition, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Text, Button, Input } from '@maatwork/ui';
 import { useRouter } from 'next/navigation';
 import { logger, toLogContext } from '@/lib/logger';
@@ -26,6 +26,14 @@ export default function FinancialSummarySection({
   const [ingresos, setIngresos] = useState<string>(initialIngresos?.toString() || '');
   const [gastos, setGastos] = useState<string>(initialGastos?.toString() || '');
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    setIngresos(initialIngresos?.toString() || '');
+  }, [initialIngresos]);
+
+  useEffect(() => {
+    setGastos(initialGastos?.toString() || '');
+  }, [initialGastos]);
 
   // Calcular excedente automáticamente
   const calcularExcedente = (ing: string, gas: string): number | null => {

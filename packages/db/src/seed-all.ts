@@ -191,6 +191,7 @@ async function seedLookupTables() {
     { id: 'sla_warning', label: 'Advertencia SLA' },
     { id: 'contact_moved', label: 'Contacto Movido' },
     { id: 'note_mention', label: 'Mención en Nota' },
+    { id: 'feedback_received', label: 'Feedback Recibido' },
   ];
 
   for (const type of notificationTypes) {

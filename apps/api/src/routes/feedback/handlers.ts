@@ -1,5 +1,5 @@
 import { type Request } from 'express';
-import { db, feedback } from '@maatwork/db';
+import { db, feedback, users } from '@maatwork/db';
 import { eq, desc, and, count, sql } from 'drizzle-orm';
 import { createRouteHandler } from '../../utils/route-handler';
 import { listFeedbackQuerySchema } from './schemas';
@@ -32,7 +32,7 @@ export const handleCreateFeedback = createRouteHandler(async (req: Request) => {
 
     if (recipients.length > 0) {
       const { notifications } = await import('@maatwork/db');
-      const notificationData = recipients.map((r) => ({
+      const notificationData = recipients.map((r: { id: string }) => ({
         userId: r.id,
         type: 'feedback_received',
         severity: 'info',

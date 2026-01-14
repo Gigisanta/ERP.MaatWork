@@ -22,6 +22,7 @@ pnpm dev
 ```
 
 El script de setup (`pnpm setup`) automáticamente:
+
 - ✅ Verifica prerequisitos (Node.js, pnpm, Docker)
 - ✅ Configura variables de entorno (crea `.env` desde `config-example.env`)
 - ✅ Inicia servicios Docker (PostgreSQL y N8N)
@@ -29,6 +30,7 @@ El script de setup (`pnpm setup`) automáticamente:
 - ✅ Crea usuario admin inicial (`admin@maatwork.local`)
 
 **Nota:** Si encuentras errores 401 o problemas de autenticación después de clonar:
+
 - Limpia las cookies del navegador para `localhost`
 - O usa modo incógnito para evitar tokens viejos
 
@@ -40,10 +42,11 @@ pnpm dev
 ```
 
 **URLs de desarrollo:**
-- Web: http://localhost:3000
-- API: http://localhost:3001
-- Analytics: http://localhost:3002
-- N8N: http://localhost:5678
+
+- Web: <http://localhost:3000>
+- API: <http://localhost:3001>
+- Analytics: <http://localhost:3002>
+- N8N: <http://localhost:5678>
 
 Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started) o [Guía de Onboarding](./docs/ONBOARDING.md).
 
@@ -102,7 +105,6 @@ pnpm build            # Build completo
 pnpm test             # Tests unitarios
 ```
 
-
 ## Documentación
 
 | Documento | Descripción |
@@ -119,15 +121,19 @@ Ver [documentación completa](./docs/README.md) para todas las guías técnicas.
 ## Características Principales
 
 ### Sistema de Etiquetas
+
 Categorización de contactos con etiquetas personalizables.
 
 ### N8N - Automatizaciones
-Servicio Docker para crear y gestionar automatizaciones de flujos de trabajo. Acceso en http://localhost:5678.
+
+Servicio Docker para crear y gestionar automatizaciones de flujos de trabajo. Acceso en <http://localhost:5678>.
 
 ### Design System (@maatwork/ui)
+
 Sistema de diseño moderno y accesible con 40+ componentes reutilizables. Ver [packages/ui/README.md](./packages/ui/README.md).
 
 ### Sistema de Logging
+
 - **Backend**: Pino con logs estructurados JSON
 - **Frontend**: Sistema estructurado con correlación de requests
 - Ver logs: `pnpm -F @maatwork/api run dev:pretty`
@@ -145,6 +151,7 @@ Para información de deploy y troubleshooting, ver [Guía de Operaciones](./docs
 Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas en [`.cursor/rules/`](./.cursor/rules/).
 
 **Principios clave:**
+
 - TypeScript estricto (`exactOptionalPropertyTypes: true`)
 - NUNCA usar `any` sin justificación
 - NUNCA usar `fetch` directamente (usar cliente centralizado)
@@ -161,5 +168,26 @@ Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas 
 - **Schema DB:** `packages/db/src/schema.ts`
 
 ---
+
+## Troubleshooting
+
+### Errores Comunes de Docker
+
+#### Error de Credenciales (`error getting credentials`) en macOS
+
+Si ves un error similar a `error getting credentials - err: exit status 1, out: ""`, es probable que el gestor de credenciales de Docker Desktop esté fallando.
+
+**Soluciones:**
+
+1. **Reiniciar Docker Desktop**: Es la solución más común.
+2. **Cambiar el CredsStore**: Si persiste, edita `~/.docker/config.json` y cambia `"credsStore": "desktop"` por `"credsStore": "osxkeychain"`.
+3. **Verificar sesión**: Asegúrate de haber iniciado sesión en Docker Desktop o intenta ejecutar `docker-credential-desktop list` para verificar el estado.
+
+#### Puerto 5433 en uso
+
+Este proyecto usa el puerto **5433** para PostgreSQL para evitar conflictos con instalaciones locales que suelen usar el 5432. Si el puerto está ocupado:
+
+1. Verifica qué proceso lo usa: `lsof -i :5433`
+2. Detén el proceso o el contenedor conflictivo.
 
 Para más información, consulta la [documentación completa](./docs/README.md).

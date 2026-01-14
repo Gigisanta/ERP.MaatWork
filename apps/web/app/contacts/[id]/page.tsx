@@ -32,10 +32,11 @@ import ContactMarketTypeField from './ContactMarketTypeField';
 import BrokerAccountsSection from './BrokerAccountsSection';
 import PortfolioSection from './PortfolioSection';
 import TasksSection from './TasksSection';
-import NotesSection from './NotesSection';
 import PageTitleSetter from './PageTitleSetter';
 import PrioritiesConcernsSection from './PrioritiesConcernsSection';
 import FinancialSummarySection from './FinancialSummarySection';
+import PaperNotesSection from './PaperNotesSection';
+import ProductsSection from '../components/ProductsSection';
 
 // Server-side data fetching
 // AI_DECISION: Usar helper apiCall para Server Components
@@ -49,16 +50,27 @@ import { config } from '@/lib/config';
 // Impacto: Reduces total response time by 60-80% by consolidating queries
 async function getContactData(id: string) {
   try {
-    // Use consolidated detail endpoint that returns all related data in a single response
+    // AI_DECISION: Type matches actual API response where tags are nested inside contact
+    // Justificación: API returns { contact: { ...fields, tags: [...] }, stages, advisors, ... }
+    // Impacto: Correct type ensures TypeScript doesn't lose tag properties
     const detailResponse = await apiCall<{
-      contact: Contact;
-      tags: Array<{ id: string; name: string; color: string; icon: string | null }>;
-      tasks: Task[];
-      notes: Note[];
-      brokerAccounts: BrokerAccount[];
-      portfolioAssignments: PortfolioAssignment[];
+      contact: Contact & {
+        tags: Array<{
+          id: string;
+          name: string;
+          color: string;
+          icon: string | null;
+          businessLine: string | null;
+          monthlyPremium: number | null;
+          policyNumber: string | null;
+        }>;
+      };
       stages: PipelineStage[];
       advisors: Advisor[];
+      brokerAccounts: BrokerAccount[];
+      portfolioAssignments: PortfolioAssignment[];
+      tasks: Task[];
+      notes: Note[];
     }>(`/v1/contacts/${id}/detail`, {
       method: 'GET',
       timeoutMs: Math.min(config.apiTimeout, 10000), // Slightly higher timeout for consolidated endpoint
@@ -69,17 +81,14 @@ async function getContactData(id: string) {
       return null;
     }
 
-    const { contact, tags, tasks, notes, brokerAccounts, portfolioAssignments, stages, advisors } =
+    const { contact, stages, advisors, brokerAccounts, portfolioAssignments, tasks, notes } =
       detailResponse.data;
 
-    // Merge tags into contact object for compatibility
-    const contactWithTags = {
-      ...contact,
-      tags: tags || [],
-    };
-
     return {
-      contact: contactWithTags,
+      contact: {
+        ...contact,
+        tags: contact.tags || [],
+      },
       stages: stages || [],
       advisors: advisors || [],
       brokerAccounts: brokerAccounts || [],
@@ -313,6 +322,13 @@ export default async function ContactDetailPage(props: ContactDetailPageProps) {
           preocupaciones={contact.preocupaciones || []}
         />
 
+        {/* Notas (Tipo Papel) */}
+        <PaperNotesSection contactId={contact.id} initialNotes={contact.notes} />
+
+        {/* Product Forms (Zurich) */}
+
+        <ProductsSection contactId={contact.id} tags={contact.tags || []} />
+
         {/* Client Islands for Interactive Sections */}
         <BrokerAccountsSection contactId={contact.id} initialBrokerAccounts={brokerAccounts} />
 
@@ -322,8 +338,6 @@ export default async function ContactDetailPage(props: ContactDetailPageProps) {
         />
 
         <TasksSection contactId={contact.id} initialTasks={tasks} />
-
-        <NotesSection contactId={contact.id} initialNotes={notes} />
       </Stack>
     </div>
   );

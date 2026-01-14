@@ -6,6 +6,7 @@
  * Impacto: Easier migration to Server Components, consistent error handling
  */
 
+import { cache } from 'react';
 import { apiCall } from './api-server';
 import type { ApiResponse } from './api-client';
 import type { ContactsMetricsResponse, MonthlyGoal } from '@/types/metrics';
@@ -18,10 +19,18 @@ import type { UserApiResponse } from '@/types';
  * AI_DECISION: Usar /v1/users/me para datos completos
  * Justificación: /users/me devuelve perfil desde DB (phone, isActive, timestamps)
  * Impacto: Consistencia entre Server Components y AuthProvider
+ *
+ * AI_DECISION: Removed revalidate: 60 and added React cache()
+ * Justificación: Authenticated user data is highly dynamic and risk of shared cache (Data Cache)
+ *                leaking between users if keys aren't perfect is high.
+ *                Using cache() ensures request-level deduplication (Memoization) without persistence risk.
+ * Impacto: Prevents double-fetching in Layout + Page while ensuring security.
  */
-export async function getCurrentUser(): Promise<ApiResponse<UserApiResponse>> {
-  return apiCall('/v1/users/me', { revalidate: 60 });
-}
+export const getCurrentUser = cache(async function getCurrentUser(): Promise<
+  ApiResponse<UserApiResponse>
+> {
+  return apiCall('/v1/users/me');
+});
 
 /**
  * Get contacts metrics
@@ -30,7 +39,7 @@ export async function getCurrentUser(): Promise<ApiResponse<UserApiResponse>> {
  * Justificación: Metrics change frequently but don't need real-time updates
  * Impacto: Reduces API load while keeping data reasonably fresh
  */
-export async function getContactsMetricsServer(
+export const getContactsMetricsServer = cache(async function getContactsMetricsServer(
   month?: number,
   year?: number
 ): Promise<ApiResponse<ContactsMetricsResponse>> {
@@ -41,8 +50,10 @@ export async function getContactsMetricsServer(
   const query = params.toString();
   const endpoint = query ? `/v1/metrics/contacts?${query}` : '/v1/metrics/contacts';
 
+  // Keep revalidate here as metrics might be less sensitive/shared,
+  // but cache() ensures we don't fetch twice in same render if used multiple times
   return apiCall(endpoint, { revalidate: 30 });
-}
+});
 
 /**
  * Get monthly goals
@@ -51,7 +62,7 @@ export async function getContactsMetricsServer(
  * Justificación: Goals change less frequently than metrics
  * Impacto: Reduces API load while keeping goals reasonably fresh
  */
-export async function getMonthlyGoalsServer(
+export const getMonthlyGoalsServer = cache(async function getMonthlyGoalsServer(
   month?: number,
   year?: number
 ): Promise<ApiResponse<MonthlyGoal | null>> {
@@ -63,7 +74,7 @@ export async function getMonthlyGoalsServer(
   const endpoint = query ? `/v1/metrics/goals?${query}` : '/v1/metrics/goals';
 
   return apiCall(endpoint, { revalidate: 60 });
-}
+});
 
 /**
  * Get teams
@@ -72,6 +83,6 @@ export async function getMonthlyGoalsServer(
  * Justificación: Teams change very infrequently, can cache longer
  * Impacto: Significantly reduces API load for rarely-changing data
  */
-export async function getTeamsServer(): Promise<ApiResponse<Team[]>> {
+export const getTeamsServer = cache(async function getTeamsServer(): Promise<ApiResponse<Team[]>> {
   return apiCall('/v1/teams', { revalidate: 120 });
-}
+});

@@ -55,6 +55,14 @@ export async function seedTags() {
       description: 'Línea de negocio Patrimonial',
       isSystem: true,
     },
+    {
+      name: 'ITA',
+      color: '#0EA5E9', // Sky Blue
+      scope: 'contact',
+      businessLine: 'inversiones', // Assuming Investments business line based on usage
+      description: 'Etiqueta por defecto ITA',
+      isSystem: true,
+    },
   ];
 
   for (const tag of defaultTags) {

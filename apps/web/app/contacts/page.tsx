@@ -186,9 +186,9 @@ export default function ContactsPage() {
     onConfirm: () => {},
   });
 
-  // AI_DECISION: Estado para mostrar progreso durante exportaciรณn CSV
-  // Justificaciรณn: Proporciona feedback visual durante exportaciones de muchos contactos
-  // Impacto: Mejor UX, usuario sabe que la exportaciรณn estรก en progreso
+  // AI_DECISION: Estado para mostrar progreso durante exportación CSV
+  // Justificación: Proporciona feedback visual durante exportaciones de muchos contactos
+  // Impacto: Mejor UX, usuario sabe que la exportación está en progreso
   const [exportState, setExportState] = React.useState<{
     isExporting: boolean;
     progress: number;
@@ -204,7 +204,7 @@ export default function ContactsPage() {
       setConfirmDialog({
         open: true,
         title: 'Eliminar etiqueta',
-        description: 'ยฟEstรกs seguro de eliminar esta etiqueta?',
+        description: '¿Estás seguro de eliminar esta etiqueta?',
         variant: 'danger',
         onConfirm: async () => {
           try {
@@ -243,7 +243,7 @@ export default function ContactsPage() {
         setExportState({
           isExporting: true,
           progress: 0,
-          status: 'Preparando exportaciรณn...',
+          status: 'Preparando exportación...',
         });
       }
 
@@ -268,13 +268,13 @@ export default function ContactsPage() {
       downloadCSV(csvContent, `contactos_${dateStr}_${timeStr}`);
 
       if (isLargeExport) {
-        setExportState((prev) => ({ ...prev, progress: 100, status: 'ยกCompletado!' }));
+        setExportState((prev) => ({ ...prev, progress: 100, status: '¡Completado!' }));
         await new Promise((resolve) => setTimeout(resolve, 500));
         setExportState({ isExporting: false, progress: 0, status: '' });
       }
 
       showToast(
-        'Exportaciรณn exitosa',
+        'Exportación exitosa',
         `Se exportaron ${filteredContacts.length} contactos`,
         'success'
       );
@@ -393,12 +393,12 @@ export default function ContactsPage() {
       },
       {
         key: 'nextStep',
-        header: 'Prรณximo Paso',
+        header: 'Próximo Paso',
         render: (contact) => (
           <InlineTextInput
             contact={contact}
             field="nextStep"
-            placeholder="Agregar prรณximo paso..."
+            placeholder="Agregar próximo paso..."
             isSaving={contactActions.savingContactId === contact.id}
             onSave={contactActions.handleTextInputSave}
           />
@@ -458,7 +458,7 @@ export default function ContactsPage() {
       <div className="flex items-center justify-center py-12">
         <Stack direction="column" gap="md" align="center">
           <Spinner size="lg" />
-          <Text color="secondary">Verificando autenticaciรณn...</Text>
+          <Text color="secondary">Verificando autenticación...</Text>
         </Stack>
       </div>
     );

@@ -37,6 +37,7 @@ export async function apiCall<T>(
     timeoutMs?: number;
     cache?: RequestCache;
     revalidate?: number | false;
+    retries?: number;
   } = {}
 ): Promise<ApiResponse<T>> {
   // AI_DECISION: Usar URL interna con Host header explícito
@@ -120,25 +121,71 @@ export async function apiCall<T>(
     fetchOptions.body = JSON.stringify(options.body);
   }
 
-  let response: Response;
-  try {
-    response = await fetch(url, fetchOptions);
-  } catch (fetchError) {
-    clearTimeout(timeout);
-    // Network error (ECONNREFUSED, timeout, etc.)
-    const error = new Error(fetchError instanceof Error ? fetchError.message : 'Network error');
-    // Mark as network error (no status code)
-    (error as Error & { status?: number; isNetworkError?: boolean }).isNetworkError = true;
+  // AI_DECISION: Implement retry logic for resilience
+  // Justificación: Server-to-server calls can fail due to transient network issues or temporary server load.
+  // Impacto: More robust application that recovers from temporary failures without showing errors to user.
+  const maxRetries = options.retries ?? 2;
+  let lastError: Error | null = null;
+  // Initialize to satisfy TS, though logic guarantees assignment or throw
+  let response: Response = undefined as unknown as Response;
 
-    logger.error(`[api-server] Network error calling ${endpoint}`, {
-      error: error.message,
-      requestId,
-    });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Exponential backoff: 500ms, 1000ms, 2000ms...
+        const backoffMs = Math.min(500 * Math.pow(2, attempt - 1), 3000);
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
 
-    throw error;
-  } finally {
-    clearTimeout(timeout);
+        logger.warn(
+          `[api-server] Retrying ${endpoint} (attempt ${attempt + 1}/${maxRetries + 1})`,
+          {
+            requestId,
+          }
+        );
+      }
+
+      response = await fetch(url, { ...fetchOptions, signal: controller.signal });
+
+      // If 5xx error, throw to trigger retry
+      if (response.status >= 500) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      // If successful or client error (4xx), break loop
+      break;
+    } catch (fetchError) {
+      lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+
+      // If it's a cancellation, don't retry
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        clearTimeout(timeout);
+        throw fetchError;
+      }
+
+      // If we reached max retries, propagate error
+      if (attempt === maxRetries) {
+        clearTimeout(timeout);
+        // Network error (ECONNREFUSED, timeout, etc.)
+        const error = new Error(lastError.message || 'Network error');
+        // Mark as network error (no status code)
+        (error as Error & { status?: number; isNetworkError?: boolean }).isNetworkError = true;
+
+        logger.error(
+          `[api-server] Network error calling ${endpoint} after ${maxRetries + 1} attempts`,
+          {
+            error: error.message,
+            requestId,
+          }
+        );
+
+        throw error;
+      }
+
+      // Otherwise continue to next retry
+    }
   }
+
+  clearTimeout(timeout);
 
   if (!response.ok) {
     let errorData: unknown;

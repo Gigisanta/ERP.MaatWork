@@ -102,12 +102,15 @@ const InlineTagsEditor = React.memo<InlineTagsEditorProps>(
 
     const handleTagClick = useCallback(
       (tag: Tag) => {
-        // Solo hacer clickeable si la etiqueta tiene businessLine 'zurich'
+        // AI_DECISION: Disable navigation for Zurich tags as they are now edited inline on the contact page
+        // Justificación: Better UX requested by user ("es confuso tocar las etiquetas")
+        /*
         if (tag.businessLine === 'zurich') {
           router.push(`/contacts/${contact.id}/tags/${tag.id}`);
         }
+        */
       },
-      [contact.id, router]
+      [contact.id]
     );
 
     return (

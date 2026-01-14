@@ -14,6 +14,7 @@ import {
   pathExists,
   sleep,
   withSpinner,
+  colors,
 } from '../../lib/index';
 import { existsSync, copyFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -104,12 +105,28 @@ async function ensureDockerServices(): Promise<void> {
     logger.info('Iniciando servicios Docker...');
 
     try {
-      exec('docker compose up -d', { cwd: paths.root, stdio: 'inherit' });
+      const result = exec('docker compose up -d', { cwd: paths.root, stdio: 'inherit' });
+      
+      if (!result.success) {
+        throw new Error(result.stderr || 'El comando de Docker falló');
+      }
+
       await sleep(3000); // Esperar a que los servicios inicien
       logger.success('Servicios Docker iniciados');
     } catch (error) {
-      logger.warn('No se pudieron iniciar servicios Docker');
-      logger.info('Ejecuta manualmente: docker compose up -d');
+      logger.error('No se pudieron iniciar servicios Docker');
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('credentials')) {
+        logger.warn('⚠️ Error detectado en el gestor de credenciales de Docker.');
+        logger.info('Tips para arreglarlo en macOS:');
+        logger.info('1. Reinicia Docker Desktop');
+        logger.info('2. O intenta: docker-credential-desktop list');
+        logger.info('3. Si persiste, revisa ~/.docker/config.json y cambia "credsStore" de "desktop" a "osxkeychain"');
+      }
+
+      logger.info(colors.muted('\nEjecuta manualmente para debuggear:'));
+      logger.info(colors.primary('docker compose up -d\n'));
     }
   } else {
     logger.success('Docker: PostgreSQL corriendo');
