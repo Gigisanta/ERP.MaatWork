@@ -22,42 +22,51 @@ describe('portfolios api client', () => {
 
   it('calls getPortfolios endpoint', async () => {
     await portfoliosApi.getPortfolios();
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/portfolios/templates');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      expect.stringContaining('/v1/portfolios?type=template')
+    );
+  });
+
+  it('calls getPortfolios with type benchmark', async () => {
+    await portfoliosApi.getPortfolios({ type: 'benchmark' });
+    expect(apiClient.get).toHaveBeenCalledWith(
+      expect.stringContaining('/v1/portfolios?type=benchmark')
+    );
   });
 
   it('calls getPortfolioById endpoint', async () => {
     await portfoliosApi.getPortfolioById('portfolio-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1');
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/portfolios/portfolio-1');
   });
 
   it('calls getPortfolioLines endpoint', async () => {
     await portfoliosApi.getPortfolioLines('portfolio-1');
-    expect(apiClient.get).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1/lines');
+    expect(apiClient.get).toHaveBeenCalledWith('/v1/portfolios/portfolio-1/lines');
   });
 
   it('calls getPortfolioLinesBatch endpoint', async () => {
     await portfoliosApi.getPortfolioLinesBatch(['portfolio-1', 'portfolio-2']);
     expect(apiClient.get).toHaveBeenCalledWith(
-      expect.stringContaining('/v1/portfolios/templates/lines/batch')
+      expect.stringContaining('/v1/portfolios/lines/batch')
     );
   });
 
   it('calls createPortfolio endpoint', async () => {
     await portfoliosApi.createPortfolio({ name: 'Test Portfolio' });
-    expect(apiClient.post).toHaveBeenCalledWith('/v1/portfolios/templates', expect.any(Object));
+    expect(apiClient.post).toHaveBeenCalledWith('/v1/portfolios', expect.any(Object));
   });
 
   it('calls updatePortfolio endpoint', async () => {
     await portfoliosApi.updatePortfolio('portfolio-1', { name: 'Updated Portfolio' });
     expect(apiClient.put).toHaveBeenCalledWith(
-      '/v1/portfolios/templates/portfolio-1',
+      '/v1/portfolios/portfolio-1',
       expect.any(Object)
     );
   });
 
   it('calls deletePortfolio endpoint', async () => {
     await portfoliosApi.deletePortfolio('portfolio-1');
-    expect(apiClient.delete).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1');
+    expect(apiClient.delete).toHaveBeenCalledWith('/v1/portfolios/portfolio-1');
   });
 
   it('calls addPortfolioLine endpoint', async () => {
@@ -67,7 +76,7 @@ describe('portfolios api client', () => {
       targetWeight: 0.5,
     });
     expect(apiClient.post).toHaveBeenCalledWith(
-      '/v1/portfolios/templates/portfolio-1/lines',
+      '/v1/portfolios/portfolio-1/lines',
       expect.objectContaining({
         targetType: 'instrument',
         instrumentId: 'instrument-1',
@@ -81,7 +90,7 @@ describe('portfolios api client', () => {
       targetWeight: 0.3,
     });
     expect(apiClient.put).toHaveBeenCalledWith(
-      '/v1/portfolios/templates/portfolio-1/lines/line-1',
+      '/v1/portfolios/portfolio-1/lines/line-1',
       expect.objectContaining({
         targetWeight: 0.3,
       })
@@ -91,14 +100,14 @@ describe('portfolios api client', () => {
   it('calls deletePortfolioLine endpoint', async () => {
     await portfoliosApi.deletePortfolioLine('portfolio-1', 'line-1');
     expect(apiClient.delete).toHaveBeenCalledWith(
-      '/v1/portfolios/templates/portfolio-1/lines/line-1'
+      '/v1/portfolios/portfolio-1/lines/line-1'
     );
   });
 
   it('calls getPortfolioLinesBatch with correct query params', async () => {
     await portfoliosApi.getPortfolioLinesBatch(['id1', 'id2', 'id3']);
     expect(apiClient.get).toHaveBeenCalledWith(
-      expect.stringContaining('/v1/portfolios/templates/lines/batch')
+      expect.stringContaining('/v1/portfolios/lines/batch')
     );
     expect(apiClient.get).toHaveBeenCalledWith(expect.stringMatching(/ids=id1,id2,id3/));
   });
@@ -110,7 +119,7 @@ describe('portfolios api client', () => {
       riskLevel: 'moderate' as const,
     };
     await portfoliosApi.createPortfolio(portfolioData);
-    expect(apiClient.post).toHaveBeenCalledWith('/v1/portfolios/templates', portfolioData);
+    expect(apiClient.post).toHaveBeenCalledWith('/v1/portfolios', portfolioData);
   });
 
   it('calls updatePortfolio with correct data structure', async () => {
@@ -120,6 +129,6 @@ describe('portfolios api client', () => {
       riskLevel: 'aggressive' as const,
     };
     await portfoliosApi.updatePortfolio('portfolio-1', updateData);
-    expect(apiClient.put).toHaveBeenCalledWith('/v1/portfolios/templates/portfolio-1', updateData);
+    expect(apiClient.put).toHaveBeenCalledWith('/v1/portfolios/portfolio-1', updateData);
   });
 });

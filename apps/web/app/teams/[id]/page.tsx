@@ -178,7 +178,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo enviar la invitación', 'error');
       }
     } catch (err) {
-      logger.error('Error inviting advisor', toLogContext({ err, teamId, inviteeId }));
+      logger.error(toLogContext({ err, teamId, inviteeId }), 'Error inviting advisor');
       showToast('Error', 'No se pudo enviar la invitación', 'error');
     } finally {
       setInviteLoading(null);
@@ -207,7 +207,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo actualizar el equipo', 'error');
       }
     } catch (err) {
-      logger.error('Error updating team', toLogContext({ err, teamId }));
+      logger.error(toLogContext({ err, teamId }), 'Error updating team');
       showToast('Error', 'No se pudo actualizar el equipo', 'error');
     } finally {
       setActionLoading(null);
@@ -227,7 +227,7 @@ export default function TeamDetailsPage() {
         showToast('Error', 'No se pudo eliminar el equipo', 'error');
       }
     } catch (err) {
-      logger.error('Error deleting team', toLogContext({ err, teamId }));
+      logger.error(toLogContext({ err, teamId }), 'Error deleting team');
       showToast('Error', 'No se pudo eliminar el equipo', 'error');
     } finally {
       setActionLoading(null);
@@ -250,8 +250,8 @@ export default function TeamDetailsPage() {
       }
     } catch (err) {
       logger.error(
-        'Error removing member',
-        toLogContext({ err, teamId, memberId: removeMemberConfirm.memberId })
+        toLogContext({ err, teamId, memberId: removeMemberConfirm.memberId }),
+        'Error removing member'
       );
       showToast('Error', 'No se pudo remover el miembro', 'error');
     } finally {
@@ -259,14 +259,6 @@ export default function TeamDetailsPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const getRiskLevelLabel = (riskLevel: string) => {
     const labels: Record<string, string> = {
@@ -580,7 +572,7 @@ export default function TeamDetailsPage() {
         {/* Confirm Dialog - Remove Member */}
         <ConfirmDialog
           open={removeMemberConfirm.open}
-          onOpenChange={(open) => setRemoveMemberConfirm({ open, memberId: '', memberName: '' })}
+          onOpenChange={(open: boolean) => setRemoveMemberConfirm({ open, memberId: '', memberName: '' })}
           onConfirm={handleRemoveMember}
           title="Remover miembro"
           description={`¿Estás seguro de que deseas remover a ${removeMemberConfirm.memberName} del equipo?`}
@@ -596,7 +588,7 @@ export default function TeamDetailsPage() {
             {...(toast.description && { description: toast.description })}
             variant={toast.variant}
             open={toast.show}
-            onOpenChange={(open) => setToast({ ...toast, show: open })}
+            onOpenChange={(open: boolean) => setToast({ ...toast, show: open })}
           />
         )}
       </Stack>

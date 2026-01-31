@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser, getTeams, getAllTeamMembers, getPendingInvitations } from '@/lib/api';
 import { logger, toLogContext } from '@/lib/logger';
 import type { UserApiResponse as User, Team, TeamMember, TeamInvitation } from '@/types';
@@ -62,8 +62,8 @@ export function useProfileData({ user }: UseProfileDataProps): UseProfileDataRet
             }
           } catch (err) {
             logger.warn(
-              'No se pudo obtener miembros del equipo (continuando)',
-              toLogContext({ err })
+              toLogContext({ err }),
+              'No se pudo obtener miembros del equipo (continuando)'
             );
             setTeamMembers([]);
           }
@@ -76,7 +76,7 @@ export function useProfileData({ user }: UseProfileDataProps): UseProfileDataRet
         setInvitations(invitationsResponse.data || []);
       }
     } catch (err) {
-      logger.error('Error fetching user info', toLogContext({ err }));
+      logger.error(toLogContext({ err }), 'Error fetching user info');
       setError('Error al cargar la información del usuario');
     } finally {
       setDataLoading(false);

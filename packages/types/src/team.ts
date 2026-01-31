@@ -4,7 +4,7 @@
  * These types are used by both API and Web applications.
  */
 
-import type { TimestampedEntity, UserRole } from './common';
+import type { TimestampedEntity } from './common';
 import type { User } from './user';
 
 /**

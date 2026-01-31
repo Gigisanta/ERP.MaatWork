@@ -15,6 +15,7 @@ import {
   Area,
 } from '@/components/charts/LazyChartWrapper';
 import { getTeamHistory, type TeamHistoryMetric } from '@/lib/api/teams';
+import { formatCurrencyCompact } from '@maatwork/utils';
 
 interface TeamHistoryChartProps {
   teamId: string;
@@ -46,14 +47,7 @@ export default function TeamHistoryChart({ teamId }: TeamHistoryChartProps) {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-      notation: 'compact',
-    }).format(value);
-  };
+// function removed in favor of shared utility
 
   if (loading) {
     return (
@@ -123,12 +117,12 @@ export default function TeamHistoryChart({ teamId }: TeamHistoryChartProps) {
                 yAxisId="left"
                 orientation="left"
                 tick={{ fontSize: 12 }}
-                tickFormatter={(value) => formatCurrency(value)}
+                tickFormatter={(value) => formatCurrencyCompact(value)}
               />
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value: number, name: string) => {
-                  if (name === 'totalAum') return [formatCurrency(value), 'AUM Total'];
+                  if (name === 'totalAum') return [formatCurrencyCompact(value), 'AUM Total'];
                   if (name === 'newClients') return [value, 'Nuevos Clientes'];
                   return [value, name];
                 }}

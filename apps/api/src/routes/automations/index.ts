@@ -29,15 +29,23 @@ import {
   handleCreateAutomation,
   handleUpdateAutomation,
   handleDeleteAutomation,
+  handleAutomationsHealth,
 } from './handlers/crud';
 
 const router = Router();
+
+// ==========================================================
+// Health/Diagnostic Route
+// ==========================================================
+
+router.get('/health', requireAuth, handleAutomationsHealth);
 
 // ==========================================================
 // List Routes
 // ==========================================================
 
 router.get('/', requireAuth, handleListAutomations);
+
 
 // ==========================================================
 // Get by Name Route (must come before /:id routes)

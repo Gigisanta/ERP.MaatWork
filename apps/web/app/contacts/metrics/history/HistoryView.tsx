@@ -176,7 +176,7 @@ export default function HistoryView() {
             <Select
               label="Año"
               value={filterYear?.toString() ?? ''}
-              onValueChange={(value) => setFilterYear(value ? Number(value) : null)}
+              onValueChange={(value: string) => setFilterYear(value ? Number(value) : null)}
               items={[
                 { value: '', label: 'Todos los años' },
                 ...years.map((year) => ({
@@ -189,7 +189,7 @@ export default function HistoryView() {
             <Select
               label="Mes"
               value={filterMonth?.toString() ?? ''}
-              onValueChange={(value) => setFilterMonth(value ? Number(value) : null)}
+              onValueChange={(value: string) => setFilterMonth(value ? Number(value) : null)}
               items={[
                 { value: '', label: 'Todos los meses' },
                 ...MONTH_NAMES.map((name, idx) => ({

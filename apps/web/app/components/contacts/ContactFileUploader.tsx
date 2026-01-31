@@ -259,7 +259,7 @@ export default function ContactFileUploader({ onImportSuccess }: ContactFileUplo
                 Asesores no reconocidos (contactos creados como unassigned):
               </Text>
               <div className="flex flex-wrap gap-2">
-                {successData.stats.unknownAdvisors.map((adv, i) => (
+                {successData.stats.unknownAdvisors.map((adv: string, i: number) => (
                   <span key={i} className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">
                     {adv}
                   </span>

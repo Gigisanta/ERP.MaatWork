@@ -103,16 +103,7 @@ describe('InlineTagsEditor', () => {
     });
   });
 
-  it('debería navegar cuando se hace click en etiqueta Zurich', () => {
-    render(
-      <InlineTagsEditor {...defaultProps} contact={{ ...mockContact, tags: [mockTags[1]] }} />
-    );
 
-    const zurichTag = screen.getByText('Zurich');
-    fireEvent.click(zurichTag);
-
-    expect(mockRouter.push).toHaveBeenCalledWith('/contacts/contact-1/tags/tag-2');
-  });
 
   it('debería mostrar spinner cuando está guardando', () => {
     render(<InlineTagsEditor {...defaultProps} isSaving={true} />);

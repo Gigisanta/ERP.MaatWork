@@ -12,7 +12,7 @@
     "dev:fast": "tsx scripts/cli/index.ts dev --fast",
     "dev:basic": "turbo run dev --parallel",
     "dev:clean": "pnpm dev:kill && pnpm -F @maatwork/web clean && pnpm dev",
-    "dev:kill": "tsx scripts/dev-kill.ts",
+    "dev:kill": "pnpm mw clean dev --quiet",
     "lint": "turbo run lint",
     "lint:analytics": "cd apps/analytics-service && python -m flake8 . --max-line-length=88 --extend-ignore=E203,W503 && python -m mypy .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
@@ -44,10 +44,10 @@
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report",
     "lighthouse": "lhci autorun --config=lighthouserc.json",
-    "predev": "tsx scripts/dev-clean.ts --quiet",
-    "predev:basic": "tsx scripts/dev-clean.ts --quiet",
+    "predev": "pnpm mw clean dev --quiet",
+    "predev:basic": "pnpm mw clean dev --quiet",
     "prepare": "husky install",
-    "guard:artifacts": "tsx scripts/guard-artifacts.ts",
+    "guard:artifacts": "pnpm mw audit artifacts",
     "health": "tsx scripts/cli/index.ts health",
     "gen": "tsx scripts/cli/index.ts gen",
     "verify:aum": "node scripts/verify-aum-import.js",
@@ -55,22 +55,21 @@
     "test:aum:full": "node scripts/test-aum-import-full.js",
     "verify:all": "node scripts/verify-all.js",
     "verify:all:no-e2e": "SKIP_E2E=true node scripts/verify-all.js",
-    "audit:code": "tsx scripts/audit.ts",
+    "audit:code": "tsx scripts/cli/index.ts audit code",
     "audit:fix": "knip --fix",
-    "audit:ci": "tsx scripts/audit.ts --ci",
-    "audit:types": "tsx scripts/audit.ts --types",
-    "audit:barrels": "tsx scripts/audit.ts --barrels",
+    "audit:ci": "tsx scripts/cli/index.ts audit code --ci",
+    "audit:types": "tsx scripts/cli/index.ts audit code",
+    "audit:barrels": "tsx scripts/cli/index.ts audit code",
     "clean:temp": "node -e \"const fs=require('fs');['.tmp_aum_cookies.txt'].forEach(f=>{try{fs.unlinkSync(f);console.log('Deleted:',f)}catch(e){}})\"",
     "deps:outdated": "pnpm outdated",
-    "deps:update": "tsx scripts/update-deps.ts",
-    "deps:update:major": "tsx scripts/update-deps.ts --major",
-    "deps:update:check": "tsx scripts/update-deps.ts --dry-run"
+    "deps:update": "pnpm mw deps update",
+    "deps:update:major": "pnpm mw deps update --major",
+    "deps:update:check": "pnpm mw deps update --dry-run"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
-    "commander": "^13.1.0",
     "@eslint/js": "^9.39.2",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.48.0",
@@ -83,14 +82,18 @@
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
     "chalk": "^5.6.2",
-    "csv-parse": "^5.5.6",
     "dotenv": "^16.6.1",
     "eslint": "^8.53.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "husky": "^9.0.11",
-    "knip": "^5.78.0",
+    "knip": "^5.81.0",
     "lint-staged": "^15.5.2",
     "pg": "^8.12.0",
-    "prettier": "^3.2.5",
+    "prettier": "^3.7.4",
     "rimraf": "^5.0.10",
     "turbo": "^2.7.2",
     "typescript": "^5.9.3",
@@ -99,7 +102,6 @@
   },
   "pnpm": {
     "overrides": {
-      "zod": "3.24.1",
       "react": "^19.2.0",
       "react-dom": "^19.2.0",
       "@types/react": "^19.2.2",
@@ -113,7 +115,7 @@
     "packageExtensions": {
       "drizzle-zod": {
         "peerDependencies": {
-          "zod": "3.24.1"
+          "zod": "^3.22.4"
         }
       }
     }

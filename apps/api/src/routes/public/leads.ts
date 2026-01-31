@@ -59,7 +59,7 @@ router.post(
         .returning()
     );
 
-    const [newContact] = result as any[];
+    const [newContact] = result as { id: string }[];
 
     if (!newContact) {
       throw new Error('Failed to create lead');

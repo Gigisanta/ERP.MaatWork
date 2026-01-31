@@ -4,7 +4,6 @@
  * AI_DECISION: Implement connection pool monitoring for production health visibility
  * Justificación: Detectar pool exhaustion antes de que cause timeouts y errores
  * Impacto: Mejor visibilidad en health del sistema, alertas tempranas de problemas
- * Referencias: Performance optimization plan - Fase 3
  */
 
 import { db } from '@maatwork/db';
@@ -23,8 +22,14 @@ export function getPoolStats(): PoolStats | null {
   try {
     const dbInstance = db();
     // Access the underlying pg Pool through Drizzle's internal structure
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pool = (dbInstance as any).$client;
+    interface DrizzleClient {
+        $client: {
+            totalCount?: number;
+            idleCount?: number;
+            waitingCount?: number;
+        }
+    }
+    const pool = (dbInstance as unknown as DrizzleClient).$client;
 
     if (!pool || typeof pool !== 'object') {
       return null;
@@ -102,6 +107,6 @@ export function startPoolMonitoring(intervalMs: number = 60000): NodeJS.Timeout 
 /**
  * Stop pool monitoring
  */
-export function stopPoolMonitoring(interval: NodeJS.Timeout): void {
+function stopPoolMonitoring(interval: NodeJS.Timeout): void {
   clearInterval(interval);
 }

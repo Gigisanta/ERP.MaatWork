@@ -41,6 +41,11 @@
   --input: 0 0% 88%;
   --ring: 266 96% 76%;
 
+  /* Status Colors */
+  --success: 142 71% 45%;    /* Green */
+  --warning-text: 45 93% 47%; /* Yellow/Amber */
+  --info: 217 91% 60%;       /* Blue */
+
   --radius: 0.5rem;
 
   /* ============================================================
@@ -94,6 +99,11 @@
   --border: 0 0% 18%;
   --input: 0 0% 18%;
   --ring: 261 92% 82%;
+
+  /* Status Colors (Dark Mode) - Adjusted for contrast */
+  --success: 142 60% 35%;    /* Darker Green */
+  --warning-text: 45 80% 45%; /* Darker Yellow/Amber */
+  --info: 217 80% 55%;       /* Darker Blue */
 
   /* ============================================================
      Table Row Colors (Dark Mode)

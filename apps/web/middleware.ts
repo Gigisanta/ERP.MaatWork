@@ -55,8 +55,24 @@ export async function middleware(request: NextRequest) {
   const baseUrl = getBaseUrl(request);
   const loggerContext = { requestId, pathname };
 
-  // Si es la página de login y ya hay cookie de sesión, redirigir fuera del login
+  // Si es la página de login
   if (pathname === '/login') {
+    // AI_DECISION: Check for explicit unauthorized error param
+    // Justificación: If Layout redirects here with ?error=unauthorized, it means the API rejected the token
+    // Impacto: Forces cookie cleanup to break the infinite redirect loop
+    const errorParam = request.nextUrl.searchParams.get('error');
+    if (errorParam === 'unauthorized') {
+      logger.warn('[Middleware] Detected unauthorized redirect loop - Clearing token cookie', { ...loggerContext });
+      
+      // AI_DECISION: Redirect to clean /login instead of next()
+      // Justificación: next() keeps the same request context (with old cookies) for the Server Component.
+      //                Redirecting forces a fresh request where the browser has already removed the cookie.
+      // Impacto: Completely breaks the loop by ensuring RootLayout sees no token.
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('token');
+      return response;
+    }
+
     const token = request.cookies.get('token')?.value;
     // LOGGING: Inspeccionar cookies entrantes en middleware
     logger.info('[Middleware] Checking login page access', {
@@ -85,12 +101,13 @@ export async function middleware(request: NextRequest) {
           response.cookies.delete('token');
           return response;
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as Error & { code?: string };
         // Token inválido/expirado, limpiar cookie y continuar al login
         logger.warn('[Middleware] JWT verification failed for login page', {
           ...loggerContext,
-          error: err.message,
-          code: err.code,
+          error: error.message,
+          code: error.code,
         });
         const response = NextResponse.next();
         response.cookies.delete('token');
@@ -123,11 +140,12 @@ export async function middleware(request: NextRequest) {
           // Token válido y no expirado, redirigir a /home
           return NextResponse.redirect(new URL('/home', baseUrl));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         // si el token es inválido/expirado, continuar al flujo normal (mostrar página pública)
+        const error = err as Error;
         logger.debug('[Middleware] JWT verification failed for root access', {
           ...loggerContext,
-          error: err.message,
+          error: error.message,
         });
       }
     }
@@ -182,12 +200,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/home', baseUrl));
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error & { code?: string };
     // Token inválido - limpiar cookie y redirigir a login
     logger.warn('[Middleware] Protected route access failed - JWT invalid', {
       ...loggerContext,
-      error: err.message,
-      code: err.code,
+      error: error.message,
+      code: error.code,
     });
     const response = NextResponse.redirect(new URL('/login', baseUrl));
     response.cookies.delete('token');

@@ -1,9 +1,9 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-// AI_DECISION: Root ESLint config for consistency
-// Justificación: Centralize linting rules to ensure code quality across the monorepo.
-// Impacto: Affects all packages/apps.
+// AI_DECISION: Simplified ESLint config to ensure stability with ESLint v9
+// Justificación: Reverting to basic TS config while keeping the core requirement of 300 lines.
+// Impacto: Ensures the project can still lint without Babel-related crashes.
 
 export default [
   js.configs.recommended,
@@ -18,9 +18,14 @@ export default [
     ],
   },
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.{js,mjs,ts,tsx}'],
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': [
         'warn',
@@ -30,6 +35,7 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
     },
   },
   {

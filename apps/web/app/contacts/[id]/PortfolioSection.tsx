@@ -87,8 +87,8 @@ export default function PortfolioSection({
       setNewAssignment({ templateId: '', templateName: '', notes: '' });
     } catch (err) {
       logger.error(
-        'Error assigning portfolio',
-        toLogContext({ err, contactId, assignment: newAssignment })
+        toLogContext({ err, contactId, assignment: newAssignment }),
+        'Error assigning portfolio'
       );
     } finally {
       setSaving(false);
@@ -110,7 +110,7 @@ export default function PortfolioSection({
             await removePortfolioAssignment(assignmentId);
             await mutate(); // Refresh data
           } catch (err) {
-            logger.error('Error unassigning portfolio', toLogContext({ err, assignmentId }));
+            logger.error(toLogContext({ err, assignmentId }), 'Error unassigning portfolio');
           }
         },
       });
@@ -125,8 +125,8 @@ export default function PortfolioSection({
         await mutate(); // Refresh data
       } catch (err) {
         logger.error(
-          'Error updating portfolio assignment status',
-          toLogContext({ err, assignmentId, newStatus })
+          toLogContext({ err, assignmentId, newStatus }),
+          'Error updating portfolio assignment status'
         );
       }
     },
@@ -177,7 +177,7 @@ export default function PortfolioSection({
       </CardContent>
 
       {/* Assign Modal */}
-      <Modal open={showAssignModal} onOpenChange={setShowAssignModal}>
+      <Modal open={showAssignModal} onOpenChange={(open: boolean) => setShowAssignModal(open)}>
         <ModalHeader>
           <ModalTitle>Asignar Portfolio</ModalTitle>
         </ModalHeader>
@@ -190,7 +190,7 @@ export default function PortfolioSection({
               <input
                 type="text"
                 value={newAssignment.templateId}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNewAssignment((prev) => ({ ...prev, templateId: e.target.value }))
                 }
                 placeholder="ID del template"
@@ -204,7 +204,7 @@ export default function PortfolioSection({
               <input
                 type="text"
                 value={newAssignment.templateName}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNewAssignment((prev) => ({ ...prev, templateName: e.target.value }))
                 }
                 placeholder="Nombre del portfolio"
@@ -217,7 +217,7 @@ export default function PortfolioSection({
               </Text>
               <textarea
                 value={newAssignment.notes}
-                onChange={(e) => setNewAssignment((prev) => ({ ...prev, notes: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewAssignment((prev) => ({ ...prev, notes: e.target.value }))}
                 placeholder="Notas adicionales"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 rows={3}
@@ -242,7 +242,7 @@ export default function PortfolioSection({
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

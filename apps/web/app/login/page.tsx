@@ -10,12 +10,10 @@ import {
   Checkbox,
   Card,
   CardHeader,
-  CardTitle,
   CardContent,
   Heading,
   Text,
   Stack,
-  Icon,
   Spinner,
 } from '@maatwork/ui';
 import { Feather } from 'lucide-react';
@@ -189,7 +187,7 @@ function LoginPageContent() {
                     type="text"
                     label="Email o usuario"
                     value={identifier}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setIdentifier(e.target.value);
                       if (fieldErrors.identifier) {
                         setFieldErrors((prev) => {
@@ -221,7 +219,7 @@ function LoginPageContent() {
                     type="password"
                     label="Contraseña"
                     value={password}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setPassword(e.target.value);
                       if (fieldErrors.password) {
                         setFieldErrors((prev) => {
@@ -252,7 +250,7 @@ function LoginPageContent() {
                   <Checkbox
                     id="rememberMe"
                     checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                    onCheckedChange={(checked: boolean | string) => setRememberMe(checked as boolean)}
                     label="Recordarme"
                   />
                   <Link

@@ -72,7 +72,7 @@ export function ProfileModals({
             label="Contraseña actual"
             type="password"
             value={passwordForm.currentPassword}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
             }
             required
@@ -81,7 +81,7 @@ export function ProfileModals({
             label="Nueva contraseña"
             type="password"
             value={passwordForm.newPassword}
-            onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
             required
             minLength={6}
           />
@@ -89,7 +89,7 @@ export function ProfileModals({
             label="Confirmar nueva contraseña"
             type="password"
             value={passwordForm.confirmPassword}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
             }
             required
@@ -116,7 +116,7 @@ export function ProfileModals({
           <Input
             label="Nombre del equipo"
             value={teamForm.name}
-            onChange={(e) => setTeamForm((prev) => ({ ...prev, name: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTeamForm((prev) => ({ ...prev, name: e.target.value }))}
             placeholder="Nombre del equipo"
             required
           />
@@ -142,7 +142,7 @@ export function ProfileModals({
             label="Email del miembro"
             type="email"
             value={memberForm.email}
-            onChange={(e) => setMemberForm((prev) => ({ ...prev, email: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMemberForm((prev) => ({ ...prev, email: e.target.value }))}
             placeholder="miembro@email.com"
             required
           />

@@ -9,20 +9,30 @@ import { uuidSchema } from '../../utils/validation/common-schemas';
 // Zod Validation Schemas
 // ==========================================================
 
-const riskLevelSchema = z.enum(['conservative', 'moderate', 'aggressive']);
-
 const portfolioAssignmentStatusSchema = z.enum(['active', 'paused', 'ended']);
 
+/**
+ * Schema para query params de listado de portfolios
+ * Soporta paginación, búsqueda y filtros
+ */
+export const listPortfoliosQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  search: z.string().max(255).optional(),
+  sortBy: z.enum(['name', 'createdAt', 'clientCount', 'lineCount']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+});
+
 export const createPortfolioSchema = z.object({
+  code: z.string().max(50, 'Código demasiado largo').optional().nullable(),
   name: z.string().min(1, 'Nombre es requerido').max(255, 'Nombre demasiado largo'),
   description: z.string().max(1000, 'Descripción demasiado larga').optional().nullable(),
-  riskLevel: riskLevelSchema,
 });
 
 export const updatePortfolioSchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  description: z.string().max(1000).optional().nullable(),
-  riskLevel: riskLevelSchema.optional(),
+  code: z.string().max(50, 'Código demasiado largo').optional().nullable(),
+  name: z.string().min(1, 'Nombre es requerido').max(255, 'Nombre demasiado largo').optional(),
+  description: z.string().max(1000, 'Descripción demasiado larga').optional().nullable(),
 });
 
 export const addPortfolioLineSchema = z
@@ -51,7 +61,7 @@ export const addPortfolioLineSchema = z
     }
   );
 
-export const templateIdParamSchema = z.object({
+export const portfolioIdParamSchema = z.object({
   id: uuidSchema,
 });
 
@@ -62,7 +72,7 @@ export const lineIdParamSchema = z.object({
 
 export const createAssignmentSchema = z.object({
   contactId: uuidSchema,
-  templateId: uuidSchema,
+  portfolioId: uuidSchema,
   startDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/, 'Invalid ISO date format'),

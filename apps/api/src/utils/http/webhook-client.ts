@@ -9,8 +9,8 @@
 import { getHttpClient } from './http-client';
 import type { Logger } from 'pino';
 
-interface WebhookPayload {
-  nombre: string;
+export interface WebhookPayload extends Record<string, unknown> {
+  nombre?: string | null;
   email: string | null;
 }
 

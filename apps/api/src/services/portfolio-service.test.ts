@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db } from '@maatwork/db';
 import { canAccessContact } from '../auth/authorization';
-import { getPortfolioTemplateLines, getAssignmentWithAccessCheck } from './portfolio-service';
+import { getPortfolioLines, getAssignmentWithAccessCheck } from './portfolio-service';
 
 // Mock dependencies
 vi.mock('@maatwork/db', async () => {
@@ -53,7 +53,7 @@ const createChainableMock = (finalValue: unknown) => {
   return mock as unknown as ReturnType<typeof db>;
 };
 
-describe('getPortfolioTemplateLines', () => {
+describe('getPortfolioLines', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -73,7 +73,7 @@ describe('getPortfolioTemplateLines', () => {
 
     mockDb.mockReturnValue(createChainableMock(mockLines));
 
-    const result = await getPortfolioTemplateLines('template-123', { includeMetadata: true });
+    const result = await getPortfolioLines('template-123', { includeMetadata: true });
 
     expect(result).toEqual(mockLines);
   });
@@ -89,7 +89,7 @@ describe('getPortfolioTemplateLines', () => {
 
     mockDb.mockReturnValue(createChainableMock(mockLines));
 
-    const result = await getPortfolioTemplateLines('template-123', { includeMetadata: false });
+    const result = await getPortfolioLines('template-123', { includeMetadata: false });
 
     expect(result).toEqual(mockLines);
   });
@@ -104,7 +104,7 @@ describe('getAssignmentWithAccessCheck', () => {
     const mockAssignment = {
       id: 'assignment-123',
       contactId: 'contact-123',
-      templateId: 'template-123',
+      portfolioId: 'template-123',
     };
 
     mockDb.mockReturnValue(createChainableMock([mockAssignment]));
@@ -130,7 +130,7 @@ describe('getAssignmentWithAccessCheck', () => {
     const mockAssignment = {
       id: 'assignment-123',
       contactId: 'contact-123',
-      templateId: 'template-123',
+      portfolioId: 'template-123',
     };
 
     mockDb.mockReturnValue(createChainableMock([mockAssignment]));

@@ -96,7 +96,7 @@ export function EventDetailsModal({
   };
 
   return (
-    <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Modal open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <ModalContent className="max-w-lg p-0 overflow-hidden sm:rounded-xl">
         <ModalHeader className="px-6 py-4 border-b border-border/40 bg-background sticky top-0 z-40">
           <div className="flex flex-col gap-2">

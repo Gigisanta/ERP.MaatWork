@@ -27,10 +27,35 @@ export const DEFAULT_AUTOMATIONS = [
       senderEmail: '',
     },
   },
+  {
+    name: 'cumpleanos_saludo',
+    displayName: 'Saludo de Cumpleaños',
+    triggerType: 'date_match',
+    triggerConfig: { field: 'birthDate', relativeDays: 0 },
+    enabled: true,
+    config: {
+      subject: '¡Feliz Cumpleaños!',
+      body: '<p>Hola {contact.firstName},</p><p>¡Que tengas un excelente día!</p>',
+      senderEmail: '',
+    },
+  },
+  {
+    name: 'alerta_vip',
+    displayName: 'Alerta Nuevo Cliente VIP',
+    triggerType: 'pipeline_stage_change',
+    triggerConfig: { stageName: 'Cliente' },
+    enabled: true,
+    config: {
+      subject: 'NUEVO CLIENTE VIP: {contact.fullName}',
+      body: 'Se ha cerrado un cliente con perfil de riesgo {contact.riskProfile}. Revisar portafolio.',
+      senderEmail: '',
+    },
+  },
 ];
 
 export async function seedAutomations() {
-  console.log('  ➜ Seeding automations...');
+  // eslint-disable-next-line no-console
+    console.log('  ➜ Seeding automations...');
 
   const createdConfigs = [];
 
@@ -47,8 +72,8 @@ export async function seedAutomations() {
         .insert(automationConfigs)
         .values({
           ...automation,
-          triggerConfig: automation.triggerConfig as any,
-          config: automation.config as any,
+          triggerConfig: automation.triggerConfig as Record<string, unknown>,
+          config: automation.config as Record<string, unknown>,
         })
         .returning();
 
@@ -60,6 +85,7 @@ export async function seedAutomations() {
     }
   }
 
-  console.log(`  ✅ Seeded ${createdConfigs.length} new automation configs`);
+  // eslint-disable-next-line no-console
+    console.log(`  ✅ Seeded ${createdConfigs.length} new automation configs`);
   return createdConfigs;
 }

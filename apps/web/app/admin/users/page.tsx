@@ -78,6 +78,30 @@ export default function AdminUsersPage() {
       : 'Error al cargar usuarios'
     : error;
 
+  // Optimistic update helper
+  const updateLocalUser = async (
+    userId: string,
+    updateFn: (user: UserApiResponse) => UserApiResponse
+  ) => {
+    await mutate(
+      (currentData) => {
+        if (!currentData?.success || !currentData.data) return currentData;
+
+        const currentUsers = currentData.data.data;
+        const updatedUsers = currentUsers.map((u) => (u.id === userId ? updateFn(u) : u));
+
+        return {
+          ...currentData,
+          data: {
+            ...currentData.data,
+            data: updatedUsers,
+          },
+        };
+      },
+      { revalidate: false }
+    );
+  };
+
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!user) return;
 
@@ -91,14 +115,20 @@ export default function AdminUsersPage() {
       setActionLoading(userId);
       setError(null);
 
-      await updateUserRole(userId, newRole as UserRole);
+      // Optimistic update
+      await updateLocalUser(userId, (u) => ({ ...u, role: newRole as UserRole }));
 
-      // Invalidate cache to refetch users
+      await updateUserRole(userId, newRole as UserRole);
+      
+      // Revalidate to ensure consistency
       await mutate();
     } catch (err) {
+      // Revert optimistic update (refetch)
+      await mutate();
+      
       logger.error(
-        'Error updating user role',
-        toLogContext({ err: err instanceof Error ? err.message : String(err), userId, newRole })
+        toLogContext({ err: err instanceof Error ? err.message : String(err), userId, newRole }),
+        'Error updating user role'
       );
       setError(err instanceof Error ? err.message : 'Error al actualizar rol');
     } finally {
@@ -113,14 +143,20 @@ export default function AdminUsersPage() {
       setActionLoading(userId);
       setError(null);
 
-      await updateUserStatus(userId, isActive);
+      // Optimistic update
+      await updateLocalUser(userId, (u) => ({ ...u, isActive }));
 
-      // Invalidate cache to refetch users
+      await updateUserStatus(userId, isActive);
+      
+      // Revalidate
       await mutate();
     } catch (err) {
+      // Revert
+      await mutate();
+
       logger.error(
-        'Error updating user status',
-        toLogContext({ err: err instanceof Error ? err.message : String(err), userId, isActive })
+        toLogContext({ err: err instanceof Error ? err.message : String(err), userId, isActive }),
+        'Error updating user status'
       );
       setError(err instanceof Error ? err.message : 'Error al actualizar estado');
     } finally {
@@ -135,13 +171,48 @@ export default function AdminUsersPage() {
       setActionLoading(userToDelete.id);
       setError(null);
 
-      await deleteUserApi(userToDelete.id);
+      // Optimistic delete: filter out the user immediately
+      await mutate(
+        (currentData) => {
+          if (!currentData?.success || !currentData.data) return currentData;
+          return {
+            ...currentData,
+            data: {
+              ...currentData.data,
+              data: currentData.data.data.filter((u) => u.id !== userToDelete.id),
+              pagination: {
+                ...currentData.data.pagination,
+                total: Math.max(0, currentData.data.pagination.total - 1),
+              },
+            },
+          };
+        },
+        { revalidate: false }
+      );
 
-      // Invalidate cache to refetch users
+      setShowDeleteModal(false); // Close modal user immediately
+      
+      try {
+        await deleteUserApi(userToDelete.id);
+      } catch (apiErr) {
+        // If 404, treating as success as user is already gone
+        const is404 = apiErr instanceof Error && apiErr.message.includes('404');
+        const isResourceNotFound = apiErr instanceof Error && apiErr.message.includes('not found');
+        
+        if (is404 || isResourceNotFound) {
+          // Already gone, do nothing (keep optimistic delete)
+        } else {
+           throw apiErr; // Rethrow real errors
+        }
+      }
+
+      // Revalidate to be sure
       await mutate();
-      setShowDeleteModal(false);
       setUserToDelete(null);
     } catch (err) {
+      // Revert if it was a real error
+      await mutate();
+      setShowDeleteModal(true); // Re-open modal
       setError(err instanceof Error ? err.message : 'Error al eliminar usuario');
     } finally {
       setActionLoading(null);
@@ -176,7 +247,7 @@ export default function AdminUsersPage() {
           <div className="min-w-[150px]">
             <Select
               value={row.role}
-              onValueChange={(value) => handleRoleChange(row.id, value)}
+              onValueChange={(value: string) => handleRoleChange(row.id, value)}
               disabled={actionLoading === row.id}
               items={[
                 { value: 'advisor', label: 'Asesor' },
@@ -195,7 +266,7 @@ export default function AdminUsersPage() {
         render: (row) => (
           <Switch
             checked={row.isActive}
-            onCheckedChange={(checked) => handleToggleActive(row.id, checked)}
+            onCheckedChange={(checked: boolean) => handleToggleActive(row.id, checked)}
             disabled={actionLoading === row.id}
           />
         ),
@@ -279,7 +350,7 @@ export default function AdminUsersPage() {
         ),
       },
     ],
-    [actionLoading, router, mutate]
+    [actionLoading, router, mutate, userToDelete] // Added userToDelete dependency
   );
 
   // Early return for loading - DESPUÉS de todos los hooks
@@ -343,7 +414,7 @@ export default function AdminUsersPage() {
                 <Text size="sm">Solo pendientes</Text>
                 <Switch
                   checked={showPendingOnly}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={(checked: boolean) => {
                     setShowPendingOnly(checked);
                     setPage(1); // Reset to first page when filter changes
                   }}
@@ -370,7 +441,7 @@ export default function AdminUsersPage() {
         </Card>
 
         {/* Modal de confirmación de eliminación */}
-        <Modal open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <Modal open={showDeleteModal} onOpenChange={(open: boolean) => setShowDeleteModal(open)}>
           <ModalHeader>
             <ModalTitle>Confirmar eliminación</ModalTitle>
             <ModalDescription>

@@ -33,7 +33,7 @@ export default function PrioritiesConcernsSection({
   preocupaciones,
 }: PrioritiesConcernsSectionProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [_, startTransition] = useTransition();
   const [localPrioridades, setLocalPrioridades] = useState<string[]>(prioridades || []);
   const [localPreocupaciones, setLocalPreocupaciones] = useState<string[]>(preocupaciones || []);
 
@@ -58,8 +58,8 @@ export default function PrioritiesConcernsSection({
         router.refresh();
       } catch (err) {
         logger.error(
-          'Error updating priorities/concerns',
-          toLogContext({ err, contactId, field, value })
+          toLogContext({ err, contactId, field, value }),
+          'Error updating priorities/concerns'
         );
       }
     });
@@ -140,7 +140,6 @@ export default function PrioritiesConcernsSection({
                 onAdd={() => setShowAddPriorityModal(true)}
                 onEdit={handleEditPriority}
                 onDelete={handleDeletePriority}
-                placeholder="Agregar prioridad..."
                 emptyMessage="No hay prioridades"
               />
             </div>
@@ -156,7 +155,6 @@ export default function PrioritiesConcernsSection({
                 onAdd={() => setShowAddConcernModal(true)}
                 onEdit={handleEditConcern}
                 onDelete={handleDeleteConcern}
-                placeholder="Agregar preocupación..."
                 emptyMessage="No hay preocupaciones"
               />
             </div>
@@ -165,7 +163,7 @@ export default function PrioritiesConcernsSection({
       </Card>
 
       {/* Modal para agregar prioridad */}
-      <Modal open={showAddPriorityModal} onOpenChange={setShowAddPriorityModal}>
+      <Modal open={showAddPriorityModal} onOpenChange={(open: boolean) => setShowAddPriorityModal(open)}>
         <ModalHeader>
           <ModalTitle>Agregar Prioridad</ModalTitle>
         </ModalHeader>
@@ -174,9 +172,9 @@ export default function PrioritiesConcernsSection({
             <Input
               label="Prioridad"
               value={newPriority}
-              onChange={(e) => setNewPriority(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPriority(e.target.value)}
               placeholder="Ingresa una prioridad..."
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter') {
                   handleAddPriority();
                 }
@@ -202,7 +200,7 @@ export default function PrioritiesConcernsSection({
       </Modal>
 
       {/* Modal para agregar preocupación */}
-      <Modal open={showAddConcernModal} onOpenChange={setShowAddConcernModal}>
+      <Modal open={showAddConcernModal} onOpenChange={(open: boolean) => setShowAddConcernModal(open)}>
         <ModalHeader>
           <ModalTitle>Agregar Preocupación</ModalTitle>
         </ModalHeader>
@@ -211,9 +209,9 @@ export default function PrioritiesConcernsSection({
             <Input
               label="Preocupación"
               value={newConcern}
-              onChange={(e) => setNewConcern(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewConcern(e.target.value)}
               placeholder="Ingresa una preocupación..."
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === 'Enter') {
                   handleAddConcern();
                 }

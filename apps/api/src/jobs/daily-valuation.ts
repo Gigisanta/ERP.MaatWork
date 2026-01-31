@@ -3,16 +3,14 @@ import {
   instruments,
   priceSnapshots,
   brokerPositions,
-  brokerBalances,
   brokerAccounts,
   aumSnapshots,
   clientPortfolioAssignments,
+  portfolioLines,
   portfolioMonitoringSnapshot,
   portfolioMonitoringDetails,
-  portfolioTemplateLines,
-  contacts,
 } from '@maatwork/db/schema';
-import { eq, and, sql, desc, gte, lte, sum, type InferSelectModel } from 'drizzle-orm';
+import { eq, and, sql, desc, sum, lte, type InferSelectModel } from 'drizzle-orm';
 import { logger } from '../utils/logger';
 import { PositionWithMarketValue } from '../types/daily-valuation';
 import { CircuitBreaker, CircuitBreakerOpenError } from '../utils/validation/circuit-breaker';
@@ -381,7 +379,7 @@ export class DailyValuationJob {
       const contactsWithPortfolios = await db()
         .select({
           contactId: clientPortfolioAssignments.contactId,
-          templateId: clientPortfolioAssignments.templateId,
+          portfolioId: clientPortfolioAssignments.portfolioId,
           assignmentId: clientPortfolioAssignments.id,
         })
         .from(clientPortfolioAssignments)
@@ -398,7 +396,7 @@ export class DailyValuationJob {
       for (const contact of contactsWithPortfolios) {
         await this.calculateContactPortfolioDeviation(
           contact.contactId,
-          contact.templateId,
+          contact.portfolioId,
           contact.assignmentId,
           date
         );
@@ -419,21 +417,21 @@ export class DailyValuationJob {
    */
   private async calculateContactPortfolioDeviation(
     contactId: string,
-    templateId: string,
+    portfolioId: string,
     assignmentId: string,
     date: string
   ): Promise<void> {
     try {
-      // Obtener composición objetivo de la plantilla
+      // Obtener composición objetivo de la cartera
       const templateLines = await db()
         .select({
-          targetType: portfolioTemplateLines.targetType,
-          assetClass: portfolioTemplateLines.assetClass,
-          instrumentId: portfolioTemplateLines.instrumentId,
-          targetWeight: portfolioTemplateLines.targetWeight,
+          targetType: portfolioLines.targetType,
+          assetClass: portfolioLines.assetClass,
+          instrumentId: portfolioLines.instrumentId,
+          targetWeight: portfolioLines.targetWeight,
         })
-        .from(portfolioTemplateLines)
-        .where(eq(portfolioTemplateLines.templateId, templateId));
+        .from(portfolioLines)
+        .where(eq(portfolioLines.portfolioId, portfolioId));
 
       // Obtener posiciones actuales del contacto
       const currentPositions = await db()

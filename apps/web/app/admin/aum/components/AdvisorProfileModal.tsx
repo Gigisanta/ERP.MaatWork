@@ -120,7 +120,7 @@ export default function AdvisorProfileModal({ row, open, onClose }: AdvisorProfi
   return (
     <Modal
       open={open}
-      onOpenChange={(isOpen) => {
+      onOpenChange={(isOpen: boolean) => {
         if (!isOpen) {
           onClose();
         }

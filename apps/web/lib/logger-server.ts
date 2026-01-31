@@ -5,7 +5,7 @@
  * Outputs JSON in production for easier parsing by log aggregators.
  */
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
   level: LogLevel;

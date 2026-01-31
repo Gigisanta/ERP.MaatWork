@@ -62,7 +62,7 @@ const InlineTextInput = React.memo<InlineTextInputProps>(
       return (
         <Input
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}

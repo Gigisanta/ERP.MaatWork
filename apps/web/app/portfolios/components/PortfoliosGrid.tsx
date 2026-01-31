@@ -39,7 +39,7 @@ export function PortfoliosGrid({
     return () => clearTimeout(timer);
   }, []);
 
-  const getRiskLevelVariant = (riskLevel: string) => {
+  const getRiskLevelVariant = (riskLevel: string | null | undefined) => {
     switch (riskLevel) {
       case 'conservative':
         return 'success';
@@ -52,7 +52,8 @@ export function PortfoliosGrid({
     }
   };
 
-  const getRiskLevelLabel = (riskLevel: string) => {
+  const getRiskLevelLabel = (riskLevel: string | null | undefined) => {
+    if (!riskLevel) return 'Sin definir';
     switch (riskLevel) {
       case 'conservative':
         return 'Conservador';
@@ -96,9 +97,16 @@ export function PortfoliosGrid({
             <CardContent className="p-3">
               <Stack direction="column" gap="xs">
                 <div className="flex items-start justify-between gap-2">
-                  <Heading level={6} className="truncate flex-1 text-sm">
-                    {portfolio.name}
-                  </Heading>
+                  <div className="flex flex-col flex-1 truncate">
+                    <Heading level={6} className="truncate text-sm">
+                      {portfolio.name}
+                    </Heading>
+                    {portfolio.code && (
+                      <Text size="xs" color="secondary" className="truncate opacity-70">
+                        {portfolio.code}
+                      </Text>
+                    )}
+                  </div>
                   <Badge
                     variant={getRiskLevelVariant(portfolio.riskLevel)}
                     className="text-xs shrink-0"
@@ -110,8 +118,14 @@ export function PortfoliosGrid({
                 <Stack direction="row" gap="xs" align="center">
                   <PieChart className="w-3 h-3 text-foreground-tertiary" />
                   <Text size="xs" color="secondary">
-                    {portfolio.lines?.length || 0} activos
+                    {portfolio.lines?.length || portfolio.lineCount || 0} activos
                   </Text>
+                  {portfolio.type === 'benchmark' && (
+                    <Badge variant="success" className="text-[10px] h-4 py-0">Benchmark</Badge>
+                  )}
+                  {portfolio.isSystem && (
+                    <Badge variant="outline" className="text-[10px] h-4 py-0 border-primary/30 text-primary">Sistema</Badge>
+                  )}
                 </Stack>
 
                 <Stack direction="row" gap="xs" className="mt-1">

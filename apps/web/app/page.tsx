@@ -9,6 +9,7 @@
 import { Suspense } from 'react';
 import { HomePageClient } from './components/home/HomePageClient';
 import { LandingPage } from './components/landing/LandingPage';
+import { cookies } from 'next/headers';
 import {
   getCurrentUser,
   getContactsMetricsServer,
@@ -106,6 +107,21 @@ function HomePageLoading() {
  */
 async function getHomePageData() {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token');
+
+    // If no token, return immediately with null user (Landing Page state)
+    if (!token?.value) {
+      return {
+        user: null,
+        metricsData: null,
+        goalsData: null,
+        teamCalendarUrl: null,
+        teamId: null,
+        metricsError: null,
+      };
+    }
+
     // Fetch all data in parallel
     const [userResponse, metricsResponse, goalsResponse, teamsResponse] = await Promise.all([
       getCurrentUser().catch(() => ({ success: false, data: null })),
@@ -153,7 +169,7 @@ async function getHomePageData() {
       teamId,
       metricsError,
     };
-  } catch (error) {
+  } catch (_error) {
     // Return null user on error (will show unauthenticated state)
     return {
       user: null,
@@ -170,7 +186,7 @@ async function getHomePageData() {
  * Home page component
  */
 export default async function HomePage() {
-  const { user, metricsData, goalsData, teamCalendarUrl, teamId, metricsError } =
+  const { user, metricsData, goalsData, metricsError } =
     await getHomePageData();
 
   // If no user, show unauthenticated state

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Home,
   Users,
@@ -141,12 +141,6 @@ export interface IconProps {
 }
 
 export function Icon({ name, size = 16, className = '' }: IconProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const iconMap: Record<string, LucideIcon> = {
     Home,
     Users,
@@ -221,14 +215,6 @@ export function Icon({ name, size = 16, className = '' }: IconProps) {
   };
 
   const IconComponent = iconMap[name] || AlertCircle; // Fallback to AlertCircle if not found
-
-  // AI_DECISION: Use defensive rendering for icons to prevent hydration mismatches
-  // Justificación: External shims or browser extensions can interfere with SVG rendering.
-  // By only rendering after mount, we ensure the client-side SVG matches what React expects.
-  if (!mounted) {
-    // Return a placeholder with the same dimensions to avoid layout shift
-    return <span className={cn('shrink-0', className)} style={{ width: size, height: size }} />;
-  }
 
   return (
     <IconComponent size={size} className={cn('shrink-0', className)} suppressHydrationWarning />

@@ -66,7 +66,7 @@ import type { AuthUser } from '../auth/types';
 
 /**
  * AI_DECISION: Extender Express.Request para incluir requestId, contactId y user tipados
- * Justificación: Elimina necesidad de casts (req as any).requestId, (req as any).contactId y (req as any).user
+ * Justificación: Elimina necesidad de casts (req).requestId, (req).contactId y (req).user
  * Impacto: Type safety mejorado, código más limpio, menos errores en runtime
  */
 declare global {

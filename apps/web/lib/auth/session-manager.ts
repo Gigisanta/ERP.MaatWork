@@ -35,7 +35,7 @@ export async function verifySession(
   retryDelays: number[] = [500, 1000, 2000]
 ): Promise<SessionCheckResult> {
   const startTime = Date.now();
-  logger.debug('Verificando sesión', { maxRetries, apiUrl: config.apiUrl });
+  logger.debug({ maxRetries, apiUrl: config.apiUrl }, 'Verificando sesión');
 
   let lastError: Error | null = null;
   let lastStatus: number | undefined;
@@ -44,20 +44,17 @@ export async function verifySession(
     try {
       if (attempt > 0) {
         const delay = retryDelays[attempt - 1] || 1000;
-        logger.debug(
-          `Reintentando verificaci?n de sesi?n (intento ${attempt + 1}/${maxRetries + 1})`,
-          {
+        logger.debug({
             delay,
-          }
-        );
+          }, `Reintentando verificaci?n de sesi?n (intento ${attempt + 1}/${maxRetries + 1})`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
       const endpoint = `${config.apiUrl}/v1/auth/me`;
-      logger.debug('Llamando endpoint de verificación de sesión', {
+      logger.debug({
         endpoint,
         attempt: attempt + 1,
-      });
+      }, 'Llamando endpoint de verificación de sesión');
 
       const response = await fetchWithLogging(endpoint, {
         credentials: 'include',
@@ -72,7 +69,7 @@ export async function verifySession(
 
         // Verify response format
         if (!data || typeof data !== 'object') {
-          logger.warn('Respuesta de /auth/me tiene formato inv?lido', { data });
+          logger.warn({ data }, 'Respuesta de /auth/me tiene formato inv?lido');
           return {
             success: false,
             user: null,
@@ -89,12 +86,12 @@ export async function verifySession(
         // Impacto: Correct parsing of user data including isGoogleConnected flag
         if (data?.data) {
           const duration = Date.now() - startTime;
-          logger.info('Sesi?n verificada exitosamente', {
+          logger.info({
             userId: data.data.id,
             attempt: attempt + 1,
             duration,
             isGoogleConnected: data.data.isGoogleConnected,
-          });
+          }, 'Sesi?n verificada exitosamente');
 
           return {
             success: true,
@@ -103,7 +100,7 @@ export async function verifySession(
         }
 
         // No user in response but status is OK - treat as no session
-        logger.debug('Respuesta OK pero sin usuario', { data });
+        logger.debug({ data }, 'Respuesta OK pero sin usuario');
         return {
           success: false,
           user: null,
@@ -119,11 +116,11 @@ export async function verifySession(
       if (response.status === 401 || response.status === 403) {
         // Authentication error - don't retry
         const duration = Date.now() - startTime;
-        logger.debug('Sesi?n no v?lida', {
+        logger.debug({
           status: response.status,
           attempt: attempt + 1,
           duration,
-        });
+        }, 'Sesi?n no v?lida');
 
         return {
           success: false,
@@ -159,10 +156,10 @@ export async function verifySession(
       // Check if it's a timeout error
       if (error instanceof Error && error.message.includes('timeout')) {
         if (attempt < maxRetries) {
-          logger.warn('Timeout en verificaci?n de sesi?n, reintentando', {
+          logger.warn({
             attempt: attempt + 1,
             error: error.message,
-          });
+          }, 'Timeout en verificaci?n de sesi?n, reintentando');
           continue; // Retry
         }
 
@@ -178,21 +175,21 @@ export async function verifySession(
 
       // Network errors - retry if not last attempt
       if (attempt < maxRetries) {
-        logger.warn('Error de red en verificaci?n de sesi?n, reintentando', {
+        logger.warn({
           attempt: attempt + 1,
           error: error instanceof Error ? error.message : String(error),
-        });
+        }, 'Error de red en verificaci?n de sesi?n, reintentando');
         continue; // Retry
       }
 
       // Last attempt failed
-      logger.error('Error al verificar sesión después de todos los intentos', {
+      logger.error({
         attempts: attempt + 1,
         duration,
         error: error instanceof Error ? error.message : String(error),
         apiUrl: config.apiUrl,
         endpoint: `${config.apiUrl}/v1/auth/me`,
-      });
+      }, 'Error al verificar sesión después de todos los intentos');
 
       return {
         success: false,
@@ -207,14 +204,14 @@ export async function verifySession(
 
   // All retries exhausted
   const duration = Date.now() - startTime;
-  logger.error('Fallo al verificar sesión después de todos los reintentos', {
+  logger.error({
     attempts: maxRetries + 1,
     duration,
     lastError: lastError?.message,
     lastStatus,
     apiUrl: config.apiUrl,
     endpoint: `${config.apiUrl}/v1/auth/me`,
-  });
+  }, 'Fallo al verificar sesión después de todos los reintentos');
 
   return {
     success: false,
@@ -247,12 +244,12 @@ export async function refreshToken(): Promise<boolean> {
       return true;
     }
 
-    logger.warn('Fallo al refrescar token', { status: response.status });
+    logger.warn({ status: response.status }, 'Fallo al refrescar token');
     return false;
   } catch (error) {
-    logger.error('Error al refrescar token', {
+    logger.error({
       error: error instanceof Error ? error.message : String(error),
-    });
+    }, 'Error al refrescar token');
     return false;
   }
 }
@@ -289,13 +286,13 @@ export async function clearSession(): Promise<void> {
     logger.info('Limpiando sesi?n');
 
     await postJson(`${config.apiUrl}/v1/auth/logout`, {}).catch((err) => {
-      logger.warn('Error al limpiar cookie en servidor', { err });
+      logger.warn({ err }, 'Error al limpiar cookie en servidor');
     });
 
     logger.info('Sesi?n limpiada');
   } catch (error) {
-    logger.error('Error al limpiar sesi?n', {
+    logger.error({
       error: error instanceof Error ? error.message : String(error),
-    });
+    }, 'Error al limpiar sesi?n');
   }
 }

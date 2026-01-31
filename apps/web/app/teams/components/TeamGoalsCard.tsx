@@ -137,7 +137,7 @@ export default function TeamGoalsCard({ teamId }: TeamGoalsCardProps) {
               <Text className="mb-2 block">Métrica</Text>
               <Select
                 value={editType}
-                onValueChange={(val) => {
+                onValueChange={(val: string) => {
                   setEditType(val);
                   const existing = goals.find((g) => g.type === val);
                   setEditTarget(existing ? String(existing.target) : '0');
@@ -153,7 +153,7 @@ export default function TeamGoalsCard({ teamId }: TeamGoalsCardProps) {
               label="Objetivo Mensual"
               type="number"
               value={editTarget}
-              onChange={(e) => setEditTarget(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditTarget(e.target.value)}
             />
           </Stack>
           <ModalFooter>

@@ -68,13 +68,15 @@ const CAPACITACIONES_DATA = [
  * Seed capacitaciones
  */
 export async function seedCapacitaciones(advisorUsers: (typeof users.$inferSelect)[]) {
-  console.log('📚 Seeding capacitaciones...');
+  // eslint-disable-next-line no-console
+    console.log('📚 Seeding capacitaciones...');
 
   const createdCapacitaciones: (typeof capacitaciones.$inferSelect)[] = [];
 
   // Get an admin/manager user to be the creator
   const creatorUser = advisorUsers[0];
   if (!creatorUser) {
+    // eslint-disable-next-line no-console
     console.log('  ⚠️ No users available for capacitacion creation');
     return [];
   }
@@ -102,12 +104,14 @@ export async function seedCapacitaciones(advisorUsers: (typeof users.$inferSelec
         .returning();
 
       createdCapacitaciones.push(created);
-      console.log(`  ✓ Created capacitación: ${capData.titulo}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created capacitación: ${capData.titulo}`);
     } else {
       createdCapacitaciones.push(existing[0]!);
     }
   }
 
-  console.log(`✅ Capacitaciones seeded: ${createdCapacitaciones.length} courses\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Capacitaciones seeded: ${createdCapacitaciones.length} courses\n`);
   return createdCapacitaciones;
 }

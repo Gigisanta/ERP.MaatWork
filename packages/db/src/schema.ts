@@ -107,8 +107,8 @@ export {
 
 // Carteras
 export {
-  portfolioTemplates,
-  portfolioTemplateLines,
+  portfolios,
+  portfolioLines,
   clientPortfolioAssignments,
   clientPortfolioOverrides,
   portfolioMonitoringSnapshot,
@@ -130,8 +130,8 @@ export { auditLogs, alertPolicies } from './schema/audit';
 
 // Benchmarks y precios
 export {
-  benchmarkDefinitions,
-  benchmarkComponents,
+  // benchmarkDefinitions, // Unified into portfolios
+  // benchmarkComponents, // Unified into portfolioLines
   priceSnapshots,
   pricesDaily,
   pricesIntraday,

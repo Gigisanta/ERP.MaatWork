@@ -17,6 +17,7 @@ import { Feather } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { FeedbackButton } from './FeedbackButton';
 import { MobileBottomBar } from './MobileBottomBar';
+import { logger } from '../../lib/logger';
 
 interface NavigationNewProps {
   onToggleSidebar?: () => void;
@@ -360,13 +361,12 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    console.log('[NavigationNew] useEffect ejecutado', {
+    logger.debug({
       initialized,
       user: !!user,
       pathname,
       hasRedirected: hasRedirectedRef.current,
-      timestamp: new Date().toISOString(),
-    });
+    }, '[NavigationNew] useEffect ejecutado');
 
     // Limpiar timeout anterior si existe
     if (timeoutRef.current) {
@@ -376,7 +376,7 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
 
     // Solo procesar si ya se inicializó
     if (!initialized) {
-      console.log('[NavigationNew] Aún no inicializado, esperando...');
+      logger.debug('[NavigationNew] Aún no inicializado, esperando...');
       return;
     }
 
@@ -388,18 +388,18 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     // Justificación: El middleware ya maneja la redirección de usuarios autenticados desde rutas públicas
     // Impacto: Evita race conditions y loops de redirección en producción
     if (user) {
-      console.log('[NavigationNew] Usuario autenticado, middleware maneja redirects');
+      logger.debug('[NavigationNew] Usuario autenticado, middleware maneja redirects');
       hasRedirectedRef.current = false;
       return;
     }
 
     // Si no hay usuario y estamos en rutas públicas, no hacer nada
     if (isPublicRoute) {
-      console.log('[NavigationNew] Ruta pública sin usuario, no redirigir:', pathname);
+      logger.debug({ pathname }, '[NavigationNew] Ruta pública sin usuario, no redirigir');
       return;
     }
 
-    console.log(
+    logger.debug(
       '[NavigationNew] No hay usuario en ruta protegida, iniciando timeout de 1 segundo...'
     );
 
@@ -407,27 +407,28 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
     // El middleware ya validó el token, así que si no hay usuario después de este delay,
     // realmente no hay sesión activa
     timeoutRef.current = setTimeout(() => {
-      console.log('[NavigationNew] Timeout completado, verificando usuario nuevamente', {
+      logger.debug({
         user: !!user,
         hasRedirected: hasRedirectedRef.current,
         pathname,
-      });
+      }, '[NavigationNew] Timeout completado, verificando usuario nuevamente');
+
+
 
       // Verificar nuevamente el estado actual
       if (!hasRedirectedRef.current) {
-        console.error(
-          '[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout',
+        logger.error(
           {
             pathname,
             initialized,
-            timestamp: new Date().toISOString(),
-          }
+          },
+          '[NavigationNew] REDIRIGIENDO A /LOGIN - No hay usuario después del timeout'
         );
         hasRedirectedRef.current = true;
         // Usar replace en lugar de push para evitar problemas de historial
         router.replace('/login');
       } else {
-        console.log('[NavigationNew] Usuario encontrado después del timeout, no redirigir');
+        logger.debug('[NavigationNew] Usuario encontrado después del timeout, no redirigir');
       }
     }, 1000); // Esperar 1 segundo para dar tiempo a que AuthContext termine de verificar
 
@@ -546,12 +547,11 @@ export default function NavigationNew({ onToggleSidebar, sidebarOpen }: Navigati
 
     // Runtime debugging to identify if the correct sections are being rendered
     if (process.env.NODE_ENV === 'development') {
-      console.log('[NavigationNew] Sidebar sections generated', {
+      logger.debug({
         role: user.role,
         sectionCount: sections.length,
         titles: sections.map((s) => s.title),
-        timestamp: new Date().toISOString(),
-      });
+      }, '[NavigationNew] Sidebar sections generated');
     }
     return sections;
   })();

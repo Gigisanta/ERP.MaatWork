@@ -98,8 +98,8 @@ export {
   brokerTransactions,
   brokerPositions,
   // Portfolios
-  portfolioTemplates,
-  portfolioTemplateLines,
+  portfolios,
+  portfolioLines,
   clientPortfolioAssignments,
   clientPortfolioOverrides,
   portfolioMonitoringSnapshot,
@@ -108,8 +108,7 @@ export {
   auditLogs,
   alertPolicies,
   // Benchmarks
-  benchmarkDefinitions,
-  benchmarkComponents,
+  // Benchmarks unified into portfolios
   // Analytics/reporting
   scheduledReports,
   reportRuns,

@@ -8,7 +8,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Badge, Text, Stack, Icon, Button, Tooltip, cn } from '@maatwork/ui';
+import { Text, Icon, Button, Tooltip, cn } from '@maatwork/ui';
 
 interface ColorLegendProps {
   className?: string;
@@ -16,7 +16,6 @@ interface ColorLegendProps {
 
 export function ColorLegend({ className }: ColorLegendProps) {
   const [isDismissed, setIsDismissed] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   // Verificar si el usuario ya ha visto la leyenda
   useEffect(() => {
@@ -24,11 +23,6 @@ export function ColorLegend({ className }: ColorLegendProps) {
       const dismissed = localStorage.getItem('color-legend-dismissed');
       if (dismissed === 'true') {
         setIsDismissed(true);
-      } else {
-        // Mostrar tooltip la primera vez
-        setShowTooltip(true);
-        const timer = setTimeout(() => setShowTooltip(false), 5000);
-        return () => clearTimeout(timer);
       }
     }
   }, []);
@@ -70,13 +64,14 @@ export function ColorLegend({ className }: ColorLegendProps) {
       </div>
 
       <div className="flex items-center gap-4 flex-wrap">
-        {/* Verde - Interacción reciente */}
+        {/* Reciente (Verde) */}
         <div className="flex items-center gap-1.5">
           <div
-            className="w-4 h-4 rounded border-l-2"
+            className="w-6 h-4 rounded"
             style={{
-              backgroundColor: 'hsl(120 80% 96%)',
-              borderLeftColor: 'hsl(120 76% 36%)',
+              background:
+                'linear-gradient(90deg, hsl(var(--success) / 0.2) 0%, transparent 100%)',
+              boxShadow: 'inset 3px 0 0 0 hsl(var(--success))',
             }}
           />
           <Text size="xs" color="secondary">
@@ -84,13 +79,14 @@ export function ColorLegend({ className }: ColorLegendProps) {
           </Text>
         </div>
 
-        {/* Amarillo - Hace 7+ días */}
+        {/* 7+ días (Amarillo) */}
         <div className="flex items-center gap-1.5">
           <div
-            className="w-4 h-4 rounded border-l-2"
+            className="w-6 h-4 rounded"
             style={{
-              backgroundColor: 'hsl(60 80% 96%)',
-              borderLeftColor: 'hsl(60 70% 45%)',
+              background:
+                'linear-gradient(90deg, hsl(var(--warning-text) / 0.2) 0%, transparent 100%)',
+              boxShadow: 'inset 3px 0 0 0 hsl(var(--warning-text))',
             }}
           />
           <Text size="xs" color="secondary">
@@ -98,13 +94,14 @@ export function ColorLegend({ className }: ColorLegendProps) {
           </Text>
         </div>
 
-        {/* Rojo - Sin interacción */}
+        {/* Sin contacto (Rojo) */}
         <div className="flex items-center gap-1.5">
           <div
-            className="w-4 h-4 rounded border-l-2"
+            className="w-6 h-4 rounded"
             style={{
-              backgroundColor: 'hsl(0 100% 98%)',
-              borderLeftColor: 'hsl(0 84% 60%)',
+              background:
+                'linear-gradient(90deg, hsl(var(--destructive) / 0.2) 0%, transparent 100%)',
+              boxShadow: 'inset 3px 0 0 0 hsl(var(--destructive))',
             }}
           />
           <Text size="xs" color="secondary">
@@ -112,13 +109,14 @@ export function ColorLegend({ className }: ColorLegendProps) {
           </Text>
         </div>
 
-        {/* Cliente - Verde especial */}
+        {/* Cliente (Morado) */}
         <div className="flex items-center gap-1.5">
           <div
-            className="w-4 h-4 rounded border-l-2"
+            className="w-6 h-4 rounded"
             style={{
-              backgroundColor: 'hsl(142 70% 96%)',
-              borderLeftColor: 'hsl(142 76% 36%)',
+              background:
+                'linear-gradient(90deg, hsl(var(--primary) / 0.2) 0%, transparent 100%)',
+              boxShadow: 'inset 3px 0 0 0 hsl(var(--primary))',
             }}
           />
           <Text size="xs" color="secondary">

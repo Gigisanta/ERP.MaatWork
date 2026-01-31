@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSWRConfig } from 'swr';
 import { z } from 'zod';
-import { Input, Button, Stack, Text, Spinner, Alert } from '@maatwork/ui';
+import { Input, Button, Stack, Text, Spinner } from '@maatwork/ui';
 import { useToast } from '@/lib/hooks/useToast';
 import { updateContactTag } from '@/lib/api/tags';
 import type { UpdateContactTagRequest } from '@/types';
@@ -112,8 +112,8 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
     e.stopPropagation();
 
     logger.debug(
-      'handleSubmit llamado',
-      toLogContext({ contactId, tagId, hasErrors: Object.keys(errors).length > 0 })
+      toLogContext({ contactId, tagId, hasErrors: Object.keys(errors).length > 0 }),
+      'handleSubmit llamado'
     );
 
     // Limpiar errores previos
@@ -124,12 +124,12 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
 
     if (!validationResult.success) {
       logger.warn(
-        'Validación Zod falló',
         toLogContext({
           contactId,
           tagId,
           errors: validationResult.error.errors.map((e) => ({ path: e.path, message: e.message })),
-        })
+        }),
+        'Validación Zod falló'
       );
       const zodErrors: typeof errors = {};
       validationResult.error.errors.forEach((error) => {
@@ -157,11 +157,11 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
         payload.policyNumber = formData.policyNumber;
       }
 
-      logger.debug('Enviando datos de contact tag', toLogContext({ contactId, tagId, payload }));
+      logger.debug(toLogContext({ contactId, tagId, payload }), 'Enviando datos de contact tag');
 
       const response = await updateContactTag(contactId, tagId, payload);
 
-      logger.info('Contact tag actualizado exitosamente', toLogContext({ contactId, tagId }));
+      logger.info(toLogContext({ contactId, tagId }), 'Contact tag actualizado exitosamente');
 
       if (response.success && response.data) {
         showToast(
@@ -182,24 +182,24 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
       } else {
         const errorMsg = response.error || 'Error al guardar los datos';
         logger.error(
-          'Error en respuesta de updateContactTag',
           toLogContext({
             contactId,
             tagId,
             error: errorMsg,
             response,
-          })
+          }),
+          'Error en respuesta de updateContactTag'
         );
         throw new Error(errorMsg);
       }
     } catch (err) {
       logger.error(
-        'Error al guardar contact tag',
         toLogContext({
           error: err instanceof Error ? err.message : String(err),
           contactId,
           tagId,
-        })
+        }),
+        'Error al guardar contact tag'
       );
       let errorMessage = 'Error desconocido al guardar';
 
@@ -224,7 +224,7 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
             label="Prima Mensual"
             type="number"
             value={formData.monthlyPremium?.toString() ?? ''}
-            onChange={(e) => handleMonthlyPremiumChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleMonthlyPremiumChange(e.target.value)}
             placeholder="Ej: 550"
             disabled={isSaving}
             error={errors.monthlyPremium}
@@ -242,7 +242,7 @@ export default function TagDetailsForm({ contactId, tagId, initialData }: TagDet
             label="Número de Póliza"
             type="text"
             value={formData.policyNumber ?? ''}
-            onChange={(e) => handlePolicyNumberChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePolicyNumberChange(e.target.value)}
             placeholder="Ej: POL-12345"
             disabled={isSaving}
             error={errors.policyNumber}

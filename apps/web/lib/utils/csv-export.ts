@@ -8,6 +8,7 @@
 
 import type { Contact, PipelineStage } from '@/types';
 import { logger, toLogContextValue } from '../logger';
+import { formatDateDDMMYYYY } from '@maatwork/utils';
 
 /**
  * Calcula el score de completitud de un contacto para ordenamiento
@@ -96,20 +97,7 @@ function getCustomField(contact: Contact, fieldName: string): string {
 /**
  * Formatea fecha para CSV (formato legible)
  */
-function formatDate(dateInput: string | Date | null | undefined): string {
-  if (!dateInput) return '';
-  try {
-    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
-    if (isNaN(date.getTime())) return String(dateInput);
-    return date.toLocaleDateString('es-AR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  } catch {
-    return String(dateInput);
-  }
-}
+// function removed in favor of shared utility
 
 /**
  * Exporta contactos a formato CSV ordenados por completitud comercial
@@ -121,7 +109,7 @@ function formatDate(dateInput: string | Date | null | undefined): string {
 export function exportContactsToCSV(contacts: Contact[], pipelineStages: PipelineStage[]): string {
   // Validar que contacts sea un array válido
   if (!Array.isArray(contacts)) {
-    logger.error('exportContactsToCSV: contacts no es un array', { contacts });
+    logger.error({ contacts }, 'exportContactsToCSV: contacts no es un array');
     contacts = [];
   }
 
@@ -177,14 +165,14 @@ export function exportContactsToCSV(contacts: Contact[], pipelineStages: Pipelin
       escapeCSVValue(contact.nextStep),
       escapeCSVValue(contact.notes),
       escapeCSVValue(
-        formatDate(
+        formatDateDDMMYYYY(
           (contact as Contact & { createdAt?: string | Date }).createdAt as
             | string
             | Date
             | undefined
         )
       ),
-      escapeCSVValue(formatDate(contact.contactLastTouchAt)),
+      escapeCSVValue(formatDateDDMMYYYY(contact.contactLastTouchAt)),
     ];
 
     return row.join(',');
@@ -211,10 +199,10 @@ export function downloadCSV(csvContent: string, filename: string): void {
   // Validar que el contenido tenga al menos headers y una fila de datos
   const lines = csvContent.split('\n').filter((line) => line.trim().length > 0);
   if (lines.length <= 1) {
-    logger.warn('downloadCSV: CSV solo tiene headers, sin datos', { lines });
+    logger.warn({ lines }, 'downloadCSV: CSV solo tiene headers, sin datos');
   }
 
-  logger.info('downloadCSV: descargando archivo', { filename, lineCount: lines.length });
+  logger.info({ filename, lineCount: lines.length }, 'downloadCSV: descargando archivo');
 
   try {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -234,9 +222,9 @@ export function downloadCSV(csvContent: string, filename: string): void {
       URL.revokeObjectURL(url);
     }, 100);
   } catch (err) {
-    logger.error('downloadCSV: error al crear descarga', {
+    logger.error({
       error: toLogContextValue(err),
-    });
+    }, 'downloadCSV: error al crear descarga');
     throw err;
   }
 }

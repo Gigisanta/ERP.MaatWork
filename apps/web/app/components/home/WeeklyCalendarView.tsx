@@ -203,7 +203,7 @@ export function WeeklyCalendarView({
       setIsFormOpen(false);
       onRefresh();
     } catch (error) {
-      logger.error('Error saving event', { error: toLogContextValue(error) });
+      logger.error({ error: toLogContextValue(error) }, 'Error saving event');
       setFormError('Error al guardar el evento. Inténtalo de nuevo.');
     } finally {
       setIsSubmitting(false);
@@ -219,7 +219,7 @@ export function WeeklyCalendarView({
       setSelectedEvent(null);
       onRefresh();
     } catch (error) {
-      logger.error('Error deleting event', { error: toLogContextValue(error) });
+      logger.error({ error: toLogContextValue(error) }, 'Error deleting event');
     } finally {
       setIsDeleting(false);
     }

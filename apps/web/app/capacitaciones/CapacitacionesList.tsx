@@ -16,18 +16,11 @@ import {
   Text,
   Stack,
   Input,
-  Select,
   Badge,
   DataTable,
   DropdownMenu,
   DropdownMenuItem,
   EmptyState,
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  ModalDescription,
-  ModalContent,
-  ModalFooter,
   Alert,
   Spinner,
   Icon,
@@ -89,7 +82,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
   // AI_DECISION: Use SWR with fallbackData for server-side initial data
   // Justificación: Maintains revalidation after mutations while using server-fetched initial data
   // Impacto: Faster initial load with server data, automatic revalidation for updates
-  const { capacitaciones, pagination, isLoading, error, mutate } = useCapacitaciones(
+  const { capacitaciones, isLoading, error } = useCapacitaciones(
     queryParams,
     initialData
       ? { data: initialData.data, success: true, pagination: initialData.pagination }
@@ -287,12 +280,12 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
             <Input
               placeholder="Buscar por título o tema..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="flex-1 min-w-[200px]"
             />
             <select
               value={selectedTema}
-              onChange={(e) => setSelectedTema(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedTema(e.target.value)}
               className="w-[200px] px-3 py-2 border border-gray-300 rounded-md"
             >
               <option value="all">Todos los temas</option>
@@ -370,7 +363,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
           title={confirmDialog.title}
           {...(confirmDialog.description ? { description: confirmDialog.description } : {})}
           {...(confirmDialog.variant ? { variant: confirmDialog.variant } : {})}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             if (!open) {
               setConfirmDialog({ open: false, title: '', onConfirm: () => {} });
             }

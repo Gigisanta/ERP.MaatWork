@@ -107,7 +107,7 @@ export function PersonalCalendarWidget() {
     try {
       await Promise.all([mutatePersonal(), mutateTeam()]);
     } catch (err) {
-      logger.error('[PersonalCalendarWidget] Refresh failed', { error: toLogContextValue(err) });
+      logger.error({ error: toLogContextValue(err) }, '[PersonalCalendarWidget] Refresh failed');
     }
   };
 

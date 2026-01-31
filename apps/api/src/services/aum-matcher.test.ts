@@ -20,7 +20,7 @@ import {
   isNameSimilarityHigh,
   computeMatchStatus,
   calculateNameSimilarity,
-} from '@/services/aum/matcher';
+} from './aum/matcher';
 
 // Mock alias service
 vi.mock('./alias', () => ({
@@ -130,9 +130,9 @@ describe('aumMatcher', () => {
       const result = await matchContactByAccountNumber('balanz', '12345');
 
       expect(result).toBeNull();
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({ accountNumber: '12345' }),
-        'Error matching AUM row by account number'
+        'Failed to match contact by account number'
       );
     });
   });
@@ -277,7 +277,7 @@ describe('aumMatcher', () => {
       const result = await batchMatchContactsByAccountNumber('balanz', ['12345']);
 
       expect(result.size).toBe(0);
-      expect(mockLogger.warn).toHaveBeenCalled();
+      expect(mockLogger.error).toHaveBeenCalled();
     });
   });
 

@@ -53,7 +53,7 @@ export { optionalEmailSchema };
  * Schema para validar UUID opcional (puede ser null o undefined)
  * @deprecated Use optionalUuidSchema from common-schemas.ts
  */
-export { optionalUuidSchema };
+;
 
 /**
  * Schema para validar rango de fechas

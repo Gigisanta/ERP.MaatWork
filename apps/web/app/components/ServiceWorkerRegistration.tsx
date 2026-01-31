@@ -20,7 +20,7 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          logger.info('Service Worker registered', { scope: registration.scope });
+          logger.info({ scope: registration.scope }, 'Service Worker registered');
 
           // Check for updates
           registration.addEventListener('updatefound', () => {
@@ -36,7 +36,7 @@ export default function ServiceWorkerRegistration() {
           });
         })
         .catch((error) => {
-          logger.error('Service Worker registration failed', { error });
+          logger.error({ error }, 'Service Worker registration failed');
         });
     }
   }, []);

@@ -167,7 +167,7 @@ export function CalendarEventForm({
   };
 
   return (
-    <Modal open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Modal open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <ModalContent className="max-w-lg p-0 overflow-hidden sm:rounded-xl">
         <form onSubmit={handleSubmit} className="flex flex-col w-full h-full sm:h-auto">
           <ModalHeader className="px-6 py-4 border-b border-border/40 bg-background sticky top-0 z-40">
@@ -278,7 +278,7 @@ export function CalendarEventForm({
                       <Input
                         placeholder="email@ejemplo.com"
                         value={attendee.email}
-                        onChange={(e) => handleAttendeeChange(index, e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleAttendeeChange(index, e.target.value)}
                         className="h-9"
                       />
                       <Button

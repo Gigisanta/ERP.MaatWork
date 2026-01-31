@@ -32,7 +32,9 @@ export const automationConfigs = pgTable(
     config: jsonb('config')
       .notNull()
       .default(sql`'{}'::jsonb`), // Configuración adicional (payload personalizado, etc.)
+    webhookUrl: text('webhook_url'), // URL opcional para webhook automations
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({

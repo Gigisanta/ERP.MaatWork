@@ -145,8 +145,8 @@ export default function TeamsClient({
       setAdvisorCandidates((prev) => prev.filter((a: TeamAdvisor) => String(a.id) !== userId));
     } catch (err) {
       logger.error(
-        'Error inviting advisor',
-        toLogContext({ err, teamId: linkModalOpen.teamId, userId })
+        toLogContext({ err, teamId: linkModalOpen.teamId, userId }),
+        'Error inviting advisor'
       );
     } finally {
       setInviteLoading(null);
@@ -175,7 +175,7 @@ export default function TeamsClient({
         throw new Error('Error al crear equipo');
       }
     } catch (err) {
-      logger.error('Error creating team', toLogContext({ err, teamName: newTeamName }));
+      logger.error(toLogContext({ err, teamName: newTeamName }), 'Error creating team');
       setError(err instanceof Error ? err.message : 'Error al crear equipo');
     } finally {
       setActionLoading(null);
@@ -191,8 +191,8 @@ export default function TeamsClient({
       setMembershipRequests((prev) => prev.filter((req) => req.id !== requestId));
     } catch (err) {
       logger.error(
-        'Error responding to membership request',
-        toLogContext({ err, requestId, action })
+        toLogContext({ err, requestId, action }),
+        'Error responding to membership request'
       );
       setError(err instanceof Error ? err.message : 'Error al procesar solicitud');
     } finally {
@@ -283,8 +283,8 @@ export default function TeamsClient({
       );
     } catch (err) {
       logger.error(
-        'Error connecting team calendar',
-        toLogContext({ err, teamId: configTeam.id, calendarId: calendarIdToConnect, type })
+        toLogContext({ err, teamId: configTeam.id, calendarId: calendarIdToConnect, type }),
+        'Error connecting team calendar'
       );
       setError(err instanceof Error ? err.message : 'Error al conectar calendario');
     } finally {
@@ -476,11 +476,12 @@ export default function TeamsClient({
               </Text>
             </CardHeader>
             <CardContent className="p-4">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <DataTable
                 data={membershipRequests as unknown as Record<string, unknown>[]}
                 columns={membershipColumns as unknown as Column<Record<string, unknown>>[]}
                 keyField="id"
-                emptyMessage="No hay solicitudes pendientes."
+                emptyState={<Text color="secondary">No hay solicitudes pendientes.</Text>}
               />
             </CardContent>
           </Card>

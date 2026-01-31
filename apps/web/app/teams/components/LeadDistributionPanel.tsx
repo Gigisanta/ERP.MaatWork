@@ -75,7 +75,7 @@ export default function LeadDistributionPanel({ teamId }: LeadDistributionPanelP
         <input
           type="checkbox"
           checked={selectedLeads.includes(item.id)}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             if (e.target.checked) setSelectedLeads([...selectedLeads, item.id]);
             else setSelectedLeads(selectedLeads.filter((id) => id !== item.id));
           }}
@@ -108,7 +108,7 @@ export default function LeadDistributionPanel({ teamId }: LeadDistributionPanelP
                   <Text className="mb-1 block">Reasignar seleccionados a:</Text>
                   <Select
                     value={targetAdvisor}
-                    onValueChange={(val) => setTargetAdvisor(val)}
+                    onValueChange={(val: string) => setTargetAdvisor(val)}
                     items={teamMembers.map((m) => ({
                       label: m.fullName || m.email || 'Unknown',
                       value: m.userId,

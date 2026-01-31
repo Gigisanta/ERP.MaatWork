@@ -70,7 +70,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
       {/* Toast component includes its own Provider internally */}
       <Toast
         open={toast.show}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) {
             hideToast();
           }

@@ -231,11 +231,10 @@ test(api): add auth middleware tests
 
 | Servicio | URL |
 |----------|-----|
-| Web | http://localhost:3000 |
-| API | http://localhost:3001 |
-| Analytics | http://localhost:3002 |
-| Drizzle Studio | http://localhost:4983 |
-| N8N | http://localhost:5678 |
+| Web | <http://localhost:3000> |
+| API | <http://localhost:3001> |
+| Analytics | <http://localhost:3002> |
+| Drizzle Studio | <http://localhost:4983> |
 
 ---
 
@@ -300,4 +299,3 @@ pnpm mw clean deps --force
 - [CLI Reference](./CLI.md)
 - [Guía de Contribución](./CONTRIBUTING.md)
 - [Arquitectura](./ARCHITECTURE.md)
-

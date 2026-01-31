@@ -86,9 +86,9 @@ export default function PerformanceDashboard() {
         setPoolStats(poolResponse.data);
       }
     } catch (err) {
-      logger.error('Error fetching performance metrics', {
+      logger.error({
         err: err instanceof Error ? err.message : String(err),
-      });
+      }, 'Error fetching performance metrics');
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);

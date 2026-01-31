@@ -118,7 +118,7 @@ export default function CalendarWidget({
               {showDropdown && (
                 <Select
                   value={calendarType}
-                  onValueChange={(val) => setCalendarType(val as 'primary' | 'meetingRoom')}
+                  onValueChange={(val: string) => setCalendarType(val as 'primary' | 'meetingRoom')}
                   items={calendarOptions}
                   className="w-[250px]"
                   // If only one option (no meeting room), it acts as read-only label effectively

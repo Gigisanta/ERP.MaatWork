@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -8,23 +10,40 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from portfolio_performance import (
-    PerformanceData,
-    PortfolioComponent,
-    portfolio_calculator,
-)
+import portfolio_performance as portfolio_calculator
 from yfinance_client import yfinance_client
+from portfolio_performance import PortfolioComponent
 
-# Configure logging - formato compacto
-# AI_DECISION: Formato compacto de logs - solo información esencial
-# Justificación: Timestamp completo, nombre del logger generan demasiado ruido
-# Impacto: Logs 60-70% más compactos, más legibles
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S",
-)
+class JsonFormatter(logging.Formatter):
+    """Formateador para logs estructurados en JSON"""
+    def format(self, record):
+        log_record = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "service": "analytics-service",
+            "module": record.module,
+        }
+        if record.exc_info:
+            log_record["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_record)
+
+# Configure logging
+is_production = os.getenv("NODE_ENV") == "production"
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+
+handler = logging.StreamHandler(sys.stdout)
+if is_production:
+    handler.setFormatter(JsonFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
+else:
+    handler.setFormatter(logging.Formatter(
+        fmt="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%H:%M:%S"
+    ))
+
+logging.basicConfig(level=log_level, handlers=[handler])
 logger = logging.getLogger(__name__)
+
 # Reducir verbosidad de librerías externas
 logging.getLogger("uvicorn").setLevel(logging.WARNING)
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)

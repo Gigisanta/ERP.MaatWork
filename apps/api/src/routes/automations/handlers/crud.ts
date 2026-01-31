@@ -18,7 +18,7 @@ import { z } from 'zod';
 /**
  * GET /automations - List automation configs
  */
-export const handleListAutomations = createRouteHandler(async (req: Request) => {
+export const handleListAutomations = createRouteHandler(async (_req: Request) => {
   const items = await db().select().from(automationConfigs).orderBy(automationConfigs.displayName);
 
   return items;
@@ -150,4 +150,103 @@ export const handleDeleteAutomation = createRouteHandler(async (req: Request) =>
   req.log.info({ automationConfigId: id }, 'automation config deleted');
 
   return { success: true };
+});
+
+/**
+ * GET /automations/health - Diagnóstico del sistema de automations
+ *
+ * Verifica:
+ * - Variables de entorno de Google OAuth
+ * - Automations configuradas y su estado
+ * - Tokens OAuth disponibles
+ */
+export const handleAutomationsHealth = createRouteHandler(async (_req: Request) => {
+  const { googleOAuthTokens } = await import('@maatwork/db');
+  const { env } = await import('../../../config/env');
+
+  // Check all automations
+  const automations = await db().select().from(automationConfigs);
+
+  // Check OAuth tokens
+  const tokens = await db()
+    .select({
+      id: googleOAuthTokens.id,
+      email: googleOAuthTokens.email,
+      userId: googleOAuthTokens.userId,
+    })
+    .from(googleOAuthTokens);
+
+  // Analyze each automation
+  const automationDetails = automations.map((auto: typeof automations[number]) => {
+    const config = auto.config as { senderEmail?: string; subject?: string; body?: string } | null;
+    const issues: string[] = [];
+
+    if (!auto.enabled) {
+      issues.push('Automation is disabled');
+    }
+
+    if (!config?.senderEmail) {
+      issues.push('Missing senderEmail - configure with a Google OAuth connected email');
+    } else {
+      // Check if senderEmail has an OAuth token
+      const hasToken = tokens.some((t: typeof tokens[number]) => t.email === config.senderEmail);
+      if (!hasToken) {
+        issues.push(`senderEmail "${config.senderEmail}" has no OAuth token connected`);
+      }
+    }
+
+    if (!config?.subject) {
+      issues.push('Missing email subject');
+    }
+
+    if (!config?.body) {
+      issues.push('Missing email body');
+    }
+
+    return {
+      id: auto.id,
+      name: auto.name,
+      displayName: auto.displayName,
+      enabled: auto.enabled,
+      triggerType: auto.triggerType,
+      senderEmail: config?.senderEmail || null,
+      hasWebhook: !!auto.webhookUrl,
+      issues,
+      ready: issues.length === 0,
+    };
+  });
+
+  // Environment checks
+  const envChecks = {
+    googleClientId: !!env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_ID !== '',
+    googleClientSecret: !!env.GOOGLE_CLIENT_SECRET && env.GOOGLE_CLIENT_SECRET !== '',
+    googleEncryptionKey:
+      !!env.GOOGLE_ENCRYPTION_KEY && env.GOOGLE_ENCRYPTION_KEY.length >= 32,
+    googleRedirectUri: !!env.GOOGLE_REDIRECT_URI,
+  };
+
+  const envReady = Object.values(envChecks).every(Boolean);
+
+  // Summary
+  interface AutomationDetail {
+    ready: boolean;
+    enabled: boolean;
+  }
+  
+  const readyCount = automationDetails.filter((a: AutomationDetail) => a.ready).length;
+  const enabledCount = automationDetails.filter((a: AutomationDetail) => a.enabled).length;
+
+  return {
+    summary: {
+      environment: env.NODE_ENV,
+      envConfigured: envReady,
+      totalAutomations: automations.length,
+      enabledAutomations: enabledCount,
+      readyAutomations: readyCount,
+      oauthTokensAvailable: tokens.length,
+    },
+    envChecks,
+    oauthEmails: tokens.map((t: typeof tokens[number]) => t.email),
+    automations: automationDetails,
+  };
 });

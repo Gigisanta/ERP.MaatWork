@@ -37,7 +37,7 @@ export interface CareerPlanLevelCreateRequest extends Omit<
 /**
  * Request para actualizar un nivel del plan de carrera
  */
-export interface CareerPlanLevelUpdateRequest extends UpdateRequest<CareerPlanLevel> {}
+export type CareerPlanLevelUpdateRequest = UpdateRequest<CareerPlanLevel>;
 
 /**
  * Progreso del usuario en el plan de carrera

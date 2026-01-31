@@ -181,7 +181,7 @@ export interface AumDuplicatesResponse {
 /**
  * Request to insert AUM row (Backend)
  */
-export interface AumRowInsert extends Omit<
+export type AumRowInsert = Omit<
   AumRow,
   | 'id'
   | 'advisorNormalized'
@@ -193,7 +193,7 @@ export interface AumRowInsert extends Omit<
   | 'contact'
   | 'user'
   | 'suggestedUserId'
-> {}
+>;
 
 /**
  * Upsert Statistics

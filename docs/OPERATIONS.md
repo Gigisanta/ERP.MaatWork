@@ -33,7 +33,7 @@ Esta guía consolida toda la información sobre deploy, configuración, monitore
 # 1. Instalar dependencias
 pnpm install
 
-# 2. Iniciar PostgreSQL y N8N (Docker)
+# 2. Iniciar PostgreSQL (Docker)
 docker compose up -d
 
 # 3. Configurar variables de entorno
@@ -97,10 +97,10 @@ pnpm dev:kill
 ```
 
 **URLs de Desarrollo:**
-- Web: http://localhost:3000
-- API: http://localhost:3001
-- Analytics: http://localhost:3002 (ajusta `ANALYTICS_PORT` si el puerto está ocupado)
-- N8N: http://localhost:5678
+
+- Web: <http://localhost:3000>
+- API: <http://localhost:3001>
+- Analytics: <http://localhost:3002> (ajusta `ANALYTICS_PORT` si el puerto está ocupado)
 
 ### Verificar Salud
 
@@ -129,6 +129,7 @@ pnpm -F @maatwork/db run db:init
 ```
 
 **Notas Importantes:**
+
 - ❌ **NUNCA usar `drizzle-kit push`** en CI/prod (es destructivo)
 - Migraciones: baseline unificada en `packages/db/migrations_squashed`
 - En desarrollo, la API corre migraciones automáticamente al iniciar si `AUTO_MIGRATE=true` (por defecto cuando `NODE_ENV !== 'production'`)
@@ -204,6 +205,7 @@ pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 ### Variables de Entorno en Producción
 
 **API (`apps/api/.env`):**
+
 - `DATABASE_URL` - URL de PostgreSQL
 - `PORT` - Puerto del servidor (default: 3001)
 - `LOG_LEVEL` - Nivel de logging (info/warn/error)
@@ -213,6 +215,7 @@ pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 - `CSP_ENABLED` - Habilitar CSP (opcional)
 
 **Web (`apps/web/.env.local`):**
+
 - `NEXT_PUBLIC_API_URL` - URL de la API en producción
 - `JWT_SECRET` - Debe coincidir con API
 
@@ -237,6 +240,7 @@ pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 - **p99**: 99% de las queries son más rápidas que este valor
 
 **Umbrales recomendados:**
+
 - `< 100ms`: Excelente
 - `100-500ms`: Bueno
 - `500-1000ms`: Aceptable (revisar optimización)
@@ -245,6 +249,7 @@ pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 ##### Queries N+1
 
 Patrones N+1 se detectan automáticamente cuando:
+
 - Múltiples queries similares (mismo patrón base) se ejecutan en una ventana de 100ms
 - Al menos 5 queries similares en la ventana
 
@@ -338,6 +343,7 @@ Genera reporte de uso de índices para identificar índices no utilizados o subu
 ### Dashboard de Performance
 
 Acceder a `/admin/performance` para visualizar:
+
 - Métricas en tiempo real
 - Top queries lentas
 - Cache hit rate
@@ -346,6 +352,7 @@ Acceder a `/admin/performance` para visualizar:
 ### Alertas Automáticas
 
 El job `query-performance-alerts` ejecuta diariamente y detecta:
+
 - Queries degradadas (>2x tiempo promedio)
 - Queries lentas persistentes (p95 > 1000ms)
 - Patrones N+1
@@ -356,6 +363,7 @@ Las alertas se envían como notificaciones a usuarios admin.
 ### Reportes Semanales
 
 El job `weekly-performance-report` ejecuta semanalmente y genera:
+
 - Comparación semana a semana
 - Identificación de tendencias
 - Reportes semanales de performance en formato JSON y texto para análisis de tendencias
@@ -379,9 +387,11 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Síntomas:** Error al iniciar la API
 
 **Soluciones:**
+
 1. Verificar `DATABASE_URL` está configurado correctamente
 2. Verificar `JWT_SECRET` está configurado
 3. Verificar puertos no están ocupados:
+
    ```bash
    # Windows
    netstat -ano | findstr :3001
@@ -389,7 +399,9 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
    # Linux/Mac
    lsof -i :3001
    ```
+
 4. Verificar PostgreSQL está corriendo:
+
    ```bash
    docker ps | grep postgres
    # Si no está corriendo
@@ -401,6 +413,7 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Síntomas:** Usuario autenticado recibe 403 o redirects inesperados
 
 **Soluciones:**
+
 1. Verificar cookie `token` está presente en navegador
 2. Verificar `JWT_SECRET` es consistente entre API y Web
 3. Verificar token no ha expirado (verificar `JWT_EXPIRES_IN`)
@@ -411,10 +424,13 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Síntomas:** Búsqueda de instrumentos es muy lenta
 
 **Soluciones:**
+
 1. Verificar `apps/analytics-service` está corriendo:
+
    ```bash
    curl http://localhost:3002/health  # Ajusta el puerto si sobrescribiste ANALYTICS_PORT
    ```
+
 2. Verificar conectividad entre API y analytics-service
 3. Los timeouts protegerán la API (15s normal, 5min backfill)
 4. Verificar logs del servicio Python para errores
@@ -424,6 +440,7 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Síntomas:** Error al ejecutar seeds por datos duplicados
 
 **Soluciones:**
+
 1. Asegurarse de idempotencia en seeds
 2. Revisar `onConflict*` en código de seeds
 3. Limpiar datos antes de re-ejecutar seeds si es necesario
@@ -433,6 +450,7 @@ El job `weekly-performance-report` ejecuta semanalmente y genera:
 **Síntomas:** Procesos quedan corriendo después de Ctrl+C
 
 **Soluciones:**
+
 ```bash
 # Detener todos los servicios
 pnpm dev:kill
@@ -449,16 +467,22 @@ pkill -f "uvicorn.*main:app"
 **Síntomas:** El servicio Python no responde
 
 **Soluciones:**
+
 1. El servicio es opcional. Si no está disponible, el API usará fallback a base de datos
 2. Verificar Python:
+
    ```bash
    python3 --version
    ```
+
 3. Instalar dependencias:
+
    ```bash
    pnpm -F @maatwork/analytics-service install
    ```
+
 4. Iniciar servicio:
+
    ```bash
    pnpm -F @maatwork/analytics-service dev
    ```
@@ -470,7 +494,7 @@ pkill -f "uvicorn.*main:app"
 ### Configuración Inicial
 
 1. **Crear proyecto en Google Cloud Console:**
-   - Ir a https://console.cloud.google.com/
+   - Ir a <https://console.cloud.google.com/>
    - Crear nuevo proyecto o seleccionar existente
    - Habilitar Google Calendar API
 
@@ -488,11 +512,13 @@ pkill -f "uvicorn.*main:app"
    - Ver sección [Variables de Entorno](#variables-de-entorno) para `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
    - **GOOGLE_REDIRECT_URI** debe coincidir **exactamente** con una de las URIs configuradas en Google Cloud Console
    - Generar `GOOGLE_ENCRYPTION_KEY` (32 caracteres mínimo):
+
      ```bash
      openssl rand -base64 32
      ```
 
 4. **Aplicar migraciones de base de datos:**
+
    ```bash
    pnpm -F @maatwork/db generate
    pnpm -F @maatwork/db migrate
@@ -505,18 +531,19 @@ pkill -f "uvicorn.*main:app"
 Este es el error más común al configurar Google OAuth. Ocurre cuando la URI de redirección no coincide exactamente con la configurada en Google Cloud Console.
 
 **Síntomas:**
+
 - Error al intentar iniciar sesión con Google: "Error 400: redirect_uri_mismatch"
 - Mensaje: "No puedes acceder porque esta app envió una solicitud no válida"
 
 **Solución paso a paso:**
 
 1. **Verificar Google Cloud Console:**
-   - Ir a https://console.cloud.google.com/apis/credentials
+   - Ir a <https://console.cloud.google.com/apis/credentials>
    - Seleccionar tu OAuth 2.0 Client ID
    - En "Authorized redirect URIs", verificar que esté configurada exactamente:
      - Desarrollo: `http://localhost:3001/v1/auth/google/callback`
      - Producción: `https://[tu-dominio]/v1/auth/google/callback`
-   - **Importante**: 
+   - **Importante**:
      - Sin trailing slash al final
      - Protocolo correcto (http para dev, https para prod)
      - Path exacto: `/v1/auth/google/callback`
@@ -529,6 +556,7 @@ Este es el error más común al configurar Google OAuth. Ocurre cuando la URI de
    - Ejemplo producción: `GOOGLE_REDIRECT_URI=https://maat.work/v1/auth/google/callback`
 
 3. **Reiniciar servidor:**
+
    ```bash
    # Después de cambiar variables de entorno, reiniciar el servidor API
    pnpm -F @maatwork/api dev
@@ -539,6 +567,7 @@ Este es el error más común al configurar Google OAuth. Ocurre cuando la URI de
    - El sistema valida automáticamente el formato y muestra warnings si hay problemas
 
 **Errores comunes:**
+
 - ❌ `http://localhost:3001/v1/auth/google/callback/` (trailing slash)
 - ❌ `https://localhost:3001/v1/auth/google/callback` (https en localhost)
 - ❌ `http://localhost:3001/v1/auth/google/callbacks` (path incorrecto)
@@ -546,11 +575,13 @@ Este es el error más común al configurar Google OAuth. Ocurre cuando la URI de
 - ✅ `https://maat.work/v1/auth/google/callback` (correcto para producción)
 
 #### Error "Google Calendar not connected"
+
 - Verificar que el usuario haya completado el flujo OAuth2
 - Verificar que los tokens no estén expirados (se refrescan automáticamente cada 10 minutos)
 - Revisar logs del backend para errores de refresh de tokens
 
 #### Error "Failed to refresh token"
+
 - Verificar que `GOOGLE_ENCRYPTION_KEY` sea el mismo en todos los entornos
 - Verificar que el refresh token no haya sido revocado en Google Account
 - El usuario puede necesitar re-autenticarse
@@ -560,11 +591,13 @@ Este es el error más común al configurar Google OAuth. Ocurre cuando la URI de
 Este error ocurre cuando los tokens de Google OAuth no pueden ser desencriptados.
 
 **Causa:**
+
 - La clave `GOOGLE_ENCRYPTION_KEY` cambió después de que los tokens fueron guardados
 - Los tokens fueron encriptados con una clave diferente (ej: en otro entorno o con una clave anterior)
 - La clave actual no coincide con la clave usada para encriptar los tokens existentes
 
 **Síntomas:**
+
 - Error en logs: `Failed to decrypt token: encryption key mismatch`
 - Error al intentar acceder a calendario de Google: `Unsupported state or unable to authenticate data`
 - El job de refresh de tokens falla continuamente
@@ -585,19 +618,23 @@ Este error ocurre cuando los tokens de Google OAuth no pueden ser desencriptados
 
 3. **Si el problema persiste:**
    - Eliminar manualmente los tokens corruptos de la base de datos:
+
      ```sql
      DELETE FROM google_oauth_tokens WHERE user_id = 'user-id-here';
      ```
+
    - O usar el endpoint DELETE `/v1/auth/google/disconnect` para limpiar tokens
    - Luego el usuario debe reconectar su cuenta de Google
 
 **Prevención:**
+
 - Generar una clave única y segura al inicio: `openssl rand -base64 32`
 - Guardar la clave de forma segura (no en el código)
 - **Nunca cambiar** `GOOGLE_ENCRYPTION_KEY` después de que los tokens están en producción
 - Si es absolutamente necesario cambiar la clave, planificar una migración donde todos los usuarios reconecten
 
 #### CSP bloquea recursos de Google
+
 - Si `CSP_ENABLED=true`, verificar que la configuración en `apps/api/src/index.ts` incluya dominios de Google
 - Ver sección [Seguridad](#seguridad-y-performance) para más detalles
 
@@ -608,7 +645,7 @@ Para que Google apruebe tu aplicación OAuth y permita que usuarios externos la 
 #### Paso 1: Verificar Dominio en Google Search Console
 
 1. **Ir a Google Search Console:**
-   - Acceder a https://search.google.com/search-console
+   - Acceder a <https://search.google.com/search-console>
    - Iniciar sesión con la misma cuenta de Google que usa tu proyecto en Google Cloud Console
 
 2. **Agregar propiedad:**
@@ -666,16 +703,19 @@ Google requiere que la página principal (`https://maat.work`) incluya:
 #### Troubleshooting de Verificación
 
 **Error: "The website of your home page URL is not registered to you"**
+
 - Verificar que el dominio esté verificado en Google Search Console
 - Asegurar que uses la misma cuenta de Google en Search Console y Cloud Console
 - Esperar hasta 48 horas después de verificar el dominio
 
 **Error: "Your home page URL does not include a link to your privacy policy"**
+
 - Verificar que el enlace a `/legal/privacy-policy.html` sea visible
 - El enlace debe estar en el HTML de la página principal (no solo en JavaScript)
 - Verificar que la URL sea accesible públicamente
 
 **Error: "Your home page does not explain the purpose of your app"**
+
 - Asegurar que la descripción del propósito sea clara y visible
 - Debe estar en el contenido HTML principal, no solo en meta tags
 - La descripción debe explicar específicamente qué hace la aplicación
@@ -705,6 +745,7 @@ Google requiere que la página principal (`https://maat.work`) incluya:
 El servidor de producción usa **Nginx como reverse proxy** con **SSL/TLS** configurado para Cloudflare:
 
 **Configuración:**
+
 - Archivo: `infrastructure/mvp/nginx.conf`
 - Puerto HTTP (80): Redirige a HTTPS
 - Puerto HTTPS (443): SSL con Cloudflare Origin CA Certificate
@@ -713,6 +754,7 @@ El servidor de producción usa **Nginx como reverse proxy** con **SSL/TLS** conf
 - HTTP/2: Habilitado (directiva `http2 on;` separada)
 
 **Aplicar cambios de nginx:**
+
 ```bash
 # 1. Subir configuración actualizada
 scp infrastructure/mvp/nginx.conf ec2-user@SERVER_IP:/home/ec2-user/
@@ -724,6 +766,7 @@ sudo systemctl reload nginx  # Aplicar cambios
 ```
 
 **Verificar SSL:**
+
 ```bash
 # Verificar que escucha en puerto 443
 sudo ss -tulpn | grep :443
@@ -733,6 +776,7 @@ sudo ls -la /etc/ssl/cloudflare/
 ```
 
 **Cloudflare SSL Mode:**
+
 - Configurado en Terraform: `Full (Strict)`
 - Requiere certificado válido en el servidor
 - Cloudflare valida el certificado antes de conectar
@@ -799,6 +843,7 @@ sudo ls -la /etc/ssl/cloudflare/
 - ❌ **NO están en `.gitignore`** - Deben versionarse para control de cambios
 
 **Antes de modificar:**
+
 - [ ] Entender el impacto en producción
 - [ ] Probar en desarrollo primero
 - [ ] Revisar cambios línea por línea
@@ -815,4 +860,3 @@ sudo ls -la /etc/ssl/cloudflare/
 - [Guía de Desarrollo](./DEVELOPMENT.md) - Guía para desarrolladores
 - [Guía de Arquitectura](./ARCHITECTURE.md) - Arquitectura del sistema
 - [Archivos Críticos de Infraestructura](./CRITICAL-INFRASTRUCTURE-FILES.md) - Archivos críticos que pueden romper producción
-

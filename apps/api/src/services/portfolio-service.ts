@@ -1,6 +1,6 @@
 import { db } from '@maatwork/db';
 import {
-  portfolioTemplateLines,
+  portfolioLines,
   clientPortfolioAssignments,
   instruments,
   lookupAssetClass,
@@ -25,39 +25,39 @@ interface GetPortfolioLinesOptions {
 }
 
 /**
- * Obtiene las líneas de un template de portfolio con metadata de instrumentos y asset classes
- * @param templateId - ID del template
+ * Obtiene las líneas de un portfolio con metadata de instrumentos y asset classes
+ * @param portfolioId - ID del portfolio
  * @param options - Opciones de configuración
  * @returns Array de líneas con metadata
  */
-export async function getPortfolioTemplateLines(
-  templateId: string,
+export async function getPortfolioLines(
+  portfolioId: string,
   options: GetPortfolioLinesOptions = {}
 ): Promise<PortfolioLine[]> {
   const { includeMetadata = true } = options;
 
   let query = db()
     .select({
-      id: portfolioTemplateLines.id,
-      targetType: portfolioTemplateLines.targetType,
-      assetClass: portfolioTemplateLines.assetClass,
-      instrumentId: portfolioTemplateLines.instrumentId,
-      targetWeight: portfolioTemplateLines.targetWeight,
+      id: portfolioLines.id,
+      targetType: portfolioLines.targetType,
+      assetClass: portfolioLines.assetClass,
+      instrumentId: portfolioLines.instrumentId,
+      targetWeight: portfolioLines.targetWeight,
       ...(includeMetadata && {
         instrumentName: instruments.name,
         instrumentSymbol: instruments.symbol,
         assetClassName: lookupAssetClass.label,
       }),
     })
-    .from(portfolioTemplateLines)
-    .leftJoin(instruments, eq(portfolioTemplateLines.instrumentId, instruments.id))
-    .leftJoin(lookupAssetClass, eq(portfolioTemplateLines.assetClass, lookupAssetClass.id))
-    .where(eq(portfolioTemplateLines.templateId, templateId));
+    .from(portfolioLines)
+    .leftJoin(instruments, eq(portfolioLines.instrumentId, instruments.id))
+    .leftJoin(lookupAssetClass, eq(portfolioLines.assetClass, lookupAssetClass.id))
+    .where(eq(portfolioLines.portfolioId, portfolioId));
 
   if (includeMetadata) {
     query = query.orderBy(
-      asc(portfolioTemplateLines.targetType),
-      asc(portfolioTemplateLines.targetWeight)
+      asc(portfolioLines.targetType),
+      asc(portfolioLines.targetWeight)
     );
   }
 
@@ -67,7 +67,7 @@ export async function getPortfolioTemplateLines(
 interface AssignmentWithContact {
   id: string;
   contactId: string;
-  templateId: string;
+  portfolioId: string;
 }
 
 /**
@@ -87,7 +87,7 @@ export async function getAssignmentWithAccessCheck(
     .select({
       id: clientPortfolioAssignments.id,
       contactId: clientPortfolioAssignments.contactId,
-      templateId: clientPortfolioAssignments.templateId,
+      portfolioId: clientPortfolioAssignments.portfolioId,
     })
     .from(clientPortfolioAssignments)
     .where(eq(clientPortfolioAssignments.id, assignmentId))

@@ -11,6 +11,8 @@ vi.mock('@maatwork/db', () => ({
   },
   googleOAuthTokens: {
     email: 'email',
+    userId: 'userId',
+    id: 'id',
   },
   contacts: {
     id: 'id',
@@ -32,6 +34,7 @@ vi.mock('@maatwork/db', () => ({
 
 vi.mock('../../utils/encryption', () => ({
   decryptToken: vi.fn((token) => `decrypted-${token}`),
+  encryptToken: vi.fn((token) => `encrypted-${token}`),
 }));
 
 vi.mock('../../config/env', () => ({
@@ -39,7 +42,7 @@ vi.mock('../../config/env', () => ({
     GOOGLE_CLIENT_ID: 'client-id',
     GOOGLE_CLIENT_SECRET: 'client-secret',
     GOOGLE_REDIRECT_URI: 'redirect-uri',
-    GOOGLE_ENCRYPTION_KEY: 'key',
+    GOOGLE_ENCRYPTION_KEY: 'key-32-characters-long-here-test',
   },
 }));
 
@@ -53,16 +56,25 @@ const mockGmail = {
   },
 };
 
+const mockSetCredentials = vi.fn();
+const mockOn = vi.fn();
+
 vi.mock('googleapis', () => ({
   google: {
     auth: {
       OAuth2: vi.fn().mockImplementation(() => ({
-        setCredentials: vi.fn(),
+        setCredentials: mockSetCredentials,
+        on: mockOn,
       })),
     },
     gmail: vi.fn(() => mockGmail),
   },
 }));
+
+vi.mock('../../utils/http/webhook-client', () => ({
+  sendWebhook: vi.fn().mockResolvedValue(undefined),
+}));
+
 
 describe('EmailAutomationService', () => {
   let service: EmailAutomationService;

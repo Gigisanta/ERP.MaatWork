@@ -87,6 +87,6 @@ export interface ConnectTeamCalendarResponse {
   calendarType: string;
 }
 
-export interface ListCalendarEventsRequest extends GetEventsParams {}
+export type ListCalendarEventsRequest = GetEventsParams;
 
-export interface UpdateCalendarEventRequest extends UpdateEventRequest {}
+export type UpdateCalendarEventRequest = UpdateEventRequest;

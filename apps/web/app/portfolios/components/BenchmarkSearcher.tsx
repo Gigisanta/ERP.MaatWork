@@ -53,7 +53,7 @@ export function BenchmarkSearcher({
         setShowResults(false);
       }
     } catch (err) {
-      logger.error('Error searching benchmarks', toLogContext({ error: err }));
+      logger.error(toLogContext({ error: err }), 'Error searching benchmarks');
       setSearchResults([]);
       setShowResults(false);
     } finally {
@@ -99,7 +99,7 @@ export function BenchmarkSearcher({
         <Input
           ref={inputRef}
           value={query || selectedSymbol || ''}
-          onChange={(e) => handleInputChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange(e.target.value)}
           onFocus={() => {
             if (searchResults.length > 0) {
               setShowResults(true);

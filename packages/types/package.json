@@ -8,6 +8,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./common": {
+      "types": "./dist/common.d.ts",
+      "default": "./dist/common.js"
+    },
+    "./user": {
+      "types": "./dist/user.d.ts",
+      "default": "./dist/user.js"
+    },
     "./contact": {
       "types": "./dist/contact.d.ts",
       "default": "./dist/contact.js"
@@ -16,9 +24,49 @@
       "types": "./dist/team.d.ts",
       "default": "./dist/team.js"
     },
-    "./common": {
-      "types": "./dist/common.d.ts",
-      "default": "./dist/common.js"
+    "./career-plan": {
+      "types": "./dist/career-plan.d.ts",
+      "default": "./dist/career-plan.js"
+    },
+    "./aum": {
+      "types": "./dist/aum.d.ts",
+      "default": "./dist/aum.js"
+    },
+    "./calendar": {
+      "types": "./dist/calendar.d.ts",
+      "default": "./dist/calendar.js"
+    },
+    "./tag": {
+      "types": "./dist/tag.d.ts",
+      "default": "./dist/tag.js"
+    },
+    "./pipeline": {
+      "types": "./dist/pipeline.d.ts",
+      "default": "./dist/pipeline.js"
+    },
+    "./broker-account": {
+      "types": "./dist/broker-account.d.ts",
+      "default": "./dist/broker-account.js"
+    },
+    "./portfolio-assignment": {
+      "types": "./dist/portfolio-assignment.d.ts",
+      "default": "./dist/portfolio-assignment.js"
+    },
+    "./task": {
+      "types": "./dist/task.d.ts",
+      "default": "./dist/task.js"
+    },
+    "./note": {
+      "types": "./dist/note.d.ts",
+      "default": "./dist/note.js"
+    },
+    "./capacitacion": {
+      "types": "./dist/capacitacion.d.ts",
+      "default": "./dist/capacitacion.js"
+    },
+    "./feedback": {
+      "types": "./dist/feedback.d.ts",
+      "default": "./dist/feedback.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -26,7 +74,11 @@
     "dist"
   ],
   "scripts": {
+    "dev": "tsc -w -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:unit": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "audit:code": "knip --workspace .",
     "clean": "rimraf dist"

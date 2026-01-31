@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { Drawer, Stack, Heading, Input, Select, Button } from '@maatwork/ui';
+import { Modal, ModalContent, ModalFooter, Stack, Input, Select, Button } from '@maatwork/ui';
 import { PortfolioComposition } from './PortfolioComposition';
 import type { Portfolio, PortfolioLine, RiskLevel, InstrumentSearchResult } from '@/types';
 
@@ -54,12 +53,13 @@ export function PortfolioForm({
   const handleAddAsset = (asset: InstrumentSearchResult) => {
     const exists = lines.find((line) => line.instrumentSymbol === asset.symbol);
     if (exists) {
-      return; // Duplicado, se manejará en el componente padre
+      // Notify parent about duplicate - will be handled via toast
+      return { duplicate: true, symbol: asset.symbol };
     }
 
     const newLine: PortfolioLine = {
       id: `temp-${Date.now()}`,
-      templateId: portfolio?.id || '',
+      portfolioId: portfolio?.id || '',
       targetType: 'instrument',
       instrumentSymbol: asset.symbol,
       instrumentName: asset.name,
@@ -68,6 +68,7 @@ export function PortfolioForm({
     };
 
     setLines([...lines, newLine]);
+    return { duplicate: false };
   };
 
   const handleUpdateWeight = (lineId: string, weight: number) => {
@@ -78,6 +79,14 @@ export function PortfolioForm({
 
   const handleRemoveLine = (lineId: string) => {
     setLines((prevLines) => prevLines.filter((line) => line.id !== lineId));
+  };
+
+  const handleDistributeEvenly = () => {
+    if (lines.length === 0) return;
+    const evenWeight = 1 / lines.length;
+    setLines((prevLines) =>
+      prevLines.map((line) => ({ ...line, targetWeight: evenWeight }))
+    );
   };
 
   const totalWeight = lines.reduce((sum, line) => {
@@ -99,82 +108,72 @@ export function PortfolioForm({
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} side="right" className="w-full max-w-2xl">
-      <div className="flex flex-col h-full bg-background">
-        <div className="flex items-center justify-between p-6 border-b border-border bg-surface">
-          <Heading level={2}>{isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}</Heading>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="h-8 w-8 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+    <Modal 
+      open={open} 
+      onOpenChange={onOpenChange} 
+      size="lg"
+      title={isEditing ? 'Editar Cartera' : 'Crear Nueva Cartera'}
+    >
+      <ModalContent className="max-h-[70vh] overflow-y-auto pr-2">
+        <Stack direction="column" gap="lg" className="py-4">
+          <Input
+            label="Nombre de la Cartera"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            placeholder="Ej: Cartera Conservadora"
+            disabled={isLoading}
+          />
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <Stack direction="column" gap="lg">
-            <Input
-              label="Nombre de la Cartera"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Cartera Conservadora"
+          <div>
+            <label className="block text-sm font-medium text-foreground-base mb-2">
+              Descripción
+            </label>
+            <textarea
+              value={description}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+              className="w-full min-h-[80px] px-3 py-2 border border-border bg-surface text-foreground-base rounded-md focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed resize-none transition-colors"
+              placeholder="Descripción de la estrategia de inversión"
               disabled={isLoading}
             />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground-base mb-2">
-                Descripción
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full min-h-[80px] px-3 py-2 border border-border bg-surface text-foreground-base rounded-md focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-                placeholder="Descripción de la estrategia de inversión"
-                disabled={isLoading}
-              />
-            </div>
+          <Select
+            label="Nivel de Riesgo"
+            value={riskLevel}
+            onValueChange={(value: string) => setRiskLevel(value as RiskLevel)}
+            items={[
+              { value: 'conservative', label: 'Conservador' },
+              { value: 'moderate', label: 'Moderado' },
+              { value: 'aggressive', label: 'Agresivo' },
+            ]}
+            disabled={isLoading}
+          />
 
-            <Select
-              label="Nivel de Riesgo"
-              value={riskLevel}
-              onValueChange={(value) => setRiskLevel(value as RiskLevel)}
-              items={[
-                { value: 'conservative', label: 'Conservador' },
-                { value: 'moderate', label: 'Moderado' },
-                { value: 'aggressive', label: 'Agresivo' },
-              ]}
-              disabled={isLoading}
-            />
+          <PortfolioComposition
+            lines={lines}
+            onAddAsset={handleAddAsset}
+            onUpdateWeight={handleUpdateWeight}
+            onRemoveLine={handleRemoveLine}
+            onDistributeEvenly={handleDistributeEvenly}
+            disabled={isLoading}
+          />
+        </Stack>
+      </ModalContent>
 
-            <PortfolioComposition
-              lines={lines}
-              onAddAsset={handleAddAsset}
-              onUpdateWeight={handleUpdateWeight}
-              onRemoveLine={handleRemoveLine}
-              disabled={isLoading}
-            />
-          </Stack>
-        </div>
-
-        <div className="p-6 border-t border-border bg-surface">
-          <Stack direction="row" gap="sm" justify="end">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancelar
-            </Button>
-            <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isLoading}>
-              {isLoading
-                ? isEditing
-                  ? 'Guardando...'
-                  : 'Creando...'
-                : isEditing
-                  ? 'Guardar Cambios'
-                  : 'Crear Cartera'}
-            </Button>
-          </Stack>
-        </div>
-      </div>
-    </Drawer>
+      <ModalFooter className="mt-6 pt-4 border-t border-border">
+        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          Cancelar
+        </Button>
+        <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isLoading}>
+          {isLoading
+            ? isEditing
+              ? 'Guardando...'
+              : 'Creando...'
+            : isEditing
+              ? 'Guardar Cambios'
+              : 'Crear Cartera'}
+        </Button>
+      </ModalFooter>
+    </Modal>
   );
 }

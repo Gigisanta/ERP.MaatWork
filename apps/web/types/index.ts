@@ -41,14 +41,15 @@ export type {
 } from './portfolio';
 
 // Benchmark types
-export type {
-  Benchmark,
-  BenchmarkComponent,
-  CreateBenchmarkRequest,
-  UpdateBenchmarkRequest,
-  AddBenchmarkComponentRequest,
-  BenchmarkWithComponents,
-} from './benchmark';
+// Benchmark types unified into Portfolio types
+// export type {
+//   Benchmark,
+//   BenchmarkComponent,
+//   CreateBenchmarkRequest,
+//   UpdateBenchmarkRequest,
+//   AddBenchmarkComponentRequest,
+//   BenchmarkWithComponents,
+// } from './benchmark';
 
 // Analytics types
 export type {
@@ -156,10 +157,10 @@ export type {
 
 // Feedback types
 export type {
-  FeedbackType,
-  FeedbackStatus,
-  Feedback,
+  
+  
+  
   FeedbackListResponse,
-  CreateFeedbackRequest,
-  UpdateFeedbackStatusRequest,
+  
+  
 } from '@maatwork/types';

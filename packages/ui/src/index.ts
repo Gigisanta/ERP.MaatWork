@@ -1,3 +1,5 @@
+'use client';
+
 // AI_DECISION: Replace barrel exports with specific exports for tree-shaking
 // Justificación: Next.js cannot tree-shake unused components with export * syntax
 // Impacto: First Load JS reduction ~30-50KB by eliminating unused UI components

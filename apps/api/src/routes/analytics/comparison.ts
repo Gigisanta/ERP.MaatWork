@@ -7,13 +7,11 @@
 import { Router, type Request, type Response } from 'express';
 import { db } from '@maatwork/db';
 import {
-  portfolioTemplates,
-  portfolioTemplateLines,
-  benchmarkDefinitions,
-  benchmarkComponents,
+  portfolios,
+  portfolioLines,
   instruments,
 } from '@maatwork/db/schema';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, sql, inArray, and } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { getPortfolioCompareTimeout } from '../../config/timeouts';
 
@@ -72,19 +70,20 @@ router.post(
         try {
           const allPortfolioData = await db()
             .select({
-              portfolioId: portfolioTemplates.id,
-              portfolioName: portfolioTemplates.name,
+              portfolioId: portfolios.id,
+              portfolioName: portfolios.name,
               instrumentSymbol: instruments.symbol,
-              weight: portfolioTemplateLines.targetWeight,
+              weight: portfolioLines.targetWeight,
               instrumentName: instruments.name,
             })
-            .from(portfolioTemplates)
+            .from(portfolios)
             .innerJoin(
-              portfolioTemplateLines,
-              eq(portfolioTemplateLines.templateId, portfolioTemplates.id)
+              portfolioLines,
+              eq(portfolioLines.portfolioId, portfolios.id)
             )
-            .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-            .where(inArray(portfolioTemplates.id, portfolioIds));
+            .innerJoin(instruments, eq(instruments.id, portfolioLines.instrumentId))
+            .where(and(eq(portfolios.type, 'portfolio'), inArray(portfolios.id, portfolioIds)));
+
 
           // Agrupar por portfolioId
           type PortfolioDataRow = {
@@ -134,19 +133,19 @@ router.post(
         try {
           const allBenchmarkData = await db()
             .select({
-              benchmarkId: benchmarkDefinitions.id,
-              benchmarkName: benchmarkDefinitions.name,
+              benchmarkId: portfolios.id,
+              benchmarkName: portfolios.name,
               instrumentSymbol: instruments.symbol,
-              weight: benchmarkComponents.weight,
+              weight: portfolioLines.targetWeight,
               instrumentName: instruments.name,
             })
-            .from(benchmarkDefinitions)
+            .from(portfolios)
             .innerJoin(
-              benchmarkComponents,
-              eq(benchmarkComponents.benchmarkId, benchmarkDefinitions.id)
+              portfolioLines,
+              eq(portfolioLines.portfolioId, portfolios.id)
             )
-            .innerJoin(instruments, eq(instruments.id, benchmarkComponents.instrumentId))
-            .where(inArray(benchmarkDefinitions.id, benchmarkIds));
+            .innerJoin(instruments, eq(instruments.id, portfolioLines.instrumentId))
+            .where(and(eq(portfolios.type, 'benchmark'), inArray(portfolios.id, benchmarkIds)));
 
           // Agrupar por benchmarkId
           type BenchmarkDataRow = {

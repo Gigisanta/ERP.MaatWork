@@ -6,6 +6,7 @@
  * Impacto: Prevenir errores en análisis de carteras
  */
 
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import comparisonRouter from './comparison';
@@ -20,25 +21,29 @@ vi.mock('../../auth/cache', () => ({
   setCachedUser: vi.fn(),
 }));
 
+vi.mock('@maatwork/db/schema', () => ({
+  portfolios: { id: 'p_id', name: 'p_name' },
+  portfolioLines: {
+    portfolioId: 'pl_portfolioId',
+    instrumentId: 'pl_instrumentId',
+    targetWeight: 'pl_targetWeight',
+    targetType: 'pl_targetType',
+  },
+  benchmarkDefinitions: { id: 'bd_id', name: 'bd_name' },
+  benchmarkComponents: {
+    benchmarkId: 'bc_benchmarkId',
+    instrumentId: 'bc_instrumentId',
+    weight: 'bc_weight',
+  },
+  instruments: { id: 'i_id', symbol: 'i_symbol', name: 'i_name' },
+  users: { id: 'u_id', role: 'u_role', isActive: 'u_isActive' },
+}));
+
 vi.mock('@maatwork/db', async () => {
   const actual = await vi.importActual('@maatwork/db');
   return {
     ...actual,
     db: vi.fn(),
-    portfolioTemplates: { id: 'pt_id', name: 'pt_name' },
-    portfolioTemplateLines: {
-      templateId: 'ptl_templateId',
-      instrumentId: 'ptl_instrumentId',
-      targetWeight: 'ptl_targetWeight',
-    },
-    benchmarkDefinitions: { id: 'bd_id', name: 'bd_name' },
-    benchmarkComponents: {
-      benchmarkId: 'bc_benchmarkId',
-      instrumentId: 'bc_instrumentId',
-      weight: 'bc_weight',
-    },
-    instruments: { id: 'i_id', symbol: 'i_symbol', name: 'i_name' },
-    users: { id: 'u_id', role: 'u_role', isActive: 'u_isActive' },
   };
 });
 
@@ -57,15 +62,20 @@ vi.mock('../../config/timeouts', () => ({
 
 // Helper to create a chainable mock
 const createChainableMock = (finalValue: unknown) => {
-  const mock = vi.fn().mockImplementation(() => mock) as any;
-  mock.select = vi.fn().mockReturnValue(mock);
-  mock.from = vi.fn().mockReturnValue(mock);
-  mock.where = vi.fn().mockReturnValue(mock);
-  mock.innerJoin = vi.fn().mockReturnValue(mock);
-  mock.limit = vi.fn().mockReturnValue(mock);
-  mock.then = (onRes: (value: unknown) => void, onRej: (reason: unknown) => void) =>
-    Promise.resolve(finalValue).then(onRes, onRej);
-  return mock as unknown as ReturnType<typeof db>;
+  const mock: any = {};
+  const chainable = () => mock;
+  mock.select = vi.fn(chainable);
+  mock.from = vi.fn(chainable);
+  mock.where = vi.fn(chainable);
+  mock.innerJoin = vi.fn(chainable);
+  mock.leftJoin = vi.fn(chainable);
+  mock.limit = vi.fn(chainable);
+  mock.orderBy = vi.fn(chainable);
+  mock.groupBy = vi.fn(chainable);
+  mock.then = vi.fn().mockImplementation((onRes) => {
+    return Promise.resolve(finalValue).then(onRes);
+  });
+  return mock;
 };
 
 describe('Analytics Comparison Routes', () => {
@@ -84,7 +94,7 @@ describe('Analytics Comparison Routes', () => {
     mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
 
     // Default mock for user lookup in requireAuth (as fallback)
-    mockDb.mockReturnValue(
+    mockDb.mockImplementation(() =>
       createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }])
     );
   });
@@ -138,8 +148,10 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería procesar comparación con portfolios', async () => {
-      const mockPortfolioData = [
+      const mockCombinedResult = [
         {
+          id: 'port-1',
+          name: 'Portfolio 1',
           portfolioId: 'port-1',
           portfolioName: 'Portfolio 1',
           instrumentSymbol: 'AAPL',
@@ -148,10 +160,11 @@ describe('Analytics Comparison Routes', () => {
         },
       ];
 
-      // Only one call to db() since requireAuth uses cache
-      mockDb.mockReturnValueOnce(createChainableMock(mockPortfolioData));
+      // Use mockImplementation to handle all sequential queries
+      mockDb.mockImplementation(() => createChainableMock(mockCombinedResult));
+      mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
 
-      (global.fetch as vi.Mock).mockResolvedValue({
+      (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => ({
           status: 'success',
@@ -180,15 +193,24 @@ describe('Analytics Comparison Routes', () => {
       const res = await request(app)
         .post('/analytics/compare')
         .set('Cookie', `token=${token}`)
-        .send({ portfolioIds: ['port-1'], period: '1Y' })
-        .expect(200);
+        .send({ portfolioIds: ['port-1'], period: '1Y' });
 
-      expect(res.body.success).toBe(true);
+      if (res.status !== 200) {
+        console.log('DEBUG: Response body on failure:', JSON.stringify(res.body));
+      }
+      expect(res.status).toBe(200);
+      if (res.status === 200) {
+        expect(res.body.success).toBe(true);
+      } else {
+        expect(res.body.error).toBeUndefined(); // This will show the actual error message in failure output
+      }
     });
 
     it('debería procesar comparación con benchmarks', async () => {
-      const mockBenchmarkData = [
+      const mockCombinedResult = [
         {
+          id: 'bench-1',
+          name: 'Benchmark 1',
           benchmarkId: 'bench-1',
           benchmarkName: 'Benchmark 1',
           instrumentSymbol: 'SPY',
@@ -197,8 +219,9 @@ describe('Analytics Comparison Routes', () => {
         },
       ];
 
-      // First call is benchmark query (since no portfolioIds)
-      mockDb.mockReturnValueOnce(createChainableMock(mockBenchmarkData));
+      // Use mockImplementation to handle calls
+      mockDb.mockImplementation(() => createChainableMock(mockCombinedResult));
+      mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
@@ -236,17 +259,20 @@ describe('Analytics Comparison Routes', () => {
     });
 
     it('debería manejar error del servicio Python', async () => {
-      mockDb.mockReturnValueOnce(
-        createChainableMock([
-          {
-            portfolioId: 'port-1',
-            portfolioName: 'Portfolio 1',
-            instrumentSymbol: 'AAPL',
-            weight: 0.5,
-            instrumentName: 'Apple Inc',
-          },
-        ])
-      );
+      const mockCombinedResult = [
+        {
+          id: 'port-1',
+          name: 'Portfolio 1',
+          portfolioId: 'port-1',
+          portfolioName: 'Portfolio 1',
+          instrumentSymbol: 'AAPL',
+          weight: 0.5,
+          instrumentName: 'Apple Inc',
+        },
+      ];
+
+      mockDb.mockImplementation(() => createChainableMock(mockCombinedResult));
+      mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
 
       (global.fetch as any).mockRejectedValue(new Error('Python service error'));
 
@@ -260,9 +286,12 @@ describe('Analytics Comparison Routes', () => {
       const res = await request(app)
         .post('/analytics/compare')
         .set('Cookie', `token=${token}`)
-        .send({ portfolioIds: ['port-1'], period: '1Y' })
-        .expect(200); // Because of the fallback in the code (it catches error and returns success: true with empty results)
+        .send({ portfolioIds: ['port-1'], period: '1Y' });
 
+      if (res.status !== 200) {
+        console.log('DEBUG: Fallback test failure body:', JSON.stringify(res.body));
+      }
+      expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.results).toHaveLength(0);
     });
@@ -288,24 +317,55 @@ describe('Analytics Comparison Routes', () => {
         .expect(403);
     });
 
+    it('debería retornar 404 si no se encuentran carteras', async () => {
+      // Mock returns empty array
+      mockDb.mockImplementation(() => createChainableMock([]));
+      mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
+
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
+
+      const res = await request(app)
+        .post('/analytics/compare')
+        .set('Cookie', `token=${token}`)
+        .send({ portfolioIds: ['non-existent'], period: '1Y' });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toMatch(/No valid portfolios/i);
+    });
+
     it('debería aceptar periodos válidos', async () => {
       const validPeriods = ['1M', '3M', '6M', '1Y', 'YTD', 'ALL'];
+      const app = createTestAppWithRoutes();
+      const token = await signUserToken({
+        id: 'user-1',
+        email: 'test@example.com',
+        role: 'advisor',
+      });
 
       for (const period of validPeriods) {
-        mockDb.mockImplementation(() =>
-          createChainableMock([{ id: 'user-1', role: 'advisor', isActive: true }])
-        );
+        // Mock returns items so it doesn't hit 404
+        // MUST include portfolioId to match the grouping logic in comparison.ts
+        mockDb.mockImplementation(() => createChainableMock([
+          { 
+            id: 'port-1', 
+            name: 'Port 1', 
+            portfolioId: 'port-1', 
+            portfolioName: 'Port 1',
+            instrumentSymbol: 'AAPL',
+            instrumentName: 'Apple',
+            weight: 1.0
+          }
+        ]));
+        mockGetCachedUser.mockReturnValue({ id: 'user-1', role: 'advisor', isActive: true });
 
         (global.fetch as any).mockResolvedValue({
           ok: true,
-          json: async () => ({ status: 'success', data: { portfolios: {} } }),
-        });
-
-        const app = createTestAppWithRoutes();
-        const token = await signUserToken({
-          id: 'user-1',
-          email: 'test@example.com',
-          role: 'advisor',
+          json: async () => ({ status: 'success', data: { portfolios: { 'port-1': { performance_series: [] } } } }),
         });
 
         const res = await request(app)
@@ -313,8 +373,10 @@ describe('Analytics Comparison Routes', () => {
           .set('Cookie', `token=${token}`)
           .send({ portfolioIds: ['port-1'], period });
 
-        // Status will be 404 because our mock returns [] for portfolios so portfoliosToCompare is empty
-        expect(res.status).toBe(404);
+        if (res.status !== 200) {
+          throw new Error(`Period ${period} failed with status ${res.status}: ${JSON.stringify(res.body)}`);
+        }
+        expect(res.status).toBe(200);
       }
     });
   });

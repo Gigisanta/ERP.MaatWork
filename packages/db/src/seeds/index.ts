@@ -70,6 +70,11 @@ import { seedSegments } from './segments';
 import { seedAutomations } from './automations';
 
 /**
+ * Seed Volume - controls dataset size
+ */
+export type SeedVolume = 'low' | 'normal' | 'high';
+
+/**
  * Configuration options for seedFull
  */
 export interface SeedFullOptions {
@@ -87,6 +92,7 @@ export interface SeedFullOptions {
   skipCapacitaciones?: boolean;
   skipSegments?: boolean;
   skipAutomations?: boolean;
+  volume?: SeedVolume;
 }
 
 /**
@@ -108,8 +114,12 @@ export interface SeedFullOptions {
  * 13. Automations
  */
 export async function seedFull(options: SeedFullOptions = {}) {
-  console.log('\n🌱 Starting full database seed...\n');
-  console.log('='.repeat(50));
+  const volume = options.volume || 'normal';
+
+  // eslint-disable-next-line no-console
+    console.log('\n🌱 Starting full database seed...\n');
+  // eslint-disable-next-line no-console
+    console.log('='.repeat(50));
 
   const startTime = Date.now();
 
@@ -143,7 +153,7 @@ export async function seedFull(options: SeedFullOptions = {}) {
     // 4. Contacts
     let contactsList: Awaited<ReturnType<typeof seedContacts>> = [];
     if (!options.skipContacts && advisorUsers) {
-      contactsList = await seedContacts(advisorUsers, teamsList, pipelineStagesList);
+      contactsList = await seedContacts(advisorUsers, teamsList, pipelineStagesList, volume);
     }
 
     // 5. Tags
@@ -168,7 +178,7 @@ export async function seedFull(options: SeedFullOptions = {}) {
 
     // 9. Portfolios
     if (!options.skipPortfolios && contactsList.length > 0 && advisorUsers) {
-      await seedPortfolios(contactsList, advisorUsers);
+      await seedPortfolios(contactsList, advisorUsers, volume);
     }
 
     // 10. Notifications
@@ -197,7 +207,9 @@ export async function seedFull(options: SeedFullOptions = {}) {
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    // eslint-disable-next-line no-console
     console.log('='.repeat(50));
+    // eslint-disable-next-line no-console
     console.log(`\n🎉 Full seed completed in ${duration}s\n`);
 
     return {

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { moveContactToStage } from '@/lib/api';
 import { usePageTitle } from '../components/PageTitleContext';
@@ -16,7 +15,6 @@ import {
   CardTitle,
   CardContent,
   Button,
-  Heading,
   Text,
   Stack,
   Badge,
@@ -140,12 +138,12 @@ export default function PipelineBoardClient({
         mutateBoard();
       } catch (err) {
         logger.error(
-          'Error moving contact',
           toLogContext({
             err: err instanceof Error ? err.message : String(err),
             contactId,
             targetStageId,
-          })
+          }),
+          'Error moving contact'
         );
         setMoveError(err instanceof Error ? err.message : 'Error al mover contacto');
         // Revalidar en caso de error para restaurar estado correcto
@@ -351,9 +349,9 @@ export default function PipelineBoardClient({
                           ? 'ring-4 ring-primary/50 ring-dashed bg-primary/10 border-2 border-primary border-dashed scale-[1.02]'
                           : ''
                       }`}
-                      onDragOver={(e) => handleDragOver(e, stage.id)}
+                      onDragOver={(e: React.DragEvent) => handleDragOver(e, stage.id)}
                       onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, stage.id)}
+                      onDrop={(e: React.DragEvent) => handleDrop(e, stage.id)}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
@@ -420,7 +418,7 @@ export default function PipelineBoardClient({
                                     movingContactId === contact.id ? 'opacity-50' : ''
                                   }`}
                                   draggable
-                                  onDragStart={(e) => handleDragStart(e, contact.id)}
+                                  onDragStart={(e: React.DragEvent) => handleDragStart(e, contact.id)}
                                 >
                                   <CardContent className="p-3">
                                     <Stack direction="column" gap="sm">
@@ -528,7 +526,7 @@ export default function PipelineBoardClient({
       {/* Diálogo de confirmación para etapa Cliente */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) =>
+        onOpenChange={(open: boolean) =>
           setConfirmDialog({
             open,
             contactId: confirmDialog.contactId,

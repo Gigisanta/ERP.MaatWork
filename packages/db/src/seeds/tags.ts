@@ -10,8 +10,24 @@ import { tags, contactTags, contacts } from '../schema';
 import { eq, and } from 'drizzle-orm';
 import { getRandomElements } from './helpers';
 
+interface TagData {
+  scope: string;
+  name: string;
+  color: string;
+  businessLine?: string;
+}
+
 // Tag data constants - tags have scope, name, color
-const TAGS_DATA = [
+const TAGS_DATA: TagData[] = [
+  // Business Line Tags
+  { scope: 'contact', name: 'Options', color: '#003399', businessLine: 'zurich' },
+  { scope: 'contact', name: 'Invest', color: '#0055CC', businessLine: 'zurich' },
+  { scope: 'contact', name: 'Impact', color: '#0077FF', businessLine: 'zurich' },
+  { scope: 'contact', name: 'InvestorsTrust', color: '#10B981', businessLine: 'investorstrust' },
+  { scope: 'contact', name: 'Balanz', color: '#F59E0B', businessLine: 'inversiones' },
+  { scope: 'contact', name: 'Auto', color: '#6B7280', businessLine: 'patrimonial' },
+  { scope: 'contact', name: 'Hogar', color: '#4B5563', businessLine: 'patrimonial' },
+
   // Investment profile tags
   { scope: 'contact', name: 'Conservador', color: '#3B82F6' },
   { scope: 'contact', name: 'Moderado', color: '#8B5CF6' },
@@ -46,7 +62,8 @@ const TAGS_DATA = [
  * Seed tags
  */
 export async function seedTags(contactsList: (typeof contacts.$inferSelect)[]) {
-  console.log('🏷️  Seeding tags...');
+  // eslint-disable-next-line no-console
+    console.log('🏷️  Seeding tags...');
 
   const createdTags: (typeof tags.$inferSelect)[] = [];
 
@@ -65,11 +82,13 @@ export async function seedTags(contactsList: (typeof contacts.$inferSelect)[]) {
           scope: tagData.scope,
           name: tagData.name,
           color: tagData.color,
+          businessLine: tagData.businessLine || null,
           isSystem: false,
         })
         .returning();
       createdTags.push(created);
-      console.log(`  ✓ Created tag: ${tagData.name}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created tag: ${tagData.name}`);
     } else {
       createdTags.push(existing[0]!);
     }
@@ -77,6 +96,7 @@ export async function seedTags(contactsList: (typeof contacts.$inferSelect)[]) {
 
   // Assign tags to contacts
   if (contactsList.length > 0 && createdTags.length > 0) {
+    // eslint-disable-next-line no-console
     console.log('  🏷️  Assigning tags to contacts...');
     let assignmentsCreated = 0;
 
@@ -105,9 +125,11 @@ export async function seedTags(contactsList: (typeof contacts.$inferSelect)[]) {
       }
     }
 
+    // eslint-disable-next-line no-console
     console.log(`    ✓ Created ${assignmentsCreated} tag assignments`);
   }
 
-  console.log(`✅ Tags seeded: ${createdTags.length} tags\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Tags seeded: ${createdTags.length} tags\n`);
   return createdTags;
 }

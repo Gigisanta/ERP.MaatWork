@@ -5,7 +5,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { db, contacts, pipelineStageHistory } from '@maatwork/db';
-import { eq } from 'drizzle-orm';
+
 import { requireAuth, requireWriteAccess } from '../../auth/middlewares';
 import { createDrizzleLogger } from '../../utils/database/db-logger';
 import { validate } from '../../utils/validation';
@@ -143,7 +143,7 @@ router.post(
         requestId: req.requestId,
       });
     } catch (err) {
-      console.error('CRITICAL ERROR IN CREATE CONTACT:', err);
+      req.log.error({ err }, 'CRITICAL ERROR IN CREATE CONTACT');
       throw err;
     }
   })

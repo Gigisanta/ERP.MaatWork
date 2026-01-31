@@ -1,4 +1,4 @@
-import type { TimestampedEntity, PaginatedResponse } from './common';
+import type { TimestampedEntity } from './common';
 
 export type FeedbackType = 'feedback' | 'feature_request' | 'bug';
 export type FeedbackStatus = 'new' | 'in_progress' | 'completed' | 'closed';

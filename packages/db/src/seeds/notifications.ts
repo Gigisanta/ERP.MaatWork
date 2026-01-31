@@ -29,10 +29,12 @@ export async function seedNotifications(
   advisorUsers: (typeof users.$inferSelect)[],
   contactsList: (typeof contacts.$inferSelect)[]
 ) {
-  console.log('🔔 Seeding notifications...');
+  // eslint-disable-next-line no-console
+    console.log('🔔 Seeding notifications...');
 
   const existingNotifications = await db().select().from(notifications).limit(10);
   if (existingNotifications.length >= 10) {
+    // eslint-disable-next-line no-console
     console.log(
       `  ⊙ Notifications already seeded: ${existingNotifications.length} notifications found\n`
     );
@@ -42,6 +44,7 @@ export async function seedNotifications(
   // Get notification types
   const notificationTypes = await db().select().from(lookupNotificationType);
   if (notificationTypes.length === 0) {
+    // eslint-disable-next-line no-console
     console.log('  ⚠️ Missing notification type lookups');
     return [];
   }
@@ -76,6 +79,7 @@ export async function seedNotifications(
     }
   }
 
-  console.log(`✅ Notifications seeded: ${createdNotifications.length} notifications\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Notifications seeded: ${createdNotifications.length} notifications\n`);
   return createdNotifications;
 }

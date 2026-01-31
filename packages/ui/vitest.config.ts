@@ -14,8 +14,8 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    environment: 'jsdom',
     // Suppress React 18 act() warnings from testing-library
     environmentOptions: {
       jsdom: {

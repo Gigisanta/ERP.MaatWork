@@ -92,7 +92,7 @@ export function PortfolioAnalyticsView({ portfolios }: PortfolioAnalyticsViewPro
         setComparisonMode('asset');
       }
     } catch (err) {
-      logger.error('Error selecting comparison benchmark', toLogContext({ err, symbol }));
+      logger.error(toLogContext({ err, symbol }), 'Error selecting comparison benchmark');
     }
   }, []);
 
@@ -179,7 +179,7 @@ export function PortfolioAnalyticsView({ portfolios }: PortfolioAnalyticsViewPro
                     <div className="w-[100px]">
                       <Select
                         value={period}
-                        onValueChange={(value) => setPeriod(value as TimePeriod)}
+                        onValueChange={(value: string) => setPeriod(value as TimePeriod)}
                         items={PERIOD_OPTIONS}
                       />
                     </div>

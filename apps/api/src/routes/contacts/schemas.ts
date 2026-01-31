@@ -101,6 +101,6 @@ export const patchContactSchema = z.object({
 });
 
 // Type exports for use in route handlers
-export type CreateContactInput = z.infer<typeof createContactSchema>;
-export type UpdateContactInput = z.infer<typeof updateContactSchema>;
-export type PatchContactInput = z.infer<typeof patchContactSchema>;
+type CreateContactInput = z.infer<typeof createContactSchema>;
+type UpdateContactInput = z.infer<typeof updateContactSchema>;
+type PatchContactInput = z.infer<typeof patchContactSchema>;

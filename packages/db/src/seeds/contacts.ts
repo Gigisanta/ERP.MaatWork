@@ -16,6 +16,7 @@ import {
   generateRandomPhone,
   generateRandomDNI,
 } from './helpers';
+import { type SeedVolume } from './index';
 
 // Contact data constants
 const RISK_PROFILES = ['low', 'mid', 'high'];
@@ -61,6 +62,22 @@ const STAGE_DISTRIBUTION = [
   { stageName: 'Cuenta vacia', count: 3 },
   { stageName: 'Caido', count: 3 },
 ];
+
+function getDistribution(volume: SeedVolume) {
+  if (volume === 'high') {
+    return STAGE_DISTRIBUTION.map((d) => ({
+      ...d,
+      count: d.count * 12, // ~600 contacts total
+    }));
+  }
+  if (volume === 'low') {
+    return STAGE_DISTRIBUTION.map((d) => ({
+      ...d,
+      count: Math.ceil(d.count / 2),
+    }));
+  }
+  return STAGE_DISTRIBUTION;
+}
 
 /**
  * Create a single contact
@@ -165,19 +182,25 @@ async function createStageHistory(
 export async function seedContacts(
   advisorUsers: InferSelectModel<typeof users>[],
   teamsList: InferSelectModel<typeof teams>[],
-  pipelineStagesList: InferSelectModel<typeof pipelineStages>[]
+  pipelineStagesList: InferSelectModel<typeof pipelineStages>[],
+  volume: SeedVolume = 'normal'
 ): Promise<InferSelectModel<typeof contacts>[]> {
-  console.log('📇 Seeding contacts...');
+  // eslint-disable-next-line no-console
+  console.log(`📇 Seeding contacts... (Volume: ${volume})`);
 
-  const existingContacts = await db().select().from(contacts).limit(50);
-  if (existingContacts.length >= 40) {
+  const minContacts = volume === 'high' ? 400 : 40;
+
+  const existingContacts = await db().select().from(contacts).limit(500);
+  if (existingContacts.length >= minContacts) {
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Contacts already seeded: ${existingContacts.length} contacts found\n`);
     return existingContacts;
   }
 
   const createdContacts: InferSelectModel<typeof contacts>[] = [];
+  const distributionList = getDistribution(volume);
 
-  for (const distribution of STAGE_DISTRIBUTION) {
+  for (const distribution of distributionList) {
     const stage = pipelineStagesList.find((s) => s.name === distribution.stageName);
     if (!stage) continue;
 
@@ -198,6 +221,7 @@ export async function seedContacts(
     }
   }
 
-  console.log(`✅ Contacts seeded: ${createdContacts.length} contacts\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Contacts seeded: ${createdContacts.length} contacts\n`);
   return createdContacts;
 }

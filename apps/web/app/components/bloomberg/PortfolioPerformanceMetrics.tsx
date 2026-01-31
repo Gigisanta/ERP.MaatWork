@@ -288,7 +288,7 @@ export default function PortfolioPerformanceMetrics({
           <CardTitle>Portfolio Performance Metrics</CardTitle>
           <Select
             value={selectedPeriod}
-            onValueChange={(value) => setSelectedPeriod(value as TimePeriod)}
+            onValueChange={(value: string) => setSelectedPeriod(value as TimePeriod)}
             items={[
               { value: '1M', label: '1 Mes' },
               { value: '3M', label: '3 Meses' },

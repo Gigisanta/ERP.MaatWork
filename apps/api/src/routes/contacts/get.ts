@@ -4,7 +4,7 @@
  * GET /contacts/:id - Get contact detail (basic)
  * GET /contacts/:id/detail - Get contact detail (consolidated with all related data)
  */
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request } from 'express';
 import { eq, desc, and, isNull, sql, type InferSelectModel } from 'drizzle-orm';
 import {
   db,
@@ -19,6 +19,9 @@ import {
   notes,
   clientPortfolioAssignments,
 } from '@maatwork/db';
+// portfolios and portfolioLines are no longer used here as standalone imports, 
+// they are used via clientPortfolioAssignments and portfolioAssignments in SQL.
+// Removing unused imports.
 import { type Contact, type TimelineItem } from '@maatwork/types';
 import { requireAuth, requireContactAccess } from '../../auth/middlewares';
 import { getUserAccessScope, buildContactAccessFilter } from '../../auth/authorization';
@@ -204,7 +207,7 @@ router.get(
       }>;
       portfolioAssignments: Array<{
         id: string;
-        templateId: string;
+        portfolioId: string;
         status: string;
         startDate: string;
         endDate: string | null;
@@ -361,7 +364,7 @@ router.get(
             portfolioAssignments: sql<
               Array<{
                 id: string;
-                templateId: string;
+                portfolioId: string;
                 status: string;
                 startDate: string;
                 endDate: string | null;
@@ -372,7 +375,7 @@ router.get(
                   SELECT json_agg(
                     json_build_object(
                       'id', cpa.id,
-                      'templateId', cpa.template_id,
+                      'portfolioId', cpa.portfolio_id,
                       'status', cpa.status,
                       'startDate', cpa.start_date,
                       'endDate', cpa.end_date

@@ -15,7 +15,7 @@ import {
   getDirSize,
   formatSize,
 } from '../../lib/index';
-import { existsSync, readdirSync, rmSync } from 'fs';
+import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
 
 export const cleanCommand = new Command('clean')
@@ -23,20 +23,47 @@ export const cleanCommand = new Command('clean')
   .addCommand(cacheCommand())
   .addCommand(artifactsCommand())
   .addCommand(depsCommand())
+  .addCommand(devCommand())
   .addCommand(allCommand());
+
+function devCommand(): Command {
+  return new Command('dev')
+    .description('Limpieza rápida para desarrollo (caches + carpetas .next/dist)')
+    .option('--quiet', 'No mostrar logs detallados')
+    .action(async (options) => {
+      if (!options.quiet) logger.header('Limpieza de Desarrollo');
+
+      const toRemove = [
+        '.turbo',
+        'apps/web/.next',
+        'apps/api/dist',
+        'packages/ui/dist',
+        'packages/db/dist',
+        'packages/types/dist',
+      ];
+
+      await withSpinner(
+        'Limpiando entorno dev',
+        async () => {
+          for (const item of toRemove) {
+            const fullPath = join(paths.root, item);
+            if (existsSync(fullPath)) {
+              rmSync(fullPath, { recursive: true, force: true });
+            }
+          }
+        },
+        options.quiet
+      );
+
+      if (!options.quiet) logger.success('Limpieza dev completada');
+    });
+}
 
 function cacheCommand(): Command {
   return new Command('cache')
     .description('Limpiar caches (turbo, next, typescript)')
     .action(async () => {
       logger.header('Limpieza de Caches');
-
-      const caches = [
-        { name: 'Turbo', path: '.turbo' },
-        { name: 'Next.js (web)', path: 'apps/web/.next' },
-        { name: 'TypeScript (root)', path: '*.tsbuildinfo' },
-        { name: 'TypeScript (packages)', path: 'packages/*/*.tsbuildinfo' },
-      ];
 
       await withSpinner('Limpiando caches', async () => {
         // Turbo cache

@@ -97,14 +97,14 @@ export default function EmailAutomationCard({
       } catch (err: unknown) {
         if (err instanceof ApiError && err.status === 404) {
           // Nueva configuración (404) - establecer email del usuario como default
-          logger.debug('Automation config not found (404), using defaults', {
+          logger.debug({
             name: automationName,
-          });
+          }, 'Automation config not found (404), using defaults');
           if (user?.isGoogleConnected && user.googleEmail) {
             setSenderEmail(user.googleEmail);
           }
         } else {
-          logger.error('Error loading automation config', { error: toLogContextValue(err) });
+          logger.error({ error: toLogContextValue(err) }, 'Error loading automation config');
           setError('Error al cargar la configuración');
         }
       } finally {
@@ -166,7 +166,7 @@ export default function EmailAutomationCard({
         }
       }
     } catch (err) {
-      logger.error('Error saving automation config', { error: toLogContextValue(err) });
+      logger.error({ error: toLogContextValue(err) }, 'Error saving automation config');
       showToast('Error', 'No se pudo guardar la configuración', 'error');
     } finally {
       setSaving(false);
@@ -209,7 +209,7 @@ export default function EmailAutomationCard({
 
       throw new Error('No se recibió URL de la imagen');
     } catch (error) {
-      logger.error('Error uploading image', { error: toLogContextValue(error) });
+      logger.error({ error: toLogContextValue(error) }, 'Error uploading image');
       throw new Error('Error al subir la imagen');
     }
   }, []);
@@ -284,7 +284,7 @@ export default function EmailAutomationCard({
               type="checkbox"
               id={`enabled-${automationName}`}
               checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEnabled(e.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
             />
             <label
@@ -335,7 +335,7 @@ export default function EmailAutomationCard({
                 <div
                   key={v.value}
                   draggable
-                  onDragStart={(e) => handleDragStart(e, v.value)}
+                  onDragStart={(e: React.DragEvent) => handleDragStart(e, v.value)}
                   className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded cursor-grab active:cursor-grabbing hover:bg-primary/20 transition-colors border border-transparent hover:border-primary/30"
                 >
                   {v.label}
@@ -349,10 +349,10 @@ export default function EmailAutomationCard({
             <Text weight="medium">Asunto</Text>
             <Input
               value={subject}
-              onChange={(e) => setSubject(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSubject(e.target.value)}
               placeholder="Asunto del correo"
-              onDrop={(e) => handleDrop(e, setSubject, subject)}
-              onDragOver={handleDragOver}
+              onDrop={(e: React.DragEvent<HTMLInputElement>) => handleDrop(e, setSubject, subject)}
+              onDragOver={(e: React.DragEvent) => handleDragOver(e)}
             />
           </div>
 

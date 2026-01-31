@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Sidebar } from './Sidebar';
@@ -8,50 +8,10 @@ import type { ComponentProps } from 'react';
 /**
  * Tipo para LinkComponent basado en SidebarProps
  */
-type LinkComponentProps =
-  NonNullable<SidebarProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
+// type LinkComponentProps =
+//   NonNullable<SidebarProps['LinkComponent']> extends React.ComponentType<infer P> ? P : never;
 
-const mockSections: SidebarSection[] = [
-  {
-    title: 'Main',
-    items: [
-      { label: 'Dashboard', href: '/dashboard', icon: 'Home', badge: 3 },
-      { label: 'Analytics', href: '/analytics', icon: 'BarChart3' },
-    ],
-  },
-  {
-    title: 'Settings',
-    items: [
-      { label: 'Profile', href: '/profile', icon: 'User' },
-      { label: 'Preferences', href: '/preferences' },
-    ],
-  },
-];
-
-const MockLink = ({
-  href,
-  className,
-  children,
-  ...props
-}: LinkComponentProps & ComponentProps<'a'>) => (
-  <a href={href} className={className} {...props}>
-    {children}
-  </a>
-);
-
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
+import { mockSections, MockLink, localStorageMock } from './Sidebar/SidebarTestUtils.js';
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 

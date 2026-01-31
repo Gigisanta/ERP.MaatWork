@@ -25,6 +25,7 @@ import { sendWebhook } from '../../utils/http/webhook-client';
 import { invalidateCache } from '../../middleware/cache';
 import { HttpError } from '../../utils/route-handler';
 import { uuidSchema } from '../../utils/validation/common-schemas';
+import { emailAutomationService } from '../../services/automations/email-service';
 
 const router = Router();
 
@@ -163,117 +164,16 @@ router.post(
       await invalidateCache('crm:pipeline:*');
       await invalidateCache('crm:contacts:*');
 
-      // Buscar automatización configurada para este cambio de etapa
-      const [automationConfig] = await db()
-        .select()
-        .from(automationConfigs)
-        .where(
-          and(
-            eq(automationConfigs.triggerType, 'pipeline_stage_change'),
-            eq(automationConfigs.enabled, true),
-            sql`${automationConfigs.triggerConfig}->>'stageName' = ${toStage.name}`
-          )
-        )
-        .limit(1);
-
-      // Si hay configuración y está habilitada, enviar webhook
-      if (automationConfig && automationConfig.webhookUrl) {
-        const nombre = updated.firstName; // Solo el nombre, no el apellido
-        const email = updated.email;
-
-        // AI_DECISION: Obtener tags/productos del contacto para incluir en webhook
-        // Justificación: Permite automatizar emails con información de productos (línea de negocio, prima, póliza)
-        // Impacto: Webhooks más ricos para personalización de comunicaciones
-        const contactTagsData = await db()
-          .select({
-            tagId: contactTags.tagId,
-            tagName: tags.name,
-            tagColor: tags.color,
-            tagIcon: tags.icon,
-            tagDescription: tags.description,
-            businessLine: tags.businessLine,
-            monthlyPremium: contactTags.monthlyPremium,
-            policyNumber: contactTags.policyNumber,
-          })
-          .from(contactTags)
-          .innerJoin(tags, eq(contactTags.tagId, tags.id))
-          .where(eq(contactTags.contactId, contactId));
-
-        // Formatear productos para el payload
-        const productos = contactTagsData.map((tag: (typeof contactTagsData)[number]) => ({
-          nombre: tag.tagName,
-          lineaDeNegocio: tag.businessLine,
-          descripcion: tag.tagDescription,
-          primaMensual: tag.monthlyPremium,
-          numeroPoliza: tag.policyNumber,
-          color: tag.tagColor,
-          icono: tag.tagIcon,
-        }));
-
-        req.log.info(
-          {
-            contactId,
-            contactFirstName: nombre,
-            contactEmail: email,
-            webhookUrl: automationConfig.webhookUrl,
-            automationConfigId: automationConfig.id,
-            stageName: toStage.name,
-            productosCount: productos.length,
-          },
-          'Contact moved to stage, triggering automation webhook'
-        );
-
-        // Construir payload con información completa del contacto y sus productos
-        const basePayload = {
-          nombre,
-          apellido: updated.lastName,
-          nombreCompleto: updated.fullName ?? `${updated.firstName} ${updated.lastName}`,
-          email: email ?? null,
-          telefono: updated.phone ?? null,
-          pais: updated.country ?? null,
-          dni: updated.dni ?? null,
-          etapaActual: toStage.name,
-          productos,
-        };
-
-        // Merge con payload personalizado si existe en la configuración
-        const payload =
-          automationConfig.config &&
-          typeof automationConfig.config === 'object' &&
-          'payload' in automationConfig.config
-            ? { ...(automationConfig.config.payload as Record<string, unknown>), ...basePayload }
-            : basePayload;
-
-        // Enviar webhook de forma asíncrona (fire-and-forget)
-        sendWebhook(automationConfig.webhookUrl, payload, {
-          timeout: 10000,
-          logger: req.log.child({
-            contactId,
-            automationConfigId: automationConfig.id,
-            webhookType: automationConfig.name,
-          }),
-        }).catch((error) => {
-          // Error ya manejado dentro de sendWebhook, solo prevenir unhandled rejection
-          req.log.error(
-            {
-              contactId,
-              webhookUrl: automationConfig.webhookUrl,
-              automationConfigId: automationConfig.id,
-              error: error instanceof Error ? error.message : String(error),
-            },
-            'Unhandled error in webhook send (should not happen)'
-          );
+      // Trigger automations (Unified: handles both emails and webhooks)
+      emailAutomationService
+        .checkAndTriggerAutomations('pipeline_stage_change', {
+          contactId,
+          userId,
+          newPipelineStageId: toStageId,
+        })
+        .catch((err) => {
+          req.log.error({ err }, 'Error triggering automation');
         });
-      } else {
-        req.log.debug(
-          {
-            contactId,
-            targetStageName: toStage.name,
-            hasAutomationConfig: !!automationConfig,
-          },
-          'No automation config found or disabled for this stage change, skipping webhook'
-        );
-      }
 
       res.json({ success: true, data: updated });
     } catch (err) {

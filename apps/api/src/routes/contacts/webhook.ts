@@ -19,8 +19,8 @@ const router = Router();
 
 // Rate limiter para webhooks (por usuario)
 const webhookRateLimiter = createUserRateLimiter({
-  capacity: env.N8N_WEBHOOK_RATE_LIMIT,
-  refillPerSec: env.N8N_WEBHOOK_RATE_LIMIT / 60, // Refill rate: capacidad por minuto
+  capacity: env.WEBHOOK_RATE_LIMIT,
+  refillPerSec: env.WEBHOOK_RATE_LIMIT / 60, // Refill rate: capacidad por minuto
 });
 
 // ==========================================================
@@ -160,11 +160,11 @@ router.post(
     const userId = req.user!.id;
     const userRole = req.user!.role;
 
-    // Verificar si N8N está habilitado
-    if (!env.N8N_ENABLED) {
+    // Verificar si webhooks están habilitados
+    if (!env.WEBHOOK_ENABLED) {
       return res.status(503).json({
         success: false,
-        error: 'N8N webhook service is disabled',
+        error: 'Webhook service is disabled',
         requestId: req.requestId,
       });
     }
@@ -187,7 +187,7 @@ router.post(
     }
 
     // Dividir en batches si es necesario
-    const batchSize = env.N8N_WEBHOOK_BATCH_SIZE;
+    const batchSize = env.WEBHOOK_BATCH_SIZE;
     const batches = contacts.length > batchSize ? chunkArray(contacts, batchSize) : [contacts];
 
     req.log.info(
@@ -238,7 +238,7 @@ router.post(
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
           controller.abort();
-        }, env.N8N_WEBHOOK_TIMEOUT);
+        }, env.WEBHOOK_TIMEOUT);
 
         try {
           // Enviar con retry y exponential backoff
@@ -289,11 +289,11 @@ router.post(
 
           if (response.status === 404) {
             if (parsedError?.message?.includes('not registered')) {
-              errorMessage = `El webhook de N8N no está activo. ${parsedError.hint || 'Asegúrate de que el workflow esté activo y el webhook esté configurado correctamente.'}`;
+              errorMessage = `El webhook no está activo. ${parsedError.hint || 'Asegúrate de que el workflow esté activo y el webhook esté configurado correctamente.'}`;
             } else if (parsedError?.message?.includes('not registered for POST')) {
-              errorMessage = `El webhook de N8N está configurado para GET, pero necesitas POST. Verifica la configuración del webhook en N8N.`;
+              errorMessage = `El webhook está configurado para GET, pero necesitas POST. Verifica la configuración del webhook.`;
             } else {
-              errorMessage = `El webhook de N8N no fue encontrado (404). Verifica que la URL sea correcta y que el workflow esté activo.`;
+              errorMessage = `El webhook no fue encontrado (404). Verifica que la URL sea correcta y que el workflow esté activo.`;
             }
           } else if (parsedError?.message) {
             errorMessage = `${parsedError.message}${parsedError.hint ? ` ${parsedError.hint}` : ''}`;
@@ -311,11 +311,11 @@ router.post(
                 webhookUrl,
                 batchIndex: batchIndex + 1,
                 duration: batchDuration,
-                timeout: env.N8N_WEBHOOK_TIMEOUT,
+                timeout: env.WEBHOOK_TIMEOUT,
               },
               'Webhook batch timeout'
             );
-            throw new Error(`Timeout: El webhook no respondió en ${env.N8N_WEBHOOK_TIMEOUT}ms`);
+            throw new Error(`Timeout: El webhook no respondió en ${env.WEBHOOK_TIMEOUT}ms`);
           }
 
           // Detectar errores de conexión

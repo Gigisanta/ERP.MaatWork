@@ -9,10 +9,8 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  Button,
   Text,
   Stack,
-  Alert,
   Spinner,
   Select,
   Grid,
@@ -120,13 +118,6 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
       : 'Error al cargar datos de rendimiento'
     : null;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   const formatValue = (value: number) => {
     return value.toFixed(2);
@@ -223,7 +214,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
             <Calendar className="w-4 h-4 text-foreground-tertiary" />
             <Select
               value={selectedPeriod}
-              onValueChange={(value) => setSelectedPeriod(value as TimePeriod)}
+              onValueChange={(value: string) => setSelectedPeriod(value as TimePeriod)}
               items={PERIOD_OPTIONS}
               className="w-32"
             />
@@ -257,7 +248,7 @@ const PerformanceChart = memo<PerformanceChartProps>(function PerformanceChart({
             ))}
 
             {/* Performance lines */}
-            {performanceData.map((data, dataIndex) => (
+            {performanceData.map((data) => (
               <g key={data.id}>
                 {/* Line path */}
                 <path

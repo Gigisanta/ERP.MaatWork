@@ -38,7 +38,7 @@ export default function PaperNotesSection({ contactId, initialNotes }: PaperNote
         setIsSaving(false);
         router.refresh();
       } catch (err) {
-        logger.error('Error saving paper notes', { err: err as any, contactId });
+        logger.error({ err, contactId }, 'Error saving paper notes');
         setIsSaving(false);
       }
     }, 1000);

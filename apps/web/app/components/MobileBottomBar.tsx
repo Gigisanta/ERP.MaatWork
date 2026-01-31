@@ -94,4 +94,3 @@ export function MobileBottomBar({ onMenuClick }: MobileBottomBarProps) {
   );
 }
 
-export default MobileBottomBar;

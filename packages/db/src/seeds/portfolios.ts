@@ -3,27 +3,28 @@
  *
  * Seeds portfolio templates and client portfolio assignments.
  * Uses actual schema:
- * - portfolioTemplates: name, description, riskLevel, createdByUserId
- * - portfolioTemplateLines: templateId, targetType (asset_class|instrument), assetClass, targetWeight
- * - clientPortfolioAssignments: contactId, templateId, status, startDate, createdByUserId
+ * - portfolios: name, description, createdByUserId
+ * - portfolioLines: portfolioId, targetType (asset_class|instrument), assetClass, targetWeight
+ * - clientPortfolioAssignments: contactId, portfolioId, status, startDate, createdByUserId
  */
 
 import { db } from '../index';
 import {
-  portfolioTemplates,
-  portfolioTemplateLines,
+  portfolios,
+  portfolioLines,
   clientPortfolioAssignments,
   contacts,
   users,
 } from '../schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { getRandomElement, getRandomDateOnly } from './helpers';
+import { type SeedVolume } from './index';
 
 // Portfolio template data
 const PORTFOLIO_TEMPLATES = [
   {
+    code: 'AGG_CONSERVATIVE',
     name: 'Conservador',
-    riskLevel: 'low',
     description: 'Cartera conservadora con énfasis en renta fija',
     lines: [
       { assetClass: 'fixed_income', targetWeight: '0.6000' },
@@ -32,8 +33,8 @@ const PORTFOLIO_TEMPLATES = [
     ],
   },
   {
+    code: 'AGG_MODERATE',
     name: 'Moderado',
-    riskLevel: 'mid',
     description: 'Cartera balanceada con mix de activos',
     lines: [
       { assetClass: 'equity', targetWeight: '0.4000' },
@@ -43,8 +44,8 @@ const PORTFOLIO_TEMPLATES = [
     ],
   },
   {
+    code: 'AGG_AGGRESSIVE',
     name: 'Agresivo',
-    riskLevel: 'high',
     description: 'Cartera de alto crecimiento',
     lines: [
       { assetClass: 'equity', targetWeight: '0.7000' },
@@ -60,15 +61,22 @@ const PORTFOLIO_TEMPLATES = [
  */
 export async function seedPortfolios(
   contactsList: (typeof contacts.$inferSelect)[],
-  advisorUsers: (typeof users.$inferSelect)[]
+  advisorUsers: (typeof users.$inferSelect)[],
+  volume: SeedVolume = 'normal'
 ) {
-  console.log('💼 Seeding portfolios...');
+  // eslint-disable-next-line no-console
+  console.log(`💼 Seeding portfolios... (Volume: ${volume})`);
 
-  const createdTemplates: (typeof portfolioTemplates.$inferSelect)[] = [];
+  const createdPortfolios: (typeof portfolios.$inferSelect)[] = [];
 
-  // Check for existing templates
-  const existingTemplates = await db().select().from(portfolioTemplates).limit(5);
+  // Check for existing portfolios
+  const existingTemplates = await db()
+    .select()
+    .from(portfolios)
+    .limit(5);
+
   if (existingTemplates.length >= 3) {
+    // eslint-disable-next-line no-console
     console.log(
       `  ⊙ Portfolio templates already seeded: ${existingTemplates.length} templates found`
     );
@@ -78,12 +86,14 @@ export async function seedPortfolios(
       await assignPortfoliosToContacts(existingTemplates, contactsList, advisorUsers);
     }
 
+    // eslint-disable-next-line no-console
     console.log(`✅ Portfolios seeded\n`);
     return existingTemplates;
   }
 
   const adminUser = advisorUsers[0];
   if (!adminUser) {
+    // eslint-disable-next-line no-console
     console.log('  ⚠️ No users available for portfolio creation');
     return [];
   }
@@ -92,63 +102,86 @@ export async function seedPortfolios(
   for (const templateData of PORTFOLIO_TEMPLATES) {
     const existing = await db()
       .select()
-      .from(portfolioTemplates)
-      .where(eq(portfolioTemplates.name, templateData.name))
+      .from(portfolios)
+      .where(eq(portfolios.name, templateData.name))
       .limit(1);
 
+    let portfolioRecord: typeof portfolios.$inferSelect;
+
     if (existing.length > 0) {
-      createdTemplates.push(existing[0]!);
-      continue;
+      portfolioRecord = existing[0]!;
+    } else {
+      const [newPortfolio] = await db()
+        .insert(portfolios)
+        .values({
+          code: templateData.code,
+          name: templateData.name,
+          description: templateData.description,
+          createdByUserId: adminUser.id,
+        })
+        .returning();
+      
+      portfolioRecord = newPortfolio!;
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created template: ${templateData.name}`);
     }
 
-    const [template] = await db()
-      .insert(portfolioTemplates)
-      .values({
-        name: templateData.name,
-        riskLevel: templateData.riskLevel,
-        description: templateData.description,
-        createdByUserId: adminUser.id,
-      })
-      .returning();
-
-    createdTemplates.push(template);
-    console.log(`  ✓ Created template: ${templateData.name}`);
+    createdPortfolios.push(portfolioRecord);
 
     // Create template lines
     for (const line of templateData.lines) {
-      await db()
-        .insert(portfolioTemplateLines)
-        .values({
-          templateId: template.id,
-          targetType: 'asset_class',
-          assetClass: line.assetClass,
-          targetWeight: line.targetWeight,
-        })
-        .onConflictDoNothing();
+      // Check if line already exists for this portfolio and asset class
+      const existingLine = await db()
+        .select()
+        .from(portfolioLines)
+        .where(
+          and(
+            eq(portfolioLines.portfolioId, portfolioRecord.id),
+            eq(portfolioLines.targetType, 'asset_class'),
+            eq(portfolioLines.assetClass, line.assetClass)
+          )
+        )
+        .limit(1);
+
+      if (existingLine.length === 0) {
+        await db()
+          .insert(portfolioLines)
+          .values({
+            portfolioId: portfolioRecord.id,
+            targetType: 'asset_class',
+            assetClass: line.assetClass,
+            targetWeight: line.targetWeight,
+          })
+          .onConflictDoNothing();
+      }
     }
   }
 
   // Assign portfolios to contacts
   if (contactsList.length > 0) {
-    await assignPortfoliosToContacts(createdTemplates, contactsList, advisorUsers);
+    await assignPortfoliosToContacts(createdPortfolios, contactsList, advisorUsers, volume);
   }
 
-  console.log(`✅ Portfolios seeded: ${createdTemplates.length} templates\n`);
-  return createdTemplates;
+  // eslint-disable-next-line no-console
+    console.log(`✅ Portfolios seeded: ${createdPortfolios.length} templates\n`);
+  return createdPortfolios;
 }
 
 /**
  * Assign portfolio templates to contacts
  */
 async function assignPortfoliosToContacts(
-  templates: (typeof portfolioTemplates.$inferSelect)[],
+  templates: (typeof portfolios.$inferSelect)[],
   contactsList: (typeof contacts.$inferSelect)[],
-  advisorUsers: (typeof users.$inferSelect)[]
+  advisorUsers: (typeof users.$inferSelect)[],
+  volume: SeedVolume = 'normal'
 ): Promise<void> {
-  console.log('  📊 Assigning portfolios to contacts...');
+  // eslint-disable-next-line no-console
+    console.log('  📊 Assigning portfolios to contacts...');
 
   let assignmentsCreated = 0;
-  const contactsForPortfolios = contactsList.filter(() => Math.random() > 0.5).slice(0, 20);
+  // Assign to ~50% of contacts
+  const contactsForPortfolios = contactsList.filter(() => Math.random() > 0.5);
 
   for (const contact of contactsForPortfolios) {
     // Check if already assigned
@@ -160,15 +193,8 @@ async function assignPortfoliosToContacts(
 
     if (existing.length > 0) continue;
 
-    // Match template to contact's risk profile
-    let template: typeof portfolioTemplates.$inferSelect;
-    if (contact.riskProfile === 'low') {
-      template = templates.find((t) => t.riskLevel === 'low') ?? getRandomElement(templates);
-    } else if (contact.riskProfile === 'high') {
-      template = templates.find((t) => t.riskLevel === 'high') ?? getRandomElement(templates);
-    } else {
-      template = templates.find((t) => t.riskLevel === 'mid') ?? getRandomElement(templates);
-    }
+    // Simply assign a random portfolio from templates
+    const template = getRandomElement(templates);
 
     const advisor =
       advisorUsers.find((a) => a.id === contact.assignedAdvisorId) ??
@@ -180,7 +206,7 @@ async function assignPortfoliosToContacts(
       .insert(clientPortfolioAssignments)
       .values({
         contactId: contact.id,
-        templateId: template.id,
+        portfolioId: template.id,
         status: 'active',
         startDate,
         createdByUserId: advisor.id,
@@ -190,5 +216,6 @@ async function assignPortfoliosToContacts(
     assignmentsCreated++;
   }
 
-  console.log(`    ✓ Created ${assignmentsCreated} portfolio assignments`);
+  // eslint-disable-next-line no-console
+    console.log(`    ✓ Created ${assignmentsCreated} portfolio assignments`);
 }

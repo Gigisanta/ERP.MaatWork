@@ -62,13 +62,13 @@ vi.mock('./hooks/usePortfolios', () => ({
   }),
 }));
 
-vi.mock('./hooks/useBenchmarks', () => ({
-  useBenchmarks: () => ({
-    benchmarks: [],
-    isLoading: false,
-    error: null,
-  }),
-}));
+// vi.mock('./hooks/useBenchmarks', () => ({
+//   useBenchmarks: () => ({
+//     benchmarks: [],
+//     isLoading: false,
+//     error: null,
+//   }),
+// }));
 
 vi.mock('../components/PageTitleContext', () => ({
   usePageTitle: vi.fn(),

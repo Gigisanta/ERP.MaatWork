@@ -18,7 +18,7 @@ Antes de comenzar, asegúrate de tener instalado:
 
 - **Node.js** >=22.0.0 <25.0.0
 - **pnpm** >=9.0.0
-- **Docker Desktop** (para PostgreSQL y N8N)
+- **Docker Desktop** (para PostgreSQL)
 - **Git**
 
 ### Verificar Instalaciones
@@ -36,6 +36,7 @@ docker compose version
 ```
 
 Si alguna de estas herramientas no está instalada, consulta:
+
 - [Instalar Node.js](https://nodejs.org/)
 - [Instalar pnpm](https://pnpm.io/installation)
 - [Instalar Docker Desktop](https://www.docker.com/products/docker-desktop)
@@ -79,7 +80,6 @@ Este comando ejecuta automáticamente:
 
 3. **Inicio de servicios Docker**
    - Inicia PostgreSQL en el puerto 5433
-   - Inicia N8N en el puerto 5678
 
 4. **Migraciones de base de datos**
    - Ejecuta todas las migraciones pendientes
@@ -96,9 +96,10 @@ pnpm dev
 ```
 
 Esto iniciará todos los servicios:
-- **Web App** en http://localhost:3000
-- **API** en http://localhost:3001
-- **Analytics Service** en http://localhost:3002 (o 3003 si 3002 está ocupado)
+
+- **Web App** en <http://localhost:3000>
+- **API** en <http://localhost:3001>
+- **Analytics Service** en <http://localhost:3002> (o 3003 si 3002 está ocupado)
 
 ---
 
@@ -106,7 +107,7 @@ Esto iniciará todos los servicios:
 
 ### Verificar que Todo Funciona
 
-1. **Abre el navegador** en http://localhost:3000
+1. **Abre el navegador** en <http://localhost:3000>
 2. **Haz login** con:
    - Email: `admin@maatwork.local`
    - No se requiere contraseña en desarrollo
@@ -134,6 +135,7 @@ curl http://localhost:3000
 **Problema:** El archivo `.env` no existe o no está configurado.
 
 **Solución:**
+
 ```bash
 # Ejecutar setup nuevamente
 pnpm setup
@@ -147,6 +149,7 @@ cp apps/api/config-example.env apps/api/.env
 **Problema:** Otro proceso está usando los puertos requeridos.
 
 **Solución:**
+
 ```bash
 # Detener procesos en los puertos
 pnpm dev:kill
@@ -169,13 +172,13 @@ taskkill /PID <PID> /F
 
 1. **Limpiar cookies del navegador:**
    - Abre DevTools (F12)
-   - Ve a Application → Cookies → http://localhost:3000
+   - Ve a Application → Cookies → <http://localhost:3000>
    - Elimina todas las cookies
    - Recarga la página
 
 2. **O usar modo incógnito:**
    - Abre una ventana incógnita
-   - Navega a http://localhost:3000
+   - Navega a <http://localhost:3000>
 
 3. **Verificar JWT_SECRET:**
    - Asegúrate de que `JWT_SECRET` en `apps/api/.env` y `apps/web/.env.local` sean iguales
@@ -186,6 +189,7 @@ taskkill /PID <PID> /F
 **Problema:** PostgreSQL no está corriendo o la conexión es incorrecta.
 
 **Solución:**
+
 ```bash
 # Verificar que Docker está corriendo
 docker ps
@@ -205,6 +209,7 @@ docker compose logs db
 **Problema:** El token tiene un rol diferente al que está en la base de datos.
 
 **Solución:**
+
 - Este es un warning normal cuando el rol del usuario cambió en la DB
 - El sistema automáticamente usa el rol de la base de datos (correcto)
 - Si persiste, limpia las cookies y haz login nuevamente
@@ -214,6 +219,7 @@ docker compose logs db
 **Problema:** Las dependencias no están instaladas correctamente.
 
 **Solución:**
+
 ```bash
 # Limpiar e instalar dependencias
 rm -rf node_modules
@@ -231,6 +237,7 @@ pnpm install
 **Problema:** Las migraciones fallaron o la base de datos está en un estado inconsistente.
 
 **Solución:**
+
 ```bash
 # Verificar que PostgreSQL está corriendo
 docker compose ps
@@ -317,11 +324,3 @@ Si encuentras problemas que no están cubiertos en esta guía:
 ---
 
 **¡Bienvenido al equipo! 🌵**
-
-
-
-
-
-
-
-

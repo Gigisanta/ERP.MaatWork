@@ -53,7 +53,7 @@ export function getAuthCookieOptions(maxAge?: number): CookieOptions {
  * Justificación: Facilita debugging de problemas de cookies en producción
  * Impacto: Mejor visibilidad de configuración exacta de cookies
  */
-export function getAuthCookieOptionsDebugInfo(maxAge?: number): Record<string, unknown> {
+function getAuthCookieOptionsDebugInfo(maxAge?: number): Record<string, unknown> {
   const options = getAuthCookieOptions(maxAge);
   return {
     httpOnly: options.httpOnly,

@@ -137,11 +137,26 @@ import { ThemeProvider } from '@maatwork/ui';
 </ThemeProvider>
 ```
 
+### Animations & Transitions
+
+- **PageTransition**: Wrappers for consistent page entrances (`PageContent`, `StaggeredSection`, `PageHeader`).
+- **Standard Classes**: `animate-fade-in-up`, `animate-enter`, `animate-pop`.
+
 ### Available Themes
 
 - `light`: Default light theme
 - `dark`: Dark theme with inverted colors
 - `high-contrast`: High contrast theme for accessibility
+
+### Using Tokens
+
+You can import the raw design tokens for advanced usage in standard TypeScript files:
+
+```typescript
+import { tokens, brandColors } from '@maatwork/ui/tokens';
+
+const primaryColor = brandColors.primary.base;
+```
 
 ### CSS Variables
 
@@ -228,13 +243,13 @@ pnpm build
 ```
 
 ### Component docs
+
 La documentación de componentes se mantiene inline (JSDoc) y en README de la app.
 
 ### Testing
 
 - **Jest + RTL**: Unit tests with React Testing Library
 - **jest-axe**: Accessibility testing
- 
 
 ## Performance
 
@@ -260,8 +275,3 @@ La documentación de componentes se mantiene inline (JSDoc) y en README de la ap
 ## License
 
 MIT
-
-
-
-
-

@@ -100,7 +100,7 @@ export default function PlanDeCarreraPage() {
         setError('Error al cargar los niveles del plan de carrera');
       }
     } catch (err) {
-      logger.error('Error loading career plan levels', toLogContext({ err }));
+      logger.error(toLogContext({ err }), 'Error loading career plan levels');
       setError('Error al cargar los niveles del plan de carrera');
     } finally {
       setDataLoading(false);
@@ -382,7 +382,7 @@ export default function PlanDeCarreraPage() {
       {/* Modal de formulario */}
       <Modal
         open={showFormModal}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) {
             setShowFormModal(false);
             setEditingLevel(null);
@@ -403,7 +403,7 @@ export default function PlanDeCarreraPage() {
             <Input
               label="Categoría"
               value={formData.category}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setFormData({ ...formData, category: e.target.value });
                 setFormErrors({ ...formErrors, category: '' });
               }}
@@ -415,7 +415,7 @@ export default function PlanDeCarreraPage() {
             <Input
               label="Nivel"
               value={formData.level}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setFormData({ ...formData, level: e.target.value });
                 setFormErrors({ ...formErrors, level: '' });
               }}
@@ -428,7 +428,7 @@ export default function PlanDeCarreraPage() {
               label="Número de Nivel"
               type="number"
               value={formData.levelNumber.toString()}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const num = parseInt(e.target.value, 10);
                 if (!isNaN(num)) {
                   setFormData({ ...formData, levelNumber: num });
@@ -445,7 +445,7 @@ export default function PlanDeCarreraPage() {
               type="number"
               step="0.01"
               value={formData.index.toString()}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setFormData({ ...formData, index: e.target.value });
                 setFormErrors({ ...formErrors, index: '' });
               }}
@@ -459,7 +459,7 @@ export default function PlanDeCarreraPage() {
               type="number"
               step="0.01"
               value={formData.percentage.toString()}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setFormData({ ...formData, percentage: e.target.value });
                 setFormErrors({ ...formErrors, percentage: '' });
               }}
@@ -474,7 +474,7 @@ export default function PlanDeCarreraPage() {
               label="Objetivo Anual (USD)"
               type="number"
               value={formData.annualGoalUsd.toString()}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const num = parseInt(e.target.value, 10);
                 if (!isNaN(num)) {
                   setFormData({ ...formData, annualGoalUsd: num });
@@ -490,7 +490,7 @@ export default function PlanDeCarreraPage() {
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.isActive ?? true}
-                onCheckedChange={(checked) => {
+                onCheckedChange={(checked: boolean) => {
                   setFormData({ ...formData, isActive: checked });
                 }}
               />
@@ -528,7 +528,7 @@ export default function PlanDeCarreraPage() {
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}
