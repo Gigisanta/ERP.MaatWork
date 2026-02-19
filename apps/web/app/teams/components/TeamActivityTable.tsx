@@ -27,6 +27,7 @@ import {
   type Column,
 } from '@maatwork/ui';
 import type { TeamMemberActivity } from '@/types';
+import { formatCurrencyCompact } from '@maatwork/utils';
 
 interface TeamActivityTableProps {
   teamId: string;
@@ -80,15 +81,7 @@ function getActivityStatusBadgeProps(status: TeamMemberActivity['activityStatus'
 /**
  * Format currency for AUM display
  */
-function formatCurrency(amount: number): string {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(0)}K`;
-  }
-  return `$${amount}`;
-}
+// function removed in favor of shared utility
 
 export default function TeamActivityTable({ teamId, teamName }: TeamActivityTableProps) {
   const router = useRouter();
@@ -213,7 +206,7 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
       header: 'AUM',
       render: (member) => (
         <div className="text-right min-w-[80px]">
-          <Text weight="medium">{formatCurrency(member.totalAum)}</Text>
+          <Text weight="medium">{formatCurrencyCompact(member.totalAum)}</Text>
         </div>
       ),
     },

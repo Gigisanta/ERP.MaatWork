@@ -61,7 +61,7 @@ function ContactUserPickerComponent({
       <Input
         type="text"
         value={contactId}
-        onChange={(e) => setContactId(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setContactId(e.target.value)}
         placeholder="Contact ID"
         size="sm"
         className="text-xs w-24 flex-shrink-0 min-w-0"
@@ -69,7 +69,7 @@ function ContactUserPickerComponent({
       <Input
         type="text"
         value={userId}
-        onChange={(e) => setUserId(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserId(e.target.value)}
         placeholder="User ID"
         size="sm"
         className="text-xs w-24 flex-shrink-0 min-w-0"

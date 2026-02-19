@@ -67,7 +67,7 @@ export function PortfolioLineForm({
           <Select
             label="Tipo de Componente"
             value={formData.targetType}
-            onValueChange={(value) =>
+            onValueChange={(value: string) =>
               setFormData((prev) => ({ ...prev, targetType: value as 'instrument' | 'assetClass' }))
             }
             items={[
@@ -80,7 +80,7 @@ export function PortfolioLineForm({
             <Select
               label="Clase de Activo"
               value={formData.assetClass || ''}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, assetClass: value }))}
+              onValueChange={(value: string) => setFormData((prev) => ({ ...prev, assetClass: value }))}
               items={[
                 { value: 'equity', label: 'Acciones' },
                 { value: 'fixed_income', label: 'Renta Fija' },
@@ -95,7 +95,7 @@ export function PortfolioLineForm({
             <Input
               label="ID del Instrumento"
               value={formData.instrumentId || ''}
-              onChange={(e) => setFormData((prev) => ({ ...prev, instrumentId: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, instrumentId: e.target.value }))}
               placeholder="Ingresa el ID del instrumento"
             />
           )}
@@ -107,7 +107,7 @@ export function PortfolioLineForm({
             max="100"
             step="0.01"
             value={formData.targetWeight}
-            onChange={(e) => setFormData((prev) => ({ ...prev, targetWeight: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev) => ({ ...prev, targetWeight: e.target.value }))}
             placeholder="Ej: 25.5"
           />
           <Text size="sm" color="secondary">

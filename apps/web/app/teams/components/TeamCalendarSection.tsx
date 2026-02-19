@@ -78,11 +78,11 @@ export function TeamCalendarSection({
         alert('Error al asignar la reunión');
       }
     } catch (error) {
-      logger.error('Failed to assign event to member', {
+      logger.error({
         error: toLogContextValue(error),
         teamId,
         eventId,
-      });
+      }, 'Failed to assign event to member');
       alert('Error al asignar la reunión');
     } finally {
       setAssigningEventId(null);
@@ -202,7 +202,7 @@ export function TeamCalendarSection({
                         value: m.userId,
                         label: m.user?.fullName || m.email || 'Miembro sin nombre',
                       }))}
-                      onValueChange={(value) => handleAssignEvent(event.id, value, event)}
+                      onValueChange={(value: string) => handleAssignEvent(event.id, value, event)}
                       className="w-full text-xs"
                     />
                   </div>

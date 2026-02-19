@@ -28,7 +28,7 @@ export default function PortfolioDetailPage() {
   const { user, loading: authLoading } = useRequireAuth();
   const params = useParams();
   const router = useRouter();
-  const templateId = params.id as string;
+  const portfolioId = params.id as string;
 
   const [showCreateLineModal, setShowCreateLineModal] = useState(false);
 
@@ -37,7 +37,7 @@ export default function PortfolioDetailPage() {
     loading: dataLoading,
     error,
     refetch,
-  } = usePortfolioData(templateId, !authLoading && !!user);
+  } = usePortfolioData(portfolioId, !authLoading && !!user);
 
   const {
     isCreating,
@@ -47,7 +47,7 @@ export default function PortfolioDetailPage() {
     setConfirmDialog,
     handleCreateLine,
     handleDeleteLine,
-  } = usePortfolioLineActions(templateId, portfolio?.totalWeight ?? 0, refetch);
+  } = usePortfolioLineActions(portfolioId, portfolio?.totalWeight ?? 0, refetch);
 
   const loading = authLoading || dataLoading;
 
@@ -91,7 +91,7 @@ export default function PortfolioDetailPage() {
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { href: '/portfolios', label: 'Carteras' },
-    { href: `/portfolios/${templateId}`, label: portfolio?.name || 'Cartera Modelo' },
+    { href: `/portfolios/${portfolioId}`, label: portfolio?.name || 'Cartera Modelo' },
   ];
 
   return (
@@ -196,7 +196,7 @@ export default function PortfolioDetailPage() {
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

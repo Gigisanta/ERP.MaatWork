@@ -116,7 +116,10 @@ describe('ClientLogger', () => {
       error: vi.spyOn(console, 'error').mockImplementation(() => {}),
       warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
       debug: vi.spyOn(console, 'debug').mockImplementation(() => {}),
-    };
+      group: vi.spyOn(console, 'group').mockImplementation(() => {}),
+      groupCollapsed: vi.spyOn(console, 'groupCollapsed').mockImplementation(() => {}),
+      groupEnd: vi.spyOn(console, 'groupEnd').mockImplementation(() => {}),
+    } as any;
 
     // Mock window
     global.window = {
@@ -211,9 +214,16 @@ describe('ClientLogger', () => {
       process.env.NEXT_PUBLIC_VERBOSE_LOGS = 'true';
       testLogger.info('Test', { userId: '123', action: 'test' });
 
-      const call = mockConsole.log.mock.calls[0];
-      expect(call[0]).toContain('Test');
-      expect(call[1]).toEqual({ userId: '123', action: 'test' });
+      // In dev mode with group, info message is in groupCollapsed
+      expect(mockConsole.groupCollapsed).toHaveBeenCalled();
+      const groupCall = (console.groupCollapsed as any).mock.calls[0];
+      expect(groupCall[0]).toContain('Test');
+      
+      // Context is in log call
+      expect(mockConsole.log).toHaveBeenCalled();
+      const logCall = mockConsole.log.mock.calls[0];
+      expect(logCall[0]).toBe('Details:');
+      expect(logCall[1]).toEqual({ userId: '123', action: 'test' });
     });
   });
 
@@ -246,10 +256,18 @@ describe('ClientLogger', () => {
 
       testLogger.logRequest('GET', '/api/users', 'req-123', { userId: 'user-1' });
 
+      expect(mockConsole.groupCollapsed).toHaveBeenCalled();
+      const groupCall = (console.groupCollapsed as any).mock.calls[0];
+      expect(groupCall[0]).toContain('GET');
+      expect(groupCall[0]).toContain('/api/users');
+      
       expect(mockConsole.log).toHaveBeenCalled();
-      const call = mockConsole.log.mock.calls[0];
-      expect(call[0]).toContain('GET');
-      expect(call[0]).toContain('/api/users');
+      const logCall = mockConsole.log.mock.calls[0];
+      expect(logCall[1]).toMatchObject({
+        requestId: 'req-123',
+        method: 'GET',
+        url: '/api/users'
+      });
     });
   });
 
@@ -291,9 +309,17 @@ describe('ClientLogger', () => {
       const error = new Error('Network error');
       testLogger.logNetworkError('GET', '/api/users', error, 'req-123');
 
+      expect(mockConsole.group).toHaveBeenCalled();
+      const groupCall = (console.group as any).mock.calls[0];
+      expect(groupCall[0]).toContain('Network error');
+      
       expect(mockConsole.error).toHaveBeenCalled();
-      const call = mockConsole.error.mock.calls[0];
-      expect(call[0]).toContain('Network error');
+      const errorCall = mockConsole.error.mock.calls[0];
+      expect(errorCall[1]).toMatchObject({
+        method: 'GET',
+        url: '/api/users',
+        requestId: 'req-123'
+      });
     });
   });
 

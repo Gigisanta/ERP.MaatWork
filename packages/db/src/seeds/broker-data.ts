@@ -84,11 +84,13 @@ export async function seedBrokerData(
   contactsList: (typeof contacts.$inferSelect)[],
   advisorUsers: (typeof users.$inferSelect)[]
 ) {
-  console.log('🏦 Seeding broker data...');
+  // eslint-disable-next-line no-console
+    console.log('🏦 Seeding broker data...');
 
   // Check existing accounts
   const existingAccounts = await db().select().from(brokerAccounts).limit(20);
   if (existingAccounts.length >= 15) {
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Broker accounts already seeded: ${existingAccounts.length} accounts found\n`);
     return { accounts: existingAccounts };
   }
@@ -107,10 +109,12 @@ export async function seedBrokerData(
     if (account) {
       createdAccounts.push(account);
       await createAccountBalance(account);
-      console.log(`  ✓ Created account ${account.accountNumber} for ${contact.fullName}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created account ${account.accountNumber} for ${contact.fullName}`);
     }
   }
 
-  console.log(`✅ Broker data seeded: ${createdAccounts.length} accounts\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Broker data seeded: ${createdAccounts.length} accounts\n`);
   return { accounts: createdAccounts };
 }

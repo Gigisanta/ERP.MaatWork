@@ -40,7 +40,7 @@ export interface CreateTagRequest extends Omit<CreateRequest<Tag>, 'entityType' 
 /**
  * Request to update a tag
  */
-export interface UpdateTagRequest extends UpdateRequest<Tag> {}
+export type UpdateTagRequest = UpdateRequest<Tag>;
 
 /**
  * Contact-Tag relation with additional data for business lines

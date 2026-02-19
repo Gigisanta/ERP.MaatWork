@@ -12,10 +12,9 @@ import {
   clearSession,
   isTokenExpiringSoon,
 } from '../../lib/auth/session-manager';
-import type { UserRole } from '@/types';
 import type { AuthUser, RegisterData } from '@/types/auth';
 
-export type { AuthUser, RegisterData };
+export type { AuthUser,  };
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -56,10 +55,10 @@ export function AuthProvider({
       const result = await verifySession(3, [500, 1000, 2000]);
 
       if (result.success && result.user) {
-        logger.info('Sesión verificada exitosamente', {
+        logger.info({
           userId: result.user.id,
           duration: Date.now() - startTime,
-        });
+        }, 'Sesión verificada exitosamente');
         setUser(result.user);
         logger.updateUser(result.user.id, result.user.role);
         lastVerifiedRef.current = Date.now();
@@ -67,22 +66,22 @@ export function AuthProvider({
         // Differentiate between error types for better logging
         if (result.error) {
           if (result.error.type === 'auth') {
-            logger.debug('No hay sesión activa', {
+            logger.debug({
               status: result.error.status,
               message: result.error.message,
-            });
+            }, 'No hay sesión activa');
           } else if (result.error.type === 'network') {
-            logger.warn('Error de red al verificar sesión', {
+            logger.warn({
               type: result.error.type,
               message: result.error.message,
               status: result.error.status,
-            });
+            }, 'Error de red al verificar sesión');
           } else {
-            logger.warn('Error al verificar sesión', {
+            logger.warn({
               type: result.error.type,
               message: result.error.message,
               status: result.error.status,
-            });
+            }, 'Error al verificar sesión');
           }
         }
         setUser(null);
@@ -91,10 +90,10 @@ export function AuthProvider({
       }
     } catch (error) {
       // Catch any unexpected errors during session verification
-      logger.error('Error inesperado al verificar sesión', {
+      logger.error({
         error: error instanceof Error ? error.message : String(error),
         duration: Date.now() - startTime,
-      });
+      }, 'Error inesperado al verificar sesión');
       setUser(null);
       logger.updateUser(null, null);
       lastVerifiedRef.current = null;
@@ -129,10 +128,10 @@ export function AuthProvider({
         setInitialized(true);
       })
       .catch((err) => {
-        logger.error('Error crítico al verificar sesión inicial', {
+        logger.error({
           error: err instanceof Error ? err.message : String(err),
           stack: err instanceof Error ? err.stack : undefined,
-        });
+        }, 'Error crítico al verificar sesión inicial');
         // Asegurar que initialized se establezca incluso con errores
         // Esto permite que NavigationNew redirija al login cuando no hay usuario
         setInitialized(true);
@@ -175,9 +174,9 @@ export function AuthProvider({
               setUser(result.user);
               logger.updateUser(result.user.id, result.user.role);
               lastVerifiedRef.current = Date.now();
-              logger.info('Token refrescado y sesión verificada automáticamente', {
+              logger.info({
                 userId: result.user.id,
-              });
+              }, 'Token refrescado y sesión verificada automáticamente');
             } else {
               logger.warn('Token refrescado pero verificación de sesión falló');
             }
@@ -205,9 +204,9 @@ export function AuthProvider({
       if (e.key === 'maatwork_session_changed' || e.key === null) {
         logger.debug('Cambio de sesión detectado en otra pestaña, re-verificando');
         checkSession().catch((err) => {
-          logger.warn('Error al re-verificar sesión después de cambio en otra pestaña', {
+          logger.warn({
             error: err instanceof Error ? err.message : String(err),
-          });
+          }, 'Error al re-verificar sesión después de cambio en otra pestaña');
         });
       }
     };
@@ -221,38 +220,34 @@ export function AuthProvider({
   // Listen for auth events from API client
   React.useEffect(() => {
     const handleSessionExpired = (e: CustomEvent) => {
-      console.error('[AuthContext] EVENTO auth:session-expired RECIBIDO - LIMPIANDO USUARIO', {
+      logger.error({
         detail: e.detail,
         previousUser: !!user,
-        timestamp: new Date().toISOString(),
-      });
-      logger.warn('Sesión expirada detectada por API client', {
+      }, '[AuthContext] EVENTO auth:session-expired RECIBIDO - LIMPIANDO USUARIO');
+      logger.warn({
         detail: e.detail,
-      });
+      }, 'Sesión expirada detectada por API client');
       // Clear user state
       setUser(null);
       logger.updateUser(null, null);
       lastVerifiedRef.current = null;
-      console.error('[AuthContext] Usuario limpiado debido a sesión expirada');
+      logger.info('[AuthContext] Usuario limpiado debido a sesión expirada');
     };
 
     const handleTokenRefreshed = () => {
-      console.log('[AuthContext] EVENTO auth:token-refreshed RECIBIDO - Re-verificando sesión', {
-        timestamp: new Date().toISOString(),
-      });
+      logger.info('[AuthContext] EVENTO auth:token-refreshed RECIBIDO - Re-verificando sesión');
       logger.debug('Token refrescado por API client, re-verificando sesión');
       // Re-verify session after token refresh
       checkSession().catch((err) => {
-        logger.warn('Error al re-verificar sesión después de refresh de token', {
+        logger.warn({
           error: err instanceof Error ? err.message : String(err),
-        });
+        }, 'Error al re-verificar sesión después de refresh de token');
       });
     };
 
-    console.log('[AuthContext] Configurando listeners de eventos auth', {
+    logger.debug({
       hasWindow: typeof window !== 'undefined',
-      timestamp: new Date().toISOString(),
-    });
+    }, '[AuthContext] Configurando listeners de eventos auth');
 
     if (typeof window !== 'undefined') {
       window.addEventListener('auth:session-expired', handleSessionExpired as EventListener);
@@ -260,7 +255,7 @@ export function AuthProvider({
     }
 
     return () => {
-      console.log('[AuthContext] Removiendo listeners de eventos auth');
+      logger.debug('[AuthContext] Removiendo listeners de eventos auth');
       if (typeof window !== 'undefined') {
         window.removeEventListener('auth:session-expired', handleSessionExpired as EventListener);
         window.removeEventListener('auth:token-refreshed', handleTokenRefreshed);
@@ -276,7 +271,7 @@ export function AuthProvider({
       setUser(result.user);
       logger.updateUser(result.user.id, result.user.role);
       lastVerifiedRef.current = Date.now();
-      logger.info('Sesión refrescada exitosamente', { userId: result.user.id });
+      logger.info({ userId: result.user.id }, 'Sesión refrescada exitosamente');
       return true;
     }
 
@@ -294,7 +289,7 @@ export function AuthProvider({
     async (identifier: string, password: string, rememberMe?: boolean) => {
       const startTime = Date.now();
       try {
-        logger.info('Iniciando login', { identifier });
+        logger.info({ identifier }, 'Iniciando login');
 
         const data = await postJson<{ success: boolean; user: AuthUser }>(
           `${config.apiUrl}/v1/auth/login`,
@@ -320,26 +315,26 @@ export function AuthProvider({
           setUser(sessionResult.user);
           logger.updateUser(sessionResult.user.id, sessionResult.user.role);
           lastVerifiedRef.current = Date.now();
-          logger.info('Login exitoso y sesión verificada', {
+          logger.info({
             userId: sessionResult.user.id,
             duration: Date.now() - startTime,
-          });
+          }, 'Login exitoso y sesión verificada');
         } else {
           // Login succeeded but session verification failed
-          logger.warn('Login exitoso pero verificación de sesión falló', {
+          logger.warn({
             error: sessionResult.error,
-          });
+          }, 'Login exitoso pero verificación de sesión falló');
           // Still set user from login response as fallback
           setUser(data.user);
           logger.updateUser(data.user.id, data.user.role);
           lastVerifiedRef.current = Date.now();
         }
       } catch (error) {
-        logger.error('Error en login', {
+        logger.error({
           error: error instanceof Error ? error.message : String(error),
           identifier,
           duration: Date.now() - startTime,
-        });
+        }, 'Error en login');
         throw error;
       }
     },
@@ -348,23 +343,23 @@ export function AuthProvider({
 
   const register = React.useCallback(async (data: RegisterData) => {
     try {
-      logger.info('Iniciando proceso de registro', {
+      logger.info({
         email: data.email,
         role: data.role,
-      });
+      }, 'Iniciando proceso de registro');
 
       await postJson(`${config.apiUrl}/v1/auth/register`, data);
 
-      logger.info('Registro exitoso', {
+      logger.info({
         email: data.email,
         role: data.role,
-      });
+      }, 'Registro exitoso');
     } catch (error) {
-      logger.error('Error en proceso de registro', {
+      logger.error({
         error: error instanceof Error ? error.message : String(error),
         email: data.email,
         role: data.role,
-      });
+      }, 'Error en proceso de registro');
       throw error;
     }
   }, []);
@@ -376,9 +371,9 @@ export function AuthProvider({
     try {
       await clearSession();
     } catch (error) {
-      logger.warn('Error al limpiar sesión en servidor', {
+      logger.warn({
         error: error instanceof Error ? error.message : String(error),
-      });
+      }, 'Error al limpiar sesión en servidor');
     }
 
     // Clear local state (always clear, even if server call failed)
@@ -408,13 +403,13 @@ export function AuthProvider({
   const mutateUser = React.useCallback(async () => {
     logger.debug('[AuthContext] mutateUser called - Refrescando datos de usuario');
     const result = await verifySession(1);
-    logger.debug('[AuthContext] mutateUser result', {
+    logger.debug({
       success: result.success,
       hasUser: !!result.user,
       isGoogleConnected: result.user?.isGoogleConnected,
       userId: result.user?.id,
       userEmail: result.user?.email,
-    });
+    }, '[AuthContext] mutateUser result');
     if (result.success && result.user) {
       // AI_DECISION: No incluir user en dependencias para evitar bucles infinitos
       // Justificación: mutateUser es llamado desde componentes que re-renderizan cuando user cambia
@@ -422,10 +417,10 @@ export function AuthProvider({
       // Impacto: mutateUser es estable, componentes pueden usarlo sin causar bucles
       setUser(result.user);
     } else {
-      logger.warn('[AuthContext] mutateUser failed to get user', {
+      logger.warn({
         success: result.success,
         hasUser: !!result.user,
-      });
+      }, '[AuthContext] mutateUser failed to get user');
     }
   }, []); // Sin dependencias - función estable
 

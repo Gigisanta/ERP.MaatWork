@@ -1,7 +1,6 @@
 'use client';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { logger, toLogContext } from '@/lib/logger';
@@ -77,7 +76,6 @@ export default function NewContactPage() {
   // Impacto: Mejor UX, menos frustración al enviar formularios con errores
   const {
     errors: validationErrors,
-    isValid,
     validateField,
     validateAll,
     touchField,
@@ -132,12 +130,15 @@ export default function NewContactPage() {
       setSubmitLoading(true);
       setError(null);
 
-      logger.info('Contact creation form submitted', {
-        userId: user?.id,
-        userRole: user?.role,
-        hasFirstName: !!formData.firstName.trim(),
-        hasLastName: !!formData.lastName.trim(),
-      });
+      logger.info(
+        toLogContext({
+          userId: user?.id,
+          userRole: user?.role,
+          hasFirstName: !!formData.firstName.trim(),
+          hasLastName: !!formData.lastName.trim(),
+        }),
+        'Contact creation form submitted'
+      );
 
       const response = await createContact({
         firstName: formData.firstName.trim(),
@@ -148,32 +149,41 @@ export default function NewContactPage() {
         notes: formData.notes.trim() || null,
       });
 
-      logger.info('Contact creation API response received', {
-        responseSuccess: response.success,
-        hasData: !!response.data,
-        hasError: !!response.error,
-        responseKeys: Object.keys(response),
-      });
+      logger.info(
+        toLogContext({
+          responseSuccess: response.success,
+          hasData: !!response.data,
+          hasError: !!response.error,
+          responseKeys: Object.keys(response),
+        }),
+        'Contact creation API response received'
+      );
 
       if (response.success && response.data) {
         const createdContact = response.data;
 
         // Justificación: Mejor observabilidad y correlación con logs de API
         // Impacto: Logs estructurados y rastreables en producción
-        logger.info('Contact created successfully', {
-          contactId: createdContact?.id,
-          assignedAdvisorId: createdContact?.assignedAdvisorId,
-          expectedAdvisorId: user?.id,
-          userRole: user?.role,
-        });
+        logger.info(
+          toLogContext({
+            contactId: createdContact?.id,
+            assignedAdvisorId: createdContact?.assignedAdvisorId,
+            expectedAdvisorId: user?.id,
+            userRole: user?.role,
+          }),
+          'Contact created successfully'
+        );
 
         // Verify assignment for advisors
         if (user?.role === 'advisor' && createdContact?.assignedAdvisorId !== user.id) {
-          logger.warn('Advisor mismatch on contact creation', {
-            expected: user.id,
-            actual: createdContact?.assignedAdvisorId,
-            contactId: createdContact?.id,
-          });
+          logger.warn(
+            toLogContext({
+              expected: user.id,
+              actual: createdContact?.assignedAdvisorId,
+              contactId: createdContact?.id,
+            }),
+            'Advisor mismatch on contact creation'
+          );
         }
 
         // Invalidate contacts cache and wait for revalidation to complete
@@ -191,11 +201,14 @@ export default function NewContactPage() {
         throw new Error(response.error || 'Error al crear contacto');
       }
     } catch (err) {
-      logger.error('Contact creation failed', {
-        error: err instanceof Error ? err.message : 'Unknown error',
-        errorType: err?.constructor?.name,
-        userId: user?.id,
-      });
+      logger.error(
+        toLogContext({
+          error: err instanceof Error ? err.message : 'Unknown error',
+          errorType: (err instanceof Error) ? err.constructor.name : 'Unknown',
+          userId: user?.id,
+        }),
+        'Contact creation failed'
+      );
       setError(err instanceof Error ? err.message : 'Error al crear contacto');
     } finally {
       setSubmitLoading(false);
@@ -282,7 +295,7 @@ export default function NewContactPage() {
                       <Input
                         label="Nombre"
                         value={formData.firstName}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('firstName', e.target.value)}
                         onBlur={() => handleFieldBlur('firstName')}
                         placeholder="Juan"
                         disabled={isLoading || submitLoading}
@@ -299,7 +312,7 @@ export default function NewContactPage() {
                       <Input
                         label="Apellido"
                         value={formData.lastName}
-                        onChange={(e) => handleInputChange('lastName', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('lastName', e.target.value)}
                         onBlur={() => handleFieldBlur('lastName')}
                         placeholder="Pérez"
                         disabled={isLoading || submitLoading}
@@ -318,7 +331,7 @@ export default function NewContactPage() {
                       label="Correo Electrónico"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('email', e.target.value)}
                       onBlur={() => handleFieldBlur('email')}
                       placeholder="juan.perez@email.com"
                       disabled={isLoading || submitLoading}
@@ -332,7 +345,7 @@ export default function NewContactPage() {
                     <Input
                       label="Teléfono"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('phone', e.target.value)}
                       onBlur={() => handleFieldBlur('phone')}
                       placeholder="+54 9 11 1234-5678"
                       disabled={isLoading || submitLoading}

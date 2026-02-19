@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { Request, Response } from 'express';
-import { db, portfolioTemplates, portfolioTemplateLines, instruments } from '@maatwork/db';
+import { db, portfolios, portfolioLines, instruments } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { TIMEOUTS } from '../../config/timeouts';
@@ -16,8 +16,8 @@ import { TIMEOUTS } from '../../config/timeouts';
 // Mock dependencies
 vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
-  portfolioTemplates: {},
-  portfolioTemplateLines: {},
+  portfolios: {},
+  portfolioLines: {},
   instruments: {},
 }));
 
@@ -127,13 +127,13 @@ describe('GET /analytics/performance/:portfolioId', () => {
     const handler = async (req: Request, res: Response) => {
       const portfolioData = await db()
         .select()
-        .from(portfolioTemplates)
+        .from(portfolios)
         .innerJoin(
-          portfolioTemplateLines,
-          eq(portfolioTemplateLines.templateId, portfolioTemplates.id)
+          portfolioLines,
+          eq(portfolioLines.portfolioId, portfolios.id)
         )
-        .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-        .where(eq(portfolioTemplates.id, 'portfolio-123'))
+        .innerJoin(instruments, eq(instruments.id, portfolioLines.instrumentId))
+        .where(eq(portfolios.id, 'portfolio-123'))
         .limit(100);
 
       if (portfolioData.length === 0) {

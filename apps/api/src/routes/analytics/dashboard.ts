@@ -10,7 +10,7 @@ import {
   users,
   contacts,
   aumSnapshots,
-  portfolioTemplates,
+  portfolios,
   clientPortfolioAssignments,
   portfolioMonitoringSnapshot,
   instruments,
@@ -192,7 +192,7 @@ router.get(
           // Distribución de riesgo por clientes
           db()
             .select({
-              riskLevel: portfolioTemplates.riskLevel,
+              riskLevel: portfolios.riskLevel,
               count: count(),
             })
             .from(contacts)
@@ -201,8 +201,8 @@ router.get(
               eq(clientPortfolioAssignments.contactId, contacts.id)
             )
             .innerJoin(
-              portfolioTemplates,
-              eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+              portfolios,
+              eq(portfolios.id, clientPortfolioAssignments.portfolioId)
             )
             .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
             .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
@@ -211,7 +211,7 @@ router.get(
               and(eq(teams.id, teamMembership.teamId), eq(teams.managerUserId, user.id))
             )
             .where(and(eq(clientPortfolioAssignments.status, 'active')))
-            .groupBy(portfolioTemplates.riskLevel),
+            .groupBy(portfolios.riskLevel),
 
           // Top 5 clientes por AUM
           db()
@@ -274,7 +274,8 @@ router.get(
               .select({
                 count: count(),
               })
-              .from(portfolioTemplates),
+              .from(portfolios)
+              .where(eq(portfolios.type, 'template')),
 
             // Clientes sin cartera asignada
             db()
@@ -334,7 +335,8 @@ router.get(
                 .select({
                   count: count(),
                 })
-                .from(portfolioTemplates),
+                .from(portfolios)
+                .where(eq(portfolios.type, 'template')),
 
               db()
                 .select({
@@ -399,7 +401,7 @@ router.get(
           // Distribución de riesgo global
           db()
             .select({
-              riskLevel: portfolioTemplates.riskLevel,
+              riskLevel: portfolios.riskLevel,
               count: count(),
             })
             .from(contacts)
@@ -408,11 +410,11 @@ router.get(
               eq(clientPortfolioAssignments.contactId, contacts.id)
             )
             .innerJoin(
-              portfolioTemplates,
-              eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+              portfolios,
+              eq(portfolios.id, clientPortfolioAssignments.portfolioId)
             )
             .where(eq(clientPortfolioAssignments.status, 'active'))
-            .groupBy(portfolioTemplates.riskLevel),
+            .groupBy(portfolios.riskLevel),
 
           // Tendencia AUM últimos 30 días (global)
           db()
@@ -486,7 +488,7 @@ router.get(
             .where(sql`${clientPortfolioAssignments.id} IS NULL AND ${contacts.deletedAt} IS NULL`),
 
           // Número de carteras modelo activas
-          db().select({ count: count() }).from(portfolioTemplates),
+          db().select({ count: count() }).from(portfolios).where(eq(portfolios.type, 'template')),
 
           // Tendencia AUM últimos 30 días
           db()

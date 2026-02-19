@@ -24,20 +24,15 @@ export function formatNumber(value: number | null | undefined): string {
 /**
  * Format currency with AR locale
  */
-export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '--';
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
+/**
+ * Format currency with AR locale
+ */
+;
 
 /**
  * Build column widths for table based on config
  */
-export function buildColumnWidths(config: Record<string, number>): string {
+function buildColumnWidths(config: Record<string, number>): string {
   return Object.values(config)
     .map((width) => `${width}px`)
     .join(' ');
@@ -73,46 +68,38 @@ export function parseErrorMessage(error: unknown): string {
 /**
  * Truncate string with ellipsis
  */
-export function truncate(str: string | null | undefined, maxLength: number): string {
+function truncate(str: string | null | undefined, maxLength: number): string {
   if (!str) return '';
   if (str.length <= maxLength) return str;
   return `${str.slice(0, maxLength)}...`;
 }
 
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@maatwork/utils';
+
 /**
  * Format date to locale string
  */
-export function formatDate(date: Date | string | null | undefined): string {
+function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '--';
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(dateObj.getTime())) return '--';
-  return dateObj.toLocaleDateString('es-AR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
+  return formatDateDDMMYYYY(dateObj) || '--';
 }
 
 /**
  * Format date time to locale string
  */
-export function formatDateTime(date: Date | string | null | undefined): string {
+function formatDateTime(date: Date | string | null | undefined): string {
   if (!date) return '--';
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(dateObj.getTime())) return '--';
-  return dateObj.toLocaleString('es-AR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeDDMMYYYY(dateObj) || '--';
 }
 
 /**
  * Calculate percentage
  */
-export function calculatePercentage(value: number, total: number): number {
+function calculatePercentage(value: number, total: number): number {
   if (total === 0) return 0;
   return (value / total) * 100;
 }
@@ -120,7 +107,7 @@ export function calculatePercentage(value: number, total: number): number {
 /**
  * Format match status for display
  */
-export function formatMatchStatus(status: 'matched' | 'ambiguous' | 'unmatched'): string {
+function formatMatchStatus(status: 'matched' | 'ambiguous' | 'unmatched'): string {
   const statusMap = {
     matched: 'Matcheado',
     ambiguous: 'Ambiguo',
@@ -132,7 +119,7 @@ export function formatMatchStatus(status: 'matched' | 'ambiguous' | 'unmatched')
 /**
  * Get match status color
  */
-export function getMatchStatusColor(status: 'matched' | 'ambiguous' | 'unmatched'): string {
+function getMatchStatusColor(status: 'matched' | 'ambiguous' | 'unmatched'): string {
   const colorMap = {
     matched: 'text-green-600',
     ambiguous: 'text-yellow-600',

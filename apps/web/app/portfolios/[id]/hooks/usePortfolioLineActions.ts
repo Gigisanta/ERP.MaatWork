@@ -32,7 +32,7 @@ interface ConfirmDialogState {
 }
 
 export function usePortfolioLineActions(
-  templateId: string | null,
+  portfolioId: string | null,
   currentTotalWeight: number,
   onSuccess: () => void
 ) {
@@ -66,7 +66,7 @@ export function usePortfolioLineActions(
 
   const handleCreateLine = useCallback(
     async (createLineData: CreateLineData): Promise<boolean> => {
-      if (!templateId) return false;
+      if (!portfolioId) return false;
 
       try {
         setIsCreating(true);
@@ -114,7 +114,7 @@ export function usePortfolioLineActions(
           payload.instrumentId = createLineData.instrumentId;
         }
 
-        const response = await addPortfolioLine(templateId, payload);
+        const response = await addPortfolioLine(portfolioId, payload);
 
         if (!response.success) {
           const errorMessage = response.error || 'Error al crear la línea';
@@ -128,8 +128,8 @@ export function usePortfolioLineActions(
         return true;
       } catch (err) {
         logger.error(
-          'Error creating template line',
-          toLogContext({ err, templateId, data: createLineData })
+          toLogContext({ err, portfolioId, data: createLineData }),
+          'Error creating portfolio line'
         );
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
         showToast('Error al crear línea', errorMessage, 'error');
@@ -138,12 +138,12 @@ export function usePortfolioLineActions(
         setIsCreating(false);
       }
     },
-    [templateId, currentTotalWeight, onSuccess, showToast]
+    [portfolioId, currentTotalWeight, onSuccess, showToast]
   );
 
   const handleDeleteLine = useCallback(
     (lineId: string) => {
-      if (!templateId) return;
+      if (!portfolioId) return;
 
       setConfirmDialog({
         open: true,
@@ -152,7 +152,7 @@ export function usePortfolioLineActions(
         variant: 'danger',
         onConfirm: async () => {
           try {
-            const response = await deletePortfolioLine(templateId, lineId);
+            const response = await deletePortfolioLine(portfolioId, lineId);
 
             if (!response.success) {
               const errorMessage = response.error || 'Error al eliminar la línea';
@@ -163,14 +163,14 @@ export function usePortfolioLineActions(
             onSuccess();
             showToast('Línea eliminada', 'La línea se eliminó exitosamente', 'success');
           } catch (err) {
-            logger.error('Error deleting template line', toLogContext({ err, lineId, templateId }));
+            logger.error(toLogContext({ err, lineId, portfolioId }), 'Error deleting portfolio line');
             const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
             showToast('Error al eliminar línea', errorMessage, 'error');
           }
         },
       });
     },
-    [templateId, onSuccess, showToast]
+    [portfolioId, onSuccess, showToast]
   );
 
   return {

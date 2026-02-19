@@ -330,6 +330,27 @@
       "when": 1767977845593,
       "tag": "0046_stale_morph",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1768440486218,
+      "tag": "0047_clumsy_slapstick",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1768531415655,
+      "tag": "0048_hesitant_tana_nile",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1768611233622,
+      "tag": "0049_daffy_captain_midlands",
+      "breakpoints": true
     }
   ]
 }

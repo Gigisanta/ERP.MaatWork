@@ -24,7 +24,7 @@ const PerformanceChart = dynamic(() => import('./PerformanceChart'), {
   ssr: false,
 });
 import { usePortfolioComparison } from '../../lib/api-hooks';
-import type { ComparisonResult } from '@/types';
+import type { ComparisonResult, Portfolio } from '@/types';
 import {
   Card,
   CardHeader,
@@ -39,18 +39,9 @@ import {
   DataTable,
 } from '@maatwork/ui';
 
-interface Portfolio {
-  id: string;
-  name: string;
-  type: 'portfolio' | 'benchmark';
-  riskLevel?: string;
-  description?: string;
-  createdAt?: string;
-}
-
 interface PortfolioComparatorProps {
   portfolios: Portfolio[];
-  benchmarks: Portfolio[];
+  benchmarks: Portfolio[]; // Now uses the same unified type
   onAddToComparison?: (id: string, type: 'portfolio' | 'benchmark') => void;
   onRemoveFromComparison?: (id: string, type: 'portfolio' | 'benchmark') => void;
   className?: string;
@@ -59,7 +50,7 @@ interface PortfolioComparatorProps {
 interface ComparisonItem {
   id: string;
   name: string;
-  type: 'portfolio' | 'benchmark';
+  type: string; // broadened from literal union to string to match Portfolio type
   performance: number;
   volatility: number;
   sharpe?: number;
@@ -354,8 +345,8 @@ const PortfolioComparator = memo<PortfolioComparatorProps>(function PortfolioCom
                   render: (item: ComparisonItem & Record<string, unknown>) => {
                     const typedItem = item as ComparisonItem;
                     return (
-                      <Badge variant={typedItem.type === 'portfolio' ? 'secondary' : 'success'}>
-                        {typedItem.type === 'portfolio' ? 'Cartera' : 'Benchmark'}
+                      <Badge variant={typedItem.type === 'benchmark' ? 'success' : 'secondary'}>
+                        {typedItem.type === 'benchmark' ? 'Benchmark' : 'Cartera'}
                       </Badge>
                     );
                   },

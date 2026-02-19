@@ -24,17 +24,17 @@
     "README.md"
   ],
   "scripts": {
+    "dev": "tsup src/index.ts src/tailwind-preset.ts --format cjs,esm --watch --dts",
     "build": "tsc && pnpm run build:styles && pnpm run build:link-styles && pnpm run build:add-use-client",
     "build:styles": "node scripts/copy-styles.js",
     "build:link-styles": "node scripts/link-styles.js",
     "build:add-use-client": "node scripts/add-use-client.js",
+    "lint": "eslint src",
     "test": "COVERAGE=false vitest run",
     "test:unit": "COVERAGE=false vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src",
-    "type-check": "tsc --noEmit",
-    "typecheck": "pnpm run type-check",
+    "typecheck": "tsc --noEmit",
     "audit:code": "knip --workspace ."
   },
   "dependencies": {

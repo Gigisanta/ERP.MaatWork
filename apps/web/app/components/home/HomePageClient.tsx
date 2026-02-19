@@ -150,7 +150,7 @@ function HomePageUnauthenticated({ onLoginClick }: HomePageUnauthenticatedProps)
  * Client component wrapper for unauthenticated state
  * Needed for useRouter hook
  */
-export function HomePageUnauthenticatedClient() {
+function HomePageUnauthenticatedClient() {
   const router = useRouter();
 
   return <HomePageUnauthenticated onLoginClick={() => router.push('/login')} />;

@@ -26,10 +26,12 @@ export async function seedActivityEvents(
   advisorUsers: (typeof users.$inferSelect)[],
   contactsList: (typeof contacts.$inferSelect)[]
 ) {
-  console.log('📊 Seeding activity events...');
+  // eslint-disable-next-line no-console
+    console.log('📊 Seeding activity events...');
 
   const existingEvents = await db().select().from(activityEvents).limit(10);
   if (existingEvents.length >= 10) {
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Activity events already seeded: ${existingEvents.length} events found\n`);
     return existingEvents;
   }
@@ -69,6 +71,7 @@ export async function seedActivityEvents(
     }
   }
 
-  console.log(`✅ Activity events seeded: ${createdEvents.length} events\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Activity events seeded: ${createdEvents.length} events\n`);
   return createdEvents;
 }

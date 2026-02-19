@@ -4,7 +4,6 @@ import React from 'react';
 import {
   Card,
   CardHeader,
-  CardTitle,
   CardContent,
   Badge,
   Heading,
@@ -29,8 +28,10 @@ interface ProductsSectionProps {
 }
 
 export default function ProductsSection({ contactId, tags }: ProductsSectionProps) {
-  // Filter tags that belong to the Zurich business line
-  const productTags = tags.filter((tag) => tag.businessLine === 'zurich');
+  // Filter tags that belong to the relevant business lines
+  const productTags = tags.filter((tag) => 
+    tag.businessLine && ['zurich', 'investorstrust', 'inversiones', 'patrimonial'].includes(tag.businessLine)
+  );
 
   if (productTags.length === 0) {
     return null;

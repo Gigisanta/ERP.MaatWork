@@ -8,7 +8,6 @@ import {
   Text,
   Icon,
   Spinner,
-  Button,
 } from '@maatwork/ui';
 import { moveContactToStage, getNextPipelineStage } from '@/lib/api/pipeline';
 import { logger } from '@/lib/logger';
@@ -88,11 +87,11 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(
         // Actualizar estado local
         performStageChange(targetStageId);
       } catch (error) {
-        logger.error('Error changing stage to Cliente', {
+        logger.error({
           error: error instanceof Error ? error.message : String(error),
           contactId: contact.id,
           targetStageId,
-        });
+        }, 'Error changing stage to Cliente');
         if (onError && error instanceof Error) {
           onError(error);
         }
@@ -129,12 +128,12 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(
         // También llamar a onStageChange para actualizar el estado local
         onStageChange(contact.id, nextStage.id);
       } catch (error) {
-        logger.error('Error advancing stage', {
+        logger.error({
           error: error instanceof Error ? error.message : String(error),
           contactId: contact.id,
           currentStageId: contact.pipelineStageId,
           nextStageId: nextStage?.id,
-        });
+        }, 'Error advancing stage');
         // Notificar error al componente padre si está disponible
         if (onError && error instanceof Error) {
           onError(error);
@@ -218,7 +217,7 @@ const InlineStageSelect = React.memo<InlineStageSelectProps>(
         {/* Diálogo de confirmación para etapa Cliente */}
         <ConfirmDialog
           open={confirmDialog.open}
-          onOpenChange={(open) =>
+          onOpenChange={(open: boolean) =>
             setConfirmDialog({ open, targetStageId: confirmDialog.targetStageId })
           }
           onConfirm={handleConfirmStageChange}

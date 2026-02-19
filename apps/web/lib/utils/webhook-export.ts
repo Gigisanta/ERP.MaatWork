@@ -1,5 +1,5 @@
 /**
- * Utilidades para enviar contactos a webhook de N8N
+ * Utilidades para enviar contactos a webhook externo
  *
  * AI_DECISION: Proxy a través del backend para evitar problemas de CORS
  * Justificación: El backend hace la petición server-to-server, eliminando restricciones CORS
@@ -25,10 +25,10 @@ interface _WebhookPayload {
 }
 
 /**
- * Envía contactos a un webhook de N8N (proxy a través del backend)
+ * Envía contactos a un webhook externo (proxy a través del backend)
  *
  * @param contacts - Array de contactos a enviar
- * @param webhookUrl - URL del webhook de N8N
+ * @param webhookUrl - URL del webhook externo
  * @param metadata - Metadata opcional sobre los filtros aplicados
  * @returns Resultado de la operación
  */

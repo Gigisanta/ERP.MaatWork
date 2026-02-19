@@ -23,7 +23,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./vitest.setup.ts'],
+    setupFiles: [path.resolve(__dirname, './vitest.setup.ts')],
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['node_modules/**', '.next/**', 'out/**', 'dist/**'],
     // Parallelization optimized - Adaptive based on CPU cores
@@ -37,7 +37,7 @@ export default defineConfig({
     hookTimeout: adaptiveConfig.hookTimeout,
     coverage: {
       enabled: process.env.COVERAGE !== 'false' && !process.env.VITEST_WATCH,
-      provider: 'v8',
+      provider: 'v8' as const,
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
       include: ['lib/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],

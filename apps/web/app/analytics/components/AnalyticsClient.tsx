@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import type { DashboardData } from '@/types';
+import { formatCurrency, formatDateShort } from '@maatwork/utils';
 
 // AI_DECISION: Lazy load chart component to reduce initial bundle size
 // Justificación: Recharts is heavy (~200KB), loading it async reduces initial bundle significantly
@@ -25,21 +26,9 @@ interface AnalyticsClientProps {
 // AI_DECISION: Funciones de formateo definidas DENTRO del Client Component
 // Justificación: Next.js no permite pasar funciones de Server Components a Client Components
 // Impacto: Evita el error "Functions cannot be passed directly to Client Components"
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+// function removed in favor of shared utility
 
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('es-AR', {
-    month: 'short',
-    day: 'numeric',
-  });
-};
+// function removed in favor of shared utility
 
 const getRiskLevelLabel = (riskLevel: string | null): string => {
   switch (riskLevel) {
@@ -352,8 +341,7 @@ export default function AnalyticsClient({ dashboardData }: AnalyticsClientProps)
             <div className="h-[300px]">
               <AumTrendChart
                 data={aumTrend}
-                formatCurrency={formatCurrency}
-                formatDate={formatDate}
+                formatDate={formatDateShort}
               />
             </div>
             {role === 'owner' && aumTrend.length >= 2 && (

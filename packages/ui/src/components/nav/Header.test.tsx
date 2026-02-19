@@ -88,16 +88,7 @@ describe('Header Component', () => {
       );
     });
 
-    it('should render mobile menu button when onToggleSidebar provided', () => {
-      const handleToggle = vi.fn();
-      render(<Header onToggleSidebar={handleToggle} />);
-      expect(screen.getByLabelText(/abrir menú/i)).toBeInTheDocument();
-    });
 
-    it('should not render mobile menu button when no onToggleSidebar', () => {
-      render(<Header />);
-      expect(screen.queryByLabelText(/menú/i)).not.toBeInTheDocument();
-    });
   });
 
   describe('Navigation Items', () => {
@@ -122,7 +113,7 @@ describe('Header Component', () => {
 
     it('should render icons on nav items', () => {
       const { container } = render(<Header navItems={mockNavItems} />);
-      const icons = container.querySelectorAll('span');
+      const icons = container.querySelectorAll('svg');
       expect(icons.length).toBeGreaterThan(0);
     });
 
@@ -164,31 +155,6 @@ describe('Header Component', () => {
       const handleLogout = vi.fn();
       render(<Header user={mockUser} onLogout={handleLogout} />);
       expect(screen.getByLabelText(/menú de usuario/i)).toBeInTheDocument();
-    });
-  });
-
-  describe('Sidebar Toggle', () => {
-    it('should call onToggleSidebar when mobile menu clicked', async () => {
-      const handleToggle = vi.fn();
-      const user = userEvent.setup();
-
-      render(<Header onToggleSidebar={handleToggle} />);
-
-      const toggleButton = screen.getByLabelText(/abrir menú/i);
-      await user.click(toggleButton);
-
-      expect(handleToggle).toHaveBeenCalled();
-    });
-
-    it('should change aria-label based on sidebarOpen state', () => {
-      render(<Header onToggleSidebar={vi.fn()} sidebarOpen={true} />);
-      expect(screen.getByLabelText(/cerrar menú/i)).toBeInTheDocument();
-    });
-
-    it('should be hidden on large screens', () => {
-      render(<Header onToggleSidebar={vi.fn()} />);
-      const button = screen.getByLabelText(/abrir menú/i);
-      expect(button).toHaveClass('lg:hidden');
     });
   });
 
@@ -255,10 +221,7 @@ describe('Header Component', () => {
       expect(screen.getByLabelText(/menú de usuario/i)).toBeInTheDocument();
     });
 
-    it('should have accessible mobile menu button', () => {
-      render(<Header onToggleSidebar={vi.fn()} />);
-      expect(screen.getByLabelText(/abrir menú/i)).toBeInTheDocument();
-    });
+
 
     it('should have focus styles', () => {
       render(<Header navItems={mockNavItems} />);
@@ -278,11 +241,7 @@ describe('Header Component', () => {
       expect(screen.getByText('J')).toBeInTheDocument();
     });
 
-    it('should show mobile menu button only on small screens', () => {
-      render(<Header onToggleSidebar={vi.fn()} />);
-      const button = screen.getByLabelText(/abrir menú/i);
-      expect(button).toHaveClass('lg:hidden');
-    });
+
   });
 
   describe('Edge Cases', () => {

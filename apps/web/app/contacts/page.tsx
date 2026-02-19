@@ -76,7 +76,7 @@ import { useViewport } from '../(shared)/useViewport';
 import { useToast } from '../../lib/hooks/useToast';
 import { exportContactsToCSV, downloadCSV } from '../../lib/utils/csv-export';
 import { logger } from '../../lib/logger';
-import { useVirtualizer } from '@tanstack/react-virtual';
+
 
 // Helper to format relative time
 const formatTimeAgo = (dateString?: string | null) => {
@@ -94,7 +94,7 @@ const formatTimeAgo = (dateString?: string | null) => {
 
 export default function ContactsPage() {
   const { isMd } = useViewport();
-  const { user, loading } = useRequireAuth();
+  const { loading } = useRequireAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -280,9 +280,9 @@ export default function ContactsPage() {
       );
     } catch (err) {
       setExportState({ isExporting: false, progress: 0, status: '' });
-      logger.error('Error al exportar CSV', {
+      logger.error({
         error: err instanceof Error ? err.message : String(err),
-      });
+      }, 'Error al exportar CSV');
       showToast(
         'Error al exportar',
         err instanceof Error ? err.message : 'Error desconocido',
@@ -299,42 +299,63 @@ export default function ContactsPage() {
         ? (pipelineStages as PipelineStage[]).find((s) => s.id === contact.pipelineStageId)
         : null;
 
-      // Always green for "Cliente" stage
+      const baseStyle: React.CSSProperties = {
+        transition: 'all 0.2s ease',
+        borderBottom: '1px solid hsl(var(--border))', // Ensure separator
+      };
+
+      // 1. Cliente Stage: Blue/Primary
       if (stage?.name.toLowerCase() === 'cliente') {
         return {
-          backgroundColor: 'hsl(var(--row-client-bg))',
-          borderLeft: '4px solid hsl(var(--row-client-border))',
+          ...baseStyle,
+          background: 'linear-gradient(90deg, hsl(var(--primary) / 0.15) 0%, transparent 100%)',
+          boxShadow: 'inset 4px 0 0 0 hsl(var(--primary))',
         };
       }
 
+      // 2. No interaction (Sin contacto): Red/Destructive (Urgent)
       if (!contact.contactLastTouchAt) {
         return {
-          backgroundColor: 'hsl(var(--row-no-interaction-bg))',
-          borderLeft: '4px solid hsl(var(--row-no-interaction-border))',
+          ...baseStyle,
+          background:
+            'linear-gradient(90deg, hsl(var(--destructive) / 0.15) 0%, transparent 100%)',
+          boxShadow: 'inset 4px 0 0 0 hsl(var(--destructive))',
         };
       }
 
       const lastTouch = new Date(contact.contactLastTouchAt);
       const now = new Date();
-      const daysSinceTouch = Math.max(
-        0,
-        Math.floor((now.getTime() - lastTouch.getTime()) / (1000 * 60 * 60 * 24))
-      );
+      // Use absolute difference to avoid issues with future dates
+      const diffTime = now.getTime() - lastTouch.getTime();
+      const daysSinceTouch = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      // Gradient Logic:
-      // 0 days -> 120 (Green)
-      // 7 days -> 60 (Yellow)
-      // 14+ days -> 0 (Red)
-      const maxDays = 14;
-      // Calculate hue: start at 120, decrease by (120/14) per day
-      const hue = Math.max(0, 120 - (daysSinceTouch / maxDays) * 120);
+      // 3. Logic based on days passed
+      // > 30 days: Red (Urgent)
+      if (daysSinceTouch > 30) {
+        return {
+          ...baseStyle,
+          background:
+            'linear-gradient(90deg, hsl(var(--destructive) / 0.2) 0%, transparent 100%)',
+          boxShadow: 'inset 4px 0 0 0 hsl(var(--destructive))',
+        };
+      }
 
+      // > 7 days: Yellow (Warning)
+      if (daysSinceTouch > 7) {
+        return {
+          ...baseStyle,
+          background:
+            'linear-gradient(90deg, hsl(var(--warning-text) / 0.2) 0%, transparent 100%)',
+          boxShadow: 'inset 4px 0 0 0 hsl(var(--warning-text))', // Using warning-text for better visibility
+        };
+      }
+
+      // < 7 days (Recent): Green/Success
       return {
-        '--row-hue': hue,
-        backgroundColor: 'hsl(var(--row-hue) var(--row-dynamic-sat) var(--row-dynamic-light))',
-        borderLeft:
-          '4px solid hsl(var(--row-hue) var(--row-dynamic-border-sat) var(--row-dynamic-border-light))',
-      } as React.CSSProperties;
+        ...baseStyle,
+        background: 'linear-gradient(90deg, hsl(var(--success) / 0.15) 0%, transparent 100%)',
+        boxShadow: 'inset 4px 0 0 0 hsl(var(--success))',
+      };
     },
     [pipelineStages]
   );
@@ -346,69 +367,88 @@ export default function ContactsPage() {
         key: 'fullName',
         header: 'Nombre',
         sortable: true,
+        width: '200px', // Fixed minimum width
+        verticalAlign: 'top',
         render: (contact) => (
-          <Link
-            href={`/contacts/${contact.id}`}
-            className="block hover:opacity-80 transition-opacity"
-          >
-            <Text weight="medium" className="text-primary cursor-pointer">
-              {contact.fullName}
-            </Text>
-            {contact.email && (
-              <Text size="sm" color="secondary">
-                {contact.email}
+          <div className="py-2">
+            <Link
+              href={`/contacts/${contact.id}`}
+              className="block hover:opacity-80 transition-opacity"
+            >
+              <Text weight="medium" className="text-primary cursor-pointer truncate">
+                {contact.fullName}
               </Text>
-            )}
-          </Link>
+              {contact.email && (
+                <Text size="sm" color="secondary" className="truncate block">
+                  {contact.email}
+                </Text>
+              )}
+            </Link>
+          </div>
         ),
       },
       {
         key: 'pipelineStageId',
         header: 'Etapa',
+        width: '140px',
+        verticalAlign: 'top',
         render: (contact) => (
-          <InlineStageSelect
-            contact={contact}
-            pipelineStages={
-              Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
-            }
-            isSaving={contactActions.savingContactId === contact.id}
-            onStageChange={contactActions.handleStageChange}
-            onMutate={mutateContacts}
-            onError={(error: Error) => showToast('Error al avanzar etapa', error.message, 'error')}
-          />
+          <div className="py-1">
+            <InlineStageSelect
+              contact={contact}
+              pipelineStages={
+                Array.isArray(pipelineStages) ? (pipelineStages as PipelineStage[]) : []
+              }
+              isSaving={contactActions.savingContactId === contact.id}
+              onStageChange={contactActions.handleStageChange}
+              onMutate={mutateContacts}
+              onError={(error: Error) => showToast('Error al avanzar etapa', error.message, 'error')}
+            />
+          </div>
         ),
       },
       {
         key: 'tags',
         header: 'Etiquetas',
+        width: '250px',
+        verticalAlign: 'top',
         render: (contact) => (
-          <InlineTagsEditor
-            contact={contact}
-            allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
-            isSaving={contactActions.savingContactId === contact.id}
-            onTagsChange={contactActions.handleTagsChange}
-            onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
-          />
+          <div className="py-1 max-w-[250px]">
+            <InlineTagsEditor
+              contact={contact}
+              allTags={Array.isArray(allTags) ? (allTags as Tag[]) : []}
+              isSaving={contactActions.savingContactId === contact.id}
+              onTagsChange={contactActions.handleTagsChange}
+              onManageTagsClick={() => tagManagement.setShowManageTagsModal(true)}
+            />
+          </div>
         ),
       },
       {
         key: 'nextStep',
         header: 'Próximo Paso',
+        width: '200px',
+        verticalAlign: 'top',
         render: (contact) => (
-          <InlineTextInput
-            contact={contact}
-            field="nextStep"
-            placeholder="Agregar próximo paso..."
-            isSaving={contactActions.savingContactId === contact.id}
-            onSave={contactActions.handleTextInputSave}
-          />
+          <div className="py-1">
+            <InlineTextInput
+              contact={contact}
+              field="nextStep"
+              placeholder="Agregar próximo paso..."
+              isSaving={contactActions.savingContactId === contact.id}
+              onSave={contactActions.handleTextInputSave}
+            />
+          </div>
         ),
       },
       {
         key: 'interactionCount',
         header: 'Interacciones',
+        width: '120px',
+        align: 'center',
+        verticalAlign: 'top',
         render: (contact) => (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 items-center py-1">
             <InteractionCounter
               contact={contact}
               onUpdate={mutateContacts}
@@ -425,28 +465,33 @@ export default function ContactsPage() {
       {
         key: 'actions',
         header: 'Acciones',
+        width: '80px',
+        align: 'center',
+        verticalAlign: 'middle',
         render: (contact) => (
-          <DropdownMenu
-            trigger={
-              <Button variant="ghost" size="sm">
-                <Icon name="more-vertical" size={16} />
-              </Button>
-            }
-          >
-            <DropdownMenuItem onClick={() => router.push(`/contacts/${contact.id}`)}>
-              <Icon name="edit" size={16} className="mr-2" />
-              Editar
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                contactActions.setContactToDelete(contact);
-                contactActions.setShowDeleteModal(true);
-              }}
+          <div className="flex justify-center py-1">
+            <DropdownMenu
+              trigger={
+                <Button variant="ghost" size="sm">
+                  <Icon name="more-vertical" size={16} />
+                </Button>
+              }
             >
-              <Icon name="trash-2" size={16} className="mr-2" />
-              Eliminar
-            </DropdownMenuItem>
-          </DropdownMenu>
+              <DropdownMenuItem onClick={() => router.push(`/contacts/${contact.id}`)}>
+                <Icon name="edit" size={16} className="mr-2" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  contactActions.setContactToDelete(contact);
+                  contactActions.setShowDeleteModal(true);
+                }}
+              >
+                <Icon name="trash-2" size={16} className="mr-2" />
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenu>
+          </div>
         ),
       },
     ],
@@ -589,8 +634,7 @@ export default function ContactsPage() {
                       ? 'No se encontraron contactos con los filtros aplicados.'
                       : 'Comienza agregando tu primer contacto al sistema.'
                   }
-                  virtualized={true}
-                  virtualizedHeight={600}
+                  virtualized={false}
                   getRowStyle={(item: Record<string, unknown>) =>
                     getRowStyle(item as unknown as Contact)
                   }
@@ -638,7 +682,7 @@ export default function ContactsPage() {
 
         <ConfirmDialog
           open={confirmDialog.open}
-          onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+          onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
           onConfirm={confirmDialog.onConfirm}
           title={confirmDialog.title}
           {...(confirmDialog.description ? { description: confirmDialog.description } : {})}
@@ -678,13 +722,9 @@ export default function ContactsPage() {
 function MobileContactList({
   contacts,
   pipelineStages,
-  allTags,
   getRowStyle,
   savingContactId,
   onStageChange,
-  onTagsChange,
-  onTextInputSave,
-  onManageTagsClick,
   mutateContacts,
   showToast,
   hasActiveFilters,
@@ -709,17 +749,6 @@ function MobileContactList({
   onClearFilters: () => void;
 }) {
   const router = useRouter();
-  const parentRef = React.useRef<HTMLDivElement>(null);
-
-  // AI_DECISION: Virtualization for mobile list
-  // Justificación: Mejora drásticamente el performance en dispositivos móviles con muchos contactos
-  // Impacto: Scroll más fluido, menor consumo de memoria y CPU
-  const rowVirtualizer = useVirtualizer({
-    count: contacts.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 200, // Estimated height of a contact card
-    overscan: 5,
-  });
 
   if (contacts.length === 0) {
     return (
@@ -746,99 +775,72 @@ function MobileContactList({
   }
 
   return (
-    <div
-      ref={parentRef}
-      className="h-[600px] overflow-auto pr-1"
-      style={{
-        scrollbarWidth: 'thin',
-      }}
-    >
-      <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-          const contact = contacts[virtualItem.index];
-          return (
-            <div
-              key={contact.id}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-                paddingBottom: '12px', // Gap between items
-              }}
-            >
-              <div
-                className="p-3 rounded-lg border-l-4 bg-surface shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden cursor-pointer"
-                style={getRowStyle(contact)}
-                onClick={() => router.push(`/contacts/${contact.id}`)}
-              >
-                {/* Simplified: Name, Stage, Urgency Indicator */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <Text weight="semibold" className="text-base text-primary truncate">
-                      {contact.fullName}
-                    </Text>
-                    <div className="flex items-center gap-2 mt-1">
-                      <InlineStageSelect
-                        contact={contact}
-                        pipelineStages={pipelineStages}
-                        isSaving={savingContactId === contact.id}
-                        onStageChange={onStageChange}
-                        onMutate={mutateContacts}
-                        onError={(error: Error) =>
-                          showToast('Error al avanzar etapa', error.message, 'error')
-                        }
-                      />
-                      {/* Urgency indicator */}
-                      {(() => {
-                        const stage = pipelineStages.find((s) => s.id === contact.pipelineStageId);
-                        if (stage?.name.toLowerCase() === 'cliente') return null;
+    <div className="h-[600px] overflow-auto pr-1 scrollbar-thin">
+      <div className="flex flex-col gap-3 pb-4">
+        {contacts.map((contact) => (
+          <div
+            key={contact.id}
+            className="p-3 rounded-lg border-l-4 bg-surface shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            style={getRowStyle(contact)}
+            onClick={() => router.push(`/contacts/${contact.id}`)}
+          >
+            {/* Simplified: Name, Stage, Urgency Indicator */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <Text weight="semibold" className="text-base text-primary truncate">
+                  {contact.fullName}
+                </Text>
+                <div className="flex items-center gap-2 mt-1">
+                  <InlineStageSelect
+                    contact={contact}
+                    pipelineStages={pipelineStages}
+                    isSaving={savingContactId === contact.id}
+                    onStageChange={onStageChange}
+                    onMutate={mutateContacts}
+                    onError={(error: Error) =>
+                      showToast('Error al avanzar etapa', error.message, 'error')
+                    }
+                  />
+                  {/* Urgency indicator */}
+                  {(() => {
+                    const stage = pipelineStages.find((s) => s.id === contact.pipelineStageId);
+                    if (stage?.name.toLowerCase() === 'cliente') return null;
 
-                        if (!contact.contactLastTouchAt) {
-                          return (
-                            <Badge variant="error" className="text-xs">
-                              Sin contacto
-                            </Badge>
-                          );
-                        }
+                    if (!contact.contactLastTouchAt) {
+                      return (
+                        <Badge variant="error" className="text-xs">
+                          Sin contacto
+                        </Badge>
+                      );
+                    }
 
-                        const daysSinceTouch = Math.floor(
-                          (new Date().getTime() - new Date(contact.contactLastTouchAt).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        );
+                    const diffTime = new Date().getTime() - new Date(contact.contactLastTouchAt).getTime();
+                    const daysSinceTouch = Math.floor(
+                      diffTime / (1000 * 60 * 60 * 24)
+                    );
 
-                        if (daysSinceTouch >= 14) {
-                          return (
-                            <Badge variant="error" className="text-xs">
-                              Urgente
-                            </Badge>
-                          );
-                        }
-                        if (daysSinceTouch >= 7) {
-                          return (
-                            <Badge variant="warning" className="text-xs">
-                              Atención
-                            </Badge>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  </div>
-                  <Icon name="ChevronRight" size={18} className="text-text-muted shrink-0" />
+                    if (daysSinceTouch >= 30) {
+                      return (
+                        <Badge variant="error" className="text-xs">
+                          Urgente
+                        </Badge>
+                      );
+                    }
+                    if (daysSinceTouch > 7) {
+                      return (
+                        <Badge variant="warning" className="text-xs">
+                          Atención
+                        </Badge>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
+              <Icon name="ChevronRight" size={18} className="text-text-muted shrink-0" />
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

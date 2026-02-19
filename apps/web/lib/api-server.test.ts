@@ -8,11 +8,11 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { apiCall, getContactById } from './api-server';
-import { config } from './config';
 
-// Mock Next.js cookies
+// Mock Next.js cookies y headers
 vi.mock('next/headers', () => ({
   cookies: vi.fn(),
+  headers: vi.fn(),
 }));
 
 // Mock config
@@ -22,29 +22,34 @@ vi.mock('./config', () => ({
   },
 }));
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 // Mock global fetch
 global.fetch = vi.fn() as typeof fetch;
 
 describe('api-server', () => {
+  const mockCookieStore = {
+    get: vi.fn().mockReturnValue({ value: 'test-token' }),
+    getAll: vi.fn().mockReturnValue([{ name: 'token', value: 'test-token' }]),
+  };
+  const mockHeaderStore = {
+    get: vi.fn().mockReturnValue('test-request-id'),
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    (cookies as any).mockResolvedValue(mockCookieStore);
+    (headers as any).mockResolvedValue(mockHeaderStore);
   });
 
   describe('apiCall', () => {
     it('debería hacer GET request con cookies', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       const mockResponse = {
         ok: true,
         headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true, data: { id: '1' } }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
       const result = await apiCall('/v1/test');
 
@@ -64,17 +69,12 @@ describe('api-server', () => {
     });
 
     it('debería hacer POST request con body', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       const mockResponse = {
         ok: true,
         headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
       await apiCall('/v1/test', {
         method: 'POST',
@@ -91,17 +91,18 @@ describe('api-server', () => {
     });
 
     it('debería funcionar sin cookie si no está disponible', async () => {
-      const mockCookieStore = {
+      const emptyCookieStore = {
         get: vi.fn().mockReturnValue(undefined),
+        getAll: vi.fn().mockReturnValue([]),
       };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
+      (cookies as any).mockResolvedValue(emptyCookieStore);
 
       const mockResponse = {
         ok: true,
         headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
       await apiCall('/v1/test');
 
@@ -116,11 +117,6 @@ describe('api-server', () => {
     });
 
     it('debería manejar timeout', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       // Mock AbortController correctamente
       const mockAbort = vi.fn();
       const mockSignal = { aborted: false } as AbortSignal;
@@ -130,16 +126,16 @@ describe('api-server', () => {
         signal = mockSignal;
       };
 
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
+      global.AbortController = AbortControllerMock as any;
 
       // Mock setTimeout para que ejecute inmediatamente
       const originalSetTimeout = global.setTimeout;
       global.setTimeout = vi.fn().mockImplementation((fn: () => void) => {
         fn();
-        return 123 as unknown as NodeJS.Timeout;
-      }) as typeof setTimeout;
+        return 123 as any;
+      }) as any;
 
-      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      (global.fetch as any).mockImplementation(() => {
         return Promise.reject(new Error('AbortError'));
       });
 
@@ -149,60 +145,46 @@ describe('api-server', () => {
     });
 
     it('debería lanzar error cuando response no es ok', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       const mockResponse = {
         ok: false,
         status: 404,
         statusText: 'Not Found',
         headers: new Headers(),
-        json: vi.fn().mockResolvedValue({ error: 'Not found' }),
+        json: vi.fn().mockResolvedValue({ message: 'Not found' }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      await expect(apiCall('/v1/test')).rejects.toThrow();
+      await expect(apiCall('/v1/test')).rejects.toThrow('Not found');
     });
 
     it('debería manejar error de JSON parsing', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       const mockResponse = {
         ok: false,
-        status: 500,
-        statusText: 'Internal Server Error',
+        status: 400,
+        statusText: 'Bad Request',
         headers: new Headers(),
         json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
+        text: vi.fn().mockResolvedValue('Bad Request'),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      await expect(apiCall('/v1/test')).rejects.toThrow();
+      await expect(apiCall('/v1/test')).rejects.toThrow('API Error: 400 Bad Request');
     });
 
     it('debería usar timeout personalizado', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       const mockResponse = {
         ok: true,
         headers: new Headers(),
         json: vi.fn().mockResolvedValue({ success: true }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
       // Mock AbortController
       const AbortControllerMock = class {
         abort = vi.fn();
         signal = { aborted: false } as AbortSignal;
       };
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
+      global.AbortController = AbortControllerMock as any;
 
       const setTimeoutSpy = vi.spyOn(global, 'setTimeout');
 
@@ -216,27 +198,22 @@ describe('api-server', () => {
 
   describe('getContactById', () => {
     it('debería llamar apiCall con el endpoint correcto', async () => {
-      const mockCookieStore = {
-        get: vi.fn().mockReturnValue({ value: 'test-token' }),
-      };
-      (cookies as ReturnType<typeof vi.fn>).mockResolvedValue(mockCookieStore);
-
       // Mock AbortController
       const AbortControllerMock = class {
         abort = vi.fn();
         signal = { aborted: false } as AbortSignal;
       };
-      global.AbortController = AbortControllerMock as unknown as typeof AbortController;
+      global.AbortController = AbortControllerMock as any;
 
       const mockResponse = {
         ok: true,
         headers: new Headers(),
         json: vi.fn().mockResolvedValue({
-          success: true,
-          data: { id: 'contact-123', firstName: 'John' },
+          id: 'contact-123',
+          firstName: 'John',
         }),
       };
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse as Response);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
       const result = await getContactById('contact-123');
 
@@ -244,7 +221,7 @@ describe('api-server', () => {
         'http://localhost:3001/v1/contacts/contact-123',
         expect.any(Object)
       );
-      expect(result.data).toEqual({ id: 'contact-123', firstName: 'John' });
+      expect(result).toEqual({ id: 'contact-123', firstName: 'John' });
     });
   });
 });

@@ -16,8 +16,8 @@ import { uuidSchema } from '../utils/validation/common-schemas';
 // Mock dependencies
 vi.mock('@maatwork/db', () => ({
   db: vi.fn(),
-  portfolioTemplates: {},
-  portfolioTemplateLines: {},
+  portfolios: {},
+  portfolioLines: {},
   clientPortfolioAssignments: {},
   contacts: {},
   instruments: {},
@@ -572,7 +572,7 @@ describe('Portfolio Assignments - POST /assignments', () => {
           {
             id: 'assignment-123',
             contactId: 'contact-123',
-            templateId: 'template-123',
+            portfolioId: 'template-123',
             status: 'active',
           },
         ]),
@@ -671,7 +671,7 @@ describe('Portfolio Assignments - GET /contacts/:id/portfolio', () => {
               limit: vi.fn().mockResolvedValue([
                 {
                   id: 'assignment-123',
-                  templateId: 'template-123',
+                  portfolioId: 'template-123',
                 },
               ]),
             }),

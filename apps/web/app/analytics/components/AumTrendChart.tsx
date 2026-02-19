@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import type { AumTrendItem } from '@/types';
+import { formatCurrency } from '@maatwork/utils';
 
 // AI_DECISION: Lazy load Recharts to reduce initial bundle size
 // Justificación: Recharts is heavy (~200KB), loading it async reduces initial bundle significantly
@@ -11,11 +12,9 @@ const RechartsChart = dynamic(
     import('recharts').then((mod) => ({
       default: ({
         data,
-        formatCurrency,
         formatDate,
       }: {
         data: AumTrendItem[];
-        formatCurrency: (value: number) => string;
         formatDate: (date: string) => string;
       }) => {
         const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
@@ -50,10 +49,9 @@ const RechartsChart = dynamic(
 
 interface AumTrendChartProps {
   data: AumTrendItem[];
-  formatCurrency: (value: number) => string;
   formatDate: (date: string) => string;
 }
 
-export default function AumTrendChart({ data, formatCurrency, formatDate }: AumTrendChartProps) {
-  return <RechartsChart data={data} formatCurrency={formatCurrency} formatDate={formatDate} />;
+export default function AumTrendChart({ data, formatDate }: AumTrendChartProps) {
+  return <RechartsChart data={data} formatDate={formatDate} />;
 }

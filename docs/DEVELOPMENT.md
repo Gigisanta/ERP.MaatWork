@@ -21,7 +21,7 @@ Esta guía proporciona información esencial para desarrolladores que trabajan e
 
 - Node.js >=22.0.0 <25.0.0
 - pnpm >=9.0.0
-- Docker Desktop (requerido para PostgreSQL y N8N)
+- Docker Desktop (requerido para PostgreSQL)
 - Python 3.10+ (opcional, para analytics-service)
 
 ### Instalación Rápida (Recomendada)
@@ -40,9 +40,10 @@ pnpm dev
 ```
 
 El comando `pnpm setup` ejecuta automáticamente:
+
 - ✅ Verificación de prerequisitos
 - ✅ Configuración de variables de entorno (crea `.env`)
-- ✅ Inicio de servicios Docker (PostgreSQL y N8N)
+- ✅ Inicio de servicios Docker (PostgreSQL)
 - ✅ Ejecución de migraciones de base de datos
 - ✅ Creación de usuario admin inicial
 
@@ -54,7 +55,7 @@ Si prefieres configurar manualmente:
 # 1. Instalar dependencias
 pnpm install
 
-# 2. Iniciar PostgreSQL y N8N (Docker)
+# 2. Iniciar PostgreSQL (Docker)
 docker compose up -d
 
 # 3. Configurar variables de entorno
@@ -88,12 +89,13 @@ pnpm dev:fast
 ```
 
 **URLs de desarrollo:**
-- Web: http://localhost:3000
-- API: http://localhost:3001
-- Analytics: http://localhost:3002 (configurable vía `ANALYTICS_PORT`)
-- N8N: http://localhost:5678
+
+- Web: <http://localhost:3000>
+- API: <http://localhost:3001>
+- Analytics: <http://localhost:3002> (configurable vía `ANALYTICS_PORT`)
 
 **Usuario por defecto (después del setup):**
+
 - Email: `admin@maatwork.local`
 - Rol: `admin` (acceso completo)
 - Contraseña: No requerida en desarrollo
@@ -113,7 +115,7 @@ MaatWork/
 │   └── ui/                  # Design System + React Components
 ├── data/                    # Archivos de datos de negocio
 ├── docs/                     # Documentación técnica
-└── docker-compose.yml       # PostgreSQL y N8N
+└── docker-compose.yml       # PostgreSQL
 ```
 
 ### Rutas Clave
@@ -143,6 +145,7 @@ MaatWork/
 **Regla:** No usar `console.log`, `console.warn`, o `console.info` en código de producción. Usar logger estructurado en su lugar.
 
 **Backend (API):**
+
 ```typescript
 import { logger } from '@/utils/logger';
 
@@ -156,6 +159,7 @@ logger.error({ err: error }, 'Error processing request');
 ```
 
 **Frontend (Web):**
+
 ```typescript
 import { logger, toLogContext } from '@/lib/logger';
 
@@ -172,10 +176,12 @@ logger.error('Error occurred', toLogContext({ error: err }));
 ```
 
 **Excepciones:**
+
 - Scripts (`apps/api/src/scripts/**`, `apps/api/src/add-*.ts`) pueden usar `console.*`
 - Server Components de Next.js pueden usar `console.error` para debugging en desarrollo
 
 **Verificación:**
+
 ```bash
 # Usar grep para buscar console.log en código de producción
 grep -r "console\\.log" apps/ --exclude-dir=node_modules --exclude-dir=.next
@@ -278,6 +284,7 @@ export default function PortfolioDetailPage() {
 ```
 
 **Verificación:**
+
 ```bash
 # Usar find para identificar archivos grandes
 find apps/ packages/ -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -rn | head -20
@@ -620,6 +627,7 @@ var d=JSON.parse(localStorage.getItem('debug-console-logs')||'[]');console.table
 ```
 
 Esta línea:
+
 - Carga los logs
 - Muestra una tabla con solo errores
 - Devuelve el último error
@@ -654,6 +662,7 @@ pnpm changeset
 ```
 
 Esto te guiará para:
+
 1. Seleccionar el tipo de cambio (major, minor, patch)
 2. Seleccionar los paquetes afectados
 3. Escribir una descripción del cambio
@@ -699,6 +708,7 @@ pnpm audit:code
 ```
 
 Este comando realiza una auditoría completa que incluye:
+
 - **Knip**: Detecta archivos no usados, exportaciones huérfanas y dependencias no utilizadas en todo el monorepo.
 - **Any Audit**: Escaneo de uso de tipos `any` para control de deuda técnica.
 - **Barrel Audit**: Detección de `export *` que impactan negativamente el performance de build y bundle size.
@@ -709,6 +719,7 @@ Este comando realiza una auditoría completa que incluye:
 ```bash
 pnpm audit:fix
 ```
+
 Intenta corregir automáticamente problemas de Knip (elimina exportaciones no usadas y dependencias huérfanas).
 
 ### Auditorías Específicas
@@ -722,6 +733,7 @@ pnpm audit:barrels
 ```
 
 **Cuándo ejecutar:**
+
 - Antes de cada commit (el pre-commit ejecuta una versión rápida).
 - Antes de cada release para asegurar un despliegue limpio.
 - Después de refactorizaciones grandes.
@@ -735,6 +747,7 @@ Para información detallada sobre módulos específicos del sistema, consulta:
 - [Guía de Arquitectura](./ARCHITECTURE.md) - Arquitectura y estructura de módulos principales
 
 Los módulos principales incluyen:
+
 - Pipeline
 - Analytics
 - Auth (Autenticación y Autorización)
@@ -793,4 +806,3 @@ pnpm -F @maatwork/db seed:all    # Seed completo
 - [Guía de Base de Datos](./DATABASE.md) - Optimización y configuración de BD
 - [Guía de Testing](./TESTING.md) - Estrategias y herramientas de testing
 - [Guía de Operaciones](./OPERATIONS.md) - Deploy y monitoreo en producción
-

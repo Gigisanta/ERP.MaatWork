@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger, toLogContext } from '@/lib/logger';
-import type { UserApiResponse as User } from '@/types';
 import type { AuthUser } from '@/app/auth/AuthContext';
 
 interface AliasData {
@@ -73,7 +72,7 @@ export function useAliases({ user, showToast, setError }: UseAliasesProps): UseA
         setAliases(mine);
       }
     } catch (e) {
-      logger.warn('No se pudieron obtener aliases', toLogContext({ e }));
+      logger.warn(toLogContext({ e }), 'No se pudieron obtener aliases');
     }
   }, []);
 

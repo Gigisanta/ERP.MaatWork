@@ -108,7 +108,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
           }
         }
       } catch (err: unknown) {
-        logger.error('Error searching instruments', toLogContext({ err, query: searchQuery }));
+        logger.error(toLogContext({ err, query: searchQuery }), 'Error searching instruments');
 
         // Detectar tipo de error específico
         const apiError = err as ApiError;
@@ -227,7 +227,7 @@ const AssetSearcher: React.FC<AssetSearcherProps> = ({
           errorMessage = `No se pudo validar el símbolo "${symbol}". Se agregará sin validar.`;
         }
       } catch (err: unknown) {
-        logger.error('Error validating symbol', toLogContext({ err, symbol }));
+        logger.error(toLogContext({ err, symbol }), 'Error validating symbol');
         validationFailed = true;
 
         // Detectar tipo de error

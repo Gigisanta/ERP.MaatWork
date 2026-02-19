@@ -182,10 +182,10 @@ export class DebugConsole {
 
       // Mostrar errores críticos en desarrollo
       if (errorLog.type === 'error' && process.env.NODE_ENV === 'development') {
-        logger.error(`[DebugConsole] ${errorLog.message}`, {
+        logger.error({
           stack: errorLog.stack,
           url: errorLog.url,
-        });
+        }, `[DebugConsole] ${errorLog.message}`);
       }
     } finally {
       this.isLogging = false;
@@ -374,7 +374,7 @@ export class DebugConsole {
         }
       })
       .catch(() => {
-        logger.info('Logs exportados', { json });
+        logger.info({ json }, 'Logs exportados');
       });
   }
 

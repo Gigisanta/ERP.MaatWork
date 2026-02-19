@@ -77,7 +77,7 @@ vi.mock('@maatwork/db/schema', async () => {
     },
     clientPortfolioAssignments: {
       contactId: 'clientPortfolioAssignments_contactId',
-      templateId: 'clientPortfolioAssignments_templateId',
+      portfolioId: 'clientPortfolioAssignments_portfolioId',
       id: 'clientPortfolioAssignments_id',
       status: 'clientPortfolioAssignments_status',
       startDate: 'clientPortfolioAssignments_startDate',
@@ -90,12 +90,12 @@ vi.mock('@maatwork/db/schema', async () => {
       totalDeviationPct: 'portfolioMonitoringSnapshot_totalDeviationPct',
     },
     portfolioMonitoringDetails: { snapshotId: 'portfolioMonitoringDetails_snapshotId' },
-    portfolioTemplateLines: {
-      templateId: 'portfolioTemplateLines_templateId',
-      targetType: 'portfolioTemplateLines_targetType',
-      assetClass: 'portfolioTemplateLines_assetClass',
-      instrumentId: 'portfolioTemplateLines_instrumentId',
-      targetWeight: 'portfolioTemplateLines_targetWeight',
+    portfolioLines: {
+      portfolioId: 'portfolioLines_portfolioId',
+      targetType: 'portfolioLines_targetType',
+      assetClass: 'portfolioLines_assetClass',
+      instrumentId: 'portfolioLines_instrumentId',
+      targetWeight: 'portfolioLines_targetWeight',
     },
     contacts: { id: 'contacts_id' },
   };
@@ -187,7 +187,7 @@ describe('DailyValuationJob', () => {
       mockDb.mockImplementation(() =>
         createChainableMock([
           { id: 'inst-1', symbol: 'AAPL', name: 'Apple', currency: 'USD' },
-          { contactId: 'c1', aumTotal: '1000', templateId: 't1', assignmentId: 'a1' },
+          { contactId: 'c1', aumTotal: '1000', portfolioId: 'p1', assignmentId: 'a1' },
           { targetType: 'asset_class', assetClass: 'Equities', targetWeight: '0.5' },
         ])
       );

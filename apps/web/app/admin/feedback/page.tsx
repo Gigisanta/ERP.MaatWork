@@ -4,7 +4,6 @@ import { useRequireAuth } from '@/auth/useRequireAuth';
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import useSWR from 'swr';
 import {
   Card,
   CardHeader,
@@ -28,16 +27,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // Status and type labels/colors
-const statusLabels: Record<
-  Feedback['status'],
-  { label: string; variant: 'default' | 'success' | 'warning' | 'error' }
-> = {
-  new: { label: 'Nuevo', variant: 'warning' },
-  in_progress: { label: 'En Progreso', variant: 'default' },
-  completed: { label: 'Completado', variant: 'success' },
-  closed: { label: 'Cerrado', variant: 'error' },
-};
-
 const typeLabels: Record<Feedback['type'], { label: string; emoji: string }> = {
   feedback: { label: 'Comentario', emoji: '💬' },
   feature_request: { label: 'Sugerencia', emoji: '💡' },
@@ -113,7 +102,7 @@ export default function AdminFeedbackPage() {
           <div className="min-w-[140px]">
             <Select
               value={row.status}
-              onValueChange={(value) => handleStatusChange(row.id, value)}
+              onValueChange={(value: string) => handleStatusChange(row.id, value)}
               disabled={actionLoading === row.id}
               items={[
                 { value: 'new', label: '🆕 Nuevo' },
@@ -194,7 +183,7 @@ export default function AdminFeedbackPage() {
                 </Text>
                 <Select
                   value={statusFilter}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string) => {
                     setStatusFilter(value);
                     setPage(1);
                   }}
@@ -213,7 +202,7 @@ export default function AdminFeedbackPage() {
                 </Text>
                 <Select
                   value={typeFilter}
-                  onValueChange={(value) => {
+                  onValueChange={(value: string) => {
                     setTypeFilter(value);
                     setPage(1);
                   }}

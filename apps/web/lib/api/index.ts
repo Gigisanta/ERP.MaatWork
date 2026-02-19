@@ -44,13 +44,7 @@ export {
   uploadAdvisorMapping,
 } from './aum';
 
-export {
-  getBenchmarks,
-  getBenchmarkComponentsBatch,
-  createBenchmark,
-  updateBenchmark,
-  deleteBenchmark,
-} from './benchmarks';
+// Benchmarks removed and unified into portfolios
 
 export { createBrokerAccount, deleteBrokerAccount } from './broker-accounts';
 
@@ -73,7 +67,7 @@ export {
 
 export { searchInstruments, getInstruments, createInstrument } from './instruments';
 
-export { createNote, deleteNote } from './notes';
+export { getNotes, createNote, updateNote, deleteNote } from './notes';
 
 export { moveContactToStage } from './pipeline';
 
@@ -86,6 +80,9 @@ export {
   deletePortfolio,
   addPortfolioLine,
   deletePortfolioLine,
+  type GetPortfoliosParams,
+  
+  type PaginationMeta,
 } from './portfolios';
 
 export { createTag, updateTag, deleteTag, updateContactTags } from './tags';
@@ -127,5 +124,5 @@ export {
   createFeedback,
   updateFeedbackStatus,
   type Feedback,
-  type FeedbackListResponse,
+  
 } from './feedback';

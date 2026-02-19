@@ -72,7 +72,7 @@ export default function DuplicateResolutionModal({
   return (
     <Modal
       open
-      onOpenChange={(open) => {
+      onOpenChange={(open: boolean) => {
         if (!open) onClose();
       }}
       title={`Duplicados para ${accountNumber}`}

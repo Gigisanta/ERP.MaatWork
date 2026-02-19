@@ -68,11 +68,11 @@ export default React.memo(function InteractionCounter({
       setOptimisticCount(newCount);
       setIsUpdating(true);
 
-      logger.debug('InteractionCounter: Optimistic update', {
+      logger.debug({
         action,
         newCount,
         contactId: contact.id,
-      });
+      }, 'InteractionCounter: Optimistic update');
 
       try {
         // 2. API Call
@@ -86,9 +86,9 @@ export default React.memo(function InteractionCounter({
           throw new Error(response.error || 'Error al actualizar interacción');
         }
 
-        logger.debug('InteractionCounter: Update successful', {
+        logger.debug({
           data: toLogContextValue(response.data),
-        });
+        }, 'InteractionCounter: Update successful');
 
         // 3. Sync with server response if needed, but onUpdate will trigger re-fetch
         // response.data.interactionCount should match newCount if no one else touched it
@@ -99,10 +99,10 @@ export default React.memo(function InteractionCounter({
         // Call onUpdate to refresh the contact list (background revalidation)
         onUpdate?.();
       } catch (error) {
-        logger.error('InteractionCounter: Error updating interaction', {
+        logger.error({
           error: toLogContextValue(error),
           contactId: contact.id,
-        });
+        }, 'InteractionCounter: Error updating interaction');
 
         // 4. Rollback on Error
         setOptimisticCount(previousCount);

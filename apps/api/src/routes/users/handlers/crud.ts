@@ -13,6 +13,12 @@ import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { createRouteHandler, createAsyncHandler, HttpError } from '../../../utils/route-handler';
 import { createUserWithPasswordSchema } from '../schemas';
+import {
+  notifications,
+  userChannelPreferences,
+  notificationTemplates,
+} from '@maatwork/db/schema/notifications';
+import { teams, teamMembership, advisorAliases } from '@maatwork/db/schema/users';
 
 /**
  * POST /users - Create user (admin only)
@@ -97,11 +103,7 @@ export const handleGetUser = createRouteHandler(async (req: Request) => {
 /**
  * PATCH /users/:id - Update user
  */
-const handleUpdateUser = createRouteHandler(async (req: Request) => {
-  const { id } = req.params;
-  // Note: This handler is a placeholder - specific updates are handled by status.ts, role.ts, profile.ts
-  throw new HttpError(400, 'Use specific update endpoints: /status, /role, or /profile');
-});
+
 
 /**
  * DELETE /users/:id - Delete user (admin only)
@@ -145,8 +147,52 @@ export const handleDeleteUser = createRouteHandler(async (req: Request) => {
     }
   }
 
-  // Eliminar usuario
-  await db().delete(users).where(eq(users.id, id));
+
+  // Eliminar referencias en cascada
+  await db().transaction(async (tx: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // 1. Notificaciones y preferencias
+    // Desvincular templates creados por el usuario (no eliminamos los templates para no romper histórico)
+    await tx
+      .update(notificationTemplates)
+      .set({ createdByUserId: null })
+      .where(eq(notificationTemplates.createdByUserId, id));
+
+    // Eliminar notificaciones (logs de mensajes deberían tener FK cascade o se mantienen como histórico)
+    // Nota: Si message_log tiene FK a notifications sin cascade, podría fallar.
+    // Revisando messageLog en notifications.ts: relatedNotificationId referencias notifications.id
+    // Si no tiene cascade en DB, necesitamos borrar los logs o setear null.
+    // Asumiremos delete por ahora, si falla completaremos el cascade.
+    await tx.delete(notifications).where(eq(notifications.userId, id));
+
+    // Eliminar preferencias de canales
+    await tx.delete(userChannelPreferences).where(eq(userChannelPreferences.userId, id));
+
+    // 2. Equipos y membresías
+    // Eliminar solicitudes de membresía (como solicitante o como manager)
+    await tx.delete(teamMembershipRequests).where(eq(teamMembershipRequests.userId, id));
+    await tx.delete(teamMembershipRequests).where(eq(teamMembershipRequests.managerId, id));
+
+    // Eliminar membresías de equipos
+    await tx.delete(teamMembership).where(eq(teamMembership.userId, id));
+
+    // Desvincular de equipos que lidera (set manager to null)
+    await tx
+      .update(teams)
+      .set({ managerUserId: null })
+      .where(eq(teams.managerUserId, id));
+
+    // Desvincular de calendarios conectados
+    await tx
+      .update(teams)
+      .set({ calendarConnectedByUserId: null })
+      .where(eq(teams.calendarConnectedByUserId, id));
+
+    // 3. Alias de advisor
+    await tx.delete(advisorAliases).where(eq(advisorAliases.userId, id));
+
+    // 4. Eliminar usuario
+    await tx.delete(users).where(eq(users.id, id));
+  });
 
   req.log.info(
     {

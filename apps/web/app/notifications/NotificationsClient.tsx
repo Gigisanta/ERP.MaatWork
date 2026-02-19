@@ -107,7 +107,7 @@ export default function NotificationsClient() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Tabs
             value={filter}
-            onValueChange={(v) => {
+            onValueChange={(v: string) => {
               setFilter(v as 'all' | 'unread');
               setPage(0);
             }}
@@ -204,7 +204,7 @@ export default function NotificationsClient() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={(e) => handleMarkAsRead(notification.id, e)}
+                        onClick={(e: React.MouseEvent) => handleMarkAsRead(notification.id, e)}
                         className="shrink-0 h-8 w-8 p-0 rounded-full text-primary hover:bg-primary-subtle"
                         title="Marcar como leída"
                       >

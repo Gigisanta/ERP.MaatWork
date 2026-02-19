@@ -19,12 +19,16 @@
     "migrations"
   ],
   "scripts": {
+    "dev": "tsc -w -p tsconfig.json",
     "build": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "audit:code": "knip --workspace .",
     "generate": "drizzle-kit generate --config=drizzle.config.ts",
     "migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "studio": "drizzle-kit studio --config=drizzle.config.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
-    "audit:code": "knip --workspace .",
     "seed": "tsx src/seed.ts",
     "seed:all": "tsx src/seed-all.ts",
     "seed:pipeline": "tsx src/seed-pipeline-stages.ts",
@@ -39,7 +43,6 @@
     "db:full-reset": "node full-reset.js"
   },
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.30.6",
     "drizzle-orm": "^0.38.4",

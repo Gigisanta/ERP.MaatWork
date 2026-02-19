@@ -65,7 +65,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
   }
 
   componentDidCatch(error: Error, errorInfo: unknown) {
-    logger.error('AUM Error Boundary capturó un error', {
+    logger.error({
       error: error.message,
       errorStack: error.stack,
       errorInfo: errorInfo instanceof Error ? errorInfo.message : String(errorInfo),
@@ -73,7 +73,7 @@ export class AumErrorBoundary extends Component<AumErrorBoundaryProps, AumErrorB
         typeof errorInfo === 'object' && errorInfo !== null && 'componentStack' in errorInfo
           ? String(errorInfo.componentStack)
           : undefined,
-    });
+    }, 'AUM Error Boundary capturó un error');
     this.setState({
       error,
       errorInfo: errorInfo as unknown,

@@ -68,12 +68,13 @@ describe('usePortfolios', () => {
 
     expect(mockUseEntityWithComponents).toHaveBeenCalledWith(
       expect.objectContaining({
-        fetchEntities: getPortfolios,
+        fetchEntities: expect.any(Function),
         fetchComponentsBatch: getPortfolioLinesBatch,
         createEntity: createPortfolio,
         updateEntity: updatePortfolio,
         deleteEntity: deletePortfolio,
         entityName: 'portfolios',
+        getEntityId: expect.any(Function),
       })
     );
   });

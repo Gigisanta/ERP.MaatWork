@@ -1,6 +1,7 @@
 'use client';
 import { useRequireAuth } from '@/auth/useRequireAuth';
 import { getTeamById, getTeamMemberById, getTeamMemberMetrics } from '@/lib/api';
+import { formatCurrency, FormatCurrencyOptions, formatDateShort } from '@maatwork/utils';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Team, TeamMember, TeamMemberMetrics } from '@/types';
@@ -67,7 +68,7 @@ const RechartsLineChart = dynamic(
         formatCurrency,
       }: {
         data: Array<{ date: string; value: number }>;
-        formatCurrency: (value: number) => string;
+        formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
       }) => {
         const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = mod;
         return (
@@ -77,8 +78,7 @@ const RechartsLineChart = dynamic(
               <XAxis
                 dataKey="date"
                 tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return `${date.getDate()}/${date.getMonth() + 1}`;
+                  return formatDateShort(value);
                 }}
               />
               <YAxis
@@ -89,7 +89,7 @@ const RechartsLineChart = dynamic(
                 }}
               />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: number) => formatCurrency(value, { currency: 'ARS', locale: 'es-AR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 labelFormatter={(label) => {
                   const date = new Date(label);
                   return date.toLocaleDateString('es-ES');
@@ -183,14 +183,7 @@ export default function TeamMemberPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+// function removed in favor of shared utility
 
   if (loading || loadingData) {
     return (
@@ -298,9 +291,9 @@ export default function TeamMemberPage() {
                     <Text size="sm" color="secondary" className="mb-1">
                       AUM Total
                     </Text>
-                    <Text weight="bold" className="text-xl">
-                      {formatCurrency(metrics.totalAum)}
-                    </Text>
+                      <Text weight="bold" className="text-xl">
+                        {formatCurrency(metrics.totalAum, { currency: 'ARS', locale: 'es-AR', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </Text>
                   </CardContent>
                 </Card>
                 <Card>

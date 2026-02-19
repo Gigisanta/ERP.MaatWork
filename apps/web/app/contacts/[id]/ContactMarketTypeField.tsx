@@ -61,8 +61,8 @@ export default function ContactMarketTypeField({ value, contactId }: ContactMark
         router.refresh();
       } catch (err) {
         logger.error(
-          'Error updating market type',
-          toLogContext({ err, contactId, value: newValue })
+          toLogContext({ err, contactId, value: newValue }),
+          'Error updating market type'
         );
       }
     });

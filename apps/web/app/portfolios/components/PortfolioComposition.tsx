@@ -11,9 +11,10 @@ import type { PortfolioLine, InstrumentSearchResult } from '@/types';
 
 interface PortfolioCompositionProps {
   lines: PortfolioLine[];
-  onAddAsset: (asset: InstrumentSearchResult) => void;
+  onAddAsset: (asset: InstrumentSearchResult) => void | { duplicate: boolean; symbol?: string };
   onUpdateWeight: (lineId: string, weight: number) => void;
   onRemoveLine: (lineId: string) => void;
+  onDistributeEvenly?: () => void;
   showAssetSearcher?: boolean;
   disabled?: boolean;
 }
@@ -23,6 +24,7 @@ export function PortfolioComposition({
   onAddAsset,
   onUpdateWeight,
   onRemoveLine,
+  onDistributeEvenly,
   showAssetSearcher = true,
   disabled = false,
 }: PortfolioCompositionProps) {
@@ -78,6 +80,7 @@ export function PortfolioComposition({
                         value={typeof line.targetWeight === 'number' ? line.targetWeight * 100 : 0}
                         onChange={(e) => onUpdateWeight(line.id, Number(e.target.value))}
                         disabled={disabled}
+                        aria-label={`Peso para ${line.instrumentName || 'activo'}`}
                         className="w-20 px-2 py-1 text-sm border border-border bg-surface text-foreground-base rounded focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                       <Text size="sm" color="secondary">
@@ -89,6 +92,7 @@ export function PortfolioComposition({
                           size="sm"
                           onClick={() => onRemoveLine(line.id)}
                           className="text-error-500 hover:text-error-600"
+                          aria-label={`Eliminar ${line.instrumentName || 'activo'}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -104,7 +108,18 @@ export function PortfolioComposition({
             <CardContent className="p-4">
               <Stack direction="row" justify="between" align="center">
                 <Text weight="medium">Total:</Text>
-                <Badge variant={isValid ? 'success' : 'error'}>{totalWeight.toFixed(2)}%</Badge>
+                <Stack direction="row" gap="sm" align="center">
+                  {onDistributeEvenly && lines.length > 0 && !disabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onDistributeEvenly}
+                    >
+                      Distribuir
+                    </Button>
+                  )}
+                  <Badge variant={isValid ? 'success' : 'error'}>{totalWeight.toFixed(2)}%</Badge>
+                </Stack>
               </Stack>
               {!isValid && (
                 <Text size="sm" color="secondary" className="mt-2">

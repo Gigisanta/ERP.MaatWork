@@ -67,8 +67,8 @@ export default function ContactEditableField({
         router.refresh();
       } catch (err) {
         logger.error(
-          'Error updating contact field',
-          toLogContext({ err, contactId, field, value })
+          toLogContext({ err, contactId, field, value }),
+          'Error updating contact field'
         );
         setLocalValue(value || '');
       }

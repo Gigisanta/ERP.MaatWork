@@ -3,6 +3,7 @@ import React, { useState, useTransition, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Text, Button, Input } from '@maatwork/ui';
 import { useRouter } from 'next/navigation';
 import { logger, toLogContext } from '@/lib/logger';
+import { formatCurrency } from '@maatwork/utils';
 
 interface FinancialSummarySectionProps {
   contactId: string;
@@ -53,8 +54,8 @@ export default function FinancialSummarySection({
         router.refresh();
       } catch (err) {
         logger.error(
-          'Error updating financial field',
-          toLogContext({ err, contactId, field, value })
+          toLogContext({ err, contactId, field, value }),
+          'Error updating financial field'
         );
       }
     });
@@ -85,14 +86,14 @@ export default function FinancialSummarySection({
     setIsEditing(false);
   };
 
-  const formatCurrency = (value: number | null | undefined): string => {
+  const formatCurrencyValue = (value: number | null | undefined): string => {
     if (value === null || value === undefined) return 'Sin especificar';
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
+    return formatCurrency(value, {
       currency: 'ARS',
+      locale: 'es-AR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value);
+    });
   };
 
   if (isEditing) {
@@ -109,7 +110,7 @@ export default function FinancialSummarySection({
                 type="number"
                 step="0.01"
                 value={ingresos}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setIngresos(e.target.value);
                 }}
                 placeholder="0.00"
@@ -121,7 +122,7 @@ export default function FinancialSummarySection({
                 type="number"
                 step="0.01"
                 value={gastos}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setGastos(e.target.value);
                 }}
                 placeholder="0.00"
@@ -145,7 +146,7 @@ export default function FinancialSummarySection({
                   }
                 >
                   {excedenteCalculado !== null
-                    ? formatCurrency(excedenteCalculado)
+                    ? formatCurrencyValue(excedenteCalculado)
                     : 'Sin especificar'}
                 </Text>
               </div>
@@ -179,7 +180,7 @@ export default function FinancialSummarySection({
               Ingresos
             </Text>
             <Text className="mt-1 text-lg font-semibold text-green-700">
-              {formatCurrency(initialIngresos)}
+              {formatCurrencyValue(initialIngresos)}
             </Text>
           </div>
           <div
@@ -190,7 +191,7 @@ export default function FinancialSummarySection({
               Gastos
             </Text>
             <Text className="mt-1 text-lg font-semibold text-red-700">
-              {formatCurrency(initialGastos)}
+              {formatCurrencyValue(initialGastos)}
             </Text>
           </div>
           <div
@@ -219,7 +220,7 @@ export default function FinancialSummarySection({
                     : 'text-gray-600'
               }`}
             >
-              {formatCurrency(initialExcedente)}
+              {formatCurrencyValue(initialExcedente)}
             </Text>
           </div>
         </div>

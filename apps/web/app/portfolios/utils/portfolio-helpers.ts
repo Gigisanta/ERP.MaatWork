@@ -12,41 +12,70 @@ export async function ensureInstrumentsExist(lines: PortfolioLine[]): Promise<st
 
   for (const line of lines) {
     if (!line.instrumentId && line.instrumentSymbol) {
-      try {
-        // Intentar crear el instrumento
-        const instrumentResponse = await createInstrument({
-          symbol: line.instrumentSymbol,
-          name: line.instrumentSymbol,
-          type: 'EQUITY',
-          currency: 'USD',
-        });
+      let lastError: Error | null = null;
+      const maxRetries = 2;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          // Intentar crear el instrumento
+          const instrumentResponse = await createInstrument({
+            symbol: line.instrumentSymbol,
+            name: line.instrumentName || line.instrumentSymbol,
+            type: 'EQUITY',
+            currency: 'USD',
+          });
 
-        if (instrumentResponse.success && instrumentResponse.data?.instrument?.id) {
-          instrumentIds.push(instrumentResponse.data.instrument.id);
-        } else {
-          // Si no se pudo crear, buscar si ya existe
-          const searchResponse = await getInstruments({ search: line.instrumentSymbol });
-          if (searchResponse.success && searchResponse.data?.instruments) {
-            const existing = searchResponse.data.instruments.find(
-              (inst: Instrument) => inst.symbol === line.instrumentSymbol
-            );
-            if (existing) {
-              instrumentIds.push(existing.id);
-            } else {
+          if (instrumentResponse.success && instrumentResponse.data?.instrument?.id) {
+            instrumentIds.push(instrumentResponse.data.instrument.id);
+            break;
+          } else {
+            // Si no se pudo crear, buscar si ya existe
+            const searchResponse = await getInstruments({ search: line.instrumentSymbol });
+            if (searchResponse.success && searchResponse.data?.instruments) {
+              const existing = searchResponse.data.instruments.find(
+                (inst: Instrument) => inst.symbol === line.instrumentSymbol
+              );
+              if (existing) {
+                instrumentIds.push(existing.id);
+                break;
+              }
+            }
+            
+            if (attempt === maxRetries) {
               throw new Error(
-                `No se pudo crear ni encontrar el instrumento ${line.instrumentSymbol}`
+                `No se pudo encontrar el activo "${line.instrumentSymbol}". Verifica que el símbolo sea correcto.`
               );
             }
-          } else {
-            throw new Error(`No se pudo crear el instrumento ${line.instrumentSymbol}`);
           }
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+
+          // Check for 409 Conflict (Instrument already exists)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const apiError = lastError as any;
+          if (apiError.status === 409 && apiError.data?.data?.id) {
+            logger.info(
+              { symbol: line.instrumentSymbol, id: apiError.data.data.id },
+              'Instrument already exists, using existing ID'
+            );
+            instrumentIds.push(apiError.data.data.id);
+            break;
+          }
+          
+          if (attempt < maxRetries) {
+            // Exponential backoff: 100ms, 200ms
+            await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+            continue;
+          }
+          
+          logger.error(
+            toLogContext({ err: lastError, symbol: line.instrumentSymbol, attempts: attempt + 1 }),
+            'Error creating/finding instrument after retries'
+          );
+          throw new Error(
+            `Error al procesar el activo "${line.instrumentSymbol}": ${lastError.message}`
+          );
         }
-      } catch (err) {
-        logger.error(
-          'Error creating/finding instrument',
-          toLogContext({ err, symbol: line.instrumentSymbol })
-        );
-        throw err;
       }
     } else if (line.instrumentId) {
       instrumentIds.push(line.instrumentId);

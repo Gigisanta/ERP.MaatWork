@@ -129,11 +129,11 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     // Validate file before setting
     const validationError = validateFile(f);
     if (validationError) {
-      logger.warn('AUM file validation failed', {
+      logger.warn({
         fileName: f.name,
         fileSize: f.size,
         error: validationError,
-      });
+      }, 'AUM file validation failed');
       setError(validationError);
       // Clear the input
       if (fileInputRef.current) {
@@ -167,20 +167,20 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
     startProgressSimulation();
 
     try {
-      logger.info('Starting AUM file upload', {
+      logger.info({
         fileName: file.name,
         fileSize: file.size,
         broker,
-      });
+      }, 'Starting AUM file upload');
 
       const resp = await uploadAumFile(file, broker);
 
-      logger.info('AUM file upload response received', {
+      logger.info({
         success: resp?.success,
         hasData: !!resp?.data,
         dataKeys: resp?.data ? Object.keys(resp.data) : [],
         ...(resp ? toLogContext({ fullResponse: resp }) : {}),
-      });
+      }, 'AUM file upload response received');
 
       // Verificar respuesta del servidor
       // El apiClient normaliza { ok: true, ... } a { success: true, data: { ok: true, fileId, ... } }
@@ -190,10 +190,10 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         const { fileId, totals } = resp.data;
 
         if (!fileId) {
-          logger.error('AUM file upload response missing fileId', {
+          logger.error({
             fileName: file.name,
             ...(resp.data ? toLogContext({ responseData: resp.data }) : {}),
-          });
+          }, 'AUM file upload response missing fileId');
           setError('Error: El servidor no retornó un ID de archivo válido');
           return;
         }
@@ -205,16 +205,16 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
           fileInputRef.current.value = '';
         }
 
-        logger.info('AUM file uploaded successfully', {
+        logger.info({
           fileId,
           fileName: file.name,
           fileSize: file.size,
           broker,
           ...toLogContext({ totals }),
-        });
+        }, 'AUM file uploaded successfully');
 
         if (onUploadSuccess) {
-          logger.info('Calling onUploadSuccess callback', { fileId });
+          logger.info({ fileId }, 'Calling onUploadSuccess callback');
           onUploadSuccess(fileId);
         } else {
           logger.warn('onUploadSuccess callback not provided');
@@ -229,14 +229,14 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
             : resp.details
           : null;
         const errorMsg = resp?.error || details || 'Error desconocido al procesar archivo';
-        logger.error('AUM file upload failed', {
+        logger.error({
           fileName: file.name,
           fileSize: file.size,
           broker,
           error: resp?.error,
           details,
           ...(resp ? toLogContext({ response: resp }) : {}),
-        });
+        }, 'AUM file upload failed');
         stopProgressSimulation(false);
         setError(errorMsg);
       }
@@ -245,14 +245,14 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       const apiErr = e as ApiErrorWithMessage;
       const errorMsg =
         apiErr.userMessage || apiErr.message || apiErr.error || 'Error al subir archivo';
-      logger.error('AUM file upload error', {
+      logger.error({
         fileName: file.name,
         fileSize: file.size,
         broker,
         error: apiErr.message || apiErr.error,
         userMessage: apiErr.userMessage,
         ...(e ? toLogContext({ fullError: e }) : {}),
-      });
+      }, 'AUM file upload error');
       setError(errorMsg);
     } finally {
       setUploading(false);
@@ -308,7 +308,7 @@ export default function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       {/* Broker selector */}
       <Select
         value={broker}
-        onValueChange={(v) => setBroker(v)}
+        onValueChange={(v: string) => setBroker(v)}
         items={[{ value: 'balanz', label: 'Balanz' }]}
         placeholder="Broker"
         disabled={uploading}

@@ -8,6 +8,7 @@ import type { TimestampedEntity, UpdateRequest, CreateRequest } from './common';
  * Capacitacion
  */
 export interface Capacitacion extends TimestampedEntity {
+  id: string; // Explicitar para evitar problemas de inferencia en apps/web
   titulo: string;
   tema: string;
   link: string;
@@ -31,7 +32,7 @@ export interface CreateCapacitacionRequest extends Omit<
 /**
  * Request to update a capacitacion
  */
-export interface UpdateCapacitacionRequest extends UpdateRequest<Capacitacion> {}
+export type UpdateCapacitacionRequest = UpdateRequest<Capacitacion>;
 
 /**
  * Response for CSV import

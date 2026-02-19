@@ -60,7 +60,7 @@ export function PersonalInfoSection({
               <Input
                 type="tel"
                 value={phoneValue}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   onPhoneChange(e.target.value);
                   onPhoneErrorClear();
                 }}

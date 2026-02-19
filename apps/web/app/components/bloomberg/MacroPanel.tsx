@@ -125,7 +125,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
       <CardHeader>
         <Stack direction="row" gap="md" align="center" justify="between">
           <CardTitle>Macro Economic Data</CardTitle>
-          <Tabs value={country} onValueChange={(v) => setCountry(v as 'US' | 'AR')}>
+          <Tabs value={country} onValueChange={(v: string) => setCountry(v as 'US' | 'AR')}>
             <TabsList>
               <TabsTrigger value="US">US</TabsTrigger>
               <TabsTrigger value="AR">AR</TabsTrigger>
@@ -142,7 +142,7 @@ export default function MacroPanel({ className, height = 300 }: MacroPanelProps)
           <Stack direction="column" gap="md">
             <Select
               value={selectedSeries || ''}
-              onValueChange={(value) => setSelectedSeries(value)}
+              onValueChange={(value: string) => setSelectedSeries(value)}
               items={seriesList.map((s) => ({
                 value: String(s.series_id || s.seriesId || s.id || ''),
                 label: `${s.name} (${s.series_id || s.seriesId || s.id})`,

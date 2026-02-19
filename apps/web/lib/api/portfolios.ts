@@ -18,17 +18,65 @@ import type {
 } from '@/types';
 
 /**
- * Obtener todos los portfolios
+ * Parámetros para listar portfolios
  */
-export async function getPortfolios(): Promise<ApiResponse<Portfolio[]>> {
-  return apiClient.get<Portfolio[]>('/v1/portfolios/templates');
+export interface GetPortfoliosParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: 'name' | 'createdAt' | 'clientCount' | 'lineCount';
+  sortOrder?: 'asc' | 'desc';
 }
+
+/**
+ * Metadata de paginación
+ */
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+/**
+ * Respuesta paginada de portfolios
+ */
+export interface PaginatedPortfoliosResponse {
+  data: Portfolio[];
+  pagination: PaginationMeta;
+}
+
+/**
+ * Obtener portfolios con soporte para paginación, búsqueda y filtros
+ * 
+ * @param params - Opciones de consulta
+ * @returns Respuesta paginada con portfolios y metadata
+ */
+export async function getPortfolios(params?: GetPortfoliosParams): Promise<ApiResponse<PaginatedPortfoliosResponse>> {
+  const queryParams = new URLSearchParams();
+  
+  // Add pagination params
+  if (params?.page) queryParams.append('page', String(params.page));
+  if (params?.limit) queryParams.append('limit', String(params.limit));
+  
+  // Add search
+  if (params?.search) queryParams.append('search', params.search);
+  
+  // Add sorting
+  if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+  if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+  return apiClient.get<PaginatedPortfoliosResponse>(`/v1/portfolios?${queryParams.toString()}`);
+}
+
 
 /**
  * Obtener portfolio por ID
  */
 export async function getPortfolioById(id: string): Promise<ApiResponse<PortfolioWithLines>> {
-  return apiClient.get<PortfolioWithLines>(`/v1/portfolios/templates/${id}`);
+  return apiClient.get<PortfolioWithLines>(`/v1/portfolios/${id}`);
 }
 
 /**
@@ -37,7 +85,7 @@ export async function getPortfolioById(id: string): Promise<ApiResponse<Portfoli
 export async function getPortfolioLines(
   id: string
 ): Promise<ApiResponse<{ lines: PortfolioLine[] }>> {
-  return apiClient.get<{ lines: PortfolioLine[] }>(`/v1/portfolios/templates/${id}/lines`);
+  return apiClient.get<{ lines: PortfolioLine[] }>(`/v1/portfolios/${id}/lines`);
 }
 
 /**
@@ -47,7 +95,7 @@ export async function getPortfolioLinesBatch(
   ids: string[]
 ): Promise<ApiResponse<Record<string, PortfolioLine[]>>> {
   return apiClient.get<Record<string, PortfolioLine[]>>(
-    `/v1/portfolios/templates/lines/batch?ids=${ids.join(',')}`
+    `/v1/portfolios/lines/batch?ids=${ids.join(',')}`
   );
 }
 
@@ -57,7 +105,7 @@ export async function getPortfolioLinesBatch(
 export async function createPortfolio(
   data: CreatePortfolioRequest
 ): Promise<ApiResponse<Portfolio>> {
-  return apiClient.post<Portfolio>('/v1/portfolios/templates', data);
+  return apiClient.post<Portfolio>('/v1/portfolios', data);
 }
 
 /**
@@ -67,14 +115,14 @@ export async function updatePortfolio(
   id: string,
   data: UpdatePortfolioRequest
 ): Promise<ApiResponse<Portfolio>> {
-  return apiClient.put<Portfolio>(`/v1/portfolios/templates/${id}`, data);
+  return apiClient.put<Portfolio>(`/v1/portfolios/${id}`, data);
 }
 
 /**
  * Eliminar portfolio
  */
 export async function deletePortfolio(id: string): Promise<ApiResponse<void>> {
-  return apiClient.delete<void>(`/v1/portfolios/templates/${id}`);
+  return apiClient.delete<void>(`/v1/portfolios/${id}`);
 }
 
 /**
@@ -84,7 +132,7 @@ export async function addPortfolioLine(
   portfolioId: string,
   data: AddPortfolioLineRequest
 ): Promise<ApiResponse<PortfolioLine>> {
-  return apiClient.post<PortfolioLine>(`/v1/portfolios/templates/${portfolioId}/lines`, data);
+  return apiClient.post<PortfolioLine>(`/v1/portfolios/${portfolioId}/lines`, data);
 }
 
 /**
@@ -96,7 +144,7 @@ export async function updatePortfolioLine(
   data: Partial<AddPortfolioLineRequest>
 ): Promise<ApiResponse<PortfolioLine>> {
   return apiClient.put<PortfolioLine>(
-    `/v1/portfolios/templates/${portfolioId}/lines/${lineId}`,
+    `/v1/portfolios/${portfolioId}/lines/${lineId}`,
     data
   );
 }
@@ -108,5 +156,5 @@ export async function deletePortfolioLine(
   portfolioId: string,
   lineId: string
 ): Promise<ApiResponse<void>> {
-  return apiClient.delete<void>(`/v1/portfolios/templates/${portfolioId}/lines/${lineId}`);
+  return apiClient.delete<void>(`/v1/portfolios/${portfolioId}/lines/${lineId}`);
 }

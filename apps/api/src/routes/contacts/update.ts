@@ -455,9 +455,26 @@ router.patch(
     }
 
     req.log.info(
-      { contactId: id, fields: fields.map((f: { field: string; value: unknown }) => f.field) },
+      {
+        contactId: id,
+        fields: fields.map((f: { field: string; value: unknown }) => f.field),
+      },
       'contact patched'
     );
+
+    // Trigger automations (Unified: handles both emails and webhooks)
+    if (pipelineStageChanged && newPipelineStageId) {
+      emailAutomationService
+        .checkAndTriggerAutomations('pipeline_stage_change', {
+          contactId: id,
+          userId: req.user!.id,
+          newPipelineStageId,
+        })
+        .catch((err) => {
+          req.log.error({ err }, 'Error triggering automation');
+        });
+    }
+
     return res.json({
       success: true,
       data: updated,

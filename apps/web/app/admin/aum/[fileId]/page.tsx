@@ -179,7 +179,7 @@ export default function AumPreviewPage() {
         title={toast.title}
         {...(toast.description ? { description: toast.description } : {})}
         variant={toast.variant}
-        onOpenChange={(open) => setToast((prev) => ({ ...prev, show: open }))}
+        onOpenChange={(open: boolean) => setToast((prev) => ({ ...prev, show: open }))}
       />
     </div>
   );

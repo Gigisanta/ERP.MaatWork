@@ -48,10 +48,12 @@ export async function seedTasks(
   contactsList: (typeof contacts.$inferSelect)[],
   advisorUsers: (typeof users.$inferSelect)[]
 ) {
-  console.log('📋 Seeding tasks...');
+  // eslint-disable-next-line no-console
+    console.log('📋 Seeding tasks...');
 
   const existingTasks = await db().select().from(tasks).limit(10);
   if (existingTasks.length >= 10) {
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Tasks already seeded: ${existingTasks.length} tasks found\n`);
     return existingTasks;
   }
@@ -61,6 +63,7 @@ export async function seedTasks(
   const priorities = await db().select().from(lookupPriority);
 
   if (statuses.length === 0 || priorities.length === 0) {
+    // eslint-disable-next-line no-console
     console.log('  ⚠️ Missing lookup tables for tasks');
     return [];
   }
@@ -105,7 +108,8 @@ export async function seedTasks(
     }
   }
 
-  console.log(`✅ Tasks seeded: ${createdTasks.length} tasks\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Tasks seeded: ${createdTasks.length} tasks\n`);
   return createdTasks;
 }
 
@@ -116,10 +120,12 @@ export async function seedNotes(
   contactsList: (typeof contacts.$inferSelect)[],
   advisorUsers: (typeof users.$inferSelect)[]
 ) {
-  console.log('📝 Seeding notes...');
+  // eslint-disable-next-line no-console
+    console.log('📝 Seeding notes...');
 
   const existingNotes = await db().select().from(notes).limit(10);
   if (existingNotes.length >= 10) {
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Notes already seeded: ${existingNotes.length} notes found\n`);
     return existingNotes;
   }
@@ -155,6 +161,7 @@ export async function seedNotes(
     }
   }
 
-  console.log(`✅ Notes seeded: ${createdNotes.length} notes\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Notes seeded: ${createdNotes.length} notes\n`);
   return createdNotes;
 }

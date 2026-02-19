@@ -2,7 +2,7 @@
  * Tests para AutomationsPage
  *
  * AI_DECISION: Tests para página de automatizaciones
- * Justificación: Validar renderizado y apertura de N8N
+ * Justificación: Validar renderizado y funcionamiento de automatizaciones
  * Impacto: Prevenir errores en acceso a automatizaciones
  */
 import { useRequireAuth } from '../auth/useRequireAuth';
@@ -37,7 +37,6 @@ vi.mock('../components/PageTitleContext', () => ({
 
 vi.mock('@/lib/config', () => ({
   config: {
-    // n8nUrl removed
   },
 }));
 

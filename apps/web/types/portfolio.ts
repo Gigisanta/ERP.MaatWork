@@ -15,10 +15,14 @@ import type {
  */
 export interface Portfolio extends TimestampedEntity {
   id: string; // Explicitly include id from BaseEntity for TypeScript resolution
+  code?: string | null;
   name: string;
+  type?: 'template' | 'benchmark' | 'hybrid';
   description?: string | null;
-  riskLevel: RiskLevel;
+  riskLevel: RiskLevel | null;
+  isSystem?: boolean;
   clientCount?: number;
+  lineCount?: number;
   lines?: PortfolioLine[];
 }
 
@@ -27,7 +31,7 @@ export interface Portfolio extends TimestampedEntity {
  */
 export interface PortfolioLine {
   id: string;
-  templateId: string;
+  portfolioId: string;
   targetType: 'instrument' | 'assetClass';
   assetClass?: string | null;
   instrumentId: string | null;
@@ -41,9 +45,12 @@ export interface PortfolioLine {
  * Request para crear portfolio - usando utility type CreateRequest
  */
 export interface CreatePortfolioRequest extends CreateRequest<Portfolio> {
+  code?: string;
   name: string;
-  riskLevel: RiskLevel;
+  type?: 'template' | 'benchmark' | 'hybrid';
+  riskLevel: RiskLevel | null;
   description?: string | null;
+  isSystem?: boolean;
 }
 
 /**
@@ -55,7 +62,10 @@ export type UpdatePortfolioRequest = UpdateRequest<Portfolio>;
  * Request para agregar línea de portfolio
  */
 export interface AddPortfolioLineRequest {
-  targetType: 'instrument' | 'assetClass';
+  targetType?: 'instrument' | 'assetClass'; // Made optional, defaults to instrument in some contexts or backend handles it? 
+  // Check backend: backend usually requires it. BUT Benchmark calls hardcoded it.
+  // Consolidating types: BenchmarkComponent had 'instrumentId' and 'weight'.
+  // PortfolioLine has 'targetType', 'instrumentId', 'targetWeight'.
   instrumentId?: string;
   assetClass?: string;
   targetWeight: number; // Decimal
@@ -74,12 +84,12 @@ export interface PortfolioWithLines extends Portfolio {
  * Tipos para composición de portfolio (UI)
  * Extiende ComponentBase para compartir estructura con BenchmarkComponent
  */
-export type PortfolioComponent = ComponentBase;
+type PortfolioComponent = ComponentBase;
 
 /**
  * Datos de formulario de portfolio
  */
-export interface PortfolioFormData {
+interface PortfolioFormData {
   name: string;
   description: string;
   riskLevel: RiskLevel;

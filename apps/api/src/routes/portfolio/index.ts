@@ -5,8 +5,8 @@
  * Justificación: Mejor mantenibilidad, testabilidad y separación de responsabilidades
  * Impacto: Código más organizado, dividido en:
  *   - schemas.ts: Validaciones Zod
- *   - handlers/templates.ts: CRUD de plantillas
- *   - handlers/template-lines.ts: Líneas de plantillas
+ *   - handlers/portfolios.ts: CRUD de portfolios (templates/benchmarks)
+ *   - handlers/portfolio-lines.ts: Líneas de portfolios
  *   - handlers/assignments.ts: Asignaciones de carteras
  *
  * REGLA CURSOR: Portfolios - mantener RBAC, validaciones, logging estructurado, no romper API sin versioning
@@ -23,7 +23,7 @@ import {
   createPortfolioSchema,
   updatePortfolioSchema,
   addPortfolioLineSchema,
-  templateIdParamSchema,
+  portfolioIdParamSchema,
   lineIdParamSchema,
   createAssignmentSchema,
   updateAssignmentStatusSchema,
@@ -32,13 +32,18 @@ import {
 
 // Handlers
 import {
-  listTemplates,
-  createTemplate,
-  getTemplateById,
-  updateTemplate,
-  getTemplateLinesBatch,
-} from './handlers/templates';
-import { getTemplateLines, addTemplateLine, deleteTemplateLine } from './handlers/template-lines';
+  listPortfolios,
+  createPortfolio,
+  getPortfolioById,
+  updatePortfolio,
+  deletePortfolio,
+  getPortfolioLinesBatch,
+} from './handlers/portfolios';
+import {
+  getPortfolioLines,
+  addPortfolioLine,
+  deletePortfolioLine,
+} from './handlers/portfolio-lines';
 import {
   listAssignments,
   createAssignment,
@@ -47,93 +52,119 @@ import {
   updateAssignmentStatus,
   deleteAssignment,
 } from './handlers/assignments';
+import { getPortfolioStats } from './handlers/stats';
+
+import { rateLimit } from '../../middleware/rate-limit';
+import { cache } from '../../middleware/cache';
 
 const router = Router();
 
 // ==========================================================
-// Portfolio Templates CRUD
+// Portfolios CRUD
 // ==========================================================
 
-// GET /portfolios/templates - Listar plantillas
+// GET /portfolios - Listar portfolios
 router.get(
-  '/templates',
+  '/',
   requireAuth,
   requireRole(['admin', 'manager']),
-  createRouteHandler(listTemplates)
+  rateLimit({ windowMs: 60 * 1000, max: 30 }),
+  cache({ ttl: 60, keyPrefix: 'portfolios:list' }),
+  createRouteHandler(listPortfolios)
 );
 
-// POST /portfolios/templates - Crear plantilla
+// POST /portfolios - Crear portfolio
 // AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
 // Justificación: createRouteHandler siempre retorna 200, pero POST debe retornar 201
 // Impacto: Respuesta HTTP correcta según estándares REST
 router.post(
-  '/templates',
+  '/',
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ body: createPortfolioSchema }),
   createAsyncHandler(async (req, res) => {
-    const result = await createTemplate(req);
+    const result = await createPortfolio(req);
     return res.status(201).json({ success: true, data: result, requestId: req.requestId });
   })
 );
 
-// GET /portfolios/templates/lines/batch - Obtener líneas en batch (DEBE ir antes de :id)
+// GET /portfolios/lines/batch - Obtener líneas en batch (DEBE ir antes de :id)
 router.get(
-  '/templates/lines/batch',
+  '/lines/batch',
   requireAuth,
   requireRole(['admin', 'manager']),
-  createRouteHandler(getTemplateLinesBatch)
+  createRouteHandler(getPortfolioLinesBatch)
 );
 
-// GET /portfolios/templates/:id - Obtener plantilla por ID
+// GET /portfolios/:id - Obtener portfolio por ID
 router.get(
-  '/templates/:id',
+  '/:id',
   requireAuth,
   requireRole(['admin', 'manager']),
-  validate({ params: templateIdParamSchema }),
-  createRouteHandler(getTemplateById)
+  validate({ params: portfolioIdParamSchema }),
+  cache({ ttl: 300, keyPrefix: 'portfolios:detail' }),
+  createRouteHandler(getPortfolioById)
 );
 
-// PUT /portfolios/templates/:id - Actualizar plantilla
+// PUT /portfolios/:id - Actualizar portfolio
 router.put(
-  '/templates/:id',
+  '/:id',
   requireAuth,
   requireRole(['admin', 'manager']),
-  validate({ params: templateIdParamSchema, body: updatePortfolioSchema }),
-  createRouteHandler(updateTemplate)
+  validate({ params: portfolioIdParamSchema, body: updatePortfolioSchema }),
+  createRouteHandler(updatePortfolio)
 );
 
-// GET /portfolios/templates/:id/lines - Obtener líneas de plantilla
+// DELETE /portfolios/:id - Eliminar portfolio (Soft Delete)
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({ params: portfolioIdParamSchema }),
+  createRouteHandler(deletePortfolio)
+);
+
+// GET /portfolios/:id/lines - Obtener líneas de portfolio
 router.get(
-  '/templates/:id/lines',
+  '/:id/lines',
   requireAuth,
   requireRole(['admin', 'manager']),
-  validate({ params: templateIdParamSchema }),
-  createRouteHandler(getTemplateLines)
+  validate({ params: portfolioIdParamSchema }),
+  createRouteHandler(getPortfolioLines)
 );
 
-// POST /portfolios/templates/:id/lines - Agregar línea a plantilla
+// POST /portfolios/:id/lines - Agregar línea a portfolio
 // AI_DECISION: Usar createAsyncHandler para manejar status 201 (Created)
 // Justificación: createRouteHandler siempre retorna 200, pero POST debe retornar 201
 // Impacto: Respuesta HTTP correcta según estándares REST
 router.post(
-  '/templates/:id/lines',
+  '/:id/lines',
   requireAuth,
   requireRole(['admin', 'manager']),
-  validate({ params: templateIdParamSchema, body: addPortfolioLineSchema }),
+  validate({ params: portfolioIdParamSchema, body: addPortfolioLineSchema }),
   createAsyncHandler(async (req, res) => {
-    const result = await addTemplateLine(req);
+    const result = await addPortfolioLine(req);
     return res.status(201).json({ success: true, data: result, requestId: req.requestId });
   })
 );
 
-// DELETE /portfolios/templates/:id/lines/:lineId - Eliminar línea de plantilla
+// DELETE /portfolios/:id/lines/:lineId - Eliminar línea de portfolio
 router.delete(
-  '/templates/:id/lines/:lineId',
+  '/:id/lines/:lineId',
   requireAuth,
   requireRole(['admin', 'manager']),
   validate({ params: lineIdParamSchema }),
-  createRouteHandler(deleteTemplateLine)
+  createRouteHandler(deletePortfolioLine)
+);
+
+// GET /portfolios/:id/stats - Obtener estadísticas de portfolio
+router.get(
+  '/:id/stats',
+  requireAuth,
+  requireRole(['admin', 'manager']),
+  validate({ params: portfolioIdParamSchema }),
+  cache({ ttl: 60, keyPrefix: 'portfolios:stats' }),
+  createRouteHandler(getPortfolioStats)
 );
 
 // ==========================================================

@@ -62,7 +62,8 @@ const PIPELINE_STAGES = [
  * Seed asset class lookup table
  */
 export async function seedAssetClasses() {
-  console.log('  📋 Seeding asset classes...');
+  // eslint-disable-next-line no-console
+    console.log('  📋 Seeding asset classes...');
 
   for (const item of ASSET_CLASSES) {
     const existing = await db()
@@ -81,7 +82,8 @@ export async function seedAssetClasses() {
  * Seed task status lookup table
  */
 export async function seedTaskStatuses() {
-  console.log('  📋 Seeding task statuses...');
+  // eslint-disable-next-line no-console
+    console.log('  📋 Seeding task statuses...');
 
   for (const item of TASK_STATUSES) {
     const existing = await db()
@@ -100,7 +102,8 @@ export async function seedTaskStatuses() {
  * Seed priority lookup table
  */
 export async function seedPriorities() {
-  console.log('  📋 Seeding priorities...');
+  // eslint-disable-next-line no-console
+    console.log('  📋 Seeding priorities...');
 
   for (const item of PRIORITIES) {
     const existing = await db()
@@ -119,7 +122,8 @@ export async function seedPriorities() {
  * Seed notification type lookup table
  */
 export async function seedNotificationTypes() {
-  console.log('  📋 Seeding notification types...');
+  // eslint-disable-next-line no-console
+    console.log('  📋 Seeding notification types...');
 
   for (const item of NOTIFICATION_TYPES) {
     const existing = await db()
@@ -138,7 +142,8 @@ export async function seedNotificationTypes() {
  * Seed pipeline stages
  */
 export async function seedPipelineStages() {
-  console.log('  🔄 Seeding pipeline stages...');
+  // eslint-disable-next-line no-console
+    console.log('  🔄 Seeding pipeline stages...');
   const results: (typeof pipelineStages.$inferSelect)[] = [];
 
   for (const stage of PIPELINE_STAGES) {
@@ -170,7 +175,8 @@ export async function seedPipelineStages() {
  * Seed all dependency tables
  */
 export async function ensureDependencies() {
-  console.log('🔧 Ensuring dependencies exist...\n');
+  // eslint-disable-next-line no-console
+    console.log('🔧 Ensuring dependencies exist...\n');
 
   await seedAssetClasses();
   await seedTaskStatuses();
@@ -178,7 +184,8 @@ export async function ensureDependencies() {
   await seedNotificationTypes();
   const pipelineStagesList = await seedPipelineStages();
 
-  console.log('✅ Dependencies ensured\n');
+  // eslint-disable-next-line no-console
+    console.log('✅ Dependencies ensured\n');
 
   return { pipelineStagesList };
 }

@@ -19,7 +19,7 @@
  */
 
 import { DebugConsole } from './debug-console';
-import { logger } from '../logger';
+import { logger, toLogContext } from '../logger';
 export { DebugConsole };
 export type { ErrorLog } from './types';
 
@@ -77,9 +77,12 @@ export function initDebugConsole(): DebugConsole | null {
 
     return debugConsole;
   } catch (error) {
-    logger.error('Error al inicializar Debug Console', {
-      error: error instanceof Error ? error.message : String(error),
-    });
+    logger.error(
+      toLogContext({
+        error: error instanceof Error ? error.message : String(error),
+      }),
+      'Error al inicializar Debug Console'
+    );
 
     // Crear un objeto mínimo incluso si hay error
     const fallback = {

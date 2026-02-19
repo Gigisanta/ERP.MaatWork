@@ -4,7 +4,6 @@
 
 import React from 'react';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import {
   Card,
   CardHeader,
@@ -15,7 +14,6 @@ import {
   Stack,
   Breadcrumbs,
   Badge,
-  Alert,
   type BreadcrumbItem,
 } from '@maatwork/ui';
 import type {
@@ -124,7 +122,7 @@ export default async function ContactDetailPage(props: ContactDetailPageProps) {
     notFound();
   }
 
-  const { contact, stages, advisors, brokerAccounts, portfolioAssignments, tasks, notes } = data;
+  const { contact, stages, advisors, brokerAccounts, portfolioAssignments, tasks } = data;
 
   // Find related data
   const currentStage = stages.find((stage: PipelineStage) => stage.id === contact.pipelineStageId);
@@ -158,7 +156,7 @@ export default async function ContactDetailPage(props: ContactDetailPageProps) {
                 </Badge>
               )}
               {contact.tags &&
-                contact.tags.map((tag) => (
+                contact.tags.map((tag: any) => (
                   <Badge key={tag.id} variant="default" className="text-xs">
                     {tag.name}
                   </Badge>

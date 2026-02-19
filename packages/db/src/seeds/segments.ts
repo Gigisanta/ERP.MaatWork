@@ -52,12 +52,14 @@ export async function seedSegments(
   contactsList: (typeof contacts.$inferSelect)[],
   advisorUsers: (typeof users.$inferSelect)[]
 ) {
-  console.log('📊 Seeding segments...');
+  // eslint-disable-next-line no-console
+    console.log('📊 Seeding segments...');
 
   const createdSegments: (typeof segments.$inferSelect)[] = [];
   const ownerUser = advisorUsers[0];
 
   if (!ownerUser) {
+    // eslint-disable-next-line no-console
     console.log('  ⚠️ No users available for segment creation');
     return [];
   }
@@ -86,7 +88,8 @@ export async function seedSegments(
         .returning();
       segment = created;
       createdSegments.push(segment);
-      console.log(`  ✓ Created segment: ${segmentData.name}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created segment: ${segmentData.name}`);
     } else {
       segment = existing[0]!;
       createdSegments.push(segment);
@@ -96,7 +99,8 @@ export async function seedSegments(
     await assignContactsToSegment(segment, contactsList);
   }
 
-  console.log(`✅ Segments seeded: ${createdSegments.length} segments\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Segments seeded: ${createdSegments.length} segments\n`);
   return createdSegments;
 }
 
@@ -141,6 +145,7 @@ async function assignContactsToSegment(
       .set({ contactCount: assignmentsCreated })
       .where(eq(segments.id, segment.id));
 
+    // eslint-disable-next-line no-console
     console.log(`    ✓ Assigned ${assignmentsCreated} contacts to ${segment.name}`);
   }
 }

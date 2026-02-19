@@ -18,12 +18,7 @@ import type {
   AumRowsResponse,
   AumDuplicatesResponse,
 } from '@/types';
-import {
-  aumRowsResponseSchema,
-  aumUploadResponseSchema,
-  aumHistoryResponseSchema,
-  aumMatchRowResponseSchema,
-} from './aum-validation';
+import { aumRowsResponseSchema } from './aum-validation';
 
 // ==========================================================
 // API Methods
@@ -64,7 +59,7 @@ export async function getAumRows(params?: {
     const validated = aumRowsResponseSchema.parse(response.data);
     return { ...response, data: validated } as ApiResponse<AumRowsResponse>;
   } catch (error) {
-    logger.error('AUM API validation error', toLogContext({ error }));
+    logger.error(toLogContext({ error }), 'AUM API validation error');
     throw new Error(
       `API response validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
@@ -178,19 +173,7 @@ export async function commitAumFile(fileId: string): Promise<ApiResponse<void>> 
 /**
  * Limpiar duplicados AUM manteniendo solo la fila más reciente por broker+accountNumber
  */
-async function cleanupAumDuplicates(): Promise<
-  ApiResponse<{
-    ok: boolean;
-    message: string;
-    deletedCount: number;
-  }>
-> {
-  return apiClient.post<{
-    ok: boolean;
-    message: string;
-    deletedCount: number;
-  }>('/v1/admin/aum/cleanup-duplicates');
-}
+// Unused function removed to fix lint errors
 
 /**
  * Resetear completamente el sistema AUM (eliminar todo)

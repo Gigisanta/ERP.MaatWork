@@ -129,8 +129,9 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
     req.user = user;
     next();
-  } catch (err: any) {
-    req.log?.warn({ err: err.message, code: err.code }, 'auth verify failed');
+  } catch (err: unknown) {
+    const error = err as Error & { code?: string };
+    req.log?.warn({ err: error.message, code: error.code }, 'auth verify failed');
     return res.status(401).json({ message: 'Unauthorized' });
   }
 }
@@ -183,15 +184,4 @@ export function requireContactAccess(req: Request, res: Response, next: NextFunc
  * Solo admin tiene acceso a gestión de usuarios, configuración del sistema, etc.
  * Staff puede hacer tareas operativas pero NO administrar usuarios
  */
-function requireSystemAdmin(req: Request, res: Response, next: NextFunction) {
-  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
 
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({
-      message: 'Solo administradores pueden acceder a esta función.',
-      error: 'ADMIN_ONLY',
-    });
-  }
-
-  next();
-}

@@ -89,13 +89,13 @@ vi.mock('@maatwork/ui', () => ({
 
 describe('PortfolioComparator', () => {
   const mockPortfolios = [
-    { id: '1', name: 'Portfolio 1', type: 'portfolio' as const, riskLevel: 'moderate' },
-    { id: '2', name: 'Portfolio 2', type: 'portfolio' as const, riskLevel: 'aggressive' },
+    { id: '1', name: 'Portfolio 1', type: 'template' as const, riskLevel: 'moderate', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: '2', name: 'Portfolio 2', type: 'template' as const, riskLevel: 'aggressive', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ];
 
   const mockBenchmarks = [
-    { id: 'b1', name: 'Benchmark 1', type: 'benchmark' as const },
-    { id: 'b2', name: 'Benchmark 2', type: 'benchmark' as const },
+    { id: 'b1', name: 'Benchmark 1', type: 'benchmark' as const, riskLevel: 'moderate', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 'b2', name: 'Benchmark 2', type: 'benchmark' as const, riskLevel: 'moderate', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
   ];
 
   beforeEach(() => {

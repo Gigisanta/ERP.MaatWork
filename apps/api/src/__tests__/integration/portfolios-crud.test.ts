@@ -7,10 +7,8 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '@maatwork/db';
 import {
-  portfolioTemplates,
-  portfolioTemplateLines,
-  benchmarkDefinitions,
-  benchmarkComponents,
+  portfolios,
+  portfolioLines,
 } from '@maatwork/db/schema';
 import { eq, sql, inArray } from 'drizzle-orm';
 import { createTestUser, deleteTestUser } from '../helpers/test-auth';
@@ -18,7 +16,6 @@ import { createTestUser, deleteTestUser } from '../helpers/test-auth';
 describe('Portfolios CRUD Integration Tests', () => {
   let testUserId: string | null = null;
   const createdPortfolioIds: string[] = [];
-  const createdBenchmarkIds: string[] = [];
 
   beforeAll(async () => {
     // Verify database connection
@@ -33,29 +30,22 @@ describe('Portfolios CRUD Integration Tests', () => {
   });
 
   afterAll(async () => {
-    // Cleanup benchmarks
-    if (createdBenchmarkIds.length > 0) {
-      for (const id of createdBenchmarkIds) {
-        await db().delete(benchmarkComponents).where(eq(benchmarkComponents.benchmarkId, id));
-        await db().delete(benchmarkDefinitions).where(eq(benchmarkDefinitions.id, id));
-      }
-    }
 
     // Cleanup portfolios and their lines
     if (testUserId) {
       // Find all portfolios created by this user
       const userPortfolios = await db()
-        .select({ id: portfolioTemplates.id })
-        .from(portfolioTemplates)
-        .where(eq(portfolioTemplates.createdByUserId, testUserId));
+        .select({ id: portfolios.id })
+        .from(portfolios)
+        .where(eq(portfolios.createdByUserId, testUserId));
 
       const ids = userPortfolios.map((p) => p.id);
 
       if (ids.length > 0) {
         await db()
-          .delete(portfolioTemplateLines)
-          .where(inArray(portfolioTemplateLines.templateId, ids));
-        await db().delete(portfolioTemplates).where(inArray(portfolioTemplates.id, ids));
+          .delete(portfolioLines)
+          .where(inArray(portfolioLines.portfolioId, ids));
+        await db().delete(portfolios).where(inArray(portfolios.id, ids));
       }
 
       await deleteTestUser(testUserId);
@@ -65,7 +55,7 @@ describe('Portfolios CRUD Integration Tests', () => {
   describe('Create Portfolio', () => {
     it('should create a portfolio template', async () => {
       const [portfolio] = await db()
-        .insert(portfolioTemplates)
+        .insert(portfolios)
         .values({
           name: `Test Portfolio ${Date.now()}`,
           description: 'Test portfolio description',
@@ -83,7 +73,7 @@ describe('Portfolios CRUD Integration Tests', () => {
 
     it('should create portfolio with components', async () => {
       const [portfolio] = await db()
-        .insert(portfolioTemplates)
+        .insert(portfolios)
         .values({
           name: `Portfolio with Components ${Date.now()}`,
           riskLevel: 'moderate',
@@ -96,9 +86,9 @@ describe('Portfolios CRUD Integration Tests', () => {
 
       // Add components
       const [component1] = await db()
-        .insert(portfolioTemplateLines)
+        .insert(portfolioLines)
         .values({
-          templateId: portfolio.id,
+          portfolioId: portfolio.id,
           targetType: 'instrument',
           instrumentSymbol: 'AAPL',
           instrumentName: 'Apple Inc.',
@@ -107,9 +97,9 @@ describe('Portfolios CRUD Integration Tests', () => {
         .returning();
 
       const [component2] = await db()
-        .insert(portfolioTemplateLines)
+        .insert(portfolioLines)
         .values({
-          templateId: portfolio.id,
+          portfolioId: portfolio.id,
           targetType: 'instrument',
           instrumentSymbol: 'MSFT',
           instrumentName: 'Microsoft Corporation',
@@ -117,8 +107,8 @@ describe('Portfolios CRUD Integration Tests', () => {
         } as any)
         .returning();
 
-      expect(component1.templateId).toBe(portfolio.id);
-      expect(component2.templateId).toBe(portfolio.id);
+      expect(component1.portfolioId).toBe(portfolio.id);
+      expect(component2.portfolioId).toBe(portfolio.id);
 
       // Verify weights
       expect(Number(component1.targetWeight)).toBe(0.3);
@@ -129,7 +119,7 @@ describe('Portfolios CRUD Integration Tests', () => {
   describe('Read Portfolio', () => {
     it('should read portfolio with components', async () => {
       const [portfolio] = await db()
-        .insert(portfolioTemplates)
+        .insert(portfolios)
         .values({
           name: `Read Portfolio ${Date.now()}`,
           riskLevel: 'conservative',
@@ -141,9 +131,9 @@ describe('Portfolios CRUD Integration Tests', () => {
       createdPortfolioIds.push(portfolio.id);
 
       await db()
-        .insert(portfolioTemplateLines)
+        .insert(portfolioLines)
         .values({
-          templateId: portfolio.id,
+          portfolioId: portfolio.id,
           targetType: 'instrument',
           instrumentSymbol: 'BOND',
           targetWeight: '1.0000',
@@ -152,8 +142,8 @@ describe('Portfolios CRUD Integration Tests', () => {
       // Read portfolio
       const [readPortfolio] = await db()
         .select()
-        .from(portfolioTemplates)
-        .where(eq(portfolioTemplates.id, portfolio.id))
+        .from(portfolios)
+        .where(eq(portfolios.id, portfolio.id))
         .limit(1);
 
       expect(readPortfolio).toBeDefined();
@@ -164,7 +154,7 @@ describe('Portfolios CRUD Integration Tests', () => {
   describe('Update Portfolio', () => {
     it('should update portfolio details', async () => {
       const [portfolio] = await db()
-        .insert(portfolioTemplates)
+        .insert(portfolios)
         .values({
           name: `To Update ${Date.now()}`,
           riskLevel: 'moderate',
@@ -177,12 +167,12 @@ describe('Portfolios CRUD Integration Tests', () => {
 
       // Update
       const [updated] = await db()
-        .update(portfolioTemplates)
+        .update(portfolios)
         .set({
           name: 'Updated Name',
           riskLevel: 'aggressive',
         })
-        .where(eq(portfolioTemplates.id, portfolio.id))
+        .where(eq(portfolios.id, portfolio.id))
         .returning();
 
       expect(updated?.name).toBe('Updated Name');
@@ -190,33 +180,35 @@ describe('Portfolios CRUD Integration Tests', () => {
     });
   });
 
-  describe('Benchmark Assignment', () => {
-    it('should create benchmark and assign to portfolio', async () => {
-      // Create benchmark
+  describe('Benchmark Type Portfolio', () => {
+    it('should create a portfolio of type benchmark', async () => {
+      // Create benchmark portfolio
       const [benchmark] = await db()
-        .insert(benchmarkDefinitions)
+        .insert(portfolios)
         .values({
           name: `Test Benchmark ${Date.now()}`,
-          code: `TEST_${Date.now()}`,
-          isSystem: false,
-          createdByUserId: testUserId,
+          description: 'Benchmark created via portfolio unification',
+          type: 'benchmark', // New field
+          code: `TEST_${Date.now()}`, // New field
+          isSystem: false, // New field
+          createdByUserId: testUserId || '',
           createdAt: new Date(),
         } as any)
         .returning();
 
-      createdBenchmarkIds.push(benchmark.id);
+      createdPortfolioIds.push(benchmark.id);
 
-      // Create portfolio - since we don't have benchmarkId in portfolioTemplates,
-      // we'll just verify the benchmark was created.
       expect(benchmark.id).toBeDefined();
+      expect(benchmark.type).toBe('benchmark');
       expect(benchmark.code).toContain('TEST_');
+      expect(benchmark.isSystem).toBe(false);
     });
   });
 
   describe('Delete Portfolio', () => {
     it('should delete portfolio and cascade delete components', async () => {
       const [portfolio] = await db()
-        .insert(portfolioTemplates)
+        .insert(portfolios)
         .values({
           name: `To Delete ${Date.now()}`,
           riskLevel: 'moderate',
@@ -227,22 +219,22 @@ describe('Portfolios CRUD Integration Tests', () => {
 
       // Add component
       await db()
-        .insert(portfolioTemplateLines)
+        .insert(portfolioLines)
         .values({
-          templateId: portfolio.id,
+          portfolioId: portfolio.id,
           targetType: 'instrument',
           instrumentSymbol: 'DEL',
           targetWeight: '1.0000',
         } as any);
 
       // Delete
-      await db().delete(portfolioTemplates).where(eq(portfolioTemplates.id, portfolio.id));
+      await db().delete(portfolios).where(eq(portfolios.id, portfolio.id));
 
       // Verify deletion
       const [found] = await db()
         .select()
-        .from(portfolioTemplates)
-        .where(eq(portfolioTemplates.id, portfolio.id))
+        .from(portfolios)
+        .where(eq(portfolios.id, portfolio.id))
         .limit(1);
 
       expect(found).toBeUndefined();
@@ -250,8 +242,8 @@ describe('Portfolios CRUD Integration Tests', () => {
       // Verify components deleted (cascade)
       const components = await db()
         .select()
-        .from(portfolioTemplateLines)
-        .where(eq(portfolioTemplateLines.templateId, portfolio.id));
+        .from(portfolioLines)
+        .where(eq(portfolioLines.portfolioId, portfolio.id));
 
       expect(components.length).toBe(0);
     });

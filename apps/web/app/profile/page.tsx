@@ -275,7 +275,7 @@ export default function ProfilePage() {
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

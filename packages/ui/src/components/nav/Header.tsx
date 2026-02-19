@@ -48,6 +48,7 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
       navItems = [],
       user,
       notificationComponent,
+
       onLogout,
       onToggleSidebar,
       sidebarOpen = false,

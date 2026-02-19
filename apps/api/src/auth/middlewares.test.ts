@@ -297,7 +297,10 @@ describe('requireAuth', () => {
 
       await requireAuth(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(mockReq.log?.warn).toHaveBeenCalledWith({ err: error }, 'auth verify failed');
+      expect(mockReq.log?.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ err: error.message }),
+        'auth verify failed'
+      );
     });
   });
 

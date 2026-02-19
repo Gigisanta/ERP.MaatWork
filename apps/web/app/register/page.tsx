@@ -75,7 +75,7 @@ function RegisterContent() {
         throw new Error('Failed to fetch managers');
       }
     } catch (err) {
-      logger.error('Error fetching managers', toLogContext({ err }));
+      logger.error(toLogContext({ err }), 'Error fetching managers');
       setManagers([]);
     } finally {
       setLoadingManagers(false);
@@ -297,7 +297,7 @@ function RegisterContent() {
                     label="Nombre de usuario (opcional)"
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     placeholder="tu_usuario (a-z0-9._-, 3-20)"
                     disabled={loading}
                     autoFocus
@@ -317,7 +317,7 @@ function RegisterContent() {
                     label="Nombre completo"
                     type="text"
                     value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                     placeholder="Tu nombre completo"
                     disabled={loading}
                     required
@@ -337,7 +337,7 @@ function RegisterContent() {
                     label="Email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                     placeholder="tu@email.com"
                     disabled={loading}
                     required
@@ -358,7 +358,7 @@ function RegisterContent() {
                     label="Contraseña"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     placeholder="Mínimo 6 caracteres"
                     disabled={loading}
                     required
@@ -379,7 +379,7 @@ function RegisterContent() {
                   <label className="block text-sm font-medium text-text mb-2">Rol</label>
                   <Select
                     value={role}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setRole(value as 'advisor' | 'manager' | 'owner' | 'staff')
                     }
                     disabled={loading}

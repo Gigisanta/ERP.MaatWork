@@ -106,8 +106,8 @@ export function useProfileActions({
           }
         } catch (teamsErr) {
           logger.warn(
-            'Error refreshing teams after accepting invitation',
-            toLogContext({ err: teamsErr })
+            toLogContext({ err: teamsErr }),
+            'Error refreshing teams after accepting invitation'
           );
           // No es crítico, el usuario puede refrescar manualmente
         }
@@ -121,8 +121,8 @@ export function useProfileActions({
       }
     } catch (err) {
       logger.error(
-        'Error responding to invitation',
-        toLogContext({ err, invitationId: id, action })
+        toLogContext({ err, invitationId: id, action }),
+        'Error responding to invitation'
       );
       const errorMessage = err instanceof Error ? err.message : 'Error al procesar invitación';
       setError(errorMessage);
@@ -156,7 +156,7 @@ export function useProfileActions({
       onSuccess();
       showToast('Contraseña cambiada exitosamente', undefined, 'success');
     } catch (err) {
-      logger.error('Error changing password', toLogContext({ err }));
+      logger.error(toLogContext({ err }), 'Error changing password');
       setError(err instanceof Error ? err.message : 'Error al cambiar contraseña');
     } finally {
       setActionLoading(null);
@@ -185,7 +185,7 @@ export function useProfileActions({
       await fetchUserInfo();
       showToast('Equipo creado exitosamente', undefined, 'success');
     } catch (err) {
-      logger.error('Error creating team', toLogContext({ err, teamForm }));
+      logger.error(toLogContext({ err, teamForm }), 'Error creating team');
       setError(err instanceof Error ? err.message : 'Error al crear equipo');
     } finally {
       setActionLoading(null);
@@ -214,7 +214,7 @@ export function useProfileActions({
       await fetchUserInfo();
       showToast('Invitación enviada exitosamente', undefined, 'success');
     } catch (err) {
-      logger.error('Error inviting member', toLogContext({ err, memberForm }));
+      logger.error(toLogContext({ err, memberForm }), 'Error inviting member');
       setError(err instanceof Error ? err.message : 'Error al invitar miembro');
     } finally {
       setActionLoading(null);
@@ -230,7 +230,7 @@ export function useProfileActions({
       await fetchUserInfo();
       showToast('Has abandonado el equipo', undefined, 'success');
     } catch (err) {
-      logger.error('Error leaving team', toLogContext({ err, teamId, userId: user?.id }));
+      logger.error(toLogContext({ err, teamId, userId: user?.id }), 'Error leaving team');
       setError(err instanceof Error ? err.message : 'Error al abandonar equipo');
       showToast(
         'Error al abandonar equipo',
@@ -267,7 +267,7 @@ export function useProfileActions({
         showToast('Teléfono actualizado exitosamente', undefined, 'success');
       }
     } catch (err) {
-      logger.error('Error updating phone', toLogContext({ err }));
+      logger.error(toLogContext({ err }), 'Error updating phone');
       const errorMessage = err instanceof Error ? err.message : 'Error al actualizar teléfono';
       setPhoneError(errorMessage);
       showToast('Error', errorMessage, 'error');

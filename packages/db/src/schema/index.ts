@@ -75,8 +75,8 @@ export { aumImportFiles, aumImportRows, advisorAccountMapping, aumMonthlySnapsho
 
 // Carteras
 export {
-  portfolioTemplates,
-  portfolioTemplateLines,
+  portfolios,
+  portfolioLines,
   clientPortfolioAssignments,
   clientPortfolioOverrides,
   portfolioMonitoringSnapshot,
@@ -98,8 +98,8 @@ export { auditLogs, alertPolicies } from './audit';
 
 // Benchmarks y precios
 export {
-  benchmarkDefinitions,
-  benchmarkComponents,
+  // benchmarkDefinitions,
+  // benchmarkComponents,
   priceSnapshots,
   pricesDaily,
   pricesIntraday,

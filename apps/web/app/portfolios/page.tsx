@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getPortfolios, getCurrentUser } from '@/lib/api-server';
+import { Alert } from '@maatwork/ui';
 import PortfoliosClient from './components/PortfoliosClient';
 import type { Portfolio } from '@/types';
 
@@ -37,7 +38,7 @@ export default async function PortfoliosPage() {
   try {
     const portfoliosResponse = await getPortfolios();
     if (portfoliosResponse.success && portfoliosResponse.data) {
-      portfolios = portfoliosResponse.data;
+      portfolios = portfoliosResponse.data.data;
     } else {
       error = portfoliosResponse.error || 'Error al cargar carteras';
     }
@@ -45,5 +46,14 @@ export default async function PortfoliosPage() {
     error = err instanceof Error ? err.message : 'Error al cargar carteras';
   }
 
-  return <PortfoliosClient initialPortfolios={portfolios} />;
+  return (
+    <>
+      {error && (
+        <Alert variant="error" title="Error">
+          {error}
+        </Alert>
+      )}
+      <PortfoliosClient initialPortfolios={portfolios} />
+    </>
+  );
 }

@@ -105,7 +105,7 @@ export function AliasesSection({
           <Input
             placeholder="Ej: Juan Pérez"
             value={newAlias}
-            onChange={(e) => onNewAliasChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => onNewAliasChange(e.target.value)}
             className="flex-1"
             size="sm"
           />

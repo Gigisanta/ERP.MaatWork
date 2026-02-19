@@ -18,61 +18,8 @@ import {
 import { users } from './users';
 import { instruments } from './instruments';
 
-/**
- * benchmark_definitions
- * Definición de benchmarks para comparación de carteras.
- */
-export const benchmarkDefinitions = pgTable(
-  'benchmark_definitions',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    code: text('code').notNull().unique(), // MERVAL, IAMC, SP500, CUSTOM_BALANCED
-    name: text('name').notNull(),
-    description: text('description'),
-    isSystem: boolean('is_system').notNull().default(false), // benchmarks del sistema vs custom
-    createdByUserId: uuid('created_by_user_id').references(() => users.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => ({
-    benchmarkCodeIdx: index('idx_benchmark_code').on(table.code),
-  })
-);
-
-/**
- * benchmark_components
- * Componentes de benchmarks (instrumentos con pesos).
- */
-export const benchmarkComponents = pgTable(
-  'benchmark_components',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    benchmarkId: uuid('benchmark_id')
-      .notNull()
-      .references(() => benchmarkDefinitions.id, { onDelete: 'cascade' }),
-    instrumentId: uuid('instrument_id').references(() => instruments.id),
-    weight: numeric('weight', { precision: 7, scale: 4 }).notNull(), // para benchmarks compuestos
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => ({
-    benchmarkComponentsBenchmarkIdx: index('idx_benchmark_components_benchmark').on(
-      table.benchmarkId
-    ),
-    benchmarkComponentsInstrumentIdx: index('idx_benchmark_components_instrument').on(
-      table.instrumentId
-    ),
-    benchmarkWeightCheck: check(
-      'chk_benchmark_weight',
-      sql`${table.weight} >= 0 and ${table.weight} <= 1`
-    ),
-    // AI_DECISION: Add composite index for benchmark component queries
-    // Justificación: Queries load all components for a benchmark and sort by weight. Composite index speeds up sorting.
-    // Impacto: Faster benchmark composition loading
-    benchmarkComponentsWeightIdx: index('idx_benchmark_components_weight').on(
-      table.benchmarkId,
-      table.weight
-    ),
-  })
-);
+// benchmark_definitions and benchmark_components have been unified into portfolios and portfolio_lines
+// See packages/db/src/schema/portfolios.ts
 
 /**
  * price_snapshots

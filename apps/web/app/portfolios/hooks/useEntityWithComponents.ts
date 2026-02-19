@@ -26,6 +26,7 @@ interface UseEntityWithComponentsConfig<
   getEntityId: (entity: TEntity) => string;
   canManage?: (user: AuthUser | null) => boolean;
   entityName: string;
+  refreshKey?: string | number | (string | number)[];
 }
 
 /**
@@ -37,6 +38,24 @@ interface UseEntityWithComponentsConfig<
  *                el useEffect en un loop infinito (~100+ requests en segundos)
  * Impacto: Elimina el problema de performance/loop infinito en /portfolios
  */
+
+// Helper for retries with exponential backoff
+const retryOperation = async <T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return retryOperation(operation, retries - 1, delay * 1.5);
+    }
+    throw err;
+  }
+};
+
 export function useEntityWithComponents<
   TEntity extends { id: string },
   TComponent,
@@ -47,26 +66,25 @@ export function useEntityWithComponents<
   const [entities, setEntities] = useState<TEntity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use explicit key for refetching instead of deep object comparison of config
+  const refreshKey = Array.isArray(config.refreshKey) 
+    ? config.refreshKey.join('-') 
+    : String(config.refreshKey || '');
 
   // Usar refs para las funciones del config para evitar re-renders infinitos
-  // Las funciones del config se actualizan en cada render pero no queremos
-  // que eso dispare re-fetches
   const configRef = useRef(config);
   configRef.current = config;
 
-  // Flag para evitar múltiples fetches simultáneos
   const isFetchingRef = useRef(false);
-  // Flag para saber si ya hicimos el fetch inicial
   const hasFetchedRef = useRef(false);
+  const lastKeyRef = useRef(refreshKey);
 
   const canManage = config.canManage ? config.canManage(user || null) : true;
 
-  const fetchEntities = useCallback(async () => {
-    // Evitar múltiples fetches simultáneos
-    if (isFetchingRef.current) {
-      return;
-    }
-
+  const fetchEntities = useCallback(async (force = false) => {
+    if (isFetchingRef.current) return;
+    
     if (!user || loading || !canManage) {
       setEntities([]);
       return;
@@ -78,24 +96,26 @@ export function useEntityWithComponents<
 
     try {
       const currentConfig = configRef.current;
-      const entitiesResponse = await currentConfig.fetchEntities();
+      // Wrap fetch in retry
+      const entitiesResponse = await retryOperation(() => currentConfig.fetchEntities());
 
       if (!entitiesResponse.success) {
-        logger.warn(`Error fetching ${currentConfig.entityName}`, {
-          error: entitiesResponse.error,
-        });
+        logger.warn(
+          toLogContext({ error: entitiesResponse.error }),
+          `Error fetching ${currentConfig.entityName}`
+        );
         setEntities([]);
-        return;
-      }
-
-      if (entitiesResponse.data) {
+      } else if (entitiesResponse.data) {
         const entityIds = entitiesResponse.data.map((entity: TEntity) =>
           currentConfig.getEntityId(entity)
         );
 
         if (entityIds.length > 0) {
           try {
-            const componentsBatchResponse = await currentConfig.fetchComponentsBatch(entityIds);
+            // Wrap batch fetch in retry
+            const componentsBatchResponse = await retryOperation(() => 
+              currentConfig.fetchComponentsBatch(entityIds)
+            );
 
             if (componentsBatchResponse.success && componentsBatchResponse.data) {
               const componentsByEntity = componentsBatchResponse.data || {};
@@ -114,10 +134,10 @@ export function useEntityWithComponents<
               setEntities(entitiesWithComponents);
             } else {
               logger.warn(
-                `Error fetching ${currentConfig.entityName} components, using entities without components`,
-                {
+                toLogContext({
                   error: componentsBatchResponse.error,
-                }
+                }),
+                `Error fetching ${currentConfig.entityName} components, using entities without components`
               );
               setEntities(
                 entitiesResponse.data.map((entity: TEntity) => ({
@@ -129,8 +149,8 @@ export function useEntityWithComponents<
             }
           } catch (err) {
             logger.error(
-              `Error fetching ${currentConfig.entityName} components batch`,
-              toLogContext({ err, entityIds })
+              toLogContext({ err, entityIds }),
+              `Error fetching ${currentConfig.entityName} components batch after retries`
             );
             setEntities(
               entitiesResponse.data.map((entity: TEntity) => ({
@@ -148,16 +168,17 @@ export function useEntityWithComponents<
       }
     } catch (err) {
       const currentConfig = configRef.current;
-      logger.error(`Error fetching ${currentConfig.entityName}`, toLogContext({ err }));
+      logger.error(toLogContext({ err }), `Error fetching ${currentConfig.entityName}`);
+      
       if (err instanceof Error) {
         if (
           err.message.includes('fetch') ||
           err.message.includes('network') ||
           err.message.includes('Failed to fetch')
         ) {
-          setError(`Error de conexión. Por favor verifica tu conexión a internet.`);
+          setError(`Error de conexión. Se reintentó varias veces.`);
         } else if (err.message.includes('timeout')) {
-          setError(`La solicitud tardó demasiado. Por favor intenta nuevamente.`);
+          setError(`La solicitud tardó demasiado.`);
         } else {
           setError(`Error al cargar ${currentConfig.entityName}: ${err.message}`);
         }
@@ -169,7 +190,7 @@ export function useEntityWithComponents<
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [user, loading, canManage]); // Solo dependencias estables, no config
+  }, [user, loading, canManage]);
 
   const createEntity = useCallback(
     async (data: TCreateData) => {
@@ -184,36 +205,74 @@ export function useEntityWithComponents<
 
   const updateEntity = useCallback(
     async (id: string, data: TUpdateData) => {
-      const response = await configRef.current.updateEntity(id, data);
-      if (response.success) {
-        await fetchEntities();
+      // Optimistic update
+      const previousEntities = [...entities];
+      setEntities((prev) =>
+        prev.map((entity) => {
+          if (configRef.current.getEntityId(entity) === id) {
+            return { ...entity, ...data } as TEntity;
+          }
+          return entity;
+        })
+      );
+
+      try {
+        const response = await retryOperation(() => configRef.current.updateEntity(id, data));
+        if (response.success && response.data) {
+           // Update with server response
+           const updated = response.data;
+           setEntities((prev) => 
+             prev.map(e => configRef.current.getEntityId(e) === id ? updated : e)
+           );
+        } else {
+           // Rollback
+           setEntities(previousEntities);
+           if (response.error) setError(response.error);
+        }
+        return response;
+      } catch (err) {
+        setEntities(previousEntities);
+        throw err;
       }
-      return response;
     },
-    [fetchEntities]
+    [entities] 
   );
 
   const deleteEntity = useCallback(async (id: string) => {
-    const response = await configRef.current.deleteEntity(id);
-    if (response.success) {
-      setEntities((prev) => prev.filter((entity) => configRef.current.getEntityId(entity) !== id));
-    }
-    return response;
-  }, []);
+    // Optimistic update
+    const previousEntities = [...entities];
+    setEntities((prev) => prev.filter((entity) => configRef.current.getEntityId(entity) !== id));
 
-  // Fetch inicial - solo una vez cuando el usuario está autenticado
-  useEffect(() => {
-    if (user && !loading && canManage && !hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      fetchEntities();
+    try {
+      const response = await retryOperation(() => configRef.current.deleteEntity(id));
+      if (!response.success) {
+         // Rollback
+         setEntities(previousEntities);
+         if (response.error) setError(response.error);
+      }
+      return response;
+    } catch (err) {
+      setEntities(previousEntities);
+      throw err;
     }
-  }, [user, loading, canManage, fetchEntities]);
+  }, [entities]);
+
+  // Re-fetch when refreshKey changes or for initial fetch
+  useEffect(() => {
+    if (!user || loading || !canManage) return;
+
+    if (!hasFetchedRef.current || refreshKey !== lastKeyRef.current) {
+        hasFetchedRef.current = true;
+        lastKeyRef.current = refreshKey;
+        fetchEntities(true);
+    }
+  }, [user, loading, canManage, fetchEntities, refreshKey]);
 
   return {
     entities,
     isLoading,
     error,
-    refetch: fetchEntities,
+    refetch: () => fetchEntities(true),
     createEntity,
     updateEntity,
     deleteEntity,

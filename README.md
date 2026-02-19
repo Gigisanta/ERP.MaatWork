@@ -25,7 +25,7 @@ El script de setup (`pnpm setup`) automáticamente:
 
 - ✅ Verifica prerequisitos (Node.js, pnpm, Docker)
 - ✅ Configura variables de entorno (crea `.env` desde `config-example.env`)
-- ✅ Inicia servicios Docker (PostgreSQL y N8N)
+- ✅ Inicia servicios Docker (PostgreSQL)
 - ✅ Ejecuta migraciones de base de datos
 - ✅ Crea usuario admin inicial (`admin@maatwork.local`)
 
@@ -46,7 +46,6 @@ pnpm dev
 - Web: <http://localhost:3000>
 - API: <http://localhost:3001>
 - Analytics: <http://localhost:3002>
-- N8N: <http://localhost:5678>
 
 Para información detallada de instalación y configuración, ver [Guía de Desarrollo](./docs/DEVELOPMENT.md#getting-started) o [Guía de Onboarding](./docs/ONBOARDING.md).
 
@@ -124,10 +123,6 @@ Ver [documentación completa](./docs/README.md) para todas las guías técnicas.
 
 Categorización de contactos con etiquetas personalizables.
 
-### N8N - Automatizaciones
-
-Servicio Docker para crear y gestionar automatizaciones de flujos de trabajo. Acceso en <http://localhost:5678>.
-
 ### Design System (@maatwork/ui)
 
 Sistema de diseño moderno y accesible con 40+ componentes reutilizables. Ver [packages/ui/README.md](./packages/ui/README.md).
@@ -148,7 +143,7 @@ Para información de deploy y troubleshooting, ver [Guía de Operaciones](./docs
 
 ## Reglas del Proyecto
 
-Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas en [`.cursor/rules/`](./.cursor/rules/).
+Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas en [`.cursor/rules/`](./.cursor/rules/) y en [Coding Standards](./docs/CODING_STANDARDS.md).
 
 **Principios clave:**
 

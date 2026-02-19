@@ -99,12 +99,12 @@ export default function AumAdvisorSettingsPage() {
           <Input
             placeholder="Alias exacto (se normaliza trim+lowercase)"
             value={newAlias}
-            onChange={(e) => setNewAlias(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewAlias(e.target.value)}
             className="w-64"
           />
           <Select
             value={newUserId}
-            onValueChange={setNewUserId}
+            onValueChange={(value: string) => setNewUserId(value)}
             placeholder="Seleccionar asesor"
             items={advisorsOptions}
             className="w-64"

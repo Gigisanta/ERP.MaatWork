@@ -181,7 +181,7 @@ export default function OHLCVChart({ symbol, className, height = 400 }: OHLCVCha
           <Stack direction="row" gap="sm" align="center">
             <Select
               value={timeframe}
-              onValueChange={(value) => setTimeframe(value as Timeframe)}
+              onValueChange={(value: string) => setTimeframe(value as Timeframe)}
               items={TIMEFRAME_OPTIONS}
             />
           </Stack>

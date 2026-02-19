@@ -13,7 +13,8 @@ import { hashPassword } from './helpers';
  * Seed users (admin, managers, advisors)
  */
 export async function seedUsers() {
-  console.log('👥 Seeding users...');
+  // eslint-disable-next-line no-console
+    console.log('👥 Seeding users...');
 
   const defaultPassword = 'password123';
   const hashedPassword = await hashPassword(defaultPassword);
@@ -37,9 +38,11 @@ export async function seedUsers() {
       })
       .returning();
     adminUser = admin;
+    // eslint-disable-next-line no-console
     console.log(`  ✓ Created admin: ${adminEmail}`);
   } else {
     adminUser = existingAdmin[0]!;
+    // eslint-disable-next-line no-console
     console.log(`  ⊙ Admin already exists: ${adminEmail}`);
   }
 
@@ -67,10 +70,12 @@ export async function seedUsers() {
         })
         .returning();
       managerUsers.push(created);
-      console.log(`  ✓ Created manager: ${manager.email}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created manager: ${manager.email}`);
     } else {
       managerUsers.push(existing[0]!);
-      console.log(`  ⊙ Manager already exists: ${manager.email}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ⊙ Manager already exists: ${manager.email}`);
     }
   }
 
@@ -103,14 +108,17 @@ export async function seedUsers() {
         })
         .returning();
       advisorUsers.push(created);
-      console.log(`  ✓ Created advisor: ${advisor.email}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created advisor: ${advisor.email}`);
     } else {
       advisorUsers.push(existing[0]!);
-      console.log(`  ⊙ Advisor already exists: ${advisor.email}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ⊙ Advisor already exists: ${advisor.email}`);
     }
   }
 
-  console.log(
+  // eslint-disable-next-line no-console
+    console.log(
     `✅ Users seeded: 1 admin, ${managerUsers.length - 1} managers, ${advisorUsers.length} advisors\n`
   );
 

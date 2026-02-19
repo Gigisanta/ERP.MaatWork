@@ -16,6 +16,7 @@ import {
 import { TeamCalendarSection } from './TeamCalendarSection';
 import type { MemberDashboardResponse } from '@/lib/api/teams';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@maatwork/utils';
 
 interface MemberTeamDashboardProps {
   data: MemberDashboardResponse;
@@ -40,13 +41,7 @@ export default function MemberTeamDashboard({ data }: MemberTeamDashboardProps) 
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+// function removed in favor of shared utility
 
   return (
     <Stack direction="column" gap="lg">
@@ -68,7 +63,7 @@ export default function MemberTeamDashboard({ data }: MemberTeamDashboardProps) 
               </Text>
               <Icon name="BarChart3" size={16} className="text-muted-foreground" />
             </div>
-            <Heading level={3}>{formatCurrency(metrics?.totalAum || 0)}</Heading>
+            <Heading level={3}>{formatCurrency(metrics?.totalAum || 0, { currency: 'USD', locale: 'es-AR', maximumFractionDigits: 0 })}</Heading>
             <Text size="xs" color="secondary">
               Total bajo gestión
             </Text>

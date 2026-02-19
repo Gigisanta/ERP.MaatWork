@@ -1,0 +1,1 @@
+ALTER TABLE "automation_configs" ADD COLUMN "webhook_url" text;

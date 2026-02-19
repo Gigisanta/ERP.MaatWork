@@ -180,6 +180,25 @@ log "   NODE_ENV=$NODE_ENV"
 log "   NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
 
 # =============================================================================
+# 7.5. MIGRACIONES DE BASE DE DATOS (AUTO-REPAIR)
+# =============================================================================
+log "🔄 Checking & Running Database Migrations..."
+
+# Asegurar que las dependencias de DB estén instaladas antes de migrar
+# (Ya se hizo pnpm install, pero aseguramos el contexto)
+
+# Ejecutar migración con flag de producción si es necesario,
+# pero drizzle-kit usa el .env que ya cargamos.
+if pnpm -F @maatwork/db run migrate; then
+    log_success "Database migrations executed successfully"
+else
+    log_error "Database migration failed!"
+    echo "   Esto puede deberse a bloqueos de base de datos o migraciones conflictivas."
+    echo "   Aborting deploy to prevent inconsistent state."
+    exit 1
+fi
+
+# =============================================================================
 # 8. EJECUTAR TESTS
 # =============================================================================
 if [ "$SKIP_TESTS" = true ]; then

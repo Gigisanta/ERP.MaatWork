@@ -5,9 +5,9 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { createTag, updateTag, deleteTag } from '@/lib/api';
+import { createTag, updateTag } from '@/lib/api';
 import { useToast } from '@/lib/hooks/useToast';
-import { logger } from '@/lib/logger';
+import { logger, toLogContext } from '@/lib/logger';
 import type { Tag } from '@/types';
 
 interface TagFormState {
@@ -104,11 +104,14 @@ export function useTagManagement({
             businessLine: editedTagBusinessLine,
           });
         } catch (err) {
-          logger.error('Error al guardar automáticamente la etiqueta', {
-            error: err instanceof Error ? err.message : String(err),
-            tagId: tagToEdit.id,
-            tagName: editedTagName,
-          });
+          logger.error(
+            toLogContext({
+              error: err instanceof Error ? err.message : String(err),
+              tagId: tagToEdit.id,
+              tagName: editedTagName,
+            }),
+            'Error al guardar automáticamente la etiqueta'
+          );
         } finally {
           setIsAutoSavingTag(false);
         }

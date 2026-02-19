@@ -80,6 +80,14 @@ async function getInitialUser() {
       timestamp: new Date().toISOString(),
     });
   }
+
+  // AI_DECISION: Optimization - Skip API call if no token exists
+  // Justificación: Prevents unnecessary 401s and potential redirect loops when user is clearly not logged in
+  const token = cookieStore.get('token');
+  if (!token?.value) {
+    return null;
+  }
+
   try {
     const response = await getCurrentUser();
     if (response.success && response.data) {
@@ -112,9 +120,16 @@ async function getInitialUser() {
       (error instanceof Error && error.message.includes('Unauthorized'));
 
     if (isUnauthorized) {
-      // AI_DECISION: Cookies cannot be deleted in Server Components.
-      // We rely on Middleware or Client-side logout to handle token clearance.
-      // This prevents the "Cookies can only be modified in a Server Action or Route Handler" error.
+      // AI_DECISION: Redirect with error param to signal Middleware to clear cookie
+      // Justificación: Server Components cannot delete cookies directly when rendering
+      // Impacto: Middleware will detect 'error=unauthorized', clear cookie, and show login page
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Layout] User unauthorized (401) - Redirecting to login to clear specific session');
+      }
+      // Import dynamically to avoid top-level side effects if possible, but standard import is fine.
+      // We need to ensure 'redirect' is imported from 'next/navigation' at the top of file.
+      const { redirect } = await import('next/navigation');
+      redirect('/login?error=unauthorized');
     }
 
     // AI_DECISION: Log errors but don't throw - allow app to render unauthenticated shell
@@ -123,8 +138,6 @@ async function getInitialUser() {
     if (process.env.NODE_ENV === 'development' && !isUnauthorized) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn('[Layout] Error getting initial user:', errorMessage);
-    } else if (isUnauthorized) {
-      console.log('[Layout] User is unauthorized (401)');
     }
     // Return null to render unauthenticated shell
   }

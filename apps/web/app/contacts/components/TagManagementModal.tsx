@@ -96,7 +96,7 @@ export default function TagManagementModal({
               <Input
                 label="Nombre de la etiqueta"
                 value={newTagName}
-                onChange={(e) => onNewTagNameChange(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onNewTagNameChange(e.target.value)}
                 placeholder="Ej: Cliente VIP, Prospecto caliente..."
               />
               <div>
@@ -123,7 +123,7 @@ export default function TagManagementModal({
               <Select
                 label="Línea de negocio"
                 value={newTagBusinessLine ?? ''}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   onNewTagBusinessLineChange(
                     value === '' ? null : (value as 'inversiones' | 'zurich' | 'patrimonial')
                   )
@@ -156,7 +156,7 @@ export default function TagManagementModal({
               <Input
                 label="Nombre de la etiqueta"
                 value={editedTagName}
-                onChange={(e) => onEditedTagNameChange(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onEditedTagNameChange(e.target.value)}
                 placeholder="Nombre de la etiqueta"
               />
               <div>
@@ -183,7 +183,7 @@ export default function TagManagementModal({
               <Select
                 label="Línea de negocio"
                 value={editedTagBusinessLine ?? ''}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   onEditedTagBusinessLineChange(
                     value === '' ? null : (value as 'inversiones' | 'zurich' | 'patrimonial')
                   )

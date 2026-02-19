@@ -65,7 +65,7 @@ export function AumFiltersBar({
       <Input
         placeholder="Buscar..."
         value={searchTerm}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
         leftIcon="search"
         size="sm"
         className="w-[200px]"
@@ -74,7 +74,7 @@ export function AumFiltersBar({
       <div className="flex items-center gap-1.5">
         <Checkbox
           checked={onlyUpdated}
-          onCheckedChange={(checked) => {
+          onCheckedChange={(checked: boolean | 'indeterminate') => {
             onOnlyUpdatedChange(typeof checked === 'boolean' ? checked : false);
           }}
         />

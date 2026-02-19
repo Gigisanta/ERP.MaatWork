@@ -86,8 +86,8 @@ export default function BrokerAccountsSection({
       setNewAccount({ broker: '', accountNumber: '', holderName: '', status: 'active' });
     } catch (err) {
       logger.error(
-        'Error creating broker account',
-        toLogContext({ err, contactId, account: newAccount })
+        toLogContext({ err, contactId, account: newAccount }),
+        'Error creating broker account'
       );
     } finally {
       setSaving(false);
@@ -105,7 +105,7 @@ export default function BrokerAccountsSection({
           await deleteBrokerAccount(accountId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error deleting broker account', toLogContext({ err, accountId }));
+          logger.error(toLogContext({ err, accountId }), 'Error deleting broker account');
         }
       },
     });
@@ -169,7 +169,7 @@ export default function BrokerAccountsSection({
       </CardContent>
 
       {/* Create Modal */}
-      <Modal open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Modal open={showCreateModal} onOpenChange={(open: boolean) => setShowCreateModal(open)}>
         <ModalHeader>
           <ModalTitle>Agregar Cuenta de Broker</ModalTitle>
         </ModalHeader>
@@ -181,7 +181,7 @@ export default function BrokerAccountsSection({
               </Text>
               <Input
                 value={newAccount.broker}
-                onChange={(e) => setNewAccount((prev) => ({ ...prev, broker: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewAccount((prev) => ({ ...prev, broker: e.target.value }))}
                 placeholder="Ej: Balanz, IOL, etc."
               />
             </div>
@@ -191,7 +191,7 @@ export default function BrokerAccountsSection({
               </Text>
               <Input
                 value={newAccount.accountNumber}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setNewAccount((prev) => ({ ...prev, accountNumber: e.target.value }))
                 }
                 placeholder="Número de cuenta"
@@ -203,7 +203,7 @@ export default function BrokerAccountsSection({
               </Text>
               <Input
                 value={newAccount.holderName}
-                onChange={(e) => setNewAccount((prev) => ({ ...prev, holderName: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewAccount((prev) => ({ ...prev, holderName: e.target.value }))}
                 placeholder="Nombre del titular"
               />
             </div>
@@ -241,7 +241,7 @@ export default function BrokerAccountsSection({
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

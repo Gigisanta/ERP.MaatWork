@@ -144,7 +144,7 @@ export class ErrorBoundary extends Component<Props, State> {
     // Usar pathname si está disponible, sino window.location.href como fallback
     const url = typeof window !== 'undefined' ? window.location.href : undefined;
 
-    logger.error('Error de renderizado capturado por ErrorBoundary', {
+    logger.error({
       error: {
         name: error.name,
         message: error.message,
@@ -156,7 +156,7 @@ export class ErrorBoundary extends Component<Props, State> {
       url,
       userAgent: typeof window !== 'undefined' ? navigator.userAgent : undefined,
       timestamp: new Date().toISOString(),
-    });
+    }, 'Error de renderizado capturado por ErrorBoundary');
 
     // Llamar callback personalizado si existe
     if (this.props.onError) {
@@ -174,10 +174,10 @@ export class ErrorBoundary extends Component<Props, State> {
   private handleReportError = () => {
     if (this.state.error) {
       // En un entorno real, aquí se enviaría el error a un servicio de reporte
-      logger.info('Usuario reportó error manualmente', {
+      logger.info({
         error: this.state.error.message,
         stack: this.state.error.stack,
-      });
+      }, 'Usuario reportó error manualmente');
     }
   };
 

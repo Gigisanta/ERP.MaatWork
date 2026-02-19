@@ -109,7 +109,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
               <Select
                 items={chartItems}
                 value={chartView}
-                onValueChange={(value) => setChartView(value as ChartView)}
+                onValueChange={(value: string) => setChartView(value as ChartView)}
                 className="text-xs"
               />
             </div>

@@ -107,7 +107,7 @@ export default function CapacitacionForm({
             <Input
               label="Título"
               value={formData.titulo}
-              onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, titulo: e.target.value })}
               placeholder="Ej: Vender por telefono - Bryan Tracy"
               required
             />
@@ -115,7 +115,7 @@ export default function CapacitacionForm({
             <Input
               label="Tema"
               value={formData.tema}
-              onChange={(e) => setFormData({ ...formData, tema: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, tema: e.target.value })}
               placeholder="Ej: Podcast, Libros, TED, Administración..."
               required
             />
@@ -124,7 +124,7 @@ export default function CapacitacionForm({
               label="Link"
               type="url"
               value={formData.link}
-              onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, link: e.target.value })}
               placeholder="https://..."
               required
             />
@@ -133,7 +133,7 @@ export default function CapacitacionForm({
               label="Fecha (opcional)"
               type="date"
               value={typeof formData.fecha === 'string' ? formData.fecha : ''}
-              onChange={(e) => setFormData({ ...formData, fecha: e.target.value || null })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, fecha: e.target.value || null })}
             />
           </Stack>
         </ModalContent>

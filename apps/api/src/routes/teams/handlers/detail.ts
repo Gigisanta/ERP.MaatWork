@@ -9,7 +9,10 @@ import {
   contacts,
   aumSnapshots,
   clientPortfolioAssignments,
-  portfolioTemplates,
+  portfolios,
+  portfolioMonitoringSnapshot,
+  notes,
+  tasks,
 } from '@maatwork/db/schema';
 import { eq, and, sum, count, gte, sql } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
@@ -166,24 +169,21 @@ export async function getTeamDetail(req: Request) {
         .limit(1),
 
       // Get risk distribution
-      db()
-        .select({
-          riskLevel: portfolioTemplates.riskLevel,
-          count: count(),
-        })
-        .from(contacts)
-        .innerJoin(
-          clientPortfolioAssignments,
-          eq(clientPortfolioAssignments.contactId, contacts.id)
-        )
-        .innerJoin(
-          portfolioTemplates,
-          eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
-        )
-        .where(
-          and(inArray(contacts.id, contactIds), eq(clientPortfolioAssignments.status, 'active'))
-        )
-        .groupBy(portfolioTemplates.riskLevel),
+    db()
+      .select({
+        riskLevel: portfolios.riskLevel,
+        count: count(),
+      })
+      .from(contacts)
+      .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
+      .innerJoin(
+        portfolios,
+        eq(portfolios.id, clientPortfolioAssignments.portfolioId)
+      )
+      .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
+      .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
+      .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
+      .groupBy(portfolios.riskLevel),
 
       // Get AUM trend using IN clause (optimized)
       db()

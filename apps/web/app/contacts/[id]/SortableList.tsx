@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { Text, Button, Icon } from '@maatwork/ui';
-import { logger } from '@/lib/logger';
 
 interface SortableListProps {
   items: string[];
@@ -9,7 +8,6 @@ interface SortableListProps {
   onAdd: () => void;
   onEdit: (index: number, value: string) => void;
   onDelete: (index: number) => void;
-  placeholder?: string;
   emptyMessage?: string;
   label?: string;
 }
@@ -25,7 +23,6 @@ export default function SortableList({
   onAdd,
   onEdit,
   onDelete,
-  placeholder = 'Agregar item...',
   emptyMessage = 'No hay items',
   label,
 }: SortableListProps) {
@@ -113,11 +110,11 @@ export default function SortableList({
             <div
               key={index}
               draggable
-              onDragStart={(e) => handleDragStart(e, index)}
+              onDragStart={(e: React.DragEvent) => handleDragStart(e, index)}
               onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, index)}
+              onDragOver={(e: React.DragEvent) => handleDragOver(e, index)}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, index)}
+              onDrop={(e: React.DragEvent) => handleDrop(e, index)}
               className={`
                 flex items-center gap-2 p-2 rounded border bg-white
                 cursor-move hover:bg-gray-50 transition-colors
@@ -136,8 +133,8 @@ export default function SortableList({
                   <input
                     type="text"
                     value={editingValue}
-                    onChange={(e) => setEditingValue(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingValue(e.target.value)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === 'Enter') handleSaveEdit();
                       if (e.key === 'Escape') handleCancelEdit();
                     }}

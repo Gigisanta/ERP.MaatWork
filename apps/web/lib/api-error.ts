@@ -28,6 +28,7 @@ export class ApiError extends Error {
   public readonly details?: string | string[] | Record<string, unknown>[] | undefined;
   public readonly timestamp?: string;
   public readonly requestId?: string;
+  public data?: unknown;
 
   constructor(
     message: string,
@@ -338,9 +339,16 @@ export async function createApiErrorFromResponse(response: Response): Promise<Ap
   if (errorData.requestId) {
     options.requestId = errorData.requestId;
   }
-  return new ApiError(
+  
+  const error = new ApiError(
     errorData.error || errorData.message || response.statusText,
     response.status,
     options
   );
+
+  if (Object.prototype.hasOwnProperty.call(errorData, 'data')) {
+    (error as ApiError).data = (errorData as { data: unknown }).data;
+  }
+  
+  return error;
 }

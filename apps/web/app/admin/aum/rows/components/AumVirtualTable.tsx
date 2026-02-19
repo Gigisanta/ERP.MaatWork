@@ -149,10 +149,10 @@ export function AumVirtualTable({
               {virtualItems.map((virtualRow) => {
                 const row = rows[virtualRow.index];
                 if (!row) {
-                  logger.warn('Row missing at index in AumVirtualTable', {
+                  logger.warn({
                     index: virtualRow.index,
                     totalRows: rows.length,
-                  });
+                  }, 'Row missing at index in AumVirtualTable');
                   return null;
                 }
                 const rowKey = `${row.id}-${virtualRow.index}`;

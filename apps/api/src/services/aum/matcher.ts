@@ -64,6 +64,7 @@ export async function matchContactByAccountNumber(
         method: 'broker_account',
       };
     }
+    return null;
   } catch (error) {
     logger.error(
       {
@@ -74,9 +75,8 @@ export async function matchContactByAccountNumber(
       },
       'Failed to match contact by account number'
     );
+    return null;
   }
-
-  return null;
 }
 
 /**

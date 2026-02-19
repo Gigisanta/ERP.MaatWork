@@ -74,7 +74,7 @@ export {
   Tooltip,
   Legend,
   Cell,
-  Pie,
-  Sector,
-  LabelList,
+  
+  
+  
 } from 'recharts';

@@ -6,8 +6,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import { db } from '@maatwork/db';
-import { portfolioTemplates, portfolioTemplateLines, instruments } from '@maatwork/db/schema';
-import { eq } from 'drizzle-orm';
+import { portfolios, portfolioLines, instruments } from '@maatwork/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../../auth/middlewares';
 import { TIMEOUTS } from '../../config/timeouts';
 
@@ -51,19 +51,19 @@ router.get(
       // Obtener composición de la cartera y nombre
       const portfolioData = await db()
         .select({
-          portfolioName: portfolioTemplates.name,
-          instrumentId: portfolioTemplateLines.instrumentId,
-          weight: portfolioTemplateLines.targetWeight,
+          portfolioName: portfolios.name,
+          instrumentId: portfolioLines.instrumentId,
+          weight: portfolioLines.targetWeight,
           instrumentSymbol: instruments.symbol,
           instrumentName: instruments.name,
         })
-        .from(portfolioTemplates)
+        .from(portfolios)
         .innerJoin(
-          portfolioTemplateLines,
-          eq(portfolioTemplateLines.templateId, portfolioTemplates.id)
+          portfolioLines,
+          eq(portfolioLines.portfolioId, portfolios.id)
         )
-        .innerJoin(instruments, eq(instruments.id, portfolioTemplateLines.instrumentId))
-        .where(eq(portfolioTemplates.id, portfolioId))
+        .innerJoin(instruments, eq(instruments.id, portfolioLines.instrumentId))
+        .where(eq(portfolios.id, portfolioId))
         .limit(100); // Límite razonable de componentes
 
       if (portfolioData.length === 0) {
@@ -151,8 +151,8 @@ router.get(
         } else {
           throw new Error('Invalid response from Python service');
         }
-      } catch (fetchError: unknown) {
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+      } catch (_fetchError: unknown) {
+        if (_fetchError instanceof Error && _fetchError.name === 'AbortError') {
           req.log.error(
             {
               portfolioId,
@@ -169,7 +169,7 @@ router.get(
         }
 
         // Detectar errores de conexión específicos
-        const errorObj = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+        const errorObj = _fetchError instanceof Error ? _fetchError : new Error(String(_fetchError));
         const isConnectionError =
           (errorObj as { code?: string }).code === 'ECONNREFUSED' ||
           (errorObj as { code?: string }).code === 'ETIMEDOUT' ||
@@ -210,11 +210,11 @@ router.get(
           timestamp: new Date().toISOString(),
         });
       }
-    } catch (error) {
-      req.log.error(error, 'Error fetching portfolio performance');
+    } catch (_dbError) {
+      req.log.error(_dbError, 'Error fetching portfolio performance');
       res.status(500).json({
         error: 'Failed to fetch portfolio performance',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        details: _dbError instanceof Error ? _dbError.message : 'Unknown error',
       });
     }
   }

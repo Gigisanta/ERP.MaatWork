@@ -14,7 +14,6 @@
 
 import type { Contact } from '@maatwork/types';
 import type { ApiResponse } from './api-client';
-import { config } from './config';
 import { cookies, headers } from 'next/headers';
 import { logger } from './logger-server';
 
@@ -136,12 +135,9 @@ export async function apiCall<T>(
         const backoffMs = Math.min(500 * Math.pow(2, attempt - 1), 3000);
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
 
-        logger.warn(
-          `[api-server] Retrying ${endpoint} (attempt ${attempt + 1}/${maxRetries + 1})`,
-          {
-            requestId,
-          }
-        );
+        logger.warn(`[api-server] Retrying ${endpoint} (attempt ${attempt + 1}/${maxRetries + 1})`, {
+          requestId,
+        });
       }
 
       response = await fetch(url, { ...fetchOptions, signal: controller.signal });
@@ -260,12 +256,13 @@ export async function getMembershipRequests(): Promise<
 /**
  * Helper para obtener portfolios en Server Components
  */
-export async function getPortfolios(): Promise<ApiResponse<import('@/types').Portfolio[]>> {
-  return apiCall('/v1/portfolios/templates', { revalidate: 3600 });
+export async function getPortfolios(): Promise<ApiResponse<import('./api/portfolios').PaginatedPortfoliosResponse>> {
+  return apiCall('/v1/portfolios', { revalidate: 3600 });
 }
 
 /**
  * Helper para obtener usuario actual en Server Components
+
  *
  * AI_DECISION: Usar /v1/users/me en lugar de /v1/auth/me para información completa
  * Justificación: /v1/users/me retorna información completa del usuario desde DB (phone, isActive, createdAt, etc.)
@@ -276,12 +273,7 @@ export async function getCurrentUser(): Promise<ApiResponse<import('@/types').Us
   return apiCall('/v1/users/me');
 }
 
-/**
- * Helper para obtener benchmarks en Server Components
- */
-export async function getBenchmarks(): Promise<ApiResponse<import('@/types').Benchmark[]>> {
-  return apiCall('/v1/benchmarks', { revalidate: 3600 });
-}
+// Removed deprecated getBenchmarks. Use getPortfolios({ type: 'benchmark' }) instead.
 
 /**
  * Helper para obtener capacitaciones en Server Components

@@ -29,6 +29,9 @@ const requiredInProduction = [
   'CORS_ORIGINS', // Necesario para permitir requests del frontend
   'FRONTEND_URL', // Necesario para redirects de OAuth
   'COOKIE_DOMAIN', // Necesario para que cookies funcionen con Cloudflare
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_REDIRECT_URI',
 ];
 const missing = required.filter((key) => !process.env[key]);
 
@@ -110,7 +113,7 @@ if ((process.env.NODE_ENV || 'development') === 'production') {
         }
         console.warn(msg);
       }
-    } catch (error) {
+    } catch (_error) {
       const msg = `Error: GOOGLE_REDIRECT_URI "${googleRedirectUri}" is not a valid URL.`;
       if ((process.env.NODE_ENV || 'development') === 'production') {
         throw new Error(msg);
@@ -134,7 +137,7 @@ if (googleRedirectUri && googleRedirectUri !== 'http://localhost:3001/v1/auth/go
           'Current value must match exactly with Google Cloud Console "Authorized redirect URIs".'
       );
     }
-  } catch (error) {
+  } catch (_error) {
     // Error ya manejado arriba en producción
   }
 }
@@ -203,9 +206,9 @@ export const env = {
     process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/v1/auth/google/callback',
   GOOGLE_ENCRYPTION_KEY: process.env.GOOGLE_ENCRYPTION_KEY || '', // 32 bytes para AES-256
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
-  // N8N Configuration
-  N8N_ENABLED: process.env.N8N_ENABLED !== 'false', // Default to true unless explicitly disabled
-  N8N_WEBHOOK_RATE_LIMIT: parseInt(process.env.N8N_WEBHOOK_RATE_LIMIT || '60', 10),
-  N8N_WEBHOOK_BATCH_SIZE: parseInt(process.env.N8N_WEBHOOK_BATCH_SIZE || '100', 10),
-  N8N_WEBHOOK_TIMEOUT: parseInt(process.env.N8N_WEBHOOK_TIMEOUT || '30000', 10),
+  // Webhook Configuration (generic - works with any webhook service)
+  WEBHOOK_ENABLED: process.env.WEBHOOK_ENABLED !== 'false', // Default to true unless explicitly disabled
+  WEBHOOK_RATE_LIMIT: parseInt(process.env.WEBHOOK_RATE_LIMIT || '60', 10),
+  WEBHOOK_BATCH_SIZE: parseInt(process.env.WEBHOOK_BATCH_SIZE || '100', 10),
+  WEBHOOK_TIMEOUT: parseInt(process.env.WEBHOOK_TIMEOUT || '30000', 10),
 };

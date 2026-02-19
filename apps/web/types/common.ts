@@ -57,7 +57,7 @@ export interface Pagination {
 /**
  * Opciones de filtrado comunes
  */
-export interface FilterOptions {
+interface FilterOptions {
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -88,12 +88,12 @@ export type TimePeriod = '1M' | '3M' | '6M' | '1Y' | 'YTD' | 'ALL';
 /**
  * Toast notification variant
  */
-export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 /**
  * Estado de carga
  */
-export interface LoadingState {
+interface LoadingState {
   isLoading: boolean;
   error?: string | null;
 }

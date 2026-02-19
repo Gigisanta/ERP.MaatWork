@@ -123,7 +123,7 @@ export async function invalidateCache(pattern: string): Promise<void> {
 /**
  * Invalidate cache for specific key
  */
-export async function invalidateCacheKey(key: string): Promise<void> {
+async function invalidateCacheKey(key: string): Promise<void> {
   const redis = getRedisClient();
   if (!redis) {
     return;

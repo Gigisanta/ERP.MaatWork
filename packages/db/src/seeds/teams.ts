@@ -15,7 +15,8 @@ export async function seedTeams(
   managerUsers: InferSelectModel<typeof users>[],
   advisorUsers: InferSelectModel<typeof users>[]
 ): Promise<InferSelectModel<typeof teams>[]> {
-  console.log('👥 Seeding teams...');
+  // eslint-disable-next-line no-console
+    console.log('👥 Seeding teams...');
 
   const teamNames = ['Equipo Norte', 'Equipo Sur', 'Equipo Centro'];
   const createdTeams: InferSelectModel<typeof teams>[] = [];
@@ -37,14 +38,16 @@ export async function seedTeams(
         })
         .returning();
       team = created;
-      console.log(`  ✓ Created team: ${teamName} (manager: ${manager.fullName})`);
+      // eslint-disable-next-line no-console
+    console.log(`  ✓ Created team: ${teamName} (manager: ${manager.fullName})`);
     } else {
       team = existing[0]!;
       // Update manager if needed
       if (team.managerUserId !== manager.id) {
         await db().update(teams).set({ managerUserId: manager.id }).where(eq(teams.id, team.id));
       }
-      console.log(`  ⊙ Team already exists: ${teamName}`);
+      // eslint-disable-next-line no-console
+    console.log(`  ⊙ Team already exists: ${teamName}`);
     }
     createdTeams.push(team);
 
@@ -70,7 +73,8 @@ export async function seedTeams(
             role: 'member',
           })
           .onConflictDoNothing();
-        console.log(`    ✓ Added ${advisor.fullName} to ${teamName}`);
+        // eslint-disable-next-line no-console
+    console.log(`    ✓ Added ${advisor.fullName} to ${teamName}`);
       }
     }
   }
@@ -100,11 +104,13 @@ export async function seedTeams(
             status: 'pending',
           })
           .onConflictDoNothing();
-        console.log(`  ✓ Created team membership request`);
+        // eslint-disable-next-line no-console
+    console.log(`  ✓ Created team membership request`);
       }
     }
   }
 
-  console.log(`✅ Teams seeded: ${createdTeams.length} teams\n`);
+  // eslint-disable-next-line no-console
+    console.log(`✅ Teams seeded: ${createdTeams.length} teams\n`);
   return createdTeams;
 }

@@ -57,6 +57,7 @@ export {
   // Main orchestrator
   seedFull,
   type SeedFullOptions,
+  type SeedVolume,
 } from './seeds';
 
 // Default export for direct execution
@@ -67,7 +68,11 @@ import { seedFull } from './seeds';
 
 async function main() {
   try {
-    await seedFull();
+    // Parse volume from env
+    const volume = (process.env.SEED_VOLUME as 'low' | 'high' | 'normal') || 'normal';
+    console.log(`🌱 Seed volume set to: ${volume.toUpperCase()}`);
+
+    await seedFull({ volume });
     console.log('✅ Seed completed successfully');
     process.exit(0);
   } catch (error) {

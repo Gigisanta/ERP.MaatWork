@@ -7,7 +7,7 @@ import type { TimestampedEntity } from '@maatwork/types/common';
 /**
  * Líneas de negocio disponibles para categorizar etiquetas
  */
-export type BusinessLine = 'inversiones' | 'zurich' | 'patrimonial';
+type BusinessLine = 'inversiones' | 'zurich' | 'patrimonial';
 
 /**
  * Métricas de un mes específico

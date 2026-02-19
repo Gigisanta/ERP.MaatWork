@@ -83,7 +83,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
       setShowCreateModal(false);
       setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     } catch (err) {
-      logger.error('Error creating task', toLogContext({ err, contactId, task: newTask }));
+      logger.error(toLogContext({ err, contactId, task: newTask }), 'Error creating task');
     } finally {
       setSaving(false);
     }
@@ -100,7 +100,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
           await deleteTask(taskId);
           await mutate(); // Refresh data
         } catch (err) {
-          logger.error('Error deleting task', toLogContext({ err, taskId }));
+          logger.error(toLogContext({ err, taskId }), 'Error deleting task');
         }
       },
     });
@@ -113,7 +113,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
 
       await mutate(); // Refresh data
     } catch (err) {
-      logger.error('Error updating task status', toLogContext({ err, taskId, newStatus }));
+      logger.error(toLogContext({ err, taskId, newStatus }), 'Error updating task status');
     }
   };
 
@@ -252,7 +252,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
       </CardContent>
 
       {/* Create Modal */}
-      <Modal open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Modal open={showCreateModal} onOpenChange={(open: boolean) => setShowCreateModal(open)}>
         <ModalHeader>
           <ModalTitle>Crear Tarea</ModalTitle>
         </ModalHeader>
@@ -264,7 +264,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
               </Text>
               <Input
                 value={newTask.title}
-                onChange={(e) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="Título de la tarea"
               />
             </div>
@@ -274,7 +274,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
               </Text>
               <textarea
                 value={newTask.description}
-                onChange={(e) => setNewTask((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewTask((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Descripción de la tarea"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 rows={3}
@@ -303,7 +303,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
               <Input
                 type="date"
                 value={newTask.dueDate}
-                onChange={(e) => setNewTask((prev) => ({ ...prev, dueDate: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask((prev) => ({ ...prev, dueDate: e.target.value }))}
               />
             </div>
           </Stack>
@@ -321,7 +321,7 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
       {/* Confirm Dialog */}
       <ConfirmDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setConfirmDialog((prev) => ({ ...prev, open }))}
         onConfirm={confirmDialog.onConfirm}
         title={confirmDialog.title}
         description={confirmDialog.description}

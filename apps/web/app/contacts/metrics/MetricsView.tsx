@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { getContactsMetrics, getMonthlyGoals, saveMonthlyGoals } from '@/lib/api/metrics';
-import type { ContactsMetricsResponse, MonthlyMetrics, MonthlyGoal } from '@/types/metrics';
+import type { ContactsMetricsResponse, MonthlyGoal } from '@/types/metrics';
 import {
   Card,
   CardHeader,
@@ -152,10 +152,7 @@ export default function MetricsView() {
 
   const currentMonth = metrics?.currentMonth;
 
-  const getProgressPercentage = (current: number, goal: number) => {
-    if (goal === 0) return 0;
-    return Math.min(100, Math.round((current / goal) * 100));
-  };
+
 
   if (loading) {
     return (
@@ -188,7 +185,7 @@ export default function MetricsView() {
             <Select
               label="Mes"
               value={selectedMonth.toString()}
-              onValueChange={(value) => setSelectedMonth(Number(value))}
+              onValueChange={(value: string) => setSelectedMonth(Number(value))}
               items={MONTH_NAMES.map((name, idx) => ({
                 value: (idx + 1).toString(),
                 label: name,
@@ -202,7 +199,7 @@ export default function MetricsView() {
               <Input
                 type="number"
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedYear(Number(e.target.value))}
                 min={2000}
                 max={2100}
                 className="w-full"
@@ -315,34 +312,28 @@ export default function MetricsView() {
               type="number"
               label="Nuevos Contactos"
               value={goalForm.newProspectsGoal}
-              onChange={(e) =>
-                setGoalForm({ ...goalForm, newProspectsGoal: Number(e.target.value) })
-              }
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, newProspectsGoal: Number(e.target.value) })}
               min={0}
             />
             <Input
               type="number"
               label="Primeras Reuniones"
               value={goalForm.firstMeetingsGoal}
-              onChange={(e) =>
-                setGoalForm({ ...goalForm, firstMeetingsGoal: Number(e.target.value) })
-              }
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, firstMeetingsGoal: Number(e.target.value) })}
               min={0}
             />
             <Input
               type="number"
               label="Segundas Reuniones"
               value={goalForm.secondMeetingsGoal}
-              onChange={(e) =>
-                setGoalForm({ ...goalForm, secondMeetingsGoal: Number(e.target.value) })
-              }
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, secondMeetingsGoal: Number(e.target.value) })}
               min={0}
             />
             <Input
               type="number"
               label="Nuevos Clientes"
               value={goalForm.newClientsGoal}
-              onChange={(e) => setGoalForm({ ...goalForm, newClientsGoal: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoalForm({ ...goalForm, newClientsGoal: Number(e.target.value) })}
               min={0}
             />
           </Stack>

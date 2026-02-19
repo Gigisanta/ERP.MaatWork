@@ -7,18 +7,18 @@
  * GET /teams/:id/members-activity - Get activity metrics for all team members
  * GET /teams/:id/history - Get monthly history metrics
  */
-import type { Request, Response, NextFunction } from 'express';
+import type { Request } from 'express';
 import { db, teamMembership, users, pipelineStages, pipelineStageHistory } from '@maatwork/db';
 import {
   contacts,
   aumSnapshots,
   clientPortfolioAssignments,
-  portfolioTemplates,
+  portfolios,
   portfolioMonitoringSnapshot,
   notes,
   tasks,
 } from '@maatwork/db/schema';
-import { eq, and, sum, count, gte, sql, desc, inArray } from 'drizzle-orm';
+import { eq, and, sum, count, gte, sql, inArray } from 'drizzle-orm';
 import { getUserTeams } from '../../../auth/authorization';
 import { teamMetricsCacheUtil, normalizeCacheKey } from '../../../utils/performance/cache';
 import { createRouteHandler, HttpError } from '../../../utils/route-handler';
@@ -151,19 +151,19 @@ export const getTeamMetrics = createRouteHandler(async (req: Request) => {
     // Get risk distribution
     db()
       .select({
-        riskLevel: portfolioTemplates.riskLevel,
+        riskLevel: portfolios.riskLevel,
         count: count(),
       })
       .from(contacts)
       .innerJoin(clientPortfolioAssignments, eq(clientPortfolioAssignments.contactId, contacts.id))
       .innerJoin(
-        portfolioTemplates,
-        eq(portfolioTemplates.id, clientPortfolioAssignments.templateId)
+        portfolios,
+        eq(portfolios.id, clientPortfolioAssignments.portfolioId)
       )
       .innerJoin(users, eq(users.id, contacts.assignedAdvisorId))
       .innerJoin(teamMembership, eq(teamMembership.userId, users.id))
       .where(and(eq(teamMembership.teamId, id), eq(clientPortfolioAssignments.status, 'active')))
-      .groupBy(portfolioTemplates.riskLevel),
+      .groupBy(portfolios.riskLevel),
 
     // Get AUM trend (last 30 days)
     db()

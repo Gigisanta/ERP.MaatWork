@@ -6,7 +6,11 @@
     // Impact: Allows more flexible prop handling while maintaining other strict checks
     "exactOptionalPropertyTypes": false,
     "target": "ES2020",
-    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2020"
+    ],
     "allowJs": true,
     "noEmit": false,
     "declaration": true,
@@ -22,10 +26,29 @@
     "tsBuildInfoFile": "tsconfig.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
-    "types": ["vitest/globals", "@testing-library/jest-dom/vitest", "node", "next"]
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom/vitest",
+      "node",
+      "next"
+    ]
   },
-  "include": ["src/**/*", "src/tailwind-preset.ts"],
-  "exclude": ["node_modules", "dist", "tests", "**/*.stories.tsx", "**/*.test.ts", "**/*.test.tsx"]
+  "include": [
+    "src/**/*",
+    "src/tailwind-preset.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests",
+    "**/*.stories.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "vitest.setup.ts",
+    "vitest.config.ts"
+  ]
 }
