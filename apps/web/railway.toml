@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cp ../../pnpm-lock.yaml . && pnpm install --no-frozen-lockfile && pnpm --filter @maatwork/web build"
+buildCommand = "cp ../../pnpm-lock.yaml . && corepack enable && corepack prepare pnpm@9.10.0 --activate && pnpm install --no-frozen-lockfile && pnpm --filter @maatwork/web build"
 
 [build.env]
 PNPM_FROZEN_LOCKFILE = "false"
