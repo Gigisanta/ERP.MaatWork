@@ -1,5 +1,5 @@
 [build]
-builder = "railpack"
+builder = "dockerfile"
 buildCommand = "pnpm install && pnpm --filter @maatwork/web build"
 
 [deploy]
@@ -7,7 +7,7 @@ buildCommand = "pnpm install && pnpm --filter @maatwork/web build"
 # Justificación: Modo standalone crea bundle optimizado y autónomo
 # Impacto: Reduces deployment size by 40-50%, faster cold starts
 # Referencias: Railway docs + next.config.js (output: 'standalone' en producción)
-startCommand = "node .next/standalone/apps/web/server.js"
+startCommand = "node .next/standalone/apps/web/server.js -p ${PORT:-3000}"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
