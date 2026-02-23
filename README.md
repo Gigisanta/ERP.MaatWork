@@ -166,6 +166,36 @@ Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas 
 
 ## Troubleshooting
 
+### Errores Comunes de Deployment (Railway)
+
+#### Error: Build falla en monorepo
+
+**Causa**: Root Directory configurado en `apps/` en lugar de `/`
+
+**Solución**:
+1. En Railway dashboard → servicio → "Settings"
+2. Cambiar "Root Directory" a `/`
+3. Redeploy
+
+#### Error: Migraciones fallan
+
+**Causa**: `preDeployCommand` falla antes del deployment
+
+**Solución**:
+1. Ver logs de deployment en Railway dashboard
+2. Ejecutar manualmente: `pnpm --filter @maatwork/db migrate`
+
+#### Error: Cannot connect to database
+
+**Causa**: `DATABASE_URL` no referenciada correctamente
+
+**Solución**:
+1. Verificar servicio PostgreSQL está corriendo
+2. En servicio API → "Variables"
+3. Click "Ref" button al lado de `DATABASE_URL`
+
+---
+
 ### Errores Comunes de Docker
 
 #### Error de Credenciales (`error getting credentials`) en macOS

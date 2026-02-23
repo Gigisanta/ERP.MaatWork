@@ -34,37 +34,26 @@ Infraestructura como código (IaC) para MaatWork usando **Terraform** con soport
 
 ```
 infrastructure/
-├── terraform/                    # Configuración Terraform
-│   ├── modules/
-│   │   ├── aws-compute/          # EC2, Elastic IP, Security Groups, IAM
-│   │   ├── aws-database/         # RDS PostgreSQL, Secrets Manager
-│   │   ├── aws-storage/          # S3 Logs Bucket
-│   │   └── cloudflare/           # DNS, SSL, WAF
-│   ├── environments/
-│   │   ├── dev/                  # Configuración desarrollo
-│   │   └── prod/                 # Configuración producción
-│   ├── main.tf                   # Root module
-│   ├── README.md                 # Documentación detallada Terraform
-│   └── MIGRATION.md              # Guía de migración desde CDK
-├── mvp/
-│   └── nginx.conf                # Configuración Nginx (SSL/HTTPS con Cloudflare)
-├── scripts/
-│   ├── deploy.sh                 # Script deployment Unix
-│   └── deploy.ps1                # Script deployment Windows
-└── README.md                     # Este archivo
+├── aws-deprecated/          # ⚠️ AWS Infrastructure (archivado)
+│   ├── terraform/           # Configuración Terraform AWS (EC2, RDS, S3, Cloudflare)
+│   ├── deploy.sh            # Script deployment Unix (AWS)
+│   ├── deploy.ps1           # Script deployment Windows (AWS)
+│   ├── nginx.conf           # Configuración Nginx (AWS)
+│   └── README.md            # Documentación AWS deprecated
+├── scripts/                 # Scripts utilitarios (invariable)
+│   └── ...                 # Scripts de desarrollo, testing, etc.
+└── README.md                 # Este archivo
 ```
 
-## Recursos AWS
+## Servicios Railway
 
-| Recurso | Tipo | Descripción | Costo Est. |
+| Servicio | Tipo | Descripción | Costo Est. |
 |---------|------|-------------|------------|
-| EC2 Instance | t3.small | Servidor principal (2 vCPU, 2GB RAM) | ~$15/mes |
-| Elastic IP | - | IP fija para el servidor | $0 (asociada) |
-| RDS PostgreSQL | t3.micro | Base de datos (20GB) | $0 (Free Tier) |
-| S3 Bucket | - | Logs con lifecycle | ~$0.50/mes |
-| Secrets Manager | - | Credenciales de DB | ~$0.40/mes |
-| Security Groups | 2 | EC2 + RDS | $0 |
-| IAM Role | - | Permisos para EC2 | $0 |
+| API Service | Node.js 22 | Express API (puerto dinámico) | ~$5/mes |
+| Web Service | Next.js 16 | Frontend (puerto dinámico) | ~$5/mes |
+| PostgreSQL | Managed | PostgreSQL 16 (0.5GB) | ~$5/mes |
+
+**Total estimado: ~$15/mes**
 
 ## Recursos Cloudflare (Opcional)
 
@@ -120,100 +109,131 @@ terraform apply
 
 ## Documentación Adicional
 
-- [Terraform README](./terraform/README.md) - Documentación completa de Terraform
-- [Guía de Migración](./terraform/MIGRATION.md) - Migración desde CDK
+- [Railway Deployment Guide](./docs/DEPLOYMENT-RAILWAY.md) - Documentación completa de Railway
+- [AWS Deprecated](./aws-deprecated/README.md) - Arquitectura AWS histórica
+- [Development Guide](../docs/DEVELOPMENT.md) - Guía de desarrollo local
+- [Database Guide](../docs/DATABASE.md) - Schema y migraciones
 
 ## Sistema de Logs
 
-Los logs se gestionan de forma económica:
-
-1. **PM2** gestiona los procesos y escribe logs localmente
-2. **S3 Lifecycle** mueve logs a Glacier después de 30 días y los elimina después de 90
-
-**Costo aproximado:** ~$0.023/GB (vs ~$0.50/GB de CloudWatch Logs)
+Railway maneja logs automáticamente:
+- **Streaming**: Logs en tiempo real desde dashboard
+- **Storage**: Logs almacenados temporalmente para debugging
+- **Costo**: Incluido en costo del servicio (no adicional)
 
 ```bash
-# Ver logs en tiempo real
-pm2 logs
-
-# Ver logs de un servicio específico
-pm2 logs maatwork-api
+# Ver logs en dashboard Railway
+# 1. Ir a servicio → "Logs" tab
+# 2. Filtrar por fecha/level
 ```
 
 ## Mantenimiento
 
-### Ver estado de infraestructura
+### Ver estado de servicios Railway
 
 ```bash
-cd infrastructure/terraform/environments/dev
-terraform show
+# Desde dashboard Railway:
+# 1. Ir a "Services"
+# 2. Ver status (running, crashed, building)
+# 3. Ver métricas (CPU, RAM, Network)
 ```
 
-### Actualizar infraestructura
+### Actualizar servicios
 
 ```bash
-terraform plan   # Ver cambios
-terraform apply  # Aplicar cambios
+# Railway hace deploy automático en git push
+# Para deploy manual:
+# 1. Ir a servicio → "Deployments" tab
+# 2. Click "New Deployment" → "Redeploy"
 ```
 
-### Destruir infraestructura (¡cuidado!)
+### Escalar servicios (si es necesario)
 
 ```bash
-terraform destroy
+# Desde dashboard Railway:
+# 1. Ir a servicio → "Settings"
+# 2. Cambiar plan (Free → Pro)
+# 3. Opciones:
+#    - API: Más RAM/CPU para alta carga
+#    - Web: Más RAM para build rápidos
+#    - DB: Más storage/conexiones
 ```
 
 ## Troubleshooting
 
-### Error: "VPC not found"
+### Error: Build falla en monorepo
 
-El modo MVP usa la VPC por defecto. Si no existe:
-```bash
-aws ec2 create-default-vpc
-```
+**Causa**: Root Directory configurado incorrectamente en `apps/` en lugar de `/`
 
-### Error: "Insufficient permissions"
+**Solución**:
+1. Ir a servicio Railway → "Settings"
+2. Cambiar "Root Directory" a `/` (repo root)
+3. Redeploy
 
-Verificar que el usuario IAM tenga permisos para:
-- EC2, VPC
-- RDS, Secrets Manager
-- S3
-- IAM
+### Error: Migraciones fallan
+
+**Causa**: `preDeployCommand` falla antes del deployment
+
+**Solución**:
+1. Revisar logs de deployment en Railway dashboard
+2. Verificar migraciones en `packages/db/migrations/`
+3. Ejecutar migración manualmente: `pnpm --filter @maatwork/db migrate`
+
+### Error: Cannot connect to database
+
+**Causa**: `DATABASE_URL` no referenciada correctamente
+
+**Solución**:
+1. Verificar servicio PostgreSQL está corriendo
+2. En servicio API → "Variables"
+3. Click "Ref" button al lado de `DATABASE_URL`
+4. Seleccionar servicio PostgreSQL
+
+### Error: CORS errors en frontend
+
+**Causa**: `CORS_ORIGINS` no incluye dominio Railway
+
+**Solución**:
+1. En servicio API → "Variables"
+2. Actualizar `CORS_ORIGINS` con dominio Railway (ej: `https://maat.work`)
+3. Redeploy API
 
 ## Seguridad
 
-### SSL/TLS con Cloudflare
+### SSL/TLS Automático
 
-El proyecto está configurado para usar **Cloudflare Origin CA Certificate** con modo **Full (Strict)**:
+- Railway maneja SSL automáticamente con Let's Encrypt
+- No requiere configuración manual
+- Renovación automática de certificados
+- HTTPS forzado por defecto
 
-- ✅ Certificados SSL instalados en `/etc/ssl/cloudflare/`
-- ✅ Nginx configurado para escuchar en puerto 443 (HTTPS)
-- ✅ HTTP (80) redirige automáticamente a HTTPS (443)
-- ✅ Security Group restringido solo a rangos IP de Cloudflare
+### Variables de Entorno
 
-**Configuración de Nginx:**
-- Archivo: `infrastructure/mvp/nginx.conf`
-- Certificado: `/etc/ssl/cloudflare/origin.crt`
-- Clave privada: `/etc/ssl/cloudflare/origin.key`
-- Protocolos: TLSv1.2, TLSv1.3
-- HTTP/2 habilitado
-
-**Verificar configuración SSL:**
-```bash
-# Verificar que nginx escucha en puerto 443
-sudo ss -tulpn | grep :443
-
-# Verificar certificados
-sudo ls -la /etc/ssl/cloudflare/
-```
+- **Secretos**: Nunca comitear en git (`.env` archivos en `.gitignore`)
+- **JWT_SECRET**: Usar valor fuerte (>32 caracteres)
+- **CORS**: Restringir a dominios de producción
 
 ### Recomendaciones para Producción
 
-- [x] SSL/TLS habilitado con Cloudflare (Full Strict)
-- [x] Security Group restringido a rangos Cloudflare
-- [ ] Limitar acceso SSH por IP específicas
-- [ ] Configurar WAF en Cloudflare
-- [ ] Rotar credenciales periódicamente
+- [x] SSL/TLS automático por Railway
+- [x] Variables de entorno gestionadas en dashboard
+- [x] Migraciones automáticas pre-deploy
+- [ ] Rate limiting configurado en API
+- [ ] Logs monitoreados regularmente
+- [ ] Backups de base de datos (Railway tiene backups automáticos)
 
 ## Soporte
 
 Para problemas o preguntas, abre un issue en el repositorio.
+
+## Arquitectura AWS (Histórica)
+
+> ℹ️ Información de la arquitectura AWS anterior en `infrastructure/aws-deprecated/README.md`
+
+La arquitectura AWS migrada usaba:
+- EC2 t3.small (PM2 process manager)
+- RDS PostgreSQL t3.micro
+- S3 bucket para logs
+- Cloudflare para DNS/SSL/WAF
+
+Costo AWS: ~$30-35/mes vs Railway: ~$15/mes (50% ahorro)

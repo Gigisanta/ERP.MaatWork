@@ -1,0 +1,16 @@
+[build]
+builder = "railpack"
+buildCommand = "pnpm install && pnpm --filter @maatwork/api build"
+
+[deploy]
+startCommand = "node dist/index.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# AI_DECISION: Run migrations BEFORE deployment starts
+# Justificación: Si las migraciones fallan, el despliegue debe abortarse
+# Impacto: Previene que código incompatible con DB corrompa el sistema
+# Referencias: Railway best practices - usar preDeployCommand para migraciones
+preDeployCommand = "cd ../.. && pnpm --filter @maatwork/db migrate"

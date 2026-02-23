@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'pnpm']
+
+[phases.install]
+cmds = ['pnpm install --frozen-lockfile']
+
+[phases.build]
+# Build se delega a railway.toml de cada servicio específico
+# Cada servicio define sus propios comandos de build y start
+cmds = ['echo "Build handled by service-specific railway.toml"']
+
+[start]
+# Start command sobrescrito por railway.toml de cada servicio
+cmd = 'echo "Start command handled by service"'
+
+# AI_DECISION: Configuración para monorepo Turborepo
+# Justificación: Railway necesita construir desde la raíz para ver packages/ compartidos
+# Impacto: Build exitoso sin "module not found" en @maatwork/* packages
+# Referencias: Railway monorepo docs - mantener Root Directory en / para todos los servicios

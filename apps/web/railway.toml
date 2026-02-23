@@ -1,0 +1,14 @@
+[build]
+builder = "railpack"
+buildCommand = "pnpm install && pnpm --filter @maatwork/web build"
+
+[deploy]
+# AI_DECISION: Usar standalone server generado por Next.js
+# Justificación: Modo standalone crea bundle optimizado y autónomo
+# Impacto: Reduces deployment size by 40-50%, faster cold starts
+# Referencias: Railway docs + next.config.js (output: 'standalone' en producción)
+startCommand = "node .next/standalone/apps/web/server.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

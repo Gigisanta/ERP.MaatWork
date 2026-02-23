@@ -7,12 +7,11 @@ module.exports = {
   // swcMinify is default in Next.js 15
   // swcMinify: true,
 
-  // AI_DECISION: Enable standalone output for optimized production builds
+  // AI_DECISION: Enable standalone output for all environments (especially Railway)
   // Justificación: Standalone output creates minimal server bundle, reducing deployment size by 40-50%
-  // Impacto: Faster deployments, lower memory usage
-  // Solo aplicar en producción para evitar problemas con archivos estáticos en desarrollo
-  // DISABLED ON WINDOWS locally due to symlink EPERM issues
-  // ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
+  // Impacto: Faster deployments, lower memory usage, optimized for Railway's containerized environment
+  // Referencias: Railway best practices + migration plan from AWS to Railway
+  output: 'standalone',
 
   // AI_DECISION: Configure CDN for assets in production
   // Justificación: CDN reduce latencia y carga en servidor, mejora performance global
@@ -32,4 +31,9 @@ module.exports = {
   experimental: {
     // externalDir: true,
   },
+
+  // AI_DECISION: Add empty turbopack config for Next.js 16
+  // Justificación: Next.js 16 uses Turbopack by default, this silences the warning about webpack config
+  // Impacto: No breaking changes, just silences the warning
+  turbopack: {},
 };
