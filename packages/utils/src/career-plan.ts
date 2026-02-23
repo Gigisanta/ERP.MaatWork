@@ -1,11 +1,7 @@
-/**
- * Utilidades para el plan de carrera comercial (Cálculos y Formateo)
- */
-
 import type { CareerPlanLevel } from '@maatwork/types';
 
 /**
- * Calcula el porcentaje de progreso hacia el objetivo del nivel actual
+ * Utilidades para el plan de carrera comercial (Cálculos y Formateo)
  */
 export function calculateProgressPercentage(annualProduction: number, levelGoal: number): number {
   if (levelGoal === 0) {

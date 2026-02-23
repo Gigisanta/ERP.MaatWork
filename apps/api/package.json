@@ -53,6 +53,7 @@
     "pino-http": "^8.5.0",
     "prom-client": "^15.1.0",
     "uuid": "^13.0.0",
+    "ws": "^8.18.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
@@ -67,6 +68,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.10.2",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "@vitest/coverage-v8": "^4.0.6",

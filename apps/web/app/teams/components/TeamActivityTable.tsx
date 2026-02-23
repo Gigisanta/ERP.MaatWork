@@ -348,7 +348,7 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
               data={members as unknown as Record<string, unknown>[]}
               columns={columns as unknown as Column<Record<string, unknown>>[]}
               keyField="id"
-              emptyMessage="No hay miembros en este equipo."
+              emptyState="No hay miembros en este equipo."
             />
           </div>
         </CardContent>

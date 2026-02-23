@@ -4,7 +4,7 @@
 
 - **Monorepo:** `pnpm workspaces` + `turborepo`
 - **Apps:**
-  - API: `apps/api` (Express 4.18.2 + TypeScript + Pino + Helmet + CORS)
+  - API: `apps/api` (Express 5 + TypeScript + Pino + Helmet + CORS)
   - Web: `apps/web` (Next.js App Router)
   - Analytics: `apps/analytics-service` (Python + yfinance)
 - **Packages:**
@@ -48,7 +48,7 @@
 
 ## Backend (API)
 
-- Express 4.18.2, middlewares en orden: CORS → compression → requestId → helmet → pino-http → routes → error/404
+- Express 5, middlewares en orden: CORS → compression → requestId → helmet → pino-http → routes → error/404
 - Error handler devuelve JSON y oculta detalles en prod
 - Shutdown graceful (SIGTERM/SIGINT) con timeout de 10s
 - **Versionado de API:** Todas las rutas deben usar el prefijo `/v1/` obligatoriamente (ej: `/v1/contacts`, `/v1/users`)

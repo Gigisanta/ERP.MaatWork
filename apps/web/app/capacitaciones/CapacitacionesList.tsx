@@ -318,7 +318,7 @@ export default function CapacitacionesList({ initialData, initialError }: Capaci
               data={capacitaciones as unknown as Record<string, unknown>[]}
               columns={columns as unknown as Column<Record<string, unknown>>[]}
               keyField="id"
-              emptyMessage="No se encontraron capacitaciones"
+              emptyState="No se encontraron capacitaciones"
             />
           )}
         </CardContent>

@@ -9,9 +9,10 @@
     // Justificación: Incremental builds reducen tiempo de typecheck 15-25% en builds subsiguientes
     // Impacto: Typecheck más rápido, especialmente útil en desarrollo con cambios frecuentes
     "incremental": true,
+    "exactOptionalPropertyTypes": false,
     "tsBuildInfoFile": ".tsbuildinfo",
     "baseUrl": ".",
-    "paths": {
+  "paths": {
       "@maatwork/db": ["../../packages/db/src/index.ts"],
       "@maatwork/db/*": ["../../packages/db/src/*"],
       "@maatwork/ui": ["../../packages/ui/src/index.ts"],

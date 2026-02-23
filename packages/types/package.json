@@ -6,67 +6,67 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "default": "./dist/index.d.ts"
     },
     "./common": {
       "types": "./dist/common.d.ts",
-      "default": "./dist/common.js"
+      "default": "./dist/common.d.ts"
     },
     "./user": {
       "types": "./dist/user.d.ts",
-      "default": "./dist/user.js"
+      "default": "./dist/user.d.ts"
     },
     "./contact": {
       "types": "./dist/contact.d.ts",
-      "default": "./dist/contact.js"
+      "default": "./dist/contact.d.ts"
     },
     "./team": {
       "types": "./dist/team.d.ts",
-      "default": "./dist/team.js"
+      "default": "./dist/team.d.ts"
     },
     "./career-plan": {
       "types": "./dist/career-plan.d.ts",
-      "default": "./dist/career-plan.js"
+      "default": "./dist/career-plan.d.ts"
     },
     "./aum": {
       "types": "./dist/aum.d.ts",
-      "default": "./dist/aum.js"
+      "default": "./dist/aum.d.ts"
     },
     "./calendar": {
       "types": "./dist/calendar.d.ts",
-      "default": "./dist/calendar.js"
+      "default": "./dist/calendar.d.ts"
     },
     "./tag": {
       "types": "./dist/tag.d.ts",
-      "default": "./dist/tag.js"
+      "default": "./dist/tag.d.ts"
     },
     "./pipeline": {
       "types": "./dist/pipeline.d.ts",
-      "default": "./dist/pipeline.js"
+      "default": "./dist/pipeline.d.ts"
     },
     "./broker-account": {
       "types": "./dist/broker-account.d.ts",
-      "default": "./dist/broker-account.js"
+      "default": "./dist/broker-account.d.ts"
     },
     "./portfolio-assignment": {
       "types": "./dist/portfolio-assignment.d.ts",
-      "default": "./dist/portfolio-assignment.js"
+      "default": "./dist/portfolio-assignment.d.ts"
     },
     "./task": {
       "types": "./dist/task.d.ts",
-      "default": "./dist/task.js"
+      "default": "./dist/task.d.ts"
     },
     "./note": {
       "types": "./dist/note.d.ts",
-      "default": "./dist/note.js"
+      "default": "./dist/note.d.ts"
     },
     "./capacitacion": {
       "types": "./dist/capacitacion.d.ts",
-      "default": "./dist/capacitacion.js"
+      "default": "./dist/capacitacion.d.ts"
     },
     "./feedback": {
       "types": "./dist/feedback.d.ts",
-      "default": "./dist/feedback.js"
+      "default": "./dist/feedback.d.ts"
     }
   },
   "types": "./dist/index.d.ts",
@@ -74,12 +74,12 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsc -w -p tsconfig.json",
-    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.declarations.json",
+    "build": "tsc -p tsconfig.declarations.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:unit": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.declarations.json",
     "audit:code": "knip --workspace .",
     "clean": "rimraf dist"
   },

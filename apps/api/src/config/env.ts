@@ -188,12 +188,16 @@ if (googleEncryptionKey) {
 export const env = {
   DATABASE_URL: process.env.DATABASE_URL!,
   PORT: parseInt(process.env.PORT || '3001', 10),
+  WS_PORT: parseInt(process.env.WS_PORT || '3003', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   CORS_ORIGINS: process.env.CORS_ORIGINS || '',
   CSP_ENABLED: process.env.CSP_ENABLED === 'true',
   JWT_SECRET: process.env.JWT_SECRET || 'dev-insecure-secret-change-me',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  WS_TLS_KEY: process.env.WS_TLS_KEY,
+  WS_TLS_CERT: process.env.WS_TLS_CERT,
+  WS_TLS_CA: process.env.WS_TLS_CA,
   // Cookie Configuration
   // AI_DECISION: Exponer COOKIE_DOMAIN para uso en cookie-config.ts
   // Justificación: Necesario para que cookies funcionen correctamente con Cloudflare/subdominios

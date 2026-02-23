@@ -4,6 +4,7 @@
  * Combines all contact-related routes into a single router.
  *
  * Routes:
+ * - GET /contacts/search - Fuzzy search with pg_trgm similarity (search.ts)
  * - GET /contacts - List contacts with filters (list.ts)
  * - GET /contacts/batch - Get multiple contacts (batch.ts)
  * - POST /contacts/webhook - Export contacts to webhook (webhook.ts)
@@ -28,11 +29,13 @@ import historyRouter from './history';
 import assignmentRouter from './assignment';
 import interactionRouter from './interactions';
 import importRouter from './import-router';
+import searchRouter from './search';
 
 const router = Router();
 
 // Mount routes in order of specificity
-// IMPORTANT: Specific routes (/batch, /webhook, /import) must come before parameterized routes (/:id)
+// IMPORTANT: Specific routes (/search, /batch, /webhook, /import) must come before parameterized routes (/:id)
+router.use(searchRouter); // GET /contacts/search
 router.use(batchRouter); // GET /contacts/batch
 router.use(webhookRouter); // POST /contacts/webhook
 router.use(importRouter); // POST /contacts/import

@@ -25,6 +25,7 @@ import { type PinoLoggerOptions, type HelmetOptions } from './types/common';
 import { handleEtag } from './utils/etag-cache';
 import { RateLimiter, RATE_LIMIT_PRESETS, setupRateLimiterCleanup } from './utils/performance';
 import { createAsyncHandler } from './utils/route-handler';
+import { startWebSocketServer, stopWebSocketServer } from './websocket';
 
 // 3. Routes
 import adminMaintenanceRouter from './routes/admin-maintenance';
@@ -603,6 +604,24 @@ async function startServer() {
     // Referencias: Performance optimization plan - Fase 3
     const poolMonitoringInterval = startPoolMonitoring(60000); // Every minute
 
+    // AI_DECISION: Start WebSocket server for real-time updates
+    // Justificación: Real-time features improve UX, reduce polling overhead
+    // Impacto: Live dashboard updates, reduced server load from polling
+    // Referencias: Performance optimization plan - Fase 3
+    const wsConfig: { port: number; tls?: { key: string; cert: string; ca?: string } } = {
+      port: env.WS_PORT,
+    };
+    if (env.WS_TLS_KEY && env.WS_TLS_CERT) {
+      wsConfig.tls = {
+        key: env.WS_TLS_KEY,
+        cert: env.WS_TLS_CERT,
+      };
+      if (env.WS_TLS_CA) {
+        wsConfig.tls.ca = env.WS_TLS_CA;
+      }
+    }
+    startWebSocketServer(wsConfig);
+
     // Security: bind to HOST (default 127.0.0.1 in production, 0.0.0.0 in dev)
     const host = process.env.HOST || (isProduction ? '127.0.0.1' : '0.0.0.0');
     const server = app.listen(port, host, () => {
@@ -619,6 +638,9 @@ async function startServer() {
       if (poolMonitoringInterval) {
         clearInterval(poolMonitoringInterval);
       }
+
+      // Stop WebSocket server
+      stopWebSocketServer();
 
       server.close(() => {
         logger.info('HTTP server closed');

@@ -1,0 +1,21 @@
+{
+  "name": "MaatWork",
+  "short_name": "MaatWork",
+  "description": "Gestión profesional de clientes e inversiones",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

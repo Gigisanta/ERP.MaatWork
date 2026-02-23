@@ -105,34 +105,29 @@ export default function HistoryView() {
       key: 'monthYear',
       header: 'Mes/Año',
       sortable: true,
-      align: 'left',
     },
     {
       key: 'newProspects',
       header: 'Prospectos',
       sortable: true,
-      align: 'right',
       render: (item) => <span className="text-right">{item.newProspects}</span>,
     },
     {
       key: 'firstMeetings',
       header: '1ra Reunión',
       sortable: true,
-      align: 'right',
       render: (item) => <span className="text-right">{item.firstMeetings}</span>,
     },
     {
       key: 'secondMeetings',
       header: '2da Reunión',
       sortable: true,
-      align: 'right',
       render: (item) => <span className="text-right">{item.secondMeetings}</span>,
     },
     {
       key: 'newClients',
       header: 'Clientes',
       sortable: true,
-      align: 'right',
       render: (item) => <span className="text-right font-medium">{item.newClients}</span>,
     },
   ];
@@ -226,9 +221,9 @@ export default function HistoryView() {
             columns={columns as unknown as Column<Record<string, unknown>>[]}
             keyField="id"
             loading={loading}
-            emptyMessage="No hay datos de historial disponibles"
-            virtualized={filteredRows.length > 20}
-            virtualizedHeight={600}
+            emptyState="No hay datos de historial disponibles"
+            shouldVirtualize={filteredRows.length > 20}
+            virtualRowHeight={600}
           />
         </CardContent>
       </Card>

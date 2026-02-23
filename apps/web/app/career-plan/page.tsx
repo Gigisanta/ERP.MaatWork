@@ -291,7 +291,6 @@ export default function PlanDeCarreraPage() {
         key: 'actions',
         header: 'Acciones',
         width: '120px',
-        align: 'right',
         render: (level) => (
           <div className="flex gap-2 justify-end">
             <Button

@@ -7,6 +7,9 @@ declare global {
       user?: AuthUser;
       log?: Logger;
       requestId?: string;
+      traceId?: string;
+      spanId?: string;
+      parentSpanId?: string;
     }
   }
 }

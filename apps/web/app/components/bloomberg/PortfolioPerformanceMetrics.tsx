@@ -310,7 +310,7 @@ export default function PortfolioPerformanceMetrics({
             columns={columns as unknown as Column<Record<string, unknown>>[]}
             data={performanceData as unknown as Record<string, unknown>[]}
             keyField="portfolioId"
-            emptyMessage="No hay datos de rendimiento disponibles"
+            emptyState="No hay datos de rendimiento disponibles"
           />
         )}
       </CardContent>

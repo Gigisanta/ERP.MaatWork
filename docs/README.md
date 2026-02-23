@@ -10,6 +10,7 @@
 | Contribuidor | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | Buscando comandos | [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) |
 | Entendiendo arquitectura | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Haciendo deployment | [deployment/README.md](./deployment/README.md) |
 
 ---
 
@@ -33,6 +34,11 @@
 ### Testing
 - **[TESTING.md](./TESTING.md)** - Unit, integration, E2E y visual regression
 - **[TEST-PERFORMANCE.md](./TEST-PERFORMANCE.md)** - Performance testing
+
+### Deployment
+- **[deployment/README.md](./deployment/README.md)** - Guía de selección de deployment (MVP vs Producción)
+- **[deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md)** - Quickstart para primer deployment (EC2 + Docker)
+- **[deployment/production-terraform.md](./deployment/production-terraform.md)** - Deploy producción escalable (Terraform + AWS)
 
 ### Operaciones
 - **[OPERATIONS.md](./OPERATIONS.md)** - Deploy, monitoreo, troubleshooting
@@ -81,6 +87,12 @@ docs/
 ├── TESTING.md                  # Estrategias de testing
 ├── TEST-PERFORMANCE.md         # Performance testing
 │
+├── # Deployment
+├── deployment/                 # ⭐ Guías de deployment
+│   ├── README.md               # Guía de selección
+│   ├── mvp-quickstart.md       # MVP EC2 + Docker
+│   └── production-terraform.md  # Terraform AWS
+│
 ├── # Operaciones
 ├── OPERATIONS.md               # Deploy, monitoreo
 ├── OPTIMIZATION.md             # Optimizaciones
@@ -122,6 +134,11 @@ docs/
 2. [CLI.md](./CLI.md#generadores) - Generadores (`pnpm mw gen`)
 3. [FILE-STRUCTURE.md](./FILE-STRUCTURE.md) - Dónde poner archivos
 
+### Deployment
+1. [deployment/README.md](./deployment/README.md) - Seleccionar enfoque (MVP vs Producción)
+2. [deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md) - Primer deployment rápido
+3. [deployment/production-terraform.md](./deployment/production-terraform.md) - Producción escalable
+
 ### Contribuir
 1. [CONTRIBUTING.md](./CONTRIBUTING.md) - Proceso de contribución
 2. [ARCHITECTURE-DECISIONS.md](./ARCHITECTURE-DECISIONS.md) - Entender decisiones
@@ -129,7 +146,3 @@ docs/
 ### Debugging
 1. [DEVELOPMENT.md](./DEVELOPMENT.md#debugging) - Guía de debugging
 2. [troubleshooting/](./troubleshooting/) - Problemas comunes
-
-### Deploy
-1. [OPERATIONS.md](./OPERATIONS.md) - Guía de operaciones
-2. [OPTIMIZATION.md](./OPTIMIZATION.md) - Optimizaciones

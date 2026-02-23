@@ -426,7 +426,7 @@ export default function AdminUsersPage() {
               data={users as (UserApiResponse & Record<string, unknown>)[]}
               columns={columns as Column<UserApiResponse & Record<string, unknown>>[]}
               keyField="id"
-              emptyMessage="No hay usuarios registrados."
+              emptyState={<div className="text-center py-8 text-muted-foreground">No hay usuarios registrados.</div>}
               loading={dataLoading}
             />
 

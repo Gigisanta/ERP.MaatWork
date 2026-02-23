@@ -31,7 +31,7 @@ function getBaseUrl(request: NextRequest): string {
   }
 
   // Último fallback a request.url
-  return request.nextUrl.origin;
+  return request.nextUrl.origin.href;
 }
 
 // Rutas públicas que no requieren autenticación
@@ -42,7 +42,7 @@ const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
 const JWT_ISSUER = 'maatwork-api';
 const JWT_AUDIENCE = 'maatwork-web';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // AI_DECISION: Generar o propagar X-Request-ID para trazabilidad
@@ -167,10 +167,10 @@ export async function middleware(request: NextRequest) {
 
   if (!token) {
     // Redirigir al login con la URL de destino completa (incluyendo query params)
-    const loginUrl = new URL('/login', baseUrl);
-    const fullPath = pathname + (request.nextUrl.search || '');
-    loginUrl.searchParams.set('redirect', fullPath);
-    return NextResponse.redirect(loginUrl);
+  const loginUrl = new URL('/login', baseUrl);
+  const fullPath = pathname + (request.nextUrl.search || '');
+  loginUrl.searchParams.set('redirect', fullPath);
+  return NextResponse.redirect(loginUrl);
   }
 
   // Validar el JWT
@@ -245,6 +245,6 @@ export const config = {
      *                causando errores de Service Worker registration
      * Impacto: PWA funciona correctamente, archivos estáticos no pasan por auth
      */
-    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
+    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|manifest.webmanifest|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
   ],
 };
