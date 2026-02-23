@@ -1,18 +1,9 @@
 [build]
-builder = "nixpacks"
-installCommand = ""
-buildCommand = "corepack enable && corepack prepare pnpm@9.10.0 --activate && cp ../../pnpm-lock.yaml . && pnpm install --no-frozen-lockfile && pnpm --filter @maatwork/web build"
-
-[build.env]
-PNPM_FROZEN_LOCKFILE = "false"
-NIXPACKS_NO_CACHE = "true"
+builder = "dockerfile"
+dockerfile = "apps/web/Dockerfile"
 
 [deploy]
-# AI_DECISION: Usar standalone server generado por Next.js
-# Justificación: Modo standalone crea bundle optimizado y autónomo
-# Impacto: Reduces deployment size by 40-50%, faster cold starts
-# Referencias: Railway docs + next.config.js (output: 'standalone' en producción)
-startCommand = "node .next/standalone/apps/web/server.js -p ${PORT:-3000}"
+startCommand = "node server.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
