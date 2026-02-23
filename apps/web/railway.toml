@@ -1,6 +1,10 @@
 [build]
-builder = "dockerfile"
-buildCommand = "pnpm install && pnpm --filter @maatwork/web build"
+builder = "nixpacks"
+buildCommand = "pnpm install --no-frozen-lockfile && pnpm --filter @maatwork/web build"
+
+[build.env]
+PNPM_FROZEN_LOCKFILE = "false"
+NIXPACKS_NO_CACHE = "true"
 
 [deploy]
 # AI_DECISION: Usar standalone server generado por Next.js
