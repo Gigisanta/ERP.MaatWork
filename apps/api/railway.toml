@@ -1,6 +1,6 @@
 [build]
 builder = "railpack"
-buildCommand = "pnpm install && pnpm --filter @maatwork/api build"
+buildCommand = "pnpm install --no-frozen-lockfile && pnpm --filter @maatwork/api build"
 
 [deploy]
 startCommand = "node dist/index.js"
