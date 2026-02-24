@@ -88,6 +88,54 @@ docs/
 ├── TEST-PERFORMANCE.md         # Performance testing
 │
 ├── # Deployment
+
+### Deployment
+- **[RAILWAY_GITHUB_INTEGRATION.md](./RAILWAY_GITHUB_INTEGRATION.md)** - Railway GitHub integration setup (recomendado, CI/CD nativo)
+- **[deployment/README.md](./deployment/README.md)** - Deployment selection guide (aún relevante)
+- **[deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md)** - Local Docker development (aún relevante)
+
+> **Railway es la plataforma recomendada para producción.** Usa la guía de Railway GitHub integration para deployments automáticos en git push.
+## 🔧 CLI Rápido
+
+```bash
+pnpm mw dev              # Iniciar desarrollo
+pnpm mw health           # Verificar salud del proyecto
+pnpm mw gen component    # Generar código
+pnpm mw test unit        # Ejecutar tests
+pnpm mw audit code       # Auditoría de código
+pnpm mw metrics          # Ver métricas
+```
+
+Ver [CLI.md](./CLI.md) para documentación completa.
+
+---
+
+## 📁 Estructura de Documentación
+
+```
+docs/
+├── README.md                   # Este archivo (índice)
+│
+├── # Desarrollo
+├── CLI.md                      # ⭐ Referencia del CLI
+├── QUICK-REFERENCE.md          # ⭐ Cheatsheet de comandos
+├── CONTRIBUTING.md             # Guía de contribución
+├── DEVELOPMENT.md              # Guía de desarrollo
+├── ONBOARDING.md               # Guía de onboarding
+│
+├── # Arquitectura
+├── ARCHITECTURE.md             # Arquitectura general
+├── ARCHITECTURE-DECISIONS.md   # ADRs
+├── FILE-STRUCTURE.md           # Estructura de archivos
+│
+├── # Base de Datos
+├── DATABASE.md                 # Drizzle, migraciones
+│
+├── # Testing
+├── TESTING.md                  # Estrategias de testing
+├── TEST-PERFORMANCE.md         # Performance testing
+│
+├── # Deployment
 ├── deployment/                 # ⭐ Guías de deployment
 │   ├── README.md               # Guía de selección
 │   ├── mvp-quickstart.md       # MVP EC2 + Docker
