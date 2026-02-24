@@ -6,7 +6,7 @@ COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 COPY packages ./packages
 COPY apps ./apps
-RUN pnpm install --frozen-lockfile --prod=false --filter=!@maatwork/analytics-service
+COPY scripts ./scripts
 COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 
@@ -15,6 +15,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN pnpm install --frozen-lockfile --prod=false --filter=!@maatwork/analytics-service
 RUN pnpm run build
 
 FROM node:22-alpine AS runner
