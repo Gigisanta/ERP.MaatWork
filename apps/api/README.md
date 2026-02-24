@@ -43,3 +43,4 @@ Use `createAsyncHandler` to ensure this format and catch errors automatically.
 
 - Use `db()` from `@maatwork/db`.
 - Check `src/monitoring/connection-pool.ts` if debugging connection issues.
+# railway trigger build 1771946622
