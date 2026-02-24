@@ -1,41 +1,41 @@
 # Root Dockerfile for Railway deployment
-# This Dockerfile builds the API service specifically
+# Simplified single-stage build for reliability
 
-FROM node:22-alpine AS deps
+FROM node:22-alpine
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+
+# Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
+
+# Copy all necessary files
 COPY pnpm-lock.yaml ./
-COPY package.json ./pnpm-workspace.yaml ./
+COPY package.json ./
+COPY pnpm-workspace.yaml ./
 COPY turbo.json ./
 COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 COPY scripts ./scripts
-RUN pnpm install --frozen-lockfile --prod=false
 
-FROM node:22-alpine AS builder
-WORKDIR /app
-RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/pnpm-lock.yaml ./
-COPY --from=deps /app/package.json ./package.json
-COPY --from=deps /app/pnpm-workspace.yaml ./
-COPY --from=deps /app/turbo.json ./
-COPY --from=deps /app/tsconfig.base.json ./
-COPY --from=deps /app/packages ./packages
-COPY --from=deps /app/apps ./apps
-COPY --from=deps /app/scripts ./scripts
+# Install all dependencies (including dev)
+RUN pnpm install --frozen-lockfile
+
+# Build the API and Web apps
 RUN pnpm run build --filter=@maatwork/api --filter=@maatwork/web
 
-FROM node:22-alpine AS runner
-WORKDIR /app
+# Production configuration
 ENV NODE_ENV=production
+
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+
+# Copy only what's needed for running the API
+COPY --from=0 /app/apps/api/dist ./dist
+COPY --from=0 /app/apps/api/package.json ./package.json
+COPY --from=0 /app/node_modules ./node_modules
+
 USER nodejs
 EXPOSE 3001
 CMD ["node", "dist/index.js"]
