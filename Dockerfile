@@ -11,6 +11,7 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 COPY scripts ./scripts
+RUN pnpm install --frozen-lockfile --prod=false
 
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -21,7 +22,6 @@ COPY --from=deps /app/pnpm-workspace.yaml ./
 COPY --from=deps /app/packages ./packages
 COPY --from=deps /app/apps ./apps
 COPY --from=deps /app/scripts ./scripts
-RUN pnpm install --frozen-lockfile --prod=false
 RUN pnpm run build --filter=@maatwork/api --filter=@maatwork/web
 
 FROM node:22-alpine AS runner
