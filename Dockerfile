@@ -32,6 +32,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
 
 # Copy only what's needed for running the API
+COPY apps/api/dist ./dist
+COPY apps/api/package.json ./package.json
+COPY node_modules ./node_modules
 COPY --from=0 /app/apps/api/dist ./dist
 COPY --from=0 /app/apps/api/package.json ./package.json
 COPY --from=0 /app/node_modules ./node_modules
