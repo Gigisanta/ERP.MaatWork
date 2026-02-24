@@ -7,6 +7,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
+COPY turbo.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
@@ -17,7 +18,11 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/pnpm-lock.yaml ./
 COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/pnpm-workspace.yaml ./
+COPY --from=deps /app/turbo.json ./
+COPY --from=deps /app/packages ./packages
 COPY --from=deps /app/pnpm-workspace.yaml ./
 COPY --from=deps /app/packages ./packages
 COPY --from=deps /app/apps ./apps
