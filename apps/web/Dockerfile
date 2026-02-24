@@ -6,7 +6,9 @@ COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 COPY packages ./packages
 COPY apps ./apps
-RUN pnpm install --frozen-lockfile --prod=false
+COPY scripts ./scripts
+COPY pnpm-lock.yaml ./
+COPY package.json ./pnpm-workspace.yaml ./
 
 FROM node:22-alpine AS builder
 WORKDIR /app

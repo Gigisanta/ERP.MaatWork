@@ -5,7 +5,6 @@
   "description": "Python FastAPI microservice for financial calculations and market data",
   "scripts": {
     "dev": "python main.py",
-    "install": "node ../../scripts/install-python-deps.js",
     "check": "python --version",
     "start": "python main.py",
     "test": "python -m pytest tests/",
