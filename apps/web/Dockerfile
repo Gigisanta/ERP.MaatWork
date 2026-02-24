@@ -6,7 +6,7 @@ COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 COPY packages ./packages
 COPY apps ./apps
-COPY scripts ./scripts
+RUN pnpm install --frozen-lockfile --prod=false --filter=!@maatwork/analytics-service
 COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 
