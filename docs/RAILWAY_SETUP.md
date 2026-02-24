@@ -139,3 +139,15 @@ This will trigger automatic deployments via GitHub Actions.
 - Wait up to 24 hours for DNS propagation
 - Verify Cloudflare DNS records match Railway requirements
 - Check SSL certificate status in Railway dashboard
+
+## Legacy Documentation (Archived)
+
+The following deployment documentation has been archived as MaatWork migrates to Railway:
+
+### Archived Files
+- ~~`docs/deployment/production-terraform.md`~~ - Terraform for AWS production deployment
+
+### Active Documentation
+- `docs/RAILWAY_SETUP.md` - Current Railway deployment guide (this file)
+- `docs/deployment/README.md` - General deployment selection guide (still relevant)
+- `docs/deployment/mvp-quickstart.md` - Local Docker development (still relevant)
