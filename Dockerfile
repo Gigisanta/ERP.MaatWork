@@ -7,7 +7,7 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 COPY scripts ./scripts
-RUN pnpm install && pnpm --filter @maatwork/api run build:tsc
+RUN pnpm install && pnpm run build --filter=@maatwork/api
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
 USER nodejs
