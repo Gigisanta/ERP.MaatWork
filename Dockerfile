@@ -8,6 +8,7 @@ RUN corepack enable && corepack prepare pnpm@9.10.0 --activate
 COPY pnpm-lock.yaml ./
 COPY package.json ./pnpm-workspace.yaml ./
 COPY turbo.json ./
+COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
@@ -22,8 +23,7 @@ COPY --from=deps /app/pnpm-lock.yaml ./
 COPY --from=deps /app/package.json ./package.json
 COPY --from=deps /app/pnpm-workspace.yaml ./
 COPY --from=deps /app/turbo.json ./
-COPY --from=deps /app/packages ./packages
-COPY --from=deps /app/pnpm-workspace.yaml ./
+COPY --from=deps /app/tsconfig.base.json ./
 COPY --from=deps /app/packages ./packages
 COPY --from=deps /app/apps ./apps
 COPY --from=deps /app/scripts ./scripts
