@@ -7,7 +7,7 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 COPY scripts ./scripts
-RUN pnpm install --frozen-lockfile && pnpm run build --filter=@maatwork/api --filter=@maatwork/web
+RUN pnpm install && pnpm run build --filter=@maatwork/api --filter=@maatwork/web
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
 USER nodejs
