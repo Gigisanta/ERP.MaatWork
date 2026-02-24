@@ -7,13 +7,9 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 COPY apps/web ./apps/web
 COPY scripts ./scripts
-RUN pnpm install --frozen-lockfile
-RUN pnpm run build --filter=@maatwork/api --filter=@maatwork/web
+RUN pnpm install --frozen-lockfile && pnpm run build --filter=@maatwork/api --filter=@maatwork/web
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
-COPY apps/api/dist ./dist
-COPY apps/api/package.json ./package.json
-COPY node_modules ./node_modules
 USER nodejs
 EXPOSE 3001
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/api/dist/index.js"]
