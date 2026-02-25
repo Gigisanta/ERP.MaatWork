@@ -1,0 +1,18 @@
+{
+  "name": "@maatwork/analytics-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Python FastAPI microservice for financial calculations and market data",
+  "scripts": {
+    "dev": "python main.py",
+    "install": "node ../../scripts/install-python-deps.js",
+    "check": "python --version",
+    "start": "python main.py",
+    "test": "python -m pytest tests/",
+    "test:unit": "python -m pytest tests/",
+    "test:coverage": "python -m pytest tests/ --cov=. --cov-report=xml"
+  },
+  "engines": {
+    "python": ">=3.10.0"
+  }
+}

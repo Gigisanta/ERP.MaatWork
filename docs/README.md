@@ -1,5 +1,22 @@
 # Documentación del Proyecto MAATWORK
 
+## 🚀 Production Deployment (Railway)
+
+**Live URL:** https://maatwork-production.up.railway.app
+
+**Branch:** `feature/railway-migration`
+
+**Configuración:**
+- Root Directory: `/`
+- Build: `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Solo se deploya la web app a Railway. API y analytics corren localmente.
+
+---
+
+Índice principal de toda la documentación técnica del proyecto.
+
 Índice principal de toda la documentación técnica del proyecto.
 
 ## 🚀 Inicio Rápido

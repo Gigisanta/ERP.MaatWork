@@ -2,133 +2,168 @@
 
 ## Overview
 
-Railway has **built-in GitHub integration** for automatic deployments - this is the recommended approach, not GitHub Actions workflows.
+Rail-in GitHub integrationway has **built** for automatic deployments. 
+
+**Current Status:** ✅ **DEPLOYED**
+- **URL:** https://maatwork-production.up.railway.app
+- **Branch:** `feature/railway-migration`
+- **Service:** Web (Next.js) only
+
+## What Was Deployed
+
+| Service | Status | Notes |
+|---------|--------|-------|
+| Web (Next.js) | ✅ Active | Only service deployed |
+| API (Express) | ❌ Not deployed | Runs locally |
+| Analytics (Python) | ❌ Not deployed | Runs locally |
+| PostgreSQL | Optional | Can be added if needed |
 
 ## Setup Steps
 
 ### 1. Connect GitHub Repository to Railway
 
-1. Go to: https://railway.com/project/8156c542-b896-48b8-afd0-192602b02d44
+1. Go to: https://railway.com/project/aa4efbfc-a325-4ff4-b28c-680c8fbedfba
 2. Click "New Service" → "GitHub"
 3. Click "Connect a repository"
 4. Select: `Gigisanta/MaatWork`
-5. Select branch: `master` (or `feature/railway-migration`)
+5. Select branch: `feature/railway-migration`
 6. Click "Deploy"
 
-This will create services automatically from GitHub with proper build configuration.
+### 2. Configure Service
 
-### 2. Configure Services
-
-After connecting GitHub, Railway will create services automatically:
-
-**API Service:**
-- Root Directory: `.` (repo root)
-- Builder: Dockerfile
-- Build Command: `pnpm run build --filter=@maatwork/api`
-- Start Command: `node apps/api/dist/index.js`
+After connecting GitHub, Railway will create a service. Configure it:
 
 **Web Service:**
-- Root Directory: `.` (repo root)
-- Builder: Dockerfile
-- Build Command: `pnpm run build --filter=@maatwork/web`
-- Start Command: `node apps/web/server.js`
+- Root Directory: `/` (CRITICAL!)
+- Builder: Nixpacks (auto-detected)
+- Build Command: 
+  ```
+  pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build
+  ```
+- Start Command: `pnpm -F @maatwork/web start`
+- Port: 3000 (auto-detected)
 
-### 3. Add PostgreSQL Database
+### 3. Important: Don't Use Standalone Mode
 
-**Via Dashboard:**
-1. Click "New Service" → "Database" → "PostgreSQL"
-2. Service name: `maatwork-db`
-3. Click "Create Database"
+⚠️ **CRITICAL:** Do NOT set `output: 'standalone'` in next.config.js or build.js.
 
-**Via CLI (non-interactive):**
-```bash
-# Create database service
-railway add --service maatwork-db --database postgres
+Using standalone mode causes **502 Application failed to respond** errors because Railway's proxy can't connect to the container properly.
+
+**Correct next.config.js:**
+```javascript
+// DON'T use output: 'standalone'
+module.exports = {
+  // ... other config
+  // output: 'standalone',  // REMOVE THIS!
+};
 ```
 
-### 4. Configure Environment Variables
-
-**API Service:**
+**Correct start command:**
 ```bash
-# Reference PostgreSQL database
-railway variable --service maatwork-api set DATABASE_URL
+# CORRECT - Use standard next start
+pnpm -F @maatwork/web start
 
-# Set other variables
-railway variable --service maatwork-api set PORT=3001
+# WRONG - This causes 502 errors
+node .next/standalone/apps/web/server.js
 ```
 
-**Web Service:**
-```bash
-# Set API URL (get from Railway dashboard after API is deployed)
-railway variable --service maatwork-web set NEXT_PUBLIC_API_URL=https://<api-domain>
-```
-
-### 5. Configure Custom Domains
-
-**API Domain (api.maat.work):**
-```bash
-railway domain --service maatwork-api api.maat.work
-```
-
-**Web Domain (maat.work):**
-```bash
-railway domain --service maatwork-web maat.work
-```
-
-Then add DNS records to Cloudflare:
-- **API**: CNAME `api` → Railway value
-- **Web**: CNAME `@` → Railway value
-
-### 6. Remove Manual GitHub Actions Workflow
-
-Since Railway handles deployments automatically:
+### 4. Trigger Deployment
 
 ```bash
-rm .github/workflows/deploy-railway.yml
-git add .github/workflows/deploy-railway.yml
-git commit -m "chore: remove manual GitHub Actions workflow (using Railway native integration)"
-git push
+# Push to the configured branch
+git push origin feature/railway-migration
 ```
 
-## Final Verification
+Railway will automatically detect the push and start deployment.
 
-After setup, verify automatic deployment works:
+### 5. Verify Deployment
 
 ```bash
-# Make a small change
-echo "# test" >> apps/api/README.md
+# Check deployment status
+railway deployment list
 
-# Commit and push
-git add apps/api/README.md
-git commit -m "test: verify automatic deployment"
-git push origin master
+# View logs
+railway logs --lines 100
+
+# Test the app
+curl https://maatwork-production.up.railway.app
 ```
 
-Then check Railway dashboard - deployment should start automatically.
+---
+
+## Common Issues and Solutions
+
+### 502 Application Failed to Respond
+
+**Cause:** App starts but Railway proxy can't connect
+
+**Solution:**
+1. Check start command is `pnpm -F @maatwork/web start`
+2. Remove `output: 'standalone'` from next.config
+3. Ensure PORT is set to 3000
+4. Check build logs for errors
+
+### Build Fails: Package Not Found
+
+**Cause:** Root Directory is wrong
+
+**Solution:**
+1. Go to Railway Dashboard → Service → Settings
+2. Set Root Directory to `/` (not `apps/web`)
+3. Redeploy
+
+### Build Fails: pnpm Not Found
+
+**Cause:** Railway can't detect pnpm
+
+**Solution:**
+1. Ensure pnpm is in package.json
+2. Check that corepack is enabled
+3. Try adding to build command: `corepack enable && pnpm install`
+
+---
+
+## CLI Reference
+
+```bash
+# Link project (if needed)
+railway link aa4efbfc-a325-4ff4-b28c-680c8fbedfba
+
+# Trigger deployment
+railway up --detach
+
+# Redeploy
+railway redeploy --yes
+
+# View logs
+railway logs --lines 100
+
+# Open dashboard
+railway open
+
+# Get domain
+railway domain
+```
+
+---
 
 ## Benefits of Railway Native Integration
 
 1. **Zero Configuration** - No GitHub Actions workflow needed
-2. **Automatic Detection** - Detects Dockerfile and builds automatically
+2. **Automatic Detection** - Detects Node.js/pnpm and builds automatically
 3. **Instant Deployment** - Deploys on every push to configured branch
 4. **Built-in Logs** - View build and runtime logs in Railway dashboard
 5. **One-Click Rollbacks** - Instant rollback to previous deployment
 
-## CLI Reference for Non-Interactive Setup
+---
 
-```bash
-# Link project
-railway link 8156c542-b896-48b8-afd0-192602b02d44
+## Notes
 
-# Set variables (non-interactive)
-railway variable --service <service> set KEY=value
+- Only the Next.js web app is deployed. API and analytics run locally or in separate environments.
+- The deployment is on the `feature/railway-migration` branch
+- Production URL: https://maatwork-production.up.railway.app
 
-# Add domain (non-interactive)
-railway domain --service <service> <domain>
+---
 
-# Deploy (non-interactive)
-railway up . --detach
-
-# Get service status
-railway service status --all
-```
+**Last Updated:** 2026-02-25
+**Status:** ✅ Production Ready

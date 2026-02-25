@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "declaration": false,
+    "sourceMap": false,
+    // AI_DECISION: Habilitar incremental builds con cache persistente
+    // Justificación: Incremental builds reducen tiempo de typecheck 15-25% en builds subsiguientes
+    // Impacto: Typecheck más rápido, especialmente útil en desarrollo con cambios frecuentes
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "baseUrl": ".",
+    "paths": {
+      "@maatwork/db": ["../../packages/db/src/index.ts"],
+      "@maatwork/db/*": ["../../packages/db/src/*"],
+      "@maatwork/ui": ["../../packages/ui/src/index.ts"],
+      "@maatwork/ui/*": ["../../packages/ui/src/*"],
+      "@maatwork/types": ["../../packages/types/src/index.ts"],
+      "@maatwork/types/*": ["../../packages/types/src/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/routes/*": ["src/routes/*"],
+      "@/services/*": ["src/services/*"],
+      "@/config/*": ["src/config/*"],
+      "@/types/*": ["src/types/*"],
+      "@/auth/*": ["src/auth/*"],
+      "@/middleware/*": ["src/middleware/*"]
+    },
+    "types": ["node"],
+    "typeRoots": ["../../node_modules/@types", "./node_modules/@types"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts", "node_modules", "dist"]
+}

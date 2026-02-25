@@ -1,0 +1,1392 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@cactus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+    devDependencies:
+      typescript:
+        specifier: ^5.2.2
+        version: 5.9.3
+
+  ../..: {}
+
+  ../../../../..: {}
+
+  ../../../../../AppData/Local/Datos de programa/Microsoft/TypeScript/5.8: {}
+
+  ../../../../../AppData/Local/Datos de programa/Microsoft/TypeScript/5.9: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/LM Studio/resources/app: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/bat: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/clojure: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/coffeescript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/cpp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/csharp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/css: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/css-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/dart: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/diff: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/docker: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/emmet: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/extension-editing: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/fsharp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/git: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/git-base: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/github: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/github-authentication: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/go: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/groovy: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/grunt: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/gulp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/handlebars: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/hlsl: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/html: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/html-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ini: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ipynb: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/jake: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/java: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/javascript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/json: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/json-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/julia: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/latex: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/less: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/log: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/lua: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/make: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/markdown-math: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/media-preview: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/npm: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/objective-c: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/perl: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/php: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/php-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/powershell: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/prompt-basics: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/pug: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/python: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/r: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/razor: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/references-view: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/ruby: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/rust: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/scss: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/search-result: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/shaderlab: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/shellscript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/simple-browser: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/sql: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/swift: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-red: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-seti: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/vb: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/xml: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/Microsoft VS Code/resources/app/extensions/yaml: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/bat: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/clojure: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/coffeescript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cpp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/csharp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/css: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/css-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-always-local: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-deeplink: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-file-service: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-retrieval: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-shadow-workspace: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/cursor-tokenize: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/dart: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/diff: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/docker: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/emmet: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/extension-editing: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/fsharp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/git: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/git-base: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/github: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/github-authentication: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/go: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/groovy: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/grunt: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/gulp: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/handlebars: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/hlsl: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/html: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/html-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ini: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ipynb: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/jake: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/java: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/javascript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/json: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/json-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/julia: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/latex: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/less: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/log: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/lua: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/make: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/markdown-math: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/media-preview: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/npm: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/objective-c: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ocaml: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/perl: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/php: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/php-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/powershell: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/pug: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/python: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/r: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/razor: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/references-view: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/ruby: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/rust: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/scss: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/search-result: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/shaderlab: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/shellscript: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/simple-browser: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/sql: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/swift: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-cursor: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-red: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-seti: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/vb: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/vscode-jupyter-keymap: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/xml: {}
+
+  ../../../../../AppData/Local/Datos de programa/Programs/cursor/_/resources/app/extensions/yaml: {}
+
+  ../../../../../AppData/Local/Datos de programa/node/corepack/v1/pnpm/10.17.1: {}
+
+  ../../../../../AppData/Local/Datos de programa/node/corepack/v1/pnpm/10.18.0: {}
+
+  ../../../../../AppData/Local/Datos de programa/node/corepack/v1/pnpm/9.10.0: {}
+
+  ../../../../../AppData/Local/Datos de programa/node/corepack/v1/yarn/1.22.22: {}
+
+  ../../../../../AppData/Local/Datos de programa/npm-cache/_npx/1415fee72ff6294b: {}
+
+  ../../../../../AppData/Local/Datos de programa/npm-cache/_npx/1d6e82a4126006c4: {}
+
+  ../../../../../AppData/Local/Datos de programa/npm-cache/_npx/7c7555b0b81cc7e0: {}
+
+  ../../../../../AppData/Local/Datos de programa/npm-cache/_npx/9ca470fa61f45e06: {}
+
+  ../../../../../AppData/Local/Datos de programa/npm-cache/_npx/cc2145a2fe1558fa: {}
+
+  ../../../../../AppData/Local/Datos de programa/pnpm-cache/dlx/743f51a37374e6cb0e9d38e826cfed3ef552727be45bbb6b4cb396d9e6ac201a/1999dae4db1-1fec: {}
+
+  ../../../../../AppData/Local/Microsoft/TypeScript/5.8: {}
+
+  ../../../../../AppData/Local/Microsoft/TypeScript/5.9: {}
+
+  ../../../../../AppData/Local/Programs/LM Studio/resources/app: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/bat: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/clojure: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/coffeescript: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/cpp: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/csharp: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/css: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/css-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/dart: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/diff: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/docker: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/emmet: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/extension-editing: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/fsharp: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/git: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/git-base: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/github: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/github-authentication: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/go: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/groovy: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/grunt: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/gulp: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/handlebars: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/hlsl: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/html: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/html-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ini: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ipynb: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/jake: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/java: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/javascript: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/json: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/json-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/julia: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/latex: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/less: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/log: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/lua: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/make: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/markdown-math: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/media-preview: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/npm: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/objective-c: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/perl: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/php: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/php-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/powershell: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/prompt-basics: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/pug: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/python: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/r: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/razor: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/references-view: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/ruby: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/rust: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/scss: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/search-result: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/shaderlab: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/shellscript: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/simple-browser: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/sql: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/swift: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-red: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-seti: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/vb: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/xml: {}
+
+  ../../../../../AppData/Local/Programs/Microsoft VS Code/resources/app/extensions/yaml: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/bat: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/clojure: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/coffeescript: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cpp: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/csharp: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/css: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/css-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-always-local: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-deeplink: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-file-service: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-retrieval: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-shadow-workspace: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/cursor-tokenize: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/dart: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/diff: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/docker: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/emmet: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/extension-editing: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/fsharp: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/git: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/git-base: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/github: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/github-authentication: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/go: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/groovy: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/grunt: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/gulp: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/handlebars: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/hlsl: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/html: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/html-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ini: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ipynb: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/jake: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/java: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/javascript: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/json: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/json-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/julia: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/latex: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/less: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/log: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/lua: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/make: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/markdown-math: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/media-preview: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/npm: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/objective-c: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ocaml: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/perl: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/php: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/php-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/powershell: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/pug: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/python: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/r: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/razor: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/references-view: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/ruby: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/rust: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/scss: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/search-result: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/shaderlab: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/shellscript: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/simple-browser: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/sql: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/swift: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-cursor: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-red: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-seti: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/vb: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/vscode-jupyter-keymap: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/xml: {}
+
+  ../../../../../AppData/Local/Programs/cursor/_/resources/app/extensions/yaml: {}
+
+  ../../../../../AppData/Local/node/corepack/v1/pnpm/10.17.1: {}
+
+  ../../../../../AppData/Local/node/corepack/v1/pnpm/10.18.0: {}
+
+  ../../../../../AppData/Local/node/corepack/v1/pnpm/9.10.0: {}
+
+  ../../../../../AppData/Local/node/corepack/v1/yarn/1.22.22: {}
+
+  ../../../../../AppData/Local/npm-cache/_npx/1415fee72ff6294b: {}
+
+  ../../../../../AppData/Local/npm-cache/_npx/1d6e82a4126006c4: {}
+
+  ../../../../../AppData/Local/npm-cache/_npx/7c7555b0b81cc7e0: {}
+
+  ../../../../../AppData/Local/npm-cache/_npx/9ca470fa61f45e06: {}
+
+  ../../../../../AppData/Local/npm-cache/_npx/cc2145a2fe1558fa: {}
+
+  ../../../../../AppData/Local/pnpm-cache/dlx/743f51a37374e6cb0e9d38e826cfed3ef552727be45bbb6b4cb396d9e6ac201a/1999dae4db1-1fec: {}
+
+  ../../../../../AppData/Local/pnpm-cache/dlx/743f51a37374e6cb0e9d38e826cfed3ef552727be45bbb6b4cb396d9e6ac201a/pkg: {}
+
+  ../../../../../Configuración local/Microsoft/TypeScript/5.8: {}
+
+  ../../../../../Configuración local/Microsoft/TypeScript/5.9: {}
+
+  ../../../../../Configuración local/Programs/LM Studio/resources/app: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/bat: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/clojure: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/coffeescript: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/cpp: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/csharp: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/css: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/css-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/dart: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/diff: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/docker: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/emmet: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/extension-editing: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/fsharp: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/git: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/git-base: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/github: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/github-authentication: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/go: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/groovy: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/grunt: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/gulp: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/handlebars: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/hlsl: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/html: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/html-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ini: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ipynb: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/jake: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/java: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/javascript: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/json: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/json-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/julia: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/latex: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/less: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/log: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/lua: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/make: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/markdown-math: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/media-preview: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/npm: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/objective-c: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/perl: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/php: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/php-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/powershell: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/prompt-basics: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/pug: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/python: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/r: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/razor: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/references-view: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/ruby: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/rust: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/scss: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/search-result: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/shaderlab: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/shellscript: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/simple-browser: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/sql: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/swift: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-red: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-seti: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/vb: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/xml: {}
+
+  ../../../../../Configuración local/Programs/Microsoft VS Code/resources/app/extensions/yaml: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/bat: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/clojure: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/coffeescript: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/configuration-editing: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cpp: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/csharp: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/css: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/css-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/css-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-always-local: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-deeplink: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-file-service: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-retrieval: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-shadow-workspace: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/cursor-tokenize: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/dart: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/debug-auto-launch: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/debug-server-ready: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/diff: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/docker: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/emmet: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/extension-editing: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/fsharp: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/git: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/git-base: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/github: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/github-authentication: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/go: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/groovy: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/grunt: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/gulp: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/handlebars: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/hlsl: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/html: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/html-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/html-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ini: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ipynb: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/jake: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/java: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/javascript: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/json: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/json-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/json-language-features/server: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/julia: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/latex: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/less: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/log: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/lua: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/make: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/markdown-basics: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/markdown-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/markdown-math: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/media-preview: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/merge-conflict: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/microsoft-authentication: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ms-vscode.js-debug-companion: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ms-vscode.vscode-js-profile-table: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/notebook-renderers: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/npm: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/objective-c: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ocaml: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/perl: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/php: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/php-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/powershell: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/pug: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/python: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/r: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/razor: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/references-view: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/restructuredtext: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/ruby: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/rust: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/scss: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/search-result: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/shaderlab: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/shellscript: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/simple-browser: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/sql: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/swift: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/terminal-suggest: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-abyss: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-cursor: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-defaults: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-kimbie-dark: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-monokai: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-monokai-dimmed: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-quietlight: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-red: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-seti: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-solarized-dark: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-solarized-light: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/theme-tomorrow-night-blue: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/tunnel-forwarding: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/typescript-basics: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/typescript-language-features: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/vb: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/vscode-jupyter-keymap: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/xml: {}
+
+  ../../../../../Configuración local/Programs/cursor/_/resources/app/extensions/yaml: {}
+
+  ../../../../../Configuración local/node/corepack/v1/pnpm/10.17.1: {}
+
+  ../../../../../Configuración local/node/corepack/v1/pnpm/10.18.0: {}
+
+  ../../../../../Configuración local/node/corepack/v1/pnpm/9.10.0: {}
+
+  ../../../../../Configuración local/node/corepack/v1/yarn/1.22.22: {}
+
+  ../../../../../Configuración local/npm-cache/_npx/1415fee72ff6294b: {}
+
+  ../../../../../Configuración local/npm-cache/_npx/1d6e82a4126006c4: {}
+
+  ../../../../../Configuración local/npm-cache/_npx/7c7555b0b81cc7e0: {}
+
+  ../../../../../Configuración local/npm-cache/_npx/9ca470fa61f45e06: {}
+
+  ../../../../../Configuración local/npm-cache/_npx/cc2145a2fe1558fa: {}
+
+  ../../../../../Configuración local/pnpm-cache/dlx/743f51a37374e6cb0e9d38e826cfed3ef552727be45bbb6b4cb396d9e6ac201a/1999dae4db1-1fec: {}
+
+  ../../../../../OneDrive/Escritorio/Business API/backend: {}
+
+  ../../../../../OneDrive/Escritorio/Business API/frontend: {}
+
+  ../../../../../OneDrive/Escritorio/CERTIFICADOS/Portafolio: {}
+
+  ../../../../../OneDrive/Escritorio/Laburo jony/apibilletera: {}
+
+  ../../../../../OneDrive/Escritorio/Laburo jony/arriba-billetera-web-cliente: {}
+
+  ../../../../../OneDrive/Escritorio/Laburo jony/arriba-billetera-web-cliente/src/material-dashboard-2-pro-react-v2.1.0: {}
+
+  ../../../../../OneDrive/Escritorio/Laburo jony/backendbilleteraapp: {}
+
+  ../../../../../OneDrive/Escritorio/Laburo jony/web_comercio: {}
+
+  ../../../../../OneDrive/Escritorio/LinkedinBot 2: {}
+
+  ../../../../../OneDrive/Escritorio/LinkedinBot 2/ui: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/Backend Relojes: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/Camara fabri/camara-fabri: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/Catmosphere-Office/frontend-astro: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/CodoACodoFRONT/CodoACodoFRONT: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/CommandLinkScreening: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/CommandLinkScreening/api: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/DOGTOPIA/Backend-PI-DOGS: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/DOGTOPIA/PI-DOGS: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/MERCADO DE NEGOCIOS/mercadoDeNegociosBACKEND: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/MERCADO DE NEGOCIOS/mercadoDeNegociosFRONT: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/SPOTIFY CLONE: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/StoriScreening: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/StoriScreening/api: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/StoriScreening/storiscreening: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/saas-starter-next-fastapi/frontend: {}
+
+  ../../../../../OneDrive/Escritorio/Proyectos JONY/tienda-online: {}
+
+  ../../../../HIBE AI/hibe_backend: {}
+
+  ../../../../HIBE AI/united-roofing-crew-frontend: {}
+
+  ../../../../PERSONAL/CACTUS: {}
+
+  ../../../../PERSONAL/CACTUS-master: {}
+
+  ../../../../PERSONAL/CACTUS-master/apps/api: {}
+
+  ../../../../PERSONAL/CACTUS-master/apps/web: {}
+
+  ../../../../PERSONAL/CACTUS-master/packages/database: {}
+
+  ../../../../PERSONAL/CACTUS-master/packages/shared: {}
+
+  ../../../../PERSONAL/CACTUS-master/tests: {}
+
+  ../../../../PERSONAL/CACTUS/apps/api: {}
+
+  ../../../../PERSONAL/CACTUS/apps/web: {}
+
+  ../../../../PERSONAL/CACTUS/packages/db: {}
+
+  ../../../GraphQL Practice 2/backend: {}
+
+  ../../../GraphQL Practice 2/frontend: {}
+
+  ../../../GraphQL practice: {}
+
+  ../../../HIBE AI: {}
+
+  ../../../blogny: {}
+
+  ../../packages/db: {}
+
+  ../../packages/ui: {}
+
+  ../web: {}
+
+packages:
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  typescript@5.9.3: {}

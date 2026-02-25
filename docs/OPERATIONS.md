@@ -202,6 +202,63 @@ pnpm -F @maatwork/web start
 pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 ```
 
+---
+
+### Deploy en Railway (Producción)
+
+**URL:** https://maatwork-production.up.railway.app
+
+**Configuración:**
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `/` |
+| Build Command | `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build` |
+| Start Command | `pnpm -F @maatwork/web start` |
+| Port | 3000 (auto-detected) |
+
+**Notas importantes:**
+
+- **Solo se deploya la web app** - No API ni analytics
+- **NO usar standalone mode** - Causa errores 502
+- **Comandos:**
+
+```bash
+# Trigger deployment
+git push origin feature/railway-migration
+
+# O usar CLI
+railway up --detach
+
+# Ver logs
+railway logs --lines 100
+
+# Redeploy
+railway redeploy --yes
+```
+
+**Errores comunes:**
+
+1. **502 Application failed to respond:**
+   - Verificar que el start command sea `pnpm -F @maatwork/web start`
+   - NO usar `output: 'standalone'` en next.config
+   - Verificar PORT = 3000
+
+2. **Build fails:**
+   - Verificar Root Directory sea `/`
+   - Verificar pnpm está disponible
+
+```bash
+# Build de producción
+pnpm -F @maatwork/web build
+
+# Iniciar servidor de producción
+pnpm -F @maatwork/web start
+
+# O usar PM2
+pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
+```
+
 ### Variables de Entorno en Producción
 
 **API (`apps/api/.env`):**

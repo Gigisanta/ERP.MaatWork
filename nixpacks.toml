@@ -1,0 +1,10 @@
+[build]
+command = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
+
+[start]
+command = "node apps/api/dist/index.js"
+port = 3001
+
+[variables]
+NODE_ENV = "production"
+PORT = "3001"

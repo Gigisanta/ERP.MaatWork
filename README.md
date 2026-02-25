@@ -1,5 +1,41 @@
 # MAATWORK Monorepo
 
+## 🚀 Production Deployment (Railway)
+
+**Live URL:** https://maatwork-production.up.railway.app
+
+### Railway Configuration
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `/` |
+| Build Command | `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build` |
+| Start Command | `pnpm -F @maatwork/web start` |
+
+### Important Notes
+
+- **Web-only deployment**: Only the Next.js web app is deployed to Railway (not API or analytics)
+- **No standalone mode**: The web app uses standard `next start` (standalone mode caused 502 errors)
+- **Environment**: Production branch `feature/railway-migration` is deployed automatically
+
+### Trigger Deployment
+
+```bash
+# Push to feature/railway-migration to trigger deployment
+git push origin feature/railway-migration
+
+# Or use Railway CLI
+railway up --detach
+```
+
+---
+
+## Development (Local)
+
+## autopush
+
+ssh abax "cd abax/scripts && bash deploy.sh --skip-tests"
+
 ## autopush
 
 ssh abax "cd abax/scripts && bash deploy.sh --skip-tests"
@@ -165,6 +201,44 @@ Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas 
 ---
 
 ## Troubleshooting
+
+### Errores Comunes de Deployment (Railway)
+
+#### Error: Build falla en monorepo
+
+**Causa**: Root Directory configurado en `apps/` en lugar de `/`
+
+**Solución**:
+1. En Railway dashboard → servicio → "Settings"
+2. Cambiar "Root Directory" a `/`
+3. Redeploy
+
+#### Error: 502 Application failed to respond
+
+**Causa**: La app está corriendo pero Railway no puede conectarse
+
+**Solución**:
+1. Verificar que el comando Start sea `pnpm -F @maatwork/web start`
+2. Verificar que PORT esté configurado como variable de entorno (Railway lo provee automáticamente)
+3. **NO usar output: standalone** - Esto causa 502 errores en Railway
+4. Verificar que el build haya completado correctamente
+
+#### Error: Migraciones fallan
+
+**Causa**: `preDeployCommand` falla antes del deployment
+
+**Solución**:
+1. Ver logs de deployment en Railway dashboard
+2. Ejecutar manualmente: `pnpm --filter @maatwork/db migrate`
+
+#### Error: Cannot connect to database
+
+**Causa**: `DATABASE_URL` no referenciada correctamente
+
+**Solución**:
+1. Verificar servicio PostgreSQL está corriendo
+2. En servicio API → "Variables"
+3. Click "Ref" button al lado de `DATABASE_URL`
 
 ### Errores Comunes de Deployment (Railway)
 
