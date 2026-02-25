@@ -207,9 +207,11 @@ function main() {
   // Verificar pip
   const pipCmd = findPipCommand(python.cmd);
   if (!pipCmd) {
-    console.log(error('❌ pip no está disponible'));
-    console.log(error('   Instala pip ejecutando: python -m ensurepip --upgrade'));
-    process.exit(1);
+    console.log(warning('⚠️  pip no está disponible'));
+    console.log(warning('   El servicio de analytics no tendrá todas las dependencias'));
+    console.log(warning('   Para habilitarlo, instala pip: python -m ensurepip --upgrade'));
+    console.log(warning('   Continuando sin dependencias Python...'));
+    process.exit(0); // No bloquear pnpm install - cambio para Railway
   }
 
   try {
