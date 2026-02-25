@@ -460,7 +460,33 @@ pkill -f "tsx watch src/index.ts"
 pkill -f "next dev"
 pkill -f "python.*main.py"
 pkill -f "uvicorn.*main:app"
+pkill -f "uvicorn.*main:app"
 ```
+
+#### Deployment en Railway falla
+
+**Síntomas:** El build de Railway falla durante `pnpm install`
+
+**Soluciones:**
+
+1. **Error: "pip no está disponible"**
+   - El script `scripts/install-python-deps.js` intenta instalar dependencias Python del analytics-service
+   - Railway no tiene pip instalado por defecto
+   - **Solución:** El script ahora maneja este caso gracefully y continúa sin bloquear el deployment
+   - Si persiste, establecer variable de entorno `SKIP_PYTHON_INSTALL=true` en Railway
+
+2. **Error: Root Directory incorrecto**
+   - Si el build falla buscando archivos en `/app/scripts/`
+   - En Railway dashboard → servicio → "Settings"
+   - Verificar "Root Directory" esté configurado como `/` (no `apps/`)
+
+3. **Error: Migraciones fallan**
+   - Verificar que `DATABASE_URL` esté configurado correctamente
+   - En servicio API → "Variables" → click "Ref" al lado de DATABASE_URL
+
+4. **Verificar deployment:**
+   - Revisar logs en Railway dashboard para errores específicos
+   - El API deploya con: `pnpm --filter @maatwork/api start`
 
 #### Servicio Analytics (Python) no inicia
 
