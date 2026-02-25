@@ -1,0 +1,47 @@
+# Nixpacks configuration for @maatwork/web (Next.js 15)
+# This config replaces Dockerfile for Railway deployment
+# Railway will use this automatically when builder = "nixpacks" in railway.toml
+
+[phases.setup]
+# Install pnpm globally before any other setup
+nixPkgs = ["nodejs-22"]
+cmds = [
+  "corepack enable && corepack prepare pnpm@9.10.0 --activate"
+]
+
+[phases.build]
+# Install dependencies and build Next.js app
+cmds = [
+  "pnpm install --frozen-lockfile",
+  "pnpm -F @maatwork/web build"
+]
+
+[phases.build.nixpkgsArchive]
+# Use nixpkgs-unstable for latest Node.js versions
+url = "https://github.com/NixOS/nixpkgs/archive/nixpkgs-unstable.tar.gz"
+
+[phases.build.nixPkgs]
+# Node.js 22 (matches project requirements)
+nodejs = "22"
+
+[phases.start]
+# Start Next.js production server
+cmds = ["pnpm -F @maatwork/web start"]
+
+[phases.start.nixPkgs]
+# Runtime dependencies
+nodejs = "22"
+
+[variables]
+# Environment variables for the build process
+NODE_ENV = "production"
+# Next.js 15 requires output mode for standalone deployment
+# This is configured in next.config.js but we ensure it here
+OUTPUT = "standalone"
+
+[deploy]
+# Health check configuration
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

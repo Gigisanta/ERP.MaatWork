@@ -1,11 +1,11 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "./apps/web/Dockerfile"
-watchPaths = ["packages", "apps/web"]
+# Use Nixpacks builder instead of Dockerfile
+builder = "nixpacks"
+# Root directory is "/" for monorepo, Railway service should be configured this way
 
 [deploy]
-startCommand = "node server.js"
+startCommand = "pnpm -F @maatwork/web start"
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

@@ -1,0 +1,48 @@
+# Ignore files for Railway deployment to reduce build time and context size
+
+# Dependencies (Railway will install these)
+node_modules/
+.pnpm-store/
+
+# Build artifacts (except what's needed for deployment)
+.next/cache/
+.turbo/
+dist/
+coverage/
+
+# Git
+.git/
+.gitignore
+
+# Development files
+.env*
+*.log
+.DS_Store
+*.swp
+*.swo
+
+# Testing
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Documentation (not needed for deployment)
+docs/
+README.md
+CONTRIBUTING.md
+
+# IDE files
+.vscode/
+.idea/
+.cursor/
+
+# Temporary files
+.tmp/
+.cache/
+*.tmp
+
+# Docker (using Nixpacks instead)
+Dockerfile
+.dockerignore
