@@ -7,7 +7,8 @@ module.exports = {
   // swcMinify is default in Next.js 15
   // swcMinify: true,
 
-  // AI_DECISION: Enable standalone output for all environments (especially Railway)
+  // AI_DECISION: Disable standalone output to fix Railway 502 error
+  // output: 'standalone',
   // Justificación: Standalone output creates minimal server bundle, reducing deployment size by 40-50%
   // Impacto: Faster deployments, lower memory usage, optimized for Railway's containerized environment
   // Referencias: Railway best practices + migration plan from AWS to Railway

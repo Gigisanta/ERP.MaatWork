@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "node .next/standalone/apps/web/server.js",
+    "start": "next start",
     "lint": "eslint .",
     "test": "COVERAGE=false vitest run",
     "test:unit": "COVERAGE=false vitest run",
