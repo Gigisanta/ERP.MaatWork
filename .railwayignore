@@ -44,5 +44,11 @@ CONTRIBUTING.md
 *.tmp
 
 # Docker (using Nixpacks instead)
+# Docker (using Nixpacks instead)
 Dockerfile
+.dockerignore
+
+# Exclude API and analytics - only deploy web for now
+apps/api/
+apps/analytics-service/
 .dockerignore
