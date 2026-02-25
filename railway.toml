@@ -1,0 +1,67 @@
+# Railway Monorepo Configuration
+# This file configures all services for the MaatWork monorepo deployment
+
+# ========================================
+# GLOBAL SETTINGS
+# ========================================
+[build]
+# All services use Nixpacks builder
+# Railway will auto-detect nixpacks.toml files in each service directory
+# Root Directory for all services should be set to \"/\" in Railway dashboard
+
+# ========================================
+# API SERVICE
+# ========================================
+[service.api]
+name = \"api\"
+rootDirectory = \"/\"
+configPath = \"apps/api/nixpacks.toml\"
+runtime = \"nodejs\"
+startCommand = \"node dist/index.js\"
+healthcheckPath = \"/health\"
+
+# API Environment Variables (set in Railway dashboard)
+# DATABASE_URL = <Ref PostgreSQL service>
+# NODE_ENV = production
+# PORT = 3001
+# JWT_SECRET = <generate secure secret>
+
+# ========================================
+# WEB SERVICE
+# ========================================
+[service.web]
+name = \"web\"
+rootDirectory = \"/\"
+configPath = \"apps/web/nixpacks.toml\"
+runtime = \"nodejs\"
+startCommand = \"pnpm -F @maatwork/web start\"
+healthcheckPath = \"/\"
+
+# Web Environment Variables (set in Railway dashboard)
+# NODE_ENV = production
+# PORT = 3000
+# NEXT_PUBLIC_API_URL = <API Railway URL>
+# NEXT_PUBLIC_APP_URL = <Web Railway URL>
+
+# ========================================
+# ANALYTICS SERVICE
+# ========================================
+[service.analytics]
+name = \"analytics\"
+rootDirectory = \"/\"
+configPath = \"apps/analytics-service/nixpacks.toml\"
+runtime = \"python\"
+startCommand = \"uvicorn main:app --host 0.0.0.0 --port $PORT\"
+healthcheckPath = \"/health\"
+
+# Analytics Environment Variables (set in Railway dashboard)
+# DATABASE_URL = <Ref PostgreSQL service>
+# NODE_ENV = production
+# PORT = 3002
+# LOG_LEVEL = info
+# Defines all services with Nixpacks builder configuration
+
+# Global settings
+[build]
+# Use Nixpacks for all services - Railway will auto-detect nixpacks.toml files
+# This can also be explicitly set as "nixpacks"
