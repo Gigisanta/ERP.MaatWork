@@ -1,0 +1,13 @@
+[build]
+# Use Nixpacks builder
+builder = "nixpacks"
+# Root directory is "/" for monorepo
+# Build all dependencies in correct order, then build the API app
+buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
+
+[deploy]
+startCommand = "pnpm -F @maatwork/api start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
