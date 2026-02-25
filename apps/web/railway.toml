@@ -1,12 +1,9 @@
 [build]
-# Use Nixpacks builder instead of Dockerfile
+# Use Nixpacks builder
 builder = "nixpacks"
-# Root directory is "/" for monorepo, Railway service should be configured this way
-# Build command: build dependencies first, then web
+# Root directory is "/" for monorepo
+# Build all dependencies in correct order, then build the web app
 buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build"
-# Use Nixpacks builder instead of Dockerfile
-builder = "nixpacks"
-# Root directory is "/" for monorepo, Railway service should be configured this way
 
 [deploy]
 startCommand = "pnpm -F @maatwork/web start"

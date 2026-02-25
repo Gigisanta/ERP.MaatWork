@@ -1,20 +1,12 @@
 [build]
-# Use Nixpacks builder instead of Dockerfile
+# Use Nixpacks builder
 builder = "nixpacks"
-# Root directory is "/" for monorepo, Railway service should be configured this way
-# Build command: build dependencies first, then api
+# Root directory is "/" for monorepo
+# Build all dependencies in correct order, then build the API app
 buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
-# Use Nixpacks builder instead of Dockerfile
-builder = "nixpacks"
-# Root directory is "/" for monorepo, Railway service should be configured this way
-# Build command: build dependencies first, then api
-buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
-# Use Nixpacks builder instead of Dockerfile
-builder = "nixpacks"
-# Root directory is "/" for monorepo, Railway service should be configured this way
 
 [deploy]
-startCommand = "node dist/index.js"
+startCommand = "pnpm -F @maatwork/api start"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
