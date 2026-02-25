@@ -31,7 +31,7 @@ function getBaseUrl(request: NextRequest): string {
   }
 
   // Último fallback a request.url
-  return request.nextUrl.origin.href;
+  return request.nextUrl.origin;
 }
 
 // Rutas públicas que no requieren autenticación
@@ -62,8 +62,10 @@ export async function proxy(request: NextRequest) {
     // Impacto: Forces cookie cleanup to break the infinite redirect loop
     const errorParam = request.nextUrl.searchParams.get('error');
     if (errorParam === 'unauthorized') {
-      logger.warn('[Middleware] Detected unauthorized redirect loop - Clearing token cookie', { ...loggerContext });
-      
+      logger.warn('[Middleware] Detected unauthorized redirect loop - Clearing token cookie', {
+        ...loggerContext,
+      });
+
       // AI_DECISION: Redirect to clean /login instead of next()
       // Justificación: next() keeps the same request context (with old cookies) for the Server Component.
       //                Redirecting forces a fresh request where the browser has already removed the cookie.
@@ -167,10 +169,10 @@ export async function proxy(request: NextRequest) {
 
   if (!token) {
     // Redirigir al login con la URL de destino completa (incluyendo query params)
-  const loginUrl = new URL('/login', baseUrl);
-  const fullPath = pathname + (request.nextUrl.search || '');
-  loginUrl.searchParams.set('redirect', fullPath);
-  return NextResponse.redirect(loginUrl);
+    const loginUrl = new URL('/login', baseUrl);
+    const fullPath = pathname + (request.nextUrl.search || '');
+    loginUrl.searchParams.set('redirect', fullPath);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Validar el JWT
