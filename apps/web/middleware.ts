@@ -42,7 +42,7 @@ const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
 const JWT_ISSUER = 'maatwork-api';
 const JWT_AUDIENCE = 'maatwork-web';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // AI_DECISION: Generar o propagar X-Request-ID para trazabilidad
