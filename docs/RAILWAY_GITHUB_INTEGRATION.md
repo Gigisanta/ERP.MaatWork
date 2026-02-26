@@ -5,6 +5,9 @@
 Railway has **built-in GitHub integration** for automatic deployments on branch push.
 
 **Current Status:**
+- **Web URL:** https://maatwork-production.up.railway.app ✅ Working (HTTP 200)
+- **API URL:** https://maatwork-api-production.up.railway.app ⚠️ Complex Turborepo setup
+- **Branch:** `feature/railway-migration`
 - **Web URL:** https://maatwork-production.up.railway.app ✅ Working
 - **API URL:** https://maatwork-api-production.up.railway.app (needs service creation)
 - **Branch:** `feature/railway-migration`
