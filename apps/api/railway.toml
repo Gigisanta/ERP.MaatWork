@@ -1,45 +1,18 @@
 # Railway configuration for API service
-# Using Dockerfile builder for more control
 
 [railway]
 service = "API"
 
 [build]
-builder = "docker"
-dockerfilePath = "apps/api/Dockerfile"
-
-[deploy]
-startCommand = "node /app/apps/api/dist/index.js"
-healthcheckPath = "/health"
-healthcheckTimeout = 60
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
-# This deploys the Express API as a separate service
-
-[railway]
-# Service name in Railway dashboard
-service = "API"
-
-[build]
-# Use Nixpacks to detect Node.js
 builder = "nixpacks"
-
-# Build command - build from root to access shared packages
-# Note: Don't use --frozen-lockfile as the lockfile might be out of sync
 buildCommand = "pnpm install && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
 
 [nixpacks]
-# Node.js version
 node_version = "22"
 
 [deploy]
-# Start command for API
 startCommand = "pnpm -F @maatwork/api start"
-
-# Health check
 healthcheckPath = "/health"
 healthcheckTimeout = 60
-
-# Restart policy
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
