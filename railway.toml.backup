@@ -1,8 +1,8 @@
 [railway]
 # Railway will auto-detect services from monorepo structure
 
-[build]
 # Override the build command to build specific packages in order
+[build]
 command = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build && pnpm -F @maatwork/web build"
 
 # Use Nixpacks (default)
