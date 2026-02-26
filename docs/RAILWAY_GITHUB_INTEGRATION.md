@@ -5,18 +5,18 @@
 Railway has **built-in GitHub integration** for automatic deployments on branch push.
 
 **Current Status:**
-- **Web URL:** https://maatwork-production.up.railway.app ✅
-- **API URL:** https://maatwork-api-production.up.railway.app (in progress)
+- **Web URL:** https://maatwork-production.up.railway.app ✅ Working
+- **API URL:** https://maatwork-api-production.up.railway.app (needs service creation)
 - **Branch:** `feature/railway-migration`
 
 ## What Was Deployed
 
 | Service | Status | Notes |
 |---------|--------|-------|
-| Web (Next.js) | ✅ Active | Deployed |
-| API (Express) | 🔄 In Progress | Deploying |
-| Analytics (Python) | ❌ Pending | Not deployed yet |
-| PostgreSQL | ✅ Active | Database service |
+| Web (Next.js) | ✅ Active | Deployed and working |
+| API (Express) | ⚠️ Needs Setup | Requires manual service creation |
+| Analytics (Python) | ⚠️ Needs Setup | Requires manual service creation |
+| PostgreSQL | ⚠️ Needs Setup | Requires manual database creation |
 
 ---
 
@@ -57,58 +57,75 @@ Railway automatically deploys when you push to the connected branch. To deploy f
 
 ---
 
-## Setup Steps
+## Manual Setup Required
 
-### 1. Connect GitHub Repository to Railway
+Due to Railway's architecture, **new services must be created manually** through the dashboard. Here's what you need to do:
+
+### 1. Create API Service
 
 1. Go to: https://railway.com/project/aa4efbfc-a325-4ff4-b28c-680c8fbedfba
-2. Click "New Service" → "GitHub"
-3. Click "Connect a repository"
-4. Select: `Gigisanta/MaatWork`
-5. Select branch: `master` (for auto-deploy on master)
-6. Click "Deploy"
+2. Click **"New Service"** → **"GitHub"**
+3. Select repository: `Gigisanta/MaatWork`
+4. Select branch: `feature/railway-migration`
+5. **Root Directory:** `apps/api`
+6. **Build Command:**
+   ```
+   pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build
+   ```
+7. **Start Command:** `pnpm -F @maatwork/api start`
+8. **Port:** `3001`
+9. Click **"Deploy"**
 
-### 2. Configure Service
+### 2. Create Analytics Service (Python)
 
-**Web Service:**
-- Root Directory: `/` (CRITICAL!)
-- Builder: Nixpacks (auto-detected)
-- Build Command: 
-  ```
-  pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build
-  ```
-- Start Command: `pnpm -F @maatwork/web start`
-- Port: 3000 (auto-detected)
+1. Go to: https://railway.com/project/aa4efbfc-a325-4ff4-b28c-680c8fbedfba
+2. Click **"New Service"** → **"GitHub"**
+3. Select repository: `Gigisanta/MaatWork`
+4. Select branch: `feature/railway-migration`
+5. **Root Directory:** `apps/analytics-service`
+6. **Builder:** Nixpacks (auto-detects Python)
+7. **Python Version:** `3.11`
+8. **Start Command:** `python main.py`
+9. Click **"Deploy"**
 
-### 3. Important: Don't Use Standalone Mode
+### 3. Add PostgreSQL Database
 
-⚠️ **CRITICAL:** Do NOT set `output: 'standalone'` in next.config.js or build.js.
+1. Go to: https://railway.com/project/aa4efbfc-a325-4ff4-b28c-680c8fbedfba
+2. Click **"New Service"** → **"Database"**
+3. Select **"PostgreSQL"**
+4. Wait for the database to provision
+5. Once created, the `DATABASE_URL` will be automatically available to all services
 
-Using standalone mode causes **502 Application failed to respond** errors because Railway's proxy can't connect to the container properly.
+### 4. Connect Database to Services
 
-### 4. Trigger Deployment
+1. Go to each service (Web, API)
+2. Click **"Variables"** tab
+3. Add a reference to `DATABASE_URL` from the PostgreSQL service
+4. Redeploy each service
+
+### 5. Run Database Migrations
+
+After the database is connected, run migrations:
 
 ```bash
-# Push to master for auto-deployment
-git checkout master
-git merge feature/railway-migration
-git push origin master
+# Connect to Railway shell
+railway run --service api -- pnpm -F @maatwork/db migrate
+
+# Or use Railway's run command
+railway run --service api -- npx drizzle-kit migrate
 ```
 
-Railway will automatically detect the push and start deployment.
+---
 
-### 5. Verify Deployment
+## Configuration Files
 
-```bash
-# Check deployment status
-railway deployment list
+The following configuration files are already in place:
 
-# View logs
-railway logs --lines 100
-
-# Test the app
-curl https://maatwork-production.up.railway.app
-```
+- `railway.toml` - Root configuration for main service
+- `apps/web/railway.toml` - Web service configuration
+- `apps/api/railway.toml` - API service configuration
+- `apps/analytics-service/railway.toml` - Analytics service configuration
+- `railway.json` - Monorepo service definitions
 
 ---
 
@@ -136,13 +153,13 @@ railway domain
 
 ---
 
-## Notes
+## Important Notes
 
 - The deployment is on the `feature/railway-migration` branch currently
 - Production URL: https://maatwork-production.up.railway.app
-- API URL: https://maatwork-api-production.up.railway.app
+- API URL: https://maatwork-api-production.up.railway.app (after service creation)
 
 ---
 
 **Last Updated:** 2026-02-25
-**Status:** ✅ Production Ready (Web), 🔄 In Progress (API)
+**Status:** ⚠️ Setup Required - Manual service creation needed
