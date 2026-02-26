@@ -1,4 +1,13 @@
-# MAATWORK Monorepo
+#ZH|# MAATWORK Monorepo
+#KM|
+#PH|## 🚀 Production Deployment (Railway)
+#RW|
+#KX|**Live URLs:**
+#SY|
+#KJ|- **Web:** https://maatwork-production.up.railway.app
+#KJ|- **API:** https://maatwork-api-production.up.railway.app (deploying)
+#XW|
+#JK|Railway Configuration
 
 ## 🚀 Production Deployment (Railway)
 
