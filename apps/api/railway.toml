@@ -4,14 +4,11 @@
 service = "API"
 
 [build]
-builder = "nixpacks"
-buildCommand = "pnpm install && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
-
-[nixpacks]
-node_version = "22"
+builder = "docker"
+dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
-startCommand = "pnpm -F @maatwork/api start"
+startCommand = "node /app/apps/api/dist/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
