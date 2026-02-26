@@ -1,0 +1,28 @@
+# Railway configuration for Analytics Service - Python FastAPI
+
+[railway]
+# Service name in Railway dashboard
+service = "Analytics"
+
+[build]
+# Use Nixpacks
+builder = "nixpacks"
+
+# Root directory for isolated monorepo
+root = "apps/analytics-service"
+
+[nixpacks]
+# Python version
+python_version = "3.11"
+
+[deploy]
+# Start command
+startCommand = "python main.py"
+
+# Health check
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

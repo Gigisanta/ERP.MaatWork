@@ -1,0 +1,32 @@
+# Railway configuration for API service
+# This deploys the Express API as a separate service
+
+[railway]
+# Service name in Railway dashboard
+service = "API"
+
+[build]
+# Use Nixpacks to detect Node.js
+builder = "nixpacks"
+
+# Build command - build from root to access shared packages
+buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
+
+[nixpacks]
+# Node.js version
+node_version = "22"
+
+[deploy]
+# Start command for API
+startCommand = "pnpm -F @maatwork/api start"
+
+# Health check
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+
+# Port
+port = 3001
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
