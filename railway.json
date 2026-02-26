@@ -6,7 +6,7 @@
       "path": "apps/web",
       "build": {
         "builder": "nixpacks",
-        "buildCommand": "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build"
+        "buildCommand": "pnpm install && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build"
       },
       "deploy": {
         "numReplicas": 1,
@@ -21,7 +21,7 @@
       "path": "apps/api",
       "build": {
         "builder": "nixpacks",
-        "buildCommand": "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
+        "buildCommand": "pnpm install && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
       },
       "deploy": {
         "numReplicas": 1,
