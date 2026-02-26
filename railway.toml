@@ -1,33 +1,5 @@
 # Root Railway configuration for monorepo
-# This deploys API as the main service on port 3001
-
-[railway]
-# Service name
-service = "MaatWork"
-
-[build]
-# Build command - build all packages including both API and Web
-builder = "nixpacks"
-buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/api build && pnpm -F @maatwork/web build"
-
-[nixpacks]
-node_version = "22"
-
-[deploy]
-# Start command - API runs on port 3001
-startCommand = "pnpm -F @maatwork/api start"
-
-# Health check
-healthcheckPath = "/health"
-healthcheckTimeout = 300
-
-# Port
-port = 3001
-
-# Restart policy
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 10
-# This deploys both Web and API from the same service
+# Deploys Web app (Next.js) as the main service
 
 [railway]
 # Service name
@@ -36,19 +8,21 @@ service = "MaatWork"
 [build]
 # Build command - build all packages
 builder = "nixpacks"
-buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/api build && pnpm -F @maatwork/web build"
+buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build"
 
 [nixpacks]
 node_version = "22"
 
 [deploy]
-# Start both web and API using concurrently
-# Note: This runs both on the same container - for production, consider separate services
-startCommand = "npx concurrently \"pnpm -F @maatwork/web start\" \"pnpm -F @maatwork/api start\""
+# Start command - Web runs on port 3000
+startCommand = "pnpm -F @maatwork/web start"
 
-# Health check - use web health
+# Health check
 healthcheckPath = "/"
 healthcheckTimeout = 300
+
+# Port
+port = 3000
 
 # Restart policy
 restartPolicyType = "ON_FAILURE"
