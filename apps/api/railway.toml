@@ -10,7 +10,8 @@ service = "API"
 builder = "nixpacks"
 
 # Build command - build from root to access shared packages
-buildCommand = "pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
+# Note: Don't use --frozen-lockfile as the lockfile might be out of sync
+buildCommand = "pnpm install && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/api build"
 
 [nixpacks]
 # Node.js version
@@ -23,9 +24,6 @@ startCommand = "pnpm -F @maatwork/api start"
 # Health check
 healthcheckPath = "/health"
 healthcheckTimeout = 60
-
-# Port
-port = 3001
 
 # Restart policy
 restartPolicyType = "ON_FAILURE"
