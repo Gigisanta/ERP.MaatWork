@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "packageManager": "pnpm@9.10.0",
   "scripts": {
-    "build": "node scripts/railway-build.js",
     "build": "turbo run build",
     "build:clean": "turbo run build:clean && turbo run build",
     "setup": "tsx scripts/setup.js",
