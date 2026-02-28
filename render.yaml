@@ -31,8 +31,7 @@ services:
       pnpm --filter @maatwork/web build
       cp -r apps/web/public apps/web/.next/standalone/apps/web/public
       cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
-    startCommand: |
-      node apps/web/.next/standalone/apps/web/server.js
+    startCommand: node apps/web/.next/standalone/apps/web/server.js
     envVars:
       - key: NODE_VERSION
         value: '22'
@@ -59,19 +58,6 @@ services:
     region: oregon
     plan: free
     branch: master
-    buildFilter:
-      paths:
-        - apps/api/**
-        - packages/**
-        - pnpm-lock.yaml
-        - package.json
-        - pnpm-workspace.yaml
-        - turbo.json
-      ignoredPaths:
-        - apps/web/**
-        - apps/analytics-service/**
-        - docs/**
-        - .github/**
     buildCommand: |
       corepack enable
       corepack prepare pnpm@latest --activate
