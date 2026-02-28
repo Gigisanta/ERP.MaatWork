@@ -6,6 +6,11 @@ import { eq } from 'drizzle-orm';
 import { getCachedUser, setCachedUser } from './cache';
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  // DIAGNOSTIC LOGGING
+  if (req.url.includes('health')) {
+    console.warn(`[DIAGNOSTIC] requireAuth called for HEALTH CHECK path: ${req.url}`);
+  }
+
   try {
     let token: string | undefined;
     const auth = req.headers.authorization;
@@ -184,4 +189,3 @@ export function requireContactAccess(req: Request, res: Response, next: NextFunc
  * Solo admin tiene acceso a gestión de usuarios, configuración del sistema, etc.
  * Staff puede hacer tareas operativas pero NO administrar usuarios
  */
-
