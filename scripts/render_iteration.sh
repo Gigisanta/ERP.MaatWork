@@ -45,7 +45,7 @@ SUSPENDED=$(render services list --output json | jq -r '.[] | select(.service.id
 if [ "$SUSPENDED" == "suspended" ]; then
     echo -e "${RED}Warning: Service is suspended. Attempting to resume...${NC}"
     # render doesn't have a direct 'unsuspend' command in help, usually 'restart' or a new deploy triggers it
-    render deploys create --service-id "$API_SERVICE_ID"
+    render deploys create "$API_SERVICE_ID"
 fi
 
 # Step 3: Wait for Deploys
