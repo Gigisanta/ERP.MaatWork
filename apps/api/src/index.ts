@@ -117,9 +117,11 @@ if (isProduction) {
 // CORS MUST be first, before any other middleware including body parsers
 // CORS config - restrict origins for security
 const corsOptions: CorsOptions = {
-  origin: process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3000'],
+  origin: isProduction
+    ? ['https://web-production-ea17c.up.railway.app', 'https://maatwork-web.up.railway.app']
+    : process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',')
+      : ['http://localhost:3000'],
   credentials: true,
 };
 app.use(cors(corsOptions));
