@@ -10,7 +10,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    branch: main
+    branch: master
     buildFilter:
       paths:
         - apps/web/**
@@ -49,7 +49,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    branch: main
+    branch: master
     buildFilter:
       paths:
         - apps/api/**
