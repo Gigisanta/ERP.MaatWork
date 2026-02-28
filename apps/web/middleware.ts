@@ -36,7 +36,7 @@ function getBaseUrl(request: NextRequest): string {
 
 // Rutas públicas que no requieren autenticación
 // Nota: Todas las demás rutas están protegidas por defecto
-const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
+const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon', '/health'];
 
 // Configuración de JWT (Sincronizado con apps/api/src/auth/jwt.ts)
 const JWT_ISSUER = 'maatwork-api';
@@ -270,6 +270,6 @@ export const config = {
      *                causando errores de Service Worker registration
      * Impacto: PWA funciona correctamente, archivos estáticos no pasan por auth
      */
-    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|manifest.webmanifest|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
+    '/((?!api|health|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|manifest.webmanifest|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
   ],
 };
