@@ -125,7 +125,19 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
 
     // Establecer cookie del servidor
     const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 días o 1 día
-    res.cookie('token', token, getAuthCookieOptions(maxAge));
+    const options = getAuthCookieOptions(maxAge);
+    req.log.info(
+      {
+        origin: req.headers.origin,
+        host: req.headers.host,
+        cookieDomain: options.domain,
+        secure: options.secure,
+        sameSite: options.sameSite,
+        isAdmin: true,
+      },
+      '[AUTH_DIAGNOSTIC] Admin session creation'
+    );
+    res.cookie('token', token, options);
 
     const duration = Date.now() - startTime;
     req.log.info(
@@ -268,7 +280,19 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
   // Justificación: Configuración centralizada asegura que cookies se creen y limpien correctamente en producción
   // Impacto: Cookies con domain correcto (.maat.work) cuando COOKIE_DOMAIN está configurado
   const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // 30 días o 1 día
-  res.cookie('token', token, getAuthCookieOptions(maxAge));
+  const options = getAuthCookieOptions(maxAge);
+  req.log.info(
+    {
+      origin: req.headers.origin,
+      host: req.headers.host,
+      cookieDomain: options.domain,
+      secure: options.secure,
+      sameSite: options.sameSite,
+      isAdmin: false,
+    },
+    '[AUTH_DIAGNOSTIC] User session creation'
+  );
+  res.cookie('token', token, options);
 
   const duration = Date.now() - startTime;
   req.log.info(

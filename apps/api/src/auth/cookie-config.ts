@@ -18,33 +18,38 @@ import type { CookieOptions } from 'express';
  * These options must match exactly between setCookie and clearCookie calls
  * for cookies to be properly cleared.
  */
-export function getAuthCookieOptions(maxAge?: number): CookieOptions {
+export const getAuthCookieOptions = (maxAge?: number): CookieOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 
-  // AI_DECISION: Switch to standard 'lax' and host-only cookies
-  // Justificación: 'SameSite=None' was causing issues with Cloudflare/Browser delivery.
-  //                'Lax' is the standard for top-level navigation in single-domain apps.
-  //                Removing explicit 'domain' makes it a "Host-Only" cookie, which is safer
-  //                and less prone to rejection.
+  // AI_DECISION: Set SameSite=None for production to support cross-domain cookie delivery
+  // Justificación: Railway Web and API services run on different subdomains (up.railway.app).
+  //                'Lax' prevents the cookie from being sent on cross-site requests to the API.
+  //                'None' with 'Secure' is required for production cross-domain persistence.
   const options: CookieOptions = {
     httpOnly: true,
-    secure: isProduction, // MUST be true in production
-    sameSite: 'lax', // Standardize on Lax for stability
+    secure: isProduction, // true en prod
+    sameSite: isProduction ? 'none' : 'lax', // 'none' en prod para cross-domain Railway
     path: '/',
+    maxAge: maxAge || 24 * 60 * 60 * 1000,
+    domain: cookieDomain,
   };
 
-  // AI_DECISION: Set explicit domain if provided to support subdomains (e.g., .maat.work)
-  // Justificación: Required for sharing cookies between api.maat.work and maat.work
-  if (isProduction && process.env.COOKIE_DOMAIN) {
-    options.domain = process.env.COOKIE_DOMAIN;
-  }
-
-  if (maxAge !== undefined) {
-    options.maxAge = maxAge;
+  // HYPER-DIAGNOSTIC LOG FOR PRODUCTION
+  if (isProduction) {
+    console.log(
+      `[COOKIE_DIAGNOSTIC] Generated: ${JSON.stringify({
+        domain: options.domain || 'BROWSER_DEFAULT',
+        secure: options.secure,
+        sameSite: options.sameSite,
+        path: options.path,
+        maxAge: options.maxAge,
+      })}`
+    );
   }
 
   return options;
-}
+};
 
 /**
  * Get debug information about cookie options (for logging)
