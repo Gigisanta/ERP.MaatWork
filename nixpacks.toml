@@ -8,9 +8,14 @@ nixPkgs = ["nodePackages.pnpm"]
 dependsOn = ["setup"]
 cmds = ["pnpm install"]
 
-[phases.build]
+[phases.build_api]
+dependsOn = ["install"]
+cmds = ["pnpm -F @maatwork/api build"]
+
+[phases.build_web]
 dependsOn = ["install"]
 cmds = ["pnpm -F @maatwork/web build"]
 
+# The start command will be overridden by the RAILS_START_COMMAND env var in Railway
 [start]
-cmd = "pnpm -F @maatwork/web start"
+cmd = "node index.js" 
