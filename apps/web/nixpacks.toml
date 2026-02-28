@@ -1,0 +1,16 @@
+[build]
+builder = "nixpacks"
+
+[phases.setup]
+nixPkgs = ["nodePackages.pnpm"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["pnpm install"]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["pnpm -F @maatwork/web build"]
+
+[start]
+cmd = "pnpm -F @maatwork/web start"
