@@ -72,7 +72,7 @@ wait_for_deploy() {
 
         # In v2, deploys list returns an array of objects.
         # We need to check if ANY recent deploy is 'live' or wait for the LATEST one.
-        DEPLOY_INFO=$(render deploys list --service-id "$service_id" --output json | jq -r '.[0]')
+        DEPLOY_INFO=$(render deploys list "$service_id" --output json | jq -r '.[0]')
         STATUS=$(echo "$DEPLOY_INFO" | jq -r '.status')
         
         echo -e "Current status of $service_name: ${GREEN}$STATUS${NC} (${ELAPSED}s elapsed)"
@@ -80,9 +80,9 @@ wait_for_deploy() {
         if [ "$STATUS" == "live" ]; then
             echo -e "${GREEN}✓ $service_name is LIVE!${NC}"
             break
-        elif [ "$STATUS" == "failed" ] || [ "$STATUS" == "canceled" ]; then
+        elif [ "$STATUS" == "failed" ] || [ "$STATUS" == "build_failed" ] || [ "$STATUS" == "canceled" ]; then
             echo -e "${RED}✗ $service_name deploy $STATUS.${NC}"
-            render logs "$service_id" --limit 50
+            # render logs "$service_id" --limit 50 
             exit 1
         fi
         sleep 45
@@ -94,7 +94,8 @@ wait_for_deploy "$MAIN_SERVICE_ID" "MaatWork"
 # Step 4: Health Check
 echo -e "${BLUE}Step 4: Running production health checks...${NC}"
 # Based on discovery, URL is maatwork.onrender.com (which points to apps/api)
-curl -f https://maatwork.onrender.com/health || (echo -e "${RED}API Health Check Failed${NC}" && exit 1)
+# We check both possible suffixes
+curl -f https://maatwork.onrender.com/health || curl -f https://maatwork-api.onrender.com/health || (echo -e "${RED}API Health Check Failed${NC}" && exit 1)
 echo -e "${GREEN}✓ API Health OK${NC}"
 
 # Step 5: Playwright E2E
