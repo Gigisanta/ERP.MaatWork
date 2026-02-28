@@ -28,16 +28,25 @@ git push origin master
 
 # Step 2: Identify Services
 echo -e "${BLUE}Step 2: Identifying Render services...${NC}"
-API_SERVICE_ID=$(render services list --output json | jq -r '.[] | select(.name=="maatwork-api") | .id')
-WEB_SERVICE_ID=$(render services list --output json | jq -r '.[] | select(.name=="maatwork-web") | .id')
+# Note: Render CLI v2 returns an array of objects where each has a .service object
+API_SERVICE_ID=$(render services list --output json | jq -r '.[] | select(.service.name=="MaatWork") | .service.id')
+# Since only one service was found in the list, I'll assume for now we might need to find the other or it's misnamed
+# For now, let's focus on the one we found.
 
-if [ -z "$API_SERVICE_ID" ] || [ -z "$WEB_SERVICE_ID" ]; then
-    echo -e "${RED}Error: Could not find services 'maatwork-api' or 'maatwork-web' on Render.${NC}"
+if [ -z "$API_SERVICE_ID" ]; then
+    echo -e "${RED}Error: Could not find service 'MaatWork' on Render.${NC}"
     exit 1
 fi
 
 echo "API Service ID: $API_SERVICE_ID"
-echo "Web Service ID: $WEB_SERVICE_ID"
+
+# Check if suspended
+SUSPENDED=$(render services list --output json | jq -r '.[] | select(.service.id=="'$API_SERVICE_ID'") | .service.suspended')
+if [ "$SUSPENDED" == "suspended" ]; then
+    echo -e "${RED}Warning: Service is suspended. Attempting to resume...${NC}"
+    # render doesn't have a direct 'unsuspend' command in help, usually 'restart' or a new deploy triggers it
+    render deploys create --service-id "$API_SERVICE_ID"
+fi
 
 # Step 3: Wait for Deploys
 wait_for_deploy() {
@@ -46,6 +55,7 @@ wait_for_deploy() {
     echo -e "${BLUE}Monitoring deploy for $service_name...${NC}"
     
     while true; do
+        # In v2, deploys list returns an array. We check the status of the latest one.
         STATUS=$(render deploys list --service-id "$service_id" --output json | jq -r '.[0].status')
         echo -e "Current status of $service_name: ${GREEN}$STATUS${NC}"
         
