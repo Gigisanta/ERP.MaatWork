@@ -1,6 +1,7 @@
 {
   "name": "@maatwork/web",
-  "version": "1.0.0",
+  "version": "0.1.1",
+  "description": "MaatWork Web Application - Production Corrected",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
