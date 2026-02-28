@@ -28,24 +28,28 @@ git push origin master
 
 # Step 2: Identify Services
 echo -e "${BLUE}Step 2: Identifying Render services...${NC}"
-# Note: Render CLI v2 returns an array of objects where each has a .service object
-API_SERVICE_ID=$(render services list --output json | jq -r '.[] | select(.service.name=="MaatWork") | .service.id')
-# Since only one service was found in the list, I'll assume for now we might need to find the other or it's misnamed
-# For now, let's focus on the one we found.
+SERVICES_JSON=$(render services list --output json)
 
-if [ -z "$API_SERVICE_ID" ]; then
-    echo -e "${RED}Error: Could not find service 'MaatWork' on Render.${NC}"
+# Focus on services in 'Production' environment or with 'MaatWork' in name
+MAIN_SERVICE_ID=$(echo "$SERVICES_JSON" | jq -r '.[] | select(.service.name=="MaatWork") | .service.id')
+
+if [ -z "$MAIN_SERVICE_ID" ]; then
+    echo -e "${RED}Error: Could not find main service 'MaatWork' on Render.${NC}"
     exit 1
 fi
 
-echo "API Service ID: $API_SERVICE_ID"
+echo "Main Service ID: $MAIN_SERVICE_ID"
 
-# Check if suspended
-SUSPENDED=$(render services list --output json | jq -r '.[] | select(.service.id=="'$API_SERVICE_ID'") | .service.suspended')
+# Check status and resume if needed
+STATUS_DATA=$(echo "$SERVICES_JSON" | jq -r '.[] | select(.service.id=="'$MAIN_SERVICE_ID'") | .service')
+SUSPENDED=$(echo "$STATUS_DATA" | jq -r '.suspended')
+
 if [ "$SUSPENDED" == "suspended" ]; then
-    echo -e "${RED}Warning: Service is suspended. Attempting to resume...${NC}"
-    # render doesn't have a direct 'unsuspend' command in help, usually 'restart' or a new deploy triggers it
-    render deploys create "$API_SERVICE_ID"
+    echo -e "${RED}Warning: Service is suspended. Attempting to Restart...${NC}"
+    # render restart [resourceID]
+    render restart "$MAIN_SERVICE_ID" --confirm
+    echo "Restart command sent. Waiting for deployment to trigger..."
+    sleep 30
 fi
 
 # Step 3: Wait for Deploys
@@ -54,10 +58,24 @@ wait_for_deploy() {
     local service_name=$2
     echo -e "${BLUE}Monitoring deploy for $service_name...${NC}"
     
+    local start_time=$(date +%s)
+    local timeout=2700 # 45 minutes
+    
     while true; do
-        # In v2, deploys list returns an array. We check the status of the latest one.
-        STATUS=$(render deploys list --service-id "$service_id" --output json | jq -r '.[0].status')
-        echo -e "Current status of $service_name: ${GREEN}$STATUS${NC}"
+        CURRENT=$(date +%s)
+        ELAPSED=$((CURRENT - start_time))
+        
+        if [ $ELAPSED -gt $timeout ]; then
+            echo -e "${RED}Timeout waiting for $service_name to go live.${NC}"
+            exit 1
+        fi
+
+        # In v2, deploys list returns an array of objects.
+        # We need to check if ANY recent deploy is 'live' or wait for the LATEST one.
+        DEPLOY_INFO=$(render deploys list --service-id "$service_id" --output json | jq -r '.[0]')
+        STATUS=$(echo "$DEPLOY_INFO" | jq -r '.status')
+        
+        echo -e "Current status of $service_name: ${GREEN}$STATUS${NC} (${ELAPSED}s elapsed)"
         
         if [ "$STATUS" == "live" ]; then
             echo -e "${GREEN}✓ $service_name is LIVE!${NC}"
@@ -67,18 +85,21 @@ wait_for_deploy() {
             render logs "$service_id" --limit 50
             exit 1
         fi
-        sleep 30
+        sleep 45
     done
 }
 
-wait_for_deploy "$API_SERVICE_ID" "maatwork-api"
-wait_for_deploy "$WEB_SERVICE_ID" "maatwork-web"
+wait_for_deploy "$MAIN_SERVICE_ID" "MaatWork"
 
 # Step 4: Health Check
 echo -e "${BLUE}Step 4: Running production health checks...${NC}"
-curl -f https://maatwork-api.onrender.com/health || (echo -e "${RED}API Health Check Failed${NC}" && exit 1)
+# Based on discovery, URL is maatwork.onrender.com (which points to apps/api)
+curl -f https://maatwork.onrender.com/health || (echo -e "${RED}API Health Check Failed${NC}" && exit 1)
 echo -e "${GREEN}✓ API Health OK${NC}"
 
 # Step 5: Playwright E2E
 echo -e "${BLUE}Step 5: Running Playwright Production E2E...${NC}"
-pnpm exec playwright test --config playwright.config.ts --project=chromium --grep "production"
+# Note: Ensure playwright is targeting https://maatwork.onrender.com
+# Use an env var if the config supports it
+export PRODUCTION_URL="https://maatwork.onrender.com"
+pnpm exec playwright test --config playwright.config.ts --project=chromium
