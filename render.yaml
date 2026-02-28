@@ -29,12 +29,19 @@ services:
       corepack prepare pnpm@latest --activate
       pnpm install --frozen-lockfile
       pnpm --filter @maatwork/web build
-    startCommand: pnpm --filter @maatwork/web start
+    startCommand: |
+      corepack enable
+      corepack prepare pnpm@latest --activate
+      pnpm --filter @maatwork/web start
     envVars:
       - key: NODE_VERSION
         value: '22'
       - key: NODE_ENV
         value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: '1'
+      - key: DISABLE_ESLINT_PLUGIN
+        value: 'true'
       - key: NEXT_PUBLIC_API_URL
         value: https://maatwork-api.onrender.com
     healthCheckPath: /

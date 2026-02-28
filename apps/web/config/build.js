@@ -13,9 +13,14 @@ module.exports = {
   // Solo transpilar @maatwork/ui
   transpilePackages: ['@maatwork/ui', '@maatwork/types'],
 
-  serverExternalPackages: ['@maatwork/db'],
+  // generateBuildId: async () => {
+  //   return 'my-build-id';
+  // },
 
-  // Use Turbopack with empty config to allow webpack overrides
-  turbopack: {},
-  turbopack: false,
+  // Experimental features
+  experimental: {
+    // optimizeCss: true,
+  },
+
+  serverExternalPackages: ['@maatwork/db'],
 };
