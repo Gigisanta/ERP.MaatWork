@@ -1,5 +1,5 @@
 // IMPORTANTE: Cargar variables de entorno PRIMERO antes de cualquier otro import
-// REGLA CURSOR: No alterar orden de imports - variables de entorno deben cargarse primero
+// TRIGGER REDEPLOY: Diagnostic session tracing
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 

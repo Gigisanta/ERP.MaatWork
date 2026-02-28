@@ -1,4 +1,5 @@
 import { AuthProvider } from './auth/AuthContext';
+// TRIGGER REDEPLOY: Diagnostic session tracing v2
 import ThemeProviderWrapper from './components/ThemeProviderWrapper';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import NavigationNew from './components/NavigationNew';
