@@ -6,7 +6,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import dotenv from 'dotenv';
-import { getTestConfig } from './scripts/adaptive-test-config.mjs';
+import { getTestConfig } from './scripts/adaptive-test-config.ts';
 
 // Load env vars for the config itself if needed
 dotenv.config();
