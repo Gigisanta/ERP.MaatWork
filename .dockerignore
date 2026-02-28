@@ -1,0 +1,36 @@
+# Dependencies
+#node_modules/
+.pnpm-store/
+
+# Build outputs
+apps/*/dist/
+!apps/api/dist/
+apps/*/.next/
+!apps/web/.next/
+packages/*/dist/
+
+# Turbo
+.turbo/
+node_modules/.cache/
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+__tests__/
+
+# Docs outputs
+docs/.vitepress/cache/

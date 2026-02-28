@@ -211,7 +211,7 @@ function main() {
     console.log(warning('   El servicio de analytics no tendrá todas las dependencias'));
     console.log(warning('   Para habilitarlo, instala pip: python -m ensurepip --upgrade'));
     console.log(warning('   Continuando sin dependencias Python...'));
-    process.exit(0); // No bloquear pnpm install - cambio para Railway
+    process.exit(0); // No bloquear pnpm install - cambio para Fly.io
   }
 
   try {

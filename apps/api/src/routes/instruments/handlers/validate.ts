@@ -12,7 +12,7 @@ import type {
   ExternalCodes,
 } from '../../../types/python-service';
 import { isConnectionError } from '../../../types/python-service';
-import { PYTHON_SERVICE_URL } from '../utils';
+import { PYTHON_SERVICE_URL, pythonClient } from '../../../utils/http/python-client';
 
 /**
  * GET /search/validate/:symbol
@@ -33,20 +33,20 @@ export async function validateSymbol(req: Request, res: Response) {
     let validationResult: SymbolValidationResponse | null = null;
     let usedFallback = false;
 
-    // Try Python service first
+    // Try Python service first with centralized client
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch(`${PYTHON_SERVICE_URL}/search/validate/${symbolUpper}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
+      const response = await pythonClient.get<SymbolSearchResponse>(
+        `/search/validate/${symbolUpper}`,
+        {
+          timeout: 15000,
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`Python service error: ${response.statusText}`);
+      if (!response.success) {
+        throw new Error(`Python service error: ${response.error}`);
       }
 
-      const data = (await response.json()) as SymbolSearchResponse;
+      const data = response.data;
 
       if (
         data.status === 'success' &&

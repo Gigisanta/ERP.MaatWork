@@ -1,6 +1,53 @@
-# Documentación del Proyecto MAATWORK
+## 🚀 Production Deployment (Fly.io)
 
-## 🚀 Production Deployment (Railway)
+**Live URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+- Region: `sjc` (San Jose)
+- Build: `pnpm install && pnpm build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Web y API deployadas en Fly.io. Database PostgreSQL gestionado por Fly.io.
+
+## 🚀 Production Deployment (Fly.io)
+
+**Live URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+- Region: `sjc` (San Jose)
+- Build: `pnpm install && pnpm build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Web y API deployadas en Fly.io. Database PostgreSQL gestionado por Fly.io.
+
+---
+Índice principal de toda la documentación técnica del proyecto.
+
+## 🚀 Inicio Rápido
+
+| Si eres... | Empieza con... |
+|------------|----------------|
+| Nuevo desarrollador | [ONBOARDING.md](./ONBOARDING.md) → [CLI.md](./CLI.md) |
+| Contribuidor | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Buscando comandos | [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) |
+| Entendiendo arquitectura | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Haciendo deployment | [deployment/README.md](./deployment/README.md) |
+
+---
+
+## 📖 Guías Principales
+
+### Desarrollo
+- **[CLI.md](./CLI.md)** - Referencia completa del CLI (`pnpm mw`)
+- **[QUICK-REFERENCE.md](./QUICK-REFERENCE.md)** - Cheatsheet de comandos y patrones
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Guía de desarrollo detallada
+
+| Si eres... | Empieza con... |
+Índice principal de toda la documentación técnica del proyecto.
 
 **Live URL:** https://maatwork-production.up.railway.app
 

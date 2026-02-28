@@ -204,7 +204,88 @@ pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 
 ---
 
-### Deploy en Railway (Producción)
+### Deploy en Fly.io (Producción)
+
+**URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+
+| Setting | Value |
+|---------|-------|
+| Region | `sjc` (San Jose) |
+| Web App | `maatwork` |
+| API App | `maatwork-api` |
+| Database | PostgreSQL (`maatwork-db`) |
+
+**Comandos:**
+
+```bash
+# Deploy web
+fly deploy --config fly-web.toml
+
+# Deploy API
+fly deploy --config apps/api/fly.toml
+
+# Ver logs
+fly logs maatwork
+fly logs maatwork-api
+
+# Redeploy
+fly deploy --config fly-web.toml --force
+```
+
+**Notas:**
+- La base de datos PostgreSQL está gestionada por Fly.io
+- La variable `DATABASE_URL` se inyecta automáticamente al hacer `fly postgres attach`
+- Secrets: `JWT_SECRET`, `NEXT_PUBLIC_API_URL` configurados
+
+**Comandos:**
+
+```bash
+# Deploy web
+fly deploy --config fly-web.toml
+
+# Deploy API
+fly deploy --config apps/api/fly.toml
+
+# Ver logs
+fly logs maatwork
+fly logs maatwork-api
+
+# Redeploy
+fly deploy --config fly-web.toml --force
+```
+
+**Errores comunes:**
+
+1. **Error de build:**
+   - Usar `node-linker=hoisted` en `.npmrc`
+   - Limpiar node_modules y reconstruir
+
+2. **Cannot connect to database:**
+   - Verificar `fly postgres attach` se ejecutó
+   - Revisar secrets con `fly secrets list`
+
+## Comandos Deploy (Fly.io)
+
+```bash
+# Web app
+fly deploy --config fly-web.toml
+
+# API
+fly deploy --config apps/api/fly.toml
+
+fly logs maatwork-api
+```
+
+## Notas Finales
+fly logs maatwork
+fly logs maatwork-api
+```
+- La variable `DATABASE_URL` se inyecta automáticamente al hacer `fly postgres attach`
+- Secrets: `JWT_SECRET`, `NEXT_PUBLIC_API_URL` configurados
 
 **URL:** https://maatwork-production.up.railway.app
 

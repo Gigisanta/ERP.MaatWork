@@ -10,9 +10,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-import portfolio_performance as portfolio_calculator
+from portfolio_performance import PortfolioComponent, portfolio_calculator
 from yfinance_client import yfinance_client
-from portfolio_performance import PortfolioComponent
 
 class JsonFormatter(logging.Formatter):
     """Formateador para logs estructurados en JSON"""

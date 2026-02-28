@@ -5,7 +5,7 @@
  * Ensures data consistency for Contacts, AUM, and Calendar.
  */
 
-import { db, contactAliases, contacts } from '@maatwork/db';
+import { db, contactAliases, contacts, calendarEvents } from '@maatwork/db';
 import { eq } from 'drizzle-orm';
 import { reprocessUnmatchedRowsForContact } from './aum';
 import { updateSingleContactMeetingStatus } from './contact-matcher';
@@ -35,7 +35,21 @@ export async function onContactAliasesChanged(contactId: string) {
     const [contact] = await db().select().from(contacts).where(eq(contacts.id, contactId)).limit(1);
 
     if (contact) {
-      await updateSingleContactMeetingStatus(contact);
+      const aliasesSet = new Set<string>(aliases);
+      let advisorEvents = [];
+      if (contact.assignedAdvisorId) {
+        advisorEvents = await db()
+          .select({
+            id: calendarEvents.id,
+            userId: calendarEvents.userId,
+            startAt: calendarEvents.startAt,
+            status: calendarEvents.status,
+            attendees: calendarEvents.attendees,
+          })
+          .from(calendarEvents)
+          .where(eq(calendarEvents.userId, contact.assignedAdvisorId));
+      }
+      await updateSingleContactMeetingStatus(contact, aliasesSet, advisorEvents);
     }
   } catch (error) {
     logger.error({ err: error, contactId }, 'Error in SyncManager.onContactAliasesChanged');

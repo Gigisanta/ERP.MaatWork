@@ -186,8 +186,10 @@ if (process.env.RATE_LIMIT_UPLOADS_ENABLED !== 'false') {
   app.use('/v1/attachments/upload', uploadLimiter.middleware());
 }
 
-// Rate limiting general (menos restrictivo, solo si está habilitado)
-if (process.env.RATE_LIMIT_GLOBAL_ENABLED === 'true') {
+// Rate limiting general (habilitado por defecto en producción)
+const isGlobalRateLimitEnabled = process.env.RATE_LIMIT_GLOBAL_ENABLED === 'true' || isProduction;
+
+if (isGlobalRateLimitEnabled) {
   const globalLimiter = new RateLimiter({
     capacity: Number(process.env.RATE_LIMIT_GLOBAL_CAPACITY || RATE_LIMIT_PRESETS.general.capacity),
     refillPerSec: Number(
@@ -196,6 +198,13 @@ if (process.env.RATE_LIMIT_GLOBAL_ENABLED === 'true') {
   });
   rateLimiters.push(globalLimiter);
   app.use(globalLimiter.middleware());
+  console.log(
+    `[Rate Limiting] Global rate limiting ${isProduction ? 'enabled (production)' : 'enabled (manual)'}`
+  );
+} else {
+  console.log(
+    '[Rate Limiting] Global rate limiting DISABLED. Enable with RATE_LIMIT_GLOBAL_ENABLED=true or run in production.'
+  );
 }
 
 // Limpiar buckets periódicamente para evitar memory leaks

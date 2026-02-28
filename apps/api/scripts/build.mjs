@@ -66,8 +66,8 @@ const __dirname = __dirname_fn(__filename);
 
     // Minify for smaller bundle (optional)
     minify: false, // Keep readable for debugging
-
-    // Keep names for better stack traces
+    // Minify for smaller bundle (optional)
+    minify: true, // Keep readable for debugging
     keepNames: true,
 
     // Tree shaking

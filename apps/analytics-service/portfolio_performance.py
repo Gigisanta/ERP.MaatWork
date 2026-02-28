@@ -11,8 +11,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
-from yfinance_client import YFinanceClient
-
+from yfinance_client import yfinance_client
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +45,7 @@ class PortfolioPerformanceCalculator:
     """Calculador de rendimiento de carteras."""
 
     def __init__(self):
-        self.yfinance_client = YFinanceClient()
+        self.yfinance_client = yfinance_client
         self.risk_free_rate = 0.02  # Tasa libre de riesgo anual (2% por defecto)
 
     def calculate_portfolio_performance(
@@ -159,35 +158,44 @@ class PortfolioPerformanceCalculator:
         start_date: datetime,
         end_date: datetime,
     ) -> pd.DataFrame:
-        """Obtiene datos históricos para todos los componentes de la cartera."""
+        """Obtiene datos históricos para todos los componentes de la cartera con fallback."""
         all_data = {}
-
-        for component in components:
-            try:
-                # Usar yfinance directamente para obtener datos históricos
-                ticker = yf.Ticker(component.symbol)
-                hist = ticker.history(start=start_date, end=end_date)
-
-                if not hist.empty:
-                    # Usar precios de cierre
-                    all_data[component.symbol] = hist["Close"]
+        
+        start_str = start_date.strftime("%Y-%m-%d")
+        end_str = end_date.strftime("%Y-%m-%d")
+        
+        symbols = [comp.symbol for comp in components]
+        
+        try:
+            # Usar yfinance_client que tiene fallback a Yahoo REST API
+            historical_data = self.yfinance_client.fetch_historical_prices(
+                symbols, start_str, end_str
+            )
+            
+            for symbol, df in historical_data.items():
+                if not df.empty:
+                    # Convertir a Series con índice de fecha
+                    all_data[symbol] = pd.Series(
+                        df['close_price'].values,
+                        index=pd.to_datetime(df['date'])
+                    )
                 else:
-                    logger.warning(f"No se encontraron datos para {component.symbol}")
-
-            except Exception as e:
-                logger.error(f"Error fetching data for {component.symbol}: {str(e)}")
-                continue
-
-        if not all_data:
+                    logger.warning(f"No se encontraron datos para {symbol}")
+            
+            if not all_data:
+                raise ValueError("No se pudieron obtener datos para ningún componente")
+            
+            # Crear DataFrame con todos los datos
+            df = pd.DataFrame(all_data)
+            
+            # Interpolar valores faltantes y eliminar filas con NaN
+            df = df.interpolate(method="linear").dropna()
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error fetching historical data: {str(e)}")
             raise ValueError("No se pudieron obtener datos para ningún componente")
-
-        # Crear DataFrame con todos los datos
-        df = pd.DataFrame(all_data)
-
-        # Interpolar valores faltantes y eliminar filas con NaN
-        df = df.interpolate(method="linear").dropna()
-
-        return df
 
     def _calculate_portfolio_returns(
         self, price_data: pd.DataFrame, components: List[PortfolioComponent]

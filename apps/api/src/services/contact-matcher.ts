@@ -31,7 +31,9 @@ const EMPTY_MEETING_STATUS: MeetingStatus = {
 };
 
 /**
- * Updates the meeting status for a list of contacts based on their email matching against calendar events.
+ * Updates meeting status for a list of contacts based on their email matching against calendar events.
+ *
+ * OPTIMIZATION: Batch fetches all aliases and events upfront to avoid N+1 queries
  *
  * @param contactIds Array of contact IDs to update
  */
@@ -39,31 +41,91 @@ export async function updateContactsMeetingStatus(contactIds: string[]) {
   if (contactIds.length === 0) return;
 
   const contactsList = await db()
-    .select()
+    .select({
+      id: contacts.id,
+      email: contacts.email,
+      fullName: contacts.fullName,
+      firstName: contacts.firstName,
+      lastName: contacts.lastName,
+      assignedAdvisorId: contacts.assignedAdvisorId,
+      meeingStatus: contacts.meetingStatus,
+    })
     .from(contacts)
     .where(sql`${contacts.id} IN ${contactIds}`);
 
+  // Batch fetch: Get all aliases for all contacts in a single query
+  const allAliases = await db()
+    .select({
+      contactId: contactAliases.contactId,
+      aliasNormalized: contactAliases.aliasNormalized,
+    })
+    .from(contactAliases)
+    .where(sql`${contactAliases.contactId} IN ${contactIds}`);
+
+  // Build a map for quick lookup: contactId -> Set of alias names
+  const aliasesMap = new Map<string, Set<string>>();
+  for (const alias of allAliases) {
+    if (!aliasesMap.has(alias.contactId)) {
+      aliasesMap.set(alias.contactId, new Set());
+    }
+    aliasesMap.get(alias.contactId)!.add(alias.aliasNormalized);
+  }
+
+  // Batch fetch: Get all advisor IDs and fetch their events in bulk
+  const advisorIds = contactsList
+    .map((c: (typeof contactsList)[0]) => c.assignedAdvisorId)
+    .filter((id: string | null): id is string => id != null);
+  const uniqueAdvisorIds = [...new Set(advisorIds)];
+
+  // Fetch all events for all advisors at once
+  const allAdvisorEvents = await db()
+    .select({
+      id: calendarEvents.id,
+      userId: calendarEvents.userId,
+      startAt: calendarEvents.startAt,
+      status: calendarEvents.status,
+      attendees: calendarEvents.attendees,
+    })
+    .from(calendarEvents)
+    .where(sql`${calendarEvents.userId} IN ${uniqueAdvisorIds}`)
+    .orderBy(asc(calendarEvents.startAt));
+
+  // Build a map: advisorId -> events array
+  const eventsMap = new Map<string, (typeof calendarEvents.$inferSelect)[]>();
+  for (const event of allAdvisorEvents) {
+    if (!eventsMap.has(event.userId)) {
+      eventsMap.set(event.userId, []);
+    }
+    eventsMap.get(event.userId)!.push(event);
+  }
+
+  // Process each contact using pre-fetched data
   for (const contact of contactsList) {
     if (!contact.email) continue;
 
-    await updateSingleContactMeetingStatus(contact);
+    const contactAliases = aliasesMap.get(contact.id) || new Set();
+    const advisorEvents = contact.assignedAdvisorId
+      ? eventsMap.get(contact.assignedAdvisorId) || []
+      : [];
+
+    await updateSingleContactMeetingStatus(contact, contactAliases, advisorEvents);
   }
 }
 
 /**
- * Re-evaluates meeting status for a single contact by looking up all related events.
+ * Re-evaluates meeting status for a single contact using pre-fetched data
+ *
+ * @param contact The contact object
+ * @param aliases Pre-fetched set of normalized aliases
+ * @param advisorEvents Pre-fetched events for the advisor
  */
-export async function updateSingleContactMeetingStatus(contact: typeof contacts.$inferSelect) {
+export async function updateSingleContactMeetingStatus(
+  contact: typeof contacts.$inferSelect,
+  aliases: Set<string>,
+  advisorEvents: (typeof calendarEvents.$inferSelect)[]
+) {
   // We need at least an email or some aliases to match
   const contactEmail = contact.email;
-
-  // 1. Get contact aliases
-  const aliasesResult = await db()
-    .select({ aliasNormalized: contactAliases.aliasNormalized })
-    .from(contactAliases)
-    .where(eq(contactAliases.contactId, contact.id));
-
-  const aliases = new Set(aliasesResult.map((a: { aliasNormalized: string }) => a.aliasNormalized));
 
   // Add contact's own name as alias if present
   if (contact.fullName) {
@@ -75,20 +137,8 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
 
   if (!contactEmail && aliases.size === 0) return;
 
-  // 2. Fetch all events for the advisor (optimization: maybe limit to last X years if needed)
-  // We fetch all because we need to check past history for "first meeting"
-  const allEvents = await db()
-    .select()
-    .from(calendarEvents)
-    .where(eq(calendarEvents.userId, contact.assignedAdvisorId!))
-    .orderBy(asc(calendarEvents.startAt));
-
-  // 3. Filter events in memory using robust matching
-  // AI_DECISION: In-memory filtering for complex attendee matching
-  // Justificación: Matching contacts with calendar events requires checking nested JSON arrays (attendees)
-  //                and name normalization which is easier and faster in memory than complex SQL for small datasets.
-  // Impacto: Improved matching accuracy without overly complex database queries.
-  const events = allEvents.filter((event: typeof calendarEvents.$inferSelect) => {
+  // Filter events in memory using robust matching
+  const events = advisorEvents.filter((event) => {
     if (!event.attendees || !Array.isArray(event.attendees)) return false;
 
     return (event.attendees as { email?: string; displayName?: string }[]).some((attendee) => {
@@ -114,9 +164,7 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
   });
 
   // Filter valid meetings (confirmed, not cancelled)
-  const validEvents = events.filter(
-    (e: typeof calendarEvents.$inferSelect) => e.status !== 'cancelled'
-  );
+  const validEvents = events.filter((e) => e.status !== 'cancelled');
 
   const now = new Date();
 
@@ -148,19 +196,13 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
     };
   }
 
-  // Update contact if status changed (using stringify to compare deep equality simply)
-  // AI_DECISION: Simple deep equality check using JSON.stringify
-  // Justificación: MeetingStatus is a simple object, stringify is efficient enough for this comparison
-  //                and avoids manual property checking or extra dependencies.
-  // Impacto: Clean code, avoids unnecessary DB updates if status hasn't changed.
-
-  // Only update if changed significantly
-  const currentStatus = contact.meetingStatus as ContactMeetingStatus | null;
+  // Only update if changed significantly (optimize comparison to avoid JSON.stringify)
+  const currentStatus = contact.meeingStatus as ContactMeetingStatus | null;
 
   const hasChanged =
     !currentStatus ||
-    JSON.stringify(currentStatus.firstMeeting) !== JSON.stringify(newStatus.firstMeeting) ||
-    JSON.stringify(currentStatus.secondMeeting) !== JSON.stringify(newStatus.secondMeeting);
+    !deepEqual(currentStatus.firstMeeting, newStatus.firstMeeting) ||
+    !deepEqual(currentStatus.secondMeeting, newStatus.secondMeeting);
 
   if (hasChanged) {
     await db()
@@ -171,4 +213,24 @@ export async function updateSingleContactMeetingStatus(contact: typeof contacts.
       })
       .where(eq(contacts.id, contact.id));
   }
+}
+
+/**
+ * Deep equality check for simple objects (avoids JSON.stringify overhead)
+ */
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+    return false;
+  }
+  const keysA = Object.keys(a as Record<string, unknown>);
+  const keysB = Object.keys(b as Record<string, unknown>);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (!(key in (b as Record<string, unknown>))) return false;
+    if ((a as Record<string, unknown>)[key] !== (b as Record<string, unknown>)[key]) {
+      return false;
+    }
+  }
+  return true;
 }

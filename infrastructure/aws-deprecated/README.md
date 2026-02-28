@@ -1,6 +1,13 @@
 # AWS-Deprecated Infrastructure
 # ==========================
 # AI_DECISION: Archivo README para código AWS deprecated
+# Justificación: Migración completada a Fly.io, preservando código para referencia
+# Impacto: Documentación clara que este código ya no se usa en producción
+# Referencias: Plan maestro de migración a Fly.io
+#
+# ESTE DIRECTORIO CONTIENE CÓDIGO AWS QUE NO SE USA MÁS
+# ==========================
+# AI_DECISION: Archivo README para código AWS deprecated
 # Justificación: Migración completada a Railway, preservando código para referencia
 # Impacto: Documentación clara que este código ya no se usa en producción
 # Referencias: Plan maestro de migración a Railway v2.0

@@ -1,53 +1,72 @@
-#ZH|# MAATWORK Monorepo
-#KM|
-#PH|## 🚀 Production Deployment (Railway)
-#RW|
-#KX|**Live URLs:**
-#SY|
-#KJ|- **Web:** https://maatwork-production.up.railway.app
-#KJ|- **API:** https://maatwork-api-production.up.railway.app (deploying)
-#XW|
-#JK|Railway Configuration
+# MAATWORK Monorepo
 
-## 🚀 Production Deployment (Railway)
+## 🚀 Production Deployment (Vercel + Render + Neon)
 
-**Live URL:** https://maatwork-production.up.railway.app
+**Live URLs:**
 
-### Railway Configuration
+- **Web:** https://maatwork.vercel.app
+- **API:** https://maatwork-api.onrender.app
 
-| Setting | Value |
-|---------|-------|
-| Root Directory | `/` |
-| Build Command | `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build` |
-| Start Command | `pnpm -F @maatwork/web start` |
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      ARQUITECTURA 100% Gratis                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   🌐 Vercel (Web)  ──→  🔧 Render (API)  ──→  🗃️ Neon (DB)    │
+│      Next.js 15          Express.js            PostgreSQL       │
+│      $0/mes               $0/mes                $0/mes          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Servicio | Plataforma | Tecnología | Propósito |
+|----------|------------|------------|-----------|
+| **Web** | Vercel | Next.js 15 | Frontend SSR/SSG |
+| **API** | Render | Express.js | Backend REST API |
+| **Database** | Neon | PostgreSQL | Persistencia de datos |
+
+### Deployment Methods
+
+#### 1. Automatic (GitHub Actions)
+
+Push to `main`/`master` branch triggers automatic deployment via `.github/workflows/deploy.yml`.
+
+**Required Secrets:**
+
+Configure these in GitHub → Settings → Secrets and variables → Actions:
+
+- `VERCEL_TOKEN` - Token from vercel.com/account/tokens
+- `VERCEL_ORG_ID` - Organization ID from Vercel dashboard
+- `VERCEL_PROJECT_ID` - Project ID from Vercel dashboard
+- `RENDER_API_KEY` - API Key from render.com/account/api-keys
+- `RENDER_SERVICE_ID` - Service ID from Render dashboard
+- `DATABASE_URL` - Connection string from Neon console
+
+#### 2. Manual Deploy
+
+```bash
+# Web (Vercel)
+cd apps/web
+vercel --prod
+
+# API (Render) - Trigger from dashboard or:
+curl -X POST \
+  -H "Authorization: Bearer $RENDER_API_KEY" \
+  "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys"
+```
 
 ### Important Notes
 
-- **Web-only deployment**: Only the Next.js web app is deployed to Railway (not API or analytics)
-- **No standalone mode**: The web app uses standard `next start` (standalone mode caused 502 errors)
-- **Environment**: Production branch `feature/railway-migration` is deployed automatically
-
-### Trigger Deployment
-
-```bash
-# Push to feature/railway-migration to trigger deployment
-git push origin feature/railway-migration
-
-# Or use Railway CLI
-railway up --detach
-```
+- **Database**: PostgreSQL is managed by Neon (serverless). Connection string is configured in Render environment variables.
+- **Health Checks**: API checks `/health` (Render will use this)
+- **Cold Start**: Render free tier sleeps after 15min of inactivity - first request after sleep may take 30-60s
+- **Secrets**: Configured in GitHub Actions secrets and Render dashboard
 
 ---
 
 ## Development (Local)
-
-## autopush
-
-ssh abax "cd abax/scripts && bash deploy.sh --skip-tests"
-
-## autopush
-
-ssh abax "cd abax/scripts && bash deploy.sh --skip-tests"
 
 Monorepo con pnpm + Turborepo. Apps: API (Express + Pino + Helmet + CORS + PM2) y Web (Next.js). Paquetes compartidos: `@maatwork/db` (Drizzle + PostgreSQL) y `@maatwork/ui` (Design System + React Components).
 
@@ -69,7 +88,7 @@ pnpm dev
 El script de setup (`pnpm setup`) automáticamente:
 
 - ✅ Verifica prerequisitos (Node.js, pnpm, Docker)
-- ✅ Configura variables de entorno (crea `.env` desde `config-example.env`)
+- ✅ Configura variables de entorno (crea `.env` desde `.env.example`)
 - ✅ Inicia servicios Docker (PostgreSQL)
 - ✅ Ejecuta migraciones de base de datos
 - ✅ Crea usuario admin inicial (`admin@maatwork.local`)
@@ -159,6 +178,7 @@ pnpm test             # Tests unitarios
 | [Development](./docs/DEVELOPMENT.md) | Guía de desarrollo |
 | [Architecture](./docs/ARCHITECTURE.md) | Arquitectura del sistema |
 | [Testing](./docs/TESTING.md) | Estrategias de testing |
+| [Deployment](./docs/DEPLOYMENT.md) | Guía de despliegue |
 
 Ver [documentación completa](./docs/README.md) para todas las guías técnicas.
 
@@ -210,74 +230,6 @@ Las reglas de desarrollo, arquitectura y mejores prácticas están documentadas 
 ---
 
 ## Troubleshooting
-
-### Errores Comunes de Deployment (Railway)
-
-#### Error: Build falla en monorepo
-
-**Causa**: Root Directory configurado en `apps/` en lugar de `/`
-
-**Solución**:
-1. En Railway dashboard → servicio → "Settings"
-2. Cambiar "Root Directory" a `/`
-3. Redeploy
-
-#### Error: 502 Application failed to respond
-
-**Causa**: La app está corriendo pero Railway no puede conectarse
-
-**Solución**:
-1. Verificar que el comando Start sea `pnpm -F @maatwork/web start`
-2. Verificar que PORT esté configurado como variable de entorno (Railway lo provee automáticamente)
-3. **NO usar output: standalone** - Esto causa 502 errores en Railway
-4. Verificar que el build haya completado correctamente
-
-#### Error: Migraciones fallan
-
-**Causa**: `preDeployCommand` falla antes del deployment
-
-**Solución**:
-1. Ver logs de deployment en Railway dashboard
-2. Ejecutar manualmente: `pnpm --filter @maatwork/db migrate`
-
-#### Error: Cannot connect to database
-
-**Causa**: `DATABASE_URL` no referenciada correctamente
-
-**Solución**:
-1. Verificar servicio PostgreSQL está corriendo
-2. En servicio API → "Variables"
-3. Click "Ref" button al lado de `DATABASE_URL`
-
-### Errores Comunes de Deployment (Railway)
-
-#### Error: Build falla en monorepo
-
-**Causa**: Root Directory configurado en `apps/` en lugar de `/`
-
-**Solución**:
-1. En Railway dashboard → servicio → "Settings"
-2. Cambiar "Root Directory" a `/`
-3. Redeploy
-
-#### Error: Migraciones fallan
-
-**Causa**: `preDeployCommand` falla antes del deployment
-
-**Solución**:
-1. Ver logs de deployment en Railway dashboard
-2. Ejecutar manualmente: `pnpm --filter @maatwork/db migrate`
-
-#### Error: Cannot connect to database
-
-**Causa**: `DATABASE_URL` no referenciada correctamente
-
-**Solución**:
-1. Verificar servicio PostgreSQL está corriendo
-2. En servicio API → "Variables"
-3. Click "Ref" button al lado de `DATABASE_URL`
-
----
 
 ### Errores Comunes de Docker
 

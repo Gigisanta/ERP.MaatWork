@@ -84,6 +84,7 @@
     "clean": "rimraf dist"
   },
   "devDependencies": {
+    "@eslint/js": "8.57.1",
     "rimraf": "^5.0.10",
     "typescript": "^5.9.3"
   },

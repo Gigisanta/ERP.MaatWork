@@ -32,10 +32,7 @@ interface PipelineBoardClientProps {
   initialError?: string | null;
 }
 
-export default function PipelineBoardClient({
-  initialStages,
-  initialError,
-}: PipelineBoardClientProps) {
+function PipelineBoardClient({ initialStages, initialError }: PipelineBoardClientProps) {
   usePageTitle('Pipeline de Ventas');
   const router = useRouter();
 
@@ -418,7 +415,9 @@ export default function PipelineBoardClient({
                                     movingContactId === contact.id ? 'opacity-50' : ''
                                   }`}
                                   draggable
-                                  onDragStart={(e: React.DragEvent) => handleDragStart(e, contact.id)}
+                                  onDragStart={(e: React.DragEvent) =>
+                                    handleDragStart(e, contact.id)
+                                  }
                                 >
                                   <CardContent className="p-3">
                                     <Stack direction="column" gap="sm">
@@ -548,3 +547,9 @@ export default function PipelineBoardClient({
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+// This is important because this component renders many items and can re-render frequently
+const MemoizedPipelineBoardClient = React.memo(PipelineBoardClient);
+
+export default MemoizedPipelineBoardClient;

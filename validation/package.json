@@ -1,0 +1,23 @@
+{
+  "name": "@maatwork/validation",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared Zod validation schemas for AUM module. Centralizes common schemas used across API and Web.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "dev": "tsc && tsc-alias --watch",
+    "typecheck": "tsc --noEmit"
+  }
+}

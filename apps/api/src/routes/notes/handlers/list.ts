@@ -101,15 +101,17 @@ export const handleBatchNotes = createRouteHandler(async (req: Request) => {
   const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 50));
   const offset = Math.max(0, Number(req.query.offset) || 0);
 
-  // Verificar acceso a contactos
-  const accessibleContactIds: string[] = [];
-  for (const contactId of validation.ids) {
-    const hasAccess = await canAccessContact(userId, userRole, contactId);
-    if (hasAccess) {
-      accessibleContactIds.push(contactId);
-    }
-  }
+  // Verificar acceso a contactos (parallelized for performance)
+  const accessChecks = await Promise.all(
+    validation.ids.map(async (contactId) => {
+      const hasAccess = await canAccessContact(userId, userRole, contactId);
+      return { contactId, hasAccess };
+    })
+  );
 
+  const accessibleContactIds = accessChecks
+    .filter((check) => check.hasAccess)
+    .map((check) => check.contactId);
   if (accessibleContactIds.length === 0) {
     throw new HttpError(403, 'No access to any of the specified contacts');
   }

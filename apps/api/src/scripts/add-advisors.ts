@@ -11,17 +11,22 @@ import bcrypt from 'bcrypt';
 
 type SeedAdvisor = {
   username: string;
-  password: string;
+  password?: string; // Optional - will be generated if not provided
   email: string;
 };
 
+// Generate random password for each advisor
+function generatePassword(): string {
+  return Math.random().toString(36).substring(2, 12);
+}
+
 const seedAdvisors: SeedAdvisor[] = [
-  { username: 'Mvicente', password: 'Mvicente123', email: 'Mvicente@grupoabax.com' },
-  { username: 'Nzappia', password: 'Nzappia123', email: 'Nzappia@grupoabax.com' },
-  { username: 'TDanziger', password: 'TDanziger123', email: 'Tdanziger@grupoabax.com' },
-  { username: 'PMolina', password: 'PMolina123', email: 'Pmolina@grupoabax.com' },
-  { username: 'NIngilde', password: 'NIngilde123', email: 'Ningilde@grupoabax.com' },
-  { username: 'Fandreacchio', password: 'Fandreacchio123', email: 'Fandreacchio@grupoabax.com' },
+  { username: 'Mvicente', email: 'Mvicente@grupoabax.com' },
+  { username: 'Nzappia', email: 'Nzappia@grupoabax.com' },
+  { username: 'TDanziger', email: 'Tdanziger@grupoabax.com' },
+  { username: 'PMolina', email: 'Pmolina@grupoabax.com' },
+  { username: 'NIngilde', email: 'Ningilde@grupoabax.com' },
+  { username: 'Fandreacchio', email: 'Fandreacchio@grupoabax.com' },
 ];
 
 export async function upsertAdvisor({ username, password, email }: SeedAdvisor): Promise<void> {
@@ -37,7 +42,9 @@ export async function upsertAdvisor({ username, password, email }: SeedAdvisor):
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  // Use provided password or generate a random one
+  const actualPassword = password || generatePassword();
+  const passwordHash = await bcrypt.hash(actualPassword, 10);
 
   const [created] = await db()
     .insert(users)
@@ -52,11 +59,14 @@ export async function upsertAdvisor({ username, password, email }: SeedAdvisor):
     })
     .returning();
 
-  console.log(`✅ Creado: ${email} -> id=${created.id}`);
+  console.log(`✅ Creado: ${email} -> id=${created.id} | password: ${actualPassword}`);
 }
 
 async function main(): Promise<void> {
   console.log('\n👥 Creando asesores iniciales...\n');
+  console.log('⚠️  SECURITY WARNING: Contraseñas generadas se mostrarán abajo.');
+  console.log('   Por favor cambia las contraseñas después del primer login.\n');
+
   for (const advisor of seedAdvisors) {
     try {
       await upsertAdvisor(advisor);

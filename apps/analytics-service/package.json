@@ -14,5 +14,8 @@
   },
   "engines": {
     "python": ">=3.10.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "8.57.1"
   }
 }

@@ -129,3 +129,4 @@ coverage.xml
 .e2e-db-seeded
 .dev-docker-cache.json
 *test_failures.txt
+.env*.local

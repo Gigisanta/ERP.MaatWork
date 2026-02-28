@@ -1,0 +1,52 @@
+# ═══════════════════════════════════════════════════════════════════════════════════
+# PR CHECK - Validación de Pull Requests
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+name: 🔍 PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  check:
+    name: 🔍 PR Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: 📥 Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 Lint
+        run: pnpm lint
+
+      - name: 🏗️ Build
+        run: pnpm build
+
+      - name: 📝 PR Summary
+        run: |
+          echo "### ✅ PR Check Passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Lint: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ✅" >> $GITHUB_STEP_SUMMARY
