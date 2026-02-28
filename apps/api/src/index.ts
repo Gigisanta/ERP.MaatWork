@@ -613,7 +613,7 @@ async function startServer() {
     const poolMonitoringInterval = startPoolMonitoring(60000); // Every minute
 
     // Security: bind to HOST (default 127.0.0.1 in production, 0.0.0.0 in dev)
-    const host = process.env.HOST || (isProduction ? '127.0.0.1' : '0.0.0.0');
+    const host = process.env.HOST || '0.0.0.0';
     const server = app.listen(port, host, () => {
       logger.info({ port, host }, 'API listening');
     });
