@@ -29,15 +29,17 @@ services:
       corepack prepare pnpm@latest --activate
       pnpm install --frozen-lockfile
       pnpm --filter @maatwork/web build
+      cp -r apps/web/public apps/web/.next/standalone/apps/web/public
+      cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
     startCommand: |
-      corepack enable
-      corepack prepare pnpm@latest --activate
-      pnpm --filter @maatwork/web start
+      node apps/web/.next/standalone/apps/web/server.js
     envVars:
       - key: NODE_VERSION
         value: '22'
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: NEXT_TELEMETRY_DISABLED
         value: '1'
       - key: DISABLE_ESLINT_PLUGIN
