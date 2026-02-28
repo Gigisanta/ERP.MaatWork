@@ -129,15 +129,6 @@ app.use(cors(corsOptions));
 // AI_DECISION: Add compression middleware for 60-70% payload size reduction
 // Justificación: API responses (especially contacts/pipeline) can be large JSON payloads
 // Impacto: Network transfer time reduction, especially important for mobile/slow connections
-app.use((req, res, next) => {
-  if (req.url.includes('health') || req.url.includes('login')) {
-    console.log(
-      `[DIAGNOSTIC-TOP] Request start: ${req.method} ${req.url} (NODE_ENV=${process.env.NODE_ENV})`
-    );
-  }
-  next();
-});
-
 app.use(
   compression({
     level: 6, // Balanced compression level (1-9, 6 is good default)
@@ -397,13 +388,6 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     }
   });
 
-  next();
-});
-
-app.use((req, res, next) => {
-  if (req.url.includes('health')) {
-    console.log(`[DIAGNOSTIC-MID] Reached health router mount point`);
-  }
   next();
 });
 

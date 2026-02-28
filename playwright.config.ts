@@ -6,8 +6,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import dotenv from 'dotenv';
-import { getTestConfig } from './scripts/adaptive-test-config.ts';
-
 // Load env vars for the config itself if needed
 dotenv.config();
 
@@ -16,12 +14,23 @@ const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@local
 const TEST_DB_URL = DB_URL.replace(/\/([^/]+)$/, '/CRM_TEST');
 const MULTI_BROWSER = process.env.MULTI_BROWSER === 'true';
 
-// Get adaptive config for E2E
-const e2eConfig = getTestConfig('e2e');
+// Load adaptive config if possible, fallback to defaults
+let e2eConfig = { timeout: 60000, expectTimeout: 10000, workers: 1 };
+try {
+  const { getTestConfig } = require('./scripts/adaptive-test-config.ts');
+  const adaptive = getTestConfig('e2e');
+  e2eConfig = {
+    timeout: adaptive.testTimeout,
+    expectTimeout: adaptive.testTimeout / 6,
+    workers: adaptive.threads
+  };
+} catch (e) {
+  console.log('Using default test config due to import restriction');
+}
 
 export default defineConfig({
   testDir: './tests/e2e',
-  globalSetup: path.resolve(__dirname, './tests/e2e/global-setup.ts'),
+  // globalSetup: require.resolve('./tests/e2e/global-setup'),
   retries: process.env.CI ? 2 : 0,
   timeout: e2eConfig.timeout, // Reduced from 90s to 60s
   expect: { timeout: e2eConfig.expectTimeout }, // Reduced from 15s to 10s

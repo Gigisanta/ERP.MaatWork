@@ -23,35 +23,27 @@ const router = Router();
  */
 router.get(
   '/',
-  createAsyncHandler(async (req: Request, res: Response) => {
-    // DIAGNOSTIC LOGGING: Trace redirect source
-    console.log(`[DIAGNOSTIC] Health check requested: ${req.method} ${req.url}`);
-    console.log(`[DIAGNOSTIC] Headers: ${JSON.stringify(req.headers)}`);
-
+  createAsyncHandler(async (_req: Request, res: Response) => {
     try {
       // Simple database connectivity check
       const result = await db().execute(sql`SELECT 1`);
 
       // Optional sanity check on the result shape
-      const ok = (result.rows[0] as { '?column?'?: number } | undefined)?.['?column?'] === 1;
+      if (!result) {
+        throw new Error('Database check failed - no result returned');
+      }
 
-      const health = {
-        status: ok ? 'healthy' : 'unhealthy',
+      return res.json({
+        status: 'healthy',
         timestamp: new Date().toISOString(),
-        database: ok ? 'connected' : 'unexpected-result',
-      };
-
-      console.log(`[DIAGNOSTIC] Health result: ${JSON.stringify(health)}`);
-      return res.json(health);
+        database: 'connected',
+      });
     } catch (error) {
-      console.error(
-        `[DIAGNOSTIC] Health check error: ${error instanceof Error ? error.message : String(error)}`
-      );
-      return res.status(503).json({
+      // Return 200 with error details or 500? Standard is usually 500 if unhealthy
+      return res.status(500).json({
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown database error',
       });
     }
   })

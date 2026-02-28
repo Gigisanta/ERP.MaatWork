@@ -102,12 +102,6 @@ export async function middleware(request: NextRequest) {
     }
 
     const token = request.cookies.get('token')?.value;
-    // LOGGING: Inspeccionar cookies entrantes en middleware
-    logger.info('[Middleware] Checking login page access', {
-      ...loggerContext,
-      hasToken: !!token,
-      cookieNames: request.cookies.getAll().map((c) => c.name),
-    });
     if (token) {
       try {
         const secret = getSecretKey();
@@ -148,11 +142,6 @@ export async function middleware(request: NextRequest) {
   // Impacto: Redirección automática en middleware (antes de renderizar) es más eficiente que en cliente
   if (pathname === '/') {
     const token = request.cookies.get('token')?.value;
-    logger.info('[Middleware] Checking root access', {
-      ...loggerContext,
-      hasToken: !!token,
-      cookieNames: request.cookies.getAll().map((c) => c.name),
-    });
     if (token) {
       try {
         const secret = getSecretKey();
@@ -184,12 +173,6 @@ export async function middleware(request: NextRequest) {
 
   // Si es una ruta protegida, verificar si hay token en las cookies
   const token = request.cookies.get('token')?.value;
-
-  logger.info('[Middleware] Protected route check', {
-    ...loggerContext,
-    hasToken: !!token,
-    cookieNames: request.cookies.getAll().map((c) => c.name),
-  });
 
   if (!token) {
     // Redirigir al login con la URL de destino completa (incluyendo query params)
