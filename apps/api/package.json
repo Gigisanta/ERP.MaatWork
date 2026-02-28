@@ -1,6 +1,7 @@
 {
   "name": "@maatwork/api",
-  "version": "1.0.0",
+  "version": "0.1.1",
+  "description": "MaatWork API - Production Corrected",
   "private": true,
   "type": "module",
   "scripts": {
