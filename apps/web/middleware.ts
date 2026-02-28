@@ -42,6 +42,32 @@ const publicRoutes = ['/', '/login', '/register', '/icon', '/apple-icon'];
 const JWT_ISSUER = 'maatwork-api';
 const JWT_AUDIENCE = 'maatwork-web';
 
+/**
+ * Get JWT secret key with proper error handling
+ *
+ * In production: Fails explicitly if JWT_SECRET is missing
+ * In development: Uses fallback with warning
+ */
+function getSecretKey(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (!secret) {
+    if (isProduction) {
+      throw new Error(
+        'CRITICAL: JWT_SECRET environment variable is required in production. Set it in your environment variables.'
+      );
+    }
+    // Development fallback only - log warning for security awareness
+    logger.warn(
+      '[SECURITY WARNING] Using insecure JWT secret fallback. Set JWT_SECRET environment variable for production deployment.'
+    );
+    return new TextEncoder().encode('dev-insecure-secret-change-me');
+  }
+
+  return new TextEncoder().encode(secret);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -62,8 +88,10 @@ export async function middleware(request: NextRequest) {
     // Impacto: Forces cookie cleanup to break the infinite redirect loop
     const errorParam = request.nextUrl.searchParams.get('error');
     if (errorParam === 'unauthorized') {
-      logger.warn('[Middleware] Detected unauthorized redirect loop - Clearing token cookie', { ...loggerContext });
-      
+      logger.warn('[Middleware] Detected unauthorized redirect loop - Clearing token cookie', {
+        ...loggerContext,
+      });
+
       // AI_DECISION: Redirect to clean /login instead of next()
       // Justificación: next() keeps the same request context (with old cookies) for the Server Component.
       //                Redirecting forces a fresh request where the browser has already removed the cookie.
@@ -82,8 +110,7 @@ export async function middleware(request: NextRequest) {
     });
     if (token) {
       try {
-        const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
-        const secret = new TextEncoder().encode(JWT_SECRET);
+        const secret = getSecretKey();
         const { payload } = await jwtVerify(token, secret, {
           issuer: JWT_ISSUER,
           audience: JWT_AUDIENCE,
@@ -128,8 +155,7 @@ export async function middleware(request: NextRequest) {
     });
     if (token) {
       try {
-        const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
-        const secret = new TextEncoder().encode(JWT_SECRET);
+        const secret = getSecretKey();
         const { payload } = await jwtVerify(token, secret, {
           issuer: JWT_ISSUER,
           audience: JWT_AUDIENCE,
@@ -175,8 +201,7 @@ export async function middleware(request: NextRequest) {
 
   // Validar el JWT
   try {
-    const JWT_SECRET = process.env.JWT_SECRET || 'dev-insecure-secret-change-me';
-    const secret = new TextEncoder().encode(JWT_SECRET);
+    const secret = getSecretKey();
     const { payload } = await jwtVerify(token, secret, {
       issuer: JWT_ISSUER,
       audience: JWT_AUDIENCE,
@@ -245,6 +270,6 @@ export const config = {
      *                causando errores de Service Worker registration
      * Impacto: PWA funciona correctamente, archivos estáticos no pasan por auth
      */
-    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
+    '/((?!api|_next/static|_next/image|icon|apple-icon|favicon.ico|sw.js|manifest.json|manifest.webmanifest|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.ico$).*)',
   ],
 };

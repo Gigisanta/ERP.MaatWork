@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import DOMPurify from 'dompurify';
 import {
   Modal,
   ModalContent,
@@ -208,7 +209,9 @@ export function EventDetailsModal({
               </div>
               <div
                 className="text-sm text-foreground/80 leading-relaxed pl-1"
-                dangerouslySetInnerHTML={{ __html: event.description }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(event.description),
+                }}
               />
             </div>
           )}

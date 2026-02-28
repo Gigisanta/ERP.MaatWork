@@ -5,7 +5,7 @@ import { usePageTitle } from '../../components/PageTitleContext';
 import { Heading, Text, Button, Alert, Spinner, Toast } from '@maatwork/ui';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePortfolios } from '../hooks/usePortfolios';
-import { PortfoliosGrid } from './PortfoliosGrid';
+import PortfoliosGrid from './PortfoliosGrid';
 import { PortfolioForm } from './PortfolioForm';
 import { PortfolioAnalyticsView } from './PortfolioAnalyticsView';
 import { addPortfolioLine, getPortfolioById } from '@/lib/api';
@@ -36,7 +36,7 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  
+
   // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -55,7 +55,6 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
-
   } = usePortfolios({
     page,
     limit: 12,
@@ -66,10 +65,12 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
 
   // Use initial portfolios if SWR hasn't loaded yet AND we are on first page/no search
   // Actually, prefer SWR data if available.
-  const displayPortfolios = (portfolios && portfolios.length > 0) 
-    ? portfolios 
-    : (page === 1 && !debouncedSearch ? (initialPortfolios || []) : []);
-
+  const displayPortfolios =
+    portfolios && portfolios.length > 0
+      ? portfolios
+      : page === 1 && !debouncedSearch
+        ? initialPortfolios || []
+        : [];
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
   const [showPortfolioForm, setShowPortfolioForm] = useState(false);
@@ -268,7 +269,9 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
       >
         <div className="space-y-1">
           <Heading level={1}>Carteras</Heading>
-          <Text size="sm" color="secondary">Gestión y análisis de portfolios</Text>
+          <Text size="sm" color="secondary">
+            Gestión y análisis de portfolios
+          </Text>
         </div>
         <Button onClick={handleCreatePortfolio} variant="primary" size="sm">
           <Plus className="w-4 h-4 mr-2" />
@@ -290,9 +293,9 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
         </div>
 
         {portfoliosLoading && (
-            <div className="ml-auto">
-               <Spinner size="sm" />
-            </div>
+          <div className="ml-auto">
+            <Spinner size="sm" />
+          </div>
         )}
       </div>
 
@@ -304,11 +307,11 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
         style={{ transitionDelay: '100ms' }}
       >
         {portfoliosLoading && displayPortfolios.length === 0 ? (
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <PortfolioSkeleton key={i} />
-              ))}
-           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <PortfolioSkeleton key={i} />
+            ))}
+          </div>
         ) : displayPortfolios.length > 0 ? (
           <PortfoliosGrid
             portfolios={displayPortfolios}
@@ -319,7 +322,7 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
           />
         ) : (
           <div className="text-center py-12 text-gray-500">
-             <Text>No se encontraron carteras con los filtros seleccionados.</Text>
+            <Text>No se encontraron carteras con los filtros seleccionados.</Text>
           </div>
         )}
       </div>
@@ -328,28 +331,29 @@ export default function PortfoliosClient({ initialPortfolios }: PortfoliosClient
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between py-4 border-t border-gray-100 dark:border-white/5">
           <Text size="sm" color="secondary">
-            Mostrando {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total}
           </Text>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               disabled={!pagination.hasPrev}
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               Anterior
             </Button>
             <div className="flex items-center gap-1 px-2">
-               <span className="text-sm font-medium">{pagination.page}</span>
-               <span className="text-sm text-gray-400">/</span>
-               <span className="text-sm text-gray-400">{pagination.totalPages}</span>
+              <span className="text-sm font-medium">{pagination.page}</span>
+              <span className="text-sm text-gray-400">/</span>
+              <span className="text-sm text-gray-400">{pagination.totalPages}</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
               disabled={!pagination.hasNext}
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage((p) => p + 1)}
             >
               Siguiente
               <ChevronRight className="w-4 h-4 ml-1" />

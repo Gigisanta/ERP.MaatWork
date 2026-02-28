@@ -11,14 +11,18 @@ logger = logging.getLogger(__name__)
 
 
 class YFinanceClient:
-    """Cliente para obtener datos de yfinance"""
+    """Cliente para obtener datos de yfinance con fallback a otros providers"""
 
     def __init__(self):
         self.session = None
         # Cache ligero en memoria: 5 minutos para precios actuales, 1 hora históricos
         self._current_price_cache = TTLCache(maxsize=1024, ttl=300)
         self._historical_cache = TTLCache(maxsize=256, ttl=3600)
-
+        # AI_DECISION: Inicializar orquestador de providers como fallback
+        # Justificación: yfinance library puede fallar temporalmente, usar cascada de providers
+        # Impacto: Mejora disponibilidad y robustez del servicio
+        from data_providers import DataProviderOrchestrator
+        self.orchestrator = DataProviderOrchestrator()
     @backoff.on_exception(
         backoff.expo, Exception, max_tries=3, jitter=backoff.full_jitter
     )
@@ -45,36 +49,44 @@ class YFinanceClient:
             return results
 
         try:
-            # Crear ticker para todos los símbolos
-            ticker = yf.Ticker(" ".join(symbols))
-
-            # Obtener información histórica (último día disponible)
-            hist = ticker.history(period="2d")  # 2 días para asegurar datos
+            # Usar yf.download para obtener múltiples símbolos a la vez
+            # AI_DECISION: Usar download() en lugar de Ticker() con símbolos concatenados
+            # Justificación: yf.Ticker() no soporta múltiples símbolos, yf.download() sí
+            # Impacto: Obtiene datos de forma eficiente para múltiples símbolos
+            hist = yf.download(
+                symbols,
+                period="2d",
+                progress=False
+            )
 
             if hist.empty:
-                logger.warning(f"No se encontraron datos para símbolos: {symbols}")
+                logger.warning(f"yf.download returned empty for {symbols}, trying orchestrator fallback")
+                # yf.download falló, intentar símbolo por símbolo con orquestador
+                for symbol in symbols:
+                    try:
+                        result = self.fetch_single_symbol(symbol)
+                        results[symbol] = result
+                    except Exception as single_error:
+                        logger.error(
+                            f"Error fetching individual symbol {symbol}: {str(single_error)}"
+                        )
+                        results[symbol] = {"error": str(single_error), "success": False}
                 return results
-
             # Obtener último precio disponible
+            # Si hay múltiples símbolos, Close es un DataFrame, si es uno, es Series
             latest_data = hist.iloc[-1]
 
             for symbol in symbols:
                 try:
-                    # Para múltiples símbolos, yfinance puede devolver datos agrupados
-                    # Intentar obtener datos específicos del símbolo
-                    symbol_data = (
-                        hist.xs(symbol, level=1)
-                        if hasattr(hist.columns, "levels")
-                        else hist
-                    )
-
-                    if len(symbol_data) > 0:
-                        latest_price = symbol_data.iloc[-1]["Close"]
+                    if symbol in hist.columns.get_level_values(0):
+                        # Para múltiples símbolos, el DataFrame tiene MultiIndex en columnas
+                        latest_price = hist[(symbol, 'Close')].iloc[-1]
+                        last_date = hist.index[-1]
 
                         results[symbol] = {
                             "price": float(latest_price),
                             "currency": self._get_currency_for_symbol(symbol),
-                            "date": symbol_data.index[-1].strftime("%Y-%m-%d"),
+                            "date": last_date.strftime("%Y-%m-%d"),
                             "source": "yfinance",
                             "success": True,
                         }
@@ -101,17 +113,18 @@ class YFinanceClient:
                         f"Error fetching individual symbol {symbol}: {str(single_error)}"
                     )
                     results[symbol] = {"error": str(single_error), "success": False}
-
         return results
 
     def fetch_single_symbol(self, symbol: str) -> Dict:
-        """Obtener datos para un solo símbolo"""
+        """Obtener datos para un solo símbolo con fallback a otros providers"""
         try:
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period="2d")
 
             if hist.empty:
-                return {"error": f"No data available for {symbol}", "success": False}
+                # yfinance no tiene datos, intentar con orquestador de providers
+                logger.warning(f"yfinance empty for {symbol}, trying orchestrator fallback")
+                return self._try_orchestrator(symbol)
 
             latest_price = hist.iloc[-1]["Close"]
 
@@ -124,8 +137,35 @@ class YFinanceClient:
             }
 
         except Exception as e:
-            return {"error": str(e), "success": False}
+            logger.warning(f"yfinance failed for {symbol}: {str(e)}, trying orchestrator fallback")
+            return self._try_orchestrator(symbol)
 
+    def _try_orchestrator(self, symbol: str) -> Dict:
+        """Intentar obtener datos usando el orquestador de providers"""
+        try:
+            # Determinar tipo de activo basado en el símbolo
+            asset_type = 'stock'
+            if symbol.endswith('BTC') or symbol.endswith('ETH') or 'USD' in symbol or symbol in ['BTC', 'ETH']:
+                asset_type = 'crypto'
+            elif '/' in symbol or symbol.startswith(('USD', 'EUR', 'ARS')):
+                asset_type = 'forex'
+
+            result = self.orchestrator.fetch_price(symbol, asset_type)
+
+            if result.success:
+                return {
+                    "price": result.price,
+                    "currency": result.currency,
+                    "date": result.date,
+                    "source": result.source,
+                    "success": True,
+                }
+            else:
+                return {"error": result.error or "All providers failed", "success": False}
+
+        except Exception as e:
+            logger.error(f"Orchestrator failed for {symbol}: {str(e)}")
+            return {"error": str(e), "success": False}
     @backoff.on_exception(
         backoff.expo, Exception, max_tries=3, jitter=backoff.full_jitter
     )
@@ -165,15 +205,36 @@ class YFinanceClient:
 
                     results[symbol] = hist
                 else:
-                    logger.warning(f"No historical data found for {symbol}")
-                    results[symbol] = pd.DataFrame()
+                    # yfinance no tiene datos, intentar con orquestador
+                    logger.warning(f"yfinance empty for {symbol} historical data, trying orchestrator fallback")
+                    results[symbol] = self._fetch_historical_from_orchestrator(symbol, start_date, end_date)
 
             except Exception as e:
                 logger.error(f"Error fetching historical data for {symbol}: {str(e)}")
-                results[symbol] = pd.DataFrame()
+                # Intentar con orquestador como fallback
+                results[symbol] = self._fetch_historical_from_orchestrator(symbol, start_date, end_date)
 
         self._historical_cache[cache_key] = results
         return results
+
+    def _fetch_historical_from_orchestrator(self, symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+        """Intentar obtener datos históricos usando orquestador de providers"""
+        try:
+            # Para datos históricos, usar Yahoo REST directamente
+            from data_providers.yahoo_rest_provider import YahooRESTProvider
+            
+            provider = YahooRESTProvider()
+            df = provider.fetch_historical_prices(symbol, start_date, end_date)
+            
+            if not df.empty:
+                logger.info(f"✓ {symbol} historical data from yahoo-rest: {len(df)} records")
+            else:
+                logger.warning(f"✗ No historical data from yahoo-rest for {symbol}")
+            
+            return df
+        except Exception as e:
+            logger.error(f"Error in historical fallback for {symbol}: {str(e)}")
+            return pd.DataFrame()
 
     def backfill_prices(
         self, symbols: List[str], days: int = 365
@@ -231,7 +292,7 @@ class YFinanceClient:
 
     def get_symbol_info(self, symbol: str) -> Dict:
         """
-        Obtener información detallada de un símbolo
+        Obtener información detallada de un símbolo con fallback a Yahoo REST API
 
         Args:
             symbol: Símbolo del instrumento
@@ -254,8 +315,48 @@ class YFinanceClient:
             }
 
         except Exception as e:
-            return {"symbol": symbol, "error": str(e), "success": False}
+            logger.warning(f"yfinance failed for symbol info {symbol}: {str(e)}, trying Yahoo REST fallback")
+            return self._get_symbol_info_from_rest(symbol)
 
+    def _get_symbol_info_from_rest(self, symbol: str) -> Dict:
+        """Obtener información del símbolo usando Yahoo REST API"""
+        try:
+            import requests
+            
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+            params = {
+                "range": "1d",
+                "interval": "1d",
+                "includePrePost": "false"
+            }
+            
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+            
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if "chart" not in data or "result" not in data["chart"]:
+                return {"symbol": symbol, "error": "Invalid response format", "success": False}
+            
+            result = data["chart"]["result"][0]
+            meta = result.get("meta", {})
+            
+            return {
+                "symbol": symbol,
+                "name": meta.get("longName", meta.get("shortName", symbol)),
+                "currency": meta.get("currency", self._get_currency_for_symbol(symbol)),
+                "market": meta.get("exchangeName", "Unknown"),
+                "sector": "Unknown",  # Yahoo REST API no proporciona sector
+                "industry": "Unknown",  # Yahoo REST API no proporciona industry
+                "success": True,
+            }
+            
+        except Exception as e:
+            logger.error(f"Yahoo REST failed for symbol info {symbol}: {str(e)}")
+            return {"symbol": symbol, "error": str(e), "success": False}
     def search_symbols(self, query: str, max_results: int = 10) -> List[Dict]:
         """
         Buscar símbolos por nombre o ticker
@@ -433,7 +534,7 @@ class YFinanceClient:
 
     def validate_symbol(self, symbol: str) -> Dict:
         """
-        Validar si un símbolo existe y obtener información básica
+        Validar si un símbolo existe y obtener información básica con fallback
 
         Args:
             symbol: Símbolo a validar
@@ -467,8 +568,66 @@ class YFinanceClient:
                 }
 
         except Exception as e:
-            return {"symbol": symbol, "valid": False, "error": str(e), "success": False}
+            logger.warning(f"yfinance failed for validate {symbol}: {str(e)}, trying Yahoo REST fallback")
+            return self._validate_symbol_from_rest(symbol)
 
+    def _validate_symbol_from_rest(self, symbol: str) -> Dict:
+        """Validar símbolo usando Yahoo REST API"""
+        try:
+            import requests
+            
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+            params = {
+                "range": "1d",
+                "interval": "1d",
+                "includePrePost": "false"
+            }
+            
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+            
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if "chart" not in data or "result" not in data["chart"]:
+                return {
+                    "symbol": symbol,
+                    "valid": False,
+                    "error": "Symbol not found or invalid",
+                    "success": False,
+                }
+            
+            result = data["chart"]["result"][0]
+            meta = result.get("meta", {})
+            
+            # Si tiene precio regular, el símbolo es válido
+            if "regularMarketPrice" in meta:
+                return {
+                    "symbol": symbol,
+                    "valid": True,
+                    "name": meta.get("longName", meta.get("shortName", symbol)),
+                    "currency": meta.get("currency", self._get_currency_for_symbol(symbol)),
+                    "exchange": meta.get("exchangeName", "Unknown"),
+                    "type": "EQUITY",
+                    "success": True,
+                }
+            else:
+                return {
+                    "symbol": symbol,
+                    "valid": False,
+                    "error": "Symbol not found or invalid",
+                    "success": False,
+                }
+            
+        except Exception as e:
+            return {
+                "symbol": symbol,
+                "valid": False,
+                "error": str(e),
+                "success": False,
+            }
 
 # Instancia global del cliente
 yfinance_client = YFinanceClient()

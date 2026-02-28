@@ -202,6 +202,144 @@ pnpm -F @maatwork/web start
 pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
 ```
 
+---
+
+### Deploy en Fly.io (Producción)
+
+**URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+
+| Setting | Value |
+|---------|-------|
+| Region | `sjc` (San Jose) |
+| Web App | `maatwork` |
+| API App | `maatwork-api` |
+| Database | PostgreSQL (`maatwork-db`) |
+
+**Comandos:**
+
+```bash
+# Deploy web
+fly deploy --config fly-web.toml
+
+# Deploy API
+fly deploy --config apps/api/fly.toml
+
+# Ver logs
+fly logs maatwork
+fly logs maatwork-api
+
+# Redeploy
+fly deploy --config fly-web.toml --force
+```
+
+**Notas:**
+- La base de datos PostgreSQL está gestionada por Fly.io
+- La variable `DATABASE_URL` se inyecta automáticamente al hacer `fly postgres attach`
+- Secrets: `JWT_SECRET`, `NEXT_PUBLIC_API_URL` configurados
+
+**Comandos:**
+
+```bash
+# Deploy web
+fly deploy --config fly-web.toml
+
+# Deploy API
+fly deploy --config apps/api/fly.toml
+
+# Ver logs
+fly logs maatwork
+fly logs maatwork-api
+
+# Redeploy
+fly deploy --config fly-web.toml --force
+```
+
+**Errores comunes:**
+
+1. **Error de build:**
+   - Usar `node-linker=hoisted` en `.npmrc`
+   - Limpiar node_modules y reconstruir
+
+2. **Cannot connect to database:**
+   - Verificar `fly postgres attach` se ejecutó
+   - Revisar secrets con `fly secrets list`
+
+## Comandos Deploy (Fly.io)
+
+```bash
+# Web app
+fly deploy --config fly-web.toml
+
+# API
+fly deploy --config apps/api/fly.toml
+
+fly logs maatwork-api
+```
+
+## Notas Finales
+fly logs maatwork
+fly logs maatwork-api
+```
+- La variable `DATABASE_URL` se inyecta automáticamente al hacer `fly postgres attach`
+- Secrets: `JWT_SECRET`, `NEXT_PUBLIC_API_URL` configurados
+
+**URL:** https://maatwork-production.up.railway.app
+
+**Configuración:**
+
+| Setting | Value |
+|---------|-------|
+| Root Directory | `/` |
+| Build Command | `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build` |
+| Start Command | `pnpm -F @maatwork/web start` |
+| Port | 3000 (auto-detected) |
+
+**Notas importantes:**
+
+- **Solo se deploya la web app** - No API ni analytics
+- **NO usar standalone mode** - Causa errores 502
+- **Comandos:**
+
+```bash
+# Trigger deployment
+git push origin feature/railway-migration
+
+# O usar CLI
+railway up --detach
+
+# Ver logs
+railway logs --lines 100
+
+# Redeploy
+railway redeploy --yes
+```
+
+**Errores comunes:**
+
+1. **502 Application failed to respond:**
+   - Verificar que el start command sea `pnpm -F @maatwork/web start`
+   - NO usar `output: 'standalone'` en next.config
+   - Verificar PORT = 3000
+
+2. **Build fails:**
+   - Verificar Root Directory sea `/`
+   - Verificar pnpm está disponible
+
+```bash
+# Build de producción
+pnpm -F @maatwork/web build
+
+# Iniciar servidor de producción
+pnpm -F @maatwork/web start
+
+# O usar PM2
+pm2 start "pnpm -F @maatwork/web start" --name maatwork-web
+```
+
 ### Variables de Entorno en Producción
 
 **API (`apps/api/.env`):**

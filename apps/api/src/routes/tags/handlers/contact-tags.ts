@@ -40,24 +40,23 @@ router.post(
       const userId = req.user!.id;
       const userRole = req.user!.role;
 
-      // Verify user has access to all contacts
-      const accessibleContactIds = [];
-      for (const contactId of contactIds) {
-        const hasAccess = await canAccessContact(userId, userRole, contactId);
-        if (hasAccess) {
-          accessibleContactIds.push(contactId);
-        } else {
-          req.log.warn(
-            { tagId: id, contactId, userId, userRole },
-            'user attempted to add tag to inaccessible contact'
-          );
-        }
-      }
+      // Verify user has access to all contacts (parallelized for performance)
+      const accessChecks = await Promise.all(
+        contactIds.map(async (contactId: string) => {
+          const hasAccess = await canAccessContact(userId, userRole, contactId);
+          if (!hasAccess) {
+            req.log.warn(
+              { tagId: id, contactId, userId, userRole },
+              'user attempted to add tag to inaccessible contact'
+            );
+          }
+          return { contactId, hasAccess };
+        })
+      );
 
-      if (accessibleContactIds.length === 0) {
-        return res.status(403).json({ error: 'No access to any of the specified contacts' });
-      }
-
+      const accessibleContactIds = accessChecks
+        .filter((check) => check.hasAccess)
+        .map((check) => check.contactId);
       // Verify tag exists
       const [tag] = await db().select().from(tags).where(eq(tags.id, id)).limit(1);
 

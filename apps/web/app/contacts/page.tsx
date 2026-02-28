@@ -629,12 +629,12 @@ export default function ContactsPage() {
                   data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
                   columns={columns as unknown as Column<Record<string, unknown>>[]}
                   keyField="id"
-                  emptyMessage={
+                  emptyState={
                     hasActiveFilters
                       ? 'No se encontraron contactos con los filtros aplicados.'
                       : 'Comienza agregando tu primer contacto al sistema.'
                   }
-                  virtualized={false}
+                  shouldVirtualize={false}
                   getRowStyle={(item: Record<string, unknown>) =>
                     getRowStyle(item as unknown as Contact)
                   }

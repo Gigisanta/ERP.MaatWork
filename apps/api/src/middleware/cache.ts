@@ -108,12 +108,19 @@ export async function invalidateCache(pattern: string): Promise<void> {
   if (!redis) {
     return;
   }
-
   try {
-    const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(keys);
-      logger.info({ pattern, count: keys.length }, 'Cache invalidated');
+    let cursor = '0';
+    let totalDeleted = 0;
+    do {
+      const [newCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+      cursor = newCursor;
+      if (keys && keys.length > 0) {
+        await redis.del(...keys);
+        totalDeleted += keys.length;
+      }
+    } while (cursor !== '0');
+    if (totalDeleted > 0) {
+      logger.info({ pattern, totalDeleted }, 'Cache invalidated (scan-based)');
     }
   } catch (error) {
     logger.error({ error, pattern }, 'Failed to invalidate cache');
@@ -123,7 +130,7 @@ export async function invalidateCache(pattern: string): Promise<void> {
 /**
  * Invalidate cache for specific key
  */
-async function invalidateCacheKey(key: string): Promise<void> {
+export async function invalidateCacheKey(key: string): Promise<void> {
   const redis = getRedisClient();
   if (!redis) {
     return;

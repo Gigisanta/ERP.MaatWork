@@ -244,7 +244,7 @@ export default function AdminFeedbackPage() {
               data={items as (Feedback & Record<string, unknown>)[]}
               columns={columns as Column<Feedback & Record<string, unknown>>[]}
               keyField="id"
-              emptyMessage="No hay feedback disponible."
+              emptyState={<div className="text-center py-8 text-muted-foreground">No hay feedback disponible.</div>}
               loading={isLoading}
             />
 

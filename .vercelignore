@@ -1,0 +1,26 @@
+# Exclude all node_modules recursively
+**/node_modules
+**/dist
+**/.next
+**/coverage
+**/tests
+
+# Apps to ignore (if we only want api/web, but we're at root)
+apps/analytics-service
+apps/web/.next
+apps/api/dist
+
+# Other root folders
+.git
+.vercel
+.turbo
+.github
+.agents
+.cursor
+
+# Documentation
+*.md
+docs/
+
+# Example files
+*.example

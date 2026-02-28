@@ -119,7 +119,7 @@ export function AliasesSection({
               data={aliases as (AliasData & Record<string, unknown>)[]}
               columns={aliasColumns}
               keyField="id"
-              emptyMessage="Sin alias"
+              emptyState="Sin alias"
             />
           </div>
         </div>

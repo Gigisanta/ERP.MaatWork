@@ -48,7 +48,7 @@ const LOGS_DIR = {
 };
 
 // Asegurar que los directorios de logs existan
-Object.values(LOGS_DIR).forEach(dir => {
+Object.values(LOGS_DIR).forEach((dir) => {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -63,10 +63,10 @@ try {
     const envContent = fs.readFileSync(apiEnvPath, 'utf8');
     const match = envContent.match(/JWT_SECRET=(.+)/);
     if (match) {
-        jwtSecret = match[1].trim();
-        // Eliminar comillas si existen
-        jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
-        console.log('Loaded JWT_SECRET from apps/api/.env');
+      jwtSecret = match[1].trim();
+      // Eliminar comillas si existen
+      jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
+      console.log('Loaded JWT_SECRET from apps/api/.env');
     }
   }
 } catch (e) {
@@ -75,21 +75,20 @@ try {
 
 // Si no se encontró en API, intentar desde web/.env.local
 if (!jwtSecret) {
-    try {
-      const envLocalPath = path.join(ROOT_DIR, 'apps/web/.env.local');
-      if (fs.existsSync(envLocalPath)) {
-        const envContent = fs.readFileSync(envLocalPath, 'utf8');
-        const match = envContent.match(/JWT_SECRET=(.+)/);
-        if (match) {
-            jwtSecret = match[1].trim();
-            jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
-        }
+  try {
+    const envLocalPath = path.join(ROOT_DIR, 'apps/web/.env.local');
+    if (fs.existsSync(envLocalPath)) {
+      const envContent = fs.readFileSync(envLocalPath, 'utf8');
+      const match = envContent.match(/JWT_SECRET=(.+)/);
+      if (match) {
+        jwtSecret = match[1].trim();
+        jwtSecret = jwtSecret.replace(/^["']|["']$/g, '');
       }
-    } catch (e) {
-      console.warn('Could not read apps/web/.env.local:', e.message);
     }
+  } catch (e) {
+    console.warn('Could not read apps/web/.env.local:', e.message);
+  }
 }
-
 
 module.exports = {
   apps: [
@@ -117,7 +116,7 @@ module.exports = {
       name: 'web',
       cwd: './apps/web',
       // AI_DECISION: Usar next directamente en fork mode
-      // Justificación: 
+      // Justificación:
       //   1. PM2 no captura stdout correctamente cuando ejecuta pnpm como wrapper
       //   2. Next.js no es compatible con cluster mode de PM2 (maneja concurrencia internamente)
       // Impacto: Los logs de Next.js van a web-out.log correctamente

@@ -7,7 +7,11 @@
         "declaration": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "paths": {
+            "@maatwork/types": ["../types/src/index.ts"],
+            "@maatwork/types/*": ["../types/src/*"]
+        }
     },
     "include": [
         "src/**/*"

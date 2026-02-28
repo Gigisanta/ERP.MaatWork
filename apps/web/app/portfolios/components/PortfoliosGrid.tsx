@@ -1,7 +1,7 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { Eye, Edit, Trash2, PieChart } from 'lucide-react';
 import {
   Card,
@@ -24,7 +24,7 @@ interface PortfoliosGridProps {
   onSelect?: (portfolio: Portfolio) => void;
 }
 
-export function PortfoliosGrid({
+function PortfoliosGrid({
   portfolios,
   onEdit,
   onDelete,
@@ -121,10 +121,17 @@ export function PortfoliosGrid({
                     {portfolio.lines?.length || portfolio.lineCount || 0} activos
                   </Text>
                   {portfolio.type === 'benchmark' && (
-                    <Badge variant="success" className="text-[10px] h-4 py-0">Benchmark</Badge>
+                    <Badge variant="success" className="text-[10px] h-4 py-0">
+                      Benchmark
+                    </Badge>
                   )}
                   {portfolio.isSystem && (
-                    <Badge variant="outline" className="text-[10px] h-4 py-0 border-primary/30 text-primary">Sistema</Badge>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 py-0 border-primary/30 text-primary"
+                    >
+                      Sistema
+                    </Badge>
                   )}
                 </Stack>
 
@@ -170,3 +177,9 @@ export function PortfoliosGrid({
     </Grid>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+// This component renders portfolio cards that don't need frequent re-renders
+const MemoizedPortfoliosGrid = React.memo(PortfoliosGrid);
+
+export default MemoizedPortfoliosGrid;

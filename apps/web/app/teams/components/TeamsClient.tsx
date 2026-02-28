@@ -1,5 +1,6 @@
 'use client';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   getTeamAdvisors,
@@ -53,7 +54,7 @@ interface TeamsClientProps {
 /**
  * TeamsClient - Client Island for team management interactivity
  */
-export default function TeamsClient({
+function TeamsClient({
   initialTeams,
   initialMembershipRequests,
   userRole,
@@ -608,3 +609,9 @@ export default function TeamsClient({
     </div>
   );
 }
+
+// Memoize component to prevent unnecessary re-renders
+// This component renders many team cards and can re-render frequently
+const MemoizedTeamsClient = React.memo(TeamsClient);
+
+export default MemoizedTeamsClient;

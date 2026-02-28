@@ -13,6 +13,7 @@ const webpackConfig = require('./config/webpack');
 
 const nextConfig = {
   transpilePackages: ['@maatwork/ui', '@maatwork/types'],
+  outputFileTracingRoot: require('path').join(__dirname, '../../'),
   ...buildConfig,
   ...imagesConfig,
   ...environmentConfig,

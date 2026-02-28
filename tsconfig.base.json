@@ -11,7 +11,9 @@
       "@maatwork/db": ["packages/db/src/index.ts"],
       "@maatwork/db/*": ["packages/db/src/*"],
       "@maatwork/ui": ["packages/ui/src/index.ts"],
-      "@maatwork/ui/*": ["packages/ui/src/*"]
+      "@maatwork/ui/*": ["packages/ui/src/*"],
+      "@maatwork/types": ["packages/types/src/index.ts"],
+      "@maatwork/types/*": ["packages/types/src/*"]
     },
     "strict": true,
     "noImplicitAny": true,

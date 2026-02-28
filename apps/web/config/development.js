@@ -13,13 +13,6 @@ module.exports = {
     },
   },
 
-  eslint: {
-    // AI_DECISION: Ignorar ESLint durante builds por problemas de dependencias
-    // Justificación: Error de ESLint con es-abstract bloquea builds sin afectar código
-    // Impacto: Permite builds completos, linting sigue funcionando en desarrollo
-    ignoreDuringBuilds: true,
-  },
-
   typescript: {
     // Re-enable TypeScript checks now that errors are fixed
     ignoreBuildErrors: false,

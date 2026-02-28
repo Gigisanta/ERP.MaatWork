@@ -112,3 +112,21 @@ contactos_*.csv
 
 # Automation scripts (may contain credentials)
 /Automations/
+
+# Screenshots (temporary in root)
+01-*.png
+02-*.png
+03-*.png
+screenshots/
+
+# Coverage reports
+.coverage/
+coverage.xml
+*.coverage
+*.lcov
+
+# E2E and test cache files
+.e2e-db-seeded
+.dev-docker-cache.json
+*test_failures.txt
+.env*.local

@@ -51,21 +51,56 @@ export const handleLogin = createAsyncHandler(async (req: Request, res: Response
     }
 
     if (adminUserRows.length === 0) {
-      // Crear usuario admin si no existe con contraseña por defecto
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      adminUserRows = await db()
-        .insert(users)
-        .values({
-          email: adminEmail,
-          fullName: 'Gio Santarelli',
-          role: 'admin',
-          isActive: true,
-          passwordHash: hashedPassword,
-          username: 'gio',
-          usernameNormalized: 'gio',
-        })
-        .returning();
-      req.log.info({ userId: adminUserRows[0].id }, 'Admin user created');
+      // Requerir ADMIN_INITIAL_PASSWORD env var para crear admin
+      const isProduction = process.env.NODE_ENV === 'production';
+      const adminPassword = process.env.ADMIN_INITIAL_PASSWORD;
+
+      if (!adminPassword) {
+        if (isProduction) {
+          throw new HttpError(
+            500,
+            'ADMIN_INITIAL_PASSWORD environment variable is required to create the initial admin user. Please set it and try again.'
+          );
+        }
+        // Development fallback - generate a random password and log it
+        const generatedPassword = Math.random().toString(36).substring(2, 12);
+        req.log.warn(
+          `[SECURITY] No ADMIN_INITIAL_PASSWORD set. Using generated password: ${generatedPassword}. This should only happen in development.`
+        );
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+        adminUserRows = await db()
+          .insert(users)
+          .values({
+            email: adminEmail,
+            fullName: 'Gio Santarelli',
+            role: 'admin',
+            isActive: true,
+            passwordHash: hashedPassword,
+            username: 'gio',
+            usernameNormalized: 'gio',
+          })
+          .returning();
+        req.log.info(
+          { userId: adminUserRows[0].id, generatedPassword },
+          'Admin user created with generated password'
+        );
+      } else {
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        adminUserRows = await db()
+          .insert(users)
+          .values({
+            email: adminEmail,
+            fullName: 'Gio Santarelli',
+            role: 'admin',
+            isActive: true,
+            passwordHash: hashedPassword,
+            username: 'gio',
+            usernameNormalized: 'gio',
+          })
+          .returning();
+        req.log.info({ userId: adminUserRows[0].id }, 'Admin user created');
+      }
     }
 
     const adminUser = adminUserRows[0];

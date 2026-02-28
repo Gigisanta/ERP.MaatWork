@@ -1,4 +1,68 @@
-# Documentación del Proyecto MAATWORK
+## 🚀 Production Deployment (Fly.io)
+
+**Live URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+- Region: `sjc` (San Jose)
+- Build: `pnpm install && pnpm build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Web y API deployadas en Fly.io. Database PostgreSQL gestionado por Fly.io.
+
+## 🚀 Production Deployment (Fly.io)
+
+**Live URLs:**
+- **Web:** https://maatwork.fly.dev
+- **API:** https://maatwork-api.fly.dev
+
+**Configuración:**
+- Region: `sjc` (San Jose)
+- Build: `pnpm install && pnpm build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Web y API deployadas en Fly.io. Database PostgreSQL gestionado por Fly.io.
+
+---
+Índice principal de toda la documentación técnica del proyecto.
+
+## 🚀 Inicio Rápido
+
+| Si eres... | Empieza con... |
+|------------|----------------|
+| Nuevo desarrollador | [ONBOARDING.md](./ONBOARDING.md) → [CLI.md](./CLI.md) |
+| Contribuidor | [CONTRIBUTING.md](./CONTRIBUTING.md) |
+| Buscando comandos | [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) |
+| Entendiendo arquitectura | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Haciendo deployment | [deployment/README.md](./deployment/README.md) |
+
+---
+
+## 📖 Guías Principales
+
+### Desarrollo
+- **[CLI.md](./CLI.md)** - Referencia completa del CLI (`pnpm mw`)
+- **[QUICK-REFERENCE.md](./QUICK-REFERENCE.md)** - Cheatsheet de comandos y patrones
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Guía de desarrollo detallada
+
+| Si eres... | Empieza con... |
+Índice principal de toda la documentación técnica del proyecto.
+
+**Live URL:** https://maatwork-production.up.railway.app
+
+**Branch:** `feature/railway-migration`
+
+**Configuración:**
+- Root Directory: `/`
+- Build: `pnpm install --frozen-lockfile && pnpm -F @maatwork/types build && pnpm -F @maatwork/utils build && pnpm -F @maatwork/logger build && pnpm -F @maatwork/db build && pnpm -F @maatwork/ui build && pnpm -F @maatwork/web build`
+- Start: `pnpm -F @maatwork/web start`
+
+> **Nota:** Solo se deploya la web app a Railway. API y analytics corren localmente.
+
+---
+
+Índice principal de toda la documentación técnica del proyecto.
 
 Índice principal de toda la documentación técnica del proyecto.
 
@@ -10,6 +74,7 @@
 | Contribuidor | [CONTRIBUTING.md](./CONTRIBUTING.md) |
 | Buscando comandos | [QUICK-REFERENCE.md](./QUICK-REFERENCE.md) |
 | Entendiendo arquitectura | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| Haciendo deployment | [deployment/README.md](./deployment/README.md) |
 
 ---
 
@@ -33,6 +98,11 @@
 ### Testing
 - **[TESTING.md](./TESTING.md)** - Unit, integration, E2E y visual regression
 - **[TEST-PERFORMANCE.md](./TEST-PERFORMANCE.md)** - Performance testing
+
+### Deployment
+- **[deployment/README.md](./deployment/README.md)** - Guía de selección de deployment (MVP vs Producción)
+- **[deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md)** - Quickstart para primer deployment (EC2 + Docker)
+- **[deployment/production-terraform.md](./deployment/production-terraform.md)** - Deploy producción escalable (Terraform + AWS)
 
 ### Operaciones
 - **[OPERATIONS.md](./OPERATIONS.md)** - Deploy, monitoreo, troubleshooting
@@ -81,6 +151,60 @@ docs/
 ├── TESTING.md                  # Estrategias de testing
 ├── TEST-PERFORMANCE.md         # Performance testing
 │
+├── # Deployment
+
+### Deployment
+- **[RAILWAY_GITHUB_INTEGRATION.md](./RAILWAY_GITHUB_INTEGRATION.md)** - Railway GitHub integration setup (recomendado, CI/CD nativo)
+- **[deployment/README.md](./deployment/README.md)** - Deployment selection guide (aún relevante)
+- **[deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md)** - Local Docker development (aún relevante)
+
+> **Railway es la plataforma recomendada para producción.** Usa la guía de Railway GitHub integration para deployments automáticos en git push.
+## 🔧 CLI Rápido
+
+```bash
+pnpm mw dev              # Iniciar desarrollo
+pnpm mw health           # Verificar salud del proyecto
+pnpm mw gen component    # Generar código
+pnpm mw test unit        # Ejecutar tests
+pnpm mw audit code       # Auditoría de código
+pnpm mw metrics          # Ver métricas
+```
+
+Ver [CLI.md](./CLI.md) para documentación completa.
+
+---
+
+## 📁 Estructura de Documentación
+
+```
+docs/
+├── README.md                   # Este archivo (índice)
+│
+├── # Desarrollo
+├── CLI.md                      # ⭐ Referencia del CLI
+├── QUICK-REFERENCE.md          # ⭐ Cheatsheet de comandos
+├── CONTRIBUTING.md             # Guía de contribución
+├── DEVELOPMENT.md              # Guía de desarrollo
+├── ONBOARDING.md               # Guía de onboarding
+│
+├── # Arquitectura
+├── ARCHITECTURE.md             # Arquitectura general
+├── ARCHITECTURE-DECISIONS.md   # ADRs
+├── FILE-STRUCTURE.md           # Estructura de archivos
+│
+├── # Base de Datos
+├── DATABASE.md                 # Drizzle, migraciones
+│
+├── # Testing
+├── TESTING.md                  # Estrategias de testing
+├── TEST-PERFORMANCE.md         # Performance testing
+│
+├── # Deployment
+├── deployment/                 # ⭐ Guías de deployment
+│   ├── README.md               # Guía de selección
+│   ├── mvp-quickstart.md       # MVP EC2 + Docker
+│   └── production-terraform.md  # Terraform AWS
+│
 ├── # Operaciones
 ├── OPERATIONS.md               # Deploy, monitoreo
 ├── OPTIMIZATION.md             # Optimizaciones
@@ -122,6 +246,11 @@ docs/
 2. [CLI.md](./CLI.md#generadores) - Generadores (`pnpm mw gen`)
 3. [FILE-STRUCTURE.md](./FILE-STRUCTURE.md) - Dónde poner archivos
 
+### Deployment
+1. [deployment/README.md](./deployment/README.md) - Seleccionar enfoque (MVP vs Producción)
+2. [deployment/mvp-quickstart.md](./deployment/mvp-quickstart.md) - Primer deployment rápido
+3. [deployment/production-terraform.md](./deployment/production-terraform.md) - Producción escalable
+
 ### Contribuir
 1. [CONTRIBUTING.md](./CONTRIBUTING.md) - Proceso de contribución
 2. [ARCHITECTURE-DECISIONS.md](./ARCHITECTURE-DECISIONS.md) - Entender decisiones
@@ -129,7 +258,3 @@ docs/
 ### Debugging
 1. [DEVELOPMENT.md](./DEVELOPMENT.md#debugging) - Guía de debugging
 2. [troubleshooting/](./troubleshooting/) - Problemas comunes
-
-### Deploy
-1. [OPERATIONS.md](./OPERATIONS.md) - Guía de operaciones
-2. [OPTIMIZATION.md](./OPTIMIZATION.md) - Optimizaciones
