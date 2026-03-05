@@ -197,9 +197,9 @@ export default function TasksSection({ contactId, initialTasks }: TasksSectionPr
             {taskList.map((task: Task) => (
               <div key={task.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0 pr-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Heading size="sm">{task.title}</Heading>
+                      <Heading size="sm" className="truncate">{task.title}</Heading>
                       <Badge variant={getStatusBadgeVariant(task.status)}>
                         {getStatusLabel(task.status)}
                       </Badge>

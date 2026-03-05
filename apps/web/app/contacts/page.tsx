@@ -580,12 +580,12 @@ export default function ContactsPage() {
 
         {/* Table view */}
         <div
-          className={`transition-all duration-500 ease-out ${
+          className={`transition-all duration-500 ease-out min-w-0 ${
             mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
           }`}
           style={{ transitionDelay: '100ms' }}
         >
-          <Card className="rounded-md border border-border" padding="sm">
+          <Card className="rounded-md border border-border min-w-0" padding="sm">
             <CardHeader className="p-2 md:p-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm md:text-base">
@@ -604,7 +604,7 @@ export default function ContactsPage() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="p-2 md:p-3 pt-0">
+            <CardContent className="p-2 md:p-3 pt-0 min-w-0 overflow-x-auto">
               {isMd ? (
                 // Mobile view
                 <MobileContactList
@@ -625,20 +625,22 @@ export default function ContactsPage() {
                   onClearFilters={filters.clearAllFilters}
                 />
               ) : (
-                <DataTable
-                  data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
-                  columns={columns as unknown as Column<Record<string, unknown>>[]}
-                  keyField="id"
-                  emptyState={
-                    hasActiveFilters
-                      ? 'No se encontraron contactos con los filtros aplicados.'
-                      : 'Comienza agregando tu primer contacto al sistema.'
-                  }
-                  shouldVirtualize={false}
-                  getRowStyle={(item: Record<string, unknown>) =>
-                    getRowStyle(item as unknown as Contact)
-                  }
-                />
+                <div className="min-w-[800px]">
+                  <DataTable
+                    data={(filteredContacts ?? []) as unknown as Record<string, unknown>[]}
+                    columns={columns as unknown as Column<Record<string, unknown>>[]}
+                    keyField="id"
+                    emptyState={
+                      hasActiveFilters
+                        ? 'No se encontraron contactos con los filtros aplicados.'
+                        : 'Comienza agregando tu primer contacto al sistema.'
+                    }
+                    shouldVirtualize={false}
+                    getRowStyle={(item: Record<string, unknown>) =>
+                      getRowStyle(item as unknown as Contact)
+                    }
+                  />
+                </div>
               )}
             </CardContent>
           </Card>

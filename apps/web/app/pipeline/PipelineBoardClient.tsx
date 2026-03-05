@@ -421,21 +421,23 @@ function PipelineBoardClient({ initialStages, initialError }: PipelineBoardClien
                                 >
                                   <CardContent className="p-3">
                                     <Stack direction="column" gap="sm">
-                                      <Text weight="medium" size="sm">
-                                        {contact.fullName}
-                                      </Text>
-
-                                      {contact.email && (
-                                        <Text size="xs" color="secondary">
-                                          {contact.email}
+                                      <div className="min-w-0">
+                                        <Text weight="medium" size="sm" className="truncate block">
+                                          {contact.fullName}
                                         </Text>
-                                      )}
 
-                                      {contact.nextStep && (
-                                        <Text size="xs" color="secondary">
-                                          {contact.nextStep}
-                                        </Text>
-                                      )}
+                                        {contact.email && (
+                                          <Text size="xs" color="secondary" className="truncate block">
+                                            {contact.email}
+                                          </Text>
+                                        )}
+
+                                        {contact.nextStep && (
+                                          <Text size="xs" color="secondary" className="truncate block mt-1">
+                                            {contact.nextStep}
+                                          </Text>
+                                        )}
+                                      </div>
 
                                       {contact.tags && contact.tags.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1">

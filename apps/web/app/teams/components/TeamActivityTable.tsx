@@ -261,8 +261,9 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
   const { members, summary } = activityData;
 
   return (
-    <Stack direction="column" gap="md">
-      {/* Summary Cards */}
+    <div className="min-w-0 w-full">
+      <Stack direction="column" gap="md">
+        {/* Summary Cards */}
       <Grid cols={{ base: 2, md: 4, lg: 6 }} gap="sm">
         <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
           <CardContent className="p-3 text-center">
@@ -354,5 +355,6 @@ export default function TeamActivityTable({ teamId, teamName }: TeamActivityTabl
         </CardContent>
       </Card>
     </Stack>
+    </div>
   );
 }

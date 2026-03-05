@@ -78,12 +78,12 @@ export function HomePageClient({
           style={{ transitionDelay: '100ms' }}
         >
           {/* Acciones rápidas - 2 columnas en desktop */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <QuickActionsWidget />
           </div>
 
           {/* Qué hacer hoy - 1 columna en desktop */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 min-w-0">
             <TodayTasksWidget />
           </div>
         </div>

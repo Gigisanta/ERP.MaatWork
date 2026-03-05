@@ -99,9 +99,9 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
   // Justificación: Optimized space usage for dashboard
   // Impacto: Metric cards on left/right of chart depending on screen size, better information density
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
       {/* Gráfico principal - 8 columnas en LG */}
-      <div className="lg:col-span-8">
+      <div className="lg:col-span-8 min-w-0">
         <Card className="h-full">
           <CardHeader className="flex flex-row items-center justify-between gap-4 pb-2">
             <CardTitle>Métricas del Mes</CardTitle>
@@ -114,8 +114,8 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
               />
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
+          <CardContent className="min-w-0 overflow-x-auto">
+            <div className="h-[250px] min-w-0 w-full relative">
               {chartView === 'goals' && (
                 <GoalsComparisonChart currentMonth={metricsData} goals={goalsData} />
               )}
@@ -137,7 +137,7 @@ export function MetricsSection({ metricsData, goalsData, loading, error }: Metri
 
       {/* Grid de métricas individuales - 4 columnas en LG */}
       {/* AI_DECISION: 2x2 Grid for Metric Cards to reduce vertical space */}
-      <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="lg:col-span-4 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <MetricCard
           title="Nuevos Contactos"
           actual={metricsData.newProspects}
