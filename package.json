@@ -94,7 +94,7 @@
     "pg": "^8.12.0",
     "prettier": "^3.7.4",
     "rimraf": "^5.0.10",
-    "turbo": "^2.7.2",
+    "turbo": "^2.8.14",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.1",
     "vitest": "^4.0.16"
